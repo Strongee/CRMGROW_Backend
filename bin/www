@@ -9,12 +9,29 @@ const app         = require('../app');
 const debug       = require('debug')('myapp:server');
 const http        = require('http');
 
+const mongoose = require('mongoose');
+
 /**
  * Get port from environment and store in Express.
  */
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
+
+const { DB_PORT } = require('../config/database');
+
+/**
+ * Connect Monogo Database.
+ */
+
+mongoose
+  .connect(DB_PORT)
+  .then(() => {
+    console.log('Connection has been established successfully.')
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err)
+  })
 
 /**
  * Create HTTP server.
@@ -89,5 +106,6 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
+  console.log('App listening on', bind);
   debug('Listening on ' + bind);
 }
