@@ -20,18 +20,17 @@ app.set('port', port);
 
 const { DB_PORT } = require('../config/database');
 
+var uristring = process.env.MONGO_URI || DB_PORT;
+
 /**
  * Connect Monogo Database.
  */
 
-mongoose
-  .connect(DB_PORT)
-  .then(() => {
-    console.log('Connection has been established successfully.')
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err)
-  })
+ 
+
+mongoose.connect(uristring, {useNewUrlParser: true})
+.then(() => console.log('Connecting to database successful'))
+.catch(err => console.error('Could not connect to mongo DB', err))
 
 /**
  * Create HTTP server.

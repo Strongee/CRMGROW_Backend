@@ -1,8 +1,15 @@
 const express = require('express')
 
-const admin = require('./admin/index')
-const router = express()
+const user = require('./user')
+const UserCtrl = require('../controllers/user')
 
-router.use('/admin', admin)
+const router = express.Router()
 
-module.exports = router 
+router.get('/health', (req, res) => {
+    res.send('OK')
+  })
+
+// Admin Dashboard api
+router.use('/user', user)
+
+module.exports = router
