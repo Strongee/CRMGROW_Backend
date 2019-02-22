@@ -9,6 +9,7 @@ const User = mongoose.model('user',{
      notification: Number,
      picture_profile: String,
      created_at: Date,
+     updated_at: Date,
  });
 
  module.exports = User

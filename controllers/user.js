@@ -18,50 +18,62 @@ const signUp = async (req, res) => {
       ...req.body,
       password: hash,
     })
-  
-    let data
-    try {
-      const res = await user.save(function(err){
-        if(err){
-            console.log("Error in saving User:",err);
-        }
+    console.log('req.body',req.body)
+    user.save()
+    .then(data => {
+        console.log('data', data)
+        res.send({
+          status: true,
+          data
+        })
     })
-      data = res.get({plain: true})
-      console.log('data', data);
-      // Remove password
-      delete data.password
-    } catch (e) {
-      // Remove password
-      let errors
+    .catch(e => {
+        let errors
       if (e.errors) {
         errors = e.errors.map(err => {
+        
           delete err.instance
           return err
         })
       }
-  
       return res.status(500).send({
         status: false,
         error: errors || e
       })
-    }
-  
-    res.send({
-      status: true,
-      data
-    })
+    });
   }
 
+const login = async (re)
 const checkAuth = async (req, res, next) => {
-    next()
-}
-
-const checkAdmin = async (req, res, next) => {
-    next()
-}
+    const token = req.get('Authorization')
+    let decoded
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      console.info('Auth Success:', decoded, ip)
+    } catch (err) {
+      console.error(err)
+      return res.status(401).send({
+        status: false,
+        error: 'invalid_auth'
+      })
+      // err
+    }
+  
+    req.currentUser = await User.findOne({ where: { id: decoded.id } })
+  
+    if (req.currentUser) {
+      next()
+    } else {
+      console.error('Valid JWT but no user:', decoded)
+      res.send({
+        status: false,
+        error: 'invalid_user'
+      })
+    }
+  }
 
 module.exports = {
     signUp,
     checkAuth,
-    checkAdmin
 }
