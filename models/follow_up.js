@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const user = require('./user')
 
 const FollowUp = mongoose.model('follow_up',{
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],

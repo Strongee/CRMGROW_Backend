@@ -13,10 +13,12 @@ const signUp = async (req, res) => {
     }
   
     const hash = await bcrypt.hash(req.body.password, 8)
-  
+    console.log('date', new Date())
     const user = new User({
       ...req.body,
       password: hash,
+      updated_at: new Date(),
+      created_at: new Date(),
     })
     console.log('req.body',req.body)
     user.save()

@@ -123,14 +123,14 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
 
 ### FollowUp APIs
 
-   POST `/api/follow`  
+#### POST `/api/follow`  
    
    Body: 
    ```
    {
        "due_date": "2019-02-21T14:27:19.854Z",
        "content": "a",
-       "contact": id
+       "contact": "5c71a62d8e8bea5ba7da91d2"
    }
    ```
 
@@ -140,6 +140,44 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
    ```
     {
         "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71a62d8e8bea5ba7da91d2",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71b47385cdc7641d41247f",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71c2e2ea4bf27835d845c9",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            }
+        ]
     }
    ```
    HTTP Status: 401  
@@ -150,3 +188,123 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
       "error": "FollowUp doesn`t exist"
     }
    ``` 
+
+#### GET `/api/follow`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71a62d8e8bea5ba7da91d2",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71b47385cdc7641d41247f",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            }
+        ]
+    }
+
+### Contact APIs
+
+#### GET `/api/contact`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71a62d8e8bea5ba7da91d2",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71b47385cdc7641d41247f",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            }
+        ]
+    }
+
+    ```
+    HTTP Status: 401  
+
+    ```
+    {
+        "status": false,
+        "error": "Contact doesn`t exist"
+    }
+    ``` 
+
+#### POST `/api/contact`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71a62d8e8bea5ba7da91d2",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [],
+                "_id": "5c71b47385cdc7641d41247f",
+                "due_date": "2019-02-21T14:27:19.854Z",
+                "status": "1",
+                "updated_at": "2019-02-21T14:27:19.854Z",
+                "created_at": "2019-02-21T14:27:19.854Z",
+                "__v": 0
+            }
+        ]
+    }

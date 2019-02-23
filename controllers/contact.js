@@ -1,14 +1,14 @@
 const { validationResult } = require('express-validator/check')
-const FollowUp = require('../models/follow_up');
+const Contact = require('../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await FollowUp.find({user :currentUser.id});
+  const data = await Contact.find({user :currentUser.id});
   console.log('data', data);
   if (!data) {
     return res.status(401).json({
       status: false,
-      error: 'FollowUp doesn`t exist'
+      error: 'Contact doesn`t exist'
     })
   }
 
@@ -28,14 +28,14 @@ const create = async(req, res) => {
     })
   }
 
-  const followUp = new FollowUp({
+  const contact = new Contact({
     ...req.body,
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
   })
   console.log('req.body',req.body)
-  followUp.save()
+  contact.save()
   .then(_res => {
       myJSON = JSON.stringify(_res)
       const data = JSON.parse(myJSON);

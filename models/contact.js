@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 
-const Contact = mongoose.model('user',{
-     user_name: String,
+const Contact = mongoose.model('contact',{
+     first_name: String,
+     last_name: String,
      email:String,
-     password: String,
+     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
      cell_phone: String,
-     time_zone: String,
-     email_signature: String,
-     notification: Number,
-     picture_profile: String,
+     brokerage: String,
+     tag: String,
+     recruiting_stage: String,
      created_at: Date,
      updated_at: Date,
  });
