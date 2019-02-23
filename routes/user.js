@@ -18,4 +18,10 @@ router.post('/'
   ]
   , catchError(UserCtrl.signUp))
 
+router.post('/login', [
+    body('email').optional().isLength({ min: 3 }),
+    body('user_name').optional().isLength({ min: 3 }),
+    body('password').isLength({ min: 1 })
+  ], catchError(UserCtrl.login))  
+  
 module.exports = router
