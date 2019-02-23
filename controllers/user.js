@@ -63,7 +63,7 @@ const login = async (req, res) => {
 
   console.info('User Name:', email || user_name)
 
-  const _user = await User.findOne({ email: email })
+  let _user = await User.findOne({ email: email })
   .exec();
 
   console.log('_user', _user);
@@ -98,13 +98,15 @@ const login = async (req, res) => {
   delete user.password
   res.send({
     status: true,
-    data
+    data: {
+      token,
+      user
+    }
   })
 }
 const checkAuth = async (req, res, next) => {
     const token = req.get('Authorization')
     let decoded
-    console.log('process.env',process.env)
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET)
       const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -118,8 +120,8 @@ const checkAuth = async (req, res, next) => {
       // err
     }
   
-    req.currentUser = await User.findOne({ where: { id: decoded.id } })
-  
+    req.currentUser = await User.findOne({ _id: decoded.id })
+
     if (req.currentUser) {
       next()
     } else {

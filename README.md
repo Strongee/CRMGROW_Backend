@@ -121,5 +121,32 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
     }
    ``` 
 
-### User APIs
+### FollowUp APIs
 
+   POST `/api/follow`  
+   
+   Body: 
+   ```
+   {
+       "due_date": "2019-02-21T14:27:19.854Z",
+       "content": "a",
+       "contact": id
+   }
+   ```
+
+   Response:
+
+   HTTP Status: 200  
+   ```
+    {
+        "status": true,
+    }
+   ```
+   HTTP Status: 401  
+
+   ```
+    {
+      "status": false,
+      "error": "FollowUp doesn`t exist"
+    }
+   ``` 
