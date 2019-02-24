@@ -135,8 +135,89 @@ const checkAuth = async (req, res, next) => {
     }
   }
 
+const editMe = async(req, res) =>{
+  const user = req.currentUser
+
+  const editData = req.body
+  // TODO: should limit the editing fields here
+  delete editData.password
+
+  // Check settings is valid
+
+  if ('settings' in editData) {
+    try {
+      JSON.parse(editData.settings)
+    } catch (e) {
+      return res.status(400).send({
+        status: true,
+        error: 'invalid_settings'
+      })
+    }
+  }
+
+  for (let key in editData) {
+    user[key] = editData[key]
+  }
+
+  user.save()
+  .then(_res => {
+      myJSON = JSON.stringify(_res)
+      const data = JSON.parse(myJSON);
+      delete data.password
+      res.send({
+        status: true,
+        data
+      })
+  })
+  .catch(e => {
+      let errors
+    if (e.errors) {
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
+      })
+    }
+    return res.status(500).send({
+      status: false,
+      error: errors || e
+    })
+  });
+}
+
+const resetPasswordByOld = async (req, res) => {
+  const { old_password, new_password } = req.body
+
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(401).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+
+  const _user = req.currentUser
+
+  // Check password
+  if (!bcrypt.compareSync(old_password, _user.password.split(' ')[0])) {
+    return res.status(401).json({
+      status: false,
+      error: 'invalid_old_password'
+    })
+  }
+
+  _user.password = await bcrypt.hash(new_password, 8)
+  await _user.save()
+
+  res.send({
+    status: true
+  })
+}
+
+
 module.exports = {
     signUp,
     login,
+    editMe,
+    resetPasswordByOld,
     checkAuth,
 }

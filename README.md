@@ -274,6 +274,19 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
     ``` 
 
 #### POST `/api/contact`
+   
+   Body: 
+   ```
+    {
+        "first_name":"Super",
+        "last_name":"WebTop",
+        "email": "amazingksill8001@gmail.com",
+        "cell_phone": "111111111",
+        "brokerage": "Max",
+        "tag": "interesting",
+        "recruiting_stage": "cold call"
+    }
+   ```
 
     Response:
 
@@ -365,6 +378,16 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
 
 #### POST `/api/activity`
 
+   Body: 
+   ```
+    {
+        "contact": "5c71a62d8e8bea5ba7da91d2",
+        "content": "email",
+        "email": "5c715b0fccf14717986c85dc",
+        "note": "5c715b0fccf14717986c85dc"
+    }
+   ```
+
     Response:
 
     HTTP Status: 200
@@ -403,4 +426,70 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
                 "__v": 0
             }
         ]
+    }
+
+### Note APIs
+
+#### GET `/api/note`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "contact": [
+                "5c71a62d8e8bea5ba7da91d2"
+            ],
+            "_id": "5c72b10e262863105aa56885",
+            "content": "interesting",
+            "updated_at": "2019-02-24T14:58:22.364Z",
+            "created_at": "2019-02-24T14:58:22.364Z",
+            "__v": 0
+        }
+    }
+
+    ```
+    HTTP Status: 401  
+
+    ```
+    {
+        "status": false,
+        "error": "Activity doesn`t exist"
+    }
+    ``` 
+
+#### POST `/api/note`
+
+   Body: 
+   ```
+    {
+        "content":"interesting",
+        "contact": "5c71a62d8e8bea5ba7da91d2"
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "contact": [
+                "5c71a62d8e8bea5ba7da91d2"
+            ],
+            "_id": "5c72b10e262863105aa56885",
+            "content": "interesting",
+            "updated_at": "2019-02-24T14:58:22.364Z",
+            "created_at": "2019-02-24T14:58:22.364Z",
+            "__v": 0
+        }
     }

@@ -7,6 +7,7 @@ const { catchError } = require('../controllers/error')
 
 const router = express.Router()
 
+// SignUp
 router.post('/'
   , [
     body('email').isEmail(),
@@ -18,10 +19,17 @@ router.post('/'
   ]
   , catchError(UserCtrl.signUp))
 
+// Login 
 router.post('/login', [
     body('email').optional().isLength({ min: 3 }),
     body('user_name').optional().isLength({ min: 3 }),
     body('password').isLength({ min: 1 })
   ], catchError(UserCtrl.login))  
   
+// Return own profile
+router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
+
+// New Password by old one
+router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
+
 module.exports = router
