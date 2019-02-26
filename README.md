@@ -47,7 +47,7 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
             "id": 2,
             "email": "test1@test.com",
             "user_name": "A",
-            "time_zone": "America/Los_Angeles",
+            "time_zone": "+08:00",
             "email_signature": "a",
             "notification": 1,
             "picture_profile": "http://localhost:3000/api/file/949b4d70-a48d-11e8-a12f-dd03f72627a4.png"
@@ -189,6 +189,57 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
     }
    ``` 
 
+#### GET `/api/follow/date?due_date=`
+
+due_date:  
+  `overdue`, `today`, `tomorrow`, `next_week`, `next_month`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c72e23de2f8502a9914fb7a"
+                ],
+                "contact": [],
+                "_id": "5c72e29be2f8502a9914fb7b",
+                "due_date": "2019-02-24T17:42:57.401Z",
+                "status": "1",
+                "updated_at": "2019-02-24T18:29:47.790Z",
+                "created_at": "2019-02-24T18:29:47.790Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c72e23de2f8502a9914fb7a"
+                ],
+                "contact": [],
+                "_id": "5c72e2e4e2f8502a9914fb7c",
+                "due_date": "2019-02-24T17:42:57.401Z",
+                "status": "1",
+                "updated_at": "2019-02-24T18:31:00.627Z",
+                "created_at": "2019-02-24T18:31:00.627Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c72e23de2f8502a9914fb7a"
+                ],
+                "contact": [],
+                "_id": "5c72e2e6e2f8502a9914fb7d",
+                "due_date": "2019-02-24T17:42:57.401Z",
+                "status": "1",
+                "updated_at": "2019-02-24T18:31:02.267Z",
+                "created_at": "2019-02-24T18:31:02.267Z",
+                "__v": 0
+            }
+        ]
+    }
+    
 #### GET `/api/follow`
 
     Response:

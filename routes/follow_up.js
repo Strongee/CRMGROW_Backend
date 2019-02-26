@@ -8,5 +8,6 @@ const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(FollowUpCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(FollowUpCtrl.get))
+router.get('/date' , UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate))
 
 module.exports = router
