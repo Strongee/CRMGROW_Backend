@@ -479,6 +479,47 @@ due_date:
         ]
     }
 
+#### GET `/api/activity/last`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "note": [],
+                "email": [],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c729fbe861fe7dbeb4040bb",
+                "content": "email",
+                "updated_at": "2019-02-24T13:44:30.173Z",
+                "created_at": "2019-02-24T13:44:30.173Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "note": [],
+                "email": [],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c72a05049e4e3dd35401b55",
+                "content": "email",
+                "updated_at": "2019-02-24T13:46:56.347Z",
+                "created_at": "2019-02-24T13:46:56.347Z",
+                "__v": 0
+            }
+        ]
+    }
 
 
 ### Note APIs
