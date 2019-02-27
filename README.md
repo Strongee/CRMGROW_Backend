@@ -587,3 +587,61 @@ due_date:
             "__v": 0
         }
     }
+
+### Tag APIs
+
+#### GET `/api/tag`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "_id": "5c769df6f600561d9388b44b",
+                "content": "interesting",
+                "updated_at": "2019-02-27T14:25:58.610Z",
+                "created_at": "2019-02-27T14:25:58.610Z",
+                "__v": 0
+            }
+        ]
+    }
+
+    ```
+    HTTP Status: 401  
+
+    ```
+    {
+        "status": false,
+        "error": "Tag doesn`t exist"
+    }
+    ``` 
+
+#### POST `/api/tag`
+
+   Body: 
+   ```
+    {
+        "content":"interesting"
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "_id": "5c769d65220d181cae6c5873",
+            "content": "interesting",
+            "updated_at": "2019-02-27T14:23:33.505Z",
+            "created_at": "2019-02-27T14:23:33.505Z",
+            "__v": 0
+        }
+    }
