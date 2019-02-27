@@ -645,3 +645,76 @@ due_date:
             "__v": 0
         }
     }
+
+### Appointment APIs
+
+#### GET `/api/appointment`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "_id": "5c769df6f600561d9388b44b",
+                "content": "interesting",
+                "updated_at": "2019-02-27T14:25:58.610Z",
+                "created_at": "2019-02-27T14:25:58.610Z",
+                "__v": 0
+            }
+        ]
+    }
+
+    ```
+    HTTP Status: 401  
+
+    ```
+    {
+        "status": false,
+        "error": "Tag doesn`t exist"
+    }
+    ``` 
+
+#### POST `/api/appointment`
+
+   Body: 
+   ```
+    {
+        "title":"Title",
+        "description": "Description",
+        "location":"US",
+        "due_start": "2019-02-27T14:25:58.610Z",
+        "due_end": "2019-02-27T14:25:58.610Z",
+        "contact":"5c71a62d8e8bea5ba7da91d2"
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "contact": [
+                "5c71a62d8e8bea5ba7da91d2"
+            ],
+            "_id": "5c76b82ce545eb2ec2cb8f1a",
+            "title": "Title",
+            "description": "Description",
+            "location": "US",
+            "due_start": "2019-02-27T14:25:58.610Z",
+            "due_end": "2019-02-27T14:25:58.610Z",
+            "updated_at": "2019-02-27T16:17:48.463Z",
+            "created_at": "2019-02-27T16:17:48.463Z",
+            "__v": 0
+        }
+    }

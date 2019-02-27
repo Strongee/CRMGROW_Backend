@@ -37,9 +37,7 @@ const create = async(req, res) => {
 
   activity.save()
   .then(_res => {
-      myJSON = JSON.stringify(_res)
-      const data = JSON.parse(myJSON);
-      delete data.password
+      const data = _res
       res.send({
         status: true,
         data

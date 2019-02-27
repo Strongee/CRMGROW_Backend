@@ -5,6 +5,7 @@ const follow_up = require('./follow_up')
 const contact = require('./contact')
 const activity = require('./activity')
 const note = require('./note')
+const appointment = require('./appointment')
 const tag = require('./tag')
 const UserCtrl = require('../controllers/user')
 
@@ -20,6 +21,7 @@ router.use('/follow', follow_up)
 router.use('/contact', contact)
 router.use('/activity', activity)
 router.use('/note', note)
+router.use('/appointment', appointment)
 router.use('/tag', tag)
 
 module.exports = router

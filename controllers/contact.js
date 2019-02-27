@@ -4,7 +4,7 @@ const Contact = require('../models/contact');
 const get = async(req, res) => {
   const { currentUser } = req
   const data = await Contact.find({user :currentUser.id});
-  console.log('data', data);
+
   if (!data) {
     return res.status(401).json({
       status: false,

@@ -38,9 +38,7 @@ const create = async(req, res) => {
   console.log('req.body',req.body)
   followUp.save()
   .then(_res => {
-      myJSON = JSON.stringify(_res)
-      const data = JSON.parse(myJSON);
-      delete data.password
+      const data = _res
       res.send({
         status: true,
         data
@@ -100,9 +98,7 @@ const getByDate = async(req, res) =>{
   switch(due_date) {
     case 'overdue': {
       const current_time = moment().utcOffset(time_zone);
-      console.log('due_date', due_date)
       const data = await FollowUp.find({user :currentUser.id, created_at: {$lt: current_time}});
-      console.log('data', overdue);
 
       if (!overdue) {
         return res.status(401).json({
@@ -142,7 +138,7 @@ const getByDate = async(req, res) =>{
       const today_end = current_time.endOf('day');        // set to 23:59 pm today
       const tomorrow_start =  today_start.add(1, 'day');
       const tomorrow_end = today_end.add(1, 'day');
-      console.log('tomorrow_end', today_start)
+
       data = await FollowUp.find({user :currentUser.id, created_at: {$gte: tomorrow_start, $lt: tomorrow_end}})
 
       if (!data) {
