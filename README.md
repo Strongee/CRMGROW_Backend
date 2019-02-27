@@ -291,24 +291,16 @@ due_date:
                 "user": [
                     "5c715b0fccf14717986c85dc"
                 ],
-                "contact": [],
-                "_id": "5c71a62d8e8bea5ba7da91d2",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
-                "__v": 0
-            },
-            {
-                "user": [
-                    "5c715b0fccf14717986c85dc"
-                ],
-                "contact": [],
-                "_id": "5c71b47385cdc7641d41247f",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
+                "_id": "5c71c9d6cf6b7d7fae539593",
+                "first_name": "Super",
+                "last_name": "WebTop",
+                "email": "amazingksill8001@gmail.com",
+                "cell_phone": "111111111",
+                "brokerage": "Max",
+                "tag": "interesting",
+                "recruiting_stage": "cold call",
+                "updated_at": "2019-02-23T22:31:50.491Z",
+                "created_at": "2019-02-23T22:31:50.491Z",
                 "__v": 0
             }
         ]
@@ -350,24 +342,16 @@ due_date:
                 "user": [
                     "5c715b0fccf14717986c85dc"
                 ],
-                "contact": [],
-                "_id": "5c71a62d8e8bea5ba7da91d2",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
-                "__v": 0
-            },
-            {
-                "user": [
-                    "5c715b0fccf14717986c85dc"
-                ],
-                "contact": [],
-                "_id": "5c71b47385cdc7641d41247f",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
+                "_id": "5c71c9d6cf6b7d7fae539593",
+                "first_name": "Super",
+                "last_name": "WebTop",
+                "email": "amazingksill8001@gmail.com",
+                "cell_phone": "111111111",
+                "brokerage": "Max",
+                "tag": "interesting",
+                "recruiting_stage": "cold call",
+                "updated_at": "2019-02-23T22:31:50.491Z",
+                "created_at": "2019-02-23T22:31:50.491Z",
                 "__v": 0
             }
         ]
