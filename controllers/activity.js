@@ -65,7 +65,12 @@ const getByLastActivity = async(req, res) => {
   let data = []
 
   for (let i =0; i < contacts.length; i ++){
-    const activity = await Activity.find({user :currentUser.id, contact: contact.id}).sort({_id : -1 }).limit(1);
+
+    const _activity = await Activity.find({user :currentUser.id, contact: contacts[i].id}).sort({_id : -1 }).limit(1);
+    myJSON = JSON.stringify(_activity[0])
+    const activity = JSON.parse(myJSON)
+    delete activity.contact
+    activity.contact = contacts[i]
     data.push(activity)
   }
   

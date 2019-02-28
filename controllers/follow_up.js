@@ -1,11 +1,23 @@
 const { validationResult } = require('express-validator/check')
 const moment = require('moment');
 const FollowUp = require('../models/follow_up');
+const Contact = require('../models/contact')
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await FollowUp.find({user :currentUser.id}).sort({created_at: -1});
-  console.log('data', data);
+  const _follow_up = await FollowUp.find({user :currentUser.id}).sort({created_at: -1});
+  let data = [];
+
+  for(let i = 0; i < _follow_up.length; i ++){
+    const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+    console.log('contact', _contact)
+    myJSON = JSON.stringify(_follow_up[i])
+    const follow_up = JSON.parse(myJSON);
+    delete follow_up.contact
+    follow_up.contact = _contact
+    data.push(follow_up)
+  }
+
   if (!data) {
     return res.status(401).json({
       status: false,
