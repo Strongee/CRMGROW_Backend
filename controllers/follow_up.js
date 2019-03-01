@@ -54,7 +54,7 @@ const create = async(req, res) => {
   .then(_followup => {
 
     const activity = new Activity({
-      content: currentUser.user_name + 'added follow up',
+      content: currentUser.user_name + ' added follow up',
       contact: _followup.contact,
       user: currentUser.id,
       created_at: new Date(),
@@ -139,7 +139,18 @@ const getByDate = async(req, res) =>{
       console.log('moment', moment().utcOffset(8))
       const start =  moment().utcOffset(time_zone).startOf('day');      // set to 12:00 am today
       const end =  moment().utcOffset(time_zone).endOf('day');          // set to 23:59 pm today
-      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: start, $lt: end}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: start, $lt: end}})
+
+      for(let i = 0; i < _follow_up.length; i ++){
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        console.log('contact', _contact)
+        myJSON = JSON.stringify(_follow_up[i])
+        const follow_up = JSON.parse(myJSON);
+        delete follow_up.contact
+        follow_up.contact = _contact
+        data.push(follow_up)
+      }
+    
 
       if (!data) {
         return res.status(401).json({
@@ -161,8 +172,17 @@ const getByDate = async(req, res) =>{
       const today_end = moment().endOf('day');        // set to 23:59 pm today
       const tomorrow_start =  today_start.add(1, 'day');
       const tomorrow_end = today_end.add(1, 'day');
+      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: tomorrow_start, $lt: tomorrow_end}})
 
-      data = await FollowUp.find({user :currentUser.id, due_date: {$gte: tomorrow_start, $lt: tomorrow_end}})
+      for(let i = 0; i < _follow_up.length; i ++){
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        console.log('contact', _contact)
+        myJSON = JSON.stringify(_follow_up[i])
+        const follow_up = JSON.parse(myJSON);
+        delete follow_up.contact
+        follow_up.contact = _contact
+        data.push(follow_up)
+      }
 
       if (!data) {
         return res.status(401).json({
@@ -180,7 +200,17 @@ const getByDate = async(req, res) =>{
     case 'next_week': {
       const next_week_start = moment().utcOffset(time_zone).add(1, 'day')
       const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
-      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: next_week_start, $lt: next_week_end}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: next_week_start, $lt: next_week_end}})
+
+      for(let i = 0; i < _follow_up.length; i ++){
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        console.log('contact', _contact)
+        myJSON = JSON.stringify(_follow_up[i])
+        const follow_up = JSON.parse(myJSON);
+        delete follow_up.contact
+        follow_up.contact = _contact
+        data.push(follow_up)
+      }
 
       if (!data) {
         return res.status(401).json({
@@ -198,8 +228,18 @@ const getByDate = async(req, res) =>{
     case 'next_month': {
       const start_month = moment().utcOffset(time_zone).startOf('month').add(1, 'months')
       const end_month   =  moment().utcOffset(time_zone).add(1, 'months').endOf('month')
-      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: start_month, $lt: end_month}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: start_month, $lt: end_month}})
       
+      for(let i = 0; i < _follow_up.length; i ++){
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        console.log('contact', _contact)
+        myJSON = JSON.stringify(_follow_up[i])
+        const follow_up = JSON.parse(myJSON);
+        delete follow_up.contact
+        follow_up.contact = _contact
+        data.push(follow_up)
+      }
+
       if (!data) {
         return res.status(401).json({
           status: false,
@@ -215,7 +255,17 @@ const getByDate = async(req, res) =>{
     }
     case 'future': {
       const current_time = moment().utcOffset(time_zone);
-      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: current_time}});
+      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: current_time}});
+
+      for(let i = 0; i < _follow_up.length; i ++){
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        console.log('contact', _contact)
+        myJSON = JSON.stringify(_follow_up[i])
+        const follow_up = JSON.parse(myJSON);
+        delete follow_up.contact
+        follow_up.contact = _contact
+        data.push(follow_up)
+      }
 
       if (!data) {
         return res.status(401).json({

@@ -40,7 +40,7 @@ const create = async(req, res) => {
   .then(_appointment => {
 
     const activity = new Activity({
-      content: currentUser.user_name + 'added appointment',
+      content: currentUser.user_name + ' added appointment',
       contact: _note.contact,
       user: currentUser.id,
       created_at: new Date(),

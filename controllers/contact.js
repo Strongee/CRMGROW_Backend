@@ -41,7 +41,7 @@ const create = async(req, res) => {
   contact.save()
   .then(_contact => {
       const activity = new Activity({
-        content: currentUser.user_name + 'added contact',
+        content: currentUser.user_name + ' added contact',
         contact: _contact.id,
         user: currentUser.id,
         created_at: new Date(),

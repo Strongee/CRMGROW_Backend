@@ -40,7 +40,7 @@ const create = async(req, res) => {
   .then(_note => {
 
     const activity = new Activity({
-      content: currentUser.user_name + 'added note',
+      content: currentUser.user_name + ' added note',
       contact: _note.contact,
       user: currentUser.id,
       created_at: new Date(),
