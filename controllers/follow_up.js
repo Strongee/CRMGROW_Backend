@@ -112,7 +112,7 @@ const getByDate = async(req, res) =>{
       const current_time = moment().utcOffset(time_zone);
       const data = await FollowUp.find({user :currentUser.id, created_at: {$lt: current_time}});
 
-      if (!overdue) {
+      if (!data) {
         return res.status(401).json({
           status: false,
           error: 'OverDue doesn`t exist'
@@ -131,7 +131,7 @@ const getByDate = async(req, res) =>{
       const end = current_time.endOf('day');          // set to 23:59 pm today
       const data = await FollowUp.find({user :currentUser.id, created_at: {$gte: start, $lt: end}})
 
-      if (!today) {
+      if (!data) {
         return res.status(401).json({
           status: false,
           error: 'FollowUp doesn`t exist on Today'
