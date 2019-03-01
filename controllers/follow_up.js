@@ -198,8 +198,6 @@ const getByDate = async(req, res) =>{
         data.push(follow_up)
       }
 
-      let data = [];
-
       if (!data) {
         return res.status(401).json({
           status: false,
