@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator/check')
 const Note = require('../models/note');
+const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -37,7 +38,19 @@ const create = async(req, res) => {
   console.log('req.body',req.body)
   note.save()
   .then(_res => {
-      const data = _res
+
+    const activity = new Activity({
+      content: currentUser.user_name + 'added note',
+      contact: _res[0].id,
+      user: currentUser.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    myJSON = JSON.stringify(_res)
+    const data = JSON.parse(myJSON);
+    data.activity = activity;
+
       res.send({
         status: true,
         data

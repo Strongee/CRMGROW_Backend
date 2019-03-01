@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check')
 const moment = require('moment');
 const FollowUp = require('../models/follow_up');
 const Contact = require('../models/contact')
+const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -41,20 +42,33 @@ const create = async(req, res) => {
     })
   }
 
+  console.log('due_date', req.due_date)
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('req.body',req.body)
+  
   followUp.save()
   .then(_res => {
-      const data = _res
-      res.send({
-        status: true,
-        data
-      })
+
+    const activity = new Activity({
+      content: currentUser.user_name + 'added follow up',
+      contact: _res[0].id,
+      user: currentUser.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    myJSON = JSON.stringify(_res)
+    const data = JSON.parse(myJSON);
+    data.activity = activity;
+
+    res.send({
+      status: true,
+      data
+    })
   })
   .catch(e => {
       let errors
@@ -110,7 +124,7 @@ const getByDate = async(req, res) =>{
   switch(due_date) {
     case 'overdue': {
       const current_time = moment().utcOffset(time_zone);
-      const data = await FollowUp.find({user :currentUser.id, created_at: {$lt: current_time}});
+      const data = await FollowUp.find({user :currentUser.id, due_date: {$lt: current_time}});
 
       if (!data) {
         return res.status(401).json({
@@ -126,10 +140,10 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'today': {
-      const current_time = moment().utcOffset(time_zone);
-      const start = current_time.startOf('day');      // set to 12:00 am today
-      const end = current_time.endOf('day');          // set to 23:59 pm today
-      const data = await FollowUp.find({user :currentUser.id, created_at: {$gte: start, $lt: end}})
+      console.log('moment', moment().utcOffset(8))
+      const start =  moment().utcOffset(time_zone).startOf('day');      // set to 12:00 am today
+      const end =  moment().utcOffset(time_zone).endOf('day');          // set to 23:59 pm today
+      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: start, $lt: end}})
 
       if (!data) {
         return res.status(401).json({
@@ -146,12 +160,13 @@ const getByDate = async(req, res) =>{
     }
     case 'tomorrow': {
       const current_time = moment().utcOffset(time_zone);
-      const today_start = current_time.startOf('day')     // set to 12:00 am today
-      const today_end = current_time.endOf('day');        // set to 23:59 pm today
+      console.log('current_time',current_time)
+      const today_start = moment().utcOffset(time_zone).startOf('day');     // set to 12:00 am today
+      const today_end = moment().endOf('day');        // set to 23:59 pm today
       const tomorrow_start =  today_start.add(1, 'day');
       const tomorrow_end = today_end.add(1, 'day');
 
-      data = await FollowUp.find({user :currentUser.id, created_at: {$gte: tomorrow_start, $lt: tomorrow_end}})
+      data = await FollowUp.find({user :currentUser.id, due_date: {$gte: tomorrow_start, $lt: tomorrow_end}})
 
       if (!data) {
         return res.status(401).json({
@@ -169,7 +184,7 @@ const getByDate = async(req, res) =>{
     case 'next_week': {
       const next_week_start = moment().utcOffset(time_zone).add(1, 'day')
       const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
-      const data = await FollowUp.find({user :currentUser.id, created_at: {$gte: next_week_start, $lt: next_week_end}})
+      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: next_week_start, $lt: next_week_end}})
 
       if (!data) {
         return res.status(401).json({
@@ -187,7 +202,7 @@ const getByDate = async(req, res) =>{
     case 'next_month': {
       const start_month = moment().utcOffset(time_zone).startOf('month').add(1, 'months')
       const end_month   =  moment().utcOffset(time_zone).add(1, 'months').endOf('month')
-      const data = await FollowUp.find({user :currentUser.id, created_at: {$gte: start_month, $lt: end_month}})
+      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: start_month, $lt: end_month}})
       
       if (!data) {
         return res.status(401).json({
