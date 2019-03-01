@@ -37,18 +37,18 @@ const create = async(req, res) => {
   })
   console.log('req.body',req.body)
   note.save()
-  .then(_res => {
+  .then(_note => {
 
     const activity = new Activity({
       content: currentUser.user_name + 'added note',
-      contact: _contact.id,
+      contact: _note.contact,
       user: currentUser.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(_contact)
+      myJSON = JSON.stringify(_note)
       const data = JSON.parse(myJSON);
       data.activity = _activity
       res.send({

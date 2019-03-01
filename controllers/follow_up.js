@@ -42,7 +42,7 @@ const create = async(req, res) => {
     })
   }
 
-  console.log('due_date', req.due_date)
+ 
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
@@ -51,18 +51,18 @@ const create = async(req, res) => {
   })
   
   followUp.save()
-  .then(_res => {
+  .then(_followup => {
 
     const activity = new Activity({
       content: currentUser.user_name + 'added follow up',
-      contact: _contact.id,
+      contact: _followup.contact,
       user: currentUser.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(_contact)
+      myJSON = JSON.stringify(_followup)
       const data = JSON.parse(myJSON);
       data.activity = _activity
       res.send({
@@ -73,16 +73,9 @@ const create = async(req, res) => {
 
   })
   .catch(e => {
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
     return res.status(500).send({
       status: false,
-      error: errors || e
+      error: e
     })
   });
 }

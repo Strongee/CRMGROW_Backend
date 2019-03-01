@@ -37,18 +37,18 @@ const create = async(req, res) => {
   })
   console.log('data', req.body)
   appointment.save()
-  .then(_res => {
+  .then(_appointment => {
 
     const activity = new Activity({
       content: currentUser.user_name + 'added appointment',
-      contact: _contact.id,
+      contact: _note.contact,
       user: currentUser.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(_contact)
+      myJSON = JSON.stringify(_appointment)
       const data = JSON.parse(myJSON);
       data.activity = _activity
       res.send({
