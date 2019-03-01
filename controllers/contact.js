@@ -37,26 +37,29 @@ const create = async(req, res) => {
   })
   
 
+  console.log('user', currentUser.id)
   contact.save()
-  .then(_res => {
+  .then(_contact => {
       const activity = new Activity({
         content: currentUser.user_name + 'added contact',
-        contact: _res[0].id,
+        contact: _contact.id,
         user: currentUser.id,
         created_at: new Date(),
         updated_at: new Date(),
       })
 
-      myJSON = JSON.stringify(_res)
-      const data = JSON.parse(myJSON);
-      data.activity = activity;
-
-      res.send({
-        status: true,
-        data
-      })
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(_contact)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        res.send({
+          status: true,
+          data
+        })
+      })   
   })
   .catch(e => {
+    console.log(e)
       let errors
     if (e.errors) {
       errors = e.errors.map(err => {      

@@ -41,19 +41,20 @@ const create = async(req, res) => {
 
     const activity = new Activity({
       content: currentUser.user_name + 'added appointment',
-      contact: _res[0].id,
+      contact: _contact.id,
       user: currentUser.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
-    myJSON = JSON.stringify(_res)
-    const data = JSON.parse(myJSON);
-    data.activity = activity;
-    
-    res.send({
-      status: true,
-      data
+    activity.save().then(_activity => {
+      myJSON = JSON.stringify(_contact)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+      res.send({
+        status: true,
+        data
+      })
     })
   })
   .catch(e => {

@@ -55,20 +55,22 @@ const create = async(req, res) => {
 
     const activity = new Activity({
       content: currentUser.user_name + 'added follow up',
-      contact: _res[0].id,
+      contact: _contact.id,
       user: currentUser.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
-    myJSON = JSON.stringify(_res)
-    const data = JSON.parse(myJSON);
-    data.activity = activity;
-
-    res.send({
-      status: true,
-      data
+    activity.save().then(_activity => {
+      myJSON = JSON.stringify(_contact)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+      res.send({
+        status: true,
+        data
+      })
     })
+
   })
   .catch(e => {
       let errors
@@ -102,7 +104,8 @@ const getByDate = async(req, res) =>{
     'today',
     'tomorrow',
     'next_week',
-    'next_month'
+    'next_month',
+    'future'
   ]
   const query = {...req.query}
   const cquery = {...query}
@@ -208,6 +211,23 @@ const getByDate = async(req, res) =>{
         return res.status(401).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
+        })
+      }
+
+      res.send({
+        status: true,
+        data
+      })
+      break;
+    }
+    case 'future': {
+      const current_time = moment().utcOffset(time_zone);
+      const data = await FollowUp.find({user :currentUser.id, due_date: {$gte: current_time}});
+
+      if (!data) {
+        return res.status(401).json({
+          status: false,
+          error: 'OverDue doesn`t exist'
         })
       }
 
