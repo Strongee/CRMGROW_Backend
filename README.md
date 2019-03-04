@@ -140,45 +140,36 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
    ```
     {
         "status": true,
-        "data": [
-            {
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "contact": [
+                "5c71c9d6cf6b7d7fae539593"
+            ],
+            "_id": "5c7d488f9b22a15faec8eda9",
+            "content": "email",
+            "due_date": "2019-02-23T22:31:50.491Z",
+            "updated_at": "2019-03-04T15:47:27.266Z",
+            "created_at": "2019-03-04T15:47:27.266Z",
+            "__v": 0,
+            "activity": {
                 "user": [
                     "5c715b0fccf14717986c85dc"
                 ],
-                "contact": [],
-                "_id": "5c71a62d8e8bea5ba7da91d2",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
-                "__v": 0
-            },
-            {
-                "user": [
-                    "5c715b0fccf14717986c85dc"
+                "note": [],
+                "email": [],
+                "contact": [
+                    "5c71c9d6cf6b7d7fae539593"
                 ],
-                "contact": [],
-                "_id": "5c71b47385cdc7641d41247f",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
-                "__v": 0
-            },
-            {
-                "user": [
-                    "5c715b0fccf14717986c85dc"
-                ],
-                "contact": [],
-                "_id": "5c71c2e2ea4bf27835d845c9",
-                "due_date": "2019-02-21T14:27:19.854Z",
-                "status": "1",
-                "updated_at": "2019-02-21T14:27:19.854Z",
-                "created_at": "2019-02-21T14:27:19.854Z",
+                "_id": "5c7d488f9b22a15faec8edaa",
+                "content": "hello added follow up",
+                "created_at": "2019-03-04T15:47:27.332Z",
+                "updated_at": "2019-03-04T15:47:27.332Z",
                 "__v": 0
             }
-        ]
-    }
+        }
+}
    ```
    HTTP Status: 401  
 
@@ -192,7 +183,7 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
 #### GET `/api/follow/date?due_date=`
 
 due_date:  
-  `overdue`, `today`, `tomorrow`, `next_week`, `next_month`
+  `overdue`, `today`, `tomorrow`, `next_week`, `next_month`, `future`
 
     Response:
 
@@ -203,39 +194,27 @@ due_date:
         "data": [
             {
                 "user": [
-                    "5c72e23de2f8502a9914fb7a"
+                    "5c715b0fccf14717986c85dc"
                 ],
-                "contact": [],
-                "_id": "5c72e29be2f8502a9914fb7b",
-                "due_date": "2019-02-24T17:42:57.401Z",
+                "_id": "5c71a62d8e8bea5ba7da91d2",
+                "due_date": "1970-01-01T00:18:31.111Z",
                 "status": "1",
-                "updated_at": "2019-02-24T18:29:47.790Z",
-                "created_at": "2019-02-24T18:29:47.790Z",
-                "__v": 0
+                "updated_at": "1970-01-01T00:18:31.111Z",
+                "created_at": "1970-01-01T00:18:31.111Z",
+                "__v": 0,
+                "contact": null
             },
             {
                 "user": [
-                    "5c72e23de2f8502a9914fb7a"
+                    "5c715b0fccf14717986c85dc"
                 ],
-                "contact": [],
-                "_id": "5c72e2e4e2f8502a9914fb7c",
-                "due_date": "2019-02-24T17:42:57.401Z",
+                "_id": "5c71b47385cdc7641d41247f",
+                "due_date": "1970-01-01T00:18:31.111Z",
                 "status": "1",
-                "updated_at": "2019-02-24T18:31:00.627Z",
-                "created_at": "2019-02-24T18:31:00.627Z",
-                "__v": 0
-            },
-            {
-                "user": [
-                    "5c72e23de2f8502a9914fb7a"
-                ],
-                "contact": [],
-                "_id": "5c72e2e6e2f8502a9914fb7d",
-                "due_date": "2019-02-24T17:42:57.401Z",
-                "status": "1",
-                "updated_at": "2019-02-24T18:31:02.267Z",
-                "created_at": "2019-02-24T18:31:02.267Z",
-                "__v": 0
+                "updated_at": "1970-01-01T00:18:31.111Z",
+                "created_at": "1970-01-01T00:18:31.111Z",
+                "__v": 0,
+                "contact": null
             }
         ]
     }
@@ -302,10 +281,25 @@ due_date:
                 "updated_at": "2019-02-23T22:31:50.491Z",
                 "created_at": "2019-02-23T22:31:50.491Z",
                 "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "_id": "5c79a6da1ae03d1925eedfa2",
+                "first_name": "Super",
+                "last_name": "WebTop",
+                "email": "amazingksill8001@gmail.com",
+                "cell_phone": "111111111",
+                "brokerage": "Max",
+                "tag": "interesting",
+                "recruiting_stage": "cold call",
+                "created_at": "2019-03-01T21:40:42.606Z",
+                "updated_at": "2019-03-01T21:40:42.606Z",
+                "__v": 0
             }
         ]
     }
-
     ```
     HTTP Status: 401  
 
@@ -337,25 +331,139 @@ due_date:
     ```
     {
         "status": true,
-        "data": [
-            {
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "_id": "5c7d48c49b22a15faec8edab",
+            "first_name": "Super",
+            "last_name": "WebTop",
+            "email": "amazingksill8001@gmail.com",
+            "cell_phone": "111111111",
+            "brokerage": "Max",
+            "tag": "interesting",
+            "recruiting_stage": "cold call",
+            "created_at": "2019-03-04T15:48:20.383Z",
+            "updated_at": "2019-03-04T15:48:20.383Z",
+            "__v": 0,
+            "activity": {
                 "user": [
                     "5c715b0fccf14717986c85dc"
                 ],
-                "_id": "5c71c9d6cf6b7d7fae539593",
-                "first_name": "Super",
-                "last_name": "WebTop",
-                "email": "amazingksill8001@gmail.com",
-                "cell_phone": "111111111",
-                "brokerage": "Max",
-                "tag": "interesting",
-                "recruiting_stage": "cold call",
-                "updated_at": "2019-02-23T22:31:50.491Z",
-                "created_at": "2019-02-23T22:31:50.491Z",
+                "note": [],
+                "email": [],
+                "contact": [
+                    "5c7d48c49b22a15faec8edab"
+                ],
+                "_id": "5c7d48c49b22a15faec8edac",
+                "content": "hello added contact",
+                "created_at": "2019-03-04T15:48:20.408Z",
+                "updated_at": "2019-03-04T15:48:20.408Z",
                 "__v": 0
             }
-        ]
+        }
     }
+
+#### GET `/api/contact/:id`
+   
+   Body: 
+   ```
+    {
+        "first_name":"Super",
+        "last_name":"WebTop",
+        "email": "amazingksill8001@gmail.com",
+        "cell_phone": "111111111",
+        "brokerage": "Max",
+        "tag": "interesting",
+        "recruiting_stage": "cold call"
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "_id": "5c71c9d6cf6b7d7fae539593",
+            "first_name": "Super",
+            "last_name": "WebTop",
+            "email": "amazingksill8001@gmail.com",
+            "cell_phone": "111111111",
+            "brokerage": "Max",
+            "tag": "interesting",
+            "recruiting_stage": "cold call",
+            "updated_at": "2019-02-23T22:31:50.491Z",
+            "created_at": "2019-02-23T22:31:50.491Z",
+            "__v": 0,
+            "follow_up": [
+                {
+                    "user": [
+                        "5c715b0fccf14717986c85dc"
+                    ],
+                    "contact": [
+                        "5c71c9d6cf6b7d7fae539593"
+                    ],
+                    "_id": "5c77eda6bf1cae22d1786c5d",
+                    "content": "email",
+                    "updated_at": "2019-02-28T14:18:14.361Z",
+                    "created_at": "2019-02-28T14:18:14.361Z",
+                    "__v": 0
+                },
+                {
+                    "user": [
+                        "5c715b0fccf14717986c85dc"
+                    ],
+                    "contact": [
+                        "5c71c9d6cf6b7d7fae539593"
+                    ],
+                    "_id": "5c7d488f9b22a15faec8eda9",
+                    "content": "email",
+                    "due_date": "2019-02-23T22:31:50.491Z",
+                    "updated_at": "2019-03-04T15:47:27.266Z",
+                    "created_at": "2019-03-04T15:47:27.266Z",
+                    "__v": 0
+                }
+            ],
+            "activity": [
+                {
+                    "user": [
+                        "5c715b0fccf14717986c85dc"
+                    ],
+                    "note": [],
+                    "email": [],
+                    "contact": [
+                        "5c71c9d6cf6b7d7fae539593"
+                    ],
+                    "_id": "5c77fc302a67613520fac4b7",
+                    "content": "email",
+                    "updated_at": "2019-02-28T15:20:16.119Z",
+                    "created_at": "2019-02-28T15:20:16.119Z",
+                    "__v": 0
+                },
+                {
+                    "user": [
+                        "5c715b0fccf14717986c85dc"
+                    ],
+                    "note": [],
+                    "email": [],
+                    "contact": [
+                        "5c71c9d6cf6b7d7fae539593"
+                    ],
+                    "_id": "5c77fc312a67613520fac4b8",
+                    "content": "email",
+                    "updated_at": "2019-02-28T15:20:17.932Z",
+                    "created_at": "2019-02-28T15:20:17.932Z",
+                    "__v": 0
+                }
+            ]
+        }
+    }
+
 
 ### Activity APIs
 
@@ -374,30 +482,28 @@ due_date:
                 ],
                 "note": [],
                 "email": [],
-                "contact": [
-                    "5c71a62d8e8bea5ba7da91d2"
-                ],
-                "_id": "5c729fbe861fe7dbeb4040bb",
+                "_id": "5c77fc302a67613520fac4b7",
                 "content": "email",
-                "updated_at": "2019-02-24T13:44:30.173Z",
-                "created_at": "2019-02-24T13:44:30.173Z",
-                "__v": 0
+                "updated_at": "2019-02-28T15:20:16.119Z",
+                "created_at": "2019-02-28T15:20:16.119Z",
+                "__v": 0,
+                "contact": {
+                    "user": [
+                        "5c715b0fccf14717986c85dc"
+                    ],
+                    "_id": "5c71c9d6cf6b7d7fae539593",
+                    "first_name": "Super",
+                    "last_name": "WebTop",
+                    "email": "amazingksill8001@gmail.com",
+                    "cell_phone": "111111111",
+                    "brokerage": "Max",
+                    "tag": "interesting",
+                    "recruiting_stage": "cold call",
+                    "updated_at": "2019-02-23T22:31:50.491Z",
+                    "created_at": "2019-02-23T22:31:50.491Z",
+                    "__v": 0
+                }
             },
-            {
-                "user": [
-                    "5c715b0fccf14717986c85dc"
-                ],
-                "note": [],
-                "email": [],
-                "contact": [
-                    "5c71a62d8e8bea5ba7da91d2"
-                ],
-                "_id": "5c72a05049e4e3dd35401b55",
-                "content": "email",
-                "updated_at": "2019-02-24T13:46:56.347Z",
-                "created_at": "2019-02-24T13:46:56.347Z",
-                "__v": 0
-            }
         ]
     }
 

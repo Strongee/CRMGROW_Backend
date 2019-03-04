@@ -43,6 +43,7 @@ const create = async(req, res) => {
       content: currentUser.user_name + ' added note',
       contact: _note.contact,
       user: currentUser.id,
+      type: 'note',
       created_at: new Date(),
       updated_at: new Date(),
     })

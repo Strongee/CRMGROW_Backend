@@ -1,10 +1,33 @@
 const { validationResult } = require('express-validator/check')
-const Contact = require('../models/contact');
+const Contact = require('../models/contact')
 const Activity = require('../models/activity')
+const FollowUp = require('../models/follow_up')
+
+const getAll = async(req, res) => {
+  const { currentUser } = req
+  const data = await Contact.find({user: currentUser.id})
+
+  if (!data) {
+    return res.status(401).json({
+      status: false,
+      error: 'Contact doesn`t exist'
+    })
+  }
+
+  res.send({
+    status: true,
+    data
+  })
+}
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Contact.find({user :currentUser.id});
+  const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
+  const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id })
+  const _activity = await Activity.find({user: currentUser.id, contact: req.params.id })
+  myJSON = JSON.stringify(_contact)
+  const contact = JSON.parse(myJSON);
+  const data = await Object.assign(contact, {"follow_up": _follow_up}, {"activity": _activity});
 
   if (!data) {
     return res.status(401).json({
@@ -44,6 +67,7 @@ const create = async(req, res) => {
         content: currentUser.user_name + ' added contact',
         contact: _contact.id,
         user: currentUser.id,
+        type: 'contact',
         created_at: new Date(),
         updated_at: new Date(),
       })
@@ -75,6 +99,7 @@ const create = async(req, res) => {
 }
 
 module.exports = {
+    getAll,
     get,
     create,
 }

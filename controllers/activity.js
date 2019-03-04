@@ -4,7 +4,19 @@ const Contact = require('../models/contact')
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Activity.find({user :currentUser.id});
+  const _activity = await Activity.find({user :currentUser.id});
+  let data = [];
+
+  for(let i = 0; i < _activity.length; i ++){
+    const _contact = await Contact.findOne({_id: _activity[i].contact}) 
+    console.log('contact', _contact)
+    myJSON = JSON.stringify(_activity[i])
+    const activity = JSON.parse(myJSON);
+    delete activity.contact
+    activity.contact = _contact
+    data.push(activity)
+  }
+
   if (!data) {
     return res.status(401).json({
       status: false,
@@ -44,16 +56,9 @@ const create = async(req, res) => {
       })
   })
   .catch(e => {
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
     return res.status(500).send({
       status: false,
-      error: errors || e
+      error: e 
     })
   });
 }
