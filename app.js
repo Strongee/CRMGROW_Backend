@@ -17,6 +17,11 @@ if (!process.env.JWT_SECRET) {
 	process.exit(1)
 }
 
+if (!process.env.SENDGRID_KEY) {
+	console.error('Please set the valid SENDGRID_KEY')
+	process.exit(1)
+}
+
 app.use(cors())
 app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))

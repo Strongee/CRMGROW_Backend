@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
+const nodemailer = require('nodemailer');
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -11,7 +12,15 @@ const signUp = async (req, res) => {
         error: errors.array()
       })
     }
-  
+
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+             user: 'amazingskill8001@gmail.com',
+             pass: 'ambition1996'
+         }
+     });
+
     const hash = await bcrypt.hash(req.body.password, 8)
     console.log('date', new Date())
     const user = new User({
@@ -23,25 +32,33 @@ const signUp = async (req, res) => {
     console.log('req.body',req.body)
     user.save()
     .then(_res => {
+      const msg = {
+        to: user.email,
+        from: process.env.BUSINESS_EMAIL,
+        subject: process.env.WELCOME_SUBJECT,
+        text: process.env.WELCOME_CONTENT,
+        html: process.env.WELCOME_CONTENT,
+      };
+      
+      transporter.sendMail(msg).then(() => {
         myJSON = JSON.stringify(_res)
-        const data = JSON.parse(myJSON);
-        delete data.password
-        res.send({
-          status: true,
-          data
+          const data = JSON.parse(myJSON);
+          delete data.password
+          res.send({
+            status: true,
+            data
+          })
+      }).catch(e => {
+        return res.status(500).send({
+          status: false,
+          error: e
         })
+      })
     })
     .catch(e => {
-        let errors
-      if (e.errors) {
-        errors = e.errors.map(err => {      
-          delete err.instance
-          return err
-        })
-      }
       return res.status(500).send({
         status: false,
-        error: errors || e
+        error: e
       })
     });
   }

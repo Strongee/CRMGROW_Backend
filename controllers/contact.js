@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
+const sgMail = require('@sendgrid/mail');
 
 const getAll = async(req, res) => {
   const { currentUser } = req
@@ -98,8 +99,62 @@ const create = async(req, res) => {
   });
 }
 
+const sendBatch = async(req, res) => {
+  sgMail.setApiKey(process.env.SENDGRID_KEY);
+
+  const current_user = req
+  const {email_list, subject, content} = req.body
+  let promisall = []
+  
+  email_list.forEach((email) => {
+      const msg = {
+          to: email,
+          from: 'winterbreaker@hotmail.com',
+          subject: subject,
+          text: content,
+          html: content,
+      };
+      
+      // Send msg to each email
+
+      promisall.push(new Promise((resolve, reject) => {
+          sgMail.send(msg).then((res) => {
+              console.log('mailres.errorcode', res[0].statusCode);
+              if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+                resolve('Successful send to '+msg.to)
+              }else {
+                  reject(res[0].statusCode)
+              }
+          }).catch(error => { 
+              reject(error);
+          }); 
+      }));
+  });
+
+  Promise.all(promisall).then((data) => {
+    res.send({
+      status: true,
+      data
+    })
+  }).catch(e => {
+    console.log(e)
+      let errors
+    if (e.errors) {
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
+      })
+    }
+    return res.status(500).send({
+      status: false,
+      error: errors || e
+    })
+  });
+}
+
 module.exports = {
     getAll,
     get,
     create,
+    sendBatch
 }

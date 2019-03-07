@@ -464,6 +464,28 @@ due_date:
         }
     }
 
+#### GET `/api/contact/batch`
+
+    Body: 
+    ```
+        {
+            "content": "this is content",
+            "subject": "this is subject",
+            "email_list": ["a@a.com","b@b.com"]
+        }
+    ```
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            "Successful send to a@a.com",
+            "Successful send to b@b.com"
+        ]
+    }
+
 
 ### Activity APIs
 
@@ -751,10 +773,41 @@ due_date:
                 "user": [
                     "5c715b0fccf14717986c85dc"
                 ],
-                "_id": "5c769df6f600561d9388b44b",
-                "content": "interesting",
-                "updated_at": "2019-02-27T14:25:58.610Z",
-                "created_at": "2019-02-27T14:25:58.610Z",
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "guest": [],
+                "type": "",
+                "_id": "5c76b82ce545eb2ec2cb8f1a",
+                "title": "Title",
+                "description": "Description",
+                "location": "US",
+                "due_start": "2019-02-27T14:25:58.610Z",
+                "due_end": "2019-02-27T14:25:58.610Z",
+                "updated_at": "2019-02-27T16:17:48.463Z",
+                "created_at": "2019-02-27T16:17:48.463Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "guest": [
+                    "1.1@gmail.com",
+                    "2.2@gmail.com"
+                ],
+                "type": "",               
+                "_id": "5c808248829c2cbe0cdb693b",
+                "title": "Title",
+                "description": "Description",
+                "location": "US",
+                "due_start": "2019-02-27T14:25:58.610Z",
+                "due_end": "2019-02-27T14:25:58.610Z",
+                "updated_at": "2019-03-07T02:30:32.378Z",
+                "created_at": "2019-03-07T02:30:32.378Z",
                 "__v": 0
             }
         ]
@@ -797,14 +850,34 @@ due_date:
             "contact": [
                 "5c71a62d8e8bea5ba7da91d2"
             ],
-            "_id": "5c76b82ce545eb2ec2cb8f1a",
+            "guest": [
+                "guest1@gmail.com",
+                "guest2@gmail.com"
+            ],
+            "_id": "5c808248829c2cbe0cdb693b",
             "title": "Title",
             "description": "Description",
             "location": "US",
             "due_start": "2019-02-27T14:25:58.610Z",
             "due_end": "2019-02-27T14:25:58.610Z",
-            "updated_at": "2019-02-27T16:17:48.463Z",
-            "created_at": "2019-02-27T16:17:48.463Z",
-            "__v": 0
+            "updated_at": "2019-03-07T02:30:32.378Z",
+            "created_at": "2019-03-07T02:30:32.378Z",
+            "__v": 0,
+            "activity": {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "note": [],
+                "email": [],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c808248829c2cbe0cdb693c",
+                "content": "hello added appointment",
+                "type": "appointment",
+                "created_at": "2019-03-07T02:30:32.516Z",
+                "updated_at": "2019-03-07T02:30:32.516Z",
+                "__v": 0
+            }
         }
     }
