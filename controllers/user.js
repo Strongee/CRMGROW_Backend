@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
-const nodemailer = require('nodemailer');
+//const nodemailer = require('nodemailer')
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -13,16 +13,20 @@ const signUp = async (req, res) => {
       })
     }
 
-    var transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-             user: 'amazingskill8001@gmail.com',
-             pass: 'ambition1996'
-         }
-     });
+    // let transporter = nodemailer.createTransport({    
+    //   service: 'Godaddy',
+    //   host: "smtpout.secureserver.net",  
+    //   secureConnection: true,
+    //   port: 465,
+    
+    //   auth: {
+    //       user: "admin@cbdhempway.com",
+    //       pass: "ambition1996" 
+    //   }
+    // })
 
     const hash = await bcrypt.hash(req.body.password, 8)
-    console.log('date', new Date())
+
     const user = new User({
       ...req.body,
       password: hash,
@@ -32,33 +36,55 @@ const signUp = async (req, res) => {
     console.log('req.body',req.body)
     user.save()
     .then(_res => {
-      const msg = {
-        to: user.email,
-        from: process.env.BUSINESS_EMAIL,
-        subject: process.env.WELCOME_SUBJECT,
-        text: process.env.WELCOME_CONTENT,
-        html: process.env.WELCOME_CONTENT,
-      };
+      // const msg = {
+      //   to: user.email,
+      //   from: process.env.BUSINESS_EMAIL,
+      //   subject: process.env.WELCOME_SUBJECT,
+      //   text: process.env.WELCOME_CONTENT,
+      //   html: process.env.WELCOME_CONTENT,
+      // };
       
-      transporter.sendMail(msg).then(() => {
-        myJSON = JSON.stringify(_res)
-          const data = JSON.parse(myJSON);
-          delete data.password
-          res.send({
-            status: true,
-            data
-          })
-      }).catch(e => {
-        return res.status(500).send({
-          status: false,
-          error: e
-        })
+      // transporter.sendMail(msg).then(() => {
+      //   myJSON = JSON.stringify(_res)
+      //     const data = JSON.parse(myJSON);
+      //     delete data.password
+      //     res.send({
+      //       status: true,
+      //       data
+      //     })
+      // }).catch(e => {
+      //   let errors
+      //   if (e.errors) {
+      //     errors = e.errors.map(err => {      
+      //       delete err.instance
+      //       return err
+      //     })
+      //   }
+      //   return res.status(500).send({
+      //     status: false,
+      //     error: errors || e
+      //   })
+      // });
+
+      myJSON = JSON.stringify(_res)
+      const data = JSON.parse(myJSON);
+      delete data.password
+      res.send({
+          status: true,
+          data
       })
     })
     .catch(e => {
+        let errors
+      if (e.errors) {
+        errors = e.errors.map(err => {      
+          delete err.instance
+          return err
+        })
+      }
       return res.status(500).send({
         status: false,
-        error: e
+        error: errors || e
       })
     });
   }
@@ -80,12 +106,8 @@ const login = async (req, res) => {
     })
   }
 
-  console.info('User Name:', email || user_name)
-
   let _user = await User.findOne({ email: email })
   .exec();
-
-  console.log('_user', _user);
 
   if(!_user) {
     _user = await User.findOne({ user_name: user_name })
@@ -238,3 +260,4 @@ module.exports = {
     resetPasswordByOld,
     checkAuth,
 }
+

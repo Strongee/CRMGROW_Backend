@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator/check')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
-const sgMail = require('@sendgrid/mail');
+const sgMail = require('@sendgrid/mail')
 
 const getAll = async(req, res) => {
   const { currentUser } = req
@@ -102,14 +102,14 @@ const create = async(req, res) => {
 const sendBatch = async(req, res) => {
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
-  const current_user = req
+  const {current_user} = req
   const {email_list, subject, content} = req.body
   let promisall = []
   
   email_list.forEach((email) => {
       const msg = {
           to: email,
-          from: 'winterbreaker@hotmail.com',
+          from: current_user.email,
           subject: subject,
           text: content,
           html: content,

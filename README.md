@@ -123,6 +123,60 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
 
 ### FollowUp APIs
 
+### User APIs
+
+#### PUT `/api/user/me`  
+
+    Edit own profile by JWT  
+
+    Body: 
+    ```
+    {
+        "user_name": "superweb3",
+        "email": "superwebtop@outlook.com",
+        "password": "12345",
+        "cell_phone":"12323232222",
+        "time_zone":"+8:00",
+        "email_signature":"a",
+        "notification": 1,
+        "picture_profile":"http://localhost:3000"
+    }
+    ```
+
+    Response:  
+
+    HTTP Status: 200  
+    ```  
+    {
+        "status": true,
+        "data": {
+            "_id": "5c715b0fccf14717986c85dc",
+            "user_name": "superweb3",
+            "email": "superwebtop@outlook.com",
+            "cell_phone": "12323232222",
+            "time_zone": "+8:00",
+            "email_signature": "a",
+            "notification": 1,
+            "picture_profile": "http://localhost:3000",
+            "created_at": "1970-01-01T03:25:23.232Z",
+            "__v": 0
+        }
+    }
+    ```
+
+#### POST `/new-password'
+
+Reset password by old password
+
+  Body:
+  ```
+  {
+    old_password,
+    new_password
+  }
+  ```
+ 
+
 #### POST `/api/follow`  
    
    Body: 
