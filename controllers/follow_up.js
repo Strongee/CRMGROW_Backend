@@ -327,14 +327,14 @@ const updateChecked  = async(req, res) =>{
 
   const activity = new Activity({
     content: _follow_up.content,
-    contact: _follow_up.contact,
+    contacts: _follow_up.contact,
     user: currentUser.id,
     type: 'follow_up',
     created_at: new Date(),
     updated_at: new Date(),
   })
 
-  const _contact = await Contact.findOne({_id: activity.contact})
+  const _contact = await Contact.findOne({_id: activity.contacts})
 
   activity.save().then(_activity => {
   
