@@ -9,7 +9,7 @@ const get = async(req, res) => {
 
   for(let i = 0; i < _activity.length; i ++){
     const _contacts = await Contact.findOne({_id: _activity[i].contacts}) 
-    console.log('contact', _contact)
+    console.log('contact', _contacts)
     myJSON = JSON.stringify(_activity[i])
     const activity = JSON.parse(myJSON);
     delete activity.contacts
@@ -71,11 +71,11 @@ const getByLastActivity = async(req, res) => {
 
   for (let i =0; i < contacts.length; i ++){
 
-    const _activity = await Activity.find({user :currentUser.id, contact: contacts[i].id}).sort({_id : -1 }).limit(1);
+    const _activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).sort({_id : -1 }).limit(1);
     myJSON = JSON.stringify(_activity[0])
     const activity = JSON.parse(myJSON)
-    delete activity.contact
-    activity.contact = contacts[i]
+    delete activity.contacts
+    activity.contacts = contacts[i]
     data.push(activity)
   }
   
