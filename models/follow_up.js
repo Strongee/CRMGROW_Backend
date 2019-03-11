@@ -5,7 +5,7 @@ const FollowUp = mongoose.model('follow_up',{
     due_date: Date,
     content: String,
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
-    status: String,
+    status: [{ type: Number, default: 0}],
     updated_at: Date,
     created_at: Date,
  });

@@ -6,7 +6,6 @@ const Note = mongoose.model('note',{
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     updated_at: Date,
     created_at: Date,
-
  });
 
  module.exports = Note

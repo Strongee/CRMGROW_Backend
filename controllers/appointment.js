@@ -4,7 +4,8 @@ const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Appointment.find({user :currentUser.id});
+  const { contact } = req.params
+  const data = await Appointment.find({user :currentUser.id, contact: contact});
 
   if (!data) {
     return res.status(401).json({

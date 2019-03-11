@@ -176,7 +176,6 @@ Reset password by old password
   }
   ```
  
-
 #### POST `/api/follow`  
    
    Body: 
@@ -308,6 +307,46 @@ due_date:
             }
         ]
     }
+
+#### POST `/api/follow/checked`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "note": [],
+            "email": [],
+            "contact": {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "_id": "5c71c9d6cf6b7d7fae539593",
+                "first_name": "Super",
+                "last_name": "WebTop",
+                "email": "a@gmail.com",
+                "cell_phone": "111111111",
+                "brokerage": "Max",
+                "tag": "interesting",
+                "recruiting_stage": "cold call",
+                "updated_at": "2019-02-23T22:31:50.491Z",
+                "created_at": "2019-02-23T22:31:50.491Z",
+                "__v": 0
+            },
+            "_id": "5c85c6ce139e284810a5936d",
+            "content": "email",
+            "type": "follow_up",
+            "created_at": "2019-03-11T02:24:14.324Z",
+            "updated_at": "2019-03-11T02:24:14.324Z",
+            "__v": 0
+        }
+    }
+    
 
 ### Contact APIs
 
@@ -462,6 +501,7 @@ due_date:
                     "contact": [
                         "5c71c9d6cf6b7d7fae539593"
                     ],
+                    "status": [],
                     "_id": "5c77eda6bf1cae22d1786c5d",
                     "content": "email",
                     "updated_at": "2019-02-28T14:18:14.361Z",
@@ -475,45 +515,54 @@ due_date:
                     "contact": [
                         "5c71c9d6cf6b7d7fae539593"
                     ],
+                    "status": [
+                        1
+                    ],
                     "_id": "5c7d488f9b22a15faec8eda9",
                     "content": "email",
                     "due_date": "2019-02-23T22:31:50.491Z",
                     "updated_at": "2019-03-04T15:47:27.266Z",
                     "created_at": "2019-03-04T15:47:27.266Z",
-                    "__v": 0
+                    "__v": 1
                 }
             ],
             "activity": [
-                {
-                    "user": [
-                        "5c715b0fccf14717986c85dc"
-                    ],
-                    "note": [],
-                    "email": [],
-                    "contact": [
-                        "5c71c9d6cf6b7d7fae539593"
-                    ],
-                    "_id": "5c77fc302a67613520fac4b7",
-                    "content": "email",
-                    "updated_at": "2019-02-28T15:20:16.119Z",
-                    "created_at": "2019-02-28T15:20:16.119Z",
-                    "__v": 0
-                },
-                {
-                    "user": [
-                        "5c715b0fccf14717986c85dc"
-                    ],
-                    "note": [],
-                    "email": [],
-                    "contact": [
-                        "5c71c9d6cf6b7d7fae539593"
-                    ],
-                    "_id": "5c77fc312a67613520fac4b8",
-                    "content": "email",
-                    "updated_at": "2019-02-28T15:20:17.932Z",
-                    "created_at": "2019-02-28T15:20:17.932Z",
-                    "__v": 0
-                }
+                [
+                    {
+                        "_id": "5c867348002dfba675c27c5a",
+                        "user": [
+                            "5c715b0fccf14717986c85dc"
+                        ],
+                        "notes": [
+                            "5c867348002dfba675c27c59"
+                        ],
+                        "phone_log": [],
+                        "email": [],
+                        "contact": [
+                            "5c71c9d6cf6b7d7fae539593"
+                        ],
+                        "content": "superweb3 added note",
+                        "type": "notes",
+                        "created_at": "2019-03-11T14:40:08.219Z",
+                        "updated_at": "2019-03-11T14:40:08.219Z",
+                        "__v": 0,
+                        "activity_detail": [
+                            {
+                                "_id": "5c867348002dfba675c27c59",
+                                "user": [
+                                    "5c715b0fccf14717986c85dc"
+                                ],
+                                "contact": [
+                                    "5c71c9d6cf6b7d7fae539593"
+                                ],
+                                "content": "interesting",
+                                "updated_at": "2019-03-11T14:40:08.200Z",
+                                "created_at": "2019-03-11T14:40:08.200Z",
+                                "__v": 0
+                            }
+                        ]
+                    }
+                ]
             ]
         }
     }
@@ -690,7 +739,7 @@ due_date:
 
 ### Note APIs
 
-#### GET `/api/note`
+#### GET `/api/note?contact=`
 
     Response:
 
@@ -814,7 +863,7 @@ due_date:
 
 ### Appointment APIs
 
-#### GET `/api/appointment`
+#### GET `/api/appointment/:contact`
 
     Response:
 
@@ -931,6 +980,107 @@ due_date:
                 "type": "appointment",
                 "created_at": "2019-03-07T02:30:32.516Z",
                 "updated_at": "2019-03-07T02:30:32.516Z",
+                "__v": 0
+            }
+        }
+    }
+
+### Phone Log APIs
+
+#### GET `/api/phone/:contact`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": [
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c8682cddf2ec1b6f7d79fb0",
+                "updated_at": "2019-03-11T15:46:21.148Z",
+                "created_at": "2019-03-11T15:46:21.148Z",
+                "__v": 0
+            },
+            {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c86832a5613b0b77f62da52",
+                "updated_at": "2019-03-11T15:47:54.806Z",
+                "created_at": "2019-03-11T15:47:54.806Z",
+                "__v": 0
+            }
+        ]
+    }
+
+    ```
+    HTTP Status: 401  
+
+    ```
+    {
+        "status": false,
+        "error": "Tag doesn`t exist"
+    }
+    ``` 
+
+#### POST `/api/phone`
+
+   Body: 
+   ```
+    {
+        "title":"Title",
+        "description": "Description",
+        "location":"US",
+        "due_start": "2019-02-27T14:25:58.610Z",
+        "due_end": "2019-02-27T14:25:58.610Z",
+        "contact":"5c71a62d8e8bea5ba7da91d2"
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c715b0fccf14717986c85dc"
+            ],
+            "contact": [
+                "5c71a62d8e8bea5ba7da91d2"
+            ],
+            "_id": "5c86832a5613b0b77f62da52",
+            "updated_at": "2019-03-11T15:47:54.806Z",
+            "created_at": "2019-03-11T15:47:54.806Z",
+            "__v": 0,
+            "activity": {
+                "user": [
+                    "5c715b0fccf14717986c85dc"
+                ],
+                "notes": [],
+                "phone_logs": [
+                    "5c86832a5613b0b77f62da52"
+                ],
+                "email": [],
+                "contact": [
+                    "5c71a62d8e8bea5ba7da91d2"
+                ],
+                "_id": "5c86832a5613b0b77f62da53",
+                "content": "superweb3 added phone log",
+                "type": "phone_logs",
+                "created_at": "2019-03-11T15:47:54.826Z",
+                "updated_at": "2019-03-11T15:47:54.826Z",
                 "__v": 0
             }
         }

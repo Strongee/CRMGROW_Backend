@@ -70,8 +70,12 @@ const create = async(req, res) => {
         status: true,
         data
       })
-    })
-
+    }).catch(e => {
+      return res.status(500).send({
+        status: false,
+        error: e
+      })
+    });
   })
   .catch(e => {
     return res.status(500).send({
@@ -303,8 +307,55 @@ const getByDate = async(req, res) =>{
 
   }
 }
+const updateChecked  = async(req, res) =>{
+  const { currentUser } = req
+  const { id } = req.body
+  const _follow_up = await FollowUp.findOne({_id: id})
+
+  console.log('follow', _follow_up)
+
+  if (!_follow_up) {
+    return res.status(401).json({
+      status: false,
+      error: 'FollowUp doesn`t exist'
+    })
+  }
+
+  _follow_up.status = 1
+  await _follow_up.save()
+
+  const activity = new Activity({
+    content: _follow_up.content,
+    contact: _follow_up.contact,
+    user: currentUser.id,
+    type: 'follow_up',
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
+
+  const _contact = await Contact.findOne({_id: activity.contact})
+
+  activity.save().then(_activity => {
+  
+    myJSON = JSON.stringify(_activity)
+    const data = JSON.parse(myJSON);
+    data.contact = _contact
+    res.send({
+      status: true,
+      data
+    })
+  }).catch(e => {
+    return res.status(500).send({
+      status: false,
+      error: e
+    })
+  });
+}
+
+
 module.exports = {
     get,
     create,
-    getByDate
+    getByDate,
+    updateChecked
 }

@@ -4,7 +4,10 @@ const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Note.find({user :currentUser.id});
+  const query = {...req.query}
+  const contact = query['contact']
+  console.log('contact', contact)
+  const data = await Note.find({user :currentUser.id, contact: contact});
   console.log('data', data);
   if (!data) {
     return res.status(401).json({
@@ -43,7 +46,8 @@ const create = async(req, res) => {
       content: currentUser.user_name + ' added note',
       contact: _note.contact,
       user: currentUser.id,
-      type: 'note',
+      type: 'notes',
+      notes: _note.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
