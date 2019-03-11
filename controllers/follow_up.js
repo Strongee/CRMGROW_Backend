@@ -57,7 +57,8 @@ const create = async(req, res) => {
       content: currentUser.user_name + ' added follow up',
       contact: _followup.contact,
       user: currentUser.id,
-      type: 'follow_up',
+      type: 'follow_ups',
+      follow_ups: _followup.id,
       created_at: new Date(),
       updated_at: new Date(),
     })

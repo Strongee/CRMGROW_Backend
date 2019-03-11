@@ -117,7 +117,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1552320043344</updated>
-      <workItem from="1552320048455" duration="1039000" />
+      <workItem from="1552320048455" duration="1634000" />
     </task>
     <task id="LOCAL-00001" summary="contact/:id api fix&#10;phone_log model add">
       <created>1552321160619</created>
@@ -130,11 +130,10 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1039000" />
+    <option name="totallyTimeSpent" value="1634000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1774" height="983" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24971814" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
