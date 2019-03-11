@@ -42,7 +42,7 @@ const create = async(req, res) => {
 
     const activity = new Activity({
       content: currentUser.user_name + ' added phone log',
-      contact: _phone_log.contact,
+      contacts: _phone_log.contact,
       user: currentUser.id,
       type: 'phone_logs',
       phone_logs: _phone_log.id,

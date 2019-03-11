@@ -6,7 +6,7 @@ const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const _follow_up = await FollowUp.find({user :currentUser.id}).sort({created_at: -1});
+  const _follow_up = await FollowUp.find({user :currentUser.id, status: 0}).sort({created_at: -1});
   let data = [];
 
   for(let i = 0; i < _follow_up.length; i ++){
@@ -55,7 +55,7 @@ const create = async(req, res) => {
 
     const activity = new Activity({
       content: currentUser.user_name + ' added follow up',
-      contact: _followup.contact,
+      contacts: _followup.contact,
       user: currentUser.id,
       type: 'follow_ups',
       follow_ups: _followup.id,
@@ -126,7 +126,7 @@ const getByDate = async(req, res) =>{
   switch(due_date) {
     case 'overdue': {
       const current_time = moment().utcOffset(time_zone);
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$lt: current_time}});
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}});
 
       let data = [];
       
@@ -157,7 +157,7 @@ const getByDate = async(req, res) =>{
       console.log('moment', moment().utcOffset(8))
       const start =  moment().utcOffset(time_zone).startOf('day');      // set to 12:00 am today
       const end =  moment().utcOffset(time_zone).endOf('day');          // set to 23:59 pm today
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: start, $lt: end}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start, $lt: end}})
 
       let data = [];
 
@@ -190,7 +190,7 @@ const getByDate = async(req, res) =>{
       const today_end = moment().endOf('day');        // set to 23:59 pm today
       const tomorrow_start =  today_start.add(1, 'day');
       const tomorrow_end = today_end.add(1, 'day');
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: tomorrow_start, $lt: tomorrow_end}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: tomorrow_start, $lt: tomorrow_end}})
 
       let data = [];
 
@@ -220,7 +220,7 @@ const getByDate = async(req, res) =>{
     case 'next_week': {
       const next_week_start = moment().utcOffset(time_zone).add(1, 'day')
       const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: next_week_start, $lt: next_week_end}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: next_week_start, $lt: next_week_end}})
 
       let data = [];
       
@@ -250,7 +250,7 @@ const getByDate = async(req, res) =>{
     case 'next_month': {
       const start_month = moment().utcOffset(time_zone).startOf('month').add(1, 'months')
       const end_month   =  moment().utcOffset(time_zone).add(1, 'months').endOf('month')
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: start_month, $lt: end_month}})
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start_month, $lt: end_month}})
       
       let data = [];
 
@@ -279,7 +279,7 @@ const getByDate = async(req, res) =>{
     }
     case 'future': {
       const current_time = moment().utcOffset(time_zone);
-      const _follow_up = await FollowUp.find({user :currentUser.id, due_date: {$gte: current_time}});
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: current_time}});
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
