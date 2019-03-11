@@ -8,12 +8,12 @@ const get = async(req, res) => {
   let data = [];
 
   for(let i = 0; i < _activity.length; i ++){
-    const _contact = await Contact.findOne({_id: _activity[i].contacts}) 
+    const _contacts = await Contact.findOne({_id: _activity[i].contacts}) 
     console.log('contact', _contact)
     myJSON = JSON.stringify(_activity[i])
     const activity = JSON.parse(myJSON);
-    delete activity.contact
-    activity.contact = _contact
+    delete activity.contacts
+    activity.contacts = _contacts
     data.push(activity)
   }
 
