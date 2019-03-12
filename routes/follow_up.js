@@ -9,6 +9,6 @@ const router = express.Router()
 router.post('/', UserCtrl.checkAuth, catchError(FollowUpCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(FollowUpCtrl.get))
 router.get('/date' , UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate))
-router.post('/checked', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
+router.put('/checked/:id', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
 
 module.exports = router

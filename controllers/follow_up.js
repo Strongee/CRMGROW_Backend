@@ -45,7 +45,6 @@ const create = async(req, res) => {
  
   const followUp = new FollowUp({
     ...req.body,
-    status: 0,
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
@@ -311,8 +310,7 @@ const getByDate = async(req, res) =>{
 }
 const updateChecked  = async(req, res) =>{
   const { currentUser } = req
-  const { id } = req.body
-  const _follow_up = await FollowUp.findOne({_id: id})
+  const _follow_up = await FollowUp.findOne({_id: req.params.id})
 
   console.log('follow', _follow_up)
 
@@ -330,7 +328,8 @@ const updateChecked  = async(req, res) =>{
     content: _follow_up.content,
     contacts: _follow_up.contact,
     user: currentUser.id,
-    type: 'follow_up',
+    type: 'follow_ups',
+    follow_ups: _follow_up._id,
     created_at: new Date(),
     updated_at: new Date(),
   })
