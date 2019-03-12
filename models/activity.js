@@ -4,6 +4,7 @@ const Activity = mongoose.model('activity',{
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     content: String,
     type: String,
+    appointments:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'appointment' }],
     follow_ups:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' }],
     notes:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'note' }],
     phone_logs:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'phone_log' }],

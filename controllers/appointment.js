@@ -43,6 +43,7 @@ const create = async(req, res) => {
     const activity = new Activity({
       content: currentUser.user_name + ' added appointment',
       contacts: _appointment.contact,
+      appointments: _appointment.id,
       user: currentUser.id,
       type: 'appointments',
       created_at: new Date(),
