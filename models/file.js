@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const File = mongoose.model('contact',{
+const File = mongoose.model('file',{
     name: String,
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     type: String,

@@ -3,7 +3,7 @@ const uuidv1 = require('uuid/v1')
 const mime = require('mime-types')
 
 const FileCtrl = require('../controllers/file')
-const Users = require('../controllers/user')
+const UserCtrl = require('../controllers/user')
 const { catchError } = require('../controllers/error')
 
 const multer = require('multer')
@@ -24,13 +24,13 @@ const upload = multer({ storage: fileStorage })
 
 
 // Upload a file
-router.post('/', Users.checkAuthOptional, upload.single('file'), catchError(FileCtrl.create))
+router.post('/', UserCtrl.checkAuth, upload.single('file'), catchError(FileCtrl.create))
 
 // Get a file
 router.get('/:id', catchError(FileCtrl.get))
 
 // Delete a file
-router.delete('/:id', Users.checkAuth, catchError(FileCtrl.remove))
+router.delete('/:id', UserCtrl.checkAuth, catchError(FileCtrl.remove))
 
 
 module.exports = router
