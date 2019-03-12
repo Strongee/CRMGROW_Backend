@@ -185,7 +185,6 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'tomorrow': {
-      const current_time = moment().utcOffset(time_zone);
       const today_start = moment().utcOffset(time_zone).startOf('day');     // set to 12:00 am today
       const today_end = moment().endOf('day');        // set to 23:59 pm today
       const tomorrow_start =  today_start.add(1, 'day');
@@ -218,7 +217,8 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'next_week': {
-      const next_week_start = moment().utcOffset(time_zone).add(1, 'day')
+      
+      const next_week_start = moment().utcOffset(time_zone).add(2, 'day').startOf('day')
       const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: next_week_start, $lt: next_week_end}})
 
@@ -281,6 +281,8 @@ const getByDate = async(req, res) =>{
       const current_time = moment().utcOffset(time_zone);
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: current_time}});
 
+      let data = [];
+
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
         console.log('contact', _contact)
@@ -311,8 +313,6 @@ const getByDate = async(req, res) =>{
 const updateChecked  = async(req, res) =>{
   const { currentUser } = req
   const _follow_up = await FollowUp.findOne({_id: req.params.id})
-
-  console.log('follow', _follow_up)
 
   if (!_follow_up) {
     return res.status(401).json({

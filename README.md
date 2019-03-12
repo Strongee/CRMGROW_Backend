@@ -183,7 +183,9 @@ Reset password by old password
    {
        "due_date": "2019-02-21T14:27:19.854Z",
        "content": "a",
-       "contact": "5c71a62d8e8bea5ba7da91d2"
+       "contact": "5c71a62d8e8bea5ba7da91d2",
+       "type": "contact",
+       "reminder": 30
    }
    ```
 
