@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
+const Appointment = require('../models/appointment')
 const sgMail = require('@sendgrid/mail')
 
 const getAll = async(req, res) => {
@@ -175,9 +176,32 @@ const sendBatch = async(req, res) => {
   });
 }
 
+const remove = async(req, res) => {
+
+  const {currentUser} = req
+  const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
+
+  if (!data) {
+    return res.status(401).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
+
+  await Contact.deleteOne({_id: req.params.id})
+  await Activity.deleteMany({contacts: req.params.id})
+  await FollowUp.deleteMany({contact: req.params.id})
+  await Appointment.deleteMany({contact: req.params.id})
+
+  res.send({
+    status: true
+  })
+}
+
 module.exports = {
     getAll,
     get,
     create,
-    sendBatch
+    sendBatch,
+    remove
 }

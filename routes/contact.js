@@ -15,4 +15,7 @@ router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 // Send Batch email to contact lists
 router.post('/batch', UserCtrl.checkAuth, catchError(ContactCtrl.sendBatch))
 
+// Remove contact and its all related info (activity, followup) by id
+router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove))
+
 module.exports = router

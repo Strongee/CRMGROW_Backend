@@ -7,7 +7,7 @@ const Contact = mongoose.model('contact',{
      user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
      cell_phone: String,
      brokerage: String,
-     tag: String,
+     tag: Array,
      recruiting_stage: String,
      created_at: Date,
      updated_at: Date,
