@@ -7,6 +7,6 @@ const { catchError } = require('../controllers/error')
 const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(AppointmentCtrl.create))
-router.get('/:contact' , UserCtrl.checkAuth, catchError(AppointmentCtrl.get))
+router.get('/' , UserCtrl.checkAuth, catchError(AppointmentCtrl.get))
 
 module.exports = router

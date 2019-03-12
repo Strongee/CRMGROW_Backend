@@ -920,7 +920,7 @@ due_date:
 
 ### Appointment APIs
 
-#### GET `/api/appointment/:contact`
+#### GET `/api/appointment`
 
     Response:
 

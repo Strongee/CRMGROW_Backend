@@ -159,11 +159,11 @@ const edit = async(req, res) => {
   }
 
   for (let key in editData) {
-    _contact[key] = editData[key]
+    contact[key] = editData[key]
   }
 
   contact["updated_at"] = new Date()
-  console.log('contact', _contact)
+ 
   contact.save()
   .then(_res => {
       myJSON = JSON.stringify(_res)
