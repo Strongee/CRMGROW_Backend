@@ -45,6 +45,7 @@ const create = async(req, res) => {
  
   const followUp = new FollowUp({
     ...req.body,
+    status: 0,
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
