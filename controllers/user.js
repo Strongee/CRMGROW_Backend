@@ -181,19 +181,6 @@ const editMe = async(req, res) =>{
   // TODO: should limit the editing fields here
   delete editData.password
 
-  // Check settings is valid
-
-  if ('settings' in editData) {
-    try {
-      JSON.parse(editData.settings)
-    } catch (e) {
-      return res.status(400).send({
-        status: true,
-        error: 'invalid_settings'
-      })
-    }
-  }
-
   for (let key in editData) {
     user[key] = editData[key]
   }

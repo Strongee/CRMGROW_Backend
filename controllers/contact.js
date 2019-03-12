@@ -124,6 +124,71 @@ const create = async(req, res) => {
   });
 }
 
+const remove = async(req, res) => {
+
+  const {currentUser} = req
+  const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
+
+  if (!data) {
+    return res.status(401).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
+
+  await Contact.deleteOne({_id: req.params.id})
+  await Activity.deleteMany({contacts: req.params.id})
+  await FollowUp.deleteMany({contact: req.params.id})
+  await Appointment.deleteMany({contact: req.params.id})
+
+  res.send({
+    status: true
+  })
+}
+
+const edit = async(req, res) => {
+  const {currentUser} = req
+  const editData = req.body
+  const contact = await Contact.findOne({user: currentUser.id, _id: req.params.id})
+
+  if (!contact) {
+    return res.status(401).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
+
+  for (let key in editData) {
+    _contact[key] = editData[key]
+  }
+
+  contact["updated_at"] = new Date()
+  console.log('contact', _contact)
+  contact.save()
+  .then(_res => {
+      myJSON = JSON.stringify(_res)
+      const data = JSON.parse(myJSON);
+      delete data.password
+      res.send({
+        status: true,
+        data
+      })
+  })
+  .catch(e => {
+      let errors
+    if (e.errors) {
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
+      })
+    }
+    return res.status(500).send({
+      status: false,
+      error: errors || e
+    })
+  });
+}
+
 const sendBatch = async(req, res) => {
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
@@ -177,32 +242,11 @@ const sendBatch = async(req, res) => {
   });
 }
 
-const remove = async(req, res) => {
-
-  const {currentUser} = req
-  const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
-
-  if (!data) {
-    return res.status(401).json({
-      status: false,
-      error: 'Invalid_permission'
-    })
-  }
-
-  await Contact.deleteOne({_id: req.params.id})
-  await Activity.deleteMany({contacts: req.params.id})
-  await FollowUp.deleteMany({contact: req.params.id})
-  await Appointment.deleteMany({contact: req.params.id})
-
-  res.send({
-    status: true
-  })
-}
-
 module.exports = {
     getAll,
     get,
     create,
+    remove,
+    edit,
     sendBatch,
-    remove
 }

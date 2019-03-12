@@ -9,7 +9,7 @@ const Appointment = mongoose.model('appointment',{
     due_end: String,
     type: String,
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
-    guest: Array,
+    guests: Array,
     created_at: Date,
     updated_at: Date,
  });

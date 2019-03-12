@@ -576,6 +576,42 @@ due_date:
         }
     }
 
+#### PUT `/api/contact/:id`
+   
+   Body: 
+   ```
+    {
+        "first_name":"Super",
+        "last_name":"WebTop",
+    }
+   ```
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
+        "data": {
+            "user": [
+                "5c8697b0daf5860df951409b"
+            ],
+            "tag": [
+                "interesting"
+            ],
+            "_id": "5c8716e5390f6c5a3726e3b8",
+            "first_name": "Amazing2",
+            "last_name": "WebTop",
+            "email": "amazingksill8002@gmail.com",
+            "cell_phone": "111111111",
+            "brokerage": "Max",
+            "recruiting_stage": "cold call",
+            "created_at": "2019-03-12T02:18:13.146Z",
+            "updated_at": "2019-03-12T02:20:25.222Z",
+            "__v": 0
+        }
+    }
+
 #### DELETE `/api/contact/:id`
 
     Response:
