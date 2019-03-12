@@ -25,6 +25,14 @@ const getAll = async(req, res) => {
 const get = async(req, res) => {
   const { currentUser } = req
   const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
+
+  if (!_contact) {
+    return res.status(401).json({
+      status: false,
+      error: 'Contact doesn`t exist'
+    })
+  }
+
   const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id })
   const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id })
   console.log('_activity_list',_activity_list)
@@ -53,13 +61,6 @@ const get = async(req, res) => {
     myJSON = JSON.stringify(_contact)
     const contact = JSON.parse(myJSON);
     const data = await Object.assign(contact, {"follow_up": _follow_up}, {"activity": _activity_detail_list});
-  
-    if (!data) {
-      return res.status(401).json({
-        status: false,
-        error: 'Contact doesn`t exist'
-      })
-    }
     
     res.send({
       status: true,

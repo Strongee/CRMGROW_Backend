@@ -308,7 +308,7 @@ due_date:
         ]
     }
 
-#### POST `/api/follow/checked`
+#### PUT `/api/follow/checked/:id`
 
     Response:
 
@@ -318,32 +318,41 @@ due_date:
         "status": true,
         "data": {
             "user": [
-                "5c715b0fccf14717986c85dc"
+                "5c8697b0daf5860df951409b"
             ],
-            "note": [],
+            "follow_ups": [
+                "5c8710832be4a44e7b802d13"
+            ],
+            "notes": [],
+            "phone_logs": [],
             "email": [],
+            "contacts": [
+                "5c870f9edfa5524ac7e5ecab"
+            ],
+            "_id": "5c8711a58c51f050a57536bb",
+            "content": "this is followup",
+            "type": "follow_ups",
+            "created_at": "2019-03-12T01:55:49.035Z",
+            "updated_at": "2019-03-12T01:55:49.035Z",
+            "__v": 0,
             "contact": {
                 "user": [
-                    "5c715b0fccf14717986c85dc"
+                    "5c8697b0daf5860df951409b"
                 ],
-                "_id": "5c71c9d6cf6b7d7fae539593",
+                "tag": [
+                    "interesting"
+                ],
+                "_id": "5c870f9edfa5524ac7e5ecab",
                 "first_name": "Super",
                 "last_name": "WebTop",
-                "email": "a@gmail.com",
+                "email": "amazingksill8001@gmail.com",
                 "cell_phone": "111111111",
                 "brokerage": "Max",
-                "tag": "interesting",
                 "recruiting_stage": "cold call",
-                "updated_at": "2019-02-23T22:31:50.491Z",
-                "created_at": "2019-02-23T22:31:50.491Z",
+                "created_at": "2019-03-12T01:47:10.800Z",
+                "updated_at": "2019-03-12T01:47:10.800Z",
                 "__v": 0
-            },
-            "_id": "5c85c6ce139e284810a5936d",
-            "content": "email",
-            "type": "follow_up",
-            "created_at": "2019-03-11T02:24:14.324Z",
-            "updated_at": "2019-03-11T02:24:14.324Z",
-            "__v": 0
+            }
         }
     }
     
@@ -565,6 +574,16 @@ due_date:
                 ]
             ]
         }
+    }
+
+#### DELETE `/api/contact/:id`
+
+    Response:
+
+    HTTP Status: 200
+    ```
+    {
+        "status": true,
     }
 
 #### GET `/api/contact/batch`
