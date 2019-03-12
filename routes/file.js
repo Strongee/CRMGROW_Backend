@@ -19,20 +19,9 @@ const fileStorage = multer.diskStorage({
   }
 })
 
-const verifyStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './docs/')
-  },
-  filename: (req, file, cb) => {
-    cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
-  }
-})
 
 const upload = multer({ storage: fileStorage })
-const uploadVerify = multer({ storage: verifyStorage })
 
-// Upload verification document: Diploma, student cardm ...
-router.post('/verify', Users.checkAuth, uploadVerify.single('file'), catchError(FileCtrl.uploadVerifyDoc))
 
 // Upload a file
 router.post('/', Users.checkAuthOptional, upload.single('file'), catchError(FileCtrl.create))
@@ -43,7 +32,5 @@ router.get('/:id', catchError(FileCtrl.get))
 // Delete a file
 router.delete('/:id', Users.checkAuth, catchError(FileCtrl.remove))
 
-// Get a verify doc
-router.get('/verify/:id', catchError(FileCtrl.getVerifyDoc))
 
 module.exports = router

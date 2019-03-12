@@ -192,14 +192,14 @@ const edit = async(req, res) => {
 const sendBatch = async(req, res) => {
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
-  const {current_user} = req
+  const {currentUser} = req
   const {email_list, subject, content} = req.body
   let promisall = []
   
   email_list.forEach((email) => {
       const msg = {
           to: email,
-          from: current_user.email,
+          from: currentUser.email,
           subject: subject,
           text: content,
           html: content,
