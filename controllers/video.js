@@ -69,7 +69,7 @@ const getAll = async (req, res) => {
           $lookup:
             {
             from:  'videos',
-            localField: video,
+            localField: 'video',
             foreignField: '_id',
             as: "video_detail"
             }
