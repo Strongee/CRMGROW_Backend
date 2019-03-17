@@ -21,7 +21,7 @@ const fileStorage = multerS3({
     bucket: process.env.BUCKET_NAME,
     acl: 'public-read',
     metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname});
+      cb(null, {fieldName: file.fieldname + '.' + mime.extension(file.mimetype)});
     },
     key: function (req, file, cb) {
       cb(null, Date.now().toString())
@@ -34,7 +34,7 @@ const upload = multer({
 
 
 // Upload a file
-router.post('/', UserCtrl.checkAuth, upload.array('video',1), catchError(VideoCtrl.create))
+router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
 
 // Get a file
 router.get('/:id', catchError(VideoCtrl.get))

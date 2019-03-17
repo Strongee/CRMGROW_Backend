@@ -6,7 +6,7 @@ const Video = require('../models/video')
 const { FILES_PATH } = require('../config/path')
 
 const create = async (req, res) => {
-  console.log('req.files[0]',req.files[0])
+  console.log('req.files',req.files)
   // if (req.file) {
   //     if (req.currentUser) {
   //         const Video = new Video({
