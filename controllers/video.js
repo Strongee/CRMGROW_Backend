@@ -2,34 +2,36 @@ const path = require('path')
 const mime = require('mime-types')
 const fs = require('fs')
 
-const File = require('../models/file')
+const Video = require('../models/video')
 const { FILES_PATH } = require('../config/path')
 
 const create = async (req, res) => {
-    if (req.file) {
-        if (req.currentUser) {
-            const file = new File({
-                user: req.currentUser.id,
-                name: req.file.filename,
-                type: 'image'
-            })
-            await file.save()
-        }
-        res.send({
-          status: true,
-          data: {
-            file_name: req.file.filename,
-            url: process.env.TEAMGROW_DOMAIN + '/api/file/' + req.file.filename
-          }
-        })
-    }
+  console.log('req.files[0]',req.files[0])
+  // if (req.file) {
+  //     if (req.currentUser) {
+  //         const Video = new Video({
+  //             user: req.currentUser.id,
+  //             name: req.files[0].filename,
+  //             type: req.files[0].mimetype
+  //         })
+  //         await file.save()
+  //     }
+  //     res.send({
+  //       status: true,
+  //       data: {
+  //         file_name: req.file.filename,
+  //         url: process.env.TEAMGROW_DOMAIN + '/api/file/' + req.file.filename
+  //       }
+  //     })
+  // }
+    res.json({'video': req.file.location})
 }
 
 const get = (req, res) => {
-    const filePath = FILES_PATH + req.params.name
+    const filePath = FILES_PATH + req.params.id
     console.info('File Path:', filePath)
     if (fs.existsSync(filePath)) {
-      const contentType = mime.contentType(path.extname(req.params.name))
+      const contentType = mime.contentType(path.extname(req.params.id))
       res.set('Content-Type', contentType)
       res.sendFile(filePath)
     } else {

@@ -22,6 +22,11 @@ if (!process.env.SENDGRID_KEY) {
 	process.exit(1)
 }
 
+if (!process.env.AWS_ACCESS_KEY) {
+	console.error('Please set the valid AWS_ACCESS_KEY')
+	process.exit(1)
+}
+
 app.use(cors())
 app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))

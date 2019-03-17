@@ -9,6 +9,7 @@ const phone_log = require('./phone_log')
 const appointment = require('./appointment')
 const tag = require('./tag')
 const file = require('./file')
+const video = require('./video')
 const UserCtrl = require('../controllers/user')
 
 const router = express.Router()
@@ -27,5 +28,6 @@ router.use('/phone', phone_log)
 router.use('/appointment', appointment)
 router.use('/tag', tag)
 router.use('/file', file)
+router.use('/video', video)
 
 module.exports = router
