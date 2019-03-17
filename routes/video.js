@@ -3,6 +3,7 @@ const fs = require('fs')
 const AWS = require('aws-sdk')
 const multer = require('multer');
 const multerS3 = require('multer-s3')
+const mime = require('mime-types')
 
 const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
