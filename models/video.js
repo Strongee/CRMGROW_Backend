@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const Video = mongoose.model('video',{
-    name: String,
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     title: String,
     description: String,

@@ -22,11 +22,11 @@ const fileStorage = multerS3({
     bucket: process.env.BUCKET_NAME,
     acl: 'public-read',
     metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname + '.' + mime.extension(file.mimetype)});
+      cb(null, {fieldName: file.fieldname});
     },
     key: function (req, file, cb) {
-      cb(null, Date.now().toString())
-    }
+      cb(null, Date.now().toString() + '.' + mime.extension(file.mimetype))
+    },
   })
 
 const upload = multer({

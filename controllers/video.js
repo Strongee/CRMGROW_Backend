@@ -6,25 +6,28 @@ const Video = require('../models/video')
 const { FILES_PATH } = require('../config/path')
 
 const create = async (req, res) => {
-  console.log('req.files',req.files)
-  // if (req.file) {
-  //     if (req.currentUser) {
-  //         const Video = new Video({
-  //             user: req.currentUser.id,
-  //             name: req.files[0].filename,
-  //             type: req.files[0].mimetype
-  //         })
-  //         await file.save()
-  //     }
-  //     res.send({
-  //       status: true,
-  //       data: {
-  //         file_name: req.file.filename,
-  //         url: process.env.TEAMGROW_DOMAIN + '/api/file/' + req.file.filename
-  //       }
-  //     })
-  // }
-    res.json({'video': req.file.location})
+  console.log('req.file', req.filename)
+  const {title, description} = req.body
+  if (req.file) {
+      if(req.currentUser){
+        const video = new Video({
+          user: req.currentUser.id,
+          type: req.file.mimetype,
+          url: process.env.TEAMGROW_DOMAIN + '/api/file/' + req.file.filename,
+          title: title,
+          description: description,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        
+        await video.save().then((_video)=>{
+          res.send({
+            status: true,
+            data: _video
+          })
+        })
+    }
+  }
 }
 
 const get = (req, res) => {
