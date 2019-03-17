@@ -41,7 +41,7 @@ router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtr
 router.get('/:id', catchError(VideoCtrl.get))
 
 // Get all video
-router.get('/', catchError(VideoCtrl.getAll))
+router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
 
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))

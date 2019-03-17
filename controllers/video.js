@@ -32,13 +32,12 @@ const create = async (req, res) => {
 }
 
 const get = async (req, res) => {
-  const {currentUser} = req
-  const data = Video.findOne({ user: currentUser.id, _id: req.params.id})
+  const data = Video.findOne({ _id: req.params.id})
 
   if (!data) {
     return res.status(401).json({
       status: false,
-      error: 'Invalid_permission'
+      error: 'Video doesn`t exist'
     })
   }
 
