@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Video = mongoose.model('video',{
+const VideoTracker = mongoose.model('video_tracker',{
     name: String,
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
@@ -11,4 +11,4 @@ const Video = mongoose.model('video',{
     updated_at: Date,
  });
 
- module.exports = Video
+ module.exports = VideoTracker

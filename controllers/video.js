@@ -31,7 +31,7 @@ const create = async (req, res) => {
   }
 }
 
-const get = (req, res) => {
+const get = async (req, res) => {
   const {currentUser} = req
   const data = Video.findOne({ user: currentUser.id, _id: req.params.id})
 
@@ -49,7 +49,7 @@ const get = (req, res) => {
 
 }
 
-const getAll = (req, res) => {
+const getAll = async (req, res) => {
   const {currentUser} = req
   const _video = VideoTracker.find({ user: currentUser.id})
 
@@ -85,7 +85,7 @@ const getAll = (req, res) => {
     const video_detail = await Object.assign(_video, {"views": _video_detail.length})
     _video_detail_list.push(video_detail)
   }
-  
+
   res.send({
     status: true,
     data: _video_detail_list
