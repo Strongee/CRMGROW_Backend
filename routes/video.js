@@ -34,13 +34,16 @@ const upload = multer({
   })
 
 
-// Upload a file
+// Upload a video
 router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
 
-// Get a file
+// Get a video
 router.get('/:id', catchError(VideoCtrl.get))
 
-// Delete a file
+// Get all video
+router.get('/', catchError(VideoCtrl.getAll))
+
+// Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
 
 
