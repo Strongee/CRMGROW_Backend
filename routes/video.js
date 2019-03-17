@@ -34,7 +34,7 @@ const upload = multer({
 
 
 // Upload a file
-router.post('/', UserCtrl.checkAuth, upload.array('upl',1), catchError(VideoCtrl.create))
+router.post('/', UserCtrl.checkAuth, upload.array('video',1), catchError(VideoCtrl.create))
 
 // Get a file
 router.get('/:id', catchError(VideoCtrl.get))
