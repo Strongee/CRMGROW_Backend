@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const sgMail = require('@sendgrid/mail')
+const base64Img = require('base64-img');
  
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
@@ -27,7 +28,7 @@ const create = async (req, res) => {
   }
 }
 
-const createDetail = async (req, res) => {
+const updateDetail = async (req, res) => {
   if (req.body.file) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
@@ -186,7 +187,7 @@ const remove = async (req, res) => {
 
 module.exports = {
     create,
-    createDetail,
+    updateDetail,
     get,
     getAll,
     sendVideo,

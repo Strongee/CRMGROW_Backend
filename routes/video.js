@@ -41,7 +41,7 @@ router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtr
 
 // Upload a thumbnail
 
-router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
+router.put('/', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
 
 // Get a video
 router.get('/:id', catchError(VideoCtrl.get))
