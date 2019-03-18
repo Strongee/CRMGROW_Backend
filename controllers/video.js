@@ -30,11 +30,11 @@ const create = async (req, res) => {
 }
 
 const updateDetail = async (req, res) => {
+  const {currentUser} = req
   if (req.body.thumbnail) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    if (req.currentUser) {
       const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
 
       if (!video) {
@@ -58,7 +58,7 @@ const updateDetail = async (req, res) => {
           data: _video
         })
       })
-    }
+
   }
 
   res.status(401).json({
