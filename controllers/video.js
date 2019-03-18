@@ -49,7 +49,7 @@ const updateDetail = async (req, res) => {
         video[key] = editData[key]
       }
 
-      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/video/thumbnails/' + path.basename(file_path)
+      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/video/thumbnail/' + path.basename(file_path)
 
       video["updated_at"] = new Date()
 

@@ -239,12 +239,12 @@ const resetPasswordByOld = async (req, res) => {
 const mail = async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: 'Godaddy',
-    host: "smtpout.secureserver.net",
-    port: 587,
+    host: "smtpout.asia.secureserver.net",
+    port: 25,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: "support@cbdhempweb.com", // generated ethereal user
-      pass: "Admin#9911" // generated ethereal password
+      user: "admin@cbdhempway.com", // generated ethereal user
+      pass: "ambition1996" // generated ethereal password
     }
   })
 
