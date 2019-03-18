@@ -2,7 +2,8 @@ const path = require('path')
 const fs = require('fs')
 const sgMail = require('@sendgrid/mail')
 const base64Img = require('base64-img');
- 
+const mime = require('mime-types')
+
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const { FILES_PATH } = require('../config/path')
