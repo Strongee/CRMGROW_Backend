@@ -6,7 +6,7 @@ const Activity = require('../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const _follow_up = await FollowUp.find({user :currentUser.id, status: 0}).sort({created_at: -1});
+  const _follow_up = await FollowUp.find({user :currentUser.id, status: 0}).sort({due_date: -1});
   let data = [];
 
   for(let i = 0; i < _follow_up.length; i ++){
