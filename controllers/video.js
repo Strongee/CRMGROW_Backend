@@ -7,6 +7,7 @@ const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const { FILES_PATH } = require('../config/path')
 const { THUMBNAILS_PATH } = require('../config/path')
+const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {
   if (req.file) {
@@ -62,7 +63,7 @@ const updateDetail = async (req, res) => {
 
   res.status(401).json({
     status: false,
-    error: 'Not found thumbnail'
+    error: 'Not_found_thumbnail'
   })
 }
 
