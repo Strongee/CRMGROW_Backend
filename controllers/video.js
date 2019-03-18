@@ -32,7 +32,7 @@ const updateDetail = async (req, res) => {
   if (req.body.file) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
-    const file_path = base64Img.imgSync(thumbnail, THUMBNAILS_PATH, file_name)
+    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     if (req.currentUser) {
       const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
 
