@@ -29,7 +29,7 @@ const create = async (req, res) => {
 }
 
 const updateDetail = async (req, res) => {
-  if (req.body.file) { // base 64 image
+  if (req.body.thumbnail) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
@@ -59,6 +59,11 @@ const updateDetail = async (req, res) => {
       })
     }
   }
+
+  res.status(401).json({
+    status: false,
+    error: 'Not found thumbnail'
+  })
 }
 
 
