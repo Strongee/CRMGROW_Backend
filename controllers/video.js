@@ -72,7 +72,7 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
-  const data = Video.findOne({ _id: req.params.id})
+  const data = await Video.findOne({ _id: req.params.id})
 
   if (!data) {
     return res.status(401).json({
