@@ -130,7 +130,7 @@ const sendVideo = async (req, res) => {
   const msg = {
     to: email,
     from: currentUser.email,
-    subject: process.env.WELCOME_MESSAGE,
+    subject: process.env.WELCOME_SEND_VIDEO_MESSAGE,
     text: text,
     html: text
   }
