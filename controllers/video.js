@@ -1,27 +1,23 @@
 const path = require('path')
-const mime = require('mime-types')
 const fs = require('fs')
-
+const sgMail = require('@sendgrid/mail')
+ 
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const { FILES_PATH } = require('../config/path')
+const { THUMBNAILS_PATH } = require('../config/path')
 
 const create = async (req, res) => {
-  console.log('req.file', req.filename)
-  const {title, description} = req.body
   if (req.file) {
       if(req.currentUser){
         const video = new Video({
           user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
-          title: title,
-          description: description,
-          created_at: new Date(),
-          updated_at: new Date()
+          created_at: new Date()
         })
 
-        await video.save().then((_video)=>{
+        video.save().then((_video)=>{
           res.send({
             status: true,
             data: _video
@@ -30,6 +26,40 @@ const create = async (req, res) => {
     }
   }
 }
+
+const createDetail = async (req, res) => {
+  if (req.body.file) { // base 64 image
+    const editData = req.body
+    const file_name = uuidv1()
+    const file_path = base64Img.imgSync(thumbnail, THUMBNAILS_PATH, file_name)
+    if (req.currentUser) {
+      const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
+
+      if (!video) {
+        return res.status(401).json({
+          status: false,
+          error: 'Invalid_permission'
+        })
+      }
+
+      for (let key in editData) {
+        video[key] = editData[key]
+      }
+
+      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/file/' + path.basename(file_path)
+
+      video["updated_at"] = new Date()
+
+      video.save().then((_video)=>{
+        res.send({
+          status: true,
+          data: _video
+        })
+      })
+    }
+  }
+}
+
 
 const get = async (req, res) => {
   const data = Video.findOne({ _id: req.params.id})
@@ -91,6 +121,41 @@ const getAll = async (req, res) => {
   })
 }
 
+const sendVideo = async (req, res) => {
+  const { currentUser } = req
+  const {email, content, video_id, contact_id} = req.body
+  sgMail.setApiKey(process.env.SENDGRID_KEY);
+
+  const text = content + '/material/view/video/?video=' + video_id + '&contact=' + contact_id
+  const msg = {
+    to: email,
+    from: currentUser.email,
+    subject: process.env.WELCOME_MESSAGE,
+    text: text,
+    html: text
+  }
+
+  sgMail.send(msg).then((_res) => {
+    console.log('mailres.errorcode', _res[0].statusCode);
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
+      res.send({
+        status: true,
+      })
+    }else {
+      res.status(404).send({
+        status: false,
+        error: _res[0].statusCode
+      })
+    }
+  }).catch ((e) => {
+    console.error(e)
+    res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  })
+}
+
 const remove = async (req, res) => {
     const { currentUser } = req
     try {
@@ -121,7 +186,9 @@ const remove = async (req, res) => {
 
 module.exports = {
     create,
+    createDetail,
     get,
     getAll,
+    sendVideo,
     remove
 }

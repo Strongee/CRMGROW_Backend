@@ -4,6 +4,7 @@ const AWS = require('aws-sdk')
 const multer = require('multer');
 const multerS3 = require('multer-s3')
 const mime = require('mime-types')
+const uuidv1 = require('uuid/v1')
 
 const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
@@ -17,7 +18,7 @@ const s3 = new AWS.S3({
 
 const router = express.Router()
 
-const fileStorage = multerS3({
+const storage = multerS3({
     s3: s3,
     bucket: process.env.BUCKET_NAME,
     acl: 'public-read',
@@ -25,16 +26,21 @@ const fileStorage = multerS3({
       cb(null, {fieldName: file.fieldname});
     },
     key: function (req, file, cb) {
-      cb(null, Date.now().toString() + '.' + mime.extension(file.mimetype))
+      cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
 
+
 const upload = multer({
-    storage: fileStorage
+    storage: storage
   })
 
 
 // Upload a video
+router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
+
+// Upload a thumbnail
+
 router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
 
 // Get a video

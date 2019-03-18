@@ -75,7 +75,35 @@ const create = async(req, res) => {
   });
 }
 
+const edit = async(req, res) => {
+  const { currentUser } = req
+  const editData = req.body
+  const appointment = await Appointment.find({user :currentUser.id, _id: req.params.id});
+
+  if (!editData) {
+    return res.status(401).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
+
+
+  for (let key in editData) {
+    appointment[key] = editData[key]
+  }
+
+  appointment["updated_at"] = new Date()
+
+  appointment.save().then((_appointment)=>{
+    res.send({
+      status: true,
+      data: _appointment
+    })
+  })
+}
+
 module.exports = {
     get,
     create,
+    edit
 }
