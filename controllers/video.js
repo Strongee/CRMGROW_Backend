@@ -37,6 +37,7 @@ const updateDetail = async (req, res) => {
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
       const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
 
+      console.log('video', video)
       if (!video) {
         return res.status(401).json({
           status: false,
@@ -48,23 +49,24 @@ const updateDetail = async (req, res) => {
         video[key] = editData[key]
       }
 
-      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/file/' + path.basename(file_path)
+      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/video/thumbnails/' + path.basename(file_path)
 
       video["updated_at"] = new Date()
 
       video.save().then((_video)=>{
+        console.log('video', video)
         res.send({
           status: true,
           data: _video
         })
       })
 
+  }else{
+    res.status(401).json({
+      status: false,
+      error: 'Not_found_thumbnail'
+    })
   }
-
-  res.status(401).json({
-    status: false,
-    error: 'Not_found_thumbnail'
-  })
 }
 
 
@@ -83,6 +85,21 @@ const get = async (req, res) => {
     data
   })
 
+}
+
+const getThumbnail = (req, res) => {
+  const filePath = THUMBNAILS_PATH + req.params.name
+  console.info('File Path:', filePath)
+  if (fs.existsSync(filePath)) {
+    const contentType = mime.contentType(path.extname(req.params.name))
+    res.set('Content-Type', contentType)
+    res.sendFile(filePath)
+  } else {
+    res.status(404).send({
+      status: false,
+      error: 'Thumbnail does not exist'
+    })
+  }
 }
 
 const getAll = async (req, res) => {
@@ -166,10 +183,10 @@ const sendVideo = async (req, res) => {
 const remove = async (req, res) => {
     const { currentUser } = req
     try {
-      const file = File.findOne({ user: currentUser.id, name: req.params.id})
+      const video = Video.findOne({ user: currentUser.id, _id: req.params.id})
   
-      if (file) {
-        fs.unlinkSync(FILES_PATH + req.params.id)
+      if (video) {
+        fs.unlinkSync(THUMBNAILS_PATH + req.params.id)
         res.send({
           status: true,
           data: {
@@ -179,7 +196,7 @@ const remove = async (req, res) => {
       } else {
         res.status(404).send({
           status: false,
-          error: 'file_not_found'
+          error: 'thumbnail_not_found'
         })
       }
     } catch (e) {
@@ -195,6 +212,7 @@ module.exports = {
     create,
     updateDetail,
     get,
+    getThumbnail,
     getAll,
     sendVideo,
     remove
