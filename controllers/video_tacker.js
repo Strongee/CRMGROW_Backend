@@ -21,7 +21,8 @@ const get = async(req, res) => {
 }
 
 const create = async(req, res) => {
-  const { currentUser } = req
+  const query = {...req.query}
+  console.log('req.query', query)
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -31,12 +32,11 @@ const create = async(req, res) => {
   }
 
   const video_tracker = new VideoTracker({
-    ...req.body,
-    user: currentUser.id,
+    ...req.query,
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('data', req.body)
+  
   video_tracker.save()
   .then(_video_tracker => {
 

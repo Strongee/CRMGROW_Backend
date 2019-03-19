@@ -72,18 +72,31 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
-  const data = await Video.findOne({ _id: req.params.id})
+  const video_detail = await Video.aggregate(
+    [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as : "user_detail"			
+          }
+      },
+      {
+        $match: {"_id" : req.params.id}
+      }
+    ])
 
-  if (!data) {
-    return res.status(401).json({
-      status: false,
-      error: 'Video doesn`t exist'
-    })
-  }
+    if (!data) {
+      return res.status(401).json({
+        status: false,
+        error: 'Video doesn`t exist'
+      })
+    }
 
   res.send({
     status: true,
-    data
+    data: video_detail
   })
 
 }
@@ -151,7 +164,7 @@ const sendVideo = async (req, res) => {
   const {email, content, video_id, contact_id} = req.body
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
-  const text = content + '/material/view/video/?video=' + video_id + '&contact=' + contact_id
+  const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video_id + '&contact=' + contact_id + '&user=' + currentUser.id
   const msg = {
     to: email,
     from: currentUser.email,

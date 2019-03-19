@@ -10,6 +10,6 @@ router.post('/', UserCtrl.checkAuth, catchError(AppointmentCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(AppointmentCtrl.get))
 
 // Update appointment by id
-router.put('/' , UserCtrl.checkAuth, catchError(AppointmentCtrl.edit))
+router.put('/:id' , UserCtrl.checkAuth, catchError(AppointmentCtrl.edit))
 
 module.exports = router
