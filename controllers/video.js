@@ -86,6 +86,9 @@ const get = async (req, res) => {
           foreignField: '_id',
           as : "user_detail"			
           }
+      },
+      {
+        $match: {_id: req.params.id}
       }
     ])
 
@@ -98,7 +101,7 @@ const get = async (req, res) => {
 
   res.send({
     status: true,
-    data: video_detail
+    data: video_detail[0]
   })
 
 }
