@@ -72,6 +72,10 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
+  console.log('id', req.params.id)
+  const video_details = await Video.findOne({_id: req.params.id})
+  console.log('video_details', video_details)
+  
   const video_detail = await Video.aggregate(
     [
       {
