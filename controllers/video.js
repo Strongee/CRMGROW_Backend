@@ -166,8 +166,8 @@ const sendVideo = async (req, res) => {
 
   const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
-    to: email,
-    from: currentUser.email,
+    to: 'superwebtop@outlook.com',
+    from: 'bojanr995@gmail.com',
     subject: process.env.WELCOME_SEND_VIDEO_MESSAGE,
     text: text,
     html: text
