@@ -164,10 +164,12 @@ const sendVideo = async (req, res) => {
   const {email, content, video, contact} = req.body
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
+  console.log('email', email)
+  console.log('currentUser.email', currentUser.email)
   const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
-    to: 'superwebtop@outlook.com',
-    from: 'bojanr995@gmail.com',
+    to: email,
+    from: currentUser.email,
     subject: process.env.WELCOME_SEND_VIDEO_MESSAGE,
     text: text,
     html: text
