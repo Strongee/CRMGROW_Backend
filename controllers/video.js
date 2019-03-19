@@ -74,30 +74,18 @@ const updateDetail = async (req, res) => {
 
 const get = async (req, res) => {
   console.log('id', req.params.id)
-  const video_details = await Video.findOne({_id: req.params.id})
-  console.log('video_details', video_details)
-
-  const video_detail = await Video.aggregate(
-    [
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as : "user_detail"			
-          }
-      },
-      {
-        $match: {_id: req.params.id}
-      }
-    ])
-
+  const video = await Video.findOne({_id: req.params.id})
+  const user = await User.findOne({_id: video.user})
+  console.log('user', user)
     if (!video_detail) {
       return res.status(401).json({
         status: false,
         error: 'Video doesn`t exist'
       })
     }
+    myJSON = JSON.stringify(video)
+    const data = JSON.parse(myJSON);
+    Object.assign(data, {"user": user})
 
   res.send({
     status: true,
