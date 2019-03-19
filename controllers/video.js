@@ -5,6 +5,7 @@ const base64Img = require('base64-img');
 const mime = require('mime-types')
 
 const Video = require('../models/video')
+const User = require('../models/user')
 const VideoTracker = require('../models/video_tracker')
 const { FILES_PATH } = require('../config/path')
 const { THUMBNAILS_PATH } = require('../config/path')
@@ -75,7 +76,7 @@ const get = async (req, res) => {
   console.log('id', req.params.id)
   const video_details = await Video.findOne({_id: req.params.id})
   console.log('video_details', video_details)
-  
+
   const video_detail = await Video.aggregate(
     [
       {
@@ -87,7 +88,7 @@ const get = async (req, res) => {
           }
       },
       {
-        $match: {"_id" : req.params.id}
+        $match: {"_id": req.params.id}
       }
     ])
 
@@ -100,7 +101,7 @@ const get = async (req, res) => {
 
   res.send({
     status: true,
-    data: video_detail
+    data: video_detail[0]
   })
 
 }
