@@ -76,8 +76,7 @@ const get = async (req, res) => {
   console.log('id', req.params.id)
   const video = await Video.findOne({_id: req.params.id})
   const user = await User.findOne({_id: video.user})
-  console.log('user', user)
-    if (!video_detail) {
+    if (!video) {
       return res.status(401).json({
         status: false,
         error: 'Video doesn`t exist'
@@ -89,7 +88,7 @@ const get = async (req, res) => {
 
   res.send({
     status: true,
-    data: video_detail[0]
+    data
   })
 
 }
