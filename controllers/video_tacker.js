@@ -1,4 +1,6 @@
 const { validationResult } = require('express-validator/check')
+const User = require('../models/user')
+const Contact = require('../models/contact');
 const VideoTracker = require('../models/video_tracker');
 const Activity = require('../models/activity');
 
@@ -36,12 +38,16 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  
+
+  const currentUser = await User.findOne({_id: req.query['user']})
+  const contact = await Contact.findOne({_id: req.query['contact']})
   video_tracker.save()
+
+
   .then(_video_tracker => {
 
     const activity = new Activity({
-      content: currentUser.user_name + ' checked video',
+      content: contact.first_name + ' checked video',
       contacts: _video_tracker.contact,
       user: currentUser.id,
       type: 'video_tackers',

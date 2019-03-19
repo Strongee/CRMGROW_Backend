@@ -161,10 +161,10 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video_id, contact_id} = req.body
+  const {email, content, video, contact} = req.body
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
-  const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video_id + '&contact=' + contact_id + '&user=' + currentUser.id
+  const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
     to: email,
     from: currentUser.email,
