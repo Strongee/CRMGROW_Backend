@@ -87,7 +87,7 @@ const get = async (req, res) => {
       }
     ])
 
-    if (!data) {
+    if (!video_detail) {
       return res.status(401).json({
         status: false,
         error: 'Video doesn`t exist'
@@ -164,8 +164,6 @@ const sendVideo = async (req, res) => {
   const {email, content, video, contact} = req.body
   sgMail.setApiKey(process.env.SENDGRID_KEY);
 
-  console.log('email', email)
-  console.log('currentUser.email', currentUser.email)
   const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
     to: email,
