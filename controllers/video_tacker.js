@@ -69,15 +69,9 @@ const create = async(req, res) => {
       let errors   
     if (e.errors) {
         console.log('e.errors', e.errors)
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
     return res.status(500).send({
       status: false,
       error: errors || e
-    })
   });
 }
 
