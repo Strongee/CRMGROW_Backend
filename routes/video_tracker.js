@@ -1,7 +1,7 @@
 const express = require('express')
 
 const UserCtrl = require('../controllers/user')
-const VideoTrackerCtrl = require('../controllers/video_tacker')
+const VideoTrackerCtrl = require('../controllers/video_tracker')
 const { catchError } = require('../controllers/error')
 
 const router = express.Router()

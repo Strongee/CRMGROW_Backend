@@ -10,7 +10,7 @@ const appointment = require('./appointment')
 const tag = require('./tag')
 const file = require('./file')
 const video = require('./video')
-const video_tracker = require('./video_tacker')
+const video_tracker = require('./video_tracker')
 const UserCtrl = require('../controllers/user')
 
 const router = express.Router()
