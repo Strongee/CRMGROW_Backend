@@ -1,0 +1,30 @@
+const express = require('express')
+
+const user = require('./admin/user')
+const follow_up = require('./admin/follow_up')
+const contact = require('./admin/contact')
+const activity = require('./admin/activity')
+const note = require('./admin/note')
+const phone_log = require('./admin/phone_log')
+const appointment = require('./admin/appointment')
+const tag = require('./admin/tag')
+const file = require('./admin/file')
+const video = require('./admin/video')
+const video_tracker = require('./admin/video_tracker')
+const UserCtrl = require('../controllers/user')
+
+const router = express.Router()
+
+// Admin Dashboard api
+router.use('/user', user)
+router.use('/follow', follow_up)
+router.use('/contact', contact)
+router.use('/activity', activity)
+router.use('/note', note)
+router.use('/phone', phone_log)
+router.use('/appointment', appointment)
+router.use('/tag', tag)
+router.use('/file', file)
+router.use('/video', video)
+router.use('/track', video_tracker)
+module.exports = router

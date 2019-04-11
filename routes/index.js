@@ -11,6 +11,7 @@ const tag = require('./tag')
 const file = require('./file')
 const video = require('./video')
 const video_tracker = require('./video_tracker')
+const admin = require('./admin/index')
 const UserCtrl = require('../controllers/user')
 
 const router = express.Router()
@@ -19,7 +20,7 @@ router.get('/health', (req, res) => {
     res.send('OK')
   })
 
-// Admin Dashboard api
+// User Dashboard api
 router.use('/user', user)
 router.use('/follow', follow_up)
 router.use('/contact', contact)
@@ -31,5 +32,5 @@ router.use('/tag', tag)
 router.use('/file', file)
 router.use('/video', video)
 router.use('/track', video_tracker)
-
+router.user('/admin', admin)
 module.exports = router
