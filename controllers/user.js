@@ -128,7 +128,7 @@ const login = async (req, res) => {
     })
   }
 
-  const user_log = new UseLog({
+  const user_log = new UserLog({
     user: currentUser.id,
     created_at: new Date(),
     updated_at: new Date(),
