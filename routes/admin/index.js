@@ -11,7 +11,7 @@ const tag = require('./tag')
 const file = require('./file')
 const video = require('./video')
 const video_tracker = require('./video_tracker')
-const UserCtrl = require('../controllers/user')
+const UserCtrl = require('../../controllers/user')
 
 const router = express.Router()
 

@@ -32,5 +32,5 @@ router.use('/tag', tag)
 router.use('/file', file)
 router.use('/video', video)
 router.use('/track', video_tracker)
-router.user('/admin', admin)
+router.use('/admin', admin)
 module.exports = router

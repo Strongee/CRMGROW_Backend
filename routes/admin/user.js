@@ -3,7 +3,7 @@ const express = require('express')
 const { body, query } = require('express-validator/check')
 
 const UserCtrl = require('../../controllers/user')
-const { catchError } = require('../controllers/error')
+const { catchError } = require('../../controllers/error')
 
 const router = express.Router()
 
@@ -31,8 +31,5 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
-
-// Return own profile
-router.get('/mail', catchError(UserCtrl.mail))
 
 module.exports = router

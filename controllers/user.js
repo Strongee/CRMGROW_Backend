@@ -264,7 +264,6 @@ module.exports = {
     login,
     editMe,
     resetPasswordByOld,
-    checkAuth,
-    mail
+    checkAuth
 }
 
