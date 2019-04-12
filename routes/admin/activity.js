@@ -1,8 +1,8 @@
 const express = require('express')
 
-const UserCtrl = require('../controllers/user')
-const ActivityCtrl = require('../controllers/activity')
-const { catchError } = require('../controllers/error')
+const UserCtrl = require('../../controllers/user')
+const ActivityCtrl = require('../../controllers/activity')
+const { catchError } = require('../../controllers/error')
 
 const router = express.Router()
 

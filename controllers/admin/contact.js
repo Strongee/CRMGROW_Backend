@@ -1,8 +1,8 @@
 const { validationResult } = require('express-validator/check')
-const Contact = require('../models/contact')
-const Activity = require('../models/activity')
-const FollowUp = require('../models/follow_up')
-const Appointment = require('../models/appointment')
+const Contact = require('../../models/contact')
+const Activity = require('../../models/activity')
+const FollowUp = require('../../models/follow_up')
+const Appointment = require('../../models/appointment')
 const sgMail = require('@sendgrid/mail')
 
 const getAll = async(req, res) => {

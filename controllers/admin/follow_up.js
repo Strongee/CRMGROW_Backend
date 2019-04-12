@@ -1,8 +1,8 @@
 const { validationResult } = require('express-validator/check')
 const moment = require('moment');
-const FollowUp = require('../models/follow_up');
-const Contact = require('../models/contact')
-const Activity = require('../models/activity');
+const FollowUp = require('../../models/follow_up');
+const Contact = require('../../models/contact')
+const Activity = require('../../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req

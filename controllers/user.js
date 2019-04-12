@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
+const UserLog = require('../models/user_log')
 const nodemailer = require('nodemailer')
 
 const signUp = async (req, res) => {
@@ -27,6 +28,7 @@ const signUp = async (req, res) => {
     const user = new User({
       ...req.body,
       password: hash,
+      role: 'user',
       updated_at: new Date(),
       created_at: new Date(),
     })
@@ -126,22 +128,43 @@ const login = async (req, res) => {
     })
   }
 
-  // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, process.env.JWT_SECRET)
-  myJSON = JSON.stringify(_user)
-  const user = JSON.parse(myJSON);
-  delete user.password
-
-  // prevent user's password to be returned
-  delete user.password
-  res.send({
-    status: true,
-    data: {
-      token,
-      user
-    }
+  const user_log = new UseLog({
+    user: currentUser.id,
+    created_at: new Date(),
+    updated_at: new Date(),
   })
+
+  user_log.save().then(_res => {
+    // TODO: Include only email for now
+    const token = jwt.sign({id:_user.id, exp: _res.created_at}, process.env.JWT_SECRET, {expiresIn: '1m'})
+    myJSON = JSON.stringify(_user)
+    const user = JSON.parse(myJSON);
+    delete user.password
+
+    // prevent user's password to be returned
+    delete user.password
+    res.send({
+      status: true,
+      data: {
+        token,
+        user
+      }
+    })
+  }).catch(e => {
+    let errors
+    if (e.errors) {
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
+      })
+    }
+    return res.status(500).send({
+      status: false,
+      error: errors || e
+    })
+  });
 }
+
 const checkAuth = async (req, res, next) => {
     const token = req.get('Authorization')
     let decoded
@@ -158,7 +181,7 @@ const checkAuth = async (req, res, next) => {
       // err
     }
   
-    req.currentUser = await User.findOne({ _id: decoded.id })
+    req.currentUser = await UserLog.findOne({ _id: decoded.id,  created_at: decoded.exp,})
 
     if (req.currentUser) {
       next()
@@ -234,52 +257,6 @@ const resetPasswordByOld = async (req, res) => {
   res.send({
     status: true
   })
-}
-
-const mail = async (req, res) => {
-  const transporter = nodemailer.createTransport({
-    service: 'Godaddy',
-    host: "smtpout.asia.secureserver.net",
-    port: 25,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: "admin@cbdhempway.com", // generated ethereal user
-      pass: "ambition1996" // generated ethereal password
-    }
-  })
-
-  // const transporter = nodemailer.createTransport({
-  //   service: 'gmail',
-  //   auth: {
-  //          user: 'amazingskill8001@gmail.com',
-  //          pass: 'ambition1996'consol
-  //      }
-  //  })
-
-  const msg = {
-    to: 'superwebtop@outlook.com',
-    from: 'support@cbdhempweb.com',
-    subject: 'test',
-    text: 'test',
-    html: 'test',
-  };
-  
-  transporter.sendMail(msg).then((e) => {
-    res.send('OK')
-    }).catch(e => {
-      console.log(e)
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
-    return res.status(500).send({
-      status: false,
-      error: errors || e
-    })
-  });
 }
 
 module.exports = {

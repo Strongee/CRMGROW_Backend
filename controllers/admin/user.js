@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
-const User = require('../models/user')
+const User = require('../../models/user')
 const nodemailer = require('nodemailer')
 
 const signUp = async (req, res) => {
@@ -103,11 +103,11 @@ const login = async (req, res) => {
     })
   }
 
-  let _user = await User.findOne({ email: email })
+  let _user = await User.findOne({ email: email, role: 'admin' })
   .exec();
 
   if(!_user) {
-    _user = await User.findOne({ user_name: user_name })
+    _user = await User.findOne({ user_name: user_name, role: 'admin' })
     .exec();  
   }
 
@@ -142,34 +142,6 @@ const login = async (req, res) => {
     }
   })
 }
-const checkAuth = async (req, res, next) => {
-    const token = req.get('Authorization')
-    let decoded
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET)
-      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-      console.info('Auth Success:', decoded, ip)
-    } catch (err) {
-      console.error(err)
-      return res.status(401).send({
-        status: false,
-        error: 'invalid_auth'
-      })
-      // err
-    }
-  
-    req.currentUser = await User.findOne({ _id: decoded.id })
-
-    if (req.currentUser) {
-      next()
-    } else {
-      console.error('Valid JWT but no user:', decoded)
-      res.send({
-        status: false,
-        error: 'invalid_user'
-      })
-    }
-  }
 
 const editMe = async(req, res) =>{
   const user = req.currentUser
@@ -207,6 +179,64 @@ const editMe = async(req, res) =>{
   });
 }
 
+const getAll = async (req, res, next) => {
+  const token = req.get('Authorization')
+  let decoded
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.info('Auth Success:', decoded, ip)
+  } catch (err) {
+    console.error(err)
+    return res.status(401).send({
+      status: false,
+      error: 'invalid_auth'
+    })
+    // err
+  }
+
+  req.currentUser = await User.findOne({ _id: decoded.id })
+
+  if (req.currentUser && req.currentUser.role == 'admin') {
+    next()
+  } else {
+    console.error('Valid JWT but no user:', decoded)
+    res.send({
+      status: false,
+      error: 'invalid_user'
+    })
+  }
+}
+
+const checkAuth = async (req, res, next) => {
+  const token = req.get('Authorization')
+  let decoded
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.info('Auth Success:', decoded, ip)
+  } catch (err) {
+    console.error(err)
+    return res.status(401).send({
+      status: false,
+      error: 'invalid_auth'
+    })
+    // err
+  }
+
+  req.currentUser = await User.findOne({ _id: decoded.id })
+
+  if (req.currentUser && req.currentUser.role == 'admin') {
+    next()
+  } else {
+    console.error('Valid JWT but no user:', decoded)
+    res.send({
+      status: false,
+      error: 'invalid_user'
+    })
+  }
+}
+
 const resetPasswordByOld = async (req, res) => {
   const { old_password, new_password } = req.body
 
@@ -236,56 +266,11 @@ const resetPasswordByOld = async (req, res) => {
   })
 }
 
-const mail = async (req, res) => {
-  const transporter = nodemailer.createTransport({
-    service: 'Godaddy',
-    host: "smtpout.asia.secureserver.net",
-    port: 25,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: "admin@cbdhempway.com", // generated ethereal user
-      pass: "ambition1996" // generated ethereal password
-    }
-  })
-
-  // const transporter = nodemailer.createTransport({
-  //   service: 'gmail',
-  //   auth: {
-  //          user: 'amazingskill8001@gmail.com',
-  //          pass: 'ambition1996'consol
-  //      }
-  //  })
-
-  const msg = {
-    to: 'superwebtop@outlook.com',
-    from: 'support@cbdhempweb.com',
-    subject: 'test',
-    text: 'test',
-    html: 'test',
-  };
-  
-  transporter.sendMail(msg).then((e) => {
-    res.send('OK')
-    }).catch(e => {
-      console.log(e)
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
-    return res.status(500).send({
-      status: false,
-      error: errors || e
-    })
-  });
-}
-
 module.exports = {
     signUp,
     login,
     editMe,
+    getAll,
     resetPasswordByOld,
     checkAuth,
     mail

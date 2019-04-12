@@ -1,8 +1,8 @@
 const { validationResult } = require('express-validator/check')
-const User = require('../models/user')
-const Contact = require('../models/contact');
-const VideoTracker = require('../models/video_tracker');
-const Activity = require('../models/activity');
+const User = require('../../models/user')
+const Contact = require('../../models/contact');
+const VideoTracker = require('../../models/video_tracker');
+const Activity = require('../../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -66,13 +66,18 @@ const create = async(req, res) => {
       })
     })
   }).catch(e => {
-      let errors   
+    let errors
     if (e.errors) {
-        console.log('e.errors', e.errors)
-        errors = e.errors.map(err => {      
-          delete err.instance
-          return err
-  });
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
+      })
+    }
+    return res.status(500).send({
+      status: false,
+      error: errors || e
+    })
+  })
 }
 
 module.exports = {

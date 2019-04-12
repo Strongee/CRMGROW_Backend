@@ -4,11 +4,11 @@ const sgMail = require('@sendgrid/mail')
 const base64Img = require('base64-img');
 const mime = require('mime-types')
 
-const Video = require('../models/video')
-const User = require('../models/user')
-const VideoTracker = require('../models/video_tracker')
-const { FILES_PATH } = require('../config/path')
-const { THUMBNAILS_PATH } = require('../config/path')
+const Video = require('../../models/video')
+const User = require('../../models/user')
+const VideoTracker = require('../../models/video_tracker')
+const { FILES_PATH } = require('../../config/path')
+const { THUMBNAILS_PATH } = require('../../config/path')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {

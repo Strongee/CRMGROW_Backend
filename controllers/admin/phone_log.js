@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator/check')
-const PhoneLog = require('../models/phone_log');
-const Activity = require('../models/activity');
+const PhoneLog = require('../../models/phone_log');
+const Activity = require('../../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req

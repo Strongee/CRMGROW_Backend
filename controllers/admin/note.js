@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator/check')
-const Note = require('../models/note');
-const Activity = require('../models/activity');
+const Note = require('../../models/note');
+const Activity = require('../../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req

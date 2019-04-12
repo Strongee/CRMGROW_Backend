@@ -9,6 +9,7 @@ const User = mongoose.model('user',{
      email_signature: String,
      notification: Number,
      picture_profile: String,
+     role: String,
      created_at: Date,
      updated_at: Date,
  });

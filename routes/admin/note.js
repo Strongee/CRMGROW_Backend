@@ -1,8 +1,8 @@
 const express = require('express')
 
-const UserCtrl = require('../controllers/user')
-const NoteCtrl = require('../controllers/note')
-const { catchError } = require('../controllers/error')
+const UserCtrl = require('../../controllers/user')
+const NoteCtrl = require('../../controllers/note')
+const { catchError } = require('../../controllers/error')
 
 const router = express.Router()
 

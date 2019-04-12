@@ -2,8 +2,8 @@ const path = require('path')
 const mime = require('mime-types')
 const fs = require('fs')
 
-const File = require('../models/file')
-const { FILES_PATH } = require('../config/path')
+const File = require('../../models/file')
+const { FILES_PATH } = require('../../config/path')
 
 const create = async (req, res) => {
     if (req.file) {

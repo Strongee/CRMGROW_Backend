@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator/check')
-const Appointment = require('../models/appointment');
-const Activity = require('../models/activity');
+const Appointment = require('../../models/appointment');
+const Activity = require('../../models/activity');
 
 const get = async(req, res) => {
   const { currentUser } = req

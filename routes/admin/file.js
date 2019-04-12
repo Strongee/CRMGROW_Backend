@@ -2,10 +2,10 @@ const express = require('express')
 const uuidv1 = require('uuid/v1')
 const mime = require('mime-types')
 
-const FileCtrl = require('../controllers/file')
-const UserCtrl = require('../controllers/user')
-const { catchError } = require('../controllers/error')
-const { FILES_PATH } = require('../config/path')
+const FileCtrl = require('../../controllers/file')
+const UserCtrl = require('../../controllers/user')
+const { catchError } = require('../../controllers/error')
+const { FILES_PATH } = require('../../config/path')
 
 const multer = require('multer')
 

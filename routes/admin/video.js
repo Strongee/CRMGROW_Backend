@@ -6,9 +6,9 @@ const multerS3 = require('multer-s3')
 const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
-const VideoCtrl = require('../controllers/video')
-const UserCtrl = require('../controllers/user')
-const { catchError } = require('../controllers/error')
+const VideoCtrl = require('../../controllers/video')
+const UserCtrl = require('../../controllers/user')
+const { catchError } = require('../../controllers/error')
 
 const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY,
