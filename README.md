@@ -29,8 +29,8 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
     "email": "user@email.com",
     "user_name": "user",
     "password": "pwd"
-    "time_zone": ""
-    "cell_phone": "",
+    "time_zone": "+08:00"
+    "cell_phone": "12345678",
     "email_signature": "",
     "notification": "",
     "picture_profile":"http://localhost:3000/api/file/949b4d70-a48d-11e8-a12f-dd03f72627a4.png"

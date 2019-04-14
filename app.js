@@ -3,6 +3,7 @@ let url = require("url");  //2
 let express = require("express");
 const path = require('path');
 const logger = require('morgan');
+const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const { ENV_PATH } = require('./config/path')
@@ -32,6 +33,7 @@ app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({ extended: false, limit: '50mb' }))
 app.use(cookieParser())
+app.use(session({ secret: 'passport', cookie: { maxAge: 60000 }, resave: false, saveUninitialized: false }));
 
 app.use('/api', indexRouter)
 

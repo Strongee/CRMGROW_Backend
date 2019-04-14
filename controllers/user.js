@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
@@ -23,12 +23,16 @@ const signUp = async (req, res) => {
     //     pass: process.env.SMTP_PASS // generated ethereal password
     //   }
     // })
-    const hash = await bcrypt.hash(req.body.password, 8)
-
+    
+    // const hash = await bcrypt.hash(req.body.password, 8)
+    const password = req.body.password
+    console.log('password', password)
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
     const user = new User({
       ...req.body,
-      password: hash,
-      role: 'user',
+      salt: salt,
+      hash: hash,
       updated_at: new Date(),
       created_at: new Date(),
     })
@@ -113,6 +117,7 @@ const login = async (req, res) => {
     .exec();  
   }
 
+
   if (!_user) {
     return res.status(401).json({
       status: false,
@@ -120,8 +125,10 @@ const login = async (req, res) => {
     })
   }
 
+
   // Check password
-  if (!bcrypt.compareSync(password, _user.password.split(' ')[0])) {
+  const hash = crypto.pbkdf2Sync(password, _user.salt, 10000, 512, 'sha512').toString('hex');
+  if (hash != _user.hash) {
     return res.status(401).json({
       status: false,
       error: 'Invalid email or password!'
@@ -134,12 +141,20 @@ const login = async (req, res) => {
     updated_at: new Date(),
   })
 
-  user_log.save().then(_res => {
+  user_log.save().then(_user_log => {
     // TODO: Include only email for now
-    const token = jwt.sign({id:_user.id, exp: _res.created_at}, process.env.JWT_SECRET, {expiresIn: '1m'})
+    // const token = jwt.sign({id:_user.id, exp: _res.created_at}, process.env.JWT_SECRET, {expiresIn: '1m'})
+    const expirationDate = new Date(_user_log.created_at + 1)
+    const token = jwt.sign({
+      email: _user.email,
+      id: _user._id,
+      exp: parseInt(expirationDate.getTime() / 1000, 10),
+    }, process.env.JWT_SECRET);
+    console.log('token', token)
     myJSON = JSON.stringify(_user)
     const user = JSON.parse(myJSON);
-    delete user.password
+    delete user.hash
+    delete user.salt
 
     // prevent user's password to be returned
     delete user.password
@@ -151,6 +166,7 @@ const login = async (req, res) => {
       }
     })
   }).catch(e => {
+    console.log(e)
     let errors
     if (e.errors) {
       errors = e.errors.map(err => {      
