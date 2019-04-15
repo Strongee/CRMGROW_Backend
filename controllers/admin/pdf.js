@@ -4,12 +4,12 @@ const sgMail = require('@sendgrid/mail')
 const base64Img = require('base64-img');
 const mime = require('mime-types')
 
-const User = require('../models/user')
-const Activity = require('../models/activity')
-const PDF = require('../models/pdf')
-const PDFTracker = require('../models/pdf_tracker')
-const { FILES_PATH } = require('../config/path')
-const { PREVIEW_PATH } = require('../config/path')
+const User = require('../../models/user')
+const Activity = require('../../models/activity')
+const PDF = require('../../models/pdf')
+const PDFTracker = require('../../models/pdf_tracker')
+const { FILES_PATH } = require('../../config/path')
+const { PREVIEW_PATH } = require('../../config/path')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {
@@ -19,7 +19,7 @@ const create = async (req, res) => {
           user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
-          role: 'user',
+          role: 'admin',
           created_at: new Date()
         })
 

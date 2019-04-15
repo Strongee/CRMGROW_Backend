@@ -6,8 +6,8 @@ const multerS3 = require('multer-s3')
 const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
-const PDFCtrl = require('../controllers/pdf')
-const UserCtrl = require('../controllers/user')
+const PDFCtrl = require('../../controllers/pdf')
+const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../controllers/error')
 
 const s3 = new AWS.S3({
