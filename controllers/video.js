@@ -18,7 +18,8 @@ const create = async (req, res) => {
           user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
-          created_at: new Date()
+          role: 'user',
+          created_at: new Date(), 
         })
 
         video.save().then((_video)=>{
@@ -110,17 +111,18 @@ const getThumbnail = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  const _video = VideoTracker.find({ user: currentUser.id})
+  let _video_list = await Video.find({user: currentUser.id})
+  let _video_admin = await Video.find({role: "admin"})
+  Array.prototype.push.apply(_video_list, _video_admin)
 
-  if (!_video) {
+  console.log('_video_list', _video_list)
+  if (!_video_list) {
     return res.status(401).json({
       status: false,
       error: 'Video doesn`t exist'
     })
   }
 
-  const _video_list = await Video.find({user: currentUser.id})
-  console.log('_video_list',_video_list)
   let _video_detail_list = [];
 
   for(let i = 0; i < _video_list.length; i ++){

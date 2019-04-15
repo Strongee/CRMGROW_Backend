@@ -18,6 +18,7 @@ const create = async (req, res) => {
           user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
+          role: 'admin',
           created_at: new Date()
         })
 

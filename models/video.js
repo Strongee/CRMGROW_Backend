@@ -7,6 +7,7 @@ const Video = mongoose.model('video',{
     thumbnail: String,
     type: String,
     url: String,
+    role: String,
     created_at: Date,
     updated_at: Date,
  });
