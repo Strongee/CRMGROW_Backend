@@ -26,13 +26,13 @@ router.post('/login', [
     body('password').isLength({ min: 1 })
   ], catchError(UserCtrl.login))  
   
-// Return own profile
+// Edit own profile
+router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe))
+
+// Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
-
-// Return own profile
-router.get('/mail', catchError(UserCtrl.mail))
 
 module.exports = router

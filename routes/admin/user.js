@@ -2,7 +2,7 @@ const express = require('express')
 
 const { body, query } = require('express-validator/check')
 
-const UserCtrl = require('../../controllers/user')
+const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../../controllers/error')
 
 const router = express.Router()
@@ -26,8 +26,14 @@ router.post('/login', [
     body('password').isLength({ min: 1 })
   ], catchError(UserCtrl.login))  
   
-// Return own profile
+// Get own profile
+router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
+
+// Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
+
+// Edit own profile
+router.get('/', UserCtrl.checkAuth, catchError(UserCtrl.getAll))
 
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))

@@ -1,9 +1,9 @@
 const { validationResult } = require('express-validator/check')
-const Tag = require('../../models/tag');
+const UserLog = require('../../models/user_log');
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Tag.find({user :currentUser.id});
+  const data = await UserLog.find({user :currentUser.id});
   if (!data) {
     return res.status(401).json({
       status: false,

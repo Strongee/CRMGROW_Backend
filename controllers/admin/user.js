@@ -1,90 +1,96 @@
-const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../../models/user')
 const nodemailer = require('nodemailer')
 
 const signUp = async (req, res) => {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        status: false,
-        error: errors.array()
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+
+  // const transporter = nodemailer.createTransport({
+  //   host: process.env.SMTP_DOMAIN,
+  //   port: process.env.SMTP_PORT || 587,
+  //   secure: !!process.env.SMTP_SECURE, // true for 465, false for other ports
+  //   auth: {
+  //     user: process.env.SMTP_USER, // generated ethereal user
+  //     pass: process.env.SMTP_PASS // generated ethereal password
+  //   }
+  // })
+  
+  // const hash = await bcrypt.hash(req.body.password, 8)
+  const password = req.body.password
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+  const user = new User({
+    ...req.body,
+    salt: salt,
+    hash: hash,
+    role: 'admin',
+    updated_at: new Date(),
+    created_at: new Date(),
+  })
+
+  user.save()
+  .then(_res => {
+    // const msg = {
+    //   to: user.email,
+    //   from: process.env.BUSINESS_EMAIL,
+    //   subject: process.env.WELCOME_SUBJECT,
+    //   text: process.env.WELCOME_CONTENT,
+    //   html: process.env.WELCOME_CONTENT,
+    // };
+    
+    // transporter.sendMail(msg).then(() => {
+    //   myJSON = JSON.stringify(_res)
+    //     const data = JSON.parse(myJSON);
+    //     delete data.password
+    //     res.send({
+    //       status: true,
+    //       data
+    //     })
+    // }).catch(e => {
+    //   let errors
+    //   if (e.errors) {
+    //     errors = e.errors.map(err => {      
+    //       delete err.instance
+    //       return err
+    //     })
+    //   }
+    //   return res.status(500).send({
+    //     status: false,
+    //     error: errors || e
+    //   })
+    // });
+
+    myJSON = JSON.stringify(_res)
+    const data = JSON.parse(myJSON);
+    delete data.hash
+    delete data.salt
+    res.send({
+        status: true,
+        data
+    })
+  })
+  .catch(e => {
+      let errors
+    if (e.errors) {
+      errors = e.errors.map(err => {      
+        delete err.instance
+        return err
       })
     }
-
-    // const transporter = nodemailer.createTransport({
-    //   host: process.env.SMTP_DOMAIN,
-    //   port: process.env.SMTP_PORT || 587,
-    //   secure: !!process.env.SMTP_SECURE, // true for 465, false for other ports
-    //   auth: {
-    //     user: process.env.SMTP_USER, // generated ethereal user
-    //     pass: process.env.SMTP_PASS // generated ethereal password
-    //   }
-    // })
-    const hash = await bcrypt.hash(req.body.password, 8)
-
-    const user = new User({
-      ...req.body,
-      password: hash,
-      updated_at: new Date(),
-      created_at: new Date(),
+    return res.status(500).send({
+      status: false,
+      error: errors || e
     })
-    console.log('req.body',req.body)
-    user.save()
-    .then(_res => {
-      // const msg = {
-      //   to: user.email,
-      //   from: process.env.BUSINESS_EMAIL,
-      //   subject: process.env.WELCOME_SUBJECT,
-      //   text: process.env.WELCOME_CONTENT,
-      //   html: process.env.WELCOME_CONTENT,
-      // };
-      
-      // transporter.sendMail(msg).then(() => {
-      //   myJSON = JSON.stringify(_res)
-      //     const data = JSON.parse(myJSON);
-      //     delete data.password
-      //     res.send({
-      //       status: true,
-      //       data
-      //     })
-      // }).catch(e => {
-      //   let errors
-      //   if (e.errors) {
-      //     errors = e.errors.map(err => {      
-      //       delete err.instance
-      //       return err
-      //     })
-      //   }
-      //   return res.status(500).send({
-      //     status: false,
-      //     error: errors || e
-      //   })
-      // });
-
-      myJSON = JSON.stringify(_res)
-      const data = JSON.parse(myJSON);
-      delete data.password
-      res.send({
-          status: true,
-          data
-      })
-    })
-    .catch(e => {
-        let errors
-      if (e.errors) {
-        errors = e.errors.map(err => {      
-          delete err.instance
-          return err
-        })
-      }
-      return res.status(500).send({
-        status: false,
-        error: errors || e
-      })
-    });
-  }
+  });
+}
 
 const login = async (req, res) => {
   const errors = validationResult(req)
@@ -111,6 +117,7 @@ const login = async (req, res) => {
     .exec();  
   }
 
+
   if (!_user) {
     return res.status(401).json({
       status: false,
@@ -118,19 +125,23 @@ const login = async (req, res) => {
     })
   }
 
+
   // Check password
-  if (!bcrypt.compareSync(password, _user.password.split(' ')[0])) {
+  const hash = crypto.pbkdf2Sync(password, _user.salt, 10000, 512, 'sha512').toString('hex');
+  if (hash != _user.hash) {
     return res.status(401).json({
       status: false,
       error: 'Invalid email or password!'
     })
   }
 
+
   // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, process.env.JWT_SECRET)
+  const token = jwt.sign({id:_user.id}, process.env.JWT_SECRET, {expiresIn: '1d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
-  delete user.password
+  delete user.hash
+  delete user.salt
 
   // prevent user's password to be returned
   delete user.password
@@ -158,7 +169,8 @@ const editMe = async(req, res) =>{
   .then(_res => {
       myJSON = JSON.stringify(_res)
       const data = JSON.parse(myJSON);
-      delete data.password
+      delete data.hash
+      delete data.salt
       res.send({
         status: true,
         data
@@ -180,32 +192,26 @@ const editMe = async(req, res) =>{
 }
 
 const getAll = async (req, res, next) => {
-  const token = req.get('Authorization')
-  let decoded
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.info('Auth Success:', decoded, ip)
-  } catch (err) {
-    console.error(err)
-    return res.status(401).send({
+  const _users = await User.find({});
+  if(!_users){
+    return res.status(401).json({
       status: false,
-      error: 'invalid_auth'
-    })
-    // err
-  }
-
-  req.currentUser = await User.findOne({ _id: decoded.id })
-
-  if (req.currentUser && req.currentUser.role == 'admin') {
-    next()
-  } else {
-    console.error('Valid JWT but no user:', decoded)
-    res.send({
-      status: false,
-      error: 'invalid_user'
+      error: 'Users doesn`t exist'
     })
   }
+  let users= [];
+  _users.map((_user)=>{
+    myJSON = JSON.stringify(_user)
+    const data = JSON.parse(myJSON);
+    delete data.salt
+    delete data.hash
+    users.push(data)
+  })
+
+  res.send({
+    status: true,
+    data: users
+  })
 }
 
 const checkAuth = async (req, res, next) => {
@@ -224,9 +230,9 @@ const checkAuth = async (req, res, next) => {
     // err
   }
 
-  req.currentUser = await User.findOne({ _id: decoded.id })
+  req.currentUser = await User.findOne({ _id: decoded.id, role: 'admin' })
 
-  if (req.currentUser && req.currentUser.role == 'admin') {
+  if (req.currentUser) {
     next()
   } else {
     console.error('Valid JWT but no user:', decoded)
