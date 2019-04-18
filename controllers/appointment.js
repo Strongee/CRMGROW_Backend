@@ -78,7 +78,7 @@ const create = async(req, res) => {
 const edit = async(req, res) => {
   const { currentUser } = req
   const editData = req.body
-  const appointment = await Appointment.find({user :currentUser.id, _id: req.params.id});
+  const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
 
   if (!editData) {
     return res.status(401).json({

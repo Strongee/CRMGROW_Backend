@@ -29,7 +29,7 @@ const storage = multerS3({
       const today = new Date()
       const year = today.getYear()
       const month = today.getMonth()
-      cb(null, year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
+      cb(null, 'pdf' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
 

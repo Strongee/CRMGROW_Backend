@@ -4,8 +4,9 @@ const sgMail = require('@sendgrid/mail')
 const base64Img = require('base64-img');
 const mime = require('mime-types')
 
-const Video = require('../models/video')
 const User = require('../models/user')
+const Activity = require('../models/activity')
+const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const { FILES_PATH } = require('../config/path')
 const { THUMBNAILS_PATH } = require('../config/path')
@@ -19,7 +20,7 @@ const create = async (req, res) => {
           type: req.file.mimetype,
           url: req.file.location,
           role: 'user',
-          created_at: new Date(), 
+          created_at: new Date()
         })
 
         video.save().then((_video)=>{
@@ -111,6 +112,15 @@ const getThumbnail = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
+  const _video = VideoTracker.find({ user: currentUser.id})
+
+  if (!_video) {
+    return res.status(401).json({
+      status: false,
+      error: 'Video doesn`t exist'
+    })
+  }
+
   let _video_list = await Video.find({user: currentUser.id})
   let _video_admin = await Video.find({role: "admin"})
   Array.prototype.push.apply(_video_list, _video_admin)
@@ -122,8 +132,6 @@ const getAll = async (req, res) => {
       error: 'Video doesn`t exist'
     })
   }
-
-  let _video_detail_list = [];
 
   for(let i = 0; i < _video_list.length; i ++){
     const _video_detail = await VideoTracker.aggregate([
@@ -137,7 +145,7 @@ const getAll = async (req, res) => {
             }
         },
         {
-          $match: { "video": _video_list[i].id }
+          $match: { "video": _video_list[i]._id }
         }
     ])
 
@@ -169,10 +177,21 @@ const sendVideo = async (req, res) => {
 
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
-    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
-      res.send({
-        status: true,
-      })
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+      const activity = new Activity({
+        content: currentUser.user_name + ' sent video',
+        contacts: contact,
+        user: currentUser.id,
+        type: 'videos',
+        videos: video,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })     
+      activity.save().then(()=>{
+        res.send({
+          status: true,
+        })
+      })         
     }else {
       res.status(404).send({
         status: false,

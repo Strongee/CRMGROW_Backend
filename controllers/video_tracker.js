@@ -47,10 +47,10 @@ const create = async(req, res) => {
   .then(_video_tracker => {
 
     const activity = new Activity({
-      content: contact.first_name + ' checked video',
+      content: contact.first_name + ' watched video',
       contacts: _video_tracker.contact,
       user: currentUser.id,
-      type: 'video_tackers',
+      type: 'video_trackers',
       video_trackers: _video_tracker.id,
       created_at: new Date(),
       updated_at: new Date(),
@@ -66,18 +66,11 @@ const create = async(req, res) => {
       })
     })
   }).catch(e => {
-    let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
     return res.status(500).send({
       status: false,
-      error: errors || e
+      error:  e
     })
-  })
+  });
 }
 
 module.exports = {

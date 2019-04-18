@@ -26,7 +26,7 @@ const storage = multerS3({
       cb(null, {fieldName: file.fieldname});
     },
     key: function (req, file, cb) {
-      cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
+      cb(null, 'video' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
 

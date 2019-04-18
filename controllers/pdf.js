@@ -74,7 +74,6 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
-  console.log('id', req.params.id)
   const pdf = await PDF.findOne({_id: req.params.id})
   const user = await User.findOne({_id: pdf.user})
     if (!pdf) {
@@ -111,17 +110,17 @@ const getPreview = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  const _pdf = PDFTracker.find({ user: currentUser.id})
+  let _pdf_list = await PDF.find({user: currentUser.id})
+  let _pdf_admin = await PDF.find({role: "admin"})
+  Array.prototype.push.apply(_pdf_list, _pdf_admin)
 
-  if (!_pdf) {
+  console.log('_pdf_list', _pdf_list)
+  if (!_pdf_list) {
     return res.status(401).json({
       status: false,
       error: 'PDF doesn`t exist'
     })
   }
-
-  const _pdf_list = await PDF.find({user: currentUser.id})
-  console.log('_pdf_list',_pdf_list)
   let _pdf_detail_list = [];
 
   for(let i = 0; i < _pdf_list.length; i ++){

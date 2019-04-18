@@ -6,7 +6,7 @@ const multerS3 = require('multer-s3')
 const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
-const VideoCtrl = require('../../controllers/video')
+const VideoCtrl = require('../../controllers/admin/video')
 const UserCtrl = require('../../controllers/user')
 const { catchError } = require('../../controllers/error')
 
@@ -26,7 +26,7 @@ const storage = multerS3({
       cb(null, {fieldName: file.fieldname});
     },
     key: function (req, file, cb) {
-      cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
+      cb(null, 'video' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
 

@@ -6,7 +6,7 @@ const multerS3 = require('multer-s3')
 const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
-const PDFCtrl = require('../../controllers/pdf')
+const PDFCtrl = require('../../controllers/admin/pdf')
 const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../../controllers/error')
 
@@ -29,7 +29,7 @@ const storage = multerS3({
       const today = new Date()
       const year = today.getYear()
       const month = today.getMonth()
-      cb(null, year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
+      cb(null, 'pdf' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
 
