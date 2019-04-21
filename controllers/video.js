@@ -132,6 +132,7 @@ const getAll = async (req, res) => {
       error: 'Video doesn`t exist'
     })
   }
+  let _video_detail_list = []
 
   for(let i = 0; i < _video_list.length; i ++){
     const _video_detail = await VideoTracker.aggregate([

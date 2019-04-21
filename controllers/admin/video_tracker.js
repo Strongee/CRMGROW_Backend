@@ -50,7 +50,7 @@ const create = async(req, res) => {
       content: contact.first_name + ' checked video',
       contacts: _video_tracker.contact,
       user: currentUser.id,
-      type: 'video_tackers',
+      type: 'video_trackers',
       video_trackers: _video_tracker.id,
       created_at: new Date(),
       updated_at: new Date(),
