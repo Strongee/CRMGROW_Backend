@@ -235,6 +235,41 @@ const remove = async (req, res) => {
     }
 }
 
+const getHistory = async(req, res) => {
+  const { currentUser } = req
+  // const _activity_list = Activity.find({user: currentUser.id, video: req.params.id})
+  const _activity_list = await Activity.aggregate([
+    {
+      $lookup:
+        {
+        from:  'contacts',
+        localField: 'contacts',
+        foreignField: '_id',
+        as: "video_detail"
+        }
+    },
+    {
+      $match: { "video": req.params.id, "user": currentUser.id}
+    }
+  ])
+  for(let i = 0; i < _activity_list.length; i ++){
+    const _video_tracker = VideoTracker.find({contact: _activity_list[i].contact, video: req.params.id, user: currentUser.id})
+    _activity_list[i].video_tracker = _video_tracker;
+  }
+  if (_activity_list) {
+    res.send({
+      status: true,
+      data: {
+        data: _activity_list
+      }
+    })
+  } else {
+    res.status(404).send({
+      status: false,
+      error: 'Activity not found'
+    })
+  }
+}
 module.exports = {
     create,
     updateDetail,
@@ -242,5 +277,6 @@ module.exports = {
     getThumbnail,
     getAll,
     sendVideo,
-    remove
+    remove,
+    getHistory
 }
