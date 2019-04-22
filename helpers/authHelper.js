@@ -24,7 +24,7 @@ let oauth2 = require('simple-oauth2').create(credentials)
 
 module.exports = {
   getAuthUrl: function() {
-    let returnVal = oauth2.authCode.authorizeURL({
+    let returnVal = oauth2.authorizationCode.authorizeURL({
       redirect_uri: redirectUri,
       scope: scopes.join(' ')
     });
