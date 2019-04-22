@@ -4,6 +4,15 @@ const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const nodemailer = require('nodemailer')
+const sgMail = require('@sendgrid/mail')
+const AWS = require('aws-sdk')
+
+const ses = new AWS.SES({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_SES_REGION,
+  apiVersion: "2010-12-01"
+})
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -68,13 +77,80 @@ const signUp = async (req, res) => {
       //   })
       // });
 
-      myJSON = JSON.stringify(_res)
-      const data = JSON.parse(myJSON);
-      delete data.hash
-      delete data.salt
-      res.send({
-          status: true,
-          data
+    // const params = {
+    //   Destination: {
+    //     ToAddresses: ["no-reply@teamgrow.awsapps.com"] // Email address/addresses that you want to send your email
+    //   },
+    //   Message: {
+    //     Body: {
+    //       Html: {
+    //         // HTML Format of the email
+    //         Charset: "UTF-8",
+    //         Data:
+    //           "<html><body><h1>Hello" + _res.user_name + "</h1><p>Welcome to teamgrow</p></body></html>"
+    //       },
+    //       Text: {
+    //         Charset: "UTF-8",
+    //         Data: "Hello, Welcome to Teamgrow"
+    //       }
+    //     },
+    //     Subject: {
+    //       Charset: "UTF-8",
+    //       Data: "Teamgrow Web Services"
+    //     }
+    //   },
+    //   Source: process.env.WELCOME_BUSINESS_EMAIL
+    // };
+
+    // const sendEmail = ses.sendEmail(params).promise();
+
+    // sendEmail
+    //   .then(_email => {
+    //     console.log("email submitted to SES", _email);
+    //     myJSON = JSON.stringify(_res)
+    //     const data = JSON.parse(myJSON);
+    //     delete data.hash
+    //     delete data.salt
+    //     res.send({
+    //         status: true,
+    //         data
+    //     })
+    //   })
+    //   .catch(error => {
+    //     console.log(error);
+    //   })
+
+      sgMail.setApiKey(process.env.SENDGRID_KEY);
+      const msg = {
+        to: _res.email,
+        from: process.env.WELCOME_BUSINESS_EMAIL,
+        subject: process.env.WELCOME_SUBJECT,
+        text: process.env.WELCOME_CONTENT,
+        html: process.env.WELCOME_CONTENT
+      }
+
+      sgMail.send(msg).then((_msg) => {
+        if(_msg[0].statusCode >= 200 && _msg[0].statusCode < 400){ 
+          myJSON = JSON.stringify(_res)
+          const data = JSON.parse(myJSON);
+          delete data.hash
+          delete data.salt
+          res.send({
+              status: true,
+              data
+          })
+        }else {
+          res.status(404).send({
+            status: false,
+            error: _res[0].statusCode
+          })
+        }
+      }).catch ((e) => {
+        console.error(e)
+        res.status(500).send({
+          status: false,
+          error: 'internal_server_error'
+        })
       })
     })
     .catch(e => {
