@@ -10,13 +10,17 @@ let scopes = [
 ];
 
 let credentials = {
-  clientID: clientId,
-  clientSecret: clientSecret,
-  site: 'https://login.microsoftonline.com/common',
-  authorizationPath: '/oauth2/v2.0/authorize',
-  tokenPath: '/oauth2/v2.0/token'
+  client: {
+    id: clientId,
+    secret: clientSecret
+  },
+  auth: {
+    tokenHost: 'https://login.microsoftonline.com',
+    authorizePath: 'common/oauth2/v2.0/authorize',
+    tokenPath: 'common/oauth2/v2.0/token'
+  }
 }
-let oauth2 = require('simple-oauth2')(credentials)
+let oauth2 = require('simple-oauth2').create(credentials)
 
 module.exports = {
   getAuthUrl: function() {
