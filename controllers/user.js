@@ -6,6 +6,7 @@ const UserLog = require('../models/user_log')
 const nodemailer = require('nodemailer')
 const sgMail = require('@sendgrid/mail')
 const AWS = require('aws-sdk')
+const authHelper = require('../helpers/authHelper');
 
 const ses = new AWS.SES({
   accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -344,12 +345,33 @@ const resetPasswordByOld = async (req, res) => {
   })
 }
 
+const syncEmail = async (req, res) => {
+  const auth_url = authHelper.getAuthUrl()
+
+  if (!auth_url) {
+    return res.status(401).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  res.send({
+    status: true,
+    data: auth_url
+  })
+}
+
+const authorizedEmail = async(req, res) => {
+  console.log('req.query.code:', req.query.code)
+}
+
 module.exports = {
     signUp,
     login,
     getMe,
     editMe,
     resetPasswordByOld,
+    syncEmail,
+    authorizedEmail,
     checkAuth
 }
 

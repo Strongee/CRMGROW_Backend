@@ -4,7 +4,7 @@
 ### Dev  
 `npm run start:dev`
 ### Production
-`npm start`
+`npm run build`
 ### Required Env Variables
 
 Set these env variables in `/var/www/teamgrow/bakend_admin`.

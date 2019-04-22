@@ -35,4 +35,10 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
 
+// Synchronize with connected email
+router.get('/sync-email', UserCtrl.checkAuth, catchError(UserCtrl.syncEmail))
+
+// Email authorized
+router.get('/authorize', catchError(UserCtrl.authorizedEmail))
+
 module.exports = router
