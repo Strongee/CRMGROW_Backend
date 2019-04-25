@@ -4,7 +4,7 @@ const fs = require('fs')
 
 const File = require('../models/file')
 const { FILES_PATH } = require('../config/path')
-const { urls } = require('../constants/urls')
+const urls = require('../constants/urls')
 
 const create = async (req, res) => {
     if (req.file) {

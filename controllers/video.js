@@ -9,9 +9,9 @@ const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const { THUMBNAILS_PATH } = require('../config/path')
-const { urls } = require('../constants/urls')
-const { config } = require('../config/config')
-const { mail_contents } = require('../constants/mail_contents')
+const urls = require('../constants/urls')
+const config = require('../config/config')
+const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {
@@ -43,7 +43,6 @@ const updateDetail = async (req, res) => {
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
       const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
 
-      console.log('video', video)
       if (!video) {
         return res.status(401).json({
           status: false,

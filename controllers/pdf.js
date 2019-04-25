@@ -9,9 +9,9 @@ const Activity = require('../models/activity')
 const PDF = require('../models/pdf')
 const PDFTracker = require('../models/pdf_tracker')
 const { PREVIEW_PATH } = require('../config/path')
-const { urls } = require('../constants/urls')
-const { config } = require('../config/config')
-const { mail_contents } = require('../constants/mail_contents')
+const urls = require('../constants/urls')
+const config = require('../config/config')
+const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {

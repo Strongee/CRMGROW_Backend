@@ -4,9 +4,8 @@ const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const sgMail = require('@sendgrid/mail')
-const urls = require('../constants/urls')
-const { config } = require('../config/config')
-const { mail_contents } = require('../constants/mail_contents')
+const config = require('../config/config')
+const mail_contents = require('../constants/mail_contents')
 const simpleOauthModule = require('simple-oauth2')
 
 const signUp = async (req, res) => {

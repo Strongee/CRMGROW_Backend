@@ -1,4 +1,4 @@
-export const mail_contents = {
+const mail_contents = {
     WELCOME_SIGNUP: {
         MAIL: "support@teamgrow.awsapps.com",
         SUBJECT: "Welcome to Teamgrow",
@@ -13,3 +13,5 @@ export const mail_contents = {
         SUBJECT: "Thank you for your interest in EXP.  Please see below pdf link."
     }
 }
+
+module.exports = mail_contents;
