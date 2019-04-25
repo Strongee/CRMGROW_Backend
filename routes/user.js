@@ -35,10 +35,13 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
 
-// Synchronize with connected email
-router.get('/sync-email', UserCtrl.checkAuth, catchError(UserCtrl.syncEmail))
+// Synchronize with outlook email
+router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlookEmail))
 
 // Email authorized
-router.get('/authorize', catchError(UserCtrl.authorizedEmail))
+router.get('/authorize-outlook', catchError(UserCtrl.authorizedOutlookEmail))
+
+// Synchronize calender with connected outlook email
+router.get('/sync-calender', catchError(UserCtrl.authorizedOutlookEmail))
 
 module.exports = router

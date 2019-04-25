@@ -6,12 +6,9 @@
   "scripts": {
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",
-    "dev:test": "NODE_ENV=test npm run dev",
-    "start:test": "NODE_ENV=test npm run start",
     "lint": "eslint config controllers models routes",
     "lint-fix": "bash fixTab.sh && eslint config controllers models routes --fix",
-    "deploy": "pm2 deploy ecosystem.config.json staging --force",
-    "test": "rm -f /var/www/watog_api.com/test_watogDB.sqlite && NODE_ENV=test nyc --reporter=lcov ava test/**/*.test.js"
+    "deploy": "pm2 deploy ecosystem.config.json staging --force"
   },
   "repository": {
     "type": "git",

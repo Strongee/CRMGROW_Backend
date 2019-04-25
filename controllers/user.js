@@ -3,17 +3,9 @@ const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
-const nodemailer = require('nodemailer')
 const sgMail = require('@sendgrid/mail')
-const AWS = require('aws-sdk')
-const authHelper = require('../helpers/authHelper');
-
-const ses = new AWS.SES({
-  accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_SES_REGION,
-  apiVersion: "2010-12-01"
-})
+const urls = require('../constants/urls')
+const simpleOauthModule = require('simple-oauth2')
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -24,17 +16,6 @@ const signUp = async (req, res) => {
       })
     }
 
-    // const transporter = nodemailer.createTransport({
-    //   host: process.env.SMTP_DOMAIN,
-    //   port: process.env.SMTP_PORT || 587,
-    //   secure: !!process.env.SMTP_SECURE, // true for 465, false for other ports
-    //   auth: {
-    //     user: process.env.SMTP_USER, // generated ethereal user
-    //     pass: process.env.SMTP_PASS // generated ethereal password
-    //   }
-    // })
-    
-    // const hash = await bcrypt.hash(req.body.password, 8)
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
@@ -48,79 +29,6 @@ const signUp = async (req, res) => {
 
     user.save()
     .then(_res => {
-      // const msg = {
-      //   to: user.email,
-      //   from: process.env.BUSINESS_EMAIL,
-      //   subject: process.env.WELCOME_SUBJECT,
-      //   text: process.env.WELCOME_CONTENT,
-      //   html: process.env.WELCOME_CONTENT,
-      // };
-      
-      // transporter.sendMail(msg).then(() => {
-      //   myJSON = JSON.stringify(_res)
-      //     const data = JSON.parse(myJSON);
-      //     delete data.password
-      //     res.send({
-      //       status: true,
-      //       data
-      //     })
-      // }).catch(e => {
-      //   let errors
-      //   if (e.errors) {
-      //     errors = e.errors.map(err => {      
-      //       delete err.instance
-      //       return err
-      //     })
-      //   }
-      //   return res.status(500).send({
-      //     status: false,
-      //     error: errors || e
-      //   })
-      // });
-
-    // const params = {
-    //   Destination: {
-    //     ToAddresses: ["no-reply@teamgrow.awsapps.com"] // Email address/addresses that you want to send your email
-    //   },
-    //   Message: {
-    //     Body: {
-    //       Html: {
-    //         // HTML Format of the email
-    //         Charset: "UTF-8",
-    //         Data:
-    //           "<html><body><h1>Hello" + _res.user_name + "</h1><p>Welcome to teamgrow</p></body></html>"
-    //       },
-    //       Text: {
-    //         Charset: "UTF-8",
-    //         Data: "Hello, Welcome to Teamgrow"
-    //       }
-    //     },
-    //     Subject: {
-    //       Charset: "UTF-8",
-    //       Data: "Teamgrow Web Services"
-    //     }
-    //   },
-    //   Source: process.env.WELCOME_BUSINESS_EMAIL
-    // };
-
-    // const sendEmail = ses.sendEmail(params).promise();
-
-    // sendEmail
-    //   .then(_email => {
-    //     console.log("email submitted to SES", _email);
-    //     myJSON = JSON.stringify(_res)
-    //     const data = JSON.parse(myJSON);
-    //     delete data.hash
-    //     delete data.salt
-    //     res.send({
-    //         status: true,
-    //         data
-    //     })
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //   })
-
       sgMail.setApiKey(process.env.SENDGRID_KEY);
       const msg = {
         to: _res.email,
@@ -329,15 +237,20 @@ const resetPasswordByOld = async (req, res) => {
 
   const _user = req.currentUser
 
-  // Check password
-  if (!bcrypt.compareSync(old_password, _user.password.split(' ')[0])) {
-    return res.status(401).json({
-      status: false,
-      error: 'invalid_old_password'
-    })
-  }
+   // Check old password
+   const hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
+   if (hash != _user.hash) {
+     return res.status(401).json({
+       status: false,
+       error: 'Invalid old password!'
+     })
+   }
 
-  _user.password = await bcrypt.hash(new_password, 8)
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.pbkdf2Sync(new_password, salt, 10000, 512, 'sha512').toString('hex')
+
+  _user.salt = salt
+  _user.hash = hash
   await _user.save()
 
   res.send({
@@ -345,10 +258,37 @@ const resetPasswordByOld = async (req, res) => {
   })
 }
 
-const syncEmail = async (req, res) => {
-  const auth_url = authHelper.getAuthUrl()
+const syncOutlookEmail = async (req, res) => {
+  console.log('urls.EMAIL_AUTHORIZE_URL', urls.EMAIL_AUTHORIZE_URL)
+  const oauth2 = simpleOauthModule.create({
+    client: {
+      id: process.env.OUTLOOK_CLIENT_ID,
+      secret: process.env.OUTLOOK_CLIENT_SECRET,
+    },
+    auth: {
+      tokenHost: 'https://login.live.com',
+      tokenPath: '/oauth20_token.srf',
+      authorizePath: '/oauth20_authorize.srf',
+    },
+    options: {
+      authorizationMethod: 'body',
+    }
+  });
 
-  if (!auth_url) {
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://outlook.office.com/calendars.readwrite'
+  ];
+
+  // Authorization uri definition
+  const authorizationUri = oauth2.authorizationCode.authorizeURL({
+    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    scope: scopes.join(' '),
+  });
+
+  if (!authorizationUri) {
     return res.status(401).json({
       status: false,
       error: 'Client doesn`t exist'
@@ -356,12 +296,60 @@ const syncEmail = async (req, res) => {
   }
   res.send({
     status: true,
-    data: auth_url
+    data: authorizationUri
   })
 }
 
-const authorizedEmail = async(req, res) => {
-  console.log('req.query.code:', req.query.code)
+const authorizedOutlookEmail = async(req, res) => {
+  const user = req.currentUser
+  const code = req.query.code;
+  const options = {
+    code,
+    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+  };
+
+
+  try {
+    const result = await oauth2.authorizationCode.getToken(options);
+    console.log('The resulting token: ', result);
+
+    const outlook_token = oauth2.accessToken.create(result)
+    console.log('outlook_token', outlook_token)
+    console.log('access_token', outlook_token.token.access_token)
+    console.log('refresh_token', outlook_token.token.refresh_token)
+    user.outlook_token = outlook_token
+
+    user.save()
+    .then(_res => {
+        myJSON = JSON.stringify(_res)
+        const data = JSON.parse(myJSON)
+        delete data.password
+        res.send({
+          status: true,
+          data
+        })
+    })
+    .catch(e => {
+        let errors
+      if (e.errors) {
+        errors = e.errors.map(err => {      
+          delete err.instance
+          return err
+        })
+      }
+      return res.status(500).send({
+        status: false,
+        error: errors || e
+      })
+    });
+
+  } catch(error) {
+    console.error('Access Token Error', error.message);
+    return res.status(500).send({
+      status: false,
+      error: error.message
+    })
+  }
 }
 
 module.exports = {
@@ -370,8 +358,8 @@ module.exports = {
     getMe,
     editMe,
     resetPasswordByOld,
-    syncEmail,
-    authorizedEmail,
+    syncOutlookEmail,
+    authorizedOutlookEmail,
     checkAuth
 }
 
