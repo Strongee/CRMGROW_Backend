@@ -8,8 +8,10 @@ const User = require('../models/user')
 const Activity = require('../models/activity')
 const PDF = require('../models/pdf')
 const PDFTracker = require('../models/pdf_tracker')
-const { FILES_PATH } = require('../config/path')
 const { PREVIEW_PATH } = require('../config/path')
+const { urls } = require('../constants/urls')
+const { config } = require('../config/config')
+const { mail_contents } = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {
@@ -53,7 +55,7 @@ const updateDetail = async (req, res) => {
         pdf[key] = editData[key]
       }
 
-      pdf['preview'] = process.env.TEAMGROW_DOMAIN + '/api/pdf/preview/' + path.basename(file_path)
+      pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path) 
 
       pdf["updated_at"] = new Date()
 
@@ -153,14 +155,14 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {email, content, pdf, contact} = req.body
-  sgMail.setApiKey(process.env.SENDGRID_KEY);
+  const {email, content, pdf, pdf_title, contact} = req.body
+  sgMail.setApiKey(config.SENDGRID_KEY);
 
-  const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/pdf/?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id
+  const text =currentUser.user_name + 'sent pdf' + pdf_title + '\n' + urls.MATERIAL_VIEW_PDF_URL +'/material/view/pdf/?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id  + '\n' + content 
   const msg = {
     to: email,
-    from: currentUser.email,
-    subject: process.env.WELCOME_SEND_VIDEO_MESSAGE,
+    from: mail_contents.WELCOME_SEND_PDF.MAIL,
+    subject: mail_contents.WELCOME_SEND_PDF.SUBJECT,
     text: text,
     html: text
   }

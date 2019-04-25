@@ -13,17 +13,6 @@ const signUp = async (req, res) => {
     })
   }
 
-  // const transporter = nodemailer.createTransport({
-  //   host: process.env.SMTP_DOMAIN,
-  //   port: process.env.SMTP_PORT || 587,
-  //   secure: !!process.env.SMTP_SECURE, // true for 465, false for other ports
-  //   auth: {
-  //     user: process.env.SMTP_USER, // generated ethereal user
-  //     pass: process.env.SMTP_PASS // generated ethereal password
-  //   }
-  // })
-  
-  // const hash = await bcrypt.hash(req.body.password, 8)
   const password = req.body.password
   const salt = crypto.randomBytes(16).toString('hex')
   const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
@@ -38,35 +27,6 @@ const signUp = async (req, res) => {
 
   user.save()
   .then(_res => {
-    // const msg = {
-    //   to: user.email,
-    //   from: process.env.BUSINESS_EMAIL,
-    //   subject: process.env.WELCOME_SUBJECT,
-    //   text: process.env.WELCOME_CONTENT,
-    //   html: process.env.WELCOME_CONTENT,
-    // };
-    
-    // transporter.sendMail(msg).then(() => {
-    //   myJSON = JSON.stringify(_res)
-    //     const data = JSON.parse(myJSON);
-    //     delete data.password
-    //     res.send({
-    //       status: true,
-    //       data
-    //     })
-    // }).catch(e => {
-    //   let errors
-    //   if (e.errors) {
-    //     errors = e.errors.map(err => {      
-    //       delete err.instance
-    //       return err
-    //     })
-    //   }
-    //   return res.status(500).send({
-    //     status: false,
-    //     error: errors || e
-    //   })
-    // });
 
     myJSON = JSON.stringify(_res)
     const data = JSON.parse(myJSON);

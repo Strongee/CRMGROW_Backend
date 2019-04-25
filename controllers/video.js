@@ -8,8 +8,10 @@ const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
-const { FILES_PATH } = require('../config/path')
 const { THUMBNAILS_PATH } = require('../config/path')
+const { urls } = require('../constants/urls')
+const { config } = require('../config/config')
+const { mail_contents } = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 
 const create = async (req, res) => {
@@ -53,7 +55,7 @@ const updateDetail = async (req, res) => {
         video[key] = editData[key]
       }
 
-      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/video/thumbnail/' + path.basename(file_path)
+      video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
 
       video["updated_at"] = new Date()
 
@@ -164,14 +166,14 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, contact} = req.body
-  sgMail.setApiKey(process.env.SENDGRID_KEY);
+  const {email, content, video, video_title, contact} = req.body
+  sgMail.setApiKey(config.SENDGRID_KEY);
 
-  const text = content + '\n' + process.env.TEAMGROW_DOMAIN +'/material/view/video/?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
+  const text = currentUser.user_name + ' sent video ' + video_title + '\n' + urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '\n' + content 
   const msg = {
     to: email,
-    from: currentUser.email,
-    subject: process.env.WELCOME_SEND_VIDEO_MESSAGE,
+    from: mail_contents.WELCOME_SEND_VIDEO.MAIL,
+    subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
     text: text,
     html: text
   }

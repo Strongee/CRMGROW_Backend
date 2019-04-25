@@ -4,6 +4,7 @@ const fs = require('fs')
 
 const File = require('../models/file')
 const { FILES_PATH } = require('../config/path')
+const { urls } = require('../constants/urls')
 
 const create = async (req, res) => {
     if (req.file) {
@@ -19,7 +20,7 @@ const create = async (req, res) => {
           status: true,
           data: {
             file_name: req.file.filename,
-            url: process.env.TEAMGROW_DOMAIN + '/api/file/' + req.file.filename
+            url: urls.FILE_URL + req.file.filename
           }
         })
     }

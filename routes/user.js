@@ -36,7 +36,7 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
 
 // Synchronize with outlook email
-router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlookEmail))
+router.get('/sync-outlook', catchError(UserCtrl.syncOutlookEmail))
 
 // Email authorized
 router.get('/authorize-outlook', catchError(UserCtrl.authorizedOutlookEmail))

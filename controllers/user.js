@@ -5,6 +5,8 @@ const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
+const { config } = require('../config/config')
+const { mail_contents } = require('../constants/mail_contents')
 const simpleOauthModule = require('simple-oauth2')
 
 const signUp = async (req, res) => {
@@ -29,13 +31,13 @@ const signUp = async (req, res) => {
 
     user.save()
     .then(_res => {
-      sgMail.setApiKey(process.env.SENDGRID_KEY);
+      sgMail.setApiKey(config.SENDGRID_KEY);
       const msg = {
         to: _res.email,
-        from: process.env.WELCOME_BUSINESS_EMAIL,
-        subject: process.env.WELCOME_SUBJECT,
-        text: process.env.WELCOME_CONTENT,
-        html: process.env.WELCOME_CONTENT
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        subject: mail_contents.WELCOME_SIGNUP.SUBJECT,
+        text: mail_contents.WELCOME_SIGNUP.TEXT,
+        html: mail_contents.WELCOME_SIGNUP.TEXT
       }
 
       sgMail.send(msg).then((_msg) => {
@@ -128,7 +130,7 @@ const login = async (req, res) => {
 
   await user_log.save()
   // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, process.env.JWT_SECRET, {expiresIn: '1d'})
+  const token = jwt.sign({id:_user.id}, config.JWT_SECRET, {expiresIn: '1d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
   delete user.hash
@@ -149,7 +151,7 @@ const checkAuth = async (req, res, next) => {
     const token = req.get('Authorization')
     let decoded
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET)
+      decoded = jwt.verify(token, config.JWT_SECRET)
       const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
       console.info('Auth Success:', decoded, ip)
     } catch (err) {
@@ -238,8 +240,8 @@ const resetPasswordByOld = async (req, res) => {
   const _user = req.currentUser
 
    // Check old password
-   const hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
-   if (hash != _user.hash) {
+   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
+   if (old_hash != _user.hash) {
      return res.status(401).json({
        status: false,
        error: 'Invalid old password!'
@@ -259,11 +261,10 @@ const resetPasswordByOld = async (req, res) => {
 }
 
 const syncOutlookEmail = async (req, res) => {
-  console.log('urls.EMAIL_AUTHORIZE_URL', urls.EMAIL_AUTHORIZE_URL)
   const oauth2 = simpleOauthModule.create({
     client: {
-      id: process.env.OUTLOOK_CLIENT_ID,
-      secret: process.env.OUTLOOK_CLIENT_SECRET,
+      id: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+      secret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
     },
     auth: {
       tokenHost: 'https://login.live.com',
@@ -284,7 +285,7 @@ const syncOutlookEmail = async (req, res) => {
 
   // Authorization uri definition
   const authorizationUri = oauth2.authorizationCode.authorizeURL({
-    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    redirect_uri: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_EMAIL_AUTHORIZE_URL,
     scope: scopes.join(' '),
   });
 
@@ -305,7 +306,7 @@ const authorizedOutlookEmail = async(req, res) => {
   const code = req.query.code;
   const options = {
     code,
-    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    redirect_uri: config.OUTLOOK_CLIENT.EMAIL_AUTHORIZE_URL,
   };
 
 
