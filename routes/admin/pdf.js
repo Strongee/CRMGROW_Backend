@@ -9,7 +9,7 @@ const uuidv1 = require('uuid/v1')
 const PDFCtrl = require('../../controllers/admin/pdf')
 const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../../controllers/error')
-const config  = require('../config/config')
+const config  = require('../../config/config')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
