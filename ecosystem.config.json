@@ -16,13 +16,13 @@
     // Here you describe each environment
     "deploy" : {
       "staging" : {
-        "user" : "stronger",
+        "user" : "ubuntu",
         "key"  : "~/.ssh/id_rsa",
         // Multi host is possible, just by passing IPs/hostname as an array
         "host" : "3.14.73.71",
         "ssh_options": "StrictHostKeyChecking=no",
         // Branch
-        "ref"  : "origin/staging",
+        "ref"  : "origin/master",
         // Git repository to clone
         "repo" : "git@github.com:teamgrow/backend_admin.git",
         // Path of the application on target servers
