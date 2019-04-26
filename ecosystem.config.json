@@ -22,7 +22,7 @@
         "host" : "3.14.73.71",
         "ssh_options": "StrictHostKeyChecking=no",
         // Branch
-        "ref"  : "origin/master",
+        "ref"  : "origin/staging",
         // Git repository to clone
         "repo" : "git@github.com:teamgrow/backend_admin.git",
         // Path of the application on target servers
