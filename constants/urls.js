@@ -1,5 +1,3 @@
-const urls = () => {
-  let urls;
   if(process.env.NODE_ENV === 'production') {
     urls = {
       DOMAIN_URL: 'https://teamgrow.co/',
@@ -23,8 +21,5 @@ const urls = () => {
       MATERIAL_VIEW_PDF_URL: 'http://localhost:4200/material/view/pdf/'
     }
   }
-  return urls
-}
-
 
 module.exports = urls

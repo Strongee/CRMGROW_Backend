@@ -2,7 +2,7 @@ const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../../models/user')
-const nodemailer = require('nodemailer')
+const config = require('../../config/config')
 
 const signUp = async (req, res) => {
   const errors = validationResult(req)
@@ -97,7 +97,7 @@ const login = async (req, res) => {
 
 
   // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, process.env.JWT_SECRET, {expiresIn: '1d'})
+  const token = jwt.sign({id:_user.id}, config.JWT_SECRET, {expiresIn: '1d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
   delete user.hash
@@ -178,7 +178,7 @@ const checkAuth = async (req, res, next) => {
   const token = req.get('Authorization')
   let decoded
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET)
+    decoded = jwt.verify(token, config.JWT_SECRET)
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.info('Auth Success:', decoded, ip)
   } catch (err) {
@@ -204,6 +204,7 @@ const checkAuth = async (req, res, next) => {
 }
 
 const resetPasswordByOld = async (req, res) => {
+
   const { old_password, new_password } = req.body
 
   const errors = validationResult(req)
@@ -216,15 +217,20 @@ const resetPasswordByOld = async (req, res) => {
 
   const _user = req.currentUser
 
-  // Check password
-  if (!bcrypt.compareSync(old_password, _user.password.split(' ')[0])) {
-    return res.status(401).json({
-      status: false,
-      error: 'invalid_old_password'
-    })
-  }
+   // Check old password
+   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
+   if (old_hash != _user.hash) {
+     return res.status(401).json({
+       status: false,
+       error: 'Invalid old password!'
+     })
+   }
 
-  _user.password = await bcrypt.hash(new_password, 8)
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.pbkdf2Sync(new_password, salt, 10000, 512, 'sha512').toString('hex')
+
+  _user.salt = salt
+  _user.hash = hash
   await _user.save()
 
   res.send({
