@@ -11,7 +11,8 @@ const User = mongoose.model('user',{
      notification: Number,
      picture_profile: String,
      role: String,
-     outlook_token: String,
+     outlook_refresh_token: String,
+     connected_email: String,
      created_at: Date,
      updated_at: Date,
  });

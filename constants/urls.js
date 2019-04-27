@@ -1,8 +1,8 @@
-  if(process.env.NODE_ENV === 'production') {
+  if(process.env.NODE_ENV === 'production1') {
     urls = {
       DOMAIN_URL: 'http://18.220.168.230/',
       API_URL: 'http://18.220.168.230/api',
-      EMAIL_AUTHORIZE_URL: 'http://18.220.168.230/api/user/authorize-outlook',
+      EMAIL_AUTHORIZE_URL: 'http://18.220.168.230/profile',
       VIDEO_THUMBNAIL_URL:  'http://18.220.168.230/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://18.220.168.230/api/pdf/preview/',
       FILE_URL: 'http://18.220.168.230/api/file/',

@@ -5,8 +5,16 @@ const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const sgMail = require('@sendgrid/mail')
 const config = require('../config/config')
+const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
-const simpleOauthModule = require('simple-oauth2')
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token'
+}
+const oauth2 = require('simple-oauth2')(credentials)
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -132,11 +140,10 @@ const login = async (req, res) => {
   const token = jwt.sign({id:_user.id}, config.JWT_SECRET, {expiresIn: '1d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
+
   delete user.hash
   delete user.salt
 
-  // prevent user's password to be returned
-  delete user.password
   res.send({
     status: true,
     data: {
@@ -260,21 +267,7 @@ const resetPasswordByOld = async (req, res) => {
 }
 
 const syncOutlookEmail = async (req, res) => {
-  const oauth2 = simpleOauthModule.create({
-    client: {
-      id: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-      secret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
-    },
-    auth: {
-      tokenHost: 'https://login.live.com',
-      tokenPath: '/oauth20_token.srf',
-      authorizePath: '/oauth20_authorize.srf',
-    },
-    options: {
-      authorizationMethod: 'body',
-    }
-  });
-
+ 
   const scopes = [
     'openid',
     'profile',
@@ -283,10 +276,10 @@ const syncOutlookEmail = async (req, res) => {
   ];
 
   // Authorization uri definition
-  const authorizationUri = oauth2.authorizationCode.authorizeURL({
-    redirect_uri: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_EMAIL_AUTHORIZE_URL,
-    scope: scopes.join(' '),
-  });
+  const authorizationUri = oauth2.authCode.authorizeURL({
+    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    scope: scopes.join(' ')
+  })
 
   if (!authorizationUri) {
     return res.status(401).json({
@@ -302,54 +295,72 @@ const syncOutlookEmail = async (req, res) => {
 
 const authorizedOutlookEmail = async(req, res) => {
   const user = req.currentUser
-  const code = req.query.code;
-  const options = {
-    code,
-    redirect_uri: config.OUTLOOK_CLIENT.EMAIL_AUTHORIZE_URL,
-  };
-
-
-  try {
-    const result = await oauth2.authorizationCode.getToken(options);
-    console.log('The resulting token: ', result);
-
-    const outlook_token = oauth2.accessToken.create(result)
-    console.log('outlook_token', outlook_token)
-    console.log('access_token', outlook_token.token.access_token)
-    console.log('refresh_token', outlook_token.token.refresh_token)
-    user.outlook_token = outlook_token
-
-    user.save()
-    .then(_res => {
+  const code = req.query.code
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://outlook.office.com/calendars.readwrite'
+  ];
+  
+  oauth2.authCode.getToken({
+    code: code,
+    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    scope: scopes.join(' ')
+  }, function(error, result){
+    if (error) {
+      console.log('Access token error: ', error);
+    }
+    else {
+      const outlook_token = oauth2.accessToken.create(result)
+      user.outlook_refresh_token = outlook_token.token.refresh_token
+      
+      let token_parts = outlook_token.token.id_token.split('.');
+    
+      // Token content is in the second part, in urlsafe base64
+      let encoded_token = new Buffer(token_parts[1].replace('-', '+').replace('_', '/'), 'base64');
+    
+      let decoded_token = encoded_token.toString();
+    
+      let jwt = JSON.parse(decoded_token);
+    
+      // Email is in the preferred_username field
+      user.connected_email = jwt.preferred_username
+      
+      user.save()
+      .then(_res => {
         myJSON = JSON.stringify(_res)
         const data = JSON.parse(myJSON)
-        delete data.password
+        delete user.hash
+        delete user.salt
         res.send({
           status: true,
           data
         })
-    })
-    .catch(e => {
+      }).catch(e => {
         let errors
-      if (e.errors) {
-        errors = e.errors.map(err => {      
-          delete err.instance
-          return err
+        if (e.errors) {
+          errors = e.errors.map(err => {
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
         })
-      }
-      return res.status(500).send({
-        status: false,
-        error: errors || e
-      })
-    });
+      });
 
-  } catch(error) {
-    console.error('Access Token Error', error.message);
-    return res.status(500).send({
-      status: false,
-      error: error.message
-    })
-  }
+      return res.send({
+        status: true
+      })
+    }
+  })
+}
+
+const syncOutlookCalendar = async(req, res) => {
+  const user = req.currentUser
+
 }
 
 module.exports = {
@@ -360,6 +371,7 @@ module.exports = {
     resetPasswordByOld,
     syncOutlookEmail,
     authorizedOutlookEmail,
+    syncOutlookCalendar,
     checkAuth
 }
 
