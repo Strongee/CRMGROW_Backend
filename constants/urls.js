@@ -1,7 +1,7 @@
-  if(process.env.NODE_ENV === 'production1') {
+  if(process.env.NODE_ENV === 'production') {
     urls = {
       DOMAIN_URL: 'http://18.220.168.230/',
-      API_URL: 'http://18.220.168.230/api',
+      API_URL: 'http://18.220.168.230/api/',
       EMAIL_AUTHORIZE_URL: 'http://18.220.168.230/profile',
       VIDEO_THUMBNAIL_URL:  'http://18.220.168.230/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://18.220.168.230/api/pdf/preview/',
@@ -12,7 +12,7 @@
   } else {
     urls = {
       DOMAIN_URL: 'http://localhost:4200/',
-      API_URL: 'http://localhost:3000/api',
+      API_URL: 'http://localhost:3000/api/',
       EMAIL_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-outlook',
       VIDEO_THUMBNAIL_URL: 'http://localhost:3000/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://localhost:3000/api/pdf/preview/',

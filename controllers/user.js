@@ -326,41 +326,47 @@ const authorizedOutlookEmail = async(req, res) => {
     
       // Email is in the preferred_username field
       user.connected_email = jwt.preferred_username
+      user.connect_email_type = 'outlook'
       
       user.save()
       .then(_res => {
-        myJSON = JSON.stringify(_res)
-        const data = JSON.parse(myJSON)
-        delete user.hash
-        delete user.salt
-        res.send({
-          status: true,
-          data
-        })
-      }).catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
+          res.send({
+            status: true,
           })
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e
         })
-      });
-
-      return res.send({
-        status: true
-      })
+        .catch(e => {
+          let errors
+          if (e.errors) {
+            errors = e.errors.map(err => {      
+              delete err.instance
+              return err
+            })
+          }
+          return res.status(500).send({
+            status: false,
+            error: errors || e
+          })
+        });
     }
   })
 }
 
-const syncOutlookCalendar = async(req, res) => {
+const syncCalendar = async(req, res) => {
   const user = req.currentUser
+  
+  if( user.connected_email != undefined){
+    return res.status(401).json({
+      status: false,
+      error: 'Conneted email doesn`t exist'
+    })
+  }
 
+  user.connect_calendar = true
+
+  await user.save()
+  return res.send({
+    status: true
+  })
 }
 
 module.exports = {
@@ -371,7 +377,7 @@ module.exports = {
     resetPasswordByOld,
     syncOutlookEmail,
     authorizedOutlookEmail,
-    syncOutlookCalendar,
+    syncCalendar,
     checkAuth
 }
 
