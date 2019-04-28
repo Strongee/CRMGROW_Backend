@@ -1,7 +1,17 @@
 const { validationResult } = require('express-validator/check')
 const outlook = require('node-outlook')
+const moment = require('moment')
+const config = require('../config/config')
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token'
+}
+const oauth2 = require('simple-oauth2')(credentials)
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -13,7 +23,7 @@ const get = async(req, res) => {
 
   outlook.base.setAnchorMailbox(currentUser.connected_email);
   // Set the preferred time zone
-  outlook.base.setPreferredTimeZone(currentUser.time_zone);
+  //outlook.base.setPreferredTimeZone(currentUser.time_zone);
   
   // Calendar sync works on the CalendarView endpoint
   requestUrl = outlook.base.apiEndpoint() + '/Me/CalendarView';
@@ -37,15 +47,35 @@ const get = async(req, res) => {
       'odata.maxpagesize=5'
     ]
   };
-  
+
+
+  let token = oauth2.accessToken.create({ refresh_token: currentUser.refresh_token, expires_in: 0})
+  let accessToken
+  await new Promise((resolve, reject) => {
+    token.refresh(function(error, result) {
+      if (error) {
+        reject(error.message)
+      }
+      else {
+        resolve(result.token);
+      }
+    })
+  }).then((token)=>{
+    accessToken = token.access_token
+  }).catch((error) => {
+    console.log('error', error)
+  })
+
+  console.log('requestUrl', requestUrl)
+
+  console.log('accessToken', accessToken)
   let apiOptions = {
     url: requestUrl,
-    token: token,
+    token: accessToken,
     headers: headers,
     query: params
   };
   
-  console.log('here')
   outlook.base.makeApiCall(apiOptions, function(error, response) {
     if (error) {
       console.log(JSON.stringify(error))
@@ -55,8 +85,11 @@ const get = async(req, res) => {
       })
     } else {
         if (response.statusCode !== 200) {
-          console.log('API Call returned ' + response.statusCode)
-          res.send('API Call returned ' + response.statusCode)
+          console.log('API Call returned ' + JSON.stringify(response))
+          return res.status(500).send({
+            status: false,
+            error: response.statusCode
+          })
         }
         else {
           let nextLink = response.body['@odata.nextLink']
@@ -67,7 +100,18 @@ const get = async(req, res) => {
           if (deltaLink !== undefined) {
             console.log('deltaLink', deltaLink)
           }
-          const data = response.body.value
+          const _outlook_calendar_data_list = response.body.value
+          for(let i = 0; i< _outlook_calendar_data_list.length; i++){
+            let  _outlook_calendar_data = {}
+            _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
+            _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
+            _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
+            _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
+            _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
+            _outlook_calendar_data.guests = _outlook_calendar_data_list[i].Attendees
+            _outlook_calendar_data.type = 1
+            data.push(_outlook_calendar_data)
+          }
           res.send({
             status: true,
             data
@@ -76,18 +120,6 @@ const get = async(req, res) => {
       }
     });
   }
-
-  if (!data) {
-    return res.status(401).json({
-      status: false,
-      error: 'Appointment doesn`t exist'
-    })
-  }
-
-  res.send({
-    status: true,
-    data
-  })
 }
 
 const create = async(req, res) => {
@@ -103,6 +135,7 @@ const create = async(req, res) => {
   const appointment = new Appointment({
     ...req.body,
     user: currentUser.id,
+    type: 0,
     updated_at: new Date(),
     created_at: new Date(),
   })

@@ -309,11 +309,14 @@ const authorizedOutlookEmail = async(req, res) => {
     scope: scopes.join(' ')
   }, function(error, result){
     if (error) {
-      console.log('Access token error: ', error);
+      return res.status(500).send({
+        status: false,
+        error: error
+      })
     }
     else {
       const outlook_token = oauth2.accessToken.create(result)
-      user.outlook_refresh_token = outlook_token.token.refresh_token
+      user.refresh_token = outlook_token.token.refresh_token
       
       let token_parts = outlook_token.token.id_token.split('.');
     
@@ -354,7 +357,7 @@ const authorizedOutlookEmail = async(req, res) => {
 const syncCalendar = async(req, res) => {
   const user = req.currentUser
   
-  if( user.connected_email != undefined){
+  if( user.connected_email == undefined){
     return res.status(401).json({
       status: false,
       error: 'Conneted email doesn`t exist'
