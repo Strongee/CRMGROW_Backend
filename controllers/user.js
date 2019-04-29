@@ -15,6 +15,7 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
+const {google} = require('googleapis')
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -266,7 +267,7 @@ const resetPasswordByOld = async (req, res) => {
   })
 }
 
-const syncOutlookEmail = async (req, res) => {
+const syncOutlook = async (req, res) => {
  
   const scopes = [
     'openid',
@@ -277,7 +278,7 @@ const syncOutlookEmail = async (req, res) => {
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
-    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    redirect_uri: urls.OUTLOOK_AUTHORIZE_URL,
     scope: scopes.join(' ')
   })
 
@@ -293,7 +294,7 @@ const syncOutlookEmail = async (req, res) => {
   })
 }
 
-const authorizedOutlookEmail = async(req, res) => {
+const authorizeOutlook = async(req, res) => {
   const user = req.currentUser
   const code = req.query.code
   const scopes = [
@@ -305,7 +306,7 @@ const authorizedOutlookEmail = async(req, res) => {
   
   oauth2.authCode.getToken({
     code: code,
-    redirect_uri: urls.EMAIL_AUTHORIZE_URL,
+    redirect_uri: urls.OUTLOOK_AUTHORIZE_URL,
     scope: scopes.join(' ')
   }, function(error, result){
     if (error) {
@@ -335,6 +336,7 @@ const authorizedOutlookEmail = async(req, res) => {
       .then(_res => {
           res.send({
             status: true,
+            data: user.connected_email
           })
         })
         .catch(e => {
@@ -351,6 +353,95 @@ const authorizedOutlookEmail = async(req, res) => {
           })
         });
     }
+  })
+}
+
+const syncGmail = async(req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  );
+  
+  // generate a url that asks permissions for Blogger and Google Calendar scopes
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile'
+  ];
+  
+  const authorizationUri = oauth2Client.generateAuthUrl({
+    // 'online' (default) or 'offline' (gets refresh_token)
+    access_type: 'offline',
+  
+    // If you only need one scope you can pass it as a string
+    scope: scopes
+  });
+
+  if (!authorizationUri) {
+    return res.status(401).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  res.send({
+    status: true,
+    data: authorizationUri
+  })
+}
+
+const authorizeGmail = async(req, res) => {
+  const user = req.currentUser
+  const code = req.query.code
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  );
+  
+  const {tokens} = await oauth2Client.getToken(code)
+  oauth2Client.setCredentials(tokens)
+
+  user.refresh_token = JSON.stringify(tokens)
+  
+ 
+  if (!tokens) {
+    return res.status(401).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+
+  let oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2'
+  })
+
+  oauth2.userinfo.v2.me.get(function(err, _res) {
+    // Email is in the preferred_username field
+    user.connected_email = _res.data.email
+    user.connect_email_type = 'gmail'
+    
+    user.save()
+    .then(_res => {
+      res.send({
+        status: true,
+        data: user.connected_email
+      })
+    })
+    .catch(e => {
+      let errors
+      if (e.errors) {
+        errors = e.errors.map(err => {
+          delete err.instance
+          return err
+        })
+      }
+      return res.status(500).send({
+        status: false,
+        error: errors || e
+      })
+    });
   })
 }
 
@@ -372,14 +463,17 @@ const syncCalendar = async(req, res) => {
   })
 }
 
+
 module.exports = {
     signUp,
     login,
     getMe,
     editMe,
     resetPasswordByOld,
-    syncOutlookEmail,
-    authorizedOutlookEmail,
+    syncOutlook,
+    authorizeOutlook,
+    syncGmail,
+    authorizeGmail,
     syncCalendar,
     checkAuth
 }

@@ -36,10 +36,16 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
 
 // Synchronize with outlook email
-router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlookEmail))
+router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlook))
 
-// Email authorized
-router.get('/authorize-outlook', UserCtrl.checkAuth, catchError(UserCtrl.authorizedOutlookEmail))
+// Synchronize with gmail
+router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail))
+
+// Outlook Email authorization
+router.get('/authorize-outlook', UserCtrl.checkAuth, catchError(UserCtrl.authorizeOutlook))
+
+// Gmail authorized
+router.get('/authorize-gmail', UserCtrl.checkAuth, catchError(UserCtrl.authorizeGmail))
 
 // Synchronize calendar with connected outlook email
 router.get('/sync-calendar', UserCtrl.checkAuth, catchError(UserCtrl.syncCalendar))

@@ -2,7 +2,8 @@
     urls = {
       DOMAIN_URL: 'http://18.220.168.230/',
       API_URL: 'http://18.220.168.230/api/',
-      EMAIL_AUTHORIZE_URL: 'http://18.220.168.230/profile',
+      OUTLOOK_AUTHORIZE_URL: 'http://18.220.168.230/profile/outlook/',
+      GMAIL_AUTHORIZE_URL: 'http://18.220.168.230/profile/gmail/',
       VIDEO_THUMBNAIL_URL:  'http://18.220.168.230/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://18.220.168.230/api/pdf/preview/',
       FILE_URL: 'http://18.220.168.230/api/file/',
@@ -13,7 +14,8 @@
     urls = {
       DOMAIN_URL: 'http://localhost:4200/',
       API_URL: 'http://localhost:3000/api/',
-      EMAIL_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-outlook',
+      OUTLOOK_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-outlook',
+      GMAIL_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-gmail',
       VIDEO_THUMBNAIL_URL: 'http://localhost:3000/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://localhost:3000/api/pdf/preview/',
       FILE_URL: 'http://localhost:3000/api/file/',
