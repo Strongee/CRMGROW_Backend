@@ -19,7 +19,7 @@
         "user" : "ubuntu",
         "key"  : "~/.ssh/id_rsa",
         // Multi host is possible, just by passing IPs/hostname as an array
-        "host" : "3.14.73.71",
+        "host" : "3.18.217.108",
         // Branch
         "ref"  : "origin/master",
         // Git repository to clone
