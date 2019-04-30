@@ -463,6 +463,23 @@ const syncCalendar = async(req, res) => {
   })
 }
 
+const disconnectCalendar = async(req, res) => {
+  const user = req.currentUser
+  
+  if( user.connected_email == undefined){
+    return res.status(401).json({
+      status: false,
+      error: 'Conneted email doesn`t exist'
+    })
+  }
+
+  user.connect_calendar = false
+
+  await user.save()
+  return res.send({
+    status: true
+  })
+}
 module.exports = {
     signUp,
     login,
@@ -474,6 +491,7 @@ module.exports = {
     syncGmail,
     authorizeGmail,
     syncCalendar,
+    disconnectCalendar,
     checkAuth
 }
 
