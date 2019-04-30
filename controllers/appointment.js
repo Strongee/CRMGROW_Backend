@@ -20,7 +20,7 @@ const get = async(req, res) => {
 
   if(currentUser.connect_calendar){
   
-    if(currentUser.connected_email == 'outlook'){
+    if(currentUser.connected_email_type == 'outlook'){
       outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
       outlook.base.setAnchorMailbox(currentUser.connected_email);

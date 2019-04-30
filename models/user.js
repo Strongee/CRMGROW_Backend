@@ -12,7 +12,7 @@ const User = mongoose.model('user',{
      picture_profile: String,
      role: String,
      refresh_token: String,
-     connect_email_type: String,
+     connected_email_type: String,
      connect_calendar: Boolean,
      connected_email: String,
      created_at: Date,

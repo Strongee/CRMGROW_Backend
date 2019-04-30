@@ -330,7 +330,7 @@ const authorizeOutlook = async(req, res) => {
     
       // Email is in the preferred_username field
       user.connected_email = jwt.preferred_username
-      user.connect_email_type = 'outlook'
+      user.connected_email_type = 'outlook'
       
       user.save()
       .then(_res => {
@@ -420,7 +420,7 @@ const authorizeGmail = async(req, res) => {
   oauth2.userinfo.v2.me.get(function(err, _res) {
     // Email is in the preferred_username field
     user.connected_email = _res.data.email
-    user.connect_email_type = 'gmail'
+    user.connected_email_type = 'gmail'
     
     user.save()
     .then(_res => {
