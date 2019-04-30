@@ -9,18 +9,19 @@ const uuidv1 = require('uuid/v1')
 const VideoCtrl = require('../../controllers/admin/video')
 const UserCtrl = require('../../controllers/user')
 const { catchError } = require('../../controllers/error')
+const config  = require('../../config/config')
 
 const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION
 })
 
 const router = express.Router()
 
 const storage = multerS3({
     s3: s3,
-    bucket: process.env.BUCKET_NAME,
+    bucket: config.AWS.AWS_S3_BUCKET_NAME,
     acl: 'public-read',
     metadata: function (req, file, cb) {
       cb(null, {fieldName: file.fieldname});

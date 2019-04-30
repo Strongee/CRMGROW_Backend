@@ -8,7 +8,10 @@ const config = {
     OUTLOOK_CLIENT: {
         OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID ||'cf34076b-4bb2-4eef-8fdb-a7d7f2376095',
         OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET || 'pzckCYYXIL27}-]snkJ059)',
-        OUTLOOK_CLIENT_EMAIL_AUTHORIZE_URL: process.env.OUTLOOK_CLIENT_EMAIL_AUTHORIZE_URL || 'http://localhost:3000/api/user/authorize-outlook'
+    },
+    GMAIL_CLIENT: {
+        GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID ||'1041066082390-tu3lr856iut1ldd7ohrs33cdc4kubfb9.apps.googleusercontent.com',
+        GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || 't3jCOrRag5Kxf3JCOAWWE6Gt'  
     },
     JWT_SECRET: process.env.JWT_SECRET || 'THIS IS USED TO SIGN AND VERIFY JWT TOKENS',
     SENDGRID_KEY: process.env.SENDGRID_KEY || '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',
