@@ -1,14 +1,14 @@
   if(process.env.NODE_ENV === 'production') {
     urls = {
-      DOMAIN_URL: 'http://3.14.73.71/',
-      API_URL: 'http://3.14.73.71/api/',
-      OUTLOOK_AUTHORIZE_URL: 'http://3.14.73.71/profile/outlook/',
-      GMAIL_AUTHORIZE_URL: 'http://3.14.73.71/profile/gmail/',
-      VIDEO_THUMBNAIL_URL:  'http://3.14.73.71/api/video/thumbnail/',
-      PDF_PREVIEW_URL: 'http://3.14.73.71/api/pdf/preview/',
-      FILE_URL: 'http://3.14.73.71/api/file/',
-      MATERIAL_VIEW_VIDEO_URL: 'http://3.14.73.71/material/view/video/',
-      MATERIAL_VIEW_PDF_URL: 'http://3.14.73.71/material/view/pdf/'
+      DOMAIN_URL: 'https://teamgrow.co/',
+      API_URL: 'https://teamgrow.co/api/',
+      OUTLOOK_AUTHORIZE_URL: 'https://teamgrow.co/profile/outlook/',
+      GMAIL_AUTHORIZE_URL: 'https://teamgrow.co/profile/gmail/',
+      VIDEO_THUMBNAIL_URL:  'https://teamgrow.co/api/video/thumbnail/',
+      PDF_PREVIEW_URL: 'https://teamgrow.co/api/pdf/preview/',
+      FILE_URL: 'https://teamgrow.co/api/file/',
+      MATERIAL_VIEW_VIDEO_URL: 'https://teamgrow.co/material/view/video/',
+      MATERIAL_VIEW_PDF_URL: 'https://teamgrow.co/material/view/pdf/'
     }
   } else {
     urls = {
