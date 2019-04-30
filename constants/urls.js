@@ -1,14 +1,14 @@
   if(process.env.NODE_ENV === 'production') {
     urls = {
-      DOMAIN_URL: 'http://18.220.168.230/',
-      API_URL: 'http://18.220.168.230/api/',
-      OUTLOOK_AUTHORIZE_URL: 'http://18.220.168.230/profile/outlook/',
-      GMAIL_AUTHORIZE_URL: 'http://18.220.168.230/profile/gmail/',
-      VIDEO_THUMBNAIL_URL:  'http://18.220.168.230/api/video/thumbnail/',
-      PDF_PREVIEW_URL: 'http://18.220.168.230/api/pdf/preview/',
-      FILE_URL: 'http://18.220.168.230/api/file/',
-      MATERIAL_VIEW_VIDEO_URL: 'http://18.220.168.230/material/view/video/',
-      MATERIAL_VIEW_PDF_URL: 'http://18.220.168.230/material/view/pdf/'
+      DOMAIN_URL: 'http://3.14.73.71/',
+      API_URL: 'http://3.14.73.71/api/',
+      OUTLOOK_AUTHORIZE_URL: 'http://3.14.73.71/profile/outlook/',
+      GMAIL_AUTHORIZE_URL: 'http://3.14.73.71/profile/gmail/',
+      VIDEO_THUMBNAIL_URL:  'http://3.14.73.71/api/video/thumbnail/',
+      PDF_PREVIEW_URL: 'http://3.14.73.71/api/pdf/preview/',
+      FILE_URL: 'http://3.14.73.71/api/file/',
+      MATERIAL_VIEW_VIDEO_URL: 'http://3.14.73.71/material/view/video/',
+      MATERIAL_VIEW_PDF_URL: 'http://3.14.73.71/material/view/pdf/'
     }
   } else {
     urls = {
