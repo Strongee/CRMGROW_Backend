@@ -165,16 +165,22 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, video_title, contact} = req.body
+  const {email, content, video, contact, contact_name} = req.body
   sgMail.setApiKey(config.SENDGRID_KEY);
 
-  const text = currentUser.user_name + ' sent video ' + video_title + '\n' + urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '\n' + content 
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
     to: email,
     from: mail_contents.WELCOME_SEND_VIDEO.MAIL,
     subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
-    text: text,
-    html: text
+    templateId: config.SENDGRID_VIDEO_TEMPLATE,
+    dynamic_template_data: {
+      subject: 'sent video from Teamgrow',
+      first_name: contact_name,
+      content: content,
+      video_link: video_link,
+      email_signature: currentUser.email_signature,
+    },
   }
 
   sgMail.send(msg).then((_res) => {

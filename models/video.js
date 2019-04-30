@@ -6,6 +6,7 @@ const Video = mongoose.model('video',{
     description: String,
     thumbnail: String,
     type: String,
+    duration: Number,
     url: String,
     role: String,
     created_at: Date,

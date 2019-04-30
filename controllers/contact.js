@@ -195,57 +195,84 @@ const sendBatch = async(req, res) => {
   sgMail.setApiKey(config.SENDGRID_KEY);
 
   const {currentUser} = req
-  const {email_list, subject, content} = req.body
-  let promisall = []
+  const {cc, bcc, to, subject, content} = req.body
   
-  email_list.forEach((email) => {
-      const msg = {
-          from: currentUser.email,
-          subject: subject,
-          text: content,
-          html: content,
-          personalizations: [{
-            to: email.to,
-            cc: email.cc,
-            bcc: email.bcc
-        }]
-      };
+  const msg = {
+    from: currentUser.email,
+    subject: subject,
+    to: to,
+    cc: cc,
+    bcc: bcc,
+    text: content,
+    html: content,
+  };
       
-      // Send msg to each email
-
-      promisall.push(new Promise((resolve, reject) => {
-          sgMail.send(msg).then((res) => {
-              console.log('mailres.errorcode', res[0].statusCode);
-              if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-                resolve('Successful send to '+msg.to)
-              }else {
-                  reject(res[0].statusCode)
-              }
-          }).catch(error => { 
-              reject(error);
-          }); 
-      }));
-  });
-
-  Promise.all(promisall).then((data) => {
-    res.send({
-      status: true,
-      data
-    })
-  }).catch(e => {
-    console.log(e)
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
+  sgMail.send(msg).then((_res) => {
+    console.log('mailres.errorcode', _res[0].statusCode);
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+      return res.send({
+        status: true
+      })     
+    }else {
+      res.status(404).send({
+        status: false,
+        error: _res[0].statusCode
       })
     }
-    return res.status(500).send({
+  }).catch ((e) => {
+    console.error(e)
+    res.status(500).send({
       status: false,
-      error: errors || e
+      error: 'internal_server_error'
     })
-  });
+  })
+
+  // email.forEach((email) => {
+  //     const msg = {
+  //         from: currentUser.email,
+  //         subject: subject,
+  //         to: to,
+  //         cc: cc,
+  //         bcc: bcc,
+  //         text: content,
+  //         html: content,
+  //     };
+      
+  //     // Send msg to each email
+
+  //     promisall.push(new Promise((resolve, reject) => {
+  //         sgMail.send(msg).then((res) => {
+  //             console.log('mailres.errorcode', res[0].statusCode);
+  //             if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+  //               resolve('Successful send to '+msg.to)
+  //             }else {
+  //                 reject(res[0].statusCode)
+  //             }
+  //         }).catch(error => { 
+  //             reject(error);
+  //         }); 
+  //     }));
+  // });
+
+  // Promise.all(promisall).then((data) => {
+  //   res.send({
+  //     status: true,
+  //     data
+  //   })
+  // }).catch(e => {
+  //   console.log(e)
+  //     let errors
+  //   if (e.errors) {
+  //     errors = e.errors.map(err => {      
+  //       delete err.instance
+  //       return err
+  //     })
+  //   }
+  //   return res.status(500).send({
+  //     status: false,
+  //     error: errors || e
+  //   })
+  // });
 }
 
 module.exports = {

@@ -138,7 +138,7 @@ const login = async (req, res) => {
 
   await user_log.save()
   // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, config.JWT_SECRET, {expiresIn: '1d'})
+  const token = jwt.sign({id:_user.id}, config.JWT_SECRET)
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 
@@ -462,7 +462,6 @@ const syncCalendar = async(req, res) => {
     status: true
   })
 }
-
 
 module.exports = {
     signUp,
