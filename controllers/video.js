@@ -175,9 +175,10 @@ const sendVideo = async (req, res) => {
     subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
     templateId: config.SENDGRID_VIDEO_TEMPLATE,
     dynamic_template_data: {
-      subject: 'sent video from Teamgrow',
+      subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
       first_name: contact_name,
       content: content,
+      html: '<p>Here’s an attachment for you!</p>',
       video_link: video_link,
       email_signature: currentUser.email_signature,
     },
