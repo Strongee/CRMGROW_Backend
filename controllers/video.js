@@ -173,15 +173,7 @@ const sendVideo = async (req, res) => {
     to: email,
     from: mail_contents.WELCOME_SEND_VIDEO.MAIL,
     subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
-    templateId: config.SENDGRID_VIDEO_TEMPLATE,
-    dynamic_template_data: {
-      subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
-      first_name: contact_name,
-      content: content,
-      html: '<p>Here’s an attachment for you!</p>',
-      video_link: video_link,
-      email_signature: currentUser.email_signature,
-    },
+    html: '<p>Test data</p>' + '<a href="'+ video_link + '"></a>' + currentUser.email_signature,
   }
 
   sgMail.send(msg).then((_res) => {
