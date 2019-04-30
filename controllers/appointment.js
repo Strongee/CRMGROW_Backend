@@ -110,7 +110,7 @@ const get = async(req, res) => {
                 _outlook_calendar_data.type = 1
                 data.push(_outlook_calendar_data)
               }
-              res.send({
+              return res.send({
                 status: true,
                 data
               })
@@ -122,8 +122,7 @@ const get = async(req, res) => {
         config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
-      );
-
+      )
       oauth2Client.setCredentials(JSON.parse(currentUser.refresh_token)) 
       calendarList(oauth2Client, data, res)
     }
