@@ -2,8 +2,8 @@
     urls = {
       DOMAIN_URL: 'https://teamgrow.co/',
       API_URL: 'https://teamgrow.co/api/',
-      OUTLOOK_AUTHORIZE_URL: 'https://teamgrow.co/profile/outlook/',
-      GMAIL_AUTHORIZE_URL: 'https://teamgrow.co/profile/gmail/',
+      OUTLOOK_AUTHORIZE_URL: 'https://teamgrow.co/profile/outlook',
+      GMAIL_AUTHORIZE_URL: 'https://teamgrow.co/profile/gmail',
       VIDEO_THUMBNAIL_URL:  'https://teamgrow.co/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'https://teamgrow.co/api/pdf/preview/',
       FILE_URL: 'https://teamgrow.co/api/file/',
