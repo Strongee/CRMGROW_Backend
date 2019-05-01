@@ -226,53 +226,6 @@ const sendBatch = async(req, res) => {
       error: 'internal_server_error'
     })
   })
-
-  // email.forEach((email) => {
-  //     const msg = {
-  //         from: currentUser.email,
-  //         subject: subject,
-  //         to: to,
-  //         cc: cc,
-  //         bcc: bcc,
-  //         text: content,
-  //         html: content,
-  //     };
-      
-  //     // Send msg to each email
-
-  //     promisall.push(new Promise((resolve, reject) => {
-  //         sgMail.send(msg).then((res) => {
-  //             console.log('mailres.errorcode', res[0].statusCode);
-  //             if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-  //               resolve('Successful send to '+msg.to)
-  //             }else {
-  //                 reject(res[0].statusCode)
-  //             }
-  //         }).catch(error => { 
-  //             reject(error);
-  //         }); 
-  //     }));
-  // });
-
-  // Promise.all(promisall).then((data) => {
-  //   res.send({
-  //     status: true,
-  //     data
-  //   })
-  // }).catch(e => {
-  //   console.log(e)
-  //     let errors
-  //   if (e.errors) {
-  //     errors = e.errors.map(err => {      
-  //       delete err.instance
-  //       return err
-  //     })
-  //   }
-  //   return res.status(500).send({
-  //     status: false,
-  //     error: errors || e
-  //   })
-  // });
 }
 
 module.exports = {

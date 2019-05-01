@@ -126,6 +126,11 @@ const get = async(req, res) => {
       oauth2Client.setCredentials(JSON.parse(currentUser.refresh_token)) 
       calendarList(oauth2Client, data, res)
     }
+  }else{
+    return res.send({
+      status: true,
+      data
+    })
   }
 }
 
@@ -143,7 +148,7 @@ const calendarList = (auth, data, res) => {
       const events = _res.data.items
       console.log('events', events) 
       if (events.length) {
-        events.map((event, i) => {
+        events.map((event) => {
           let _gmail_calendar_data = {}
                 _gmail_calendar_data.title = event.summary
                 _gmail_calendar_data.description = event.description

@@ -463,7 +463,7 @@ const syncCalendar = async(req, res) => {
   })
 }
 
-const disconnectCalendar = async(req, res) => {
+const disconCalendar = async(req, res) => {
   const user = req.currentUser
   
   if( user.connected_email == undefined){
@@ -491,7 +491,7 @@ module.exports = {
     syncGmail,
     authorizeGmail,
     syncCalendar,
-    disconnectCalendar,
+    disconCalendar,
     checkAuth
 }
 
