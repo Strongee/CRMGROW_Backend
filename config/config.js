@@ -2,7 +2,7 @@ const config = {
     AWS: {
         AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || 'AKIAIPDV6KY3JESFG6WQ',
         AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || '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',
-        AWS_S3_REGION: process.env.AWS_S3_REGION || 'Ohio',
+        AWS_S3_REGION: process.env.AWS_S3_REGION || 'us-east-2',
         AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || 'teamgrow'
     },
     OUTLOOK_CLIENT: {

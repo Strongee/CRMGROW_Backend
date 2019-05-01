@@ -27,6 +27,9 @@ const storage = multerS3({
       cb(null, {fieldName: file.fieldname});
     },
     key: function (req, file, cb) {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
       cb(null, 'video' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
     },
   })
