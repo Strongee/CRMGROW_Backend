@@ -4,7 +4,7 @@
   "description": "Teamgrow backend",
   "main": "app.js",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "NODE_ENV=production node ./bin/www",
     "dev": "nodemon ./bin/www",
     "lint": "eslint config controllers models routes",
     "lint-fix": "bash fixTab.sh && eslint config controllers models routes --fix",
