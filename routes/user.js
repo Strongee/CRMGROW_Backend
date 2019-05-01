@@ -51,6 +51,6 @@ router.get('/authorize-gmail', UserCtrl.checkAuth, catchError(UserCtrl.authorize
 router.get('/sync-calendar', UserCtrl.checkAuth, catchError(UserCtrl.syncCalendar))
 
 // Synchronize calendar with connected outlook email
-router.get('/disconnect-calendar', UserCtrl.checkAuth, catchError(UserCtrl.disconnectCalendar))
+router.get('/discon-calendar', UserCtrl.checkAuth, catchError(UserCtrl.disconnectCalendar))
 
 module.exports = router
