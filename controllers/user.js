@@ -458,13 +458,9 @@ const syncCalendar = async(req, res) => {
     })
   }
 
-  user.connect_calendar = true
-  await user.save()
-
   if(user.connected_email_type == 'outlook'){
     const _appointments = await Appointment.find({user: user.id})
     for( let i = 0; i < _appointments.length; i ++ ) {
-      console.log('_appointments[i].timezone', user.time_zone)
       let newEvent = {
           "Subject": _appointments[i].title,
           "Body": {
@@ -476,9 +472,6 @@ const syncCalendar = async(req, res) => {
           },
           "Start": _appointments[i].due_start,
           "End": _appointments[i].due_end,
-          "StartTimeZone": 'UTC' + user.time_zone,
-          "StartTimeZone": 'UTC' + user.time_zone,
-          "Attendees": _appointments[i].guests
       };
 
       let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
@@ -502,8 +495,20 @@ const syncCalendar = async(req, res) => {
           token: accessToken,
           event: newEvent
       }
-      outlook.calendar.createEvent(createEventParameters, function (error, event) {})
+      outlook.calendar.createEvent(createEventParameters, function (error, event) {
+        if (error) {
+          console.log('There was an error contacting the Calendar service: ' + error);
+          return;
+        }
+        console.log('event', event.Id)
+        _appointments[i].event_id = event.Id
+        _appointments[i].save()
+      })
     }
+
+    user.connect_calendar = true
+    await user.save()
+  
     return res.send({
       status: true
     })
@@ -514,11 +519,11 @@ const syncCalendar = async(req, res) => {
       urls.GMAIL_AUTHORIZE_URL
     )
     oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
-    calendarAdd(oauth2Client, res)
+    addCalendar(oauth2Client, user, res)
   }
 }
 
-const calendarAdd = async (auth, res) => {
+const addCalendar = async (auth, user, res) => {
   const calendar = google.calendar({version: 'v3', auth})
   const _appointments = await Appointment.find({user: user.id})
   for( let i = 0; i < _appointments.length; i ++ ) {
@@ -534,7 +539,6 @@ const calendarAdd = async (auth, res) => {
         'dateTime': _appointments[i].due_end,
         'timeZone': 'UTC' + user.time_zone,
       },
-      'attendees': _appointments[i].guests
     }
     calendar.events.insert({
       auth: auth,
@@ -548,6 +552,9 @@ const calendarAdd = async (auth, res) => {
       console.log('event', event)
     })
   }
+  user.connect_calendar = true
+  await user.save()
+
   return res.send({
     status: true
   })
@@ -563,6 +570,42 @@ const disconCalendar = async(req, res) => {
     })
   }
 
+  if( user.connected_email_type == 'outlook' ){
+    const _appointments = await Appointment.find({user: user.id})
+    for( let i = 0; i < _appointments.length; i ++ ) {
+      let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+        let accessToken
+
+        await new Promise((resolve, reject) => {
+          token.refresh(function(error, result) {
+            if (error) {
+              reject(error.message)
+            }
+            else {
+              resolve(result.token);
+            }
+          })
+        }).then((token)=>{
+          accessToken = token.access_token
+        }).catch((error) => {
+          console.log('error', error)
+        })
+        
+        console.log('appointments[i]._id', _appointments[i].event_id)
+        let deleteEventParameters = {
+          token: accessToken,
+          eventId: _appointments[i].event_id
+        };
+      
+      outlook.calendar.deleteEvent(deleteEventParameters, function(error, event) {
+        if (error) {
+          console.log(error);
+        }
+      });
+    }
+  }else{
+
+  }
   user.connect_calendar = false
 
   await user.save()
