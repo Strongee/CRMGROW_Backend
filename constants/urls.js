@@ -14,8 +14,8 @@
     urls = {
       DOMAIN_URL: 'http://localhost:4200/',
       API_URL: 'http://localhost:3000/api/',
-      OUTLOOK_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-outlook',
-      GMAIL_AUTHORIZE_URL: 'http://localhost:3000/api/user/authorize-gmail',
+      OUTLOOK_AUTHORIZE_URL: 'http://localhost:4200/profile/outlook',
+      GMAIL_AUTHORIZE_URL: 'http://localhost:4200/profile/gmail',
       VIDEO_THUMBNAIL_URL: 'http://localhost:3000/api/video/thumbnail/',
       PDF_PREVIEW_URL: 'http://localhost:3000/api/pdf/preview/',
       FILE_URL: 'http://localhost:3000/api/file/',

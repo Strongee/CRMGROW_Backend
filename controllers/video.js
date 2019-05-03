@@ -165,15 +165,15 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, contact, contact_name} = req.body
+  const {email, content, video, video_title, contact, contact_name} = req.body
   sgMail.setApiKey(config.SENDGRID_KEY);
 
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
     to: email,
-    from: mail_contents.WELCOME_SEND_VIDEO.MAIL,
-    subject: mail_contents.WELCOME_SEND_VIDEO.SUBJECT,
-    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name + '<br/><p>' + content + '</p><br/> Please review this short video prior to our meeting next Monday:<br/>Here would be the link to the material that was sent<br/><a href="' + video_link + '">click here</a><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
+    from: currentUser.email,
+    subject: video_title,
+    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name + ',<br/><p>' + content + '</p> Here would be the link to the material that was sent<br/><a href="' + video_link + '">'+ video_title + 'e</a><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {

@@ -10,6 +10,7 @@ const Appointment = mongoose.model('appointment',{
     type: Number,
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     guests: Array,
+    event_id: String,
     created_at: Date,
     updated_at: Date,
  });

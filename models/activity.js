@@ -11,7 +11,7 @@ const Activity = mongoose.model('activity',{
     videos:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
     pdf: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     video_trackers:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'video_tracker' }],
-    email: [{ type: mongoose.Schema.Types.ObjectId, ref: 'email' }],
+    emails: [{ type: mongoose.Schema.Types.ObjectId, ref: 'email' }],
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     created_at: Date,
     updated_at: Date,

@@ -155,16 +155,15 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {email, content, pdf, pdf_title, contact} = req.body
+  const {email, content, pdf, pdf_title, contact, contact_name} = req.body
   sgMail.setApiKey(config.SENDGRID_KEY);
 
-  const text =currentUser.user_name + 'sent pdf' + pdf_title + '\n' + urls.MATERIAL_VIEW_PDF_URL +'/material/view/pdf/?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id  + '\n' + content 
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
     to: email,
-    from: mail_contents.WELCOME_SEND_PDF.MAIL,
-    subject: mail_contents.WELCOME_SEND_PDF.SUBJECT,
-    text: text,
-    html: text
+    from: currentUser.email,
+    subject: pdf_title,
+    html: '<html><head><title>PDF Invitation</title></head><body>Hi '+ contact_name + ',<br/><p>' + content + '</p> Here would be the link to the material that was sent<br/><a href="' + pdf_link + '">'+ pdf_title + 'e</a><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
+const Appointment = require('../models/appointment')
 const sgMail = require('@sendgrid/mail')
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -16,6 +17,7 @@ const credentials = {
 }
 const oauth2 = require('simple-oauth2')(credentials)
 const {google} = require('googleapis')
+const outlook = require('node-outlook')
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -365,7 +367,8 @@ const syncGmail = async(req, res) => {
   
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile'
   ];
@@ -397,7 +400,7 @@ const authorizeGmail = async(req, res) => {
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
-  );
+  )
   
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
@@ -456,8 +459,95 @@ const syncCalendar = async(req, res) => {
   }
 
   user.connect_calendar = true
-
   await user.save()
+
+  if(user.connected_email_type == 'outlook'){
+    const _appointments = await Appointment.find({user: user.id})
+    for( let i = 0; i < _appointments.length; i ++ ) {
+      console.log('_appointments[i].timezone', user.time_zone)
+      let newEvent = {
+          "Subject": _appointments[i].title,
+          "Body": {
+              "ContentType": "HTML",
+              "Content": _appointments[i].description
+          },
+          "Location": {
+            "DisplayName": _appointments[i].location
+          },
+          "Start": _appointments[i].due_start,
+          "End": _appointments[i].due_end,
+          "StartTimeZone": 'UTC' + user.time_zone,
+          "StartTimeZone": 'UTC' + user.time_zone,
+          "Attendees": _appointments[i].guests
+      };
+
+      let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+      let accessToken
+      await new Promise((resolve, reject) => {
+        token.refresh(function(error, result) {
+          if (error) {
+            reject(error.message)
+          }
+          else {
+            resolve(result.token);
+          }
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+      }).catch((error) => {
+        console.log('error', error)
+      })
+
+      let createEventParameters = {
+          token: accessToken,
+          event: newEvent
+      }
+      outlook.calendar.createEvent(createEventParameters, function (error, event) {})
+    }
+    return res.send({
+      status: true
+    })
+  }else{
+    const oauth2Client = new google.auth.OAuth2(
+      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.GMAIL_AUTHORIZE_URL
+    )
+    oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
+    calendarAdd(oauth2Client, res)
+  }
+}
+
+const calendarAdd = async (auth, res) => {
+  const calendar = google.calendar({version: 'v3', auth})
+  const _appointments = await Appointment.find({user: user.id})
+  for( let i = 0; i < _appointments.length; i ++ ) {
+    let event = {
+      'summary': _appointments[i].title,
+      'location': _appointments[i].location,
+      'description': _appointments[i].description,
+      'start': {
+        'dateTime': _appointments[i].due_start,
+        'timeZone': 'UTC' + user.time_zone,
+      },
+      'end': {
+        'dateTime': _appointments[i].due_end,
+        'timeZone': 'UTC' + user.time_zone,
+      },
+      'attendees': _appointments[i].guests
+    }
+    calendar.events.insert({
+      auth: auth,
+      calendarId: 'primary',
+      resource: event,
+    }, function(err, event) {
+      if (err) {
+        console.log('There was an error contacting the Calendar service: ' + err);
+        return;
+      }
+      console.log('event', event)
+    })
+  }
   return res.send({
     status: true
   })

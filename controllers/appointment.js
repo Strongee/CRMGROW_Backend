@@ -88,27 +88,18 @@ const get = async(req, res) => {
                 status: false,
                 error: response.statusCode
               })
-            }
-            else {
-              let nextLink = response.body['@odata.nextLink']
-              if (nextLink !== undefined) {
-                console.log('nextLink', nextLink)
-              }
-              let deltaLink = response.body['@odata.deltaLink']
-              if (deltaLink !== undefined) {
-                console.log('deltaLink', deltaLink)
-              }
-              const _outlook_calendar_data_list = response.body.value
-              for(let i = 0; i< _outlook_calendar_data_list.length; i++){
-                let  _outlook_calendar_data = {}
-                _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
-                _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
-                _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
-                _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
-                _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
-                _outlook_calendar_data.guests = _outlook_calendar_data_list[i].Attendees
-                _outlook_calendar_data.type = 1
-                data.push(_outlook_calendar_data)
+            } else {
+                const _outlook_calendar_data_list = response.body.value
+                for(let i = 0; i< _outlook_calendar_data_list.length; i++){
+                  let  _outlook_calendar_data = {}
+                  _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
+                  _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
+                  _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
+                  _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
+                  _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
+                  _outlook_calendar_data.guests = _outlook_calendar_data_list[i].Attendees
+                  _outlook_calendar_data.type = 1
+                  data.push(_outlook_calendar_data)
               }
               return res.send({
                 status: true,
@@ -146,7 +137,6 @@ const calendarList = (auth, data, res) => {
       console.log('The API returned an error: ' + err)
     } else{
       const events = _res.data.items
-      console.log('events', events) 
       if (events.length) {
         events.map((event) => {
           let _gmail_calendar_data = {}
@@ -186,7 +176,7 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('data', req.body)
+  
   appointment.save()
   .then(_appointment => {
 

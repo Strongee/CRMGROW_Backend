@@ -196,6 +196,7 @@ const sendBatch = async(req, res) => {
 
   const {currentUser} = req
   const {cc, bcc, to, subject, content} = req.body
+  const _contact = await Contact.find({email: to})
   
   const msg = {
     from: currentUser.email,
@@ -203,16 +204,30 @@ const sendBatch = async(req, res) => {
     to: to,
     cc: cc,
     bcc: bcc,
-    text: content,
-    html: content,
+    html: content + currentUser.email_signature,
   };
       
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      return res.send({
-        status: true
-      })     
+      const activity = new Activity({
+        content: currentUser.user_name + ' batched email',
+        contacts: _contact.id,
+        user: currentUser.id,
+        type: 'emails',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(_contact)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        res.send({
+          status: true,
+          data
+        })
+      })       
     }else {
       res.status(404).send({
         status: false,
@@ -228,6 +243,54 @@ const sendBatch = async(req, res) => {
   })
 }
 
+const sendEmail = async(req, res) => {
+  sgMail.setApiKey(config.SENDGRID_KEY)
+
+  const {currentUser} = req
+  const {contact, content} = req.body
+  const _contact = await Contact.find({_id: contact})
+  const msg = {
+    from: currentUser.email,
+    to: _contact.email,
+    subject: currentUser.user_name + ' sent email',
+    html: content + currentUser.email_signature
+  };
+      
+  sgMail.send(msg).then((_res) => {
+    console.log('mailres.errorcode', _res[0].statusCode);
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+      const activity = new Activity({
+        content: currentUser.user_name + ' sent email',
+        contacts: _contact.id,
+        user: currentUser.id,
+        type: 'emails',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(_contact)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        res.send({
+          status: true,
+          data
+        })
+      })      
+    }else {
+      res.status(404).send({
+        status: false,
+        error: _res[0].statusCode
+      })
+    }
+  }).catch ((e) => {
+    console.error(e)
+    res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  })
+}
 module.exports = {
     getAll,
     get,
@@ -235,4 +298,5 @@ module.exports = {
     remove,
     edit,
     sendBatch,
+    sendEmail
 }
