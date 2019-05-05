@@ -173,7 +173,7 @@ const calendarList = (auth, data, res) => {
 
 const create = async(req, res) => {
   const { currentUser } = req
-  const _appintment = req.body
+  const _appointment = req.body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -187,13 +187,13 @@ const create = async(req, res) => {
   if(currentUser.connect_calendar){
     if( currentUser.connected_email_type == 'outlook' ){
       let newEvent = {
-        "Subject": _appintment.title,
+        "Subject": _appointment.title,
         "Body": {
             "ContentType": "HTML",
-            "Content": _appintment.description
+            "Content": _appointment.description
         },
         "Location": {
-          "DisplayName": _appintment.location
+          "DisplayName": _appointment.location
         },
         "Start": _appointment.due_start,
         "End": _appointment.due_end,
@@ -235,7 +235,7 @@ const create = async(req, res) => {
       )
       const token = JSON.parse(currentUser.google_refresh_token)
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
-      addGoogleCalendarById(oauth2Client, currentUser, _appintment).then((res)=>{
+      addGoogleCalendarById(oauth2Client, currentUser, _appointment).then((res)=>{
         event_id = res
       }).catch((error) => {
         console.log('error', error)
