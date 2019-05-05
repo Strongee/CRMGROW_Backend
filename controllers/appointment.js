@@ -49,7 +49,7 @@ const get = async(req, res) => {
         ]
       };
     
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.refresh_token, expires_in: 0})
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
@@ -114,7 +114,9 @@ const get = async(req, res) => {
         config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       )
-      oauth2Client.setCredentials(JSON.parse(currentUser.refresh_token)) 
+
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
       calendarList(oauth2Client, data, res)
     }
   }else{
@@ -134,6 +136,7 @@ const get = async(req, res) => {
 }
 
 const calendarList = (auth, data, res) => {
+
   const calendar = google.calendar({version: 'v3', auth})
   calendar.events.list({
     calendarId: 'primary',
@@ -170,6 +173,7 @@ const calendarList = (auth, data, res) => {
 
 const create = async(req, res) => {
   const { currentUser } = req
+  const _appintment = req.body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -183,19 +187,19 @@ const create = async(req, res) => {
   if(currentUser.connect_calendar){
     if( currentUser.connected_email_type == 'outlook' ){
       let newEvent = {
-        "Subject": _appointments[i].title,
+        "Subject": _appintment.title,
         "Body": {
             "ContentType": "HTML",
-            "Content": _appointments[i].description
+            "Content": _appintment.description
         },
         "Location": {
-          "DisplayName": _appointments[i].location
+          "DisplayName": _appintment.location
         },
-        "Start": _appointments[i].due_start,
-        "End": _appointments[i].due_end,
+        "Start": _appointment.due_start,
+        "End": _appointment.due_end,
       };
 
-      let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
       let accessToken
       
       await new Promise((resolve, reject) => {
@@ -229,8 +233,13 @@ const create = async(req, res) => {
         config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       )
-      oauth2Client.setCredentials(JSON.parse(currentUser.refresh_token)) 
-      addGoogleCalendar(oauth2Client, currentUser, res)
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token})
+      addGoogleCalendarById(oauth2Client, currentUser, _appintment).then((res)=>{
+        event_id = res
+      }).catch((error) => {
+        console.log('error', error)
+      })
     }
   }
 
@@ -282,23 +291,22 @@ const create = async(req, res) => {
   });
 }
 
-const addGoogleCalendar = async (auth, user, res) => {
+const addGoogleCalendarById = async (auth, user, appointment) => {
   const calendar = google.calendar({version: 'v3', auth})
-  const _appointments = await Appointment.find({user: user.id})
-  for( let i = 0; i < _appointments.length; i ++ ) {
-    let event = {
-      'summary': _appointments[i].title,
-      'location': _appointments[i].location,
-      'description': _appointments[i].description,
+  let event = {
+    'summary': appointment.title,
+    'location': appointment.location,
+    'description': appointment.description,
       'start': {
-        'dateTime': _appointments[i].due_start,
+        'dateTime': appointment.due_start,
         'timeZone': 'UTC' + user.time_zone,
       },
       'end': {
-        'dateTime': _appointments[i].due_end,
+        'dateTime': appointment.due_end,
         'timeZone': 'UTC' + user.time_zone,
       },
     }
+  return new Promise((resolve, reject) => {
     calendar.events.insert({
       auth: auth,
       calendarId: 'primary',
@@ -306,16 +314,11 @@ const addGoogleCalendar = async (auth, user, res) => {
     }, function(err, event) {
       if (err) {
         console.log('There was an error contacting the Calendar service: ' + err);
-        return;
+        reject(err)
       }
-      console.log('event', event)
+      console.log('event.data.id', event.data.id)
+      resolve(event.data.id) 
     })
-  }
-  user.connect_calendar = true
-  await user.save()
-
-  return res.send({
-    status: true
   })
 }
 
@@ -339,13 +342,10 @@ const edit = async(req, res) => {
 
   appointment.save().then((_appointment)=>{
     if(currentUser.connect_calendar){
-      if( user.connected_email_type == 'outlook' ){
-        const _appointment = await Appointment.findOne({user: user.id, _id: req.params.id})
+      if( currentUser.connected_email_type == 'outlook' ){
+        let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
         
-        let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
-        let accessToken
-        
-        await new Promise((resolve, reject) => {
+        new Promise((resolve, reject) => {
           token.refresh(function(error, result) {
             if (error) {
               reject(error.message)
@@ -354,12 +354,8 @@ const edit = async(req, res) => {
             }
           })
         }).then((token)=>{
-          accessToken = token.access_token
-        }).catch((error) => {
-          console.log('error', error)
-        })
-  
-        let updatePayload = {
+          const accessToken = token.access_token
+          const updatePayload = {
             "Subject": _appointment.title,
             "Body": {
                 "ContentType": "HTML",
@@ -372,7 +368,7 @@ const edit = async(req, res) => {
             "End": _appointment.due_end,
         }
         
-        let updateEventParameters = {
+        const updateEventParameters = {
           token: accessToken,
           eventId: _appointment.event_id,
           update: updatePayload
@@ -387,13 +383,17 @@ const edit = async(req, res) => {
           status: true,
           data: _appointment
         })
+        }).catch((error) => {
+          console.log('error', error)
+        })
       }else{
       const oauth2Client = new google.auth.OAuth2(
         config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       )
-      oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token})
       updateGoogleCalendarById(oauth2Client, _appointment, res)
       }
     }else{
@@ -410,8 +410,8 @@ const remove = async(req, res) => {
   const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
 
   if(currentUser.connect_calendar){
-    if( user.connected_email_type == 'outlook' ){    
-      let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+    if( currentUser.connected_email_type == 'outlook' ){    
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
       let accessToken
       
       await new Promise((resolve, reject) => {
@@ -445,7 +445,7 @@ const remove = async(req, res) => {
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     )
-    oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
+    oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token)) 
     removeGoogleCalendarById(oauth2Client, appointment.event_id, res)
   }
 
@@ -485,13 +485,14 @@ const updateGoogleCalendarById = async (auth, appointment, res) => {
     'description': appointment.description,
       'start': {
         'dateTime': appointment.due_start,
-        'timeZone': 'UTC' + user.time_zone,
+        'timeZone': 'UTC' + currentUser.time_zone,
       },
       'end': {
         'dateTime': appointment.due_end,
-        'timeZone': 'UTC' + user.time_zone,
+        'timeZone': 'UTC' + currentUser.time_zone,
       },
     }
+    console.log('event_id', appointment.event_id)
     const params = {
       calendarId: 'primary',
       eventId: appointment.event_id,

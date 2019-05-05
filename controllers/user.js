@@ -319,7 +319,7 @@ const authorizeOutlook = async(req, res) => {
     }
     else {
       const outlook_token = oauth2.accessToken.create(result)
-      user.refresh_token = outlook_token.token.refresh_token
+      user.outlook_refresh_token = outlook_token.token.refresh_token
       
       let token_parts = outlook_token.token.id_token.split('.');
     
@@ -405,7 +405,9 @@ const authorizeGmail = async(req, res) => {
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
 
-  user.refresh_token = JSON.stringify(tokens)
+  if(typeof tokens.refresh_token !== 'undefined'){
+    user.google_refresh_token = JSON.stringify(tokens)
+  }
   
  
   if (!tokens) {
@@ -475,7 +477,7 @@ const syncCalendar = async(req, res) => {
             "End": _appointments[i].due_end,
         };
 
-        let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+        let token = oauth2.accessToken.create({ refresh_token: user.outlook_refresh_token, expires_in: 0})
         let accessToken
         await new Promise((resolve, reject) => {
           token.refresh(function(error, result) {
@@ -520,7 +522,8 @@ const syncCalendar = async(req, res) => {
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     )
-    oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
+    const token = JSON.parse(currentUser.google_refresh_token)
+    oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     addGoogleCalendar(oauth2Client, user, res)
   }
 }
@@ -577,7 +580,7 @@ const disconCalendar = async(req, res) => {
   if( user.connected_email_type == 'outlook' ){
     const _appointments = await Appointment.find({user: user.id})
     for( let i = 0; i < _appointments.length; i ++ ) {
-      let token = oauth2.accessToken.create({ refresh_token: user.refresh_token, expires_in: 0})
+      let token = oauth2.accessToken.create({ refresh_token: user.outlook_refresh_token, expires_in: 0})
         let accessToken
 
         await new Promise((resolve, reject) => {
@@ -618,7 +621,7 @@ const disconCalendar = async(req, res) => {
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     )
-    oauth2Client.setCredentials(JSON.parse(user.refresh_token)) 
+    oauth2Client.setCredentials(JSON.parse(user.google_refresh_token)) 
     removeGoogleCalendar(oauth2Client, user, res)
   }
 
