@@ -197,7 +197,7 @@ const sendBatch = async(req, res) => {
 
   const {currentUser} = req
   const {cc, bcc, to, subject, content} = req.body
-  const _contact = await Contact.find({email: to})
+  const _contact = await Contact.findOne({_id: contact})
   
   const msg = {
     from: currentUser.email,
