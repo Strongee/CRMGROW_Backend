@@ -201,7 +201,7 @@ const create = async(req, res) => {
         "End": {
           "DateTime":  _appointment.due_end,
           "TimeZone":"UTC" + currentUser.time_zone
-        }
+        },
       };
 
       let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})

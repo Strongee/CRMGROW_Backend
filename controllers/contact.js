@@ -210,23 +210,35 @@ const sendBatch = async(req, res) => {
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      const activity = new Activity({
-        content: currentUser.user_name + ' batched email',
-        contacts: _contact.id,
+      const email = new Email({
+        ...req.body,
         user: currentUser.id,
-        type: 'emails',
-        created_at: new Date(),
         updated_at: new Date(),
+        created_at: new Date(),
       })
+      
+      email.save()
+      .then(_email => {
 
-      activity.save().then(_activity => {
-        myJSON = JSON.stringify(_contact)
-        const data = JSON.parse(myJSON);
-        data.activity = _activity
-        res.send({
-          status: true,
-          data
+        const activity = new Activity({
+          content: currentUser.user_name + ' sent batch email',
+          contacts: _contact.id,
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
         })
+  
+        activity.save().then(_activity => {
+          myJSON = JSON.stringify(_email)
+          const data = JSON.parse(myJSON);
+          data.activity = _activity
+          res.send({
+            status: true,
+            data
+          })
+        })   
       })       
     }else {
       res.status(404).send({
@@ -259,24 +271,36 @@ const sendEmail = async(req, res) => {
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      const activity = new Activity({
-        content: currentUser.user_name + ' sent email',
-        contacts: _contact.id,
+      const email = new Email({
+        ...req.body,
         user: currentUser.id,
-        type: 'emails',
-        created_at: new Date(),
         updated_at: new Date(),
+        created_at: new Date(),
       })
+      
+      email.save()
+      .then(_email => {
 
-      activity.save().then(_activity => {
-        myJSON = JSON.stringify(_contact)
-        const data = JSON.parse(myJSON);
-        data.activity = _activity
-        res.send({
-          status: true,
-          data
+        const activity = new Activity({
+          content: currentUser.user_name + ' sent email',
+          contacts: _contact.id,
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
         })
-      })      
+  
+        activity.save().then(_activity => {
+          myJSON = JSON.stringify(_email)
+          const data = JSON.parse(myJSON);
+          data.activity = _activity
+          res.send({
+            status: true,
+            data
+          })
+        })   
+      })   
     }else {
       res.status(404).send({
         status: false,
