@@ -3,6 +3,7 @@ const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
 const Appointment = require('../models/appointment')
+const Email = require('../models/email')
 const sgMail = require('@sendgrid/mail')
 const config = require('../config/config')
 
