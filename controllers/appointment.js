@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check')
 const outlook = require('node-outlook')
 const moment = require('moment')
 const config = require('../config/config')
+const urls = require('../constants/urls')
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
 const credentials = {
@@ -16,7 +17,7 @@ const {google} = require('googleapis')
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const data = await Appointment.find({user: currentUser.id})
+  let data = []
 
   if(currentUser.connect_calendar){
   
@@ -32,8 +33,8 @@ const get = async(req, res) => {
     
       // Set up our sync window from midnight on the current day to
       // midnight 7 days from now.
-      let startDate = moment().startOf('day');
-      let endDate = moment(startDate).add(7, 'days');
+      let startDate = moment().startOf('week');
+      let endDate = moment(startDate).add(30, 'days');
       // The start and end date are passed as query parameters
       let params = {
         startDateTime: startDate.toISOString(),
@@ -45,12 +46,10 @@ const get = async(req, res) => {
         Prefer: [ 
           // Enables sync functionality
           'odata.track-changes',
-          // Requests only 5 changes per response
-          'odata.maxpagesize=5'
         ]
       };
     
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.refresh_token, expires_in: 0})
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
@@ -72,7 +71,7 @@ const get = async(req, res) => {
         token: accessToken,
         headers: headers,
         query: params
-      };
+      }
       
       outlook.base.makeApiCall(apiOptions, function(error, response) {
         if (error) {
@@ -91,6 +90,7 @@ const get = async(req, res) => {
             } else {
                 const _outlook_calendar_data_list = response.body.value
                 for(let i = 0; i< _outlook_calendar_data_list.length; i++){
+                  console.log('_outlook_calendar_data_list[i].Subject', _outlook_calendar_data_list[i].Id)
                   let  _outlook_calendar_data = {}
                   _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
                   _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
@@ -98,7 +98,7 @@ const get = async(req, res) => {
                   _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
                   _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
                   _outlook_calendar_data.guests = _outlook_calendar_data_list[i].Attendees
-                  _outlook_calendar_data.type = 1
+                  _outlook_calendar_data.event_id = _outlook_calendar_data_list[i].Id
                   data.push(_outlook_calendar_data)
               }
               return res.send({
@@ -114,10 +114,20 @@ const get = async(req, res) => {
         config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       )
-      oauth2Client.setCredentials(JSON.parse(currentUser.refresh_token)) 
+
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
       calendarList(oauth2Client, data, res)
     }
   }else{
+    data = await Appointment.find({user: currentUser.id, del: false})
+
+    if (!data) {
+      return res.status(401).json({
+        status: false,
+        error: 'Activity doesn`t exist'
+      })
+    }
     return res.send({
       status: true,
       data
@@ -126,6 +136,7 @@ const get = async(req, res) => {
 }
 
 const calendarList = (auth, data, res) => {
+
   const calendar = google.calendar({version: 'v3', auth})
   calendar.events.list({
     calendarId: 'primary',
@@ -159,8 +170,10 @@ const calendarList = (auth, data, res) => {
     }  
   });
 }
+
 const create = async(req, res) => {
   const { currentUser } = req
+  const _appintment = req.body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -169,10 +182,72 @@ const create = async(req, res) => {
     })
   }
 
+  let event_id
+
+  if(currentUser.connect_calendar){
+    if( currentUser.connected_email_type == 'outlook' ){
+      let newEvent = {
+        "Subject": _appintment.title,
+        "Body": {
+            "ContentType": "HTML",
+            "Content": _appintment.description
+        },
+        "Location": {
+          "DisplayName": _appintment.location
+        },
+        "Start": _appointment.due_start,
+        "End": _appointment.due_end,
+      };
+
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      let accessToken
+      
+      await new Promise((resolve, reject) => {
+        token.refresh(function(error, result) {
+          if (error) {
+            reject(error.message)
+          }else {
+            resolve(result.token);
+          }
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+      }).catch((error) => {
+        console.log('error', error)
+      })
+      
+      let createEventParameters = {
+        token: accessToken,
+        event: newEvent
+      }
+      
+      outlook.calendar.createEvent(createEventParameters, function(error, event) {
+        if (error) {
+          console.log(error);
+        }
+        event_id = event.Id
+      })
+    }else{
+      const oauth2Client = new google.auth.OAuth2(
+        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      )
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token})
+      addGoogleCalendarById(oauth2Client, currentUser, _appintment).then((res)=>{
+        event_id = res
+      }).catch((error) => {
+        console.log('error', error)
+      })
+    }
+  }
+
   const appointment = new Appointment({
     ...req.body,
     user: currentUser.id,
     type: 0,
+    event_id: event_id,
     updated_at: new Date(),
     created_at: new Date(),
   })
@@ -216,6 +291,37 @@ const create = async(req, res) => {
   });
 }
 
+const addGoogleCalendarById = async (auth, user, appointment) => {
+  const calendar = google.calendar({version: 'v3', auth})
+  let event = {
+    'summary': appointment.title,
+    'location': appointment.location,
+    'description': appointment.description,
+      'start': {
+        'dateTime': appointment.due_start,
+        'timeZone': 'UTC' + user.time_zone,
+      },
+      'end': {
+        'dateTime': appointment.due_end,
+        'timeZone': 'UTC' + user.time_zone,
+      },
+    }
+  return new Promise((resolve, reject) => {
+    calendar.events.insert({
+      auth: auth,
+      calendarId: 'primary',
+      resource: event,
+    }, function(err, event) {
+      if (err) {
+        console.log('There was an error contacting the Calendar service: ' + err);
+        reject(err)
+      }
+      console.log('event.data.id', event.data.id)
+      resolve(event.data.id) 
+    })
+  })
+}
+
 const edit = async(req, res) => {
   const { currentUser } = req
   const editData = req.body
@@ -228,7 +334,6 @@ const edit = async(req, res) => {
     })
   }
 
-
   for (let key in editData) {
     appointment[key] = editData[key]
   }
@@ -236,15 +341,180 @@ const edit = async(req, res) => {
   appointment["updated_at"] = new Date()
 
   appointment.save().then((_appointment)=>{
-    res.send({
-      status: true,
-      data: _appointment
-    })
+    if(currentUser.connect_calendar){
+      console.log('here')
+      if( currentUser.connected_email_type == 'outlook' ){
+        let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+        
+        new Promise((resolve, reject) => {
+          token.refresh(function(error, result) {
+            if (error) {
+              reject(error.message)
+            } else {
+              resolve(result.token);
+            }
+          })
+        }).then((token)=>{
+          const accessToken = token.access_token
+          const updatePayload = {
+            "Subject": _appointment.title,
+            "Body": {
+                "ContentType": "HTML",
+                "Content": _appointment.description
+            },
+            "Location": {
+              "DisplayName": _appointment.location
+            },
+            "Start": _appointment.due_start,
+            "End": _appointment.due_end,
+        }
+        
+        const updateEventParameters = {
+          token: accessToken,
+          eventId: _appointment.event_id,
+          update: updatePayload
+        };
+        
+        outlook.calendar.updateEvent(updateEventParameters, function(error) {
+          if (error) {
+            console.log(error);
+          }
+        });
+        res.send({
+          status: true,
+          data: _appointment
+        })
+        }).catch((error) => {
+          console.log('error', error)
+        })
+      }else{
+      const oauth2Client = new google.auth.OAuth2(
+        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      )
+      const token = JSON.parse(currentUser.google_refresh_token)
+      oauth2Client.setCredentials({refresh_token: token.refresh_token})
+      updateGoogleCalendarById(oauth2Client, _appointment, res)
+      }
+    }else{
+      res.send({
+        status: true,
+        data: _appointment
+      })
+    }
   })
+}
+
+const remove = async(req, res) => {
+  const { currentUser } = req
+  const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
+
+  if(currentUser.connect_calendar){
+    if( currentUser.connected_email_type == 'outlook' ){    
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      let accessToken
+      
+      await new Promise((resolve, reject) => {
+        token.refresh(function(error, result) {
+          if (error) {
+            reject(error.message)
+          } else {
+            resolve(result.token);
+          }
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+      }).catch((error) => {
+        console.log('error', error)
+      })
+
+      let deleteEventParameters = {
+        token: accessToken,
+        eventId: appointment.event_id
+      }
+    
+      outlook.calendar.deleteEvent(deleteEventParameters, function(error, event) {
+        if (error) {
+          console.log(error);
+        }
+      })
+    }
+  }else{
+    const oauth2Client = new google.auth.OAuth2(
+      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.GMAIL_AUTHORIZE_URL
+    )
+    oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token)) 
+    removeGoogleCalendarById(oauth2Client, appointment.event_id, res)
+  }
+
+  appointment['del'] = true
+  appointment["updated_at"] = new Date()
+
+  await appointment.save()
+  res.send({
+    status: true,
+  })
+}
+
+const removeGoogleCalendarById = async (auth, event_id, res) => {
+  const calendar = google.calendar({version: 'v3', auth})
+  console.log('_appointments[i].event_id', event_id)
+  const params = {
+      calendarId: 'primary',
+      eventId: event_id,
+  };
+  calendar.events.delete(params, function(err) {
+    if (err) {
+      console.log('There was an error contacting the Calendar service: ' + err);
+      return;
+    }
+  })
+
+  return res.send({
+    status: true
+  })
+}
+
+const updateGoogleCalendarById = async (auth, appointment, res) => {
+  const calendar = google.calendar({version: 'v3', auth})
+  let event = {
+    'summary': appointment.title,
+    'location': appointment.location,
+    'description': appointment.description,
+      'start': {
+        'dateTime': appointment.due_start,
+        'timeZone': 'UTC' + currentUser.time_zone,
+      },
+      'end': {
+        'dateTime': appointment.due_end,
+        'timeZone': 'UTC' + currentUser.time_zone,
+      },
+    }
+    console.log('event_id', appointment.event_id)
+    const params = {
+      calendarId: 'primary',
+      eventId: appointment.event_id,
+      resource: event
+    };
+    calendar.events.patch(params, function(err, event) {
+      if (err) {
+        console.log('There was an error contacting the Calendar service: ' + err);
+        return;
+      }
+    })
+
+    return res.send({
+      status: true,
+      data: appointment
+    })
 }
 
 module.exports = {
     get,
     create,
-    edit
+    edit,
+    remove
 }

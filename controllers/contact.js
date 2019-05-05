@@ -204,7 +204,7 @@ const sendBatch = async(req, res) => {
     to: to,
     cc: cc,
     bcc: bcc,
-    html: content + currentUser.email_signature,
+    html: content + '<br/><br/>' + currentUser.email_signature,
   };
       
   sgMail.send(msg).then((_res) => {
@@ -253,7 +253,7 @@ const sendEmail = async(req, res) => {
     from: currentUser.email,
     to: _contact.email,
     subject: currentUser.user_name + ' sent email',
-    html: content + currentUser.email_signature
+    html: content + '<br/><br/>' + currentUser.email_signature
   };
       
   sgMail.send(msg).then((_res) => {

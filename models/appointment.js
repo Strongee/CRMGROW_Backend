@@ -8,6 +8,7 @@ const Appointment = mongoose.model('appointment',{
     due_start: Date,
     due_end: String,
     type: Number,
+    del: { type: Boolean, default: false},
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     guests: Array,
     event_id: String,
