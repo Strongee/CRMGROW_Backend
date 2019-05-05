@@ -184,6 +184,7 @@ const create = async(req, res) => {
 
   let event_id
 
+  console.log('_appointment.due_end', _appointment.due_end)
   if(currentUser.connect_calendar){
     if( currentUser.connected_email_type == 'outlook' ){
       let newEvent = {
