@@ -90,7 +90,6 @@ const get = async(req, res) => {
             } else {
                 const _outlook_calendar_data_list = response.body.value
                 for(let i = 0; i< _outlook_calendar_data_list.length; i++){
-                  console.log('_outlook_calendar_data_list[i].Subject', _outlook_calendar_data_list[i].Id)
                   let  _outlook_calendar_data = {}
                   _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
                   _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
@@ -195,8 +194,14 @@ const create = async(req, res) => {
         "Location": {
           "DisplayName": _appointment.location
         },
-        "Start": _appointment.due_start,
-        "End": _appointment.due_end,
+        "Start": {
+          "DateTime":  _appointment.due_start,
+          "TimeZone":"UTC" + currentUser.time_zone
+        },
+        "End": {
+          "DateTime":  _appointment.due_end,
+          "TimeZone":"UTC" + currentUser.time_zone
+        }
       };
 
       let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
@@ -221,6 +226,7 @@ const create = async(req, res) => {
         event: newEvent
       }
       
+      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
       outlook.calendar.createEvent(createEventParameters, function(error, event) {
         if (error) {
           console.log(error);
@@ -460,7 +466,6 @@ const remove = async(req, res) => {
 
 const removeGoogleCalendarById = async (auth, event_id, res) => {
   const calendar = google.calendar({version: 'v3', auth})
-  console.log('_appointments[i].event_id', event_id)
   const params = {
       calendarId: 'primary',
       eventId: event_id,
