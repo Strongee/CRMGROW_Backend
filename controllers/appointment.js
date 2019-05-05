@@ -184,8 +184,6 @@ const create = async(req, res) => {
 
   let event_id
 
-  console.log('_appointment.due_start', _appointment.due_start)
-  console.log('_appointment.due_end', _appointment.due_end)
   if(currentUser.connect_calendar){
     if( currentUser.connected_email_type == 'outlook' ){
       let newEvent = {
@@ -344,7 +342,6 @@ const edit = async(req, res) => {
 
   appointment.save().then((_appointment)=>{
     if(currentUser.connect_calendar){
-      console.log('here')
       if( currentUser.connected_email_type == 'outlook' ){
         let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
         
