@@ -342,6 +342,7 @@ const edit = async(req, res) => {
 
   appointment.save().then((_appointment)=>{
     if(currentUser.connect_calendar){
+      console.log('here')
       if( currentUser.connected_email_type == 'outlook' ){
         let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
         
@@ -374,7 +375,7 @@ const edit = async(req, res) => {
           update: updatePayload
         };
         
-        outlook.calendar.updateEvent(updateEventParameters, function(error, event) {
+        outlook.calendar.updateEvent(updateEventParameters, function(error) {
           if (error) {
             console.log(error);
           }

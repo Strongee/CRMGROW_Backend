@@ -409,7 +409,6 @@ const authorizeGmail = async(req, res) => {
     user.google_refresh_token = JSON.stringify(tokens)
   }
   
- 
   if (!tokens) {
     return res.status(401).json({
       status: false,
@@ -463,7 +462,6 @@ const syncCalendar = async(req, res) => {
   if(user.connected_email_type == 'outlook'){
     const _appointments = await Appointment.find({user: user.id, del: false})
     for( let i = 0; i < _appointments.length; i ++ ) {
-      if(_appointments[i].connected_email.indexOf(user.connected_email) > -1){
         let newEvent = {
             "Subject": _appointments[i].title,
             "Body": {
@@ -508,7 +506,6 @@ const syncCalendar = async(req, res) => {
           _appointments[i].save()
         })
       }
-    }
 
     user.connect_calendar = true
     await user.save()
@@ -522,7 +519,7 @@ const syncCalendar = async(req, res) => {
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     )
-    const token = JSON.parse(currentUser.google_refresh_token)
+    const token = JSON.parse(user.google_refresh_token)
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     addGoogleCalendar(oauth2Client, user, res)
   }
@@ -603,7 +600,7 @@ const disconCalendar = async(req, res) => {
           eventId: _appointments[i].event_id
         };
       
-      outlook.calendar.deleteEvent(deleteEventParameters, function(error, event) {
+      outlook.calendar.deleteEvent(deleteEventParameters, function(error) {
         if (error) {
           console.log(error);
         }
@@ -631,12 +628,11 @@ const removeGoogleCalendar = async (auth, user, res) => {
   const calendar = google.calendar({version: 'v3', auth})
   const _appointments = await Appointment.find({user: user.id})
   for( let i = 0; i < _appointments.length; i ++ ) {
-    console.log('_appointments[i].event_id', _appointments[i].event_id)
     const params = {
       calendarId: 'primary',
       eventId: _appointments[i].event_id,
     };
-    calendar.events.delete(params, function(err, event) {
+    calendar.events.delete(params, function(err) {
       if (err) {
         console.log('There was an error contacting the Calendar service: ' + err);
         return;
