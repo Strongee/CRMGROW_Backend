@@ -172,7 +172,6 @@ const calendarList = (auth, data, res) => {
 
 const create = async(req, res) => {
   const { currentUser } = req
-  const _appointment = req.body
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -184,6 +183,7 @@ const create = async(req, res) => {
   let event_id
 
   if(currentUser.connect_calendar){
+    const _appointment = req.body
     if( currentUser.connected_email_type == 'outlook' ){
       let newEvent = {
         "Subject": _appointment.title,
@@ -248,6 +248,8 @@ const create = async(req, res) => {
       })
     }
   }
+
+  console.log('event_id', event_id)
 
   const appointment = new Appointment({
     ...req.body,
