@@ -462,6 +462,15 @@ const syncCalendar = async(req, res) => {
   if(user.connected_email_type == 'outlook'){
     const _appointments = await Appointment.find({user: user.id, del: false})
     for( let i = 0; i < _appointments.length; i ++ ) {
+        let attendees = [];
+        for( let j = 0; _appointments[i].guests.length; j ++){
+          const addendee = {
+            "EmailAddress": {
+              "Address": _appointments[i].guests[j]
+            }
+          }
+          attendees.push(addendee)
+        }
         let newEvent = {
             "Subject": _appointments[i].title,
             "Body": {
@@ -473,12 +482,13 @@ const syncCalendar = async(req, res) => {
             },
             "Start": {
               "DateTime":  _appointments[i].due_start,
-              "TimeZone":"UTC" + currentUser.time_zone
+              "TimeZone":"UTC" + user.time_zone
             },
             "End": {
               "DateTime":  _appointments[i].due_end,
-              "TimeZone":"UTC" + currentUser.time_zone
+              "TimeZone":"UTC" + user.time_zone
             },
+            "Attendees": attendees
         };
 
         let token = oauth2.accessToken.create({ refresh_token: user.outlook_refresh_token, expires_in: 0})
@@ -537,6 +547,13 @@ const addGoogleCalendar = async (auth, user, res) => {
   const calendar = google.calendar({version: 'v3', auth})
   const _appointments = await Appointment.find({user: user.id})
   for( let i = 0; i < _appointments.length; i ++ ) {
+    let attendees = [];
+    for( let j = 0; _appointments[i].guests.length; j ++){
+      const addendee = {
+        "email": _appointments[i].guests[j] 
+      }
+      attendees.push(addendee)
+    }
     let event = {
       'summary': _appointments[i].title,
       'location': _appointments[i].location,
@@ -549,6 +566,7 @@ const addGoogleCalendar = async (auth, user, res) => {
         'dateTime': _appointments[i].due_end,
         'timeZone': 'UTC' + user.time_zone,
       },
+      'attendees': attendees
     }
     calendar.events.insert({
       auth: auth,
@@ -559,7 +577,6 @@ const addGoogleCalendar = async (auth, user, res) => {
         console.log('There was an error contacting the Calendar service: ' + err);
         return;
       }
-      console.log('event_id', event.data.id)
       _appointments[i].event_id = event.data.id
       _appointments[i].save()
     })
