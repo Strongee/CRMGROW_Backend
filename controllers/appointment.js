@@ -331,8 +331,9 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
 const edit = async(req, res) => {
   const { currentUser } = req
   const _appointment = req.body
-  let appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
-  if(appointment) {
+  
+  if(_appointment['id']) {
+    let appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
     for (let key in _appointment) {
       appointment[key] = _appointment[key]
     }
