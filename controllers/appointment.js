@@ -154,6 +154,7 @@ const calendarList = (auth, data, res) => {
       console.log('The API returned an error: ' + err)
     } else{
       const events = _res.data.items
+      console.log('events', events)
       if (events.length) {
         events.map((event) => {
           let guests = [];
