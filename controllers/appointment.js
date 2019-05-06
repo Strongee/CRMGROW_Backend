@@ -367,8 +367,14 @@ const edit = async(req, res) => {
             "Location": {
               "DisplayName": _appointment.location
             },
-            "Start": _appointment.due_start,
-            "End": _appointment.due_end,
+            "Start": {
+              "DateTime":  _appointment.due_start,
+              "TimeZone":"UTC" + currentUser.time_zone
+            },
+            "End": {
+              "DateTime":  _appointment.due_end,
+              "TimeZone":"UTC" + currentUser.time_zone
+            },
         }
         
         const updateEventParameters = {
@@ -376,7 +382,8 @@ const edit = async(req, res) => {
           eventId: event_id,
           update: updatePayload
         };
-        
+
+        outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
         outlook.calendar.updateEvent(updateEventParameters, function(error) {
           if (error) {
             console.log(error);
@@ -443,7 +450,8 @@ const remove = async(req, res) => {
         eventId: event_id
       }
     
-      outlook.calendar.deleteEvent(deleteEventParameters, function(error, event) {
+      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
+      outlook.calendar.deleteEvent(deleteEventParameters, function(error) {
         if (error) {
           console.log(error);
         }

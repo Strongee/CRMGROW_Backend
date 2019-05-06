@@ -471,8 +471,14 @@ const syncCalendar = async(req, res) => {
             "Location": {
               "DisplayName": _appointments[i].location
             },
-            "Start": _appointments[i].due_start,
-            "End": _appointments[i].due_end,
+            "Start": {
+              "DateTime":  _appointments[i].due_start,
+              "TimeZone":"UTC" + currentUser.time_zone
+            },
+            "End": {
+              "DateTime":  _appointments[i].due_end,
+              "TimeZone":"UTC" + currentUser.time_zone
+            },
         };
 
         let token = oauth2.accessToken.create({ refresh_token: user.outlook_refresh_token, expires_in: 0})
@@ -496,6 +502,8 @@ const syncCalendar = async(req, res) => {
             token: accessToken,
             event: newEvent
         }
+
+        outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
         outlook.calendar.createEvent(createEventParameters, function (error, event) {
           if (error) {
             console.log('There was an error contacting the Calendar service: ' + error);
