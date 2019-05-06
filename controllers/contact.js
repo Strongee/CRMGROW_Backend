@@ -223,7 +223,7 @@ const sendBatch = async(req, res) => {
           contacts: _contact.id,
           user: currentUser.id,
           type: 'emails',
-          emails: _email._id,
+          emails: _email.id,
           created_at: new Date(),
           updated_at: new Date(),
         })
