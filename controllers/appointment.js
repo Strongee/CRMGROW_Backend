@@ -232,6 +232,7 @@ const create = async(req, res) => {
           console.log(error);
         }
         event_id = event.Id
+        console.log('event', event)
       })
     }else{
       const oauth2Client = new google.auth.OAuth2(
