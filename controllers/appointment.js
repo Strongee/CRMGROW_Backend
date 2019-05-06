@@ -227,13 +227,22 @@ const create = async(req, res) => {
       }
       
       outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      outlook.calendar.createEvent(createEventParameters, function(error, event) {
-        if (error) {
-          console.log(error);
-        }
-        event_id = event.Id
-        console.log('event', event)
+
+      await new Promise((resolve, reject) => {
+        outlook.calendar.createEvent(createEventParameters, function(error, event) {
+          if (error) {
+            console.log(error);
+            reject(error)
+          }
+          resolve(event.Id)
+        })
+      }).then((eventId)=>{
+        console.log('eventId', eventId)
+        event_id = eventId
+      }).catch((error) => {
+        console.log('error', error)
       })
+
     }else{
       const oauth2Client = new google.auth.OAuth2(
         config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
