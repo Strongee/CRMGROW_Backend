@@ -277,11 +277,7 @@ const create = async(req, res) => {
       )
       const token = JSON.parse(currentUser.google_refresh_token)
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
-      addGoogleCalendarById(oauth2Client, currentUser, _appointment).then((res)=>{
-        event_id = res
-      }).catch((error) => {
-        console.log('error', error)
-      })
+      event_id = await addGoogleCalendarById(oauth2Client, currentUser, _appointment)
     }
   }
 
