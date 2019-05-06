@@ -330,24 +330,20 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
 
 const edit = async(req, res) => {
   const { currentUser } = req
-  const editData = req.body
-  const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
-
-  if (!editData) {
-    return res.status(401).json({
-      status: false,
-      error: 'Invalid_permission'
-    })
+  const _appointment = req.body
+  let appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
+  if(appointment) {
+    for (let key in _appointment) {
+      appointment[key] = _appointment[key]
+    }
+  
+    appointment["updated_at"] = new Date()
+  
+    await appointment.save() 
   }
-
-  for (let key in editData) {
-    appointment[key] = editData[key]
-  }
-
-  appointment["updated_at"] = new Date()
-
-  appointment.save().then((_appointment)=>{
+ 
     if(currentUser.connect_calendar){
+      let event_id = _appointment['event_id'] || req.params.id
       if( currentUser.connected_email_type == 'outlook' ){
         let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
         
@@ -376,7 +372,7 @@ const edit = async(req, res) => {
         
         const updateEventParameters = {
           token: accessToken,
-          eventId: _appointment.event_id,
+          eventId: event_id,
           update: updatePayload
         };
         
@@ -408,14 +404,21 @@ const edit = async(req, res) => {
         data: _appointment
       })
     }
-  })
+
 }
 
 const remove = async(req, res) => {
   const { currentUser } = req
-  const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
+  const appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id})
+  if(appointment) {
+    appointment['del'] = true
+    appointment["updated_at"] = new Date()
+
+    await appointment.save()
+  }
 
   if(currentUser.connect_calendar){
+    let event_id = appointment['event_id'] || req.params.id
     if( currentUser.connected_email_type == 'outlook' ){    
       let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
       let accessToken
@@ -436,7 +439,7 @@ const remove = async(req, res) => {
 
       let deleteEventParameters = {
         token: accessToken,
-        eventId: appointment.event_id
+        eventId: event_id
       }
     
       outlook.calendar.deleteEvent(deleteEventParameters, function(error, event) {
@@ -452,13 +455,9 @@ const remove = async(req, res) => {
       urls.GMAIL_AUTHORIZE_URL
     )
     oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token)) 
-    removeGoogleCalendarById(oauth2Client, appointment.event_id, res)
+    removeGoogleCalendarById(oauth2Client, event_id, res)
   }
 
-  appointment['del'] = true
-  appointment["updated_at"] = new Date()
-
-  await appointment.save()
   res.send({
     status: true,
   })
