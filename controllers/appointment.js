@@ -398,13 +398,15 @@ const edit = async(req, res) => {
         appointment[key] = _appointment[key]
       }
     
+      console.log('appointment._id', appointment._id)
+      console.log('appointment.id', appointment.id)
       appointment["updated_at"] = new Date()
     
       await appointment.save() 
       const activity = new Activity({
         content: currentUser.user_name + ' updated appointment',
         contacts: _appointment.contact,
-        appointments: appointment.id,
+        appointments: appointment._id,
         user: currentUser.id,
         type: 'appointments',
         created_at: new Date(),
@@ -528,7 +530,7 @@ const remove = async(req, res) => {
       await removeGoogleCalendarById(oauth2Client, event_id)
     }
     appointment = await Appointment.findOne({user: currentUser.id, event_id: req.params.id})
-    
+
     if(appointment){
       appointment['del'] = true
       appointment["updated_at"] = new Date()
