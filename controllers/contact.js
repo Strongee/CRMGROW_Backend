@@ -37,7 +37,6 @@ const get = async(req, res) => {
 
   const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id }).sort({due_date: 1})
   const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id })
-  console.log('_activity_list',_activity_list)
   let _activity_detail_list = [];
   
   for(let i = 0; i < _activity_list.length; i ++){
@@ -59,8 +58,6 @@ const get = async(req, res) => {
      _activity_detail_list.push(_activity_detail[0])
   }
     
-  
-    console.log('_activity_detail_list', _activity_detail_list)
     myJSON = JSON.stringify(_contact)
     const contact = JSON.parse(myJSON);
     const data = await Object.assign(contact, {"follow_up": _follow_up}, {"activity": _activity_detail_list});
