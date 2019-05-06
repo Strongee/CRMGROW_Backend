@@ -89,11 +89,13 @@ const get = async(req, res) => {
               })
             } else {
                 const _outlook_calendar_data_list = response.body.value
-                for(let i = 0; i< _outlook_calendar_data_list.length; i++){
+                for(let i = 0; i < _outlook_calendar_data_list.length; i++){
                   let guests = [];
-                  for( let j = 0; _outlook_calendar_data_list[i].Attendees.length; j ++){
-                    const guest = _outlook_calendar_data_list[i].Attendees[j]["EmailAddress"]["Address"]
-                    guests.push(guest)
+                  if(typeof _outlook_calendar_data_list[i].Attendees != "undefined"){
+                    for( let j = 0; j <_outlook_calendar_data_list[i].Attendees.length; j ++){
+                      const guest = _outlook_calendar_data_list[i].Attendees[j]["EmailAddress"]["Address"]
+                      guests.push(guest)
+                    }
                   }
                   let  _outlook_calendar_data = {}
                   _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
@@ -155,9 +157,11 @@ const calendarList = (auth, data, res) => {
       if (events.length) {
         events.map((event) => {
           let guests = [];
-          for( let j = 0; event.attendees.length; j ++){
-            const guest = event.attendees['email']
-            guests.push(guest)
+          if(typeof event.attendees != "undefined"){
+            for( let j = 0; j < event.attendees.length; j ++){
+              const guest = event.attendees[j]['email']
+              guests.push(guest)
+            }
           }
           let _gmail_calendar_data = {}
                 _gmail_calendar_data.title = event.summary
@@ -166,6 +170,7 @@ const calendarList = (auth, data, res) => {
                 _gmail_calendar_data.due_start = event.start.dateTime
                 _gmail_calendar_data.due_end = event.end.dateTime
                 _gmail_calendar_data.guests = guests
+                _gmail_calendar_data.event_id = event.id
                 _gmail_calendar_data.type = 2
                 data.push(_gmail_calendar_data)
         });
@@ -196,14 +201,16 @@ const create = async(req, res) => {
     const _appointment = req.body
     if( currentUser.connected_email_type == 'outlook' ){
       let attendees = [];
-          for( let j = 0; _appointment.guests.length; j ++){
+       if(typeof _appointment.guests !='undefined' ){
+          for( let j = 0; j<_appointment.guests.length; j ++){
             const addendee = {
               "EmailAddress": {
                 "Address": _appointment.guests[j]
               }
             }
             attendees.push(addendee)
-         }
+        }
+       }   
       let newEvent = {
         "Subject": _appointment.title,
         "Body": {
@@ -329,12 +336,14 @@ const create = async(req, res) => {
 const addGoogleCalendarById = async (auth, user, appointment) => {
   const calendar = google.calendar({version: 'v3', auth})
   let attendees = [];
-    for( let j = 0; appointment.guests.length; j ++){
+  if(typeof appointment.guests !='undefined' ){
+    for( let j = 0; j<appointment.guests.length; j ++){
       const addendee = {
         "email": appointment.guests[j] 
       }
       attendees.push(addendee)
     }
+  }
   let event = {
     'summary': appointment.title,
     'location': appointment.location,
@@ -385,14 +394,16 @@ const edit = async(req, res) => {
         }).then((token)=>{
           const accessToken = token.access_token
           let attendees = [];
-          for( let j = 0; _appointment.guests.length; j ++){
-            const addendee = {
-              "EmailAddress": {
-                "Address": _appointment.guests[j]
+          if(typeof _appointment.guests !='undefined' ){
+            for( let j = 0; j<_appointment.guests.length; j ++){
+              const addendee = {
+                "EmailAddress": {
+                  "Address": _appointment.guests[j]
+                }
               }
+              attendees.push(addendee)
             }
-            attendees.push(addendee)
-          }
+        }
           const updatePayload = {
             "Subject": _appointment.title,
             "Body": {
@@ -436,7 +447,7 @@ const edit = async(req, res) => {
       
       const token = JSON.parse(currentUser.google_refresh_token)
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
-      await updateGoogleCalendarById(oauth2Client, event_id, _appointment)
+      await updateGoogleCalendarById(oauth2Client, event_id, _appointment, currentUser.time_zone)
     }
 
     let appointment = await Appointment.findOne({user: currentUser.id, event_id: req.params.id})
@@ -686,14 +697,16 @@ const removeGoogleCalendarById = async (auth, event_id) => {
   })
 }
 
-const updateGoogleCalendarById = async (auth, event_id, appointment) => {
+const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) => {
   const calendar = google.calendar({version: 'v3', auth})
   let attendees = [];
-  for( let j = 0; appointment.guests.length; j ++){
-    const addendee = {
-      "email": appointment.guests[j] 
+  if(typeof appointment.guests !='undefined'){
+    for( let j = 0; j<appointment.guests.length; j ++){
+      const addendee = {
+        "email": appointment.guests[j] 
+      }
+      attendees.push(addendee)
     }
-    attendees.push(addendee)
   }
   let event = {
     'summary': appointment.title,
@@ -701,11 +714,11 @@ const updateGoogleCalendarById = async (auth, event_id, appointment) => {
     'description': appointment.description,
     'start': {
         'dateTime': appointment.due_start,
-        'timeZone': 'UTC' + currentUser.time_zone,
+        'timeZone': 'UTC' + time_zone,
       },
     'end': {
         'dateTime': appointment.due_end,
-        'timeZone': 'UTC' + currentUser.time_zone,
+        'timeZone': 'UTC' + time_zone,
       },
     'attendees': attendees
     }
