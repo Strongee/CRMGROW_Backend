@@ -330,22 +330,11 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
 
 const edit = async(req, res) => {
   const { currentUser } = req
-  const _appointment = req.body
   
-  if(_appointment['id']) {
-    let appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id});
-    for (let key in _appointment) {
-      appointment[key] = _appointment[key]
-    }
-  
-    appointment["updated_at"] = new Date()
-  
-    await appointment.save() 
-  }
- 
   if(currentUser.connect_calendar){
-      let event_id = _appointment['event_id'] || req.params.id
-      if( currentUser.connected_email_type == 'outlook' ){
+    const _appointment = req.body
+    let event_id = req.params.id
+    if( currentUser.connected_email_type == 'outlook' ){
         let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
         
         new Promise((resolve, reject) => {
@@ -400,15 +389,22 @@ const edit = async(req, res) => {
       
       const token = JSON.parse(currentUser.google_refresh_token)
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
-      await updateGoogleCalendarById(oauth2Client, _appointment)
+      await updateGoogleCalendarById(oauth2Client, event_id, _appointment)
     }
-  }
 
-  if(_appointment['contact']){
-    const activity = new Activity({
+    let appointment = await Appointment.findOne({user: currentUser.id, event_id: req.params.id})
+    if(appointment){
+      for (let key in _appointment) {
+        appointment[key] = _appointment[key]
+      }
+    
+      appointment["updated_at"] = new Date()
+    
+      await appointment.save() 
+      const activity = new Activity({
         content: currentUser.user_name + ' updated appointment',
         contacts: _appointment.contact,
-        appointments: _appointment.id,
+        appointments: appointment.id,
         user: currentUser.id,
         type: 'appointments',
         created_at: new Date(),
@@ -441,83 +437,37 @@ const edit = async(req, res) => {
       res.send({
         status: true,
       })
-    }
-}
-
-const remove = async(req, res) => {
-  const { currentUser } = req
-  const inner = req.query.inner
-  let appointment = {}
-  if(inner) {
-    appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id})
-    appointment['del'] = true
-    appointment["updated_at"] = new Date()
-
-    await appointment.save()
-  }
-
-  if(currentUser.connect_calendar){
-    let event_id = appointment['event_id'] || req.params.id
-    if( currentUser.connected_email_type == 'outlook' ){    
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
-      let accessToken
-      
-      await new Promise((resolve, reject) => {
-        token.refresh(function(error, result) {
-          if (error) {
-            reject(error.message)
-          } else {
-            resolve(result.token);
-          }
-        })
-      }).then((token)=>{
-        accessToken = token.access_token
-      }).catch((error) => {
-        console.log('error', error)
-      })
-
-      let deleteEventParameters = {
-        token: accessToken,
-        eventId: event_id
+    } 
+  }else{
+    const editData = req.body
+    let appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id})
+      for (let key in _appointment) {
+        appointment[key] = editData[key]
       }
     
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
-      outlook.calendar.deleteEvent(deleteEventParameters, function(error) {
-        if (error) {
-          console.log(error);
-        }
-      })
-  }else{
-    const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-      urls.GMAIL_AUTHORIZE_URL
-    )
-    oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token)) 
-    await removeGoogleCalendarById(oauth2Client, event_id, res)
-  }
-}
-
-  if(appointment['contact']){
-    const activity = new Activity({
-      content: currentUser.user_name + ' removed appointment',
-      contacts: appointment.contact,
-      appointments: appointment.id,
-      user: currentUser.id,
-      type: 'appointments',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-
-    activity.save().then(_activity => {
-      myJSON = JSON.stringify(appointment)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
-      res.send({
-        status: true,
-        data
-      })
-    }).catch(e => {
+      appointment["updated_at"] = new Date()
+    
+      await appointment.save().then(_appointment=>{
+        const activity = new Activity({
+          content: currentUser.user_name + ' updated appointment',
+          contacts: _appointment.contact,
+          appointments: _appointment.id,
+          user: currentUser.id,
+          type: 'appointments',
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+      
+        activity.save().then(_activity => {
+          myJSON = JSON.stringify(_appointment)
+          const data = JSON.parse(myJSON);
+          data.activity = _activity
+          res.send({
+            status: true,
+            data
+          })
+        })
+      }).catch(e => {
         let errors
       if (e.errors) {
           console.log('e.errors', e.errors)
@@ -531,14 +481,140 @@ const remove = async(req, res) => {
         error: errors || e
       })
     });
-  }else{
-    res.send({
-      status: true,
-    })
   }
 }
 
-const removeGoogleCalendarById = async (auth, event_id, res) => {
+const remove = async(req, res) => {
+  const { currentUser } = req
+ 
+  if(currentUser.connect_calendar){
+      let event_id = req.params.id
+      if( currentUser.connected_email_type == 'outlook' ){    
+        let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+        let accessToken
+        
+        await new Promise((resolve, reject) => {
+          token.refresh(function(error, result) {
+            if (error) {
+              reject(error.message)
+            } else {
+              resolve(result.token);
+            }
+          })
+        }).then((token)=>{
+          accessToken = token.access_token
+        }).catch((error) => {
+          console.log('error', error)
+        })
+
+        let deleteEventParameters = {
+          token: accessToken,
+          eventId: event_id
+        }
+      
+        outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
+        outlook.calendar.deleteEvent(deleteEventParameters, function(error) {
+          if (error) {
+            console.log(error);
+          }
+        })
+    }else{
+      const oauth2Client = new google.auth.OAuth2(
+        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      )
+      oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token)) 
+      await removeGoogleCalendarById(oauth2Client, event_id)
+    }
+    appointment = await Appointment.findOne({user: currentUser.id, event_id: req.params.id})
+    
+    if(appointment){
+      appointment['del'] = true
+      appointment["updated_at"] = new Date()
+
+      await appointment.save()
+      const activity = new Activity({
+        content: currentUser.user_name + ' removed appointment',
+        contacts: appointment.contact,
+        appointments: appointment.id,
+        user: currentUser.id,
+        type: 'appointments',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(appointment)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        res.send({
+          status: true,
+          data
+        })
+      }).catch(e => {
+          let errors
+        if (e.errors) {
+            console.log('e.errors', e.errors)
+          errors = e.errors.map(err => {      
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+    }else{
+      res.send({
+        status: true,
+      })
+    }
+  }else{
+    appointment = await Appointment.findOne({user: currentUser.id, _id: req.params.id})
+    if(appointment){
+      appointment['del'] = true
+      appointment["updated_at"] = new Date()
+
+      await appointment.save()
+      const activity = new Activity({
+        content: currentUser.user_name + ' removed appointment',
+        contacts: appointment.contact,
+        appointments: appointment.id,
+        user: currentUser.id,
+        type: 'appointments',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(appointment)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        res.send({
+          status: true,
+          data
+        })
+      }).catch(e => {
+          let errors
+        if (e.errors) {
+            console.log('e.errors', e.errors)
+          errors = e.errors.map(err => {      
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+    }
+  }
+}
+
+const removeGoogleCalendarById = async (auth, event_id) => {
   const calendar = google.calendar({version: 'v3', auth})
   const params = {
       calendarId: 'primary',
@@ -561,7 +637,7 @@ const removeGoogleCalendarById = async (auth, event_id, res) => {
   })
 }
 
-const updateGoogleCalendarById = async (auth, appointment) => {
+const updateGoogleCalendarById = async (auth, event_id, appointment) => {
   const calendar = google.calendar({version: 'v3', auth})
   let event = {
     'summary': appointment.title,
@@ -579,7 +655,7 @@ const updateGoogleCalendarById = async (auth, appointment) => {
     console.log('event_id', appointment.event_id)
     const params = {
       calendarId: 'primary',
-      eventId: appointment.event_id,
+      eventId: event_id,
       resource: event
     }
     return new Promise((resolve, reject) => {
