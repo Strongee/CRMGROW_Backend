@@ -193,7 +193,7 @@ const sendBatch = async(req, res) => {
   sgMail.setApiKey(config.SENDGRID_KEY);
 
   const {currentUser} = req
-  const {cc, bcc, to, subject, content} = req.body
+  const {cc, bcc, to, subject, content, contact} = req.body
   const _contact = await Contact.findOne({_id: contact})
   
   const msg = {
@@ -223,7 +223,7 @@ const sendBatch = async(req, res) => {
           contacts: _contact.id,
           user: currentUser.id,
           type: 'emails',
-          emails: _email.id,
+          emails: _email._id,
           created_at: new Date(),
           updated_at: new Date(),
         })
