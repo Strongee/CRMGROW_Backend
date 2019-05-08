@@ -358,6 +358,7 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
     calendar.events.insert({
       auth: auth,
       calendarId: 'primary',
+      sendNotifications: true,
       resource: event,
     }, function(err, event) {
       if (err) {
@@ -452,8 +453,6 @@ const edit = async(req, res) => {
         appointment[key] = _appointment[key]
       }
     
-      console.log('appointment._id', appointment._id)
-      console.log('appointment.id', appointment.id)
       appointment["updated_at"] = new Date()
     
       await appointment.save() 
@@ -675,6 +674,7 @@ const removeGoogleCalendarById = async (auth, event_id) => {
   const params = {
       calendarId: 'primary',
       eventId: event_id,
+      sendNotifications: true,
   };
   calendar.events.delete(params, function(err) {
     if (err) {
@@ -721,7 +721,8 @@ const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) 
     const params = {
       calendarId: 'primary',
       eventId: event_id,
-      resource: event
+      resource: event,
+      sendNotifications: true,
     }
     return new Promise((resolve, reject) => {
       calendar.events.patch(params, function(err) {

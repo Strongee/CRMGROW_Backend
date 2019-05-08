@@ -9,7 +9,6 @@ const get = async(req, res) => {
 
   for(let i = 0; i < _activity.length; i ++){
     const _contacts = await Contact.findOne({_id: _activity[i].contacts}) 
-    console.log('contact', _contacts)
     myJSON = JSON.stringify(_activity[i])
     const activity = JSON.parse(myJSON);
     delete activity.contacts

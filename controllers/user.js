@@ -576,6 +576,7 @@ const addGoogleCalendar = async (auth, user, res) => {
       auth: auth,
       calendarId: 'primary',
       resource: event,
+      sendNotifications: true,
     }, function(err, event) {
       if (err) {
         console.log('There was an error contacting the Calendar service: ' + err);
