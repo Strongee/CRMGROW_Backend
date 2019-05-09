@@ -463,7 +463,7 @@ const syncCalendar = async(req, res) => {
     const _appointments = await Appointment.find({user: user.id, del: false})
     for( let i = 0; i < _appointments.length; i ++ ) {
         let attendees = [];
-        if(typeof _appointment[i].guests !='undefined' ){
+        if(typeof _appointments[i].guests !='undefined' ){
           for( let j = 0; j<_appointments[i].guests.length; j ++){
             const addendee = {
               "EmailAddress": {
