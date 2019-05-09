@@ -5,6 +5,7 @@ const Contact = mongoose.model('contact',{
      last_name: String,
      email:String,
      user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+     address: Object,
      cell_phone: String,
      brokerage: String,
      tag: Array,

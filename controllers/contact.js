@@ -5,6 +5,8 @@ const FollowUp = require('../models/follow_up')
 const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const sgMail = require('@sendgrid/mail')
+const fs = require('fs')
+const csv = require('csv-parser')
 const config = require('../config/config')
 
 const getAll = async(req, res) => {
@@ -313,6 +315,57 @@ const sendEmail = async(req, res) => {
     })
   })
 }
+
+const importCSV = async(req, res) => {
+  let file = req.file
+  fs.createReadStream(file.path).pipe(csv())
+      .on('data', (data) => {
+        const contact = new Contact({
+          ...data,
+          user: currentUser.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        
+      
+        console.log('user', currentUser.id)
+        contact.save()
+        .then(_contact => {
+            const activity = new Activity({
+              content: currentUser.user_name + ' added contact',
+              contacts: _contact.id,
+              user: currentUser.id,
+              type: 'contacts',
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+      
+            activity.save().then(_activity => {
+              myJSON = JSON.stringify(_contact)
+              const data = JSON.parse(myJSON);
+              data.activity = _activity
+              res.send({
+                status: true,
+                data
+              })
+            })   
+        })
+        .catch(e => {
+          console.log(e)
+            let errors
+          if (e.errors) {
+            errors = e.errors.map(err => {      
+              delete err.instance
+              return err
+            })
+          }
+          return res.status(500).send({
+            status: false,
+            error: errors || e
+          })
+        });
+      })
+}
 module.exports = {
     getAll,
     get,
@@ -320,5 +373,6 @@ module.exports = {
     remove,
     edit,
     sendBatch,
-    sendEmail
+    sendEmail,
+    importCSV
 }

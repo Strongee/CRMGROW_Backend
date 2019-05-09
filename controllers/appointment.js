@@ -14,6 +14,7 @@ const credentials = {
 }
 const oauth2 = require('simple-oauth2')(credentials)
 const {google} = require('googleapis')
+const sgMail = require('@sendgrid/mail')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -279,6 +280,34 @@ const create = async(req, res) => {
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
       event_id = await addGoogleCalendarById(oauth2Client, currentUser, _appointment)
     }
+  }else{
+    const _appointment = req.body
+    sgMail.setApiKey(config.SENDGRID_KEY)
+        
+    const msg = {
+      to: _appointment.guests,
+      from: currentUser.email,
+      templateId: config.SENDGRID_APPOITMENT_TEMPLATE,
+      dynamic_template_data: {
+        event_time: _appointment.due_start + '-' + _appointment.due_end,
+        guests: _appointment.guests,
+        calendar_owner: currentUser.email,
+        email_signature: currentUser.email_signature,
+      },
+    };
+
+    await sgMail.send(msg).then((_res) => {
+      console.log('mailres.errorcode', _res[0].statusCode);
+      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
+        console.log('status', _res[0].statusCode)
+      }
+    }).catch ((e) => {
+      console.error(e)
+      res.status(500).send({
+        status: false,
+        error: 'internal_server_error'
+      })
+    })
   }
 
   const appointment = new Appointment({

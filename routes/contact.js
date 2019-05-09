@@ -3,8 +3,19 @@ const express = require('express')
 const UserCtrl = require('../controllers/user')
 const ContactCtrl = require('../controllers/contact')
 const { catchError } = require('../controllers/error')
+const { FILES_PATH } = require('../config/path')
+
+const multer = require('multer')
 
 const router = express.Router()
+
+const fileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, FILES_PATH)
+    }
+  })
+
+const upload = multer({ storage: fileStorage })
 
 router.post('/', UserCtrl.checkAuth, catchError(ContactCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(ContactCtrl.getAll))
@@ -23,5 +34,8 @@ router.post('/batch', UserCtrl.checkAuth, catchError(ContactCtrl.sendBatch))
 
 // Send Batch email to contact lists
 router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
+
+// Send Batch email to contact lists
+router.post('/import-csv', UserCtrl.checkAuth, upload.single('csv'), catchError(ContactCtrl.importCSV))
 
 module.exports = router

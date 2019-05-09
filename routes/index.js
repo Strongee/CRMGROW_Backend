@@ -37,4 +37,5 @@ router.use('/vtrack', video_tracker)
 router.use('/pdf', pdf)
 router.use('/ptrack', pdf_tracker)
 router.use('/admin', admin)
+
 module.exports = router
