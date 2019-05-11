@@ -87,8 +87,6 @@ const create = async(req, res) => {
     updated_at: new Date(),
   })
   
-
-  console.log('user', currentUser.id)
   contact.save()
   .then(_contact => {
       const activity = new Activity({
@@ -119,7 +117,10 @@ const create = async(req, res) => {
         return err
       })
     }
-    return res.status(500).send({
+    if (e.code = 11000){
+      errors = "Email and Phone number must be unique!"
+    }
+    return res.status(200).send({
       status: false,
       error: errors || e
     })
@@ -259,12 +260,13 @@ const sendEmail = async(req, res) => {
   sgMail.setApiKey(config.SENDGRID_KEY)
 
   const {currentUser} = req
-  const {contact, content} = req.body
+  const {contact, content, attachments} = req.body
   const _contact = await Contact.findOne({_id: contact})
   const msg = {
     from: currentUser.email,
     to: _contact.email,
     subject: currentUser.user_name + ' sent email',
+    attachments: attachments,
     html: content + '<br/><br/>' + currentUser.email_signature
   };
       
