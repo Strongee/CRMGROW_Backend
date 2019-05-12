@@ -2,7 +2,12 @@ const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const Contact = require('../models/contact');
 const VideoTracker = require('../models/video_tracker');
+const Video = require('../models/video');
 const Activity = require('../models/activity');
+const sgMail = require('@sendgrid/mail')
+const urls = require('../constants/urls')
+const mail_contents = require('../constants/mail_contents')
+const config = require('../config/config')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -41,9 +46,33 @@ const create = async(req, res) => {
 
   const currentUser = await User.findOne({_id: req.query['user']})
   const contact = await Contact.findOne({_id: req.query['contact']})
+  const video = await Video.findOne({_id: req.query['video']})
+  sgMail.setApiKey(config.SENDGRID_KEY);
+
+  const watched_duration_min = Math.floor(req.query['duration']/6000);
+  const watched_duration_sec = (req.query['duration']/6000 - watched_duration_min).toString().substring(2,4);
+  const total_duration_min = Math.floor(video.duration/6000);
+  const total_duration_sec = (video.duration/6000 - Math.floor(video.duration/6000)).toString().substring(2,4);
+
+
+  const msg = {
+    to: currentUser.email,
+    from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+    subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+    templateId: config.SENDGRID_NOTICATION_TEMPLATE,
+    dynamic_template_data: {
+      first_name: contact.first_name,
+      phone_number: contact.cell_phone,
+      email: contact.email,
+      activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
+      duration: 'Watched ' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' at ' + req.query['time_start'],
+      detailed_activity: "Please click <a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>here</a> to see detailed activity of that contact"
+    },
+  };
+
+  await sgMail.send(msg)
+
   video_tracker.save()
-
-
   .then(_video_tracker => {
 
     const activity = new Activity({

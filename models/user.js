@@ -14,8 +14,10 @@ const User = mongoose.model('user',{
      outlook_refresh_token: String,
      google_refresh_token: String,
      connected_email_type: String,
-     connect_calendar: Boolean,
+     connect_calendar: { type: Boolean, default: false},
      connected_email: String,
+     daily_report: { type: Boolean, default: false},
+     weekly_report: { type: Boolean, default: false},
      created_at: Date,
      updated_at: Date,
  });

@@ -35,7 +35,7 @@ router.post('/batch', UserCtrl.checkAuth, catchError(ContactCtrl.sendBatch))
 // Send Batch email to contact lists
 router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
 
-// Send Batch email to contact lists
+// Import contact list as file
 router.post('/import-csv', UserCtrl.checkAuth, upload.single('csv'), catchError(ContactCtrl.importCSV))
 
 module.exports = router

@@ -53,4 +53,9 @@ router.get('/sync-calendar', UserCtrl.checkAuth, catchError(UserCtrl.syncCalenda
 // Synchronize calendar with connected outlook email
 router.get('/discon-calendar', UserCtrl.checkAuth, catchError(UserCtrl.disconCalendar))
 
+// Daily Report
+router.get('/daily-report',   UserCtrl.checkAuth, catchError(UserCtrl.dailyReport))
+
+// Daily Report
+router.get('/weekly-report',   UserCtrl.checkAuth, catchError(UserCtrl.weeklyReport))
 module.exports = router

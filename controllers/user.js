@@ -4,7 +4,14 @@ const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const Appointment = require('../models/appointment')
+const Contact = require('../models/contact')
+const Activity = require('../models/activity')
 const sgMail = require('@sendgrid/mail')
+const {google} = require('googleapis')
+const outlook = require('node-outlook')
+const CronJob = require('cron').CronJob;
+
+
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
@@ -16,8 +23,6 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
-const {google} = require('googleapis')
-const outlook = require('node-outlook')
 
 const signUp = async (req, res) => {
     const errors = validationResult(req)
@@ -677,6 +682,100 @@ const removeGoogleCalendar = async (auth, user, res) => {
   })
 }
 
+const dailyReport = async(req, res) => {
+
+  const user = req.currentUser
+
+  user['daily_report'] = true;
+
+  await user.save()
+  
+  new CronJob({
+    // Run at 21:00 Central time, only on weekdays
+    cronTime: '00 20 01 * * 1-5',
+    onTick: async function() {
+      const { currentUser } = req
+      sgMail.setApiKey(config.SENDGRID_KEY);
+    
+      const contacts = await Contact.find({user :currentUser.id})
+      let contents = []
+      for (let i =0; i < contacts.length; i ++){
+    
+        const activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).sort({_id : -1 }).limit(1);
+        let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
+        "<div class='contact'><h3>" + contacts[i].first_name + "</h3><p style='margin: 0px'>" + contacts[i].email +" " + contacts[i].cell_phone + "</p>" +
+        "<p style='margin: 0px'>" + activity[0].content +"</p></div>" + 
+        "<button style='background-color: white; color:#0078d4; width:70px; height:30px; margin: auto 10px;'><a herf='" + urls.CONTACT_PAGE_URL + contacts[i].id + "'>View</a></button></div>"
+        contents.push(content)
+      }
+    
+      const msg = {
+        to: currentUser.email,
+        from: mail_contents.DAILY_REPORT.MAIL,
+        subject: mail_contents.DAILY_REPORT.SUBJECT,
+        templateId: config.SENDGRID_DAILY_REPORT_TEMPLATE,
+        dynamic_template_data: {
+          contents: contents
+        },
+      }
+      await sgMail.send(msg)
+    },
+    start: true,
+    timeZone: 'US/Central'
+  });
+  
+  return res.send({
+    status: true
+  })
+}
+
+const weeklyReport = async(req, res) => {
+
+  const user = req.currentUser
+
+  user['weekly_report'] = true;
+
+  await user.save()
+
+  new CronJob({
+    // Run at 21:00 Central time, only on friday
+    cronTime: '00 20 01 * * 5',
+    onTick: async function() {
+      const { currentUser } = req
+      sgMail.setApiKey(config.SENDGRID_KEY);
+    
+      const contacts = await Contact.find({user :currentUser.id})
+      let contents = []
+      for (let i =0; i < contacts.length; i ++){
+    
+        const activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).sort({_id : -1 }).limit(1);
+        let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
+        "<div class='contact'><h3>" + contacts[i].first_name + "</h3><p style='margin: 0px'>" + contacts[i].email +" " + contacts[i].cell_phone + "</p>" +
+        "<p style='margin: 0px'>" + activity[0].content +"</p></div>" + 
+        "<button style='background-color: white; color:#0078d4; width:70px; height:30px; margin: auto 10px;'><a herf='" + urls.CONTACT_PAGE_URL + contacts[i].id + "'>View</a></button></div>"
+        contents.push(content)
+      }
+    
+      const msg = {
+        to: currentUser.email,
+        from: mail_contents.DAILY_REPORT.MAIL,
+        subject: mail_contents.DAILY_REPORT.SUBJECT,
+        templateId: config.SENDGRID_DAILY_REPORT_TEMPLATE,
+        dynamic_template_data: {
+          contents: contents
+        },
+      }
+      await sgMail.send(msg)
+    },
+    start: true,
+    timeZone: 'US/Central'
+  });
+  
+  return res.send({
+    status: true
+  })
+}
+
 module.exports = {
     signUp,
     login,
@@ -689,6 +788,8 @@ module.exports = {
     authorizeGmail,
     syncCalendar,
     disconCalendar,
+    dailyReport,
+    weeklyReport,
     checkAuth
 }
 

@@ -4,13 +4,13 @@ const mail_contents = {
         SUBJECT: "Welcome to Teamgrow",
         TEXT: "Welcome to Teamgrow"
     },
-    WELCOME_SEND_VIDEO: {
+    NOTIFICATION_SEND_MATERIAL: {
         MAIL: "no-reply@teamgrow.awsapps.com",
-        SUBJECT: "Thank you for your interest in EXP.  Please see below video link."
+        SUBJECT: "Teamgrow video watched notification: "
     },
-    WELCOME_SEND_PDF: {
+    DAILY_REPORT: {
         MAIL: "no-reply@teamgrow.awsapps.com",
-        SUBJECT: "Thank you for your interest in EXP.  Please see below pdf link."
+        SUBJECT: "Daily report: "
     }
 }
 
