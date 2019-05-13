@@ -25,7 +25,7 @@ const send = async(req, res) => {
     throw error // Invalid phone number
   }
 
-    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone, statusCallback: urls.SMS_RECEIVE_URL+currentUser.id,})
+    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
 
     const sms = new SMS({
         text: req.body.text,
@@ -75,29 +75,18 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    console.log('here')
     console.log(req.body.Body)
     console.log(req.body.From) 
-
-    const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
-    const contact = await Contact.findOne({_id: sms.contact})
-    const user = await User.findOne({_id: req.params.id})
-    const e164Phone = phone('+8617172498837')[0]
+    console.log(req.body)
+    // const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
+    // const contact = await Contact.findOne({_id: sms.contact})
+    // const e164Phone = phone('+8617172498837')[0]
     
-    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone, statusCallback: urls.SMS_REPLY_URL+contact.id,})
+    // await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
     res.send({
         status: true,
       })
 }
-
-const reply = async(req, res) => {
-    console.log('there')
-    console.log(req.body.Body)
-    console.log(req.body.From) 
-    res.send({
-        status: true,
-      })
-  }
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -123,5 +112,4 @@ module.exports = {
     get,
     send,
     receive,
-    reply
 }
