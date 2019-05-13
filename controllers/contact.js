@@ -85,14 +85,14 @@ const create = async(req, res) => {
   console.log('contact_old', contact_old)
   if(contact_old != null){
     return res.send({
-      status: true,
+      status: false,
       error: 'Email must be unique!'
     })
   }
   contact_old = await Contact.find({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
   if(contact_old != null){
     return res.send({
-      status: true,
+      status: false,
       error: 'Phone number must be unique!'
     })
   }
