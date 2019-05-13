@@ -193,7 +193,7 @@ const edit = async(req, res) => {
 }
 
 const sendBatch = async(req, res) => {
-  sgMail.setApiKey(config.SENDGRID_KEY);
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const {currentUser} = req
   const {cc, bcc, to, subject, content, contact} = req.body
@@ -257,7 +257,7 @@ const sendBatch = async(req, res) => {
 }
 
 const sendEmail = async(req, res) => {
-  sgMail.setApiKey(config.SENDGRID_KEY)
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
 
   const {currentUser} = req
   const {contact, content, attachments} = req.body

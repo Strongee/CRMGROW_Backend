@@ -47,7 +47,7 @@ const create = async(req, res) => {
   const currentUser = await User.findOne({_id: req.query['user']})
   const contact = await Contact.findOne({_id: req.query['contact']})
   const video = await Video.findOne({_id: req.query['video']})
-  sgMail.setApiKey(config.SENDGRID_KEY);
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const watched_duration_min = Math.floor(req.query['duration']/6000);
   const watched_duration_sec = (req.query['duration']/6000 - watched_duration_min).toString().substring(2,4);
@@ -59,7 +59,7 @@ const create = async(req, res) => {
     to: currentUser.email,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-    templateId: config.SENDGRID_NOTICATION_TEMPLATE,
+    templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
     dynamic_template_data: {
       first_name: contact.first_name,
       phone_number: contact.cell_phone,

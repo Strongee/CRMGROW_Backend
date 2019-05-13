@@ -282,12 +282,12 @@ const create = async(req, res) => {
     }
   }else{
     const _appointment = req.body
-    sgMail.setApiKey(config.SENDGRID_KEY)
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
         
     const msg = {
       to: _appointment.guests,
       from: currentUser.email,
-      templateId: config.SENDGRID_APPOITMENT_TEMPLATE,
+      templateId: config.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
       dynamic_template_data: {
         event_time: _appointment.due_start + '-' + _appointment.due_end,
         guests: _appointment.guests,

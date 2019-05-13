@@ -156,7 +156,7 @@ const getAll = async (req, res) => {
 const sendPDF = async (req, res) => {
   const { currentUser } = req
   const {email, content, pdf, pdf_title, contact, contact_name} = req.body
-  sgMail.setApiKey(config.SENDGRID_KEY);
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {

@@ -166,7 +166,7 @@ const getAll = async (req, res) => {
 const sendVideo = async (req, res) => {
   const { currentUser } = req
   const {email, content, video, video_title, contact, contact_name} = req.body
-  sgMail.setApiKey(config.SENDGRID_KEY);
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const msg = {
