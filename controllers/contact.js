@@ -81,6 +81,20 @@ const create = async(req, res) => {
     })
   }
 
+  let contact_old = await Contact.find({user: currentUser.id, email: req.body['email']}) 
+  if(contact_old != null){
+    return res.send({
+      status: true,
+      error: 'Email must be unique!'
+    })
+  }
+  contact_old = await Contact.find({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
+  if(contact_old != null){
+    return res.send({
+      status: true,
+      error: 'Phone number must be unique!'
+    })
+  }
   const contact = new Contact({
     ...req.body,
     user: currentUser.id,
@@ -342,7 +356,18 @@ const importCSV = async(req, res) => {
                   created_at: new Date(),
                   updated_at: new Date(),
               })
-              note.save().then()
+              note.save().then(_note=>{
+                const activity = new Activity({
+                  content: currentUser.user_name + ' added note',
+                  contacts: _contact.id,
+                  user: currentUser.id,
+                  type: 'notes',
+                  notes: _note.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                activity.save().then()
+              })
               const activity = new Activity({
                 content: currentUser.user_name + ' added contact',
                 contacts: _contact.id,
