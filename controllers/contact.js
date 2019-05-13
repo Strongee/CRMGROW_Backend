@@ -337,7 +337,7 @@ const sendEmail = async(req, res) => {
 const importCSV = async(req, res) => {
   let file = req.file
   const {currentUser} = req
-  fs.createReadStream(file.path).pipe(csv(['first_name', 'last_name', 'email', 'phone', 'brokerage', 'city', 'state', 'zip', 'address', 'note']))
+  fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
         if(data['first_name'] != 'first_name'){
           const contact = new Contact({
