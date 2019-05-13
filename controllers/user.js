@@ -24,6 +24,9 @@ const credentials = {
 }
 const oauth2 = require('simple-oauth2')(credentials)
 
+let daily_report
+let weekly_report
+
 const signUp = async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -686,11 +689,11 @@ const dailyReport = async(req, res) => {
 
   const user = req.currentUser
 
-  user['weekly_report'] = true;
+  user['daily_report'] = true;
 
   await user.save()
 
-  new CronJob({
+  daily_report = new CronJob({
     // Run at 21:00 Central time, only on friday
     cronTime: '00 21 * * 1-6',
     onTick: async function() {
@@ -699,7 +702,7 @@ const dailyReport = async(req, res) => {
     
       const start = new Date();
       start.setHours(0,0,0,0);
-
+  
       const end = new Date();
       end.setHours(20,59,59,999);
       const activity = await Activity.find({user :currentUser.id, created_at: {$gte: start, $lt: end}})
@@ -708,10 +711,10 @@ const dailyReport = async(req, res) => {
       
       let contents = []
       for (let i =0; i < activity.length; i ++){
-        const contact = await Contact.findOne({_id: activity.contact})
+        const contact = await Contact.findOne({_id: activity[i].contacts})
         let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
         "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
-        "<p style='margin: 0px'>" + activity.content +"</p></div>" + 
+        "<p style='margin: 0px'>" + activity[i].content +"</p></div>" + 
         "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View</a></button></div>"
         contents.push(content)
       }
@@ -745,9 +748,9 @@ const weeklyReport = async(req, res) => {
 
   await user.save()
 
-  new CronJob({
+  weekly_report = new CronJob({
     // Run at 21:00 Central time, only on friday
-    cronTime: '20 12 * * Sun',
+    cronTime: '00 21 * * Sun',
     onTick: async function() {
       const { currentUser } = req
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -766,10 +769,10 @@ const weeklyReport = async(req, res) => {
       
       let contents = []
       for (let i =0; i < activity.length; i ++){
-        const contact = await Contact.findOne({_id: activity.contact})
+        const contact = await Contact.findOne({_id: activity[i].contacts})
         let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
         "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
-        "<p style='margin: 0px'>" + activity.content +"</p></div>" + 
+        "<p style='margin: 0px'>" + activity[i].content +"</p></div>" + 
         "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View</a></button></div>"
         contents.push(content)
       }
@@ -795,6 +798,34 @@ const weeklyReport = async(req, res) => {
   })
 }
 
+const disconDaily = async(req, res) =>{
+  const user = req.currentUser
+
+  user['daily_report'] = false;
+
+  await user.save()
+
+  daily_report.stop()
+  
+  return res.send({
+    status: true
+  })
+}
+
+const disconWeekly = async(req, res) =>{
+  const user = req.currentUser
+
+  user['weekly_report'] = false;
+
+  await user.save()
+
+  weekly_report.stop()
+  
+  return res.send({
+    status: true
+  })
+}
+
 module.exports = {
     signUp,
     login,
@@ -808,6 +839,8 @@ module.exports = {
     syncCalendar,
     disconCalendar,
     dailyReport,
+    disconDaily,
+    disconWeekly,
     weeklyReport,
     checkAuth
 }
