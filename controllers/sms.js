@@ -14,7 +14,7 @@ const send = async(req, res) => {
   const { currentUser } = req
   const {text} = req.body
   const contact = Contact.findOne({_id: req.params.id})
-  const e164Phone = phone('+8618204158455')[0]
+  const e164Phone = phone(contact.cell_phone)[0]
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
@@ -50,7 +50,7 @@ const send = async(req, res) => {
         })
     
         activity.save().then(_activity => {
-          myJSON = JSON.stringify(_note)
+          myJSON = JSON.stringify(_sms)
           const data = JSON.parse(myJSON);
           data.activity = _activity
           res.send({
@@ -79,11 +79,7 @@ const receive = async(req, res) => {
     console.log(req.body.From) 
     console.log(req.body)
     console.log('here')
-    // const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
-    // const contact = await Contact.findOne({_id: sms.contact})
-    // const e164Phone = phone('+8617172498837')[0]
-    
-    // await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
+
     res.send({
         status: true,
       })

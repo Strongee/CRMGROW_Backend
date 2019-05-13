@@ -13,6 +13,11 @@ const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const fromNumber = config.TWILIO.TWILIO_FROM
+
+const twilio = require('twilio')(accountSid, authToken)
 
 const create = async (req, res) => {
   if (req.file) {
@@ -173,7 +178,7 @@ const sendVideo = async (req, res) => {
     to: email,
     from: currentUser.email,
     subject: video_title,
-    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + ',<br/><p>' + content + '</p>Please click on the video link below to learn more!<br/><a href="' + video_link + '">'+ video_title + '</a><br/><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
+    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + '</a><br/><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {
@@ -208,6 +213,39 @@ const sendVideo = async (req, res) => {
   })
 }
 
+const sendText = async (req, res) => {
+  const { currentUser } = req
+  const { cell_phone, content, video, contact} = req.body
+  const e164Phone = phone(cell_phone)[0]
+  console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+
+  if (!e164Phone) {
+    const error = {
+      error: 'Invalid Phone Number'
+    }
+
+    throw error // Invalid phone number
+  }
+
+    await twilio.messages.create({from: fromNumber, body: content, to: e164Phone})
+    
+    const activity = new Activity({
+          content: currentUser.user_name + ' sent video via text',
+          contacts: contact,
+          user: currentUser.id,
+          type: 'videos',
+          video: video,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        activity.save().then(_activity => {
+          res.send({
+            status: true,
+          })
+        })    
+}
+
 const remove = async (req, res) => {
     const { currentUser } = req
     try {
@@ -238,7 +276,6 @@ const remove = async (req, res) => {
 
 const getHistory = async(req, res) => {
   const { currentUser } = req
-  // const _activity_list = Activity.find({user: currentUser.id, video: req.params.id})
   const _activity_list = await Activity.aggregate([
     {
       $lookup:
@@ -278,6 +315,7 @@ module.exports = {
     getThumbnail,
     getAll,
     sendVideo,
+    sendText,
     remove,
     getHistory
 }

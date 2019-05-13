@@ -12,6 +12,12 @@ let indexRouter = require('./routes/index.js');
 
 let app = express();
 
+app.use(function(req,res, next) {
+    res.header("Access-Control-Allow-Origin", "*")
+    res.header("Access-Control-Allow-Headers", "Origin")
+    res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT")
+    next()
+})
 app.use(cors())
 app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))

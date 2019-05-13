@@ -62,11 +62,12 @@ const create = async(req, res) => {
     templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
     dynamic_template_data: {
       first_name: contact.first_name,
+      last_name: contact.last_name,
       phone_number: contact.cell_phone,
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-      duration: 'Watched ' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' at ' + req.query['time_start'],
-      detailed_activity: "Please click <a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>here</a> to see detailed activity of that contact"
+      duration: 'Watched <b>' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' <b>at ' + req.query['time_start'],
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View Contact Activity</a>"
     },
   };
 

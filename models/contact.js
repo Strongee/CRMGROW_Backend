@@ -9,7 +9,7 @@ const Contact = mongoose.model('contact',{
      city: String,
      state: String,
      zip: String,
-     cell_phone: {type: String, index: true, unique: true},
+     cell_phone: String,
      brokerage: String,
      tag: Array,
      recruiting_stage: String,
