@@ -331,7 +331,6 @@ const importCSV = async(req, res) => {
           updated_at: new Date(),
         })
         
-        console.log('user', currentUser.id)
         contact.save()
         .then(_contact => {
             const note = new Note({
