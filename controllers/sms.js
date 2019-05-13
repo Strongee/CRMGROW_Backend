@@ -82,7 +82,7 @@ const receive = async(req, res) => {
     const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
     const contact = await Contact.findOne({_id: sms.contact})
     const user = await User.findOne({_id: req.params.id})
-    const e164Phone = phone(user.cell_phone)[0]
+    const e164Phone = phone('+8617172498837')[0]
     
     await twilio.messages.create({from: fromNumber, body: text, to: e164Phone, statusCallback: urls.SMS_REPLY_URL+contact.id,})
     res.send({
@@ -91,7 +91,7 @@ const receive = async(req, res) => {
 }
 
 const reply = async(req, res) => {
-
+    console.log('there')
     console.log(req.body.Body)
     console.log(req.body.From) 
     res.send({
