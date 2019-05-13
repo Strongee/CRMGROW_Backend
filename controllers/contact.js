@@ -212,8 +212,7 @@ const sendBatch = async(req, res) => {
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const {currentUser} = req
-  const {cc, bcc, to, subject, content, contact} = req.body
-  const _contact = await Contact.findOne({_id: contact})
+  const {cc, bcc, to, subject, content, contacts} = req.body
   
   const msg = {
     from: currentUser.email,
@@ -224,52 +223,39 @@ const sendBatch = async(req, res) => {
     html: content + '<br/><br/>' + currentUser.email_signature,
   };
       
-  sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
-    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      const email = new Email({
-        ...req.body,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
-      
-      email.save()
-      .then(_email => {
-
-        const activity = new Activity({
-          content: currentUser.user_name + ' sent batch email',
-          contacts: _contact.id,
-          user: currentUser.id,
-          type: 'emails',
-          emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-  
-        activity.save().then(_activity => {
-          myJSON = JSON.stringify(_email)
-          const data = JSON.parse(myJSON);
-          data.activity = _activity
-          res.send({
-            status: true,
-            data
-          })
-        })   
-      })       
-    }else {
-      res.status(404).send({
-        status: false,
-        error: _res[0].statusCode
-      })
-    }
-  }).catch ((e) => {
-    console.error(e)
-    res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
-    })
+  await sgMail.send(msg)
+  const email = new Email({
+    ...req.body,
+    user: currentUser.id,
+    updated_at: new Date(),
+    created_at: new Date()
   })
+
+  const _email = await email.save()
+  let data_list = []
+  for(let i = 0; i < contacts.length; i ++){
+    const activity = new Activity({
+      content: currentUser.user_name + ' sent batch email',
+      contacts: contacts[i],
+      user: currentUser.id,
+      type: 'emails',
+      emails: _email.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    
+    const _activity = await activity.save()
+    myJSON = JSON.stringify(_email)
+    const data = JSON.parse(myJSON);
+    data.activity = _activity
+    data_list.push(data)
+  }
+        
+  res.send({
+    status: true,
+    data: data_list
+  })
+         
 }
 
 const sendEmail = async(req, res) => {

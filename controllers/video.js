@@ -178,7 +178,7 @@ const sendVideo = async (req, res) => {
     to: email,
     from: currentUser.email,
     subject: video_title,
-    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + '</a><br/><br/>Thanks<br/><br/><br/>'+ currentUser.email_signature+'</body></html>'
+    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {

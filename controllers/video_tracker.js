@@ -49,10 +49,10 @@ const create = async(req, res) => {
   const video = await Video.findOne({_id: req.query['video']})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const watched_duration_min = Math.floor(req.query['duration']/6000);
-  const watched_duration_sec = (req.query['duration']/6000 - watched_duration_min).toString().substring(2,4);
-  const total_duration_min = Math.floor(video.duration/6000);
-  const total_duration_sec = (video.duration/6000 - Math.floor(video.duration/6000)).toString().substring(2,4);
+  const watched_duration_min = Math.floor(req.query['duration']/60000);
+  const watched_duration_sec = (req.query['duration']/60000 - watched_duration_min).toString().substring(2,4);
+  const total_duration_min = Math.floor(video.duration/60000);
+  const total_duration_sec = (video.duration/60000 - Math.floor(video.duration/60000)).toString().substring(2,4);
 
 
   const msg = {
@@ -66,7 +66,7 @@ const create = async(req, res) => {
       phone_number: contact.cell_phone,
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-      duration: 'Watched <b>' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' <b>at ' + req.query['time_start'],
+      duration: 'Watched <b>' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' </b>at ' + req.query['time_start'],
       detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View Contact Activity</a>"
     },
   };
