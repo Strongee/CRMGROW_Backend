@@ -324,34 +324,37 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv(['first_name', 'last_name', 'email', 'phone', 'brokerage', 'city', 'state', 'zip', 'address', 'note']))
       .on('data', async(data) => {
-        const contact = new Contact({
-          ...data,
-          user: currentUser.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-        
-        contact.save()
-        .then(_contact => {
-            const note = new Note({
-                content: data['note'],
-                contact: _contact.id,
+        if(data['first_name'] != 'first_name'){
+          const contact = new Contact({
+            ...data,
+            cell_phone: data['phone'],
+            user: currentUser.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          
+          contact.save()
+          .then(_contact => {
+              const note = new Note({
+                  content: data['note'],
+                  contact: _contact.id,
+                  user: currentUser.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+              })
+              note.save().then()
+              const activity = new Activity({
+                content: currentUser.user_name + ' added contact',
+                contacts: _contact.id,
                 user: currentUser.id,
+                type: 'contacts',
                 created_at: new Date(),
                 updated_at: new Date(),
-            })
-            note.save().then()
-            const activity = new Activity({
-              content: currentUser.user_name + ' added contact',
-              contacts: _contact.id,
-              user: currentUser.id,
-              type: 'contacts',
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-      
-            activity.save().then()   
-        })
+              })
+        
+              activity.save().then()   
+          })
+        }
       }).on('end', () => {
         res.send({
           status: true,
