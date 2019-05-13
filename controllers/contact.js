@@ -320,6 +320,7 @@ const sendEmail = async(req, res) => {
 
 const importCSV = async(req, res) => {
   let file = req.file
+  const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv())
       .on('data', (data) => {
         const contact = new Contact({
