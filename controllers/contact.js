@@ -82,6 +82,7 @@ const create = async(req, res) => {
   }
 
   let contact_old = await Contact.find({user: currentUser.id, email: req.body['email']}) 
+  console.log('contact_old', contact_old)
   if(contact_old != null){
     return res.send({
       status: true,
