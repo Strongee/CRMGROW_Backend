@@ -14,7 +14,7 @@ const send = async(req, res) => {
   const { currentUser } = req
   const {text} = req.body
   const contact = Contact.findOne({_id: req.params.id})
-  const e164Phone = phone(contact.cell_phone)[0]
+  const e164Phone = phone('+8618204158455')[0]
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
@@ -75,6 +75,7 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
+    console.log('here')
     console.log(req.body.Body)
     console.log(req.body.From) 
 
