@@ -78,6 +78,7 @@ const receive = async(req, res) => {
     console.log(req.body.Body)
     console.log(req.body.From) 
     console.log(req.body)
+    console.log('here')
     // const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
     // const contact = await Contact.findOne({_id: sms.contact})
     // const e164Phone = phone('+8617172498837')[0]
