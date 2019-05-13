@@ -75,14 +75,9 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    console.log(req.body.Body)
-    console.log(req.body.From) 
-    console.log(req.body)
-    console.log('here')
-
     res.send({
         status: true,
-      })
+    })
 }
 
 const get = async(req, res) => {

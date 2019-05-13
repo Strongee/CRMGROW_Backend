@@ -321,8 +321,8 @@ const sendEmail = async(req, res) => {
 const importCSV = async(req, res) => {
   let file = req.file
   const {currentUser} = req
-  fs.createReadStream(file.path).pipe(csv())
-      .on('data', (data) => {
+  fs.createReadStream(file.path).pipe(csv(['first_name', 'last_name', 'email', 'phone', 'brokerage', 'city', 'state', 'zip', 'address', 'note']))
+      .on('data', async(data) => {
         const contact = new Contact({
           ...data,
           user: currentUser.id,
@@ -330,10 +330,17 @@ const importCSV = async(req, res) => {
           updated_at: new Date(),
         })
         
-      
         console.log('user', currentUser.id)
         contact.save()
         .then(_contact => {
+            const note = new Note({
+                content: data['note'],
+                contact: _contact.id,
+                user: currentUser.id,
+                created_at: new Date(),
+                updated_at: new Date(),
+            })
+            note.save().then()
             const activity = new Activity({
               content: currentUser.user_name + ' added contact',
               contacts: _contact.id,
@@ -343,31 +350,13 @@ const importCSV = async(req, res) => {
               updated_at: new Date(),
             })
       
-            activity.save().then(_activity => {
-              myJSON = JSON.stringify(_contact)
-              const data = JSON.parse(myJSON);
-              data.activity = _activity
-              res.send({
-                status: true,
-                data
-              })
-            })   
+            activity.save().then()   
         })
-        .catch(e => {
-          console.log(e)
-            let errors
-          if (e.errors) {
-            errors = e.errors.map(err => {      
-              delete err.instance
-              return err
-            })
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e
-          })
-        });
-      })
+      }).on('end', () => {
+        res.send({
+          status: true,
+        })             
+    });
 }
 module.exports = {
     getAll,
