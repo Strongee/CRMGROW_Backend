@@ -10,7 +10,8 @@
       MATERIAL_VIEW_VIDEO_URL: 'https://teamgrow.co/material/view/video/',
       MATERIAL_VIEW_PDF_URL: 'https://teamgrow.co/material/view/pdf/',
       CONTACT_PAGE_URL: 'https://teamgrow.co/contact/',
-      SMS_RECEIVE_URL: 'https://teamgrow.co/api/sms/receive',
+      SMS_RECEIVE_URL: 'https://teamgrow.co/api/sms/receive/',
+      SMS_REPLY_URL: 'https://teamgrow.co/api/sms/reply/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
     }
   } else {
@@ -25,7 +26,8 @@
       MATERIAL_VIEW_VIDEO_URL: 'http://localhost:4200/material/view/video/',
       MATERIAL_VIEW_PDF_URL: 'http://localhost:4200/material/view/pdf/',
       CONTACT_PAGE_URL: 'http://localhost:4200/contact/',
-      SMS_RECEIVE_URL: 'https://teamgrow.co/api/sms/receive',
+      SMS_RECEIVE_URL: 'https://teamgrow.co/api/sms/receive/',
+      SMS_REPLY_URL: 'https://teamgrow.co/api/sms/reply/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
     }
   }

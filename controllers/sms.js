@@ -14,8 +14,8 @@ const send = async(req, res) => {
   const { currentUser } = req
   const {text} = req.body
   const contact = Contact.findOne({_id: req.params.id})
-  const e164Phone = phone('(312) 493-8446')[0]
-  console.info(`Send SMS: ${'+861'} -> ${contact.cell_phone} :`, text)
+  const e164Phone = phone(contact.cell_phone)[0]
+  console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
     const error = {
@@ -25,26 +25,26 @@ const send = async(req, res) => {
     throw error // Invalid phone number
   }
 
-    const message = await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
+    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone, statusCallback: urls.SMS_RECEIVE_URL+currentUser.id,})
 
-    console.log('message', message)
     const sms = new SMS({
         text: req.body.text,
         contact: req.params.id,
+        phone: e164Phone,
         user: currentUser.id,
         updated_at: new Date(),
         created_at: new Date(),
       })
-      console.log('req.body',req.body)
+
       sms.save()
       .then(_sms => {
     
         const activity = new Activity({
           content: currentUser.user_name + ' sent text',
-          contacts: _note.contact,
+          contacts: _sms.contact,
           user: currentUser.id,
-          type: 'notes',
-          notes: _note.id,
+          type: 'sms',
+          sms: _sms.id,
           created_at: new Date(),
           updated_at: new Date(),
         })
@@ -75,14 +75,28 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    console.log(req.body)
-    console.log(request.body.Body);
-    console.log(request.body.From);  
+    console.log(req.body.Body)
+    console.log(req.body.From) 
+
+    const sms = await SMS.findOne({user: req.params.id, phone: req.body.From})
+    const contact = await Contact.findOne({_id: sms.contact})
+    const user = await User.findOne({_id: req.params.id})
+    const e164Phone = phone(user.cell_phone)[0]
+    
+    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone, statusCallback: urls.SMS_REPLY_URL+contact.id,})
     res.send({
         status: true,
-        data: req.body
       })
 }
+
+const reply = async(req, res) => {
+
+    console.log(req.body.Body)
+    console.log(req.body.From) 
+    res.send({
+        status: true,
+      })
+  }
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -107,5 +121,6 @@ const get = async(req, res) => {
 module.exports = {
     get,
     send,
-    receive
+    receive,
+    reply
 }
