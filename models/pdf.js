@@ -7,6 +7,7 @@ const PDF = mongoose.model('pdf',{
     preview: String,
     type: String,
     url: String,
+    role: String,
     duration: Number,
     created_at: Date,
     updated_at: Date,
