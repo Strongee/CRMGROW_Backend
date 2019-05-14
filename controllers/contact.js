@@ -81,7 +81,7 @@ const create = async(req, res) => {
     })
   }
 
-  let contact_old = await Contact.find({user: currentUser.id, email: req.body['email']}) 
+  let contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
   console.log('contact_old', contact_old)
   if(contact_old != null){
     return res.send({
@@ -89,7 +89,7 @@ const create = async(req, res) => {
       error: 'Email must be unique!'
     })
   }
-  contact_old = await Contact.find({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
+  contact_old = await Contact.findOne({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
   if(contact_old != null){
     return res.send({
       status: false,
