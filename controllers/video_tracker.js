@@ -29,7 +29,6 @@ const get = async(req, res) => {
 
 const create = async(req, res) => {
   const query = {...req.query}
-  console.log('req.query', query)
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -44,9 +43,9 @@ const create = async(req, res) => {
     created_at: new Date(),
   })
 
-  const currentUser = await User.findOne({_id: req.query['user']})
-  const contact = await Contact.findOne({_id: req.query['contact']})
-  const video = await Video.findOne({_id: req.query['video']})
+  const currentUser = await User.findOne({_id: query['user']})
+  const contact = await Contact.findOne({_id: query['contact']})
+  const video = await Video.findOne({_id: query['video']})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const watched_duration_min = Math.floor(req.query['duration']/60000);
