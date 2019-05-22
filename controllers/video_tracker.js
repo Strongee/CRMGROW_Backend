@@ -48,11 +48,26 @@ const create = async(req, res) => {
   const video = await Video.findOne({_id: query['video']})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const watched_duration_min = Math.floor(req.query['duration']/60000);
-  const watched_duration_sec = (req.query['duration']/60000 - watched_duration_min).toString().substring(2,4);
-  const total_duration_min = Math.floor(video.duration/60000);
-  const total_duration_sec = (video.duration/60000 - Math.floor(video.duration/60000)).toString().substring(2,4);
+  const d = (req.query['duration']/1000)
+  var h = Math.floor(d / 3600);
+  var m = Math.floor(d % 3600 / 60);
+  var s = Math.floor(d % 3600 % 60);
 
+  let hWatched = h > 0 ? h + ":" : "";
+  let mWatched = m > 0 ? m + ":" : "00:";
+  let sWatched = s > 0 ? s : "00";
+  let timeWatched = hWatched + mWatched + sWatched
+
+  const tD = Math.floor(video.duration/1000);
+  var tH = Math.floor(tD / 3600);
+  var tM = Math.floor(tD % 3600 / 60);
+  var tS = Math.floor(tD % 3600 % 60);
+
+  let hTotal = tH > 0 ? tH + ":" : "";
+  let mTotal = tM > 0 ? tM + ":" : "00:";
+  let sTotal = tS > 0 ? tS : "00";
+
+  let timeTotal = hTotal + mTotal + sTotal
 
   const msg = {
     to: currentUser.email,
@@ -65,8 +80,8 @@ const create = async(req, res) => {
       phone_number: contact.cell_phone,
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-      duration: 'Watched <b>' + watched_duration_min + ':' + watched_duration_sec + ' of ' + total_duration_min + ':' + total_duration_sec + ' </b>at ' + req.query['time_start'],
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View Contact Activity</a>"
+      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + req.query['time_start'],
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View</a>"
     },
   };
 

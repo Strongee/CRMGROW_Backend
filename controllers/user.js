@@ -53,10 +53,11 @@ const signUp = async (req, res) => {
       const msg = {
         to: _res.email,
         from: mail_contents.WELCOME_SIGNUP.MAIL,
-        subject: mail_contents.WELCOME_SIGNUP.SUBJECT,
-        text: mail_contents.WELCOME_SIGNUP.TEXT,
-        html: mail_contents.WELCOME_SIGNUP.TEXT
-      }
+        templateId: config.SENDGRID.SENDGRID_WELCOME_TEMPLATE,
+        dynamic_template_data: {
+          user_name: _res.user_name,
+        },
+      };
 
       sgMail.send(msg).then((_msg) => {
         if(_msg[0].statusCode >= 200 && _msg[0].statusCode < 400){ 

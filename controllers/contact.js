@@ -82,7 +82,6 @@ const create = async(req, res) => {
   }
 
   let contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
-  console.log('contact_old', contact_old)
   if(contact_old != null){
     return res.send({
       status: false,
@@ -325,7 +324,11 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        if(data['first_name'] != 'first_name'){
+
+        const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
+        const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: data['phone']}) 
+        
+        if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
           const contact = new Contact({
             ...data,
             cell_phone: data['phone'],
@@ -334,42 +337,43 @@ const importCSV = async(req, res) => {
             updated_at: new Date(),
           })
           
-          contact.save()
-          .then(_contact => {
+          _constact = await contact.save()
+            if(data['note'] == null){
               const note = new Note({
-                  content: data['note'],
-                  contact: _contact.id,
-                  user: currentUser.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-              })
-              note.save().then(_note=>{
-                const activity = new Activity({
-                  content: currentUser.user_name + ' added note',
-                  contacts: _contact.id,
-                  user: currentUser.id,
-                  type: 'notes',
-                  notes: _note.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                })
-                activity.save().then()
-              })
-              const activity = new Activity({
-                content: currentUser.user_name + ' added contact',
-                contacts: _contact.id,
+                content: data['note'],
+                contact: _contact.id,
                 user: currentUser.id,
-                type: 'contacts',
                 created_at: new Date(),
                 updated_at: new Date(),
               })
-        
-              activity.save().then()   
-          })
+              const _note = await note.save()
+              const activity = new Activity({
+                content: currentUser.user_name + ' added note',
+                contacts: _contact.id,
+                user: currentUser.id,
+                type: 'notes',
+                notes: _note.id,
+                created_at: new Date(),
+                updated_at: new Date(),
+              })
+              await activity.save()
+
+            }
+            
+            const activity = new Activity({
+              content: currentUser.user_name + ' added contact',
+              contacts: _contact.id,
+              user: currentUser.id,
+              type: 'contacts',
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+            
+            await activity.save()  
         }
       }).on('end', () => {
         res.send({
-          status: true,
+          status: true
         })             
     });
 }
