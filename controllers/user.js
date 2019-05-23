@@ -849,7 +849,8 @@ const disconWeekly = async(req, res) =>{
 const desktopNotification = async(req, res) =>{
   const user = req.currentUser
   user['desktop_notification'] = true
-  user['desktop_notification_subscription'] = req['subscription']
+  console.log('subscription', req.body['subscription'])
+  user['desktop_notification_subscription'] = req.body['subscription']
 
   await user.save()
   return res.send({
