@@ -19,7 +19,7 @@ const User = mongoose.model('user',{
      daily_report: { type: Boolean, default: false},
      weekly_report: { type: Boolean, default: false},
      desktop_notification: { type: Boolean, default: false},
-     desktop_notification_subscription: Object,
+     desktop_notification_subscription: String,
      created_at: Date,
      updated_at: Date,
  });

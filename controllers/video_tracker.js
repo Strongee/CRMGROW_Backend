@@ -56,7 +56,7 @@ const create = async(req, res) => {
       config.VAPID.PRIVATE_VAPID_KEY
     )
     
-    const subscription = currentUser.desktop_notification_subscription
+    const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const playload = JSON.stringify({'title': 'this is push notification test'})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
