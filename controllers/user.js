@@ -45,11 +45,11 @@ const signUp = async (req, res) => {
 
     const areaCode = req.body['cell_phone'].substring(1, 4)
   
-    const number = await client
+    const data = await client
     .availablePhoneNumbers('US')
     .local.list({
       areaCode: areaCode,
-    })[0]
+    })
 
     const number = data[0];
     const twilio_proxy_number = await client.incomingPhoneNumbers.create({

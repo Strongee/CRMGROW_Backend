@@ -29,7 +29,7 @@ const config = {
     },
     VAPID: {
         PUBLIC_VAPID_KEY: process.env.PUBLIC_VAPID_KEY || 'BP1lfE5RpD6bwz5FrLMc0uY1DAbPC-oOVZuk8kv6NHUKrqlYarEk8AOG-8wWCIp0gSzKjSNRnKlYC6kBjAEASJc',
-        PRIVATE_VAPID_KEY: proceess.env.PRIVATE_VAPID_KEY || 'sN8sRQRkMxc7G1VWbuXT4FsV99Z0oEaEkUTliOZAVNY'
+        PRIVATE_VAPID_KEY: process.env.PRIVATE_VAPID_KEY || 'sN8sRQRkMxc7G1VWbuXT4FsV99Z0oEaEkUTliOZAVNY'
     }
 }
 
