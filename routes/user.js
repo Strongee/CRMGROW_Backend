@@ -64,4 +64,11 @@ router.get('/weekly-report',   UserCtrl.checkAuth, catchError(UserCtrl.weeklyRep
 
 // Disconnect Weekly Report
 router.get('/discon-weekly',   UserCtrl.checkAuth, catchError(UserCtrl.disconWeekly))
+
+// Daily Report
+router.post('/desktop-notification',   UserCtrl.checkAuth, catchError(UserCtrl.desktopNotification))
+
+// Disconnect Weekly Report
+router.get('/discon-desktop',   UserCtrl.checkAuth, catchError(UserCtrl.disconDesktop))
+
 module.exports = router

@@ -23,6 +23,9 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const client = require('twilio')(accountSid, authToken)
 
 let daily_report
 let weekly_report
@@ -39,10 +42,26 @@ const signUp = async (req, res) => {
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+
+    const areaCode = req.body['cell_phone'].substring(1, 4)
+  
+    const number = await client
+    .availablePhoneNumbers('US')
+    .local.list({
+      areaCode: areaCode,
+    })[0]
+
+    const number = data[0];
+    const twilio_proxy_number = await client.incomingPhoneNumbers.create({
+        phoneNumber: number.phoneNumber,
+        smsUrl:  urls.SMS_RECEIVE_URL
+      })['phoneNumber']
+   
     const user = new User({
       ...req.body,
       salt: salt,
       hash: hash,
+      twilio_proxy_number: twilio_proxy_number,
       updated_at: new Date(),
       created_at: new Date(),
     })
@@ -827,6 +846,27 @@ const disconWeekly = async(req, res) =>{
   })
 }
 
+const desktopNotification = async(req, res) =>{
+  const user = req.currentUser
+  user['desktop_notification'] = true
+  user['desktop_notification_subscription'] = req['subscription']
+
+  await user.save()
+  return res.send({
+    status: true
+  })
+}
+
+const disconDesktop = async(req, res) =>{
+  const user = req.currentUser
+  user['desktop_notification'] = false
+  
+  await user.save()
+  return res.send({
+    status: true
+  })
+}
+
 module.exports = {
     signUp,
     login,
@@ -840,8 +880,10 @@ module.exports = {
     syncCalendar,
     disconCalendar,
     dailyReport,
+    desktopNotification,
     disconDaily,
     disconWeekly,
+    disconDesktop,
     weeklyReport,
     checkAuth
 }

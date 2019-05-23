@@ -1,5 +1,3 @@
-let http = require("http");  //1
-let url = require("url");  //2
 let express = require("express");
 const path = require('path');
 const logger = require('morgan');

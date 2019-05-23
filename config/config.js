@@ -26,8 +26,11 @@ const config = {
         TWILIO_SID: process.env.TWILIO_SID || 'ACf60a9a0d964ade6dec9ee157f261523d',
         TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '5e45d2cf4b6c71c79c806106f65f7639',
         TWILIO_FROM: process.env.TWILIO_FROM || '+17085058247'
+    },
+    VAPID: {
+        PUBLIC_VAPID_KEY: process.env.PUBLIC_VAPID_KEY || 'BP1lfE5RpD6bwz5FrLMc0uY1DAbPC-oOVZuk8kv6NHUKrqlYarEk8AOG-8wWCIp0gSzKjSNRnKlYC6kBjAEASJc',
+        PRIVATE_VAPID_KEY: proceess.env.PRIVATE_VAPID_KEY || 'sN8sRQRkMxc7G1VWbuXT4FsV99Z0oEaEkUTliOZAVNY'
     }
-    
 }
 
 module.exports = config;

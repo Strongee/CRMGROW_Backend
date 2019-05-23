@@ -1,9 +1,11 @@
 const phone = require('phone')
-const Contact = require('../models/contact');
-const Activity = require('../models/activity');
+const User = require('../models/user')
+const Contact = require('../models/contact')
+const Activity = require('../models/activity')
 const SMS = require('../models/sms')
 const urls = require('../constants/urls')
 const config = require('../config/config')
+
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const fromNumber = config.TWILIO.TWILIO_FROM
@@ -30,7 +32,8 @@ const send = async(req, res) => {
     const sms = new SMS({
         text: req.body.text,
         contact: req.params.id,
-        phone: e164Phone,
+        to: e164Phone,
+        from: fromNumber,
         user: currentUser.id,
         updated_at: new Date(),
         created_at: new Date(),
@@ -75,9 +78,41 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    res.send({
-        status: true,
+    const text = req['Body']
+    const from = req['From']
+    const to = req['To']
+
+    const currentUser = await User.findOne({twilio_proxy_number: to})
+    const contact = await Contact.fineOne({cell_phone: from})
+    await twilio.messages.create({from: from, body: text, to: to})
+
+    const sms = new SMS({
+        text: text,
+        contact: contact.id,  
+        to: to,
+        from: from,
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date(),
+      })
+  
+    const _sms = await sms.save()
+      
+    const activity = new Activity({
+      content: contact.first_name + ' replied text',
+      contacts: contact.id,
+      user: currentUser.id,
+      type: 'sms',
+      sms: _sms.id,
+      created_at: new Date(),
+      updated_at: new Date(),
     })
+    
+    await activity.save()
+    res.send({
+      status: true,
+    })
+     
 }
 
 const get = async(req, res) => {

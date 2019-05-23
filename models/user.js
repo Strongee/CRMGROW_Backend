@@ -8,7 +8,7 @@ const User = mongoose.model('user',{
      cell_phone: String,
      time_zone: {type: String, default: "-07:00"},
      email_signature: {type: String, default: ""},
-     notification: Number,
+     twilio_proxy_number: String,
      picture_profile: String,
      role: String,
      outlook_refresh_token: String,
@@ -18,6 +18,8 @@ const User = mongoose.model('user',{
      connected_email: String,
      daily_report: { type: Boolean, default: false},
      weekly_report: { type: Boolean, default: false},
+     desktop_notification: { type: Boolean, default: false},
+     desktop_notification_subscription: Object,
      created_at: Date,
      updated_at: Date,
  });

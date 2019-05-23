@@ -8,6 +8,7 @@ const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
 const config = require('../config/config')
+const webpush = require('web-push');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -46,6 +47,21 @@ const create = async(req, res) => {
   const currentUser = await User.findOne({_id: query['user']})
   const contact = await Contact.findOne({_id: query['contact']})
   const video = await Video.findOne({_id: query['video']})
+
+  // send desktop notification
+  if(currentUser.desktop_notification == true){
+    webpush.setVapidDetails(
+      'mailto:support@teamgrow.co',
+      config.VAPID.PUBLIC_VAPID_KEY,
+      config.VAPID.PRIVATE_VAPID_KEY
+    )
+    
+    const subscription = currentUser.desktop_notification_subscription
+    const playload = JSON.stringify({'title': 'this is push notification test'})
+    webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+  }
+
+  // send email notification
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const d = (req.query['duration']/1000)
@@ -114,7 +130,7 @@ const create = async(req, res) => {
       status: false,
       error:  e
     })
-  });
+  })
 }
 
 module.exports = {
