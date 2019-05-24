@@ -50,7 +50,6 @@ const create = async(req, res) => {
 
   // send desktop notification
   if(currentUser.desktop_notification == true){
-    console.log('test')
     webpush.setVapidDetails(
       'mailto:support@teamgrow.co',
       config.VAPID.PUBLIC_VAPID_KEY,
@@ -59,7 +58,7 @@ const create = async(req, res) => {
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const playload = JSON.stringify({'title': 'this is push notification test'})
-    webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+    webpush.sendNotification(subscription, playload).then(data => console.log('data', data)).catch(err => console.error(err))
   }
 
   // send email notification
