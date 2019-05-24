@@ -50,6 +50,7 @@ const create = async(req, res) => {
 
   // send desktop notification
   if(currentUser.desktop_notification == true){
+    console.log('test')
     webpush.setVapidDetails(
       'mailto:support@teamgrow.co',
       config.VAPID.PUBLIC_VAPID_KEY,
