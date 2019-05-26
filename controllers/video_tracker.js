@@ -48,22 +48,6 @@ const create = async(req, res) => {
   const contact = await Contact.findOne({_id: query['contact']})
   const video = await Video.findOne({_id: query['video']})
 
-  // send desktop notification
-  if(currentUser.desktop_notification == true){
-    webpush.setVapidDetails(
-      'mailto:support@teamgrow.co',
-      config.VAPID.PUBLIC_VAPID_KEY,
-      config.VAPID.PRIVATE_VAPID_KEY
-    )
-    
-    const subscription = JSON.parse(currentUser.desktop_notification_subscription)
-    const playload = JSON.stringify({'title': 'this is push notification test'})
-    webpush.sendNotification(subscription, playload).then(data => console.log('data', data)).catch(err => console.error(err))
-  }
-
-  // send email notification
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-
   const d = (req.query['duration']/1000)
   var h = Math.floor(d / 3600);
   var m = Math.floor(d % 3600 / 60);
@@ -84,6 +68,24 @@ const create = async(req, res) => {
   let sTotal = tS > 0 ? tS : "00";
 
   let timeTotal = hTotal + mTotal + sTotal
+
+  // send desktop notification
+  if(currentUser.desktop_notification == true){
+    webpush.setVapidDetails(
+      'mailto:support@teamgrow.co',
+      config.VAPID.PUBLIC_VAPID_KEY,
+      config.VAPID.PRIVATE_VAPID_KEY
+    )
+    
+    const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+    const title = contact.first_name + ' watched video -' + video.title 
+    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + req.query['time_start']
+    const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": ""}})
+    webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+  }
+
+  // send email notification
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const msg = {
     to: currentUser.email,
