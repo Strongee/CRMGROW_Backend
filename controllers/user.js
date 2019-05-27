@@ -727,20 +727,31 @@ const dailyReport = async(req, res) => {
       const end = new Date();
       end.setHours(20,59,59,999);
       const activity = await Activity.find({user :currentUser.id, created_at: {$gte: start, $lt: end}})
+
       let now = moment();
       const today = now.format("dddd, MMMM Do YYYY")
       
-      let contents = []
+      let contacts = []
       for (let i =0; i < activity.length; i ++){
         const contact = await Contact.findOne({_id: activity[i].contacts})
         let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
         "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
         "<p style='margin: 0px'>" + activity[i].content +"</p></div>" + 
-        "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View</a></button></div>"
-        contents.push(content)
+        "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View Contact</a></button></div>"
+        contacts.push(content)
       }
     
-      let overdue = []
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}});
+      let overdue = [];
+      
+      for(let i = 0; i < _follow_up.length; i ++){
+        const contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        const _overdue = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
+        "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+        "<p style='margin: 0px'>" + _follow_up[i].content +"</p></div>" + 
+        "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "'>View FollowUp</a></button></div>"
+        overdue.push(_overdue)
+      }
     
       const msg = {
         to: currentUser.email,
@@ -748,7 +759,7 @@ const dailyReport = async(req, res) => {
         subject: mail_contents.DAILY_REPORT.SUBJECT,
         templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
         dynamic_template_data: {
-          contents: contents,
+          contacts: contacts,
           overdue: overdue,
           day: today
         },
@@ -791,23 +802,36 @@ const weeklyReport = async(req, res) => {
       let now = moment();
       const today = now.format("dddd, MMMM Do YYYY")
       
-      let contents = []
+      let contacts = []
       for (let i =0; i < activity.length; i ++){
         const contact = await Contact.findOne({_id: activity[i].contacts})
         let content = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
         "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
         "<p style='margin: 0px'>" + activity[i].content +"</p></div>" + 
         "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "'>View</a></button></div>"
-        contents.push(content)
+        contacts.push(content)
       }
     
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}});
+      let overdue = [];
+      
+      for(let i = 0; i < _follow_up.length; i ++){
+        const contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        const _overdue = "<div class='content' style='display:flex; padding-top:20px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'><div class='avatar' style='margin-right:20px;'><img style='margin:auto;' src='" + urls.AVATAR_URL+"' width='60px' height='60px' /></div>" + 
+        "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+        "<p style='margin: 0px'>" + _follow_up[i].content +"</p></div>" + 
+        "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "'>View FollowUp</a></button></div>"
+        overdue.push(_overdue)
+      }
+
       const msg = {
         to: currentUser.email,
         from: mail_contents.DAILY_REPORT.MAIL,
         subject: mail_contents.DAILY_REPORT.SUBJECT,
         templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
         dynamic_template_data: {
-          contents: contents,
+          contacts: contacts,
+          overdue: overdue,
           day: today
         },
       }

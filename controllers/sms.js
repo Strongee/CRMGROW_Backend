@@ -10,7 +10,6 @@ const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
 const twilio = require('twilio')(accountSid, authToken)
-const parsePhoneNumberFromString = require('libphonenumber-js') 
 
 const send = async(req, res) => {
   console.log('test_send')
@@ -87,9 +86,11 @@ const receive = async(req, res) => {
     console.log('test_receive')
     let currentUser = await User.findOne({twilio_proxy_number: to})
     if(currentUser != null){
-      const phoneNumber = parsePhoneNumberFromString(from)
-      console.log('phoneNumber.formatNational()', phoneNumber.formatNational())
-      const contact = await Contact.findOne({cell_phone: phoneNumber.formatNational()})
+      const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+      const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+      const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
+      console.log('phoneNumber', phoneNumber)
+      const contact = await Contact.findOne({cell_phone: phoneNumber})
       const e164Phone = phone(currentUser.cell_phone)[0]
       await twilio.messages.create({from: to, body: text, to: e164Phone})
       const sms = new SMS({
