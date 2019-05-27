@@ -82,11 +82,11 @@ const receive = async(req, res) => {
     const from = req.body['From']
     const to = req.body['To']
 
-    console.log('req', text)
     let currentUser = await User.findOne({twilio_proxy_number: to})
     if(currentUser != null){
       const contact = await Contact.findOne({cell_phone: from})
-      await twilio.messages.create({from: from, body: text, to: currentUser.cell_phone})
+      const e164Phone = phone(currentUser.cell_phone)[0]
+      await twilio.messages.create({from: to, body: text, to: e164Phone})
       const sms = new SMS({
         text: text,
         contact: contact.id,  
@@ -113,41 +113,7 @@ const receive = async(req, res) => {
       res.send({
         status: true,
       })
-    }else{
-      currentUser = await User.findOne({twilio_proxy_number: from})
-      const contact = await Contact.findOne({cell_phone: to})
-      await twilio.messages.create({from: from, body: text, to: currentUser.cell_phone})
-      const sms = new SMS({
-        text: text,
-        contact: contact.id,  
-        to: contact.cell_phone,
-        from: from,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
-  
-      const _sms = await sms.save()
-        
-      const activity = new Activity({
-        content: currentUser.user_name + ' replied text',
-        contacts: contact.id,
-        user: currentUser.id,
-        type: 'sms',
-        sms: _sms.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      
-      await activity.save()
-      res.send({
-        status: true,
-      })
-    }
-   
-
-
-     
+    }  
 }
 
 const get = async(req, res) => {
