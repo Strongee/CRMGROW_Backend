@@ -8,7 +8,6 @@ const config = require('../config/config')
 
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-const fromNumber = config.TWILIO.TWILIO_FROM
 
 const twilio = require('twilio')(accountSid, authToken)
 
@@ -17,6 +16,7 @@ const send = async(req, res) => {
   const {text} = req.body
   const contact = await Contact.findOne({_id: req.params.id})
   const e164Phone = phone(contact.cell_phone)[0]
+  const fromNumber = currentUser.twilio_proxy_number
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {

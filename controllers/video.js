@@ -15,7 +15,6 @@ const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-const fromNumber = config.TWILIO.TWILIO_FROM
 
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
@@ -223,6 +222,7 @@ const sendText = async (req, res) => {
   const { currentUser } = req
   const { cell_phone, content, video, contact} = req.body
   const e164Phone = phone(cell_phone)[0]
+  const fromNumber = currentUser.twilio_proxy_number
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
   if (!e164Phone) {
