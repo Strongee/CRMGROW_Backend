@@ -82,9 +82,9 @@ const receive = async(req, res) => {
     const from = req['From']
     const to = req['To']
 
-    console.log('req', req)
+    console.log('req', text)
     const currentUser = await User.findOne({twilio_proxy_number: to})
-    const contact = await Contact.fineOne({cell_phone: from})
+    const contact = await Contact.findOne({cell_phone: from})
     await twilio.messages.create({from: from, body: text, to: to})
 
     const sms = new SMS({
