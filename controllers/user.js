@@ -6,6 +6,7 @@ const UserLog = require('../models/user_log')
 const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
+const FollowUp = require('../models/follow_up')
 const sgMail = require('@sendgrid/mail')
 const {google} = require('googleapis')
 const outlook = require('node-outlook')
@@ -739,6 +740,8 @@ const dailyReport = async(req, res) => {
         contents.push(content)
       }
     
+      let overdue = []
+    
       const msg = {
         to: currentUser.email,
         from: mail_contents.DAILY_REPORT.MAIL,
@@ -746,6 +749,7 @@ const dailyReport = async(req, res) => {
         templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
         dynamic_template_data: {
           contents: contents,
+          overdue: overdue,
           day: today
         },
       }

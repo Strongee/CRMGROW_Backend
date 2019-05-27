@@ -13,6 +13,7 @@ const twilio = require('twilio')(accountSid, authToken)
 const parsePhoneNumberFromString = require('libphonenumber-js') 
 
 const send = async(req, res) => {
+  console.log('test_send')
   const { currentUser } = req
   const {text} = req.body
   const contact = await Contact.findOne({_id: req.params.id})
@@ -83,6 +84,7 @@ const receive = async(req, res) => {
     const from = req.body['From']
     const to = req.body['To']
 
+    console.log('test_receive')
     let currentUser = await User.findOne({twilio_proxy_number: to})
     if(currentUser != null){
       const phoneNumber = parsePhoneNumberFromString(from)
