@@ -18,6 +18,12 @@ const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const fromNumber = config.TWILIO.TWILIO_FROM
 
 const twilio = require('twilio')(accountSid, authToken)
+const AWS = require('aws-sdk')
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION
+})
 
 const create = async (req, res) => {
   if (req.file) {
@@ -81,8 +87,7 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
-  console.log('id', req.params.id)
-  const video = await Video.findOne({_id: req.params.id})
+  const video = await Video.findOne({_id: req.params.id, del: false})
   const user = await User.findOne({_id: video.user})
     if (!video) {
       return res.status(401).json({
@@ -253,17 +258,23 @@ const remove = async (req, res) => {
       const video = Video.findOne({ user: currentUser.id, _id: req.params.id})
   
       if (video) {
+        s3.deleteObject({
+          Bucket: MY_BUCKET,
+          Key: video.url
+        }, function (err,data){})
+
         fs.unlinkSync(THUMBNAILS_PATH + req.params.id)
+
+        video['del'] = true
+        await video.save()
+
         res.send({
           status: true,
-          data: {
-            file_name: req.params.id
-          }
         })
       } else {
         res.status(404).send({
           status: false,
-          error: 'thumbnail_not_found'
+          error: 'video not found'
         })
       }
     } catch (e) {

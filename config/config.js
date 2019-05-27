@@ -30,6 +30,11 @@ const config = {
     VAPID: {
         PUBLIC_VAPID_KEY: process.env.PUBLIC_VAPID_KEY || 'BP1lfE5RpD6bwz5FrLMc0uY1DAbPC-oOVZuk8kv6NHUKrqlYarEk8AOG-8wWCIp0gSzKjSNRnKlYC6kBjAEASJc',
         PRIVATE_VAPID_KEY: process.env.PRIVATE_VAPID_KEY || 'sN8sRQRkMxc7G1VWbuXT4FsV99Z0oEaEkUTliOZAVNY'
+    },
+    STRIPE: {
+        SECRET_KEH: process.env.SECRET_KEH || 'sk_test_M5ZibSlzCut26ZvhKgfeYY5x00oAOM4Bx9',
+        BILLING_CYCLE: process.env.BILLING_CYCLE || 'month',
+        PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR'
     }
 }
 

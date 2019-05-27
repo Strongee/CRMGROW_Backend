@@ -9,6 +9,7 @@ const Video = mongoose.model('video',{
     duration: Number,
     url: String,
     role: String,
+    del: { type: Boolean, default: true},
     created_at: Date,
     updated_at: Date,
  });

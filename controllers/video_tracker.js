@@ -99,7 +99,7 @@ const create = async(req, res) => {
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
       duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + req.query['time_start'],
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View</a>"
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View Contact</a>"
     },
   };
 

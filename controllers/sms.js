@@ -15,7 +15,7 @@ const twilio = require('twilio')(accountSid, authToken)
 const send = async(req, res) => {
   const { currentUser } = req
   const {text} = req.body
-  const contact = Contact.findOne({_id: req.params.id})
+  const contact = await Contact.findOne({_id: req.params.id})
   const e164Phone = phone(contact.cell_phone)[0]
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
