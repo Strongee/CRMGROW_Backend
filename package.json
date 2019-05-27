@@ -40,6 +40,7 @@
     "express-validator": "^5.3.1",
     "googleapis": "^27.0.0",
     "jsonwebtoken": "^8.5.0",
+    "libphonenumber-js": "^1.7.18",
     "mime": "^2.4.0",
     "mime-types": "^2.1.22",
     "moment": "^2.24.0",
