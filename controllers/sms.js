@@ -31,7 +31,7 @@ const send = async(req, res) => {
     await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
 
     const sms = new SMS({
-        text: req.body.text,
+        content: req.body.text,
         contact: req.params.id,
         to: e164Phone,
         from: fromNumber,
@@ -91,7 +91,7 @@ const receive = async(req, res) => {
       const e164Phone = phone(currentUser.cell_phone)[0]
       await twilio.messages.create({from: to, body: text, to: e164Phone})
       const sms = new SMS({
-        text: text,
+        content: text,
         contact: contact.id,  
         to: currentUser.cell_phone,
         from: from,
