@@ -10,6 +10,7 @@ const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
 const twilio = require('twilio')(accountSid, authToken)
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
 
 const send = async(req, res) => {
   console.log('test_send')
@@ -84,42 +85,48 @@ const receive = async(req, res) => {
     const to = req.body['To']
 
     console.log('test_receive')
-    let currentUser = await User.findOne({twilio_proxy_number: to})
-    if(currentUser != null){
-      const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
-      const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-      const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
-      console.log('phoneNumber', phoneNumber)
-      const contact = await Contact.findOne({cell_phone: phoneNumber})
-      const e164Phone = phone(currentUser.cell_phone)[0]
-      await twilio.messages.create({from: to, body: text, to: e164Phone})
-      const sms = new SMS({
-        content: text,
-        contact: contact.id,  
-        to: currentUser.cell_phone,
-        from: from,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
+    const twiml = new MessagingResponse();
+
+    twiml.message(text);
   
-      const _sms = await sms.save()
+    res.writeHead(200, {'Content-Type': 'text/xml'});
+
+    // let currentUser = await User.findOne({twilio_proxy_number: to})
+    // if(currentUser != null){
+    //   const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+    //   const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+    //   const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
+    //   console.log('phoneNumber', phoneNumber)
+    //   const contact = await Contact.findOne({cell_phone: phoneNumber})
+    //   const e164Phone = phone(currentUser.cell_phone)[0]
+    //   await twilio.messages.create({from: to, body: text, to: e164Phone})
+    //   const sms = new SMS({
+    //     content: text,
+    //     contact: contact.id,  
+    //     to: currentUser.cell_phone,
+    //     from: from,
+    //     user: currentUser.id,
+    //     updated_at: new Date(),
+    //     created_at: new Date(),
+    //   })
+  
+    //   const _sms = await sms.save()
         
-      const activity = new Activity({
-        content: contact.first_name + ' replied text',
-        contacts: contact.id,
-        user: currentUser.id,
-        type: 'sms',
-        sms: _sms.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
+    //   const activity = new Activity({
+    //     content: contact.first_name + ' replied text',
+    //     contacts: contact.id,
+    //     user: currentUser.id,
+    //     type: 'sms',
+    //     sms: _sms.id,
+    //     created_at: new Date(),
+    //     updated_at: new Date(),
+    //   })
       
-      await activity.save()
-      res.send({
-        status: true,
-      })
-    }  
+    //   await activity.save()
+    //   res.send({
+    //     status: true,
+    //   })
+    // }  
 }
 
 const get = async(req, res) => {
