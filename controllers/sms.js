@@ -87,6 +87,7 @@ const receive = async(req, res) => {
     console.log('test_receive')
     const twiml = new MessagingResponse();
 
+    console.log('text', text)
     twiml.message(text);
   
     res.writeHead(200, {'Content-Type': 'text/xml'});
