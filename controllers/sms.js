@@ -78,9 +78,9 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    const text = req['Body']
-    const from = req['From']
-    const to = req['To']
+    const text = req.body['Body']
+    const from = req.body['From']
+    const to = req.body['To']
 
     console.log('req', text)
     const currentUser = await User.findOne({twilio_proxy_number: to})
