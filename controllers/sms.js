@@ -91,6 +91,7 @@ const receive = async(req, res) => {
     twiml.message(text);
   
     res.writeHead(200, {'Content-Type': 'text/xml'});
+    res.end(twiml.toString());
 
     // let currentUser = await User.findOne({twilio_proxy_number: to})
     // if(currentUser != null){
