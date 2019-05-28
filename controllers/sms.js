@@ -6,13 +6,12 @@ const SMS = require('../models/sms')
 const urls = require('../constants/urls')
 const config = require('../config/config')
 
-const accountSid = config.TWILIO.TWILIO_SID
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-
-const twilio = require('twilio')(accountSid, authToken)
-
 
 const send = async(req, res) => {
+  const accountSid = config.TWILIO.TWILIO_SID
+  const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+
+  const twilio = require('twilio')(accountSid, authToken)
   console.log('test_send')
   const { currentUser } = req
   const {text} = req.body
@@ -80,7 +79,7 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-  const MessagingResponse = require('twilio').twiml.MessagingResponse;
+    const MessagingResponse = require('twilio').twiml.MessagingResponse;
     const text = req.body['Body']
     const from = req.body['From']
     const to = req.body['To']
