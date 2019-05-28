@@ -34,6 +34,7 @@ const create = async(req, res) => {
 	findOrcreateCustomer(currentUser.email).then(customer => {
         console.log('customer', customer)
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+            console.log('err', err)
             const product = config.STRIPE.PRODUCT_ID
             new Promise(function(resolve, reject) {
                 stripe.plans.create({
