@@ -14,6 +14,7 @@ const video_tracker = require('./video_tracker')
 const pdf = require('./pdf')
 const pdf_tracker = require('./pdf_tracker')
 const sms = require('./sms')
+const payment = require('./payment')
 const admin = require('./admin/index')
 const UserCtrl = require('../controllers/user')
 
@@ -38,6 +39,7 @@ router.use('/vtrack', video_tracker)
 router.use('/pdf', pdf)
 router.use('/ptrack', pdf_tracker)
 router.use('/sms', sms)
+router.use('/payment', payment)
 router.use('/admin', admin)
 
 module.exports = router

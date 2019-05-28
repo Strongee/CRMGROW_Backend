@@ -5,14 +5,13 @@ const Activity = require('../models/activity')
 const SMS = require('../models/sms')
 const urls = require('../constants/urls')
 const config = require('../config/config')
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
+const twilio = require('twilio')(accountSid, authToken)
 
 const send = async(req, res) => {
-  const accountSid = config.TWILIO.TWILIO_SID
-  const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
-  const twilio = require('twilio')(accountSid, authToken)
-  console.log('test_send')
   const { currentUser } = req
   const {text} = req.body
   const contact = await Contact.findOne({_id: req.params.id})
@@ -79,56 +78,46 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
-    const MessagingResponse = require('twilio').twiml.MessagingResponse;
     const text = req.body['Body']
     const from = req.body['From']
     const to = req.body['To']
 
-    console.log('test_receive')
-    const twiml = new MessagingResponse();
-
-    console.log('text', text)
-    twiml.message(text);
+    let currentUser = await User.findOne({twilio_proxy_number: to})
+    if(currentUser != null){
+      const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+      const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+      const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
+      console.log('phoneNumber', phoneNumber)
+      const contact = await Contact.findOne({cell_phone: phoneNumber})
+      const e164Phone = phone(currentUser.cell_phone)[0]
+      await twilio.messages.create({from: to, body: text, to: e164Phone})
+      const sms = new SMS({
+        content: text,
+        contact: contact.id,  
+        to: currentUser.cell_phone,
+        from: from,
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date(),
+      })
   
-    res.writeHead(200, {'Content-Type': 'text/xml'});
-    res.end(twiml.toString());
-
-    // let currentUser = await User.findOne({twilio_proxy_number: to})
-    // if(currentUser != null){
-    //   const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
-    //   const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-    //   const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
-    //   console.log('phoneNumber', phoneNumber)
-    //   const contact = await Contact.findOne({cell_phone: phoneNumber})
-    //   const e164Phone = phone(currentUser.cell_phone)[0]
-    //   await twilio.messages.create({from: to, body: text, to: e164Phone})
-    //   const sms = new SMS({
-    //     content: text,
-    //     contact: contact.id,  
-    //     to: currentUser.cell_phone,
-    //     from: from,
-    //     user: currentUser.id,
-    //     updated_at: new Date(),
-    //     created_at: new Date(),
-    //   })
-  
-    //   const _sms = await sms.save()
+      const _sms = await sms.save()
         
-    //   const activity = new Activity({
-    //     content: contact.first_name + ' replied text',
-    //     contacts: contact.id,
-    //     user: currentUser.id,
-    //     type: 'sms',
-    //     sms: _sms.id,
-    //     created_at: new Date(),
-    //     updated_at: new Date(),
-    //   })
+      const activity = new Activity({
+        content: contact.first_name + ' replied text',
+        contacts: contact.id,
+        user: currentUser.id,
+        type: 'sms',
+        sms: _sms.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
       
-    //   await activity.save()
-    //   res.send({
-    //     status: true,
-    //   })
-    // }  
+      await activity.save()
+      res.send({
+        status: true,
+      })
+    }  
 }
 
 const get = async(req, res) => {

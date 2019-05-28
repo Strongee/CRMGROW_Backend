@@ -53,21 +53,21 @@ const create = async(req, res) => {
   var m = Math.floor(d % 3600 / 60);
   var s = Math.floor(d % 3600 % 60);
 
-  let hWatched = h > 0 ? h + ":" : "";
-  let mWatched = m > 0 ? m + ":" : "00:";
-  let sWatched = s > 0 ? s : "00";
-  let timeWatched = hWatched + mWatched + sWatched
+  if (h   < 10) {h   = "0"+h;}
+  if (m < 10) {m = "0"+m;}
+  if (s < 10) {s = "0"+s;}
+  let timeWatched = h + ':' + m + ':' + s
 
   const tD = Math.floor(video.duration/1000);
   var tH = Math.floor(tD / 3600);
   var tM = Math.floor(tD % 3600 / 60);
   var tS = Math.floor(tD % 3600 % 60);
 
-  let hTotal = tH > 0 ? tH + ":" : "";
-  let mTotal = tM > 0 ? tM + ":" : "00:";
-  let sTotal = tS > 0 ? tS : "00";
+  if (tH   < 10) {tH   = "0"+tH;}
+  if (tM < 10) {tM = "0"+tM;}
+  if (tS < 10) {tS = "0"+tS;}
 
-  let timeTotal = hTotal + mTotal + sTotal
+  let timeTotal = tH + ':' + tM + ':' + tS
 
   // send desktop notification
   if(currentUser.desktop_notification == true){
