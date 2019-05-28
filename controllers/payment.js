@@ -78,30 +78,26 @@ const create = async(req, res) => {
 	});
 }
 
-const findOrcreateCustomer = async() => {
-    const user = req.currentUser
+const findOrcreateCustomer = async(email) => {
     // Create new customer
     return new Promise(function (resolve, reject) {
-        stripe.customers.list({email: user.email, limit: 1}, async (err, customers) => {
+        stripe.customers.list({email: email, limit: 1}, async (err, customers) => {
             if(err == null) {
-               
-                users.forEach(async(user) => {
-                    if (customers.data.length === 0) {
-                        // create customer
-                        stripe.customers.create({
-                            email: user.email,
-                        }, async (err, customer) => {
-                            if (err) {
-                                reject(err);
-                                return;
-                            } 
-                            resolve(customer);
-                        });
-                    } else {
-                        // get the first customer
-                        resolve(customers.data[0]);
-                    }							
-                }); 
+                if (customers.data.length === 0) {
+                    // create customer
+                    stripe.customers.create({
+                        email: email,
+                    }, async (err, customer) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve(customer);
+                    });
+                } else {
+                    // get the first customer
+                    resolve(customers.data[0]);
+                }							
             }
         });
     });   
