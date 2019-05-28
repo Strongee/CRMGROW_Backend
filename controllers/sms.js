@@ -10,7 +10,7 @@ const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
 const twilio = require('twilio')(accountSid, authToken)
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
+
 
 const send = async(req, res) => {
   console.log('test_send')
@@ -80,6 +80,7 @@ const send = async(req, res) => {
 }
 
 const receive = async(req, res) => {
+  const MessagingResponse = require('twilio').twiml.MessagingResponse;
     const text = req.body['Body']
     const from = req.body['From']
     const to = req.body['To']
