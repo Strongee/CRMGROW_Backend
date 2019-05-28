@@ -50,8 +50,7 @@ const create = async(req, res) => {
                 });
             }).then(newPricingPlan => {
                 createSubscription(customer.id, newPricingPlan.id, card.id)
-                    .then(subscription => {return subscription})
-            }).then(result => {
+                    .then(subscription => {return subscription}).then(result => {
                 console.log('result', result)
                 		// Save card information to DB.
                 const payment = new Payment({
@@ -73,6 +72,7 @@ const create = async(req, res) => {
                     })
                 })
             })
+        })
 			.catch(err => res.status(500).send({
                 status: false,
                 error: err
