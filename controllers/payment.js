@@ -35,7 +35,7 @@ const create = async(req, res) => {
         console.log('customer', customer)
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
             const product = config.STRIPE.PRODUCT_ID
-            new Promise(function(resolve, reject) {
+            new Promise((resolve, reject) => {
                 stripe.plans.create({
                     currency: 'usd',
                     amount: billAmount,
@@ -50,11 +50,7 @@ const create = async(req, res) => {
                 });
             }).then(newPricingPlan => {
                 createSubscription(customer.id, newPricingPlan.id, card.id)
-                    .then(subscription => resolve(subscription))
-                    .catch(err => {
-                        console.log('err', err)
-                        reject(err)
-                    });
+                    .then(subscription => {return subscription})
             }).then(result => {
                 console.log('result', result)
                 		// Save card information to DB.
