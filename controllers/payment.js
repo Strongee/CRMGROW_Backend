@@ -41,13 +41,19 @@ const create = async(req, res) => {
                     interval: billCycle,
                     product: product
                 }, function(err, plan) {
-                    if (err) reject(err);
-                    resolve(plan);
+                    if (err) {
+                        console.log('err', err)
+                        reject(err)
+                    }
+                    resolve(plan)
                 });
             }).then(newPricingPlan => {
                 createSubscription(customerId, newPricingPlan.id, card.id)
                     .then(subscription => resolve(subscription))
-                    .catch(err => reject(err));
+                    .catch(err => {
+                        console.log('err', err)
+                        reject(err)
+                    });
             }).then(result => {
                 console.log('result', result)
                 		// Save card information to DB.
