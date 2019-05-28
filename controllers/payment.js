@@ -95,6 +95,7 @@ const findOrcreateCustomer = async(email) => {
                         email: email,
                     }, async (err, customer) => {
                         if (err) {
+                            console.log('err', err)
                             reject(err);
                             return;
                         }
@@ -104,6 +105,8 @@ const findOrcreateCustomer = async(email) => {
                     // get the first customer
                     resolve(customers.data[0]);
                 }							
+            }else{
+                console.log('err', err)
             }
         });
     });   
