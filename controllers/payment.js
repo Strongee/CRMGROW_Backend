@@ -27,36 +27,27 @@ const get = async(req, res) => {
 
 const create = async(req, res) => {
 	const billAmount = req.body.bill;
-	const billCycle = config.STRIPE.BILLING_CYCLE;
 	const {currentUser} = req
 	const token = req.body.token;
 
 	findOrcreateCustomer(currentUser.email).then(customer => {
         console.log('customer', customer)
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+            let pricingPlan
             const product = config.STRIPE.PRODUCT_ID
-            new Promise((resolve, reject) => {
-                stripe.plans.create({
-                    currency: 'usd',
-                    amount: billAmount,
-                    interval: billCycle,
-                    product: product
-                }, function(err, plan) {
-                    if (err) {
-                        console.log('err', err)
-                        reject(err)
-                    }
-                    resolve(plan)
-                });
-            }).then(newPricingPlan => {
-                createSubscription(customer.id, newPricingPlan.id, card.id)
+                if(billAmount == '19'){
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
+                }else{
+                    pricingPlan = config.SENDGRID.SUPER_PLAN
+                }
+                createSubscription(customer.id, pricingPlan, card.id)
                     .then(subscription => {return subscription}).then(result => {
                 console.log('result', result)
                 		// Save card information to DB.
                 const payment = new Payment({
                     user: currentUser.id,
                     customer_id: customer.id,
-                    plan_id: newPricingPlan.id,
+                    plan_id: pricingPlan,
                     token: token.id,
                     card_brand: token.card.brand,
                     exp_month: token.card.exp_month,
@@ -72,11 +63,6 @@ const create = async(req, res) => {
                     })
                 })
             })
-        })
-			.catch(err => res.status(500).send({
-                status: false,
-                error: err
-              }))
 		});
 	});
 }

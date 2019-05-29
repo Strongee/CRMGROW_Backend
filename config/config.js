@@ -33,7 +33,9 @@ const config = {
     STRIPE: {
         SECRET_KEH: process.env.SECRET_KEH || 'sk_test_M5ZibSlzCut26ZvhKgfeYY5x00oAOM4Bx9',
         BILLING_CYCLE: process.env.BILLING_CYCLE || 'month',
-        PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR'
+        PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR',
+        PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_F7xoMy4Dh4YVXw',
+        SUPER_PLAN: process.env.SUPER_PLAN || 'plan_F7xpLy2LZf6Yay'
     }
 }
 

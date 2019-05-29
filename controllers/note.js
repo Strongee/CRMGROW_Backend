@@ -8,7 +8,23 @@ const get = async(req, res) => {
   const contact = query['contact']
   console.log('contact', contact)
   const data = await Note.find({user :currentUser.id, contact: contact});
-  console.log('data', data);
+  if (!data) {
+    return res.status(401).json({
+      status: false,
+      error: 'Note doesn`t exist'
+    })
+  }
+
+  res.send({
+    status: true,
+    data
+  })
+}
+
+const getAll = async(req, res) => {
+  const { currentUser } = req
+  console.log('contact', contact)
+  const data = await Note.find({user :currentUser.id, contact: contact});
   if (!data) {
     return res.status(401).json({
       status: false,
@@ -79,5 +95,6 @@ const create = async(req, res) => {
 
 module.exports = {
     get,
+    getAll,
     create,
 }
