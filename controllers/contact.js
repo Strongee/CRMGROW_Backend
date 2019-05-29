@@ -338,7 +338,7 @@ const importCSV = async(req, res) => {
           })
           
           _constact = await contact.save()
-            if(data['note'] == null){
+            if(data['note'] != null){
               const note = new Note({
                 content: data['note'],
                 contact: _contact.id,
