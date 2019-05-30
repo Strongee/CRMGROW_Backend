@@ -28,7 +28,7 @@ const upload = multer({ storage: fileStorage })
 router.post('/', UserCtrl.checkAuth, upload.single('photo'), catchError(FileCtrl.create))
 
 // Upload attached file
-router.post('/upload',  upload.single('file'), catchError(FileCtrl.create))
+router.post('/upload',  upload.single('file'), catchError(FileCtrl.upload))
 
 // Get a file
 router.get('/:name', catchError(FileCtrl.get))

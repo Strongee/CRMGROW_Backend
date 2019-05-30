@@ -69,8 +69,19 @@ const remove = async (req, res) => {
     }
 }
 
+const upload = async (req, res) => {
+  if (req.file) {
+      res.send({
+        status: true,
+        url: urls.FILE_URL + req.file.filename
+      })
+  }
+}
+
+
 module.exports = {
     create,
     get,
+    upload,
     remove
 }
