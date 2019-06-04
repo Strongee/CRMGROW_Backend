@@ -377,6 +377,33 @@ const importCSV = async(req, res) => {
         })             
     });
 }
+
+const exportCSV = async(req, res) =>{
+  const { currentUser } = req
+  const { contacts } = req.body
+
+  let data = []
+  for(let i = 0; i < contacts.length; i ++){
+    const _note = await Note.find({user :currentUser.id, contact: contacts[i]})
+    if(_note.length!= 0){
+      const _data = {"contact": contacts[i], "note": _note}
+      data.push(_data)
+    }
+  }
+  
+  if (!data) {
+    return res.status(401).json({
+      status: false,
+      error: 'Note doesn`t exist'
+    })
+  }
+
+  res.send({
+    status: true,
+    data
+  })
+}
+
 module.exports = {
     getAll,
     get,
@@ -385,5 +412,6 @@ module.exports = {
     edit,
     sendBatch,
     sendEmail,
-    importCSV
+    importCSV,
+    exportCSV
 }

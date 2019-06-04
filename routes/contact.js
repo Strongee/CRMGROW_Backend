@@ -38,4 +38,7 @@ router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
 // Import contact list as file
 router.post('/import-csv', UserCtrl.checkAuth, upload.single('csv'), catchError(ContactCtrl.importCSV))
 
+// Download contact list as csv file
+router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV))
+
 module.exports = router

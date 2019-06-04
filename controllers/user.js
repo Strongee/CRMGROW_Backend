@@ -841,8 +841,11 @@ const weeklyReport = async(req, res) => {
     timeZone: 'US/Central'
   });
   
+  console.log('weekly_report', weekly_report)
+  
   return res.send({
-    status: true
+    status: true,
+    data: weekly_report
   })
 }
 
