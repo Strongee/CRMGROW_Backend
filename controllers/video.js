@@ -259,7 +259,7 @@ const remove = async (req, res) => {
   
       if (video) {
         s3.deleteObject({
-          Bucket: MY_BUCKET,
+          Bucket: config.AWS.AWS_S3_BUCKET_NAME,
           Key: video.url
         }, function (err,data){})
 
