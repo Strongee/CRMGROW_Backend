@@ -183,7 +183,9 @@ const sendVideo = async (req, res) => {
     to: email,
     from: currentUser.email,
     subject: video_title,
-    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + 
+          ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + 
+          '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {
@@ -221,8 +223,10 @@ const sendVideo = async (req, res) => {
 const sendText = async (req, res) => {
   const { currentUser } = req
   const { cell_phone, content, video, contact} = req.body
+
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id
   const e164Phone = phone(cell_phone)[0]
-  const fromNumber = currentUser.twilio_proxy_number
+  const fromNumber = config.TWILIO.TWILIO_NUMBER
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
   if (!e164Phone) {
@@ -233,7 +237,7 @@ const sendText = async (req, res) => {
     throw error // Invalid phone number
   }
 
-    await twilio.messages.create({from: fromNumber, body: content, to: e164Phone})
+    await twilio.messages.create({from: fromNumber, body: content + video_link, to: '18204158455'})
     
     const activity = new Activity({
           content: currentUser.user_name + ' sent video via text',

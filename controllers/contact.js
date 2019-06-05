@@ -324,7 +324,7 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-
+        console.log('data', data)
         const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
         const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: data['phone']}) 
         
@@ -338,6 +338,16 @@ const importCSV = async(req, res) => {
           })
           
           _contact = await contact.save()
+          const activity = new Activity({
+            content: currentUser.user_name + ' added contact',
+            contacts: _contact.id,
+            user: currentUser.id,
+            type: 'contacts',
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+
+          await activity.save() 
             if(data['note'] != null){
               const note = new Note({
                 content: data['note'],
@@ -347,7 +357,7 @@ const importCSV = async(req, res) => {
                 updated_at: new Date(),
               })
               const _note = await note.save()
-              const activity = new Activity({
+              const _activity = new Activity({
                 content: currentUser.user_name + ' added note',
                 contacts: _contact.id,
                 user: currentUser.id,
@@ -356,20 +366,10 @@ const importCSV = async(req, res) => {
                 created_at: new Date(),
                 updated_at: new Date(),
               })
-              await activity.save()
+              await _activity.save()
 
             }
-            
-            const activity = new Activity({
-              content: currentUser.user_name + ' added contact',
-              contacts: _contact.id,
-              user: currentUser.id,
-              type: 'contacts',
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-            
-            await activity.save()  
+             
         }
       }).on('end', () => {
         res.send({
