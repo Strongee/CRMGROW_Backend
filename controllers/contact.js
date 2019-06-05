@@ -219,7 +219,7 @@ const sendBatch = async(req, res) => {
     to: to,
     cc: cc,
     bcc: bcc,
-    html: content,
+    html: content + '<br/><br/>' + currentUser.email_signature,
   };
       
   await sgMail.send(msg)
