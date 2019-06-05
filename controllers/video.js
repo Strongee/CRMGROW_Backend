@@ -253,12 +253,10 @@ const sendText = async (req, res) => {
 }
 
 const remove = async (req, res) => {
-    const { currentUser } = req
     try {
-      const video = Video.findOne({ _id: req.params.id})
+      const video = await Video.findOne({ _id: req.params.id})
   
       if (video) {
-        console.log('video', video)
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
           Key: video.url
