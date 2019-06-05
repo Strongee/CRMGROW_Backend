@@ -255,7 +255,7 @@ const sendText = async (req, res) => {
 const remove = async (req, res) => {
     const { currentUser } = req
     try {
-      const video = Video.findOne({ user: currentUser.id, _id: req.params.id})
+      const video = Video.findOne({ _id: req.params.id})
   
       if (video) {
         s3.deleteObject({
