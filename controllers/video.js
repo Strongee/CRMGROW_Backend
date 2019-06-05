@@ -258,6 +258,7 @@ const remove = async (req, res) => {
       const video = Video.findOne({ _id: req.params.id})
   
       if (video) {
+        console.log('video', video)
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
           Key: video.url
