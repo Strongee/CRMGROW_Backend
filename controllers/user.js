@@ -161,25 +161,24 @@ const signUp = async (req, res) => {
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
 
-    const areaCode = req.body['cell_phone'].substring(1, 4)
+    // const areaCode = req.body['cell_phone'].substring(1, 4)
   
-    const data = await client
-    .availablePhoneNumbers('US')
-    .local.list({
-      areaCode: areaCode,
-    })
+    // const data = await client
+    // .availablePhoneNumbers('US')
+    // .local.list({
+    //   areaCode: areaCode,
+    // })
 
-    const number = data[0];
-    const twilio_proxy_number = await client.incomingPhoneNumbers.create({
-        phoneNumber: number.phoneNumber,
-        smsUrl:  urls.SMS_RECEIVE_URL
-      })['phoneNumber']
+    // const number = data[0];
+    // const twilio_proxy_number = await client.incomingPhoneNumbers.create({
+    //     phoneNumber: number.phoneNumber,
+    //     smsUrl:  urls.SMS_RECEIVE_URL
+    //   })['phoneNumber']
    
     const user = new User({
       ...req.body,
       salt: salt,
       hash: hash,
-      twilio_proxy_number: twilio_proxy_number,
       updated_at: new Date(),
       created_at: new Date(),
     })

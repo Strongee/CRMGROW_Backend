@@ -234,7 +234,7 @@ const sendBatch = async(req, res) => {
   let data_list = []
   for(let i = 0; i < contacts.length; i ++){
     const activity = new Activity({
-      content: currentUser.user_name + ' sent batch email',
+      content: currentUser.user_name + ' sent email',
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -337,18 +337,18 @@ const importCSV = async(req, res) => {
             updated_at: new Date(),
           })
           
-          _contact = await contact.save()
-          const activity = new Activity({
-            content: currentUser.user_name + ' added contact',
-            contacts: _contact.id,
-            user: currentUser.id,
-            type: 'contacts',
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          await activity.save() 
+          contact.save().then((_contact)=>{
+            const activity = new Activity({
+              content: currentUser.user_name + ' added contact',
+              contacts: _contact.id,
+              user: currentUser.id,
+              type: 'contacts',
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+            activity.save().then() 
             if(data['note'] != null){
+              console.log('_contact', _contact)
               const note = new Note({
                 content: data['note'],
                 contact: _contact.id,
@@ -356,20 +356,20 @@ const importCSV = async(req, res) => {
                 created_at: new Date(),
                 updated_at: new Date(),
               })
-              const _note = await note.save()
-              const _activity = new Activity({
-                content: currentUser.user_name + ' added note',
-                contacts: _contact.id,
-                user: currentUser.id,
-                type: 'notes',
-                notes: _note.id,
-                created_at: new Date(),
-                updated_at: new Date(),
+              note.save().then((_note)=>{
+                const _activity = new Activity({
+                  content: currentUser.user_name + ' added note',
+                  contacts: _contact.id,
+                  user: currentUser.id,
+                  type: 'notes',
+                  notes: _note.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                _activity.save().then()
               })
-              await _activity.save()
-
             }
-             
+          })             
         }
       }).on('end', () => {
         res.send({
