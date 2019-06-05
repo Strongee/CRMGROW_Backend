@@ -263,8 +263,6 @@ const remove = async (req, res) => {
           Key: video.url
         }, function (err,data){})
 
-        fs.unlinkSync(THUMBNAILS_PATH + video['thumbnail'])
-
         video['del'] = true
         await video.save()
 
