@@ -324,15 +324,9 @@ const updateChecked  = async(req, res) =>{
   _follow_up.status = 1
   await _follow_up.save()
 
-  const activity = new Activity({
-    content: _follow_up.content,
-    contacts: _follow_up.contact,
-    user: currentUser.id,
-    type: 'follow_ups',
-    follow_ups: _follow_up._id,
-    created_at: new Date(),
-    updated_at: new Date(),
-  })
+  const activity = await Activity.findOne({type: 'follow_ups', follow_ups: _follow_up.id})
+  activity['content'] = 'Complete Follow Up'
+  activity['updated_at'] = new Date()
 
   const _contact = await Contact.findOne({_id: activity.contacts})
 

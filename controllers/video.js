@@ -15,7 +15,7 @@ const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-
+const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
 const s3 = new AWS.S3({
@@ -237,10 +237,12 @@ const sendText = async (req, res) => {
     throw error // Invalid phone number
   }
 
-    await twilio.messages.create({from: fromNumber, body: content + video_link, to: '18204158455'})
+    const body = content + ' ' + video_link
+  
+    await twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
     const activity = new Activity({
-          content: currentUser.user_name + ' sent video via text',
+          content: currentUser.user_name + ' sent video using sms',
           contacts: contact,
           user: currentUser.id,
           type: 'videos',

@@ -39,7 +39,7 @@ const get = async(req, res) => {
   }
 
   const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id }).sort({due_date: 1})
-  const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id })
+  const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id }).sort({updated_at : 1 })
   let _activity_detail_list = [];
   
   for(let i = 0; i < _activity_list.length; i ++){
