@@ -28,27 +28,22 @@ const get = async(req, res) => {
   })
 }
 
-const create = async(req, res) => {
-  const query = {...req.query}
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array()
-    })
-  }
-
+const create = async(data) => {
   const video_tracker = new VideoTracker({
-    ...req.query,
+    ...data,
     updated_at: new Date(),
     created_at: new Date(),
   })
+  return await video_tracker.save()
+}
 
+const disconnect = async(video_tracker_id) =>{
+  const query = await VideoTracker.findOne({_id: video_tracker_id})
   const currentUser = await User.findOne({_id: query['user']})
   const contact = await Contact.findOne({_id: query['contact']})
   const video = await Video.findOne({_id: query['video']})
 
-  const d = (req.query['duration']/1000)
+  const d = (query['duration']/1000)
   var h = Math.floor(d / 3600);
   var m = Math.floor(d % 3600 / 60);
   var s = Math.floor(d % 3600 % 60);
@@ -79,8 +74,8 @@ const create = async(req, res) => {
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const title = contact.first_name + ' watched video -' + video.title 
-    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + req.query['time_start']
-    const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": ""}})
+    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['time_start']
+    const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
 
@@ -98,7 +93,7 @@ const create = async(req, res) => {
       phone_number: contact.cell_phone,
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + req.query['time_start'],
+      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['time_start'],
       detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View Contact</a>"
     },
   };
@@ -122,20 +117,45 @@ const create = async(req, res) => {
       myJSON = JSON.stringify(_video_tracker)
       const data = JSON.parse(myJSON);
       data.activity = _activity
-      res.send({
-        status: true,
-        data
-      })
-    })
-  }).catch(e => {
-    return res.status(500).send({
-      status: false,
-      error:  e
     })
   })
+}
+
+const update = async(duration, video_tracker_id) =>{
+  const video_tracker = await VideoTracker.find({_id: video_tracker_id});
+  video_tracker['duration'] = duration
+  video_tracker['updated_at'] = new Data()
+  await video_tracker.save()
+}
+
+const setup = (io) => {
+  console.info('Setup Socket.io:')
+  io.sockets
+    .on('connection', (socket) => {
+      socket.emit('connected')
+      socket.on('init', (data)=>{
+        const video_tracker = create(data)
+        socket.video_tracker = video_tracker
+      })
+
+      socket.on('update', (duration)=>{
+        const duration = data
+        const video_tracker = socket.video_tracker
+        update(duration, video_tracker)
+      })
+
+      socket.on('disconnecting', () => {
+        console.info('Socket Disconnecting:', socket)
+        const video_tracker = socket.video_tracker
+        console.log('video_tracker is canceling', video_tracker)
+        disconnect(video_tracker)
+      })
+      //auth(socket)
+    })
 }
 
 module.exports = {
     get,
     create,
+    setup
 }
