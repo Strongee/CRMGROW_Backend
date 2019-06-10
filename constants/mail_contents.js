@@ -1,15 +1,15 @@
 const mail_contents = {
     WELCOME_SIGNUP: {
-        MAIL: "support@teamgrow.awsapps.com",
-        SUBJECT: "Welcome to Teamgrow",
-        TEXT: "Welcome to Teamgrow"
+        MAIL: "support@crmgrow.com",
+        SUBJECT: "Welcome to CRMGROW",
+        TEXT: "Welcome to CRMGROW"
     },
     NOTIFICATION_SEND_MATERIAL: {
-        MAIL: "no-reply@teamgrow.awsapps.com",
-        SUBJECT: "Teamgrow video watched notification: "
+        MAIL: "no-reply@crmgrow.com",
+        SUBJECT: "CRMGROW video watched notification: "
     },
     DAILY_REPORT: {
-        MAIL: "no-reply@teamgrow.awsapps.com",
+        MAIL: "support@crmgrow.com",
         SUBJECT: "Daily report: "
     }
 }
