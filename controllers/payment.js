@@ -1,7 +1,7 @@
 const config = require('../config/config')
 const Payment = require('../models/payment')
 const User = require('../models/user')
-const stripeKey = config.STRIPE.SECRET_KEH
+const stripeKey = config.STRIPE.SECRET_KEY
 const stripe = require('stripe')(stripeKey)
 
 
@@ -34,11 +34,11 @@ const create = async(req, res) => {
         console.log('customer', customer)
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
             let pricingPlan
-            const product = config.STRIPE.PRODUCT_ID
-                if(billAmount == '19'){
+            // const product = config.STRIPE.PRODUCT_ID
+                if(billAmount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
                     pricingPlan = config.STRIPE.PRIMARY_PLAN
                 }else{
-                    pricingPlan = config.SENDGRID.SUPER_PLAN
+                    pricingPlan = config.STRIPE.SUPER_PLAN
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
                     .then(subscription => {return subscription}).then(result => {
