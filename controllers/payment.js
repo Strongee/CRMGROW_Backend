@@ -41,7 +41,9 @@ const create = async(req, res) => {
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
-                    .then(subscription => {return subscription}).then(result => {
+                    .then(subscription => {return subscription}).catch((e)=>{
+                        console.log('creating subscripition error', e)
+                    }).then(result => {
                 console.log('result', result)
                 		// Save card information to DB.
                 const payment = new Payment({
