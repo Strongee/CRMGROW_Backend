@@ -139,7 +139,6 @@ const setup = (io) => {
       })
 
       socket.on('update', (duration)=>{
-        const duration = data
         const video_tracker = socket.video_tracker
         update(duration, video_tracker)
       })
