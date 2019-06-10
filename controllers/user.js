@@ -234,6 +234,10 @@ const signUp = async (req, res) => {
     });
   }
 
+const socialSignUp = async(req, res) =>{
+
+}
+
 const login = async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -299,6 +303,10 @@ const login = async (req, res) => {
       user
     }
   })
+}
+
+const socialLogin = async(req, res) =>{
+
 }
 
 const checkAuth = async (req, res, next) => {
@@ -892,6 +900,8 @@ const disconDesktop = async(req, res) =>{
 module.exports = {
     signUp,
     login,
+    socialSignUp,
+    socialLogin,
     getMe,
     editMe,
     resetPasswordByOld,

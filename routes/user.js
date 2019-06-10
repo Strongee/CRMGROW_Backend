@@ -71,4 +71,10 @@ router.post('/desktop-notification',   UserCtrl.checkAuth, catchError(UserCtrl.d
 // Disconnect Weekly Report
 router.get('/discon-desktop',   UserCtrl.checkAuth, catchError(UserCtrl.disconDesktop))
 
+// Edit own profile
+router.post('/social-signup', UserCtrl.checkAuth, catchError(UserCtrl.socialSignUp))
+
+// Edit own profile
+router.put('/social-login', UserCtrl.checkAuth, catchError(UserCtrl.socialLogin))
+
 module.exports = router
