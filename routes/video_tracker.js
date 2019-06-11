@@ -6,7 +6,7 @@ const { catchError } = require('../controllers/error')
 
 const router = express.Router()
 
-router.post('/', catchError(VideoTrackerCtrl.create))
+router.post('/', catchError(VideoTrackerCtrl.createbyDesktop))
 router.get('/:contact' , UserCtrl.checkAuth, catchError(VideoTrackerCtrl.get))
 
 module.exports = router

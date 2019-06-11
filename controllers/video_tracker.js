@@ -37,6 +37,23 @@ const create = async(data) => {
   return await video_tracker.save()
 }
 
+const createbyDesktop = async(req, res) => {
+  const query = {...req.query}
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+
+  const video_tracker = new VideoTracker({
+    query,
+    updated_at: new Date(),
+    created_at: new Date(),
+  })
+  disconnect(video_tracker.id)
+}
 const disconnect = async(video_tracker_id) =>{
   const query = await VideoTracker.findOne({_id: video_tracker_id})
   const currentUser = await User.findOne({_id: query['user']})
@@ -155,6 +172,6 @@ const setup = (io) => {
 
 module.exports = {
     get,
-    create,
+    createbyDesktop,
     setup
 }
