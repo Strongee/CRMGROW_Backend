@@ -122,17 +122,9 @@ const getThumbnail = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  const _video = VideoTracker.find({ user: currentUser.id})
 
-  if (!_video) {
-    return res.status(401).json({
-      status: false,
-      error: 'Video doesn`t exist'
-    })
-  }
-
-  let _video_list = await Video.find({user: currentUser.id})
-  let _video_admin = await Video.find({role: "admin"})
+  let _video_list = await Video.find({user: currentUser.id, del: false})
+  let _video_admin = await Video.find({role: "admin", del: false})
   Array.prototype.push.apply(_video_list, _video_admin)
 
   console.log('_video_list', _video_list)
