@@ -45,7 +45,7 @@ const create = async(req, res) => {
                         console.log('creating subscripition error', e)
                     }).then(result => {
                 console.log('result', result)
-                		// Save card information to DB.
+                // Save card information to DB.
                 const payment = new Payment({
                     user: currentUser.id,
                     customer_id: customer.id,
