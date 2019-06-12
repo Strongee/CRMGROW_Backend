@@ -48,7 +48,7 @@ const createbyDesktop = async(req, res) => {
   }
 
   const video_tracker = new VideoTracker({
-    query,
+    ...query,
     updated_at: new Date(),
     created_at: new Date(),
   })
