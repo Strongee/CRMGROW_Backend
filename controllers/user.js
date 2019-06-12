@@ -352,6 +352,23 @@ const getMe = async(req, res) =>{
   })
 }
 
+const getUser = async(req, res) => {
+  const _user = await User.findOne({_id: req.params.id})
+  myJSON = JSON.stringify(_user)
+  const user = JSON.parse(myJSON);
+  delete user.hash
+  delete user.salt
+  res.send({
+    status: true,
+    data: {
+      name: user['user_name'],
+      cell_phone: user['cell_phone'],
+      email: user['email'],
+      picture_profile: user['picture_profile']
+    }
+  })
+}
+
 const editMe = async(req, res) =>{
   const user = req.currentUser
 
@@ -904,6 +921,7 @@ module.exports = {
     socialLogin,
     getMe,
     editMe,
+    getUser,
     resetPasswordByOld,
     syncOutlook,
     authorizeOutlook,
