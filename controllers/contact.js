@@ -324,7 +324,6 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        console.log('data', data)
         const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
         const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: data['phone']}) 
         

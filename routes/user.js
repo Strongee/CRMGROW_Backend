@@ -30,10 +30,6 @@ router.post('/login', [
 router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe))
 
 // Edit own profile
-router.get('/:id', catchError(UserCtrl.getUser))
-
-
-// Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 
 // New Password by old one
@@ -80,5 +76,8 @@ router.post('/social-signup', UserCtrl.checkAuth, catchError(UserCtrl.socialSign
 
 // Edit own profile
 router.put('/social-login', UserCtrl.checkAuth, catchError(UserCtrl.socialLogin))
+
+// Edit own profile
+router.get('/:id', catchError(UserCtrl.getUser))
 
 module.exports = router
