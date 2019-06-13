@@ -342,8 +342,8 @@ const checkAuth = async (req, res, next) => {
 
 const getMe = async(req, res) =>{
   const _user = req.currentUser
-  myJSON = JSON.stringify(_user)
-  const user = JSON.parse(myJSON);
+  const myJSON = JSON.stringify(_user)
+  user = JSON.parse(myJSON);
   delete user.hash
   delete user.salt
   res.send({

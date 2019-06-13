@@ -26,11 +26,12 @@ router.post('/login', [
     body('password').isLength({ min: 1 })
   ], catchError(UserCtrl.login))  
   
+  // Edit own profile
+router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe))
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))
 
-// Edit own profile
-router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe))
 
 // Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
