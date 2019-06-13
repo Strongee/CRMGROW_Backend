@@ -46,7 +46,6 @@ const createbyDesktop = async(req, res) => {
       error: errors.array()
     })
   }
-  console.log('query', query)
   const video_tracker = new VideoTracker({
     ...query,
     updated_at: new Date(),

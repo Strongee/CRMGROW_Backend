@@ -238,7 +238,7 @@ const sendText = async (req, res) => {
           contacts: contact,
           user: currentUser.id,
           type: 'videos',
-          video: video,
+          videos: video,
           created_at: new Date(),
           updated_at: new Date(),
         })
