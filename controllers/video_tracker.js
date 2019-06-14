@@ -219,7 +219,7 @@ const disconnect = async(video_tracker_id) =>{
 const update = async(duration, video_tracker_id) =>{
   const video_tracker = await VideoTracker.find({_id: video_tracker_id});
   video_tracker['duration'] = duration
-  video_tracker['updated_at'] = new Data()
+  video_tracker['updated_at'] = new Date()
   await video_tracker.save()
 }
 
