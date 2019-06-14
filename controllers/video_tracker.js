@@ -235,7 +235,7 @@ const setup = (io) => {
 
       socket.on('update', (duration)=>{
         const video_tracker = socket.video_tracker
-        update(duration, video_tracker)
+        update(duration, video_tracker._id)
       })
 
       socket.on('disconnecting', () => {
