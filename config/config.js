@@ -34,8 +34,8 @@ const config = {
     STRIPE: {
         SECRET_KEY: process.env.SECRET_KEY || 'sk_test_M5ZibSlzCut26ZvhKgfeYY5x00oAOM4Bx9',
         BILLING_CYCLE: process.env.BILLING_CYCLE || 'month',
-        PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR',
-        PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_F7xoMy4Dh4YVXw',
+        PRODUCT_ID: process.env.PRODUCT_ID || 'prod_FFne59xMmM2Mpm',
+        PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_FFnfPJc8bPYCZi',
         SUPER_PLAN: process.env.SUPER_PLAN || 'plan_F7xpLy2LZf6Yay',
         PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '29',
         SUPER_PLAN_AMOUNT: process.env.SUPER_PLAN_AMOUNT || '59'
