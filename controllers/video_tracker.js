@@ -217,6 +217,7 @@ const disconnect = async(video_tracker_id) =>{
 }
 
 const update = async(duration, video_tracker_id) =>{
+  console.log('video_tracker_id', video_tracker_id)
   const video_tracker = await VideoTracker.findOne({_id: video_tracker_id});
   video_tracker['duration'] = duration
   video_tracker['updated_at'] = new Date()
@@ -235,6 +236,7 @@ const setup = (io) => {
 
       socket.on('update', (duration)=>{
         const video_tracker = socket.video_tracker
+        console.log('video_tracker', video_tracker)
         update(duration, video_tracker._id)
       })
 
