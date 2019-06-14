@@ -170,7 +170,7 @@ const disconnect = async(video_tracker_id) =>{
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const title = contact.first_name + ' watched video -' + video.title 
-    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['time_start']
+    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
@@ -189,7 +189,7 @@ const disconnect = async(video_tracker_id) =>{
       phone_number: contact.cell_phone,
       email: contact.email,
       activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['time_start'],
+      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
       detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View Contact</a>"
     },
   };
@@ -216,7 +216,6 @@ const disconnect = async(video_tracker_id) =>{
 }
 
 const update = async(duration, video_tracker_id) =>{
-  console.log('video_tracker_id', video_tracker_id)
   const video_tracker = await VideoTracker.findOne({_id: video_tracker_id});
   video_tracker['duration'] = duration
   video_tracker['updated_at'] = new Date()
@@ -236,7 +235,6 @@ const setup = (io) => {
 
       socket.on('update', (duration)=>{
         const video_tracker = socket.video_tracker
-        console.log('video_tracker', video_tracker)
         update(duration, video_tracker._id)
       })
 
