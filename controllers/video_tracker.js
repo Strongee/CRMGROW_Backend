@@ -231,8 +231,8 @@ const setup = (io) => {
     .on('connection', (socket) => {
       socket.emit('connected')
       socket.on('init', (data)=>{
-        create(data).then((_socket)=>{
-          socket.video_tracker = video_tracker
+        create(data).then((_video_tracker)=>{
+          socket.video_tracker = _video_tracker
         })
       })
 
