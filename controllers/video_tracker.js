@@ -196,25 +196,23 @@ const disconnect = async(video_tracker_id) =>{
 
   await sgMail.send(msg)
 
-  video_tracker.save()
-  .then(_video_tracker => {
 
     const activity = new Activity({
       content: contact.first_name + ' watched video',
-      contacts: _video_tracker.contact,
+      contacts: query.contact,
       user: currentUser.id,
       type: 'video_trackers',
-      video_trackers: _video_tracker.id,
+      video_trackers: query.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(_video_tracker)
+      myJSON = JSON.stringify(query)
       const data = JSON.parse(myJSON);
       data.activity = _activity
     })
-  })
+ 
 }
 
 const update = async(duration, video_tracker_id) =>{
