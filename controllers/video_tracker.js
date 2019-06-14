@@ -34,8 +34,8 @@ const create = async(data) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  const _video_tracker = await video_tracker.save()
-  return _video_tracker
+  
+  return await video_tracker.save()
 }
 
 const createbyDesktop = async(req, res) => {
@@ -231,8 +231,9 @@ const setup = (io) => {
     .on('connection', (socket) => {
       socket.emit('connected')
       socket.on('init', (data)=>{
-        const video_tracker = create(data)
-        socket.video_tracker = video_tracker
+        create(data).then((_socket)=>{
+          socket.video_tracker = video_tracker
+        })
       })
 
       socket.on('update', (duration)=>{
