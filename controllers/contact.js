@@ -324,13 +324,20 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
+        let cleaned = ('' + data['phone']).replace(/\D/g, '')
+        let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+        let cell_phone
+        if (match) {
+            let intlCode = (match[1] ? '+1 ' : '')
+            cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+        }
         const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
         const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: data['phone']}) 
         
         if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
           const contact = new Contact({
             ...data,
-            cell_phone: data['phone'],
+            cell_phone: cell_phone,
             user: currentUser.id,
             created_at: new Date(),
             updated_at: new Date(),
@@ -347,7 +354,6 @@ const importCSV = async(req, res) => {
             })
             activity.save().then() 
             if(data['note'] != null){
-              console.log('_contact', _contact)
               const note = new Note({
                 content: data['note'],
                 contact: _contact.id,

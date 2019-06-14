@@ -163,7 +163,7 @@ const disconnect = async(video_tracker_id) =>{
   // send desktop notification
   if(currentUser.desktop_notification == true){
     webpush.setVapidDetails(
-      'mailto:support@teamgrow.co',
+      'mailto:support@crmgrow.com',
       config.VAPID.PUBLIC_VAPID_KEY,
       config.VAPID.PRIVATE_VAPID_KEY
     )

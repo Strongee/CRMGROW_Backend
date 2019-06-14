@@ -69,7 +69,6 @@ const updateDetail = async (req, res) => {
       video["updated_at"] = new Date()
 
       video.save().then((_video)=>{
-        console.log('video', video)
         res.send({
           status: true,
           data: _video
@@ -127,7 +126,6 @@ const getAll = async (req, res) => {
   let _video_admin = await Video.find({role: "admin", del: false})
   Array.prototype.push.apply(_video_list, _video_admin)
 
-  console.log('_video_list', _video_list)
   if (!_video_list) {
     return res.status(401).json({
       status: false,

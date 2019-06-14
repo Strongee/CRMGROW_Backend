@@ -87,7 +87,6 @@ const receive = async(req, res) => {
       const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
       const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
-      console.log('phoneNumber', phoneNumber)
       const contact = await Contact.findOne({cell_phone: phoneNumber})
       const e164Phone = phone(currentUser.cell_phone)[0]
       await twilio.messages.create({from: to, body: text, to: e164Phone})

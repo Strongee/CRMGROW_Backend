@@ -37,7 +37,7 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('req.body',req.body)
+  
   note.save()
   .then(_note => {
 
