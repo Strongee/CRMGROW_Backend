@@ -35,6 +35,12 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
 
+// Forgot password
+router.post('/forgot-password', catchError(UserCtrl.forgotPassword))
+
+// Rest own profile
+router.post('/reset-password', catchError(UserCtrl.resetPasswordByCode))
+
 // Synchronize with outlook email
 router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlook))
 

@@ -12,6 +12,7 @@
       CONTACT_PAGE_URL: 'https://crmgrow.com/contacts/',
       FOLLOWUP_PAGE_URL: 'https://crmgrow.com/follow-up/',
       SMS_RECEIVE_URL: 'https://crmgrow.com/api/sms/receive/',
+      RESET_PASSWORD_URL: 'https://crmgrow.com/reset-password/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
     }
   } else {
@@ -28,6 +29,7 @@
       CONTACT_PAGE_URL: 'http://localhost:4200/contacts/',
       FOLLOWUP_PAGE_URL: 'http://localhost:4200/follow-up/',
       SMS_RECEIVE_URL: 'https://crmgrow.com/api/sms/receive/',
+      RESET_PASSWORD_URL: 'http://localhost:4200/reset-password/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
     }
   }

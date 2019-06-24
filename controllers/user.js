@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
+const randomstring = require('randomstring')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const Appointment = require('../models/appointment')
@@ -914,6 +915,111 @@ const disconDesktop = async(req, res) =>{
   })
 }
 
+
+const resetPasswordByCode = async (req, res) => {
+  const { code, password, email } = req.body
+
+  const user = await User.findOne({
+    email: email
+  })
+
+  if (!user) {
+    return res.status(401).send({
+      status: false,
+      error: 'no_user'
+    })
+  }
+
+  const aryPassword = user.salt.split(' ')
+  console.log('aryPassword', aryPassword)
+  if (!aryPassword[1] || aryPassword[1] != code) { // Code mismatch
+    return res.status(401).send({
+      status: false,
+      error: 'invalid_code'
+    })
+  }
+  console.log(new Date().getTime())
+
+  console.log('time', user['updated_at'].getTime())
+  // Expire check
+  const delay = new Date().getTime() - user['updated_at'].getTime()
+
+  console.log('delay', delay)
+  if (delay > 1000 * 60 * 15) { // More than 15 minutes passed
+    return res.status(401).send({
+      status: true,
+      error: 'expired_code'
+    })
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+
+  user['salt'] = salt
+  user['hash'] = hash
+
+  await user.save()
+
+  await user.save()
+  res.send({
+    status: true
+  })
+}
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body
+  if (!email) {
+    return res.status(400).send({
+      status: false,
+      error: 'no_email_or_user_name'
+    })
+  }
+  const _user = await User.findOne({email: email })
+
+  if (!_user) {
+    return res.status(401).json({
+      status: false,
+      error: 'no_user'
+    })
+  }
+
+  const code = randomstring.generate({
+    length: 20,
+    charset: '1234567890ABCDEFHJKMNPQSTUVWXYZ'
+  })
+
+  const oldSalt = _user['salt'].split(' ')[0]
+  _user['salt'] = oldSalt + ' ' + code
+  _user['updated_at'] = new Date()
+  await _user.save()
+
+  const link = urls.RESET_PASSWORD_URL + code
+  const html = `<html>
+    <head></head>
+    <body style="font-family:sans-serif;">
+      <h3>We received a request to reset your password</h3>
+      <p>
+        <h3>CRMGrow Support</h3>
+        Please click: <a href='${link}'>here</a> to reset your password.
+      </p>
+    </body>
+    </html>`
+
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+
+    const msg = {
+      to: 'amazingskill8001@gmail.com',
+      from: mail_contents.RESET_PASSWORD.MAIL,
+      subject: mail_contents.RESET_PASSWORD.SUBJECT,
+      html: html,
+    }
+    await sgMail.send(msg)
+
+    res.send({
+      status: true
+    })
+}
+
 module.exports = {
     signUp,
     login,
@@ -923,6 +1029,8 @@ module.exports = {
     editMe,
     getUser,
     resetPasswordByOld,
+    resetPasswordByCode,
+    forgotPassword, 
     syncOutlook,
     authorizeOutlook,
     syncGmail,
@@ -935,6 +1043,6 @@ module.exports = {
     disconWeekly,
     disconDesktop,
     weeklyReport,
-    checkAuth
+    checkAuth,
 }
 
