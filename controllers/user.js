@@ -940,11 +940,9 @@ const resetPasswordByCode = async (req, res) => {
   }
   console.log(new Date().getTime())
 
-  console.log('time', user['updated_at'].getTime())
   // Expire check
   const delay = new Date().getTime() - user['updated_at'].getTime()
 
-  console.log('delay', delay)
   if (delay > 1000 * 60 * 15) { // More than 15 minutes passed
     return res.status(401).send({
       status: true,
@@ -1007,7 +1005,7 @@ const forgotPassword = async (req, res) => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
     const msg = {
-      to: 'amazingskill8001@gmail.com',
+      to:  _user['email'],
       from: mail_contents.RESET_PASSWORD.MAIL,
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html: html,
