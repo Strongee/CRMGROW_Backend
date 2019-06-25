@@ -931,9 +931,8 @@ const resetPasswordByCode = async (req, res) => {
   }
 
   const aryPassword = user.salt.split(' ')
-  console.log('aryPassword', aryPassword)
   if (!aryPassword[1] || aryPassword[1] != code) { // Code mismatch
-    return res.status(401).send({
+    return res.status(200).send({
       status: false,
       error: 'invalid_code'
     })
@@ -944,8 +943,8 @@ const resetPasswordByCode = async (req, res) => {
   const delay = new Date().getTime() - user['updated_at'].getTime()
 
   if (delay > 1000 * 60 * 15) { // More than 15 minutes passed
-    return res.status(401).send({
-      status: true,
+    return res.status(200).send({
+      status: false,
       error: 'expired_code'
     })
   }
