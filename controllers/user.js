@@ -984,7 +984,7 @@ const forgotPassword = async (req, res) => {
   }
 
   const code = randomstring.generate({
-    length: 20,
+    length: 5,
     charset: '1234567890ABCDEFHJKMNPQSTUVWXYZ'
   })
 
@@ -993,14 +993,13 @@ const forgotPassword = async (req, res) => {
   _user['updated_at'] = new Date()
   await _user.save()
 
-  const link = urls.RESET_PASSWORD_URL + code
   const html = `<html>
     <head></head>
     <body style="font-family:sans-serif;">
       <h3>We received a request to reset your password</h3>
       <p>
         <h3>CRMGrow Support</h3>
-        Please click: <a href='${link}'>here</a> to reset your password.
+        Please use this code in your app: <b>${code}</b> to reset your password.
       </p>
     </body>
     </html>`
