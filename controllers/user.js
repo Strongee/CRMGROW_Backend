@@ -274,7 +274,7 @@ const login = async (req, res) => {
 
 
   // Check password
-  const hash = crypto.pbkdf2Sync(password, _user.salt, 10000, 512, 'sha512').toString('hex');
+  const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
   if (hash != _user.hash) {
     return res.status(401).json({
       status: false,
@@ -420,7 +420,7 @@ const resetPasswordByOld = async (req, res) => {
   const _user = req.currentUser
 
    // Check old password
-   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
+   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
    if (old_hash != _user.hash) {
      return res.status(401).json({
        status: false,
