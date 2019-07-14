@@ -248,7 +248,7 @@ const setup = (io) => {
             const pdf_tracker = socket.pdf_tracker
             console.log('pdf_tracker is canceling', pdf_tracker._id)
             disconnectPDF(pdf_tracker)
-        }else{
+        }else if(socket.type == 'video'){
             const video_tracker = socket.video_tracker
             console.log('video_tracker is canceling', video_tracker._id)
             disconnectVideo(video_tracker)
