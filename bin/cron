@@ -97,7 +97,7 @@ const daily_report = new CronJob('00 21 * * 1-6', async() =>{
 
 const weekly_report = new CronJob({
   // Run at 21:00 Central time, only on friday
-  cronTime: '* 21 * * Sun',
+  cronTime: '00 21 * * Sun',
   onTick: async() => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
     await User.find({weekly_report: true}).then(async(users)=>{
