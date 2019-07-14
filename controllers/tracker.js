@@ -236,6 +236,8 @@ const setup = (io) => {
           console.log('connection_video', _video_tracker._id)
           socket.type = 'video'
           socket.video_tracker = _video_tracker
+        }).catch((err)=>{
+            console.log('err***************', err)
         })
       })
 
