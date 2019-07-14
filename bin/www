@@ -11,7 +11,8 @@ const http        = require('http');
 const socketIO    = require('socket.io');
 
 const mongoose = require('mongoose');
-const video_tracker         = require('../controllers/video_tracker');
+
+const tracker         = require('../controllers/tracker');
 
 /**
  * Get port from environment and store in Express.
@@ -48,7 +49,8 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 
-video_tracker.setup(io);
+tracker.setup(io);
+
 /**
  * Normalize a port into a number, string, or false.
  */

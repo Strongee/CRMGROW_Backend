@@ -8,7 +8,7 @@ const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
 const config = require('../config/config')
-const webpush = require('web-push');
+const webpush = require('web-push'); 
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -229,19 +229,20 @@ const setup = (io) => {
       socket.emit('connected')
       socket.on('init', (data)=>{
         create(data).then((_video_tracker)=>{
+          console.log('connection', _video_tracker._id)
           socket.video_tracker = _video_tracker
         })
       })
 
       socket.on('update', (duration)=>{
         const video_tracker = socket.video_tracker
+        console.log('update', video_tracker._id)
         update(duration, video_tracker._id)
       })
 
       socket.on('disconnecting', () => {
-        console.info('Socket Disconnecting:', socket)
         const video_tracker = socket.video_tracker
-        console.log('video_tracker is canceling', video_tracker)
+        console.log('video_tracker is canceling', video_tracker._id)
         disconnect(video_tracker)
       })
       //auth(socket)

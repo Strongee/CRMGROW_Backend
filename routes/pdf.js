@@ -58,6 +58,9 @@ router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll))
 // Send PDF
 router.post('/send', UserCtrl.checkAuth, catchError(PDFCtrl.sendPDF))
 
+// Send Video on text
+router.post('/send-text', UserCtrl.checkAuth, catchError(PDFCtrl.sendText))
+
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
 

@@ -30,8 +30,7 @@ const storage = multerS3({
       const today = new Date()
       const year = today.getYear()
       const month = today.getMonth()
-      console.log(today)
-      cb(null, 'video' + 'pdf ' + year + '/' + month + '/' + file.originalname)
+      cb(null, 'video' +  year + '/' + month + '/' + file.originalname)
     },
   })
 

@@ -164,7 +164,7 @@ const sendPDF = async (req, res) => {
     from: currentUser.email,
     subject: pdf_title,
     html: '<html><head><title>PDF Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + 
-          ',<br/><p>' + content + '</p> <p>Please click on the video link below to learn more!</p><a href="' + pdf_link + '">'+ pdf_title + 
+          ',<br/><p>' + content + '</p> <p>Please click on the pdf link below to learn more!</p><a href="' + pdf_link + '">'+ pdf_title + 
           '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
@@ -200,6 +200,44 @@ const sendPDF = async (req, res) => {
   })
 }
 
+const sendText = async (req, res) => {
+  const { currentUser } = req
+  const { cell_phone, content, pdf, contact} = req.body
+
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id
+  const e164Phone = phone(cell_phone)[0]
+  const fromNumber = config.TWILIO.TWILIO_NUMBER
+  console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+
+  if (!e164Phone) {
+    const error = {
+      error: 'Invalid Phone Number'
+    }
+
+    throw error // Invalid phone number
+  }
+
+    const body = content + ' ' + pdf_link
+  
+    await twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
+    
+    const activity = new Activity({
+          content: currentUser.user_name + ' sent pdf using sms',
+          contacts: contact,
+          user: currentUser.id,
+          type: 'pdfs',
+          pdfs: pdf,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        activity.save().then(_activity => {
+          res.send({
+            status: true,
+          })
+        })    
+}
+
 const remove = async (req, res) => {
     const { currentUser } = req
     try {
@@ -228,12 +266,49 @@ const remove = async (req, res) => {
     }
 }
 
+const getHistory = async(req, res) => {
+  const { currentUser } = req
+  const _activity_list = await Activity.aggregate([
+    {
+      $lookup:
+        {
+        from:  'contacts',
+        localField: 'contacts',
+        foreignField: '_id',
+        as: "pdf_detail"
+        }
+    },
+    {
+      $match: { "pdf": req.params.id, "user": currentUser.id}
+    }
+  ])
+  for(let i = 0; i < _activity_list.length; i ++){
+    const _pdf_tracker = PDFTracker.find({contact: _activity_list[i].contact, pdf: req.params.id, user: currentUser.id})
+    _activity_list[i].pdf_tracker = _pdf_tracker;
+  }
+  if (_activity_list) {
+    res.send({
+      status: true,
+      data: {
+        data: _activity_list
+      }
+    })
+  } else {
+    res.status(404).send({
+      status: false,
+      error: 'Activity not found'
+    })
+  }
+}
+
 module.exports = {
-    create,
-    updateDetail,
-    get,
-    getPreview,
-    getAll,
-    sendPDF,
-    remove
+  create,
+  updateDetail,
+  get,
+  getAll,
+  getPreview,
+  sendPDF,
+  sendText,
+  remove,
+  getHistory
 }

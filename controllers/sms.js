@@ -123,9 +123,8 @@ const get = async(req, res) => {
   const { currentUser } = req
   const query = {...req.query}
   const contact = query['contact']
-  console.log('contact', contact)
   const data = await Note.find({user :currentUser.id, contact: contact});
-  console.log('data', data);
+  
   if (!data) {
     return res.status(401).json({
       status: false,
