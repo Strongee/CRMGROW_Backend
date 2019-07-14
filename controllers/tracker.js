@@ -217,7 +217,6 @@ const setup = (io) => {
       socket.emit('connected')
       socket.on('init_pdf', (data)=>{
         createPDF(data).then((_pdf_tracker)=>{
-          console.log('connection_pdf', _pdf_tracker._id)
           socket.type = 'pdf'
           socket.pdf_tracker = _pdf_tracker
         })
@@ -225,19 +224,13 @@ const setup = (io) => {
 
       socket.on('update_pdf', (duration)=>{
         const pdf_tracker = socket.pdf_tracker
-        console.log('udpate_pdf', pdf_tracker._id)
         updatePDF(duration, pdf_tracker._id)
       })
 
       socket.on('init_video', (data)=>{
-          console.log('here')
-          console.log('data', data)
         createVideo(data).then((_video_tracker)=>{
-          console.log('connection_video', _video_tracker._id)
           socket.type = 'video'
           socket.video_tracker = _video_tracker
-        }).catch((err)=>{
-            console.log('err***************', err)
         })
       })
 
@@ -250,11 +243,9 @@ const setup = (io) => {
       socket.on('disconnecting', () => {
         if(socket.type == 'pdf'){
             const pdf_tracker = socket.pdf_tracker
-            console.log('pdf_tracker is canceling', pdf_tracker._id)
             disconnectPDF(pdf_tracker)
         }else if(socket.type == 'video'){
             const video_tracker = socket.video_tracker
-            console.log('video_tracker is canceling', video_tracker._id)
             disconnectVideo(video_tracker)
         } 
       })

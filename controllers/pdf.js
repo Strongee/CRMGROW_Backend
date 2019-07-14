@@ -172,7 +172,7 @@ const sendPDF = async (req, res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
       const activity = new Activity({
-        content: currentUser.user_name + ' sent pdf',
+        content: currentUser.user_name + ' sent pdf using email',
         contacts: contact,
         user: currentUser.id,
         type: 'pdfs',

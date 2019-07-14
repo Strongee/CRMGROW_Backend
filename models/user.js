@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const User = mongoose.model('user',{
      user_name: String,
+     social_id: String,
      email: String,
      hash: String,
      salt: String,

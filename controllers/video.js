@@ -183,7 +183,7 @@ const sendVideo = async (req, res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
       const activity = new Activity({
-        content: currentUser.user_name + ' sent video',
+        content: currentUser.user_name + ' sent video using email',
         contacts: contact,
         user: currentUser.id,
         type: 'videos',
