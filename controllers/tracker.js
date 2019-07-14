@@ -230,6 +230,8 @@ const setup = (io) => {
       })
 
       socket.on('init_video', (data)=>{
+          console.log('here')
+          console.log('data', data)
         createVideo(data).then((_video_tracker)=>{
           console.log('connection_video', _video_tracker._id)
           socket.type = 'video'
