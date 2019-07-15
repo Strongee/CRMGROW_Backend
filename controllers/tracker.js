@@ -79,7 +79,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       email: contact.email,
       activity: contact.first_name + ' watched pdf - <b>' + pdf.title + '</b>',
       duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View Contact</a>"
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: #222;'>View Contact</a>"
     },
   };
 
@@ -178,7 +178,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         email: contact.email,
         activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
-        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none;'>View Contact</a>"
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: #222;'>View Contact</a>"
       },
     };
   

@@ -13,6 +13,16 @@ const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
 const uuidv1 = require('uuid/v1')
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const phone = require('phone')
+const twilio = require('twilio')(accountSid, authToken)
+const AWS = require('aws-sdk')
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION
+})
 
 const create = async (req, res) => {
   if (req.file) {

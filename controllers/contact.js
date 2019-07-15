@@ -88,13 +88,16 @@ const create = async(req, res) => {
       error: 'Email must be unique!'
     })
   }
-  contact_old = await Contact.findOne({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
-  if(contact_old != null){
-    return res.send({
-      status: false,
-      error: 'Phone number must be unique!'
-    })
+  if(typeof req.body['cell_phone'] != 'undefined'){
+    contact_old = await Contact.findOne({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
+    if(contact_old != null){
+      return res.send({
+        status: false,
+        error: 'Phone number must be unique!'
+      })
+    }
   }
+
   const contact = new Contact({
     ...req.body,
     user: currentUser.id,
