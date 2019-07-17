@@ -38,17 +38,6 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   if (s < 10) {s = "0"+s;}
   let timeWatched = h + ':' + m + ':' + s
 
-  const tD = Math.floor(pdf.duration/1000);
-  var tH = Math.floor(tD / 3600);
-  var tM = Math.floor(tD % 3600 / 60);
-  var tS = Math.floor(tD % 3600 % 60);
-
-  if (tH   < 10) {tH   = "0"+tH;}
-  if (tM < 10) {tM = "0"+tM;}
-  if (tS < 10) {tS = "0"+tS;}
-
-  let timeTotal = tH + ':' + tM + ':' + tS
-
   // send desktop notification
   if(currentUser.desktop_notification == true){
     webpush.setVapidDetails(
@@ -58,8 +47,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     )
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
-    const title = contact.first_name + ' watched pdf -' + pdf.title 
-    const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
+    const title = contact.first_name + ' reviewed pdf -' + pdf.title 
+    const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
@@ -77,8 +66,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       last_name: contact.last_name,
       phone_number: contact.cell_phone,
       email: contact.email,
-      activity: contact.first_name + ' watched pdf - <b>' + pdf.title + '</b>',
-      duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
+      activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
+      duration: 'Watched <b>' + timeWatched + ' </b>at ' + query['created_at'],
       detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: #222;'>View Contact</a>"
     },
   };
@@ -87,7 +76,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
 
 
     const activity = new Activity({
-      content: contact.first_name + ' watched pdf',
+      content: contact.first_name + ' reviewed pdf',
       contacts: query.contact,
       user: currentUser.id,
       type: 'pdf_trackers',
@@ -216,10 +205,7 @@ const setup = (io) => {
     .on('connection', (socket) => {
       socket.emit('connected')
       socket.on('init_pdf', (data)=>{
-        console.log('pdf_connected')
-        console.log('data', data)
         createPDF(data).then((_pdf_tracker)=>{
-          console.log('pdf_tracked')
           socket.type = 'pdf'
           socket.pdf_tracker = _pdf_tracker
         })

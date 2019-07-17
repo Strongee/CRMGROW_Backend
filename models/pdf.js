@@ -9,7 +9,6 @@ const PDF = mongoose.model('pdf',{
     url: String,
     role: String,
     del: { type: Boolean, default: false},
-    duration: Number,
     created_at: Date,
     updated_at: Date,
  });
