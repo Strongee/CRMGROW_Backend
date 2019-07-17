@@ -216,7 +216,9 @@ const setup = (io) => {
     .on('connection', (socket) => {
       socket.emit('connected')
       socket.on('init_pdf', (data)=>{
+        console.log('pdf_connected')
         createPDF(data).then((_pdf_tracker)=>{
+          console.log('pdf_tracked')
           socket.type = 'pdf'
           socket.pdf_tracker = _pdf_tracker
         })
