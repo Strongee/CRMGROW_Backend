@@ -18,7 +18,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 
-const daily_report = new CronJob('5 * * * * 1-6', async() =>{
+const daily_report = new CronJob('0 21 * * 1-6', async() =>{
 
     await User.find({daily_report: true}).then(async(users)=>{
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -43,8 +43,8 @@ const daily_report = new CronJob('5 * * * * 1-6', async() =>{
               console.log('err: ', err)
             })
             if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
-            let content = "<div class='content' style='padding-top:10px; padding-bottom:10px; margin-right:10px;max-width: 500px;padding-left:30px; border-bottom: 1px solid #afaaaa;'>"+
-              "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+            let content = "<div class='content' style='display: flex; padding-top:10px; padding-bottom:10px; margin-right:10px;max-width: 700px;padding-left:30px; border-bottom: 1px solid #afaaaa;'>"+
+              "<div class='contact'><h3 style='display: inline'>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
               "<p style='margin: 0px'>" + activity[j].content +"</p></div>" + 
               "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none'> View Contact</a></button></div>"
             contacts.push(content)
@@ -60,8 +60,8 @@ const daily_report = new CronJob('5 * * * * 1-6', async() =>{
               console.log('err: ', err)
             }) 
             if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
-            const _overdue = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
-            "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+            const _overdue = "<div class='content' style='display: flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 700px ; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+            "<div class='contact'><h3 style='display: inline'>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
             "<p style='margin: 0px'>" + _follow_up[j].content +"</p></div>" + 
             "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "' style='text-decoration: none'> View FollowUp</a></button></div>"
             overdue.push(_overdue)
@@ -125,8 +125,8 @@ const weekly_report = new CronJob({
             console.log('err: ', err)
             })
           if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
-          let content = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
-          "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+          let content = "<div class='content' style='display: flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 700px ; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+          "<div class='contact'><h3 style='display: inline'>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
           "<p style='margin: 0px'>" + activity[j].content +"</p></div>" + 
           "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none'> View</a></button></div>"
           contacts.push(content)
@@ -142,8 +142,8 @@ const weekly_report = new CronJob({
             console.log('err: ', err)
             }) 
             if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
-          const _overdue = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
-          "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
+          const _overdue = "<div class='content' style='display: flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 700px ;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+          "<div class='contact'><h3 style='display: inline'>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
           "<p style='margin: 0px'>" + _follow_up[j].content +"</p></div>" + 
           "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "' style='text-decoration: none'> View FollowUp</a></button></div>"
           overdue.push(_overdue)
