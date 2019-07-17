@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+  const mongoose = require('mongoose')
 const User = require('../models/user')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
@@ -42,7 +42,8 @@ const daily_report = new CronJob('5 * * * * 1-6', async() =>{
             const contact = await Contact.findOne({_id: activity[j].contacts}).catch((err)=>{
               console.log('err: ', err)
             })
-            let content = "<div class='content' style='display:flex; padding-top:10px; padding-bottom:10px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'>"+
+            if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
+            let content = "<div class='content' style='padding-top:10px; padding-bottom:10px; margin-right:10px;max-width: 500px;padding-left:30px; border-bottom: 1px solid #afaaaa;'>"+
               "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
               "<p style='margin: 0px'>" + activity[j].content +"</p></div>" + 
               "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none'> View Contact</a></button></div>"
@@ -58,7 +59,8 @@ const daily_report = new CronJob('5 * * * * 1-6', async() =>{
             const contact = await Contact.findOne({_id: _follow_up[j].contact}).catch((err)=>{
               console.log('err: ', err)
             }) 
-            const _overdue = "<div class='content' style='display:flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+            if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
+            const _overdue = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
             "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
             "<p style='margin: 0px'>" + _follow_up[j].content +"</p></div>" + 
             "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "' style='text-decoration: none'> View FollowUp</a></button></div>"
@@ -122,7 +124,8 @@ const weekly_report = new CronJob({
           const contact = await Contact.findOne({_id: activity[j].contacts}).catch((err)=>{
             console.log('err: ', err)
             })
-          let content = "<div class='content' style='display:flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+          if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
+          let content = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px; padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
           "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
           "<p style='margin: 0px'>" + activity[j].content +"</p></div>" + 
           "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none'> View</a></button></div>"
@@ -138,7 +141,8 @@ const weekly_report = new CronJob({
           const contact = await Contact.findOne({_id: _follow_up[j].contact}).catch((err)=>{
             console.log('err: ', err)
             }) 
-          const _overdue = "<div class='content' style='display:flex; padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px;justify-content:space-around;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
+            if( typeof contact.cell_phone == 'undefined') contact.cell_phone = ""
+          const _overdue = "<div class='content' style='padding-top:10px; padding-bottom: 10px; margin-right:10px;max-width: 500px;padding-left:30px; border-bottom: 1px solid #afaaaa;'>" + 
           "<div class='contact'><h3>" + contact.first_name + "</h3><p style='margin: 0px'>" + contact.email +" " + contact.cell_phone + "</p>" +
           "<p style='margin: 0px'>" + _follow_up[j].content +"</p></div>" + 
           "<button style='background-color: white; color:#0078d4; max-width:100px; height:30px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "' style='text-decoration: none'> View FollowUp</a></button></div>"
