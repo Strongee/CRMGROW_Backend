@@ -20,7 +20,6 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 
 const daily_report = new CronJob('5 * * * * 1-6', async() =>{
 
-    console.log('urls.CONTACT_PAGE_URL', urls.CONTACT_PAGE_URL)
     await User.find({daily_report: true}).then(async(users)=>{
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       
