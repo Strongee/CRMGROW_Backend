@@ -484,7 +484,7 @@ const edit = async(req, res) => {
     
       appointment["updated_at"] = new Date()
     
-      await appointment.save() 
+      appointment.save() 
       const activity = new Activity({
         content: currentUser.user_name + ' updated appointment',
         contacts: _appointment.contact,
@@ -617,7 +617,7 @@ const remove = async(req, res) => {
       appointment['del'] = true
       appointment["updated_at"] = new Date()
 
-      await appointment.save()
+      appointment.save()
       const activity = new Activity({
         content: currentUser.user_name + ' removed appointment',
         contacts: appointment.contact,
@@ -661,7 +661,7 @@ const remove = async(req, res) => {
       appointment['del'] = true
       appointment["updated_at"] = new Date()
 
-      await appointment.save()
+      appointment.save()
       const activity = new Activity({
         content: currentUser.user_name + ' removed appointment',
         contacts: appointment.contact,

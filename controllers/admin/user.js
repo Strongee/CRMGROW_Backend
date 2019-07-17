@@ -231,7 +231,7 @@ const resetPasswordByOld = async (req, res) => {
 
   _user.salt = salt
   _user.hash = hash
-  await _user.save()
+  _user.save()
 
   res.send({
     status: true

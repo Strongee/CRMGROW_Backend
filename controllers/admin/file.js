@@ -13,7 +13,7 @@ const create = async (req, res) => {
                 name: req.file.filename,
                 type: 'image'
             })
-            await file.save()
+           file.save()
         }
         res.send({
           status: true,

@@ -246,7 +246,7 @@ const sendBatch = async(req, res) => {
       updated_at: new Date(),
     })
     
-    const _activity = await activity.save()
+    const _activity = await activity.save().then()
     myJSON = JSON.stringify(_email)
     const data = JSON.parse(myJSON);
     data.activity = _activity

@@ -226,7 +226,7 @@ const login = async (req, res) => {
     updated_at: new Date()
   })
 
-  await user_log.save()
+  user_log.save()
   // TODO: Include only email for now
   const token = jwt.sign({id:_user.id}, config.JWT_SECRET)
   myJSON = JSON.stringify(_user)
@@ -371,7 +371,7 @@ const resetPasswordByOld = async (req, res) => {
 
   _user.salt = salt
   _user.hash = hash
-  await _user.save()
+  _user.save()
 
   res.send({
     status: true
@@ -637,7 +637,7 @@ const syncCalendar = async(req, res) => {
       }
 
     user.connect_calendar = true
-    await user.save()
+    user.save()
   
     return res.send({
       status: true
@@ -696,7 +696,7 @@ const addGoogleCalendar = async (auth, user, res) => {
     })
   }
   user.connect_calendar = true
-  await user.save()
+  user.save()
 
   return res.send({
     status: true
@@ -779,7 +779,7 @@ const removeGoogleCalendar = async (auth, user, res) => {
     })
   }
   user.connect_calendar = false
-  await user.save()
+  user.save()
 
   return res.send({
     status: true
@@ -792,7 +792,7 @@ const dailyReport = async(req, res) => {
 
   user['daily_report'] = true;
 
-  await user.save()
+  user.save()
   return res.send({
     status: true
   })
@@ -803,7 +803,7 @@ const weeklyReport = async(req, res) => {
   const user = req.currentUser
 
   user['weekly_report'] = true;
-  await user.save()
+  user.save()
 
   return res.send({
     status: true,
@@ -814,7 +814,7 @@ const disconDaily = async(req, res) =>{
   const user = req.currentUser
 
   user['daily_report'] = false;
-  await user.save()
+  user.save()
   
   return res.send({
     status: true
@@ -825,7 +825,7 @@ const disconWeekly = async(req, res) =>{
   const user = req.currentUser
 
   user['weekly_report'] = false;
-  await user.save()
+  user.save()
   
   return res.send({
     status: true
@@ -837,7 +837,7 @@ const desktopNotification = async(req, res) =>{
   user['desktop_notification'] = true
   user['desktop_notification_subscription'] = JSON.stringify(req.body['subscription'])
 
-  await user.save()
+  user.save()
   return res.send({
     status: true
   })
@@ -847,7 +847,7 @@ const disconDesktop = async(req, res) =>{
   const user = req.currentUser
   user['desktop_notification'] = false
   
-  await user.save()
+  user.save()
   return res.send({
     status: true
   })
@@ -875,8 +875,6 @@ const resetPasswordByCode = async (req, res) => {
       error: 'invalid_code'
     })
   }
-  console.log(new Date().getTime())
-
   // Expire check
   const delay = new Date().getTime() - user['updated_at'].getTime()
 
@@ -893,9 +891,8 @@ const resetPasswordByCode = async (req, res) => {
   user['salt'] = salt
   user['hash'] = hash
 
-  await user.save()
+  user.save()
 
-  await user.save()
   res.send({
     status: true
   })
@@ -926,7 +923,7 @@ const forgotPassword = async (req, res) => {
   const oldSalt = _user['salt'].split(' ')[0]
   _user['salt'] = oldSalt + ' ' + code
   _user['updated_at'] = new Date()
-  await _user.save()
+  _user.save()
 
   const html = `<html>
     <head></head>
@@ -947,7 +944,7 @@ const forgotPassword = async (req, res) => {
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html: html,
     }
-    await sgMail.send(msg)
+    sgMail.send(msg)
 
     res.send({
       status: true

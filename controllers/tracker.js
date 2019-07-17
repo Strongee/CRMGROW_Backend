@@ -97,7 +97,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   const pdf_tracker = await PDFTracker.findOne({_id: pdf_tracker_id});
   pdf_tracker['duration'] = duration
   pdf_tracker['updated_at'] = new Date()
-  await pdf_tracker.save()
+  pdf_tracker.save()
 }
   
   const createVideo = async(data) => {
@@ -196,7 +196,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const video_tracker = await VideoTracker.findOne({_id: video_tracker_id});
     video_tracker['duration'] = duration
     video_tracker['updated_at'] = new Date()
-    await video_tracker.save()
+    video_tracker.save()
   }
 
 const setup = (io) => {

@@ -322,7 +322,7 @@ const updateChecked  = async(req, res) =>{
   }
 
   _follow_up.status = 1
-  await _follow_up.save()
+  _follow_up.save()
 
   const activity = new Activity({
     content: _follow_up.content,
