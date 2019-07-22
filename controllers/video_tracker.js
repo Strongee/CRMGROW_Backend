@@ -111,7 +111,7 @@ const createbyDesktop = async(req, res) => {
     },
   };
 
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
 
   video_tracker.save()
   .then(_video_tracker => {

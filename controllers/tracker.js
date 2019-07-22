@@ -11,6 +11,10 @@ const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
 const config = require('../config/config')
 const webpush = require('web-push');
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const phone = require('phone')
+const twilio = require('twilio')(accountSid, authToken)
 
 const createPDF = async(data) => {
   const pdf_tracker = new PDFTracker({
@@ -53,6 +57,24 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
 
+   // send text notification
+   if(currentUser.text_notification == true){
+    const e164Phone = phone(currentUser.cell_phone)[0]
+    const fromNumber = config.TWILIO.TWILIO_NUMBER
+    console.info(`Send SMS: ${fromNumber} -> ${currentUser.cell_phone} :`)
+    if (!e164Phone) {
+      const error = {
+        error: 'Invalid Phone Number'
+      }
+      throw error // Invalid phone number
+    }
+  
+    const title = contact.first_name + ' reviewed pdf -' + pdf.title + '\n'
+    const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
+    
+    twilio.messages.create({from: fromNumber, body: title+body,  to: e164Phone})
+  }
+
   // send email notification
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
@@ -72,7 +94,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     },
   };
 
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
 
 
     const activity = new Activity({
@@ -152,6 +174,25 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
     }
   
+    // send text notification
+    if(currentUser.text_notification == true){
+      const e164Phone = phone(currentUser.cell_phone)[0]
+      const fromNumber = config.TWILIO.TWILIO_NUMBER
+      console.info(`Send SMS: ${fromNumber} -> ${currentUser.cell_phone}`)
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+        throw error // Invalid phone number
+      }
+    
+      const title = contact.first_name + ' watched video -' + video.title + '\n'
+      const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
+      
+      twilio.messages.create({from: fromNumber, body: title+body,  to: e164Phone})
+    }
+
+
     // send email notification
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
@@ -171,7 +212,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       },
     };
   
-    await sgMail.send(msg)
+    sgMail.send(msg).then()
   
   
       const activity = new Activity({

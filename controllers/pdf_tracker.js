@@ -111,7 +111,7 @@ const createbyDesktop = async(req, res) => {
     },
   };
 
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
 
   pdf_tracker.save()
   .then(_pdf_tracker => {
@@ -195,7 +195,7 @@ const disconnect = async(pdf_tracker_id) =>{
     },
   };
 
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
 
 
     const activity = new Activity({

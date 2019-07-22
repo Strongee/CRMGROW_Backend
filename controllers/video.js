@@ -213,7 +213,7 @@ const sendVideo = async (req, res) => {
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, video, activity, contact} = req.body
+  const { cell_phone, content, video, video_title, activity, contact} = req.body
 
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
   const e164Phone = phone(cell_phone)[0]
@@ -228,9 +228,9 @@ const sendText = async (req, res) => {
     throw error // Invalid phone number
   }
 
-    const body = content + ' ' + video_link
+    const body = content + '\n' + video_title + '\n' + video_link
   
-    await twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
+    twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
     const _activity = new Activity({
           content: currentUser.user_name + ' sent video using sms',
@@ -260,7 +260,7 @@ const remove = async (req, res) => {
         }, function (err,data){})
 
         video['del'] = true
-        await video.save()
+        video.save()
 
         res.send({
           status: true,

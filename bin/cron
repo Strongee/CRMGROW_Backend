@@ -66,28 +66,30 @@ const daily_report = new CronJob('0 21 * * 1-6', async() =>{
             "<button style='background-color: white; color:#0078d4; max-width:100px; width: 100px; height:40px; margin: auto 10px; border: 1px solid; border-left: 4px solid #0078d4; cursor:pointer;'><a href='" + urls.FOLLOWUP_PAGE_URL + contact.id + "' style='text-decoration: none'> View FollowUp</a></button></div>"
             overdue.push(_overdue)
           }
-    
-          const msg = {
-            to: currentUser.email,
-            from: mail_contents.DAILY_REPORT.MAIL,
-            subject: mail_contents.DAILY_REPORT.SUBJECT,
-            templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
-            dynamic_template_data: {
-              contacts: contacts,
-              overdue: overdue,
-              day: today
-            },
-          }
-          sgMail.send(msg).then((res) => {
-            console.log('mailres.errorcode', res[0].statusCode);
-            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-              console.log('Successful send to '+msg.to)
-            }else {
-              console.log(res[0].statusCode)
+
+          if(contacts.length > 0 || overdue.length > 0){
+            const msg = {
+              to: currentUser.email,
+              from: mail_contents.DAILY_REPORT.MAIL,
+              subject: mail_contents.DAILY_REPORT.SUBJECT,
+              templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
+              dynamic_template_data: {
+                contacts: contacts,
+                overdue: overdue,
+                day: today
+              },
             }
-          }).catch((err)=>{
-            console.log('err: ', err)
-          })
+            sgMail.send(msg).then((res) => {
+              console.log('mailres.errorcode', res[0].statusCode);
+              if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+                console.log('Successful send to '+msg.to)
+              }else {
+                console.log(res[0].statusCode)
+              }
+            }).catch((err)=>{
+              console.log('err: ', err)
+            })
+          }
         }
     }).catch((err)=>{
       console.log('err', err)
@@ -149,27 +151,29 @@ const weekly_report = new CronJob({
           overdue.push(_overdue)
         }
   
-        const msg = {
-          to: currentUser.email,
-          from: mail_contents.DAILY_REPORT.MAIL,
-          subject: mail_contents.DAILY_REPORT.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
-          dynamic_template_data: {
-            contacts: contacts,
-            overdue: overdue,
-            day: today
-          },
-        }
-        await sgMail.send(msg).then((res) => {
-          console.log('mailres.errorcode', res[0].statusCode);
-          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-            console.log('Successful send to '+msg.to)
-          }else {
-            console.log(res[0].statusCode)
+        if(contacts.length > 0 || overdue.length > 0){
+          const msg = {
+            to: currentUser.email,
+            from: mail_contents.DAILY_REPORT.MAIL,
+            subject: mail_contents.DAILY_REPORT.SUBJECT,
+            templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
+            dynamic_template_data: {
+              contacts: contacts,
+              overdue: overdue,
+              day: today
+            },
           }
-        }).catch((err)=>{
-          console.log('err: ', err)
-        })
+          await sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+            }else {
+              console.log(res[0].statusCode)
+            }
+          }).catch((err)=>{
+            console.log('err: ', err)
+          })
+        }
       }
     }).catch(err=>{
       console.log('err', err)

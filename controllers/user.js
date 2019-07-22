@@ -5,9 +5,7 @@ const randomstring = require('randomstring')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const Appointment = require('../models/appointment')
-const Contact = require('../models/contact')
-const Activity = require('../models/activity')
-const FollowUp = require('../models/follow_up')
+const PaymentCtrl = require('../controllers/payment')
 const sgMail = require('@sendgrid/mail')
 const {google} = require('googleapis')
 const outlook = require('node-outlook')
@@ -64,6 +62,15 @@ const signUp = async (req, res) => {
 
     user.save()
     .then(_res => {
+      const user_id = _res.id
+      const token = req.body.token
+      const bill_amount = req.body.bill_amount
+      const payment_data = {
+        user_id: user_id,
+        token: token,
+        bill_amount: bill_amount
+      }
+      PaymentCtrl.create(payment_data)
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       const msg = {
         to: _res.email,
@@ -853,6 +860,25 @@ const disconDesktop = async(req, res) =>{
   })
 }
 
+const textNotification = async(req, res) =>{
+  const user = req.currentUser
+  user['text_notification'] = true
+
+  user.save()
+  return res.send({
+    status: true
+  })
+}
+
+const disconText = async(req, res) =>{
+  const user = req.currentUser
+  user['text_notification'] = false
+  
+  user.save()
+  return res.send({
+    status: true
+  })
+}
 
 const resetPasswordByCode = async (req, res) => {
   const { code, password, email } = req.body
@@ -970,9 +996,11 @@ module.exports = {
     disconCalendar,
     dailyReport,
     desktopNotification,
+    textNotification,
     disconDaily,
     disconWeekly,
     disconDesktop,
+    disconText,
     weeklyReport,
     checkAuth,
 }

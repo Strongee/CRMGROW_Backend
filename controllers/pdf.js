@@ -210,7 +210,7 @@ const sendPDF = async (req, res) => {
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, pdf, activity, contact} = req.body
+  const { cell_phone, content, pdf, pdf_title, activity, contact} = req.body
 
   const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
   const e164Phone = phone(cell_phone)[0]
@@ -225,9 +225,9 @@ const sendText = async (req, res) => {
     throw error // Invalid phone number
   }
 
-    const body = content + ' ' + pdf_link
+    const body = content + '\n' +  pdf_title + '\n' + pdf_link
   
-    await twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
+    twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
     const _activity = new Activity({
           content: currentUser.user_name + ' sent pdf using sms',
@@ -247,31 +247,34 @@ const sendText = async (req, res) => {
 }
 
 const remove = async (req, res) => {
-    const { currentUser } = req
-    try {
-      const pdf = PDF.findOne({ user: currentUser.id, _id: req.params.id})
-  
-      if (pdf) {
-        fs.unlinkSync(PREVIEW_PATH + req.params.id)
-        res.send({
-          status: true,
-          data: {
-            file_name: req.params.id
-          }
-        })
-      } else {
-        res.status(404).send({
-          status: false,
-          error: 'preview_not_found'
-        })
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send({
+  try {
+    const pdf = await PDF.findOne({ _id: req.params.id})
+
+    if (pdf) {
+      s3.deleteObject({
+        Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+        Key: pdf.url
+      }, function (err,data){})
+
+      pdf['del'] = true
+      pdf.save()
+
+      res.send({
+        status: true,
+      })
+    } else {
+      res.status(404).send({
         status: false,
-        error: 'internal_server_error'
+        error: 'pdf not found'
       })
     }
+  } catch (e) {
+    console.error(e)
+    res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  }
 }
 
 const getHistory = async(req, res) => {

@@ -23,17 +23,15 @@ const get = async(req, res) => {
   })
 }
 
-const create = async(req, res) => {
-	const billAmount = req.body.bill;
-	const {currentUser} = req
-	const token = req.body.token;
+const create = async(payment_data) => {
+	const bill_amount = payment_data.bill_amount;
+	const {currentUser, bill_amount, token} = payment_data
 
 	findOrcreateCustomer(currentUser.email).then(customer => {
-        console.log('customer', customer)
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
             let pricingPlan
             // const product = config.STRIPE.PRODUCT_ID
-                if(billAmount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
+                if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
                     pricingPlan = config.STRIPE.PRIMARY_PLAN
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
@@ -42,7 +40,7 @@ const create = async(req, res) => {
                     .then(subscription => {return subscription}).catch((e)=>{
                         console.log('creating subscripition error', e)
                     }).then(result => {
-                console.log('result', result)
+ 
                 // Save card information to DB.
                 const payment = new Payment({
                     user: currentUser.id,
@@ -57,11 +55,8 @@ const create = async(req, res) => {
                     updated_at: new Date(),
                     created_at: new Date(),
                 })
-                payment.save().then(_payment => {
-                    res.send({
-                        status: true,
-                    })
-                })
+                payment.save()
+                return;
             })
 		});
 	});

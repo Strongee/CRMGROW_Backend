@@ -71,11 +71,17 @@ router.get('/weekly-report',   UserCtrl.checkAuth, catchError(UserCtrl.weeklyRep
 // Disconnect Weekly Report
 router.get('/discon-weekly',   UserCtrl.checkAuth, catchError(UserCtrl.disconWeekly))
 
-// Daily Report
+// Desktop Notification
 router.post('/desktop-notification',   UserCtrl.checkAuth, catchError(UserCtrl.desktopNotification))
 
-// Disconnect Weekly Report
+// Disconnect Desktop Notification
 router.get('/discon-desktop',   UserCtrl.checkAuth, catchError(UserCtrl.disconDesktop))
+
+// Text Notification
+router.get('/text-notification',   UserCtrl.checkAuth, catchError(UserCtrl.textNotification))
+
+// Disconnect Desktop Notification
+router.get('/discon-text',   UserCtrl.checkAuth, catchError(UserCtrl.disconText))
 
 // Edit own profile
 router.post('/social-signup', UserCtrl.checkAuth, catchError(UserCtrl.socialSignUp))

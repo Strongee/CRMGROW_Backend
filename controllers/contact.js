@@ -225,7 +225,7 @@ const sendBatch = async(req, res) => {
     html: content + '<br/><br/>' + currentUser.email_signature,
   };
       
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
   const email = new Email({
     ...req.body,
     user: currentUser.id,
@@ -233,7 +233,7 @@ const sendBatch = async(req, res) => {
     created_at: new Date()
   })
 
-  const _email = await email.save()
+  const _email = await email.save().then()
   let data_list = []
   for(let i = 0; i < contacts.length; i ++){
     const activity = new Activity({
