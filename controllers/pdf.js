@@ -164,10 +164,20 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {email, content, pdf, pdf_title, contact, activity, contact_name} = req.body
+  const {email, content, pdf, pdf_title, contact, contact_name} = req.body
+  const _activity = new Activity({
+    content: currentUser.user_name + ' sent pdf using email',
+    contacts: contact,
+    user: currentUser.id,
+    type: 'pdfs',
+    pdfs: pdf,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })     
+  const activity = await _activity.save().then()
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const msg = {
     to: email,
     from: currentUser.email,
@@ -180,16 +190,6 @@ const sendPDF = async (req, res) => {
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      const _activity = new Activity({
-        content: currentUser.user_name + ' sent pdf using email',
-        contacts: contact,
-        user: currentUser.id,
-        type: 'pdfs',
-        pdfs: pdf,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })     
-      _activity.save()
       res.send({
         status: true,
       })        
@@ -210,9 +210,21 @@ const sendPDF = async (req, res) => {
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, pdf, pdf_title, activity, contact} = req.body
+  const { cell_phone, content, pdf, pdf_title, contact} = req.body
 
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
+  const _activity = new Activity({
+    content: currentUser.user_name + ' sent pdf using sms',
+    contacts: contact,
+    user: currentUser.id,
+    type: 'pdfs',
+    pdfs: pdf,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
+
+  const activity = await _activity.save().then()
+
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const e164Phone = phone(cell_phone)[0]
   const fromNumber = config.TWILIO.TWILIO_NUMBER
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
@@ -229,20 +241,9 @@ const sendText = async (req, res) => {
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
-    const _activity = new Activity({
-          content: currentUser.user_name + ' sent pdf using sms',
-          contacts: contact,
-          user: currentUser.id,
-          type: 'pdfs',
-          pdfs: pdf,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-    
-        _activity.save()
-        res.send({
-            status: true,
-          })
+    res.send({
+      status: true,
+    })
            
 }
 

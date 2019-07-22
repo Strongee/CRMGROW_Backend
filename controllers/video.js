@@ -165,11 +165,22 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, video_title, contact, activity, contact_name} = req.body
+  const {email, content, video, video_title, contact, contact_name} = req.body
+
+  const _activity = new Activity({
+    content: currentUser.user_name + ' sent video using email',
+    contacts: contact,
+    user: currentUser.id,
+    type: 'videos',
+    videos: video,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
+  activity = await _activity.save().then()
+
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
-
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const msg = {
     to: email,
     from: currentUser.email,
@@ -182,20 +193,9 @@ const sendVideo = async (req, res) => {
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      const _activity = new Activity({
-        content: currentUser.user_name + ' sent video using email',
-        contacts: contact,
-        user: currentUser.id,
-        type: 'videos',
-        videos: video,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      _activity.save()
       res.send({
         status: true,
       })
-             
     }else {
       res.status(404).send({
         status: false,
@@ -213,9 +213,20 @@ const sendVideo = async (req, res) => {
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, video, video_title, activity, contact} = req.body
+  const { cell_phone, content, video, video_title, contact} = req.body
 
-  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity
+  const _activity = new Activity({
+    content: currentUser.user_name + ' sent video using sms',
+    contacts: contact,
+    user: currentUser.id,
+    type: 'videos',
+    videos: video,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
+  activity = await _activity.save().then()
+  
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const e164Phone = phone(cell_phone)[0]
   const fromNumber = config.TWILIO.TWILIO_NUMBER
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
@@ -232,20 +243,9 @@ const sendText = async (req, res) => {
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
-    const _activity = new Activity({
-          content: currentUser.user_name + ' sent video using sms',
-          contacts: contact,
-          user: currentUser.id,
-          type: 'videos',
-          videos: video,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-    
-        _activity.save()
-        res.send({
-          status: true,
-        })
+    res.send({
+      status: true,
+    })
         
 }
 
