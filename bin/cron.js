@@ -18,7 +18,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 
-const daily_report = new CronJob('0 21 * * 1-6', async() =>{
+const daily_report = new CronJob('5 * * * * 1-6', async() =>{
 
     await User.find({daily_report: true}).then(async(users)=>{
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
