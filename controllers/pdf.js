@@ -122,11 +122,10 @@ const getPreview = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  let _pdf_list = await PDF.find({user: currentUser.id})
-  let _pdf_admin = await PDF.find({role: "admin"})
+  let _pdf_list = await PDF.find({user: currentUser.id, del: false})
+  let _pdf_admin = await PDF.find({role: "admin", del: false})
   Array.prototype.push.apply(_pdf_list, _pdf_admin)
 
-  console.log('_pdf_list', _pdf_list)
   if (!_pdf_list) {
     return res.status(401).json({
       status: false,
