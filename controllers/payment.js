@@ -24,7 +24,6 @@ const get = async(req, res) => {
 }
 
 const create = async(payment_data) => {
-	const bill_amount = payment_data.bill_amount;
 	const {currentUser, bill_amount, token} = payment_data
 
 	findOrcreateCustomer(currentUser.email).then(customer => {
