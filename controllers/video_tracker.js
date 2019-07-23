@@ -194,7 +194,7 @@ const disconnect = async(video_tracker_id) =>{
     },
   };
 
-  await sgMail.send(msg)
+  sgMail.send(msg).then()
 
 
     const activity = new Activity({
