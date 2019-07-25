@@ -62,11 +62,11 @@ const signUp = async (req, res) => {
 
     user.save()
     .then(_res => {
-      const user_id = _res.id
+      const currentUser = _res
       const token = req.body.token
       const bill_amount = req.body.bill_amount
       const payment_data = {
-        user_id: user_id,
+        currentUser: currentUser,
         token: token,
         bill_amount: bill_amount
       }
