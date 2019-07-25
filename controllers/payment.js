@@ -9,11 +9,11 @@ const get = async(req, res) => {
   const { currentUser } = req
   const query = {...req.query}
   const contact = query['contact']
-  const data = await Note.find({user :currentUser.id, contact: contact});
+  const data = await Payment.findOne({user :currentUser.id, contact: contact});
   if (!data) {
     return res.status(401).json({
       status: false,
-      error: 'Note doesn`t exist'
+      error: 'Payment doesn`t exist'
     })
   }
 
@@ -54,13 +54,51 @@ const create = async(payment_data) => {
                     updated_at: new Date(),
                     created_at: new Date(),
                 })
-                payment.save()
-                return;
+                return payment.save();
             })
 		});
 	});
 }
 
+const update = async(req, res) =>{
+    const {currentUser, bill_amount, token} = req
+
+	findOrcreateCustomer(currentUser.email).then(customer => {
+		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+            let pricingPlan
+            // const product = config.STRIPE.PRODUCT_ID
+                if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
+                }else{
+                    pricingPlan = config.STRIPE.SUPER_PLAN
+                }
+                createSubscription(customer.id, pricingPlan, card.id)
+                    .then(subscription => {return subscription}).catch((e)=>{
+                        console.log('creating subscripition error', e)
+                    }).then(result => {
+ 
+                // Save card information to DB.
+                const payment = new Payment({
+                    user: currentUser.id,
+                    customer_id: customer.id,
+                    plan_id: pricingPlan,
+                    token: token.id,
+                    card_brand: token.card.brand,
+                    exp_month: token.card.exp_month,
+                    exp_year: token.card.exp_year,
+                    last4: token.card.last4,
+                    active: true,
+                    updated_at: new Date(),
+                    created_at: new Date(),
+                })
+                payment.save()
+                res.send({
+                    status: true,
+                  });
+            })
+		});
+	});
+}
 const findOrcreateCustomer = async(email) => {
     // Create new customer
     return new Promise(function (resolve, reject) {
@@ -110,4 +148,5 @@ const createSubscription = async(customerId, planId, cardId) => {
 module.exports = {
     get,
     create,
+    update
 }

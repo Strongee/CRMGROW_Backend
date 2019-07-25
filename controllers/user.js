@@ -70,7 +70,7 @@ const signUp = async (req, res) => {
         token: token,
         bill_amount: bill_amount
       }
-      PaymentCtrl.create(payment_data)
+      const payment = await PaymentCtrl.create(payment_data).then()
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       let msg = {
         to: _res.email,
@@ -125,6 +125,7 @@ const signUp = async (req, res) => {
       
       myJSON = JSON.stringify(_res)
       const data = JSON.parse(myJSON);
+      data['payment'] = payment
       delete data.hash
       delete data.salt
       res.send({

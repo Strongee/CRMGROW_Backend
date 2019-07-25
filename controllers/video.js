@@ -248,8 +248,9 @@ const sendText = async (req, res) => {
 }
 
 const remove = async (req, res) => {
+  const { currentUser } = req
     try {
-      const video = await Video.findOne({ _id: req.params.id})
+      const video = await Video.findOne({ _id: req.params.id, user: currentUser.id})
   
       if (video) {
         s3.deleteObject({
@@ -264,9 +265,9 @@ const remove = async (req, res) => {
           status: true,
         })
       } else {
-        res.status(404).send({
+        res.status(200).send({
           status: false,
-          error: 'video not found'
+          error: 'invalid permission'
         })
       }
     } catch (e) {
