@@ -265,7 +265,7 @@ const login = async (req, res) => {
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 
-  const payment = await Payment.findOne({user :currentUser.id});
+  const payment = await Payment.findOne({user: user.id});
   delete user.hash
   delete user.salt
   user['payment'] = payment
