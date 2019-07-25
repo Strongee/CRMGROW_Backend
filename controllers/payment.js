@@ -51,8 +51,8 @@ const create = async(payment_data) => {
                     updated_at: new Date(),
                     created_at: new Date(),
                 })
-                payment.save()
-                return
+                
+                return payment.save()
             })
 		});
 	});
