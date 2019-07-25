@@ -70,9 +70,9 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     }
   
     const title = contact.first_name + ' reviewed pdf -' + pdf.title + '\n'
-    const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
-    
-    twilio.messages.create({from: fromNumber, body: title+body,  to: e164Phone})
+    const body = 'Watched ' + timeWatched + ' at ' + query['created_at'] + '\n'
+    const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+    twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone})
   }
 
   // send email notification
@@ -188,8 +188,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     
       const title = contact.first_name + ' watched video -' + video.title + '\n'
       const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
-      
-      twilio.messages.create({from: fromNumber, body: title+body,  to: e164Phone})
+      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+
+      twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone})
     }
 
 

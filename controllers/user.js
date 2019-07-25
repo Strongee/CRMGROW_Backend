@@ -72,38 +72,66 @@ const signUp = async (req, res) => {
       }
       PaymentCtrl.create(payment_data)
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      const msg = {
+      let msg = {
         to: _res.email,
         from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_WELCOME_TEMPLATE,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
         dynamic_template_data: {
-          user_name: _res.user_name,
+          first_name: _res.user_name,
+          profile_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
         },
       };
 
-      sgMail.send(msg).then((_msg) => {
-        if(_msg[0].statusCode >= 200 && _msg[0].statusCode < 400){ 
-          myJSON = JSON.stringify(_res)
-          const data = JSON.parse(myJSON);
-          delete data.hash
-          delete data.salt
-          res.send({
-              status: true,
-              data
-          })
-        }else {
-          res.status(404).send({
-            status: false,
-            error: _res[0].statusCode
-          })
+      sgMail.send(msg)
+
+      msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+          upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+          upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+          contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
         }
-      }).catch ((e) => {
-        console.error(e)
-        res.status(500).send({
-          status: false,
-          error: 'internal_server_error'
-        })
+      }
+
+      sgMail.send(msg)
+      
+      msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
+        }
+      }
+
+      sgMail.send(msg)
+
+      msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
+        }
+      }
+
+      sgMail.send(msg)
+      
+      myJSON = JSON.stringify(_res)
+      const data = JSON.parse(myJSON);
+      delete data.hash
+      delete data.salt
+      res.send({
+        status: true,
+        data
       })
+        
     })
     .catch(e => {
         let errors
