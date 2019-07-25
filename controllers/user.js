@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator/check')
 const randomstring = require('randomstring')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
+const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
 const PaymentCtrl = require('../controllers/payment')
 const sgMail = require('@sendgrid/mail')
@@ -268,9 +269,10 @@ const login = async (req, res) => {
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 
+  const payment = await Payment.findOne({user :currentUser.id});
   delete user.hash
   delete user.salt
-
+  user['payment'] = payment
   res.send({
     status: true,
     data: {

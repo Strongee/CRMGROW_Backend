@@ -1,15 +1,12 @@
 const config = require('../config/config')
 const Payment = require('../models/payment')
-const User = require('../models/user')
 const stripeKey = config.STRIPE.SECRET_KEY
 const stripe = require('stripe')(stripeKey)
 
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const query = {...req.query}
-  const contact = query['contact']
-  const data = await Payment.findOne({user :currentUser.id, contact: contact});
+  const data = await Payment.findOne({user :currentUser.id});
   if (!data) {
     return res.status(401).json({
       status: false,
