@@ -138,6 +138,22 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const contact = await Contact.findOne({_id: query['contact']})
     const video = await Video.findOne({_id: query['video']})
   
+    const activity = new Activity({
+      content: contact.first_name + ' watched video',
+      contacts: query.contact,
+      user: currentUser.id,
+      type: 'video_trackers',
+      video_trackers: query.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    activity.save().then(_activity => {
+      myJSON = JSON.stringify(query)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+    })
+
     const d = (query['duration']/1000)
     var h = Math.floor(d / 3600);
     var m = Math.floor(d % 3600 / 60);
@@ -190,7 +206,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
 
-      twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone})
+      twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone}).catch(err => console.error(err))
     }
 
 
@@ -213,25 +229,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       },
     };
   
-    sgMail.send(msg).then()
-  
-  
-      const activity = new Activity({
-        content: contact.first_name + ' watched video',
-        contacts: query.contact,
-        user: currentUser.id,
-        type: 'video_trackers',
-        video_trackers: query.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-  
-      activity.save().then(_activity => {
-        myJSON = JSON.stringify(query)
-        const data = JSON.parse(myJSON);
-        data.activity = _activity
-      })
-   
+    sgMail.send(msg).catch(err => console.error(err))   
   }
   
   const updateVideo = async(duration, video_tracker_id) =>{
