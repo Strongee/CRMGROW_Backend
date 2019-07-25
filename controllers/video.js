@@ -26,7 +26,6 @@ const s3 = new AWS.S3({
 
 const create = async (req, res) => {
   if (req.file) {
-      if(req.currentUser){
         const video = new Video({
           user: req.currentUser.id,
           type: req.file.mimetype,
@@ -41,7 +40,6 @@ const create = async (req, res) => {
             data: _video
           })
         })
-    }
   }
 }
 

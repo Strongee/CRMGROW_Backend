@@ -355,7 +355,7 @@ const importCSV = async(req, res) => {
               created_at: new Date(),
               updated_at: new Date(),
             })
-            activity.save().then() 
+            activity.save()
             if(data['note'] != null){
               const note = new Note({
                 content: data['note'],
@@ -374,7 +374,7 @@ const importCSV = async(req, res) => {
                   created_at: new Date(),
                   updated_at: new Date(),
                 })
-                _activity.save().then()
+                _activity.save()
               })
             }
           })             
