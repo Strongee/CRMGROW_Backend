@@ -32,8 +32,12 @@ const create = async(payment_data) => {
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
+                console.log('pricingPlan', pricingPlan)
+                console.log('card', card)
                 createSubscription(customer.id, pricingPlan, card.id)
-                    .then(subscription => {return subscription}).catch((e)=>{
+                    .then(subscription => {
+                        console.log('subscription', subscription)
+                        return subscription}).catch((e)=>{
                         console.log('creating subscripition error', e)
                     }).then(result => {
  

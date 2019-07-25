@@ -36,7 +36,7 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('data', req.body)
+
   phone_log.save()
   .then(_phone_log => {
 
