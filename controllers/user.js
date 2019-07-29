@@ -34,7 +34,7 @@ const signUp = async (req, res) => {
         error: errors.array()
       })
     }
-    let _user = await User.findOne({ email: email })
+    let _user = await User.findOne({ email: req.body.email })
     console.log('_user', _user)
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
