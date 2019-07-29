@@ -32,8 +32,6 @@ const create = async(payment_data) => {
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
-                console.log('pricingPlan', pricingPlan)
-                console.log('card', card)
                 createSubscription(customer.id, pricingPlan, card.id)
                     .then(subscription => {
                         console.log('subscription', subscription)

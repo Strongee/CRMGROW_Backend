@@ -34,7 +34,8 @@ const signUp = async (req, res) => {
         error: errors.array()
       })
     }
-
+    let _user = await User.findOne({ email: email })
+    console.log('_user', _user)
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
@@ -228,7 +229,6 @@ const login = async (req, res) => {
   }
 
   let _user = await User.findOne({ email: email })
-  .exec();
 
   if(!_user) {
     _user = await User.findOne({ user_name: user_name })
