@@ -35,8 +35,7 @@ const signUp = async (req, res) => {
       })
     }
     let _user = await User.findOne({ email: req.body.email })
-    console.log('_user', _user)
-    if(_user!=null){
+    if(_user != null){
       res.send({
         status: false,
         error: 'User already exists'
