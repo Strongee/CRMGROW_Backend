@@ -36,6 +36,13 @@ const signUp = async (req, res) => {
     }
     let _user = await User.findOne({ email: req.body.email })
     console.log('_user', _user)
+    if(_user!=null){
+      res.send({
+        status: false,
+        error: 'User already exists'
+      })
+      return;
+    }
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
