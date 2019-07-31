@@ -79,7 +79,7 @@ const signUp = async (req, res) => {
         bill_amount: bill_amount
       }
 
-      PaymentCtrl.create(payment_data).then()
+      PaymentCtrl.create(payment_data)
 
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
       let msg = {
