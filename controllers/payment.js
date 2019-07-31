@@ -22,9 +22,11 @@ const get = async(req, res) => {
 
 const create = async(payment_data) => {
 	const {currentUser, bill_amount, token} = payment_data
-
+    console.log('token', token)
 	findOrcreateCustomer(currentUser.email).then(customer => {
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+
+            console.log('card', card)
             let pricingPlan
             // const product = config.STRIPE.PRODUCT_ID
                 if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
