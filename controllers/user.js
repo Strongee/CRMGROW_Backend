@@ -42,6 +42,29 @@ const signUp = async (req, res) => {
       })
       return;
     }
+
+    const {email, token, bill_amount} = req.body 
+    const payment_data = {
+      email: email,
+      token: token,
+      bill_amount: bill_amount
+    }
+
+    if(token.card['cvc_check'] == 'unchecked'){
+      res.send({
+        status: false,
+        error: 'CVC is unchecked'
+      })
+      return;
+    }
+    const payment = await PaymentCtrl.create(payment_data).then().catch(err=>{
+      res.send({
+        status: false,
+        error: err
+      })
+      return;
+    })
+    
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
@@ -59,7 +82,7 @@ const signUp = async (req, res) => {
     //     phoneNumber: number.phoneNumber,
     //     smsUrl:  urls.SMS_RECEIVE_URL
     //   })['phoneNumber']
-   
+
     const user = new User({
       ...req.body,
       salt: salt,
@@ -70,17 +93,6 @@ const signUp = async (req, res) => {
 
     user.save()
     .then(_res => {
-      const currentUser = _res
-      const token = req.body.token
-      const bill_amount = req.body.bill_amount
-      const payment_data = {
-        currentUser: currentUser,
-        token: token,
-        bill_amount: bill_amount
-      }
-
-      PaymentCtrl.create(payment_data)
-
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
       let msg = {
         to: _res.email,
@@ -122,7 +134,9 @@ const signUp = async (req, res) => {
         }
       }
 
-      sgMail.send(msg)
+      setTimeout(function(){
+        sgMail.send(msg)
+      }, 1000 * 60 * 60 * 24)
 
       msg = {
         to: _res.email,
@@ -134,10 +148,24 @@ const signUp = async (req, res) => {
         }
       }
 
-      sgMail.send(msg)
+      setTimeout(function(){
+        sgMail.send(msg)
+      }, 1000 * 60 * 60 * 48)
+
       
+      const token = jwt.sign({id:_res.id}, config.JWT_SECRET)
+
+      myJSON = JSON.stringify(_res)
+      const user = JSON.parse(myJSON);
+      delete user.hash
+      delete user.salt
+      data['payment'] = payment
       res.send({
         status: true,
+        data: {
+          token,
+          user
+        }
       })
         
     })
@@ -274,7 +302,7 @@ const login = async (req, res) => {
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 
-  const payment = await Payment.findOne({user: user.id});
+  const payment = await Payment.findOne({id: user.payment});
   delete user.hash
   delete user.salt
   user['payment'] = payment

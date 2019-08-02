@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const Payment = mongoose.model('payment',{
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     customer_id: String,
     plan_id: String, 
     token: String,

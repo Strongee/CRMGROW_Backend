@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator/check')
 const User = require('../models/user')
 const Contact = require('../models/contact');
 const PDFTracker = require('../models/pdf_tracker');
@@ -90,7 +89,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       email: contact.email,
       activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
       duration: 'Watched <b>' + timeWatched + ' </b>at ' + query['created_at'],
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: #222;'>View Contact</a>"
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
     },
   };
 
@@ -225,7 +224,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         email: contact.email,
         activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
-        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: #222;'>View Contact</a>"
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
       },
     };
   
