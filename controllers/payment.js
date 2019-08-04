@@ -21,49 +21,52 @@ const get = async(req, res) => {
 }
 
 const create = async(payment_data) => {
-	const {email, bill_amount, token} = payment_data
-	findOrcreateCustomer(email).then(customer => {
-		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
-            console.log('card', card)
-            if(card == null || typeof card == 'undefined'){
-                return;
-            }
-            if(card['cvc_check'] == 'unchecked'){
-                return;
-            }
+    return new Promise(function (resolve, reject) {
+        const {email, bill_amount, token} = payment_data
+        findOrcreateCustomer(email).then(customer => {
+            stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+                console.log('card', card)
+                if(card == null || typeof card == 'undefined'){
+                    reject('Card is null');
+                }
+                if(card['cvc_check'] == 'unchecked'){
+                    reject('CVC is unchecked');
+                }
 
-            let pricingPlan
-            // const product = config.STRIPE.PRODUCT_ID
-            if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
-                pricingPlan = config.STRIPE.PRIMARY_PLAN
-            }else{
-                pricingPlan = config.STRIPE.SUPER_PLAN
-            }
-            createSubscription(customer.id, pricingPlan, card.id)
-            .then(subscription => {
-                console.log('subscription', subscription)
-                return subscription})
-            .catch((e)=>{
-                console.log('creating subscripition error', e)
-            }).then(result => {
-                // Save card information to DB.
-                const payment = new Payment({
-                    customer_id: customer.id,
-                    plan_id: pricingPlan,
-                    token: token.id,
-                    card_brand: token.card.brand,
-                    exp_month: token.card.exp_month,
-                    exp_year: token.card.exp_year,
-                    last4: token.card.last4,
-                    active: true,
-                    updated_at: new Date(),
-                    created_at: new Date(),
+                let pricingPlan
+                // const product = config.STRIPE.PRODUCT_ID
+                if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
+                }else{
+                    pricingPlan = config.STRIPE.SUPER_PLAN
+                }
+                createSubscription(customer.id, pricingPlan, card.id)
+                .then(subscription => {
+                    console.log('subscription', subscription)
+                    return subscription})
+                .catch((e)=>{
+                    console.log('creating subscripition error', e)
+                }).then(async(result) => {
+                    // Save card information to DB.
+                    const payment = new Payment({
+                        customer_id: customer.id,
+                        plan_id: pricingPlan,
+                        token: token.id,
+                        card_brand: token.card.brand,
+                        exp_month: token.card.exp_month,
+                        exp_year: token.card.exp_year,
+                        last4: token.card.last4,
+                        active: true,
+                        updated_at: new Date(),
+                        created_at: new Date(),
+                    })
+                    
+                    const _payment = await payment.save().then()
+                    resolve(_payment)
                 })
-                
-                return payment.save()
-            })
-		});
-	});
+            });
+        });
+    })
 }
 
 const update = async(req, res) =>{
