@@ -153,7 +153,7 @@ const signUp = async (req, res) => {
       const user = JSON.parse(myJSON);
       delete user.hash
       delete user.salt
-      data['payment'] = payment
+      user['payment'] = payment
       res.send({
         status: true,
         data: {

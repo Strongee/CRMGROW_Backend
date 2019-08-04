@@ -24,6 +24,7 @@ const create = async(payment_data) => {
 	const {email, bill_amount, token} = payment_data
 	findOrcreateCustomer(email).then(customer => {
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+            console.log('card', card)
             if(card == null || card['cvc_check'] == 'unchecked'){
                 return;
               }
