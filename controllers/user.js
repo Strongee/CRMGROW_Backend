@@ -50,7 +50,110 @@ const signUp = async (req, res) => {
       bill_amount: bill_amount
     }
 
-    const payment = await PaymentCtrl.create(payment_data).then().catch(err=>{
+    PaymentCtrl.create(payment_data).then(payment=>{
+      console.log('payment', payment)
+      const password = req.body.password
+      const salt = crypto.randomBytes(16).toString('hex')
+      const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
+      const user = new User({
+        ...req.body,
+        salt: salt,
+        hash: hash,
+        updated_at: new Date(),
+        created_at: new Date(),
+      })
+  
+      user.save()
+      .then(_res => {
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+        let msg = {
+          to: _res.email,
+          from: mail_contents.WELCOME_SIGNUP.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+          dynamic_template_data: {
+            first_name: _res.user_name,
+            login_credential: `<a href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+            user_email: _res.email,
+            user_password: req.body.password,
+            profile_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
+          },
+        };
+  
+        sgMail.send(msg)
+  
+        msg = {
+          to: _res.email,
+          from: mail_contents.WELCOME_SIGNUP.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+          dynamic_template_data: {
+            first_name: _res.user_name,
+            connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+            upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+            upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+            contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
+          }
+        }
+  
+        sgMail.send(msg)
+        
+        msg = {
+          to: _res.email,
+          from: mail_contents.WELCOME_SIGNUP.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+          dynamic_template_data: {
+            first_name: _res.user_name,
+            video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
+          }
+        }
+  
+        setTimeout(function(){
+          sgMail.send(msg)
+        }, 1000 * 60 * 60 * 24)
+  
+        msg = {
+          to: _res.email,
+          from: mail_contents.WELCOME_SIGNUP.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
+          dynamic_template_data: {
+            first_name: _res.user_name,
+            login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
+          }
+        }
+  
+        setTimeout(function(){
+          sgMail.send(msg)
+        }, 1000 * 60 * 60 * 48)
+  
+        
+        const token = jwt.sign({id:_res.id}, config.JWT_SECRET)
+  
+        myJSON = JSON.stringify(_res)
+        const user = JSON.parse(myJSON);
+        delete user.hash
+        delete user.salt
+        user['payment'] = payment
+        res.send({
+          status: true,
+          data: {
+            token,
+            user
+          }
+        })   
+      })
+      .catch(e => {
+          let errors
+        if (e.errors) {
+          errors = e.errors.map(err => {      
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+    }).catch(err=>{
       console.log('err', err)
       res.send({
         status: false,
@@ -58,12 +161,6 @@ const signUp = async (req, res) => {
       })
       return;
     })
-
-    console.log('payment', payment)
-    
-    const password = req.body.password
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
 
     // const areaCode = req.body['cell_phone'].substring(1, 4)
   
@@ -79,105 +176,7 @@ const signUp = async (req, res) => {
     //     smsUrl:  urls.SMS_RECEIVE_URL
     //   })['phoneNumber']
 
-    const user = new User({
-      ...req.body,
-      salt: salt,
-      hash: hash,
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
 
-    user.save()
-    .then(_res => {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-      let msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          login_credential: `<a href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-          user_email: _res.email,
-          user_password: req.body.password,
-          profile_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-        },
-      };
-
-      sgMail.send(msg)
-
-      msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-          upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-          upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-          contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-        }
-      }
-
-      sgMail.send(msg)
-      
-      msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
-        }
-      }
-
-      setTimeout(function(){
-        sgMail.send(msg)
-      }, 1000 * 60 * 60 * 24)
-
-      msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
-        }
-      }
-
-      setTimeout(function(){
-        sgMail.send(msg)
-      }, 1000 * 60 * 60 * 48)
-
-      
-      const token = jwt.sign({id:_res.id}, config.JWT_SECRET)
-
-      myJSON = JSON.stringify(_res)
-      const user = JSON.parse(myJSON);
-      delete user.hash
-      delete user.salt
-      user['payment'] = payment
-      res.send({
-        status: true,
-        data: {
-          token,
-          user
-        }
-      })
-        
-    })
-    .catch(e => {
-        let errors
-      if (e.errors) {
-        errors = e.errors.map(err => {      
-          delete err.instance
-          return err
-        })
-      }
-      return res.status(500).send({
-        status: false,
-        error: errors || e
-      })
-    });
   }
 
 const socialSignUp = async(req, res) =>{
