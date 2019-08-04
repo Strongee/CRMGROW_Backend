@@ -25,9 +25,12 @@ const create = async(payment_data) => {
 	findOrcreateCustomer(email).then(customer => {
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
             console.log('card', card)
-            if(card == null || card['cvc_check'] == 'unchecked'){
+            if(card == null || typeof card == 'undefined'){
                 return;
-              }
+            }
+            if(card['cvc_check'] == 'unchecked'){
+                return;
+            }
 
             let pricingPlan
             // const product = config.STRIPE.PRODUCT_ID
