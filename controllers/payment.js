@@ -28,9 +28,11 @@ const create = async(payment_data) => {
                 console.log('card', card)
                 if(card == null || typeof card == 'undefined'){
                     reject('Card is null');
+                    return
                 }
                 if(card['cvc_check'] == 'unchecked'){
                     reject('CVC is unchecked');
+                    return
                 }
 
                 let pricingPlan
