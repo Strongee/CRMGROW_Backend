@@ -50,14 +50,8 @@ const signUp = async (req, res) => {
       bill_amount: bill_amount
     }
 
-    if(token.card['cvc_check'] == 'unchecked'){
-      res.send({
-        status: false,
-        error: 'CVC is unchecked'
-      })
-      return;
-    }
     const payment = await PaymentCtrl.create(payment_data).then().catch(err=>{
+      console.log('err', err)
       res.send({
         status: false,
         error: err
