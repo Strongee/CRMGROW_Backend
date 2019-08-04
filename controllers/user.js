@@ -58,6 +58,8 @@ const signUp = async (req, res) => {
       })
       return;
     })
+
+    console.log('payment', payment)
     
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
