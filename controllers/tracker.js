@@ -71,7 +71,9 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     const title = contact.first_name + ' reviewed pdf -' + pdf.title + '\n'
     const body = 'Watched ' + timeWatched + ' at ' + query['created_at'] + '\n'
     const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-    twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone})
+    twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone}).catch(err=>{
+      console.log('send sms err: ',err)
+    })
   }
 
   // send email notification
@@ -93,7 +95,9 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     },
   };
 
-  sgMail.send(msg).then()
+  sgMail.send(msg).then().catch(err=>{
+    console.log('send message err: ',err)
+  })
 
 
     const activity = new Activity({
@@ -106,10 +110,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       updated_at: new Date(),
     })
 
-    activity.save().then(_activity => {
-      myJSON = JSON.stringify(query)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
+    activity.save().catch(err=>{
+      console.log('send message err: ',err)
     })
  
 }
@@ -147,10 +149,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       updated_at: new Date(),
     })
 
-    activity.save().then(_activity => {
-      myJSON = JSON.stringify(query)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
+    activity.save().catch(err=>{
+      console.log(err)
     })
 
     const d = (query['duration']/1000)
@@ -264,7 +264,6 @@ const setup = (io) => {
 
       socket.on('update_video', (duration)=>{
         const video_tracker = socket.video_tracker
-        console.log('update_video', video_tracker._id)
         updateVideo(duration, video_tracker._id)
       })
 
