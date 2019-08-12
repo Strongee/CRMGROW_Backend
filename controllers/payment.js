@@ -50,6 +50,7 @@ const create = async(payment_data) => {
                 .catch((e)=>{
                     console.log('creating subscripition error', e)
                 }).then(async(result) => {
+                    console.log('result', result)
                     // Save card information to DB.
                     const payment = new Payment({
                         customer_id: customer.id,
@@ -87,6 +88,7 @@ const update = async(req, res) =>{
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
                     .then(subscription => {
+                        console.log('subscription', subscription)
                         // Save card information to DB.
                         const payment = Payment.findOne({id: currentUser.payment})
                         payment['plan_id'] = pricingPlan
@@ -144,6 +146,7 @@ const createSubscription = async(customerId, planId, cardId) => {
             ],
             default_source: cardId
         }, function (err, subscription) {
+            console.log('creating subscription err', err)
             if (err != null) {
                 return reject(err);
             }
