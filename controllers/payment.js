@@ -22,10 +22,12 @@ const get = async(req, res) => {
 
 const create = async(payment_data) => {
     return new Promise(function (resolve, reject) {
+        resolve()
         const {email, bill_amount, token} = payment_data
         findOrcreateCustomer(email).then(customer => {
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 console.log('card', card)
+                console.log('err', err)
                 if(card == null || typeof card == 'undefined'){
                     reject('Card is null');
                     return
@@ -85,24 +87,24 @@ const update = async(req, res) =>{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
-                    .then(subscription => {return subscription}).catch((e)=>{
+                    .then(subscription => {
+                        // Save card information to DB.
+                        const payment = Payment.findOne({id: currentUser.payment})
+                        payment['plan_id'] = pricingPlan
+                        payment['token'] = token.id
+                        payment['card_brand'] = token.card.brand
+                        payment['exp_month'] = token.card.exp_month
+                        payment['exp_year'] = token.card.exp_year
+                        payment['last4'] = token.card.last4
+                        payment['updated_at'] = new Date()
+                        payment['subscrip']
+                        payment.save()
+                        res.send({
+                            status: true,
+                          });
+                        }).catch((e)=>{
                         console.log('creating subscripition error', e)
-                    }).then(result => {
- 
-                // Save card information to DB.
-                const payment = Payment.findOne({id: currentUser.payment})
-                payment['plan_id'] = pricingPlan
-                payment['token'] = token.id
-                payment['card_brand'] = token.card.brand
-                payment['exp_month'] = token.card.exp_month
-                payment['exp_year'] = token.card.exp_year
-                payment['last4'] = token.card.last4
-                payment['updated_at'] = new Date()
-                payment.save()
-                res.send({
-                    status: true,
-                  });
-            })
+                    })
 		});
 	});
 }
@@ -151,9 +153,36 @@ const createSubscription = async(customerId, planId, cardId) => {
     });
 }
 
+const cancelSubscription = async(subscription_id) => {
+    return new Promise(function (resolve, reject) {
+        stripe.subscriptions.del(subscription_id, function (err, confirmation) {
+            if (err != null)  {
+                return reject(err);
+            }
+            stripe.plans.del(confirmation.plan.id, function (err, confirmation) {
+                if (err != null) {
+                    return reject(err);
+                }
+                resolve(confirmation);
+            });
+
+        })
+    });
+}
+
+const deleteCustomer = async(id) => {
+    return new Promise(function (resolve, reject) {
+        stripe.customers.del(id, function (err, confirmation) {
+            if (err) reject(err);
+            resolve(confirmation);
+        });
+    });
+}
 
 module.exports = {
     get,
     create,
-    update
+    update,
+    cancelSubscription,
+    deleteCustomer
 }

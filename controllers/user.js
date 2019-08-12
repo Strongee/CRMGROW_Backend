@@ -51,7 +51,6 @@ const signUp = async (req, res) => {
     }
 
     PaymentCtrl.create(payment_data).then(payment=>{
-      console.log('payment', payment)
       const password = req.body.password
       const salt = crypto.randomBytes(16).toString('hex')
       const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
@@ -96,31 +95,33 @@ const signUp = async (req, res) => {
   
         sgMail.send(msg)
         
-        msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
-          }
-        }
+
   
         setTimeout(function(){
+          msg = {
+            to: _res.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+            dynamic_template_data: {
+              first_name: _res.user_name,
+              video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
+            }
+          }
           sgMail.send(msg)
         }, 1000 * 60 * 60 * 24)
   
-        msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
-          }
-        }
+       
   
         setTimeout(function(){
+          msg = {
+            to: _res.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
+            dynamic_template_data: {
+              first_name: _res.user_name,
+              login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
+            }
+          }
           sgMail.send(msg)
         }, 1000 * 60 * 60 * 48)
   
@@ -1036,6 +1037,10 @@ const forgotPassword = async (req, res) => {
     })
 }
 
+const closeAccount = async(req, res) =>{
+  const {currentUser} = req
+}
+
 module.exports = {
     signUp,
     login,
@@ -1062,5 +1067,6 @@ module.exports = {
     disconText,
     weeklyReport,
     checkAuth,
+    closeAccount
 }
 
