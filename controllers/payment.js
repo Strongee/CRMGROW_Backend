@@ -97,7 +97,6 @@ const update = async(req, res) =>{
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
                     .then(subscription => {
-                        console.log('subscription', subscription)
                         // Save card information to DB.
                         const payment = Payment.findOne({id: currentUser.payment})
                         payment['plan_id'] = pricingPlan
@@ -107,7 +106,6 @@ const update = async(req, res) =>{
                         payment['exp_year'] = token.card.exp_year
                         payment['last4'] = token.card.last4
                         payment['updated_at'] = new Date()
-                        payment['subscrip']
                         payment.save()
                         res.send({
                             status: true,
