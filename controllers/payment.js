@@ -79,6 +79,15 @@ const update = async(req, res) =>{
 
 	findOrcreateCustomer(currentUser.email).then(customer => {
 		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+            console.log('card', card)
+                console.log('err', err)
+                if(card == null || typeof card == 'undefined'){
+                    res.send({
+                        status: false,
+                        error: "Card is not valid"
+                      });
+                }
+
             let pricingPlan
             // const product = config.STRIPE.PRODUCT_ID
                 if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
@@ -144,6 +153,7 @@ const createSubscription = async(customerId, planId, cardId) => {
             items: [
                 { plan: planId }
             ],
+            trial_period_days: 7,
             default_source: cardId
         }, function (err, subscription) {
             console.log('creating subscription err', err)
