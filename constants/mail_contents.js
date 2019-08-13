@@ -5,7 +5,7 @@ const mail_contents = {
         TEXT: "Welcome to CRMGROW"
     },
     NOTIFICATION_SEND_MATERIAL: {
-        MAIL: "noreply@crmgrow.com",
+        MAIL: "no-reply@crmgrow.com",
         SUBJECT: "CRMGROW video watched notification: "
     },
     DAILY_REPORT: {
