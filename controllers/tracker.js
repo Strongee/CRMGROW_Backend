@@ -71,7 +71,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     const title = contact.first_name + ' reviewed pdf -' + pdf.title + '\n'
     const body = 'Watched ' + timeWatched + ' at ' + query['created_at'] + '\n'
     const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-    twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone}).catch(err=>{
+    twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
       console.log('send sms err: ',err)
     })
   }
@@ -205,7 +205,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
 
-      twilio.messages.create({from: fromNumber, body: title+body+contact_link,  to: e164Phone}).catch(err => console.error(err))
+      twilio.messages.create({from: fromNumber, body: title+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
     }
 
 
