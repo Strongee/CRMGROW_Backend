@@ -202,7 +202,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       }
     
       const title = contact.first_name + ' watched video -' + video.title + '\n'
-      const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
+      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
 
       twilio.messages.create({from: fromNumber, body: title+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
