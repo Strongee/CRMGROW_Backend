@@ -48,6 +48,7 @@ const create = async (req, res) => {
       try { 
         let process = new ffmpeg(file_path);
         process.then(function (_res) {
+          console.log('_res', _res)
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
@@ -58,7 +59,7 @@ const create = async (req, res) => {
             const params = {
                 Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                 Key: 'video' +  year + '/' + month + '/' + file_name, 
-                Body: _res,
+                Body: data,
                 ACL: 'public-read'
             };
     
