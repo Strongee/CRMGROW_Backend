@@ -58,7 +58,7 @@ const create = async (req, res) => {
             const params = {
                 Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                 Key: 'video' +  year + '/' + month + '/' + file_name, 
-                Body: JSON.stringify(data, null, 2),
+                Body: _res,
                 ACL: 'public-read'
             };
     
