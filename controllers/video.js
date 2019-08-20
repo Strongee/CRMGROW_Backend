@@ -47,7 +47,7 @@ const create = async (req, res) => {
       
       try { 
         let process = new ffmpeg(file_path);
-        process.then(function (_video) {
+        process.then(function (_res) {
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
