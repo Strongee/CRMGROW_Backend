@@ -52,6 +52,9 @@ const create = async (req, res) => {
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
             console.log('File read was successful', data)
+    
+            const year = today.getYear()
+            const month = today.getMonth()
             const params = {
                 Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                 Key: 'video' +  year + '/' + month + '/' + file_name, 
