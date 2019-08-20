@@ -55,10 +55,10 @@ const create = async (req, res) => {
             const params = {
                 Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                 Key: file_name, // file will be saved as testBucket/contacts.csv
-                Body: JSON.stringify(data, null, 2)
+                Body: JSON.stringify(data, null, 2),
+                ACL: 'public-read'
             };
     
-            console.log('here', _video)
             s3.upload(params, async function(s3Err, upload) {
                 if (s3Err) throw s3Err
                 console.log(`File uploaded successfully at ${upload.Location}`)
