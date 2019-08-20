@@ -54,7 +54,7 @@ const create = async (req, res) => {
             console.log('File read was successful', data)
             const params = {
                 Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: file_name, // file will be saved as testBucket/contacts.csv
+                Key: 'video' +  year + '/' + month + '/' + file_name, 
                 Body: JSON.stringify(data, null, 2),
                 ACL: 'public-read'
             };
