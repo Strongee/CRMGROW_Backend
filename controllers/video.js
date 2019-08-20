@@ -106,6 +106,7 @@ const updateDetail = async (req, res) => {
         })
       }
 
+      delete editData.url
       for (let key in editData) {
         video[key] = editData[key]
       }
