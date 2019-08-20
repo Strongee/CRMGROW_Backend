@@ -34,7 +34,7 @@ const create = async (req, res) => {
       console.log('file_name', req.file)
       const video = new Video({
         user: req.currentUser.id,
-        url: config.FILE_URL+file_name,
+        url: urls.FILE_URL+file_name,
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -62,6 +62,8 @@ const create = async (req, res) => {
             s3.upload(params, async function(s3Err, upload) {
                 if (s3Err) throw s3Err
                 console.log(`File uploaded successfully at ${upload.Location}`)
+                
+                fs.unlinkSync(file_path)
 
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
