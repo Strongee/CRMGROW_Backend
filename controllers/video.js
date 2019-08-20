@@ -52,7 +52,7 @@ const create = async (req, res) => {
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
             console.log('File read was successful', data)
-    
+            const today = new Date()
             const year = today.getYear()
             const month = today.getMonth()
             const params = {
