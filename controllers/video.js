@@ -39,7 +39,6 @@ const create = async (req, res) => {
         created_at: new Date()
       })
       const _video = await video.save().then()
-      console.log('_video',_video)
       res.send({
         status: true,
         data: _video
@@ -48,7 +47,6 @@ const create = async (req, res) => {
       try { 
         let process = new ffmpeg(file_path);
         process.then(function (_res) {
-          console.log('_res', _res)
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
@@ -72,7 +70,6 @@ const create = async (req, res) => {
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
                 __video.save().then(___video=>{
-                  console.log('___video', ___video)
                 }).catch(err=>{
                   console.log('err', err)
                 })
