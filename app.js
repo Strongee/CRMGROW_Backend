@@ -72,8 +72,8 @@ app.use(express.static('../frontend_admin/dist'));
 app.use('/api', indexRouter)
 
 
-// app.get('*', (req, res) => {
-//     res.sendFile(path.join(__dirname, '../frontend_admin/dist', 'index.html'));
-// });
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend_admin/dist', 'index.html'));
+});
 
 module.exports = app
