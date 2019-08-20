@@ -10,6 +10,7 @@ const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
 const { catchError } = require('../controllers/error')
 const config  = require('../config/config')
+const { FILES_PATH } = require('../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -19,26 +20,37 @@ const s3 = new AWS.S3({
 
 const router = express.Router()
 
-const storage = multerS3({
-    s3: s3,
-    bucket: config.AWS.AWS_S3_BUCKET_NAME,
-    acl: 'public-read',
-    metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname});
+// const storage = multerS3({
+//     s3: s3,
+//     bucket: config.AWS.AWS_S3_BUCKET_NAME,
+//     acl: 'public-read',
+//     metadata: function (req, file, cb) {
+//       cb(null, {fieldName: file.fieldname});
+//     },
+//     key: function (req, file, cb) {
+//       const today = new Date()
+//       const year = today.getYear()
+//       const month = today.getMonth()
+//       cb(null, 'video' +  year + '/' + month + '/' + file.originalname)
+//     },
+//   })
+
+
+// const upload = multer({
+//     storage: storage
+//   })
+
+  const fileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, FILES_PATH)
     },
-    key: function (req, file, cb) {
-      const today = new Date()
-      const year = today.getYear()
-      const month = today.getMonth()
-      cb(null, 'video' +  year + '/' + month + '/' + file.originalname)
-    },
+    filename: (req, file, cb) => {
+      cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
+    }
   })
-
-
-const upload = multer({
-    storage: storage
-  })
-
+  
+  
+const upload = multer({ storage: fileStorage })
 
 // Upload a video
 router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))

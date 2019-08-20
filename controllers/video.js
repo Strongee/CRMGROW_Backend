@@ -7,6 +7,7 @@ const mime = require('mime-types')
 const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
+const File = require('../models/file')
 const VideoTracker = require('../models/video_tracker')
 const { THUMBNAILS_PATH } = require('../config/path')
 const urls = require('../constants/urls')
@@ -18,6 +19,7 @@ const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
+const ffmpeg = require('ffmpeg');
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
@@ -26,22 +28,64 @@ const s3 = new AWS.S3({
 
 const create = async (req, res) => {
   if (req.file) {
-        const video = new Video({
-          user: req.currentUser.id,
-          type: req.file.mimetype,
-          url: req.file.location,
-          role: 'user',
-          created_at: new Date()
-        })
+    if (req.currentUser) {
+      const file_name = req.file.filename
+      const file_path = req.file.path
+      console.log('file_name', req.file)
+      const video = new Video({
+        user: req.currentUser.id,
+        url: config.FILE_URL+file_name,
+        type: req.file.mimetype,
+        created_at: new Date()
+      })
+      const _video = await video.save().then()
+      console.log('_video',_video)
+      res.send({
+        status: true,
+        data: _video
+      })
+      
+      try { 
+        let process = new ffmpeg(file_path);
+        process.then(function (_video) {
+          console.log('The video is ready to be processed')
+          fs.readFile(file_path, (err, data) => {
+            if (err) throw err;
+            console.log('File read was successful', data)
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: file_name, // file will be saved as testBucket/contacts.csv
+                Body: JSON.stringify(data, null, 2)
+            };
+    
+            console.log('here', _video)
+            s3.upload(params, async function(s3Err, upload) {
+                if (s3Err) throw s3Err
+                console.log(`File uploaded successfully at ${upload.Location}`)
 
-        video.save().then((_video)=>{
-          res.send({
-            status: true,
-            data: _video
-          })
-        })
+                const __video = await Video.findOne({_id: _video.id})
+                __video['url'] = upload.Location
+                __video.save().then(___video=>{
+                  console.log('___video', ___video)
+                }).catch(err=>{
+                  console.log('err', err)
+                })
+                
+            })
+         });
+        }, function (err) {
+          console.log('Error: ' + err);
+        });
+      } catch (e) {
+        console.log(e.code);
+        console.log(e.msg);
+      }
+    }
   }
 }
+
+
+
 
 const updateDetail = async (req, res) => {
   
@@ -50,6 +94,7 @@ const updateDetail = async (req, res) => {
     const editData = req.body
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
+    console.log('_id: req.params.id', req.params.id)
     const video = await Video.findOne({_id: req.params.id})
 
       if (!video) {
