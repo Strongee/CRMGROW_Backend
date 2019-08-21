@@ -1028,7 +1028,6 @@ const forgotPassword = async (req, res) => {
     const msg = {
       to:  _user['email'],
       from: `CRMGROW <support@crmgrow.com>`,
-      fromname: 'CRMGROW',
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html: html,
     }
