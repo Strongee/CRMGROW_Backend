@@ -977,7 +977,7 @@ const resetPasswordByCode = async (req, res) => {
   user['salt'] = salt
   user['hash'] = hash
 
-  user.save()
+  await user.save()
 
   res.send({
     status: true

@@ -31,7 +31,6 @@ const create = async (req, res) => {
     if (req.currentUser) {
       const file_name = req.file.filename
       const file_path = req.file.path
-      console.log('file_name', req.file)
       const video = new Video({
         user: req.currentUser.id,
         url: urls.FILE_URL+file_name,
