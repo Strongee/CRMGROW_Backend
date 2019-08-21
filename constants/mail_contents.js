@@ -13,7 +13,7 @@ const mail_contents = {
         SUBJECT: "Daily report: "
     },
     RESET_PASSWORD: {
-        MAIL: "supports@crmgrow.com",
+        MAIL: "support@crmgrow.com",
         SUBJECT: "Rest Password"
     }
 }
