@@ -1012,8 +1012,7 @@ const forgotPassword = async (req, res) => {
   _user.save()
 
   const html = `<html>
-  <title>CRMGROW</titile>
-    <head>CRMGROW</head>
+  <title>CRMGROW</title>
     <body style="font-family:sans-serif;">
       <h3>We received a request to reset your password</h3>
       <p>
