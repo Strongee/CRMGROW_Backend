@@ -34,7 +34,7 @@ const play = async(req, res) => {
  
   res.render('video', {
       video: video,
-      user: sender
+      sender: sender
   })
 }
 

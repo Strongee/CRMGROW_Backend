@@ -27,7 +27,7 @@ head
     .desc-content
       | #{video.description}
 .user-information(*ngif='video.user')
-  img(src='{{user.picture_profile}}', onerror="( this.src = './assets/icons/empty_user.png' );")
+  img(src='{{sender.picture_profile}}', onerror="( this.src = './assets/icons/empty_user.png' );")
   .info
     .name #{sender.user_name}
     hr
