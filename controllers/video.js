@@ -27,15 +27,11 @@ const s3 = new AWS.S3({
 })
 
 const play = async(req, res) => {  
-  console.log('here')
   const video_id = req.query.video
   const sender_id = req.query.user
   const video = await Video.findOne({_id: video_id})
   const sender = await User.findOne({_id: sender_id})
-  console.log('id', video_id)
-  console.log('video', video)
-  console.log('sender_id', sender_id)
-  console.log('sender', sender)
+ 
   res.render('video', {
       video: video,
       sender: sender
