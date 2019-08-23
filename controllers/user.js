@@ -1017,7 +1017,7 @@ const forgotPassword = async (req, res) => {
       <h3>We received a request to reset your password</h3>
       <p>
         <h3>CRMGrow Support</h3>
-        <a href='https://www.crmgrow.com/video?video=5cdaf1aaceb1d023a554ba7d&user=5cb4a1a3a6c02a4287c7fb13'>Here</a>
+        <a href='https://crmgrow.com/video/?video=5cdaf1aaceb1d023a554ba7d&contact=5d5acea821aab06c5344f826&user=5cb4a1a3a6c02a4287c7fb13&activity=5d603d1a882b755ccf9df6f7'>Here</a>
         Please use this code in your app: <b>${code}</b> to reset your password.
       </p>
     </body>
