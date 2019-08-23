@@ -1,0 +1,121 @@
+.view-container {
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5%;
+}
+
+.view-container .description {
+    margin-top: 20px;
+}
+
+.view-container .description .desc-title {
+    font-size: 3rem;
+    color: #040054;
+    text-align: center;
+}
+
+.view-container .description .desc-content {
+    font-size: 18px;
+    color: #b6b5cd;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.user-information {
+    margin-top: 20px;
+    background-color: #8b8d98;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+.user-information img {
+    margin-right: 30px;
+    width: 200px;
+    height: 200px;
+    border-radius: 100px;
+    object-fit: cover;
+}
+
+@media screen and (max-width: 575px) {
+    .user-information img {
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
+
+.user-information .info {
+    color: white;
+    font-size: 2.5rem;
+}
+
+.user-information * {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.user-information hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    height: 5px;
+    background-color: #0006ff;
+    width: 100px;
+    border: none;
+    margin-left: 0px;
+}
+
+@media screen and (max-width: 575px) {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.user-information .icon {
+    width: 30px;
+    display: inline-block;
+    background-color: white;
+    margin: 0px;
+}
+
+@media screen and (max-width: 575px) {
+    .user-information {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+#material-video{
+    width: 100%;
+    height: 0px;
+    padding-bottom: 56.6%;
+}
+
+.icon {
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center center;
+    -webkit-mask-position: center center;
+    background: gray;
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon-envelope {
+    -webkit-mask-image: url(../icons/email.svg);
+    mask-image: url(../icons/email.svg);
+  }
+  
+  .icon-phone {
+    -webkit-mask-image: url(../icons/phone.svg);
+    mask-image: url(../icons/phone.svg);
+  }
+  .video-js .vjs-big-play-button{
+    top: 50%!important;
+    left: 50%!important;
+    transform: translate(-50%, -50%);
+  }

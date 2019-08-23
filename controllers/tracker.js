@@ -256,6 +256,8 @@ const setup = (io) => {
       })
 
       socket.on('init_video', (data)=>{
+        console.log('init_video')
+        console.log('data', data)
         createVideo(data).then((_video_tracker)=>{
           socket.type = 'video'
           socket.video_tracker = _video_tracker
@@ -263,6 +265,7 @@ const setup = (io) => {
       })
 
       socket.on('update_video', (duration)=>{
+        console.log('update_video')
         const video_tracker = socket.video_tracker
         updateVideo(duration, video_tracker._id)
       })
@@ -272,6 +275,7 @@ const setup = (io) => {
             const pdf_tracker = socket.pdf_tracker
             disconnectPDF(pdf_tracker)
         }else if(socket.type == 'video'){
+            console.log('disconnecting')
             const video_tracker = socket.video_tracker
             disconnectVideo(video_tracker)
         } 

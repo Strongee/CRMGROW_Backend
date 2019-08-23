@@ -67,6 +67,7 @@
     "nodemailer": "^5.1.1",
     "nodemon": "^1.19.1",
     "phone": "^2.3.11",
+    "pug": "^2.0.4",
     "pusher": "^2.2.0",
     "randomstring": "^1.1.5",
     "reflect-metadata": "^0.1.13",
