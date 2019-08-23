@@ -1,6 +1,6 @@
 const mail_contents = {
     WELCOME_SIGNUP: {
-        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        MAIL: "CRMGROW <support@crmgrow.com>",
         SUBJECT: "Welcome to CRMGROW",
         TEXT: "Welcome to CRMGROW"
     },
@@ -9,11 +9,11 @@ const mail_contents = {
         SUBJECT: "CRMGROW video watched notification: "
     },
     DAILY_REPORT: {
-        MAIL: "CRMGROW <support@crmgrow.com>",
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Daily report: "
     },
     RESET_PASSWORD: {
-        MAIL: "CRMGROW <support@crmgrow.com>",
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Rest Password"
     }
 }
