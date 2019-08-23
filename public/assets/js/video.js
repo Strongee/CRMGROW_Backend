@@ -14,8 +14,7 @@ var report = {
 }
 var registered_flag = false
 if( contact && activity ){
-    // socket = io.connect('https://crmgrow.com');
-    socket = io.connect('http://localhost:3000');
+    socket = io.connect('https://crmgrow.com');
 }
 
 var vPlayer = videojs('material-video');
@@ -117,7 +116,7 @@ function reportTime() {
             total += (e[1] - e[0])
         }
     })
-    if( total != 0 ){
+    if( total != 0 && socket){
         if (!registered_flag){
             registered_flag = true
             socket.emit('init_video', report)

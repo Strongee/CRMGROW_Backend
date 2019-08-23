@@ -71,7 +71,7 @@ const signUp = async (req, res) => {
           templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
           dynamic_template_data: {
             first_name: _res.user_name,
-            login_credential: `<a href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+            login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
             user_email: _res.email,
             user_password: req.body.password,
             profile_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
