@@ -25,8 +25,6 @@ const create = async(payment_data) => {
         const {email, bill_amount, token} = payment_data
         findOrcreateCustomer(email).then(customer => {
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
-                console.log('card', card)
-                console.log('err', err)
                 if(card == null || typeof card == 'undefined'){
                     reject('Card is null');
                     return
@@ -56,6 +54,7 @@ const create = async(payment_data) => {
                         customer_id: customer.id,
                         plan_id: pricingPlan,
                         token: token.id,
+                        card_id: card.id,
                         card_brand: token.card.brand,
                         exp_month: token.card.exp_month,
                         exp_year: token.card.exp_year,
@@ -77,43 +76,137 @@ const update = async(req, res) =>{
     const { bill_amount, token} = req.body
     const currentUser = req
 
-	findOrcreateCustomer(currentUser.email).then(customer => {
-		stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
-            console.log('card', card)
-                console.log('err', err)
+	findOrcreateCustomer(currentUser.email).then(async(customer) => {
+        const payment = await Payment.findOne({customer_id: customer.id})
+        if(payment == null){
+            stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
-                    res.send({
-                        status: false,
+                    return res.send({
+                        status: true,
                         error: "Card is not valid"
-                      });
+                    });
                 }
-
-            let pricingPlan
-            // const product = config.STRIPE.PRODUCT_ID
+             
+                let pricingPlan
+                // const product = config.STRIPE.PRODUCT_ID
                 if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
                     pricingPlan = config.STRIPE.PRIMARY_PLAN
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
+    
                 createSubscription(customer.id, pricingPlan, card.id)
-                    .then(subscription => {
+                        .then(subscription => {
+                            // Save card information to DB.
+
+                            const payment = new Payment({
+                                customer_id: customer.id,
+                                plan_id: pricingPlan,
+                                token: token.id,
+                                card_id: card.id,
+                                subscription: subscription.id,
+                                card_brand: token.card.brand,
+                                exp_month: token.card.exp_month,
+                                exp_year: token.card.exp_year,
+                                last4: token.card.last4,
+                                active: true,
+                                updated_at: new Date(),
+                                created_at: new Date(),
+                            })
+
+                            payment.save()
+                            
+                            return res.send({
+                                    status: true,
+                                });
+                            }).catch((err)=>{
+                            console.log('creating subscripition error', err)
+                            return res.send({
+                                status: false,
+                                eror: err
+                            })
+                        })
+            });
+        }else if(payment['token'] != token.id){
+            stripe.customers.deleteSource(
+                payment['customer_id'],
+                payement['card_id'],
+                function(err, confirmation) {})
+
+            cancelSubscription(payment['subscription'])
+
+            stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+                if(card == null || typeof card == 'undefined'){
+                    return res.send({
+                        status: true,
+                        error: "Card is not valid"
+                    });
+                }
+             
+                let pricingPlan
+                // const product = config.STRIPE.PRODUCT_ID
+                if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
+                }else{
+                    pricingPlan = config.STRIPE.SUPER_PLAN
+                }
+    
+                    createSubscription(customer.id, pricingPlan, card.id).then(subscription => {
                         // Save card information to DB.
-                        const payment = Payment.findOne({id: currentUser.payment})
                         payment['plan_id'] = pricingPlan
                         payment['token'] = token.id
+                        payement['card_id'] = card.id
                         payment['card_brand'] = token.card.brand
                         payment['exp_month'] = token.card.exp_month
                         payment['exp_year'] = token.card.exp_year
                         payment['last4'] = token.card.last4
+                        payment['subscription'] = subscription.id
                         payment['updated_at'] = new Date()
+        
                         payment.save()
-                        res.send({
-                            status: true,
-                          });
-                        }).catch((e)=>{
-                        console.log('creating subscripition error', e)
+             
+                        return res.send({
+                                    status: true,
+                                });
+                    }).catch((err)=>{
+                        console.log('creating subscripition error', err)
+                        return res.send({
+                            status: false,
+                            eror: err
+                        })              
                     })
-		});
+            });
+        }else{
+            const customer_id = customer.id
+            const card = token.card
+            const card_id = payment['card_id']
+
+            updateCard(customer_id, card_id, card).then(card=>{
+                // Save card information to DB.
+                const payment = Payment.findOne({id: currentUser.payment})
+
+                payment['plan_id'] = pricingPlan
+
+                payment['card_brand'] = token.card.brand
+                payment['exp_month'] = token.card.exp_month
+                payment['exp_year'] = token.card.exp_year
+                payment['last4'] = token.card.last4
+                payment['updated_at'] = new Date()
+                payment.save()
+
+                res.send({
+                    status: true,
+                  });
+                res.send({
+                    status: true
+                })
+            }).catch(err=>{
+                res.send({
+                    status: false,
+                    error: err
+                })
+            })
+        }
 	});
 }
 const findOrcreateCustomer = async(email) => {
@@ -180,12 +273,37 @@ const cancelSubscription = async(subscription_id) => {
     });
 }
 
+/**
+ * 
+ * @param {customer id} id 
+ */
 const deleteCustomer = async(id) => {
     return new Promise(function (resolve, reject) {
         stripe.customers.del(id, function (err, confirmation) {
             if (err) reject(err);
             resolve(confirmation);
         });
+    });
+}
+
+/**
+ * 
+ * @param {customer id} customerId 
+ * @param {cart id} cardId 
+ * @param {data} data 
+ * @qutation update card
+ */
+ const updateCard = async(customerId, cardId, data) => {
+    return new Promise(function (resolve, reject) {
+        stripe.customers.updateCard(
+            customerId,
+            cardId,
+            data,
+            function (err, card) {
+                if (err) reject(err);
+                resolve(card);
+            }
+        );
     });
 }
 
