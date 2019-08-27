@@ -198,9 +198,6 @@ const update = async(req, res) =>{
                 res.send({
                     status: true,
                   });
-                res.send({
-                    status: true
-                })
             }).catch(err=>{
                 res.send({
                     status: false,
