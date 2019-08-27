@@ -76,6 +76,7 @@ const update = async(req, res) =>{
     const { bill_amount, token} = req.body
     const currentUser = req
 
+    console.log('currentUser.email', currentUser.email)
 	findOrcreateCustomer(currentUser.email).then(async(customer) => {
         const payment = await Payment.findOne({customer_id: customer.id})
         console.log('payment', payment)
