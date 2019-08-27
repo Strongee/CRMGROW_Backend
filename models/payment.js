@@ -5,6 +5,7 @@ const Payment = mongoose.model('payment',{
     card_id: String,
     plan_id: String, 
     token: String,
+    subscription: String,
     card_brand: String,
     exp_year: String,
     exp_month: String,
