@@ -78,6 +78,7 @@ const update = async(req, res) =>{
 
 	findOrcreateCustomer(currentUser.email).then(async(customer) => {
         const payment = await Payment.findOne({customer_id: customer.id})
+        console.log('payment', payment)
         if(payment == null){
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
