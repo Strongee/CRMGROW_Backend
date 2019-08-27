@@ -263,13 +263,7 @@ const cancelSubscription = async(subscription_id) => {
             if (err != null)  {
                 return reject(err);
             }
-            stripe.plans.del(confirmation.plan.id, function (err, confirmation) {
-                if (err != null) {
-                    return reject(err);
-                }
-                resolve(confirmation);
-            });
-
+            resolve()
         })
     });
 }
