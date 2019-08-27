@@ -76,7 +76,7 @@ app.use(express.static('../frontend_admin/dist'));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', res.render('index'))
+app.get('/', (req, res) => {res.render('index')})
 app.get('/video', VideoCtrl.play)
 
 app.use('/api', indexRouter)
