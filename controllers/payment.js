@@ -156,7 +156,7 @@ const update = async(req, res) =>{
                         // Save card information to DB.
                         payment['plan_id'] = pricingPlan
                         payment['token'] = token.id
-                        payement['card_id'] = card.id
+                        payment['card_id'] = card.id
                         payment['card_brand'] = token.card.brand
                         payment['exp_month'] = token.card.exp_month
                         payment['exp_year'] = token.card.exp_year
