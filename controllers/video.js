@@ -98,9 +98,6 @@ const create = async (req, res) => {
   }
 }
 
-
-
-
 const updateDetail = async (req, res) => {
   
   const {currentUser} = req
