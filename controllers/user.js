@@ -390,7 +390,8 @@ const editMe = async(req, res) =>{
   .then(_res => {
       myJSON = JSON.stringify(_res)
       const data = JSON.parse(myJSON);
-      delete data.password
+      delete data.hash
+      delete data.salt
       res.send({
         status: true,
         data
