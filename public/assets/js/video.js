@@ -17,7 +17,10 @@ if( contact && activity ){
     socket = io.connect('https://app.crmgrow.com');
 }
 
-var vPlayer = videojs('material-video');
+var vPlayer = videojs('material-video', {
+    autoplay: 'muted'
+});
+vPlayer.autoplay('muted');
 var timer;
 var trackingTimes = [];
 var startOverlapFlag = false;

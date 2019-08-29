@@ -16,11 +16,8 @@ head
   script(type='text/javascript', src='./assets/plugins/video/video.min.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
 .view-container.container
-  video#material-video.video-js(controls='', preload='none', poster=`${video.thumbnail}`, data-setup='{}')
+  video#material-video.video-js(controls='', preload='true', poster=`${video.thumbnail}`, data-setup='{}')
     source(src=`${video.url}`, type=`${video.type}`)
-    p.vjs-no-js
-      | To view this video please enable JavaScript, and consider upgrading to a web browser that 
-      a(href='https://videojs.com/html5-video-support/', target='_blank') supports HTML5 video
   .description
     .desc-title
       | #{video.title}
