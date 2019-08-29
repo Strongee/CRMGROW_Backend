@@ -18,9 +18,9 @@ if( contact && activity ){
 }
 
 var vPlayer = videojs('material-video', {
-    autoplay: 'muted'
+    autoplay: true
 });
-vPlayer.autoplay('muted');
+vPlayer.autoplay(true);
 var timer;
 var trackingTimes = [];
 var startOverlapFlag = false;
