@@ -66,7 +66,9 @@ const create = async(req, res) => {
       updated_at: new Date(),
     })
 
-    reminder.save()
+    reminder.save().catch(err=>{
+      console.log('error', err)
+    })
 
     const activity = new Activity({
       content: currentUser.user_name + ' added follow up',
