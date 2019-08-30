@@ -61,7 +61,7 @@ const create = async(req, res) => {
       due_date: due_date,
       type: 'follow_up',
       user: currentUser.id,
-      follow_up: _follow_up.id,
+      follow_up: _followup.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
