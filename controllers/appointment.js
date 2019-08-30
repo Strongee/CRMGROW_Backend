@@ -285,6 +285,8 @@ const create = async(req, res) => {
     const contact = _appointment.guests[0]
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
     
+    console.log('bcc', _appointment.guests.shift())
+    console.log('time', moment(_appointment.due_start).format("dddd, MMMM Do YYYY"))
     const msg = {
       to: contact,
       bcc: _appointment.guests.shift(),
