@@ -11,6 +11,10 @@ const CronJob = require('cron').CronJob;
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const phone = require('phone')
+const twilio = require('twilio')(accountSid, authToken)
 
 const { DB_PORT } = require('../config/database');
 
@@ -191,20 +195,22 @@ const weekly_report = new CronJob({
 
 const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
   const due_date = new Date()
-  const reminder_array = Reminder.find({due_date: due_date, del: false})
+  const reminder_array = await Reminder.find({due_date: due_date, del: false})
+
   for(let i=0; i<reminder_array.length(); i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up})
       const user = await User.findOne({_id: follow_up.user})
+      const contact = await Contact.findOne({_id: follow_up.contact})
       const msg = {
         to: user.email,
         from: mail_contents.FOLLOWUP_REMINDER.MAIL,
         subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
         templateId: config.SENDGRID.SENDGRID_REMINDER_TEMPLATE,
         dynamic_template_data: {
-          contacts: contacts,
-          due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY, h:mm:ss a'),
+          contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
+          due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a'),
           content: follow_up.content
         },
       }
@@ -217,6 +223,24 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         }
       }).catch((err)=>{
         console.log('err: ', err)
+      })
+
+      const e164Phone = phone(user.cell_phone)[0]
+      const fromNumber = config.TWILIO.TWILIO_NUMBER
+      console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+        throw error // Invalid phone number
+      }
+    
+      const title = `You have an appointment at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a')} with following contnent` + '\n' 
+        + contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone + '\n'
+      const body = follow_up.content + '\n'
+      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+      twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
+        console.log('send sms err: ',err)
       })
     }
   }
