@@ -1,13 +1,13 @@
 const url = new URL(location.href)
 const query_params = new URLSearchParams(url.search)
 const video = query_params.get("video")
-const sender = query_params.get("sender")
+const user = query_params.get("user")
 const contact = query_params.get("contact")
 const activity = query_params.get("activity")
 var socket;
 var report = {
     video,
-    sender,
+    user,
     contact,
     activity,
     duration: 0
