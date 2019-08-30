@@ -89,7 +89,8 @@ const create = async(req, res) => {
         data
       })
     }).catch(e => {
-      return res.status(500).send({
+      console.log('follow error', e)
+      return res.status().send({
         status: false,
         error: e
       })
