@@ -14,7 +14,7 @@ var report = {
 }
 var registered_flag = false
 if( contact && activity ){
-    socket = io.connect('http://localhost:4200')
+    socket = io.connect('https://app.crmgrow.com')
 }
 
 var vPlayer = videojs('material-video');
