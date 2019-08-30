@@ -34,5 +34,6 @@ head
     .email
       i.icon.icon-envelope
       | #{sender.email}
+input#video-duration(type='hidden', value=`${video.duration/1000}`)
 script(type='text/javascript', src='./assets/js/jquery.js')
 script(type='text/javascript', src='./assets/js/video.js')
