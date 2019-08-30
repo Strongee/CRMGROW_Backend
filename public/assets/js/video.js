@@ -17,7 +17,7 @@ if( contact && activity ){
     socket = io.connect('https://app.crmgrow.com')
 }
 
-var vPlayer = videojs('material-video');
+var vPlayer = new Plyr('#material-video');
 // var timer;
 var trackingTimes = [];
 var startOverlapFlag = false;
@@ -27,7 +27,7 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector("#video-duration").value
 function updateStartTime() {
-    let currentTime = vPlayer.currentTime()
+    let currentTime = vPlayer.currentTime
     for( let i = 0; i < trackingTimes.length; i++ ){
         if( trackingTimes[i][0] <= currentTime && currentTime <= trackingTimes[i][1] ){
             currentTrackerIndex = i;
@@ -41,7 +41,7 @@ function updateStartTime() {
 }
 
 function updateEndTime(){
-    let currentTime = vPlayer.currentTime()
+    let currentTime = vPlayer.currentTime
     // Seeking Check
     if( trackingTimes[currentTrackerIndex] && trackingTimes[currentTrackerIndex][1] != null && trackingTimes[currentTrackerIndex][1] != undefined && ( trackingTimes[currentTrackerIndex][1] < currentTime - 0.6 || currentTime < trackingTimes[currentTrackerIndex][1]) ) {
         return;
@@ -123,7 +123,7 @@ vPlayer.on("play", function() {
 })
 
 vPlayer.on("timeupdate", function() {
-    if( vPlayer.seeking() ){
+    if( vPlayer.seeking ){
         seek_flag = true
     }
     else {
