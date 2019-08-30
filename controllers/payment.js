@@ -42,19 +42,13 @@ const create = async(payment_data) => {
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
                 createSubscription(customer.id, pricingPlan, card.id)
-                .then(subscription => {
-                    console.log('subscription', subscription)
-                    return subscription})
-                .catch((e)=>{
-                    console.log('creating subscripition error', e)
-                }).then(async(result) => {
-                    console.log('result', result)
+                .then(async(subscripition) => {
                     // Save card information to DB.
                     const payment = new Payment({
                         customer_id: customer.id,
                         plan_id: pricingPlan,
                         token: token.id,
-                        subscription: result.id,
+                        subscription: subscripition.id,
                         card_id: card.id,
                         card_brand: token.card.brand,
                         exp_month: token.card.exp_month,
@@ -67,6 +61,8 @@ const create = async(payment_data) => {
                     
                     const _payment = await payment.save().then()
                     resolve(_payment)
+                }).catch(err=>{
+                    reject(err)
                 })
             });
         });

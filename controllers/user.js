@@ -56,6 +56,7 @@ const signUp = async (req, res) => {
       const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
       const user = new User({
         ...req.body,
+        payment: payment.id,
         salt: salt,
         hash: hash,
         updated_at: new Date(),
