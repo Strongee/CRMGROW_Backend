@@ -197,7 +197,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
   const due_date = new Date()
   const reminder_array = await Reminder.find({due_date: due_date, del: false})
 
-  for(let i=0; i<reminder_array.length(); i ++){
+  for(let i=0; i<reminder_array.length; i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up})
