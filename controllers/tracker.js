@@ -50,7 +50,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     )
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
-    const title = contact.first_name + ' reviewed pdf -' + pdf.title 
+    const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email +' reviewed pdf -' + pdf.title 
     const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -68,8 +68,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       throw error // Invalid phone number
     }
   
-    const title = contact.first_name + ' reviewed pdf -' + pdf.title + '\n'
-    const body = 'Watched ' + timeWatched + ' at ' + query['created_at'] + '\n'
+    const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone + ' reviewed pdf -' + pdf.title + '\n'
+    const body = 'Watched ' + timeWatched + ' at ' + query['created_at'] + '\n '
     const contact_link = urls.CONTACT_PAGE_URL + contact.id 
     twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
       console.log('send sms err: ',err)
@@ -87,8 +87,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     dynamic_template_data: {
       first_name: contact.first_name,
       last_name: contact.last_name,
-      phone_number: contact.cell_phone,
-      email: contact.email,
+      phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+      email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
       activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
       duration: 'Watched <b>' + timeWatched + ' </b>at ' + query['created_at'],
       detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
@@ -183,7 +183,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       )
       
       const subscription = JSON.parse(currentUser.desktop_notification_subscription)
-      const title = contact.first_name + ' watched video -' + video.title 
+      const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
       const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
       const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -201,7 +201,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         throw error // Invalid phone number
       }
     
-      const title = contact.first_name + ' watched video -' + video.title + '\n'
+      const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone +' watched video -' + video.title + '\n'
       const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
 
@@ -220,8 +220,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       dynamic_template_data: {
         first_name: contact.first_name,
         last_name: contact.last_name,
-        phone_number: contact.cell_phone,
-        email: contact.email,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
         activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + query['created_at'],
         detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
