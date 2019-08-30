@@ -290,9 +290,11 @@ const create = async(req, res) => {
       from: currentUser.email,
       templateId: config.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
       dynamic_template_data: {
+        event_title: _appointment.title,
+        description: _appointment.description,
         event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm"),
-        guests: contact + ' - organizer' + '<br/>' + _appointment.guests.join(", "),
-        calendar_owner: currentUser.email,
+        event_address: _appointment.location,
+        organizer: currentUser.user_name,
         email_signature: currentUser.email_signature,
       },
     };
