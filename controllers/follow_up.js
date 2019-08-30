@@ -1,8 +1,9 @@
 const { validationResult } = require('express-validator/check')
-const moment = require('moment');
-const FollowUp = require('../models/follow_up');
+const moment = require('moment')
+const FollowUp = require('../models/follow_up')
 const Contact = require('../models/contact')
-const Activity = require('../models/activity');
+const Activity = require('../models/activity')
+const Reminder = require('../models/reminder')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -11,7 +12,6 @@ const get = async(req, res) => {
 
   for(let i = 0; i < _follow_up.length; i ++){
     const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-    console.log('contact', _contact)
     myJSON = JSON.stringify(_follow_up[i])
     const follow_up = JSON.parse(myJSON);
     delete follow_up.contact
@@ -53,6 +53,21 @@ const create = async(req, res) => {
   followUp.save()
   .then(_followup => {
 
+    const mins = new Date(_followup.due_date).getMinutes()-30 
+    let due_date = new Date(_followup.due_date).setMinutes(mins)
+    console.log('due_date', due_date)
+    const reminder = new Reminder({
+      contact: _followup.contact,
+      due_date: due_date,
+      type: 'follow_up',
+      user: currentUser.id,
+      follow_up: _follow_up.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    reminder.save()
+
     const activity = new Activity({
       content: currentUser.user_name + ' added follow up',
       contacts: _followup.contact,
@@ -67,7 +82,7 @@ const create = async(req, res) => {
       myJSON = JSON.stringify(_followup)
       const data = JSON.parse(myJSON);
       data.activity = _activity
-      res.send({
+      return res.send({
         status: true,
         data
       })

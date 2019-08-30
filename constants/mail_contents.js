@@ -15,6 +15,10 @@ const mail_contents = {
     RESET_PASSWORD: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Rest Password"
+    },
+    FOLLOWUP_REMINDER: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Follow up reminder: "
     }
 }
 

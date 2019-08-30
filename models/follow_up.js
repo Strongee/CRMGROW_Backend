@@ -7,6 +7,7 @@ const FollowUp = mongoose.model('follow_up',{
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     status: { type: Number, default: 0},
     reminder: Number,
+    reminder_type: String,
     type: String,
     updated_at: Date,
     created_at: Date,

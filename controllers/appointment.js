@@ -292,7 +292,7 @@ const create = async(req, res) => {
       dynamic_template_data: {
         event_title: _appointment.title,
         description: _appointment.description,
-        event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm"),
+        event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
         event_address: _appointment.location,
         organizer: currentUser.user_name,
         email_signature: currentUser.email_signature,

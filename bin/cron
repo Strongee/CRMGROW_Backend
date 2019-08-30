@@ -3,6 +3,7 @@ const User = require('../models/user')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
+const Reminder = require('../models/reminder')
 const sgMail = require('@sendgrid/mail')
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
@@ -188,5 +189,43 @@ const weekly_report = new CronJob({
   timeZone: 'US/Central'
 });
 
+const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
+  const due_date = new Date()
+  const reminder_array = Reminder.find({due_date: due_date, del: false})
+  for(let i=0; i<reminder_array.length(); i ++){
+    const reminder = reminder_array[i]
+    if(reminder['type'] == 'follow_up'){
+      const follow_up = await FollowUp.findOne({_id: reminder.follow_up})
+      const user = await User.findOne({_id: follow_up.user})
+      const msg = {
+        to: user.email,
+        from: mail_contents.FOLLOWUP_REMINDER.MAIL,
+        subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
+        templateId: config.SENDGRID.SENDGRID_REMINDER_TEMPLATE,
+        dynamic_template_data: {
+          contacts: contacts,
+          due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY, h:mm:ss a'),
+          content: follow_up.content
+        },
+      }
+      sgMail.send(msg).then((res) => {
+        console.log('mailres.errorcode', res[0].statusCode);
+        if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+          console.log('Successful send to '+msg.to)
+        }else {
+          console.log(res[0].statusCode)
+        }
+      }).catch((err)=>{
+        console.log('err: ', err)
+      })
+    }
+  }
+}, function () {
+  console.log('DelCron Job finished.');
+}, false, 'US/Central'
+)
+
+
+reminder_job.start()
 daily_report.start()
 weekly_report.start()
