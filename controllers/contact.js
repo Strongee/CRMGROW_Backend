@@ -325,18 +325,20 @@ const sendEmail = async(req, res) => {
 const importCSV = async(req, res) => {
   let file = req.file
   const {currentUser} = req
+  let csv_id = 1;
+  let failure = []
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        let cleaned = ('' + data['phone']).replace(/\D/g, '')
+        let cell_phone = data['phone']
+        let cleaned = ('' + cell_phone).replace(/\D/g, '')
         let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-        let cell_phone
         if (match) {
             let intlCode = (match[1] ? '+1 ' : '')
             cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
         }
         const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
-        const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: data['phone']}) 
-        
+        const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
+        csv_id +=1;
         if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
           const contact = new Contact({
             ...data,
@@ -374,14 +376,38 @@ const importCSV = async(req, res) => {
                   created_at: new Date(),
                   updated_at: new Date(),
                 })
-                _activity.save()
+                _activity.save().catch(err=>{
+                  console.log(err)
+                })
               })
             }
+            if(data['tag'] != null){
+              const tags = data['tag'].split(' ')
+              tags.forEach(_tag => {
+                const tag = new Tag({
+                  content: _tag,
+                  user: currentUser.id,
+                  updated_at: new Date(),
+                  created_at: new Date(),
+                })
+                tag.save().catch(err=>{
+                  console.log(err)
+                })
+              });
+            }
           })             
+        }else{
+          const data = {
+            id: csv_id,
+            email: data['email'],
+            phone: data['phone']
+          }
+          failure.push(data)
         }
       }).on('end', () => {
         res.send({
-          status: true
+          status: true,
+          failure
         })             
     });
 }

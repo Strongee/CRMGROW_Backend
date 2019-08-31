@@ -34,7 +34,7 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('req.body',req.body)
+
   tag.save()
   .then(_res => {
       const data = _res
