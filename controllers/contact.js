@@ -347,6 +347,7 @@ const importCSV = async(req, res) => {
           contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
         }
         console.log('contact_old_email', contact_old_email)
+        console.log('contact_old_phone', contact_old_phone)
         if(data['email'] == null && data['phone'] == null) return;
         if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
           const contact = new Contact({
