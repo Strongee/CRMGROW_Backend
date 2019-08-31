@@ -329,16 +329,24 @@ const importCSV = async(req, res) => {
   let failure = []
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        let cell_phone = data['phone']
-        let cleaned = ('' + cell_phone).replace(/\D/g, '')
-        let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-        if (match) {
-            let intlCode = (match[1] ? '+1 ' : '')
-            cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-        }
-        const contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']}) 
-        const contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
+        console.log('data', data)
+        let contact_old_email = ''
+        let contact_old_phone = ''
         csv_id +=1;
+        if(data['email'] != null){
+          contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
+        }
+        if(data['phone'] !=null){
+          let cell_phone = data['phone']
+          let cleaned = ('' + cell_phone).replace(/\D/g, '')
+          let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+          if (match) {
+              let intlCode = (match[1] ? '+1 ' : '')
+              cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+          }
+          contact_old_phone = await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
+        }
+        if(data['email'] == null && data['phone'] == null) return;
         if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
           const contact = new Contact({
             ...data,
@@ -405,6 +413,7 @@ const importCSV = async(req, res) => {
           failure.push(data)
         }
       }).on('end', () => {
+        console.log('failure', failure)
         return res.send({
           status: true,
           failure
