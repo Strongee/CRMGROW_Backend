@@ -443,7 +443,7 @@ const exportCSV = async(req, res) =>{
     const _note = await Note.find({user :currentUser.id, contact: contacts[i]})
     const _tag = await Tag.find({user :currentUser.id, contact: contacts[i]})
     let _data={
-      contact: contacts[i]
+      contact: contacts[i],
       note: [],
       tag: []
     }
