@@ -405,12 +405,12 @@ const importCSV = async(req, res) => {
             }
           })             
         }else{
-          const data = {
+          const field = {
             id: csv_id,
             email: data['email'],
             phone: data['phone']
           }
-          failure.push(data)
+          failure.push(field)
         }
       }).on('end', () => {
         console.log('failure', failure)
