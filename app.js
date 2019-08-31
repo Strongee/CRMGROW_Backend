@@ -29,10 +29,14 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/video', VideoCtrl.play)
 
+app.get('/auth', (req, res) => {
+    res.render('auth')
+})
+
 app.use('/api', indexRouter)
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend_admin/dist', 'index.html'));
 }); 
 
-module.exports = app
+module.exports = app    
