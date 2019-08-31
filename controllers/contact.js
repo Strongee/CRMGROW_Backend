@@ -405,7 +405,7 @@ const importCSV = async(req, res) => {
           failure.push(data)
         }
       }).on('end', () => {
-        res.send({
+        return res.send({
           status: true,
           failure
         })             
