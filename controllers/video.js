@@ -220,7 +220,7 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, video_title, contact, contact_name} = req.body
+  const {email, content, video, video_title, video_preview, contact, contact_name} = req.body
 
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using email',
@@ -241,8 +241,9 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: video_title,
     html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + 
-          ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ video_title + 
-          '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+          ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ 
+          '<img src='+video_preview+' style="max-width: 250px"></img>' + 
+          video_title + '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
   sgMail.send(msg).then((_res) => {
