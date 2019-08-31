@@ -112,7 +112,7 @@ function reportTime() {
         }
         else{
             socket.emit('update_video', duration * 1000)
-            socket.emit('disconnect')
+            socket.emit('disconnecting')
         }                
     }
 }

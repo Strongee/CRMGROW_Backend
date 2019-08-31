@@ -4,6 +4,10 @@
     margin-top: 5%;
 }
 
+.view-container video{
+    width: 100%;
+}
+
 .view-container .description {
     margin-top: 20px;
 }
