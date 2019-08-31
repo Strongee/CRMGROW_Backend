@@ -5,6 +5,7 @@ const FollowUp = require('../models/follow_up')
 const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
+const Tag = require('../models/note')
 const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
 const csv = require('csv-parser')
@@ -347,9 +348,15 @@ const importCSV = async(req, res) => {
             }
             contact_old_phone =Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
-          console.log('contact_old_email', contact_old_email)
-          console.log('contact_old_phone', contact_old_phone)
-          if(data['email'] == null && data['phone'] == null) return;
+          if(data['email'] == null && data['phone'] == null){
+            const field = {
+              id: csv_id,
+              email: data['email'],
+              phone: data['phone']
+            }
+            failure.push(field)
+            resolve()
+          };
           if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
             const contact = new Contact({
               ...data,
@@ -405,6 +412,7 @@ const importCSV = async(req, res) => {
                     console.log(err)
                   })
                 });
+                resolve()
               }
             })  
           }else{
@@ -414,6 +422,7 @@ const importCSV = async(req, res) => {
               phone: data['phone']
             }
             failure.push(field)
+            resolve()
           }
         })
       }).on('end', () => {
@@ -432,10 +441,19 @@ const exportCSV = async(req, res) =>{
   let data = []
   for(let i = 0; i < contacts.length; i ++){
     const _note = await Note.find({user :currentUser.id, contact: contacts[i]})
-    if(_note.length!= 0){
-      const _data = {"contact": contacts[i], "note": _note}
-      data.push(_data)
+    const _tag = await Tag.find({user :currentUser.id, contact: contacts[i]})
+    let _data={
+      contact: contacts[i]
+      note: [],
+      tag: []
     }
+    if(_note.length!= 0){
+     _data["note"] =_note
+    }
+    if(_tag.length != 0){
+      _data["tag"] = _tag
+    }
+    data.push(_data)
   }
   
   if (!data) {
