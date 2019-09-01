@@ -348,16 +348,7 @@ const importCSV = async(req, res) => {
             }
             contact_old_phone =Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
-          if(data['email'] == null && data['phone'] == null){
-            const field = {
-              id: csv_id,
-              email: data['email'],
-              phone: data['phone']
-            }
-            failure.push(field)
-            resolve()
-          };
-          if(data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
+          if((data['first_name'] != null && data['email'] == null && data['phone'] == null) || data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
             const contact = new Contact({
               ...data,
               cell_phone: cell_phone,
