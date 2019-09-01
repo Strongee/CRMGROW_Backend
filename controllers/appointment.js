@@ -350,7 +350,7 @@ const create = async(req, res) => {
       bcc: _appointment.guests.slice(1),
       from: currentUser.email,
       html: html,
-      body: html,
+      text: html,
     };
 
     sgMail.send(msg).then((_res) => {
