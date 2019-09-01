@@ -193,7 +193,7 @@ const weekly_report = new CronJob({
   timeZone: 'US/Central'
 });
 
-const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
+const reminder_job = new CronJob('* * * * 0-6', async() =>{
   const due_date = new Date()
   const reminder_array = await Reminder.find({due_date: due_date, del: false})
   console.log('reminder_array', reminder_array)
