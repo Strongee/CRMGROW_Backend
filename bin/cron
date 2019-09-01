@@ -172,7 +172,7 @@ const weekly_report = new CronJob({
               day: today
             },
           }
-          await sgMail.send(msg).then((res) => {
+          sgMail.send(msg).then((res) => {
             console.log('mailres.errorcode', res[0].statusCode);
             if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
               console.log('Successful send to '+msg.to)
@@ -194,6 +194,7 @@ const weekly_report = new CronJob({
 });
 
 const reminder_job = new CronJob('* * * * 0-6', async() =>{
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   const due_date = new Date()
   due_date.setSeconds(0)
   due_date.setMilliseconds(000)
