@@ -344,6 +344,7 @@ const create = async(req, res) => {
                   </script>
                 </body>
                 </html>`
+    console.log('html', html)
     const msg = {
       to: contact,
       bcc: _appointment.guests.slice(1),
