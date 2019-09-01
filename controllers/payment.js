@@ -5,8 +5,7 @@ const stripe = require('stripe')(stripeKey)
 
 
 const get = async(req, res) => {
-  const { currentUser } = req
-  const data = await Payment.findOne({user :currentUser.id});
+  const data = await Payment.findOne({_id :req.params.id});
   if (!data) {
     return res.status(401).json({
       status: false,
