@@ -431,18 +431,25 @@ const exportCSV = async(req, res) =>{
 
   let data = []
   for(let i = 0; i < contacts.length; i ++){
-    const _note = await Note.find({user :currentUser.id, contact: contacts[i]})
-    const _tag = await Tag.find({user :currentUser.id, contact: contacts[i]})
     let _data={
       contact: contacts[i],
       note: [],
       tag: []
     }
+    const _note = await Note.find({user :currentUser.id, contact: contacts[i]})
+    const _tag = await Contact.findOne({_id: contats[i]})
+    let tag_array = []
+    for(let j=0; j<=_tag.length; j++){
+      const _tag = await Tag.find({_id :_tag[j]})
+      tag_array.push(_tag.content)
+    }
+    
+    
     if(_note.length!= 0){
      _data["note"] =_note
     }
-    if(_tag.length != 0){
-      _data["tag"] = _tag
+    if(tag_array.length != 0){
+      _data["tag"] = tag_array
     }
     data.push(_data)
   }
