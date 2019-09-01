@@ -288,7 +288,7 @@ const create = async(req, res) => {
     const event_time = moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone
     const event_title = _appointment.title
     const description = _appointment.description
-    const event_address = _appointment.address
+    const event_address = _appointment.location
     const organizer = currentUser.user_name
     const email_signature = currentUser.email_signature
     const html = `<html>
