@@ -440,7 +440,7 @@ const exportCSV = async(req, res) =>{
     const _contact = await Contact.findOne({_id: contacts[i]})
     const tag = _contact["tag"]
     let tag_array = []
-    for(let j=0; j<=tag.length; j++){
+    for(let j=0; j<tag.length; j++){
       console.log('tag', tag[j])
       const _tag = await Tag.findOne({_id :tag[j]})
       tag_array.push(_tag.content)
