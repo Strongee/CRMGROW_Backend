@@ -76,7 +76,9 @@ const create = async (req, res) => {
                 if (s3Err) throw s3Err
                 console.log(`File uploaded successfully at ${upload.Location}`)
                 
-                fs.unlinkSync(file_path)
+                fs.unlinkSync(file_path).catch(err=>{
+                  console.log('File remove err')
+                })
 
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
