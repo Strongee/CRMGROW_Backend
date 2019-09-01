@@ -195,8 +195,15 @@ const weekly_report = new CronJob({
 
 const reminder_job = new CronJob('* * * * 0-6', async() =>{
   const due_date = new Date()
-  const reminder_array = await Reminder.find({due_date: due_date, del: false})
+  const reminder_array = await Reminder.find({due_date: due_date, del: false}).catch(err=>{
+    console.log(err)
+  })
+  const reminders_array = await Reminder.find({ del: false}).catch(err=>{
+    console.log(err)
+  })
   console.log('reminder_array', reminder_array)
+  console.log('due_date', due_date)
+  console.log('reminders_array', reminders_array)
   for(let i=0; i<reminder_array.length; i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
