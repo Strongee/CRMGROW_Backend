@@ -54,7 +54,7 @@ const create = async(req, res) => {
   .then(_followup => {
 
     const mins = new Date(_followup.due_date).getMinutes()-30 
-    let due_date = new Date(_followup.due_date).setMinutes(mins).split('.')[0]+"Z"
+    let due_date = new Date(_followup.due_date).setMinutes(mins)
     console.log('due_date', due_date)
     const reminder = new Reminder({
       contact: _followup.contact,
