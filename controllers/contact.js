@@ -13,7 +13,7 @@ const config = require('../config/config')
 
 const getAll = async(req, res) => {
   const { currentUser } = req
-  const data = await Contact.find({user: currentUser.id}).sort({first_name: 1})
+  const data = await Contact.find({user: currentUser.id})
 
   if (!data) {
     return res.status(401).json({
@@ -30,7 +30,7 @@ const getAll = async(req, res) => {
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id }).sort({first_name: -1})
+  const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!_contact) {
     return res.status(401).json({

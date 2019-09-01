@@ -64,7 +64,7 @@ const create = async(req, res) => {
 
 const getByLastActivity = async(req, res) => {
   const { currentUser } = req
-  const contacts = await Contact.find({user :currentUser.id})
+  const contacts = await Contact.find({user :currentUser.id}).sort({first_name: 1})
 
   let data = []
   for (let i =0; i < contacts.length; i ++){
