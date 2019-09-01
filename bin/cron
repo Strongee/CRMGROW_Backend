@@ -201,13 +201,9 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
   const reminder_array = await Reminder.find({due_date: due_date, del: false}).catch(err=>{
     console.log(err)
   })
-  const reminders_array = await Reminder.find({due_date: {$gte: due_date}}).catch(err=>{
-    console.log(err)
-  })
-  console.log('due_date', due_date)
-  console.log('reminders_array', reminders_array)
-  for(let i=0; i<reminders_array.length; i ++){
-    const reminder = reminders_array[i]
+  
+  for(let i=0; i<reminder_array.length; i ++){
+    const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
         console.log('err: ', err)
@@ -226,7 +222,8 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
         dynamic_template_data: {
           contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
           due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a'),
-          content: follow_up.content
+          content: follow_up.content,
+          detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
         },
       }
       console.log('msg', msg)
