@@ -52,7 +52,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email +' reviewed pdf -' + pdf.title 
     const body = 'Watched ' + timeWatched + ' at ' + query['created_at']
-    const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
+    const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
 
@@ -185,7 +185,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       const subscription = JSON.parse(currentUser.desktop_notification_subscription)
       const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
       const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + query['created_at']
-      const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico"}})
+      const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
     }
   
