@@ -30,7 +30,7 @@ const getAll = async(req, res) => {
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
+  const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id }).sort({first_name: -1})
 
   if (!_contact) {
     return res.status(401).json({
