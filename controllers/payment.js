@@ -49,7 +49,7 @@ const create = async(payment_data) => {
                         plan_id: pricingPlan,
                         token: token.id,
                         subscription: subscripition.id,
-                        card_id: card.id,
+                        card: card.id,
                         card_brand: token.card.brand,
                         exp_month: token.card.exp_month,
                         exp_year: token.card.exp_year,
@@ -100,7 +100,7 @@ const update = async(req, res) =>{
                                 customer_id: customer.id,
                                 plan_id: pricingPlan,
                                 token: token.id,
-                                card_id: card.id,
+                                card: card.id,
                                 subscription: subscription.id,
                                 card_brand: token.card.brand,
                                 exp_month: token.card.exp_month,
@@ -127,7 +127,7 @@ const update = async(req, res) =>{
         }else if(payment['token'] != token.id){
             stripe.customers.deleteSource(
                 payment['customer_id'],
-                payment['card_id'],
+                payment['card'],
                 function(err, confirmation) {})
 
             cancelSubscription(payment['subscription'])
@@ -152,7 +152,7 @@ const update = async(req, res) =>{
                         // Save card information to DB.
                         payment['plan_id'] = pricingPlan
                         payment['token'] = token.id
-                        payment['card_id'] = card.id
+                        payment['card'] = card.id
                         payment['card_brand'] = token.card.brand
                         payment['exp_month'] = token.card.exp_month
                         payment['exp_year'] = token.card.exp_year
