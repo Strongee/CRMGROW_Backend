@@ -205,7 +205,7 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
   })
   console.log('due_date', due_date)
   console.log('reminders_array', reminders_array)
-  for(let i=0; i<reminder_array.length; i ++){
+  for(let i=0; i<reminders_array.length; i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
@@ -228,6 +228,8 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
           content: follow_up.content
         },
       }
+      console.log('msg', msg)
+
       sgMail.send(msg).then((res) => {
         console.log('mailres.errorcode', res[0].statusCode);
         if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
