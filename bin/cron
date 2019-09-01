@@ -206,7 +206,7 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
   console.log('due_date', due_date)
   console.log('reminders_array', reminders_array)
   for(let i=0; i<reminders_array.length; i ++){
-    const reminder = reminder_array[i]
+    const reminder = reminders_array[i]
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
         console.log('err: ', err)
