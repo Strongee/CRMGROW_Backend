@@ -196,13 +196,19 @@ const weekly_report = new CronJob({
 const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
   const due_date = new Date()
   const reminder_array = await Reminder.find({due_date: due_date, del: false})
-
+  console.log('reminder_array', reminder_array)
   for(let i=0; i<reminder_array.length; i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
-      const follow_up = await FollowUp.findOne({_id: reminder.follow_up})
-      const user = await User.findOne({_id: follow_up.user})
-      const contact = await Contact.findOne({_id: follow_up.contact})
+      const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
+        console.log('err: ', err)
+        }) 
+      const user = await User.findOne({_id: follow_up.user}).catch((err)=>{
+        console.log('err: ', err)
+        }) 
+      const contact = await Contact.findOne({_id: follow_up.contact}).catch((err)=>{
+        console.log('err: ', err)
+        }) 
       const msg = {
         to: user.email,
         from: mail_contents.FOLLOWUP_REMINDER.MAIL,
@@ -241,6 +247,10 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
       twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
         console.log('send sms err: ',err)
+      })
+      reminder['del'] = true;
+      reminder.save().catch(err=>{
+        console.log(err)
       })
     }
   }
