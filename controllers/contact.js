@@ -330,7 +330,7 @@ const importCSV = async(req, res) => {
   let failure = []
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        await new Promise((resolve, rejected)=>{
+        await new Promise(async(resolve, rejected)=>{
           console.log('data', data)
           let contact_old_email = null
           let contact_old_phone = null
