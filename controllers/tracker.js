@@ -270,16 +270,14 @@ const setup = (io) => {
         updateVideo(duration, video_tracker._id)
       })
 
-      socket.on('disconnecting', () => {
+      socket.on('disconnect', () => {
         if(socket.type == 'pdf'){
             const pdf_tracker = socket.pdf_tracker
             disconnectPDF(pdf_tracker)
-            socket.disconnect()
         }else if(socket.type == 'video'){
             console.log('disconnecting')
             const video_tracker = socket.video_tracker
             disconnectVideo(video_tracker)
-            socket.disconnect()
         } 
       })
       //auth(socket)
