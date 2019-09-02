@@ -113,6 +113,7 @@ function reportTime() {
         }
         else{
             if( !reported ){
+                console.log("disconnecting the video");
                 socket.emit('update_video', duration * 1000)
                 socket.emit('disconnecting')
                 reported = true;
