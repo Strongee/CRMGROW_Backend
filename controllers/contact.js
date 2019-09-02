@@ -360,7 +360,8 @@ const importCSV = async(req, res) => {
               updated_at: new Date(),
             })
             
-            contact.save().then((_contact)=>{
+           const _contact  = await contact.save().then()
+           
               const activity = new Activity({
                 content: currentUser.user_name + ' added contact',
                 contacts: _contact.id,
@@ -408,7 +409,7 @@ const importCSV = async(req, res) => {
                 });
                 resolve()
               }
-            })  
+            
           }else{
             const field = {
               id: csv_id,
