@@ -309,13 +309,14 @@ const create = async(req, res) => {
                     <br/>
                     Who: ${organizer}
                   </div>
-                  <a id="link_google">Add to Google Calendar</a>
+                  <a href="link_google">Add to Google Calendar</a>
                   </div>
                   <br/>
                   <br />
                   ${email_signature}
                   <br/>
                   <script>
+                  console.log('here')
                     var event = {
                       'summary': ${event_title},
                       'location': ${event_address},
@@ -339,7 +340,9 @@ const create = async(req, res) => {
                       'resource': event
                     });
                     request.execute(function(event) {
-                      document.getElementById('link_google').setAttribute('href', event.htmlLink)
+                      console.log('here')
+                      console.log(document.querySelectorAll('[href=http://link_google]')[0])
+                      document.querySelectorAll('[href=link_google]')[0].setAttribute('href', event.htmlLink)
                     });
                   </script>
                 </body>
@@ -347,10 +350,10 @@ const create = async(req, res) => {
     console.log('html', html)
     const msg = {
       to: contact,
+      subject: event_title,
       bcc: _appointment.guests.slice(1),
       from: currentUser.email,
-      html: html,
-      text: html,
+      html: html
     };
 
     sgMail.send(msg).then((_res) => {
