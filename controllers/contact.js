@@ -361,7 +361,7 @@ const importCSV = async(req, res) => {
             })
             
            const _contact  = await contact.save().then()
-           
+           console.log('_contact', _contact)
               const activity = new Activity({
                 content: currentUser.user_name + ' added contact',
                 contacts: _contact.id,
