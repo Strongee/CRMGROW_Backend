@@ -332,13 +332,16 @@ const importCSV = async(req, res) => {
       .on('data', async(data) => {
         await new Promise((resolve, rejected)=>{
           console.log('data', data)
-          let contact_old_email = ''
-          let contact_old_phone = ''
+          let contact_old_email = null
+          let contact_old_phone = null
           let cell_phone = data['phone']
           csv_id +=1;
+          console.log(data['email'])
           if(data['email'] != null){
             contact_old_email = Contact.findOne({user: currentUser.id, email: data['email']})
+            console.log('contact_old_email', contact_old_email)
           }
+          console.log('atter')
           if(data['phone'] !=null){
             let cleaned = ('' + cell_phone).replace(/\D/g, '')
             let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
@@ -348,7 +351,7 @@ const importCSV = async(req, res) => {
             }
             contact_old_phone =Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
-          if((data['first_name'] != null && data['email'] == null && data['phone'] == null) || data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null){
+          if((data['first_name'] != null && data['email'] == null && data['phone'] == null) || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
             const contact = new Contact({
               ...data,
               cell_phone: cell_phone,
