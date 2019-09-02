@@ -338,7 +338,7 @@ const importCSV = async(req, res) => {
           csv_id +=1;
           console.log(data['email'])
           if(data['email'] != null){
-            contact_old_email = Contact.findOne({user: currentUser.id, email: data['email']})
+            contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
             console.log('contact_old_email', contact_old_email)
           }
           console.log('atter')
@@ -349,7 +349,7 @@ const importCSV = async(req, res) => {
                 let intlCode = (match[1] ? '+1 ' : '')
                 cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             }
-            contact_old_phone =Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
+            contact_old_phone =await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
           if((data['first_name'] != null && data['email'] == null && data['phone'] == null) || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
             const contact = new Contact({
