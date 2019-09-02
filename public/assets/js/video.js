@@ -16,6 +16,7 @@ var registered_flag = false
 if( contact && activity ){
     socket = io.connect('https://app.crmgrow.com')
 }
+var reported = false;
 
 // var vPlayer = videojs('material-video');
 var vPlayer = new Plyr("#player");
@@ -111,8 +112,11 @@ function reportTime() {
             }
         }
         else{
-            socket.emit('update_video', duration * 1000)
-            socket.emit('disconnecting')
+            if( !reported ){
+                socket.emit('update_video', duration * 1000)
+                socket.emit('disconnecting')
+                reported = true;
+            }            
         }                
     }
 }
