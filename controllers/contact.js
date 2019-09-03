@@ -217,10 +217,10 @@ const sendBatch = async(req, res) => {
   const {currentUser} = req
   const {cc, bcc, to, subject, content, contacts} = req.body
   
-  if(typeof to == 'undefined'){
+  if(typeof to == 'undefined' || typeof subject == 'undefined'){
     return res.send({
       status: false,
-      error: 'TO email must be specified'
+      error: 'TO or Subject email must be specified'
     })
   }
   const msg = {
