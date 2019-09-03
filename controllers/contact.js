@@ -217,9 +217,16 @@ const sendBatch = async(req, res) => {
   const {currentUser} = req
   const {cc, bcc, to, subject, content, contacts} = req.body
   
+  if(typeof to == 'undefined'){
+    return res.send({
+      status: false,
+      error: 'TO email must be specified'
+    })
+  }
   const msg = {
     from: currentUser.email,
     subject: subject,
+    to: to,
     cc: cc,
     bcc: bcc,
     html: content + '<br/><br/>' + currentUser.email_signature,
@@ -334,7 +341,7 @@ const importCSV = async(req, res) => {
           let contact_old_email = null
           let contact_old_phone = null
           let cell_phone = data['phone']
-          csv_id +=1;
+          csv_id +=1
           if(data['email'] != null){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
             console.log('contact_old_email', contact_old_email)
