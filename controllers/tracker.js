@@ -273,7 +273,9 @@ const setup = (io) => {
       socket.on('disconnect', () => {
         if(socket.type == 'pdf'){
             const pdf_tracker = socket.pdf_tracker
-            disconnectPDF(pdf_tracker)
+            if( !socket.pdf_tracker.viewed ){
+              disconnectPDF(pdf_tracker)
+            }            
         }else if(socket.type == 'video'){
             console.log('disconnecting')
             const video_tracker = socket.video_tracker
@@ -285,10 +287,12 @@ const setup = (io) => {
 
       socket.on('close', () => {
         if(socket.type == 'pdf'){
+            console.log('disconnecting with full view')  
             const pdf_tracker = socket.pdf_tracker
+            socket.pdf_tracker.viewed = true
             disconnectPDF(pdf_tracker)
         }else if(socket.type == 'video'){
-            console.log('disconnecting because full view')
+            console.log('disconnecting with full view')
             const video_tracker = socket.video_tracker
             socket.video_tracker.viewed = true
             disconnectVideo(video_tracker)
