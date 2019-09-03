@@ -280,6 +280,17 @@ const setup = (io) => {
             disconnectVideo(video_tracker)
         } 
       })
+
+      socket.on('close', () => {
+        if(socket.type == 'pdf'){
+            const pdf_tracker = socket.pdf_tracker
+            disconnectPDF(pdf_tracker)
+        }else if(socket.type == 'video'){
+            console.log('disconnecting')
+            const video_tracker = socket.video_tracker
+            disconnectVideo(video_tracker)
+        } 
+      })
       //auth(socket)
     })
 }
