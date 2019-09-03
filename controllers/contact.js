@@ -335,11 +335,6 @@ const importCSV = async(req, res) => {
           let contact_old_phone = null
           let cell_phone = data['phone']
           csv_id +=1;
-<<<<<<< HEAD
-          console.log(data['email'])
-=======
-          console.log('email', data['email'])
->>>>>>> email bcc test
           if(data['email'] != null){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
             console.log('contact_old_email', contact_old_email)
