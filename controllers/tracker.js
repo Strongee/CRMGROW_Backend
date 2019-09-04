@@ -252,7 +252,9 @@ const setup = (io) => {
 
       socket.on('update_pdf', (duration)=>{
         const pdf_tracker = socket.pdf_tracker
-        updatePDF(duration, pdf_tracker._id)
+        updatePDF(duration, pdf_tracker._id).catch(err=>{
+          console.log('err', err)
+        })
       })
 
       socket.on('init_video', (data)=>{
@@ -267,7 +269,9 @@ const setup = (io) => {
       socket.on('update_video', (duration)=>{
         console.log('update_video')
         const video_tracker = socket.video_tracker
-        updateVideo(duration, video_tracker._id)
+        updateVideo(duration, video_tracker._id).catch(err=>{
+          console.log('err', err)
+        })
       })
 
       socket.on('disconnect', () => {
