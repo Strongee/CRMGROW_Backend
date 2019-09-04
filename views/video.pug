@@ -20,7 +20,7 @@ head
 .view-container.container
   //- video#material-video.video-js(controls='', preload='true', playsinline='',  poster=`${video.thumbnail}`, data-setup='{}')
   //-   source(src=`${video.url}`, type=`${video.type}`)
-  video#player(poster=`${video.thumbnail}`, playsinline='', controls='' preload='auto')
+  video(poster=`${video.thumbnail}`, autoplay, controls, name="media")
     source(src=`${video.url}`, type=`${video.type}`)
   .description
     .desc-title
