@@ -82,13 +82,17 @@ const create = async(req, res) => {
     })
   }
 
-  let contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
-  if(contact_old != null){
-    return res.send({
-      status: false,
-      error: 'Email must be unique!'
-    })
+  let contact_old
+  if(typeof req.body['email'] != 'undefined'){
+    contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
+    if(contact_old != null){
+      return res.send({
+        status: false,
+        error: 'Email must be unique!'
+      })
+    }
   }
+
   if(typeof req.body['cell_phone'] != 'undefined'){
     contact_old = await Contact.findOne({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
     if(contact_old != null){
@@ -336,18 +340,15 @@ const importCSV = async(req, res) => {
   let failure = []
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        await new Promise(async(resolve, rejected)=>{
-          console.log('data', data)
+        new Promise(async(resolve, rejected)=>{
           let contact_old_email = null
           let contact_old_phone = null
           let cell_phone = data['phone']
           csv_id +=1
-          if(data['email'] != null){
+          if(data['email'] != ''){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
-            console.log('contact_old_email', contact_old_email)
           }
-          console.log('atter')
-          if(data['phone'] !=null){
+          if(data['phone'] !=''){
             let cleaned = ('' + cell_phone).replace(/\D/g, '')
             let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
             if (match) {
@@ -356,7 +357,7 @@ const importCSV = async(req, res) => {
             }
             contact_old_phone =await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
-          if((data['first_name'] != null && data['email'] == null && data['phone'] == null) || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
+          if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
             const contact = new Contact({
               ...data,
               cell_phone: cell_phone,
@@ -365,56 +366,57 @@ const importCSV = async(req, res) => {
               updated_at: new Date(),
             })
             
-           const _contact  = await contact.save().then()
-           console.log('_contact', _contact)
-              const activity = new Activity({
-                content: currentUser.user_name + ' added contact',
-                contacts: _contact.id,
+          contact.save().then(_contact=>{
+            const activity = new Activity({
+              content: currentUser.user_name + ' added contact',
+              contacts: _contact.id,
+              user: currentUser.id,
+              type: 'contacts',
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+            activity.save()
+            if(data['note'] != null){
+              const note = new Note({
+                content: data['note'],
+                contact: _contact.id,
                 user: currentUser.id,
-                type: 'contacts',
                 created_at: new Date(),
                 updated_at: new Date(),
               })
-              activity.save()
-              if(data['note'] != null){
-                const note = new Note({
-                  content: data['note'],
-                  contact: _contact.id,
+              note.save().then((_note)=>{
+                const _activity = new Activity({
+                  content: currentUser.user_name + ' added note',
+                  contacts: _contact.id,
                   user: currentUser.id,
+                  type: 'notes',
+                  notes: _note.id,
                   created_at: new Date(),
                   updated_at: new Date(),
                 })
-                note.save().then((_note)=>{
-                  const _activity = new Activity({
-                    content: currentUser.user_name + ' added note',
-                    contacts: _contact.id,
-                    user: currentUser.id,
-                    type: 'notes',
-                    notes: _note.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  })
-                  _activity.save().catch(err=>{
-                    console.log(err)
-                  })
+                _activity.save().catch(err=>{
+                  console.log('error', err)
                 })
-              }
-              if(data['tag'] != null){
-                const tags = data['tag'].split(' ')
-                tags.forEach(_tag => {
-                  const tag = new Tag({
-                    content: _tag,
-                    user: currentUser.id,
-                    updated_at: new Date(),
-                    created_at: new Date(),
-                  })
-                  tag.save().catch(err=>{
-                    console.log(err)
-                  })
-                });
-                resolve()
-              }
-            
+              })
+            }
+            if(data['tag'] != null){
+              const tags = data['tag'].split(' ')
+              tags.forEach(_tag => {
+                const tag = new Tag({
+                  content: _tag,
+                  user: currentUser.id,
+                  updated_at: new Date(),
+                  created_at: new Date(),
+                })
+                tag.save().catch(err=>{
+                  console.log(err)
+                })
+              });
+              resolve()
+            }
+           }).catch(err=>{
+             console.log('err', err)
+           })
           }else{
             const field = {
               id: csv_id,

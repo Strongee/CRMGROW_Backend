@@ -3,6 +3,7 @@ const outlook = require('node-outlook')
 const moment = require('moment')
 const config = require('../config/config')
 const urls = require('../constants/urls')
+const time_zone = require('../constants/time_zone')
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
 const credentials = {
@@ -280,108 +281,109 @@ const create = async(req, res) => {
       oauth2Client.setCredentials({refresh_token: token.refresh_token})
       event_id = await addGoogleCalendarById(oauth2Client, currentUser, _appointment)
     }
-  }else{
-    const _appointment = req.body
-    const contact = _appointment.guests[0]
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-    
-    const event_time = moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone
-    const event_title = _appointment.title
-    const description = _appointment.description
-    const event_address = _appointment.location
-    const organizer = currentUser.user_name
-    const email_signature = currentUser.email_signature
-    const html = `<html>
-                    <head><title>Appointment Invitation</title></head>
-                    <body>
-                    <p>
-                      You have been invited following event.
-                    </p>
-                    <div style="border: 1px solid #e5e5e5;  box-shadow: 0 1px 2px rgba(0,0,0,0.075);">
-                    <div style="padding: 10px;">
-                      <h3 style="margin: 10px 0px;">${event_title}</h3>
-                      <p>
-                    ${description}
-                    </p>
-                    When: ${event_time}
-                    <br/>
-                    Where: ${event_address}
-                    <br/>
-                    Who: ${organizer}
-                  </div>
-                  <a href="link_google">Add to Google Calendar</a>
-                  </div>
-                  <br/>
-                  <br />
-                  ${email_signature}
-                  <br/>
-                  <script>
-                  console.log('here')
-                    var event = {
-                      'summary': ${event_title},
-                      'location': ${event_address},
-                      'description': ${description},
-                      'start': {
-                        'dateTime': ${_appointment.due_start},
-                        'timeZone': 'UCT${currentUser.time_zone}'
-                      },
-                      'attendees': ${_appointment.guests}
-                      'reminders': {
-                        'useDefault': false,
-                        'overrides': [
-                          {'method': 'email', 'minutes': 24 * 60},
-                          {'method': 'popup', 'minutes': 10}
-                        ]
-                      }
-                    };
-                    
-                    var request = gapi.client.calendar.events.insert({
-                      'calendarId': 'primary',
-                      'resource': event
-                    });
-                    request.execute(function(event) {
-                      console.log('here')
-                      console.log(document.querySelectorAll('[href=http://link_google]')[0])
-                      document.querySelectorAll('[href=link_google]')[0].setAttribute('href', event.htmlLink)
-                    });
-                  </script>
-                </body>
-                </html>`
-    console.log('html', html)
-    const msg = {
-      to: contact,
-      subject: event_title,
-      bcc: _appointment.guests.slice(1),
-      from: currentUser.email,
-      html: html
-    };
 
-    sgMail.send(msg).then((_res) => {
-      console.log('mailres.errorcode', _res[0].statusCode);
-      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
-        console.log('status', _res[0].statusCode)
+    const appointment = new Appointment({
+      ...req.body,
+      user: currentUser.id,
+      type: 0,
+      event_id: event_id,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+    
+    appointment.save().then(_appointment => {
+
+      const activity = new Activity({
+        content: currentUser.user_name + ' added appointment',
+        contacts: _appointment.contact,
+        appointments: _appointment.id,
+        user: currentUser.id,
+        type: 'appointments',
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+  
+      activity.save().then(_activity => {
+        myJSON = JSON.stringify(_appointment)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        return res.send({
+          status: true,
+          data
+        })
+      })
+    })
+    .catch(e => {
+        let errors
+      if (e.errors) {
+          console.log('e.errors', e.errors)
+        errors = e.errors.map(err => {      
+          delete err.instance
+          return err
+        })
       }
-    }).catch ((e) => {
-      console.error(e)
+      return res.status(500).send({
+        status: false,
+        error: errors || e
+      })
+    });
+  }else{
+
+    const appointment = new Appointment({
+      ...req.body,
+      user: currentUser.id,
+      type: 0,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+    
+    const _appointment = await appointment.save().then().catch(err=>{
+      console.log('err', err)
       return res.status(500).send({
         status: false,
         error: 'internal_server_error'
       })
-    })
-  }
+    });
+    
+    console.log('_appointment', _appointment)
+    const due_date = new Date(_appointment.due_start)
+    const due_start = new Date(_appointment.due_start).toISOString().replace(/-|:|\.\d\d\d/g,"")
+    const due_end = new Date(new Date(_appointment.due_start).setDate(due_date.getDate() + 1)).toISOString().replace(/-|:|\.\d\d\d/g,"");
+    const ctz = time_zone[currentUser.time_zone]
 
-  const appointment = new Appointment({
-    ...req.body,
-    user: currentUser.id,
-    type: 0,
-    event_id: event_id,
-    updated_at: new Date(),
-    created_at: new Date(),
-  })
-  
-  appointment.save()
-  .then(_appointment => {
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
 
+    for(let i = 0; i<_appointment.guests.length; i++){
+      new Promise((resolve, reject) => {
+        const msg = {
+          to: _appointment.guests[i],
+          from: currentUser.email,
+          templateId: config.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
+          dynamic_template_data: {
+            event_title: _appointment.title,
+            description: _appointment.description,
+            event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
+            event_address: _appointment.location,
+            organizer: currentUser.user_name,
+            add_google_calendar: "<a href='" + urls.GOOGLE_CALENDAR_URL+ encodeURI(`text=${_appointment.title}&dates=${due_start}/${due_end}&ctz=${ctz}&details=${_appointment.description}&location=${_appointment.location}&add=${_appointment.guests.slice(1)}`)+"'>Add to my google calendar</a>",
+            accept_invitation: `<a href='${urls.ACCEPT_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}'>Accept</a>`,
+            decline_invitation: `<a href='${urls.DECLINE_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}'>Decline</a>`,
+            email_signature: currentUser.email_signature,
+          }
+        }
+        sgMail.send(msg).then((_res) => {
+          console.log('mailres.errorcode', _res[0].statusCode);
+          if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
+            console.log('status', _res[0].statusCode)
+            resolve()
+          }
+        }).catch ((err) => {
+          console.error('err', err)
+          resolve()
+        })
+      })
+    }
+    
     const activity = new Activity({
       content: currentUser.user_name + ' added appointment',
       contacts: _appointment.contact,
@@ -396,26 +398,18 @@ const create = async(req, res) => {
       myJSON = JSON.stringify(_appointment)
       const data = JSON.parse(myJSON);
       data.activity = _activity
-      res.send({
+      return res.send({
         status: true,
         data
       })
-    })
-  })
-  .catch(e => {
-      let errors
-    if (e.errors) {
-        console.log('e.errors', e.errors)
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
+    }).catch(err=>{
+      console.log('err', err)
+      return res.status(500).send({
+        status: false,
+        error: 'internal_server_error'
       })
-    }
-    return res.status(500).send({
-      status: false,
-      error: errors || e
     })
-  });
+  }
 }
 
 const addGoogleCalendarById = async (auth, user, appointment) => {
@@ -824,9 +818,38 @@ const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) 
     })
 }
 
+const accept = async(req, res) =>{
+  const user = await User.findOne({_id: req.query.user})
+  const contact = await Contact.findOne({_id: req.query.contact})
+
+  const msg = {
+    to: user.email,
+    from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
+    html: `${contact.first_name} ${contact.last_name} - ${contact.email} - ${contact.cell_phone} accepted appointment invitation`
+  }
+  sgMail.send(msg).then((_res) => {
+    console.log('mailres.errorcode', _res[0].statusCode);
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
+      console.log('status', _res[0].statusCode)
+    }
+  }).catch ((e) => {
+    console.error(e)
+    return res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  })
+}
+
+const decline = async(req, res) =>{
+  
+}
+
 module.exports = {
     get,
     create,
     edit,
-    remove
+    remove,
+    accept,
+    decline
 }

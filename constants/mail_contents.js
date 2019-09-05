@@ -19,6 +19,10 @@ const mail_contents = {
     FOLLOWUP_REMINDER: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Follow up reminder: "
+    },
+    NOTIFICATION_APPOINTMENT: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Appointment notification"
     }
 }
 
