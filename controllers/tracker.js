@@ -265,23 +265,20 @@ const setup = (io) => {
       })
 
       socket.on('init_video', (data)=>{
-        console.log('init_video')
-        console.log('data', data)
         createVideo(data).then((_video_tracker)=>{
-          console.log('initiated')
           socket.type = 'video'
           socket.video_tracker = _video_tracker
         })
       })
 
       socket.on('update_video', (duration)=>{
-        console.log('update_video')
         const video_tracker = socket.video_tracker
-        updateVideo(duration, video_tracker._id).then(()=>{
-          console.log('updated')
-        }).catch(err=>{
-          console.log('err', err)
-        })
+        if(typeof video_tracker != 'undefined'){
+          updateVideo(duration, video_tracker._id).then(()=>{
+          }).catch(err=>{
+            console.log('err', err)
+          })
+        }
       })
 
       socket.on('disconnect', () => {
