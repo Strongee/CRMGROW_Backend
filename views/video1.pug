@@ -12,8 +12,10 @@ head
   meta(property='og:image', content=`${video.thumbnail}`)
   link(rel='stylesheet', type='text/css', href='./assets/css/bootstrap.css')
   link(rel='stylesheet', type='text/css', href='./assets/css/video.css')
-  <script type="text/javascript" src="https://content.jwplatform.com/libraries/LJ361JYj.js"></script>
-		<script type="text/javascript">jwplayer.key = 'ypdL3Acgwp4Uh2/LDE9dYh3W/EPwDMuA2yid4ytssfI=';</script>
+  script(type='text/javascript', src='https://content.jwplatform.com/libraries/LJ361JYj.js')
+script(type='text/javascript').
+  jwplayer.key = 'ypdL3Acgwp4Uh2/LDE9dYh3W/EPwDMuA2yid4ytssfI=';
+
 .view-container.container
   //- video#material-video.video-js(controls='', preload='true', playsinline='',  poster=`${video.thumbnail}`, data-setup='{}')
   //-   source(src=`${video.url}`, type=`${video.type}`)
