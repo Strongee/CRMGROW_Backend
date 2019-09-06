@@ -103,8 +103,17 @@ const create = async(req, res) => {
     }
   }
 
+  let cell_phone = req.body.cell_phone
+  let cleaned = ('' + cell_phone).replace(/\D/g, '')
+  let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+  if (match) {
+      let intlCode = (match[1] ? '+1 ' : '')
+      cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+  }
+
   const contact = new Contact({
     ...req.body,
+    cell_phone: cell_phone,
     user: currentUser.id,
     created_at: new Date(),
     updated_at: new Date(),
@@ -186,6 +195,17 @@ const edit = async(req, res) => {
 
   for (let key in editData) {
     contact[key] = editData[key]
+  }
+
+  if(typeof req.body.cell_phone != 'undefined'){
+    let cell_phone = req.body.cell_phone
+    let cleaned = ('' + cell_phone).replace(/\D/g, '')
+    let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+    if (match) {
+        let intlCode = (match[1] ? '+1 ' : '')
+        cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+    }
+    contact["cell_phone"] = cell_phone
   }
 
   contact["updated_at"] = new Date()
