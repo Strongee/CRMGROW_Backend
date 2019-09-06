@@ -104,6 +104,8 @@ const create = async (req, res) => {
          });
         }, function (err) {
           console.log('Error: ' + err);
+        }).catch(err=>{
+          console.log('ffmpeg processing err', err)
         });
       } catch (e) {
         console.log(e.code);
