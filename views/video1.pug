@@ -1,0 +1,62 @@
+doctype html
+head
+  meta(charset='utf-8')
+  title CRMgrow
+  base(href='/')
+  meta(name='viewport', content='width=device-width, initial-scale=1, minimun-scale=1.0, maximum-scale=1.0')
+  link(rel='shortcut icon', type='image/x-icon', href='./assets/icons/favicon.ico')
+  meta(property='og:title', content=`${video.title}`)
+  meta(property='og:description', content=`${video.description}`)
+  meta(property='og:image:width', content='600')
+  meta(property='og:image:height', content='300')
+  meta(property='og:image', content=`${video.thumbnail}`)
+  link(rel='stylesheet', type='text/css', href='./assets/css/bootstrap.css')
+  link(rel='stylesheet', type='text/css', href='./assets/css/video.css')
+  <script type="text/javascript" src="https://content.jwplatform.com/libraries/LJ361JYj.js"></script>
+		<script type="text/javascript">jwplayer.key = 'ypdL3Acgwp4Uh2/LDE9dYh3W/EPwDMuA2yid4ytssfI=';</script>
+.view-container.container
+  //- video#material-video.video-js(controls='', preload='true', playsinline='',  poster=`${video.thumbnail}`, data-setup='{}')
+  //-   source(src=`${video.url}`, type=`${video.type}`)
+  //- video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
+    //- source(src=`${video.url}`, type=`${video.type}`)
+#player
+input#videoSrc(type='hidden', value=`${video.url}`)
+input#posterSrc(type='hidden', value=`${video.thumbnail}`)
+
+  .description
+    .desc-title
+      | #{video.title}
+    .desc-content
+      | #{video.description}
+.user-information(*ngif='video.user')
+  img(src=`${sender.picture_profile}`, onerror="( this.src = './assets/icons/empty_user.png' );")
+  .info
+    .name #{sender.user_name}
+    hr
+    .cell_phone
+      i.icon.icon-phone
+      | #{sender.cell_phone}
+    .email
+      i.icon.icon-envelope
+      | #{sender.email}
+input#video-duration(type='hidden', value=`${video.duration/1000}`)
+
+<script>
+    var poster = document.getElementById("posterSrc").value
+    var video = document.getElementById("videoSrc").value
+    jwplayer("myElement").setup({
+                id: 'player',
+                image: poster,
+	            aspectratio: "16:9",
+				width: '100%',
+				aspectratio: '16:9',
+				autostart: true,
+                file : video,
+                primary: 'flash',    
+            }
+    )
+</script>
+
+script(type='text/javascript', src='./assets/js/jquery.js')
+script(type='text/javascript', src='./assets/js/video.js')
+

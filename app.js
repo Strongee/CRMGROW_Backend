@@ -27,7 +27,9 @@ app.use(express.static('../frontend_admin/dist'));
 app.use(express.static(__dirname + '/public'));
 
 
+app.get('/video/temp', VideoCtrl.play1)
 app.get('/video', VideoCtrl.play)
+
 
 app.get('/auth', (req, res) => {
     res.render('auth')

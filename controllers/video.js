@@ -38,6 +38,18 @@ const play = async(req, res) => {
   })
 }
 
+const play1 = async(req, res) => {  
+  const video_id = req.query.video
+  const sender_id = req.query.user
+  const video = await Video.findOne({_id: video_id})
+  const sender = await User.findOne({_id: sender_id})
+ 
+  res.render('video1', {
+      video: video,
+      sender: sender
+  })
+}
+
 const create = async (req, res) => {
   if (req.file) {
     if (req.currentUser) {
@@ -376,6 +388,7 @@ const getHistory = async(req, res) => {
 
 module.exports = {
     play,
+    play1,
     create,
     updateDetail,
     get,
