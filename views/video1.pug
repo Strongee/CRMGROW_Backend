@@ -13,18 +13,16 @@ head
   link(rel='stylesheet', type='text/css', href='./assets/css/bootstrap.css')
   link(rel='stylesheet', type='text/css', href='./assets/css/video.css')
   script(type='text/javascript', src='https://content.jwplatform.com/libraries/LJ361JYj.js')
-script(type='text/javascript').
-  jwplayer.key = 'ypdL3Acgwp4Uh2/LDE9dYh3W/EPwDMuA2yid4ytssfI=';
+  script(type='text/javascript').
+    jwplayer.key = 'ypdL3Acgwp4Uh2/LDE9dYh3W/EPwDMuA2yid4ytssfI=';
 
 .view-container.container
   //- video#material-video.video-js(controls='', preload='true', playsinline='',  poster=`${video.thumbnail}`, data-setup='{}')
   //-   source(src=`${video.url}`, type=`${video.type}`)
   //- video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
-    //- source(src=`${video.url}`, type=`${video.type}`)
-#player
-input#videoSrc(type='hidden', value=`${video.url}`)
-input#posterSrc(type='hidden', value=`${video.thumbnail}`)
-
+  //- source(src=`${video.url}`, type=`${video.type}`)
+    
+  #player
   .description
     .desc-title
       | #{video.title}
@@ -42,6 +40,8 @@ input#posterSrc(type='hidden', value=`${video.thumbnail}`)
       i.icon.icon-envelope
       | #{sender.email}
 input#video-duration(type='hidden', value=`${video.duration/1000}`)
+input#videoSrc(type='hidden', value=`${video.url}`)
+input#posterSrc(type='hidden', value=`${video.thumbnail}`)
 
 script.
   var poster = document.getElementById("posterSrc").value
