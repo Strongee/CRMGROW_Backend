@@ -27,7 +27,7 @@ app.use(express.static('../frontend_admin/dist'));
 app.use(express.static(__dirname + '/public'));
 
 
-// app.get('/video', VideoCtrl.play1)
+app.get('/videoTemp', VideoCtrl.vplay)
 app.get('/video', VideoCtrl.play)
 
 
