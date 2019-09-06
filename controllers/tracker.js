@@ -268,6 +268,7 @@ const setup = (io) => {
         console.log('init_video')
         console.log('data', data)
         createVideo(data).then((_video_tracker)=>{
+          console.log('initiated')
           socket.type = 'video'
           socket.video_tracker = _video_tracker
         })
@@ -276,7 +277,9 @@ const setup = (io) => {
       socket.on('update_video', (duration)=>{
         console.log('update_video')
         const video_tracker = socket.video_tracker
-        updateVideo(duration, video_tracker._id).catch(err=>{
+        updateVideo(duration, video_tracker._id).then(()=>{
+          console.log('updated')
+        }).catch(err=>{
           console.log('err', err)
         })
       })
