@@ -85,13 +85,11 @@ const create = async (req, res) => {
                 ACL: 'public-read'
             };
     
-            s3.upload(params, async function(s3Err, upload) {
+            s3.upload(params, async (s3Err, upload)=>{
                 if (s3Err) throw s3Err
                 console.log(`File uploaded successfully at ${upload.Location}`)
                 
-                fs.unlinkSync(file_path).catch(err=>{
-                  console.log('File remove err')
-                })
+                fs.unlinkSync(file_path)
 
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
@@ -104,9 +102,7 @@ const create = async (req, res) => {
          });
         }, function (err) {
           console.log('Error: ' + err);
-        }).catch(err=>{
-          console.log('ffmpeg processing err', err)
-        });
+        })
       } catch (e) {
         console.log(e.code);
         console.log(e.msg);
