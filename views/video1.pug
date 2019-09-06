@@ -41,21 +41,21 @@ input#posterSrc(type='hidden', value=`${video.thumbnail}`)
       | #{sender.email}
 input#video-duration(type='hidden', value=`${video.duration/1000}`)
 
-<script>
-    var poster = document.getElementById("posterSrc").value
-    var video = document.getElementById("videoSrc").value
-    jwplayer("myElement").setup({
-                id: 'player',
-                image: poster,
-	            aspectratio: "16:9",
-				width: '100%',
-				aspectratio: '16:9',
-				autostart: true,
-                file : video,
-                primary: 'flash',    
-            }
-    )
-</script>
+script.
+  var poster = document.getElementById("posterSrc").value
+  var video = document.getElementById("videoSrc").value
+  jwplayer("player").setup({
+  id: 'player',
+  image: poster,
+  aspectratio: "16:9",
+  width: '100%',
+  aspectratio: '16:9',
+  autostart: true,
+  file : video,
+  primary: 'flash',
+  }
+  )
+
 
 script(type='text/javascript', src='./assets/js/jquery.js')
 script(type='text/javascript', src='./assets/js/video.js')
