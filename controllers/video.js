@@ -257,15 +257,12 @@ const sendVideo = async (req, res) => {
   }
 
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
-  console.log('<html><head><title>Video Invitation</title></head><body><p>' + content + '</p><a href="' + video_link + '">'+ 
-  '<div style="background-image:'+video_preview+';background-size:cover;background-repeat:no-repeat" style="max-width: 250px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:18px;height:18px;"/></div>' + 
-  video_title + '</a><br/><br/>'+ currentUser.email_signature + '</body></html>')
   const msg = {
     to: email,
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p>' + content + '</p><a href="' + video_link + '">'+ 
-    '<img src="'+video_preview+'" style="max-width: 250px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:18px;height:18px;"/></img>' + 
+    '<div style="background-image:'+video_preview+';background-size:cover;background-repeat:no-repeat; max-width: 250px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:35px;height:25px;"/></img>' + 
     video_title + '</a><br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
