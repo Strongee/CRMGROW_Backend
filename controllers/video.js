@@ -67,7 +67,7 @@ const create = async (req, res) => {
       const video = new Video({
         user: req.currentUser.id,
         url: urls.FILE_URL+file_name,
-        thumbnail: thumbnail_path,
+        thumbnail: urls.VIDEO_THUMBNAIL_URL + path.basename(thumbnail_path),
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -118,49 +118,37 @@ const create = async (req, res) => {
   }
 }
 
-const updateDetail = async (req, res) => {
-  
+const updateDetail = async (req, res) => {  
   const {currentUser} = req
-  if (req.body.thumbnail) { // base 64 image
-    const editData = req.body
+  const editData = req.body
+  if (req.body.thumbnail) { // base 64 image    
     const file_name = uuidv1()
-  
-    if(req.body.thumbnail != 'undefined'){
-      const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-      video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
-    }
+    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
+    video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+  }
     console.log('_id: req.params.id', req.params.id)
     const video = await Video.findOne({_id: req.params.id})
 
-      if (!video) {
-        return res.status(401).json({
-          status: false,
-          error: 'Invalid_permission'
-        })
-      }
-
-      delete editData.url
-      for (let key in editData) {
-        video[key] = editData[key]
-      }
-
-      
-
-      video["updated_at"] = new Date()
-
-      video.save().then((_video)=>{
-        res.send({
-          status: true,
-          data: _video
-        })
+    if (!video) {
+      return res.status(401).json({
+        status: false,
+        error: 'Invalid_permission'
       })
+    }
 
-  }else{
-    res.status(401).json({
-      status: false,
-      error: 'Not_found_thumbnail'
+    editData.url ? delete editData.url : '';
+    editData.thumbnail ? delete editData.thumbnail : '';
+    for (let key in editData) {
+      video[key] = editData[key]
+    }
+    video["updated_at"] = new Date()
+
+    video.save().then((_video)=>{
+      res.send({
+        status: true,
+        data: _video
+      })
     })
-  }
 }
 
 
