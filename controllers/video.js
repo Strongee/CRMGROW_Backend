@@ -62,6 +62,7 @@ const create = async (req, res) => {
         type: req.file.mimetype,
         created_at: new Date()
       })
+      
       const _video = await video.save().then()
       res.send({
         status: true,
@@ -233,7 +234,7 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  const {email, content, video, video_title, video_preview, contact, contact_name} = req.body
+  let {email, content, subject, video, video_title, video_preview, contact, contact_name} = req.body
 
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using email',
@@ -248,16 +249,27 @@ const sendVideo = async (req, res) => {
 
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
+  if(typeof subject == 'undefined'){
+    subject = video_title
+  }
+  if(typeof content == 'undefined'){
+    content = ''
+  }
+
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
+  console.log('<html><head><title>Video Invitation</title></head><body><p>' + content + '</p><a href="' + video_link + '">'+ 
+  '<div style="background-image:'+video_preview+';background-size:cover;background-repeat:no-repeat" style="max-width: 250px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:18px;height:18px;"/></div>' + 
+  video_title + '</a><br/><br/>'+ currentUser.email_signature + '</body></html>')
   const msg = {
     to: email,
     from: currentUser.email,
-    subject: video_title,
-    html: '<html><head><title>Video Invitation</title></head><body>Hi '+ contact_name.charAt(0).toUpperCase() + contact_name.slice(1) + 
-          ',<br/><p>' + content + '</p><p>Please click on the video link below to learn more!<p/><a href="' + video_link + '">'+ 
-          '<img src='+video_preview+' style="max-width: 250px; display: block;"></img>' + 
-          video_title + '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+    subject: subject,
+    html: '<html><head><title>Video Invitation</title></head><body><p>' + content + '</p><a href="' + video_link + '">'+ 
+    '<img src="'+video_preview+'" style="max-width: 250px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:18px;height:18px;"/></img>' + 
+    video_title + '</a><br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
+
+  console.log(msg)
 
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
@@ -308,7 +320,12 @@ const sendText = async (req, res) => {
     throw error // Invalid phone number
   }
 
-    const body = content + '\n' + video_title + '\n' + video_link
+    let body
+    if(typeof content == 'undefined'){
+      body = video_link
+    }else{
+      body = content + '\n' + video_link
+    }
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
