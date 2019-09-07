@@ -19,7 +19,7 @@ const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
-const ffmpeg = require('ffmpeg');
+const ffmpeg = require('fluent-ffmpeg');
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
@@ -56,9 +56,18 @@ const create = async (req, res) => {
     if (req.currentUser) {
       const file_name = req.file.filename
       const file_path = req.file.path
+      let process = new ffmpeg(file_path);
+ 
+      const thumbnail_path = THUMBNAILS_PATH + uuidv1()+'.png'
+      process.takeScreenshots({
+          count: 1
+        }, thumbnail_path, function(err) {
+        console.log('screenshots were saved')
+      });
       const video = new Video({
         user: req.currentUser.id,
         url: urls.FILE_URL+file_name,
+        thumbnail: thumbnail_path,
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -70,7 +79,6 @@ const create = async (req, res) => {
       })
       
       try { 
-        let process = new ffmpeg(file_path);
         process.then(function (_res) {
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
@@ -89,12 +97,10 @@ const create = async (req, res) => {
             s3.upload(params, async (s3Err, upload)=>{
                 if (s3Err) throw s3Err
                 console.log(`File uploaded successfully at ${upload.Location}`)
-                
-                fs.unlinkSync(file_path)
-
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
                 __video.save().then(___video=>{
+                  fs.unlinkSync(file_path)
                 }).catch(err=>{
                   console.log('err', err)
                 })
@@ -118,7 +124,11 @@ const updateDetail = async (req, res) => {
   if (req.body.thumbnail) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
-    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
+  
+    if(req.body.thumbnail != 'undefined'){
+      const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
+      video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+    }
     console.log('_id: req.params.id', req.params.id)
     const video = await Video.findOne({_id: req.params.id})
 
@@ -134,7 +144,7 @@ const updateDetail = async (req, res) => {
         video[key] = editData[key]
       }
 
-      video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+      
 
       video["updated_at"] = new Date()
 
@@ -262,7 +272,7 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p>' + content + '</p><a href="' + video_link + '">'+ 
-    '<div style="background-image:url('+video_preview+');background-size:cover;background-repeat:no-repeat; max-width: 250px; height: 140px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display: block; position: absolute; left: 50%; top: 50%;transform: translate(-50%,-50%);width:35px;height:25px;"/></img>' + 
+    '<div style="background-image:url('+video_preview+');background-size:cover;background-repeat:no-repeat; max-width: 250px; height: 140px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display:block; position:absolute; left:50%; top:50%;transform:translate(-50%,-50%);width:35px;height:25px;"/></img>' + 
      '</a><br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
