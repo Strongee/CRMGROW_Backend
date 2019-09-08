@@ -300,10 +300,14 @@ const login = async (req, res) => {
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 
-  const payment = await Payment.findOne({_id: user.payment});
+  if(user.payment != 'undefined'){
+    const payment = await Payment.findOne({_id: user.payment});
+    user['payment'] = payment
+  }
+  
   delete user.hash
   delete user.salt
-  user['payment'] = payment
+  
   return res.send({
     status: true,
     data: {

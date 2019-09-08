@@ -10,7 +10,7 @@ const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
 const { catchError } = require('../controllers/error')
 const config  = require('../config/config')
-const { VIDEO_PATH } = require('../config/path')
+const { TEMP_PATH } = require('../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -42,7 +42,7 @@ const router = express.Router()
 
   const fileStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, VIDEO_PATH)
+      cb(null, TEMP_PATH)
     },
     filename: (req, file, cb) => {
       cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
@@ -73,6 +73,8 @@ router.post('/send', UserCtrl.checkAuth, catchError(VideoCtrl.sendVideo))
 // Send Video on text
 router.post('/send-text', UserCtrl.checkAuth, catchError(VideoCtrl.sendText))
 
+// Streaming video
+router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
 

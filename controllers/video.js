@@ -13,6 +13,7 @@ const { THUMBNAILS_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
+const {TEMP_PATH, VIDEO_PATH} = require('../config/path')
 const uuidv1 = require('uuid/v1')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
@@ -50,6 +51,20 @@ const vplay = async(req, res) => {
   })
 }
 
+const pipe = async(req, res) =>{
+  const filePath = TEMP_PATH + req.params.name
+  console.info('File Path:', filePath)
+  if (fs.existsSync(filePath)) {
+    const contentType = mime.contentType(path.extname(req.params.name))
+    res.set('Content-Type', contentType)
+    res.sendFile(filePath)
+  } else {
+    res.status(404).send({
+      status: false,
+      error: 'File does not exist'
+    })
+  }
+}
 
 const create = async (req, res) => {
   if (req.file) {
@@ -68,7 +83,7 @@ const create = async (req, res) => {
       });
       const video = new Video({
         user: req.currentUser.id,
-        url: urls.FILE_URL+file_name,
+        url: urls.VIDEO_URL+file_name,
         thumbnail: urls.VIDEO_THUMBNAIL_URL + thumbnail_name+'.png',
         type: req.file.mimetype,
         created_at: new Date()
@@ -81,7 +96,11 @@ const create = async (req, res) => {
       })
       
       try { 
-        process.on('end', function() {
+        process
+        // set target codec
+        .format('mp4')
+        // setup event handlers
+        .on('end', function() {
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;
@@ -102,7 +121,12 @@ const create = async (req, res) => {
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
                 __video.save().then(___video=>{
-                  fs.unlinkSync(file_path)
+                  fs.unlinkSync(VIDEO_PATH+file_name)
+
+                  setTimeout(function(){
+                    fs.unlinkSync(TEMP_PATH+file_name)
+                  }, 1000 * 60 * 60 * 8)
+            
                 }).catch(err=>{
                   console.log('err', err)
                 })
@@ -111,7 +135,8 @@ const create = async (req, res) => {
          });
         }, function (err) {
           console.log('Error: ' + err);
-        })
+        }) // save to file
+        .save(VIDEO_PATH+file_name);
       } catch (e) {
         console.log(e.code);
         console.log(e.msg);
@@ -404,6 +429,7 @@ const getHistory = async(req, res) => {
 module.exports = {
     play,
     vplay,
+    pipe,
     create,
     updateDetail,
     get,
