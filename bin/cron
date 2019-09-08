@@ -252,7 +252,9 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         + contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone + '\n'
       const body = follow_up.content + '\n'
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-      twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
+      twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
+        console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a')}`)
+      }).catch(err=>{
         console.log('send sms err: ',err)
       })
       reminder['del'] = true;
