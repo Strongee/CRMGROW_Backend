@@ -58,7 +58,7 @@ const create = async (req, res) => {
       const file_path = req.file.path
       let process = new ffmpeg(file_path);
  
-      const thumbnail_name = uuidv1()
+      const thumbnail_name = uuidv1() 
       process.takeScreenshots({
           count: 1,
           timemarks: [ '0' ],
@@ -69,7 +69,7 @@ const create = async (req, res) => {
       const video = new Video({
         user: req.currentUser.id,
         url: urls.FILE_URL+file_name,
-        thumbnail: urls.VIDEO_THUMBNAIL_URL + thumbnail_name,
+        thumbnail: urls.VIDEO_THUMBNAIL_URL + thumbnail_name+'.png',
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -129,7 +129,7 @@ const updateDetail = async (req, res) => {
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
-  
+
     const video = await Video.findOne({_id: req.params.id})
 
     if (!video) {

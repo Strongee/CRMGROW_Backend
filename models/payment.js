@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Payment = mongoose.model('payment',{
+    card_name: String,
     customer_id: String,
     card_id: String,
     plan_id: String, 
