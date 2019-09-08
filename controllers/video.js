@@ -121,10 +121,11 @@ const create = async (req, res) => {
 const updateDetail = async (req, res) => {  
   const {currentUser} = req
   const editData = req.body
+  let thumbnail;
   if (req.body.thumbnail) { // base 64 image    
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    video['thumbnail'] = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
     console.log('_id: req.params.id', req.params.id)
     const video = await Video.findOne({_id: req.params.id})
@@ -140,6 +141,9 @@ const updateDetail = async (req, res) => {
     editData.thumbnail ? delete editData.thumbnail : '';
     for (let key in editData) {
       video[key] = editData[key]
+    }
+    if( thumbnail ){
+      video["thumbnail"] = thumbnail
     }
     video["updated_at"] = new Date()
 
