@@ -81,7 +81,7 @@ const create = async (req, res) => {
       })
       
       try { 
-        process.then(function (_res) {
+        process.on('end', function() {
           console.log('The video is ready to be processed')
           fs.readFile(file_path, (err, data) => {
             if (err) throw err;

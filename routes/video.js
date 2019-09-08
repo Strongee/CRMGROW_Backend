@@ -10,7 +10,7 @@ const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
 const { catchError } = require('../controllers/error')
 const config  = require('../config/config')
-const { FILES_PATH } = require('../config/path')
+const { VIDEO_PATH } = require('../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -42,7 +42,7 @@ const router = express.Router()
 
   const fileStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, FILES_PATH)
+      cb(null, VIDEO_PATH)
     },
     filename: (req, file, cb) => {
       cb(null, uuidv1() + '.' + mime.extension(file.mimetype))

@@ -53,7 +53,6 @@ const updateDetail = async (req, res) => {
     const file_path = base64Img.imgSync(req.body.preview, PREVIEW_PATH, file_name)
       const pdf = await PDF.findOne({user: currentUser.id, _id: req.params.id})
 
-      console.log('pdf', pdf)
       if (!pdf) {
         return res.status(401).json({
           status: false,
