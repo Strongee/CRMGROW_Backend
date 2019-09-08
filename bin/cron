@@ -202,6 +202,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
     console.log(err)
   })
   
+  console.log('reminder_array', reminder_array)
   for(let i=0; i<reminder_array.length; i ++){
     const reminder = reminder_array[i]
     if(reminder['type'] == 'follow_up'){
