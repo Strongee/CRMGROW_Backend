@@ -77,7 +77,7 @@ const get = async(req, res) => {
       
       outlook.base.makeApiCall(apiOptions, function(error, response) {
         if (error) {
-          console.log(JSON.stringify(error))
+          console.log('err',JSON.stringify(error))
           return res.status(401).json({
             status: false,
             error: error
@@ -260,7 +260,7 @@ const create = async(req, res) => {
       await new Promise((resolve, reject) => {
         outlook.calendar.createEvent(createEventParameters, function(error, event) {
           if (error) {
-            console.log(error);
+            console.log('err', error);
             reject(error)
           }
           resolve(event.Id)
@@ -345,7 +345,6 @@ const create = async(req, res) => {
       })
     });
     
-    console.log('_appointment', _appointment)
     const due_date = new Date(_appointment.due_start)
     const due_start = new Date(_appointment.due_start).toISOString().replace(/-|:|\.\d\d\d/g,"")
     const due_end = new Date(new Date(_appointment.due_start).setDate(due_date.getDate() + 1)).toISOString().replace(/-|:|\.\d\d\d/g,"");
@@ -448,7 +447,6 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
         console.log('There was an error contacting the Calendar service: ' + err);
         reject(err)
       }
-      console.log('event.data.id', event.data.id)
       resolve(event.data.id) 
     })
   })
@@ -513,7 +511,7 @@ const edit = async(req, res) => {
         outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
         outlook.calendar.updateEvent(updateEventParameters, function(error) {
           if (error) {
-            console.log(error);
+            console.log('err', error);
             return;
           }
         });
@@ -653,7 +651,7 @@ const remove = async(req, res) => {
         outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0')
         outlook.calendar.deleteEvent(deleteEventParameters, function(error) {
           if (error) {
-            console.log(error);
+            console.log('err',error);
           }
         })
     }else{
@@ -828,7 +826,6 @@ const accept = async(req, res) =>{
     html: `${contact.first_name} ${contact.last_name} - ${contact.email} - ${contact.cell_phone} accepted appointment invitation`
   }
   sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
       console.log('status', _res[0].statusCode)
     }

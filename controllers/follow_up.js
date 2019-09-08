@@ -150,7 +150,6 @@ const getByDate = async(req, res) =>{
       
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -172,7 +171,6 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'today': {
-      console.log('moment', moment().utcOffset(8))
       const start =  moment().utcOffset(time_zone).startOf('day');      // set to 12:00 am today
       const end =  moment().utcOffset(time_zone).endOf('day');          // set to 23:59 pm today
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start, $lt: end}})
@@ -213,7 +211,6 @@ const getByDate = async(req, res) =>{
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -244,7 +241,6 @@ const getByDate = async(req, res) =>{
       
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -274,7 +270,6 @@ const getByDate = async(req, res) =>{
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -303,7 +298,6 @@ const getByDate = async(req, res) =>{
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact

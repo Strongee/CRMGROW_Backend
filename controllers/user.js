@@ -700,7 +700,6 @@ const syncCalendar = async(req, res) => {
             console.log('There was an error contacting the Calendar service: ' + error);
             return;
           }
-          console.log('event', event.Id)
           _appointments[i].event_id = event.Id
           _appointments[i].save()
         })
