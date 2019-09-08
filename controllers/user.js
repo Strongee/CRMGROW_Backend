@@ -323,7 +323,6 @@ const checkAuth = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, config.JWT_SECRET)
       const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-      console.info('Auth Success:', decoded, ip)
     } catch (err) {
       console.error(err)
       
@@ -338,6 +337,7 @@ const checkAuth = async (req, res, next) => {
     req.currentUser = await User.findOne({ _id: decoded.id})
 
     if (req.currentUser) {
+      console.info('Auth Success:', req.currentUser.email)
       next()
     } else {
       console.error('Valid JWT but no user:', decoded)

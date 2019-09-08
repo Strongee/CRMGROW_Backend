@@ -193,7 +193,7 @@ const weekly_report = new CronJob({
   timeZone: 'US/Central'
 });
 
-const reminder_job = new CronJob('* * * * 0-6', async() =>{
+const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   const due_date = new Date()
   due_date.setSeconds(0)
@@ -202,10 +202,8 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
     console.log(err)
   })
   
-  console.log('reminder_array', reminder_array)
   for(let i=0; i<reminder_array.length; i ++){
     const reminder = reminder_array[i]
-    console.log('reminder', reminder)
     if(reminder['type'] == 'follow_up'){
       const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
         console.log('err: ', err)
@@ -228,7 +226,6 @@ const reminder_job = new CronJob('* * * * 0-6', async() =>{
           detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
         },
       }
-      console.log('msg', msg)
 
       sgMail.send(msg).then((res) => {
         console.log('mailres.errorcode', res[0].statusCode);

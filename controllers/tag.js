@@ -4,7 +4,6 @@ const Tag = require('../models/tag');
 const get = async(req, res) => {
   const { currentUser } = req
   const data = await Tag.find({user :currentUser.id});
-  console.log('data', data);
   if (!data) {
     return res.status(401).json({
       status: false,
