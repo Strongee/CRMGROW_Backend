@@ -79,7 +79,11 @@ const create = async (req, res) => {
           timemarks: [ '00:00:00.000' ],
           filename: thumbnail_name
         }, THUMBNAILS_PATH, function(err) {
-        console.log('screenshots were saved')
+          if(!err){
+            console.log('screenshots were saved')
+          }else{
+            console.log('err', err)
+          }
       });
       const video = new Video({
         user: req.currentUser.id,
@@ -351,7 +355,9 @@ const sendText = async (req, res) => {
       body = content + '\n' + video_link
     }
   
-    twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
+    twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).catch(err=>{
+      console.log()
+    })
     
     res.send({
       status: true,
