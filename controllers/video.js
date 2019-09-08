@@ -61,7 +61,7 @@ const create = async (req, res) => {
       const thumbnail_name = uuidv1() 
       process.takeScreenshots({
           count: 1,
-          timemarks: [ '0' ],
+          timemarks: [ '00:00:00.000' ],
           filename: thumbnail_name
         }, THUMBNAILS_PATH, function(err) {
         console.log('screenshots were saved')
