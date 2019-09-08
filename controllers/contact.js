@@ -83,7 +83,7 @@ const create = async(req, res) => {
   }
 
   let contact_old
-  if(typeof req.body['email'] != ''){
+  if(typeof req.body['email'] != 'undefined'){
     contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
     if(contact_old != null){
       return res.send({
