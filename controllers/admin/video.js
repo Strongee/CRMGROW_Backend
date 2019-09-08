@@ -74,7 +74,6 @@ const updateDetail = async (req, res) => {
 
 
 const get = async (req, res) => {
-  console.log('id', req.params.id)
   const video = await Video.findOne({_id: req.params.id})
   const user = await User.findOne({_id: video.user})
     if (!video) {

@@ -58,16 +58,18 @@ const create = async (req, res) => {
       const file_path = req.file.path
       let process = new ffmpeg(file_path);
  
-      const thumbnail_path = THUMBNAILS_PATH + uuidv1()+'.png'
+      const thumbnail_name = uuidv1()
       process.takeScreenshots({
-          count: 1
-        }, thumbnail_path, function(err) {
+          count: 1,
+          timemarks: [ '0' ],
+          filename: thumbnail_name
+        }, THUMBNAILS_PATH, function(err) {
         console.log('screenshots were saved')
       });
       const video = new Video({
         user: req.currentUser.id,
         url: urls.FILE_URL+file_name,
-        thumbnail: urls.VIDEO_THUMBNAIL_URL + path.basename(thumbnail_path),
+        thumbnail: urls.VIDEO_THUMBNAIL_URL + thumbnail_name,
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -127,7 +129,7 @@ const updateDetail = async (req, res) => {
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
-    console.log('_id: req.params.id', req.params.id)
+  
     const video = await Video.findOne({_id: req.params.id})
 
     if (!video) {
