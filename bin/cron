@@ -248,7 +248,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         throw error // Invalid phone number
       }
     
-      const title = `You have an appointment at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a')} with following contnent` + '\n' 
+      const title = `You have an upcomming follow up at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm:ss a')} with following contnent` + '\n' 
         + contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone + '\n'
       const body = follow_up.content + '\n'
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
