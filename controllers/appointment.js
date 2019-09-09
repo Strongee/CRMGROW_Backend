@@ -100,6 +100,7 @@ const get = async(req, res) => {
                     }
                   }
                   let  _outlook_calendar_data = {}
+                  console.log('_outlook_calendar_data_list[i]', _outlook_calendar_data_list[i])
                   _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
                   _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
                   _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
