@@ -106,9 +106,21 @@ const get = async(req, res) => {
                   }else{
                     _outlook_calendar_data.description = ''
                   }
-                  _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
-                  _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
-                  _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
+                  if(typeof _outlook_calendar_data_list[i].Location != 'undefined'){
+                    _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
+                  }else{
+                    _outlook_calendar_data.location = ''
+                  }
+                  if(typeof  _outlook_calendar_data_list[i].Start != 'undefined'){
+                    _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
+                  }else{
+                    _outlook_calendar_data.due_start = ''
+                  }
+                  if(typeof  _outlook_calendar_data_list[i].End != 'undefined'){
+                    _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
+                  }else{
+                    _outlook_calendar_data.due_end = ''
+                  }
                   _outlook_calendar_data.guests = guests
                   _outlook_calendar_data.event_id = _outlook_calendar_data_list[i].Id
                   data.push(_outlook_calendar_data)
