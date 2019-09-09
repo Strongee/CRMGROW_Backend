@@ -100,9 +100,12 @@ const get = async(req, res) => {
                     }
                   }
                   let  _outlook_calendar_data = {}
-                  console.log('_outlook_calendar_data_list[i]', _outlook_calendar_data_list[i])
                   _outlook_calendar_data.title = _outlook_calendar_data_list[i].Subject
-                  _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
+                  if(typeof _outlook_calendar_data_list[i].Body != 'undefined'){
+                    _outlook_calendar_data.description = _outlook_calendar_data_list[i].Body.Content
+                  }else{
+                    _outlook_calendar_data.description = ''
+                  }
                   _outlook_calendar_data.location = _outlook_calendar_data_list[i].Location.DisplayName
                   _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
                   _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
