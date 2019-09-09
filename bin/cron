@@ -198,6 +198,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
   const due_date = new Date()
   due_date.setSeconds(0)
   due_date.setMilliseconds(000)
+
   const reminder_array = await Reminder.find({due_date: due_date, del: false}).catch(err=>{
     console.log(err)
   })
@@ -257,7 +258,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
       }).catch(err=>{
         console.log('send sms err: ',err)
       })
-      reminder['del'] = true;
+  
       reminder.save().catch(err=>{
         console.log(err)
       })
