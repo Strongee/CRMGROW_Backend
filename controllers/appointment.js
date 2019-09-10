@@ -383,7 +383,35 @@ const create = async(req, res) => {
             event_address: _appointment.location,
             organizer: currentUser.user_name,
             add_google_calendar: "<a href='" + urls.GOOGLE_CALENDAR_URL+ encodeURI(`text=${_appointment.title}&dates=${due_start}/${due_end}&ctz=${ctz}&details=${_appointment.description}&location=${_appointment.location}&add=${_appointment.guests.slice(1)}`)+"'>Add to my google calendar</a>",
-            accept_invitation: `<a href='${urls.ACCEPT_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}'>Accept</a>`,
+            accept_invitation: `<a href='${urls.ACCEPT_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}' style='    align-items: center;
+            border: 1px solid #dadce0;
+            display: inline-flex;
+            justify-content: center;
+            outline: none;
+            position: relative;
+            z-index: 0;
+            -webkit-font-smoothing: antialiased;
+            font-family: 'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
+            font-size: .875rem;
+            letter-spacing: .25px;
+            background: none;
+            border-radius: 4px;
+            box-sizing: border-box;
+            color: #5f6368;
+            cursor: pointer;
+            font-weight: 500;
+            height: 36px;
+            outline: none;
+            padding: 0 16px;
+            box-shadow: inset 0 0 0 1px #dadce0;
+            min-width: 104px;
+            padding-left: 12px;
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            user-select: none;
+            margin-right: 12px;
+            text-decoration: none;
+        }'>Accept</a>`,
             decline_invitation: `<a href='${urls.DECLINE_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}'>Decline</a>`,
             email_signature: currentUser.email_signature,
           }
