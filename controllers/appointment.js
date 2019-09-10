@@ -852,7 +852,7 @@ const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) 
 }
 
 const accept = async(req, res) =>{
-  const appointment = await Appointment.findOne({_id: req.query.appointment})
+  const _appointment = await Appointment.findOne({_id: req.query.appointment})
   const user = await User.findOne({_id: appointment.user})
   const contact = req.query.contact
 
@@ -860,9 +860,17 @@ const accept = async(req, res) =>{
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
     subject: 'Appointment Accept Notification',
-    body: `${contact} accepted appointment invitation`
+    templateId: config.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
+    dynamic_template_data: {
+      event_title: _appointment.title,
+      description: _appointment.description,
+      event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
+      event_address: _appointment.location,
+      organizer: currentUser.user_name,
+      appointment_notification: `${contact} accepted the following appointment invitation`
+    },
   }
-  console.log(msg)
+
   sgMail.send(msg).then((_res) => {
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
       console.log('status', _res[0].statusCode)
@@ -886,8 +894,17 @@ const decline = async(req, res) =>{
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
     subject: 'Appointment Decline Notification',
-    body: `${contact} declined appointment invitation`
+    templateId: config.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
+    dynamic_template_data: {
+      event_title: _appointment.title,
+      description: _appointment.description,
+      event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
+      event_address: _appointment.location,
+      organizer: currentUser.user_name,
+      appointment_notification: `${contact} declined the following appointment invitation`
+    },
   }
+
   sgMail.send(msg).then((_res) => {
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
       console.log('status', _res[0].statusCode)
