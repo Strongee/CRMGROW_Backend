@@ -234,7 +234,7 @@ const getByDate = async(req, res) =>{
     case 'next_week': {
       
       const next_week_start = moment().utcOffset(time_zone).add(2, 'day').startOf('day')
-      const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
+      const next_week_end = moment().utcOffset(time_zone).add( 7,'days').endOf('day')
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: next_week_start, $lt: next_week_end}})
 
       let data = [];
