@@ -859,6 +859,7 @@ const accept = async(req, res) =>{
   const msg = {
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
+    subject: 'Appointment Accept Notification',
     body: `${contact} accepted appointment invitation`
   }
   sgMail.send(msg).then((_res) => {
@@ -883,6 +884,7 @@ const decline = async(req, res) =>{
   const msg = {
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
+    subject: 'Appointment Decline Notification',
     body: `${contact} declined appointment invitation`
   }
   sgMail.send(msg).then((_res) => {
