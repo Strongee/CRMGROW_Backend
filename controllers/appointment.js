@@ -864,9 +864,9 @@ const accept = async(req, res) =>{
     dynamic_template_data: {
       event_title: _appointment.title,
       description: _appointment.description,
-      event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
+      event_time: moment(_appointment.due_start).utcOffset(user.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(user.time_zone).format("HH:mm") + ' UTC '+ user.time_zone,
       event_address: _appointment.location,
-      organizer: currentUser.user_name,
+      organizer: user.user_name,
       appointment_notification: `${contact} accepted the following appointment invitation`
     },
   }
@@ -887,7 +887,7 @@ const accept = async(req, res) =>{
 
 const decline = async(req, res) =>{
   const _appointment = await Appointment.findOne({_id: req.query.appointment})
-  const user = await user.findOne({_id: appointment.user})
+  const user = await User.findOne({_id: appointment.user})
   const contact = req.query.contact
 
   const msg = {
@@ -898,9 +898,9 @@ const decline = async(req, res) =>{
     dynamic_template_data: {
       event_title: _appointment.title,
       description: _appointment.description,
-      event_time: moment(_appointment.due_start).utcOffset(currentUser.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(currentUser.time_zone).format("HH:mm") + ' UTC '+ currentUser.time_zone,
+      event_time: moment(_appointment.due_start).utcOffset(user.time_zone).format("dddd, MMMM Do YYYY HH:mm") + ' - ' + moment(_appointment.due_end).utcOffset(user.time_zone).format("HH:mm") + ' UTC '+ user.time_zone,
       event_address: _appointment.location,
-      organizer: currentUser.user_name,
+      organizer: user.user_name,
       appointment_notification: `${contact} declined the following appointment invitation`
     },
   }
