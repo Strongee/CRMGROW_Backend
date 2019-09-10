@@ -7,6 +7,7 @@ const time_zone = require('../constants/time_zone')
 const mail_contents = require('../constants/mail_contents')
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
+const Reminder = require('../models/reminder');
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
   clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
