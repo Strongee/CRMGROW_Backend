@@ -258,6 +258,8 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
       }).catch(err=>{
         console.log('send sms err: ',err)
       })
+
+      reminder['del'] = true
   
       reminder.save().catch(err=>{
         console.log(err)
@@ -316,6 +318,8 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         console.log('send sms err: ',err)
       })
   
+      reminder['del'] = true
+      
       reminder.save().catch(err=>{
         console.log(err)
       })
