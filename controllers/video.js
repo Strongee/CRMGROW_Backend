@@ -306,7 +306,8 @@ const sendVideo = async (req, res) => {
         status: true,
       })
     }else {
-      res.status(404).send({
+      console.log('email sending err', msg.to+res[0].statusCode)
+      return res.status(404).send({
         status: false,
         error: _res[0].statusCode
       })

@@ -4,6 +4,7 @@ const moment = require('moment')
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const time_zone = require('../constants/time_zone')
+const mail_contents = require('../constants/mail_contents')
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
 const credentials = {
@@ -399,6 +400,22 @@ const create = async(req, res) => {
       })
     }
     
+    const mins = new Date(_appointment.due_start).getMinutes()-30 
+    let rdue_date = new Date(_appointment.due_start).setMinutes(mins)
+    const reminder = new Reminder({
+      contact: _appointment.contact,
+      due_date: rdue_date,
+      type: 'appointment',
+      user: currentUser.id,
+      appointment: _appointment.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    reminder.save().catch(err=>{
+      console.log('error', err)
+    })
+
     const activity = new Activity({
       content: currentUser.user_name + ' added appointment',
       contacts: _appointment.contact,
@@ -833,29 +850,51 @@ const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) 
 }
 
 const accept = async(req, res) =>{
-  const user = await User.findOne({_id: req.query.user})
-  const contact = await Contact.findOne({_id: req.query.contact})
+  const appointment = await Appointment.findOne({_id: req.query.appointment})
+  const user = await user.findOne({_id: appointment.user})
+  const contact = req.query.contact
 
   const msg = {
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
-    html: `${contact.first_name} ${contact.last_name} - ${contact.email} - ${contact.cell_phone} accepted appointment invitation`
+    body: `${contact} accepted appointment invitation`
   }
   sgMail.send(msg).then((_res) => {
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
       console.log('status', _res[0].statusCode)
+      return res.send('Thanks for your submitting')
+    }else {
+      console.log('email sending err', msg.to+res[0].statusCode)
+      return res.send('Sorry! Something went wrong... It couldn`t be notified to appointment organizer')
     }
   }).catch ((e) => {
     console.error(e)
-    return res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
-    })
+    return res.send('Sorry! Something went wrong... It couldn`t be notified to appointment organizer')
   })
 }
 
 const decline = async(req, res) =>{
-  
+  const appointment = await Appointment.findOne({_id: req.query.appointment})
+  const user = await user.findOne({_id: appointment.user})
+  const contact = req.query.contact
+
+  const msg = {
+    to: user.email,
+    from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
+    body: `${contact} declined appointment invitation`
+  }
+  sgMail.send(msg).then((_res) => {
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
+      console.log('status', _res[0].statusCode)
+      return res.send('Thanks for your submitting')
+    }else {
+      console.log('email sending err', msg.to+res[0].statusCode)
+      return res.send('Sorry! Something went wrong... It couldn`t be notified to appointment organizer')
+    }
+  }).catch ((e) => {
+    console.error(e)
+    return res.send('Sorry! Something went wrong... It couldn`t be notified to appointment organizer')
+  })
 }
 
 module.exports = {
