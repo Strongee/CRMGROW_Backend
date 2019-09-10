@@ -852,7 +852,7 @@ const updateGoogleCalendarById = async (auth, event_id, appointment, time_zone) 
 
 const accept = async(req, res) =>{
   const appointment = await Appointment.findOne({_id: req.query.appointment})
-  const user = await user.findOne({_id: appointment.user})
+  const user = await User.findOne({_id: appointment.user})
   const contact = req.query.contact
 
   const msg = {
