@@ -1,3 +1,15 @@
+let phone = document.querySelector(".cell_phone span").innerText
+let newStr = phone.replace(/\D/g, '');
+if (newStr.length < 10) {
+    while (newStr.length < 10) {
+        newStr = "0" + newStr;
+    }
+}
+newStr = newStr.slice(newStr.length - 10, newStr.length);
+let result = "";
+result = "(" + newStr.slice(0, 3) + ") " + newStr.slice(3, 6) + "-" + newStr.slice(6, 10);
+document.querySelector(".cell_phone span").innerText = result
+
 const url = new URL(location.href)
 const query_params = new URLSearchParams(url.search)
 const video = query_params.get("video")
@@ -30,6 +42,7 @@ var watched_time = 0;
 var duration = document.querySelector("#video-duration").value
 function updateStartTime() {
     let currentTime = vPlayer.currentTime
+    console.log("Start Time", currentTime);
     for( let i = 0; i < trackingTimes.length; i++ ){
         if( trackingTimes[i][0] <= currentTime && currentTime <= trackingTimes[i][1] ){
             currentTrackerIndex = i;
@@ -44,6 +57,7 @@ function updateStartTime() {
 
 function updateEndTime(){
     let currentTime = vPlayer.currentTime
+    console.log("Update Time", currentTime);
     // Seeking Check
     if( trackingTimes[currentTrackerIndex] && trackingTimes[currentTrackerIndex][1] != null && trackingTimes[currentTrackerIndex][1] != undefined && ( trackingTimes[currentTrackerIndex][1] < currentTime - 0.6 || currentTime < trackingTimes[currentTrackerIndex][1]) ) {
         return;
