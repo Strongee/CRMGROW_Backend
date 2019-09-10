@@ -313,7 +313,8 @@ const sendVideo = async (req, res) => {
       })
     }
   }).catch ((e) => {
-    console.error('email sending err', msg.to,e)
+    console.log('email sending err', msg.to)
+    console.error(e)
     res.status(500).send({
       status: false,
       error: 'internal_server_error'
