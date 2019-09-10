@@ -886,7 +886,7 @@ const accept = async(req, res) =>{
 }
 
 const decline = async(req, res) =>{
-  const appointment = await Appointment.findOne({_id: req.query.appointment})
+  const _appointment = await Appointment.findOne({_id: req.query.appointment})
   const user = await user.findOne({_id: appointment.user})
   const contact = req.query.contact
 
