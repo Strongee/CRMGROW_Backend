@@ -129,7 +129,7 @@ const create = async (req, res) => {
 
                   setTimeout(function(){
                     fs.unlinkSync(TEMP_PATH+file_name)
-                  }, 1000 * 60 * 60 * 8)
+                  }, 1000 * 60 * 60 * 2)
             
                 }).catch(err=>{
                   console.log('err', err)
