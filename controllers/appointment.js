@@ -862,6 +862,7 @@ const accept = async(req, res) =>{
     subject: 'Appointment Accept Notification',
     body: `${contact} accepted appointment invitation`
   }
+  console.log(msg)
   sgMail.send(msg).then((_res) => {
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
       console.log('status', _res[0].statusCode)
