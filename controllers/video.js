@@ -269,6 +269,7 @@ const sendVideo = async (req, res) => {
   const { currentUser } = req
   let {email, content, subject, video, video_title, video_preview, contact, contact_name} = req.body
 
+  console.log('content', content)
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using email',
     contacts: contact,
