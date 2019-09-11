@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Contact = mongoose.model('contact',{
      first_name: String,
-     last_name: String,
+     last_name: {type: String, default: ''},
      email: {type: String, default: ''},
      user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
      address: String,
