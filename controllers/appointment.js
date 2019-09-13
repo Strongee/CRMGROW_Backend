@@ -94,7 +94,7 @@ const get = async(req, res) => {
               })
             } else {
                 const _outlook_calendar_data_list = response.body.value
-                console.log('_outlook_calendar_data_list', _outlook_calendar_data_list)
+                console.log('_outlook_calendar_data_list', _outlook_calendar_data_list.length)
                 for(let i = 0; i < _outlook_calendar_data_list.length; i++){
                   let guests = [];
                   if(typeof _outlook_calendar_data_list[i].Attendees != "undefined"){
