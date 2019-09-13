@@ -76,7 +76,6 @@ const create = async (req, res) => {
       const thumbnail_name = uuidv1() 
       process.takeScreenshots({
           count: 1,
-          timemarks: [ '00:00:00.000' ],
           filename: thumbnail_name
         }, THUMBNAILS_PATH, function(err) {
           if(!err){
@@ -93,6 +92,10 @@ const create = async (req, res) => {
         created_at: new Date()
       })
       
+
+      console.log('TEMP_PATH+file_name', TEMP_PATH+file_name)
+      console.log('file_path', file_path)
+
       const _video = await video.save().then()
       res.send({
         status: true,
@@ -106,7 +109,7 @@ const create = async (req, res) => {
         // setup event handlers
         .on('end', function() {
           console.log('The video is ready to be processed')
-          fs.readFile(file_path, (err, data) => {
+          fs.readFile(VIDEO_PATH+file_name, (err, data) => {
             if (err) throw err;
             console.log('File read was successful', data)
             const today = new Date()
@@ -124,17 +127,13 @@ const create = async (req, res) => {
                 console.log(`File uploaded successfully at ${upload.Location}`)
                 const __video = await Video.findOne({_id: _video.id})
                 __video['url'] = upload.Location
-                __video.save().then(___video=>{
-                  fs.unlinkSync(VIDEO_PATH+file_name)
-
-                  setTimeout(function(){
-                    fs.unlinkSync(TEMP_PATH+file_name)
-                  }, 1000 * 60 * 60 * 2)
-            
-                }).catch(err=>{
+                __video.save().catch(err=>{
                   console.log('err', err)
                 })
-                
+                fs.unlinkSync(VIDEO_PATH+file_name)
+                setTimeout(function(){
+                  fs.unlinkSync(TEMP_PATH+file_name)
+                }, 1000 * 60 * 60 * 1)
             })
          });
         }, function (err) {
