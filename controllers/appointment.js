@@ -274,8 +274,6 @@ const create = async(req, res) => {
         token: accessToken,
         event: newEvent
       }
-      
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
       await new Promise((resolve, reject) => {
         outlook.calendar.createEvent(createEventParameters, function(error, event) {

@@ -188,8 +188,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       
       const subscription = JSON.parse(currentUser.desktop_notification_subscription)
       const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
-      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
-      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + created_at
+      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY').toString() + 'at' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
       const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
     }
@@ -206,18 +206,18 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         throw error // Invalid phone number
       }
     
-      const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone +' watched video -' + video.title + '\n'
-      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
-      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' at ' + created_at
+      const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
+      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
 
-      twilio.messages.create({from: fromNumber, body: title+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
+      twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
     }
 
 
     // send email notification
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-    const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
+    const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm: a')
 
     const msg = {
       to: currentUser.email,
