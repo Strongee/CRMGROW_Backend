@@ -91,10 +91,6 @@ const create = async (req, res) => {
         type: req.file.mimetype,
         created_at: new Date()
       })
-      
-
-      console.log('TEMP_PATH+file_name', TEMP_PATH+file_name)
-      console.log('file_path', file_path)
 
       const _video = await video.save().then()
       res.send({
@@ -131,9 +127,9 @@ const create = async (req, res) => {
                   console.log('err', err)
                 })
                 fs.unlinkSync(VIDEO_PATH+file_name)
-                setTimeout(function(){
+            
                   fs.unlinkSync(TEMP_PATH+file_name)
-                }, 1000 * 60 * 60 * 1)
+               
             })
          });
         }, function (err) {
