@@ -8,7 +8,8 @@ const { ENV_PATH } = require('./config/path')
 require('dotenv').config({ path: ENV_PATH })
 
 let indexRouter = require('./routes/index.js');
-const VideoCtrl = require('./controllers/video')
+const VideoCtrl = require('./controllers/video');
+const PDFCtrl = require('./controllers/pdf');
 const { catchError } = require('./controllers/error')
 
 let app = express();
@@ -29,6 +30,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/videoTemp', VideoCtrl.vplay)
 app.get('/video', VideoCtrl.play)
+app.get('/pdf', PDFCtrl.play)
 
 
 app.get('/auth', (req, res) => {

@@ -1,0 +1,242 @@
+.view-container {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5%;
+}
+
+.view-container .description {
+    margin-top: 20px;
+}
+
+.view-container .description .desc-title {
+    font-size: 3rem;
+    color: #040054;
+    text-align: center;
+}
+
+.view-container .description .desc-content {
+    font-size: 18px;
+    color: #b6b5cd;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.user-information {
+    margin-top: 20px;
+    background-color: #8b8d98;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+.user-information img {
+    margin-right: 30px;
+    width: 200px;
+    height: 200px;
+    border-radius: 100px;
+    object-fit: cover;
+}
+.user-information .info {
+    color: white;
+    font-size: 2.5rem;
+}
+
+.user-information * {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.user-information hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    height: 5px;
+    background-color: #0006ff;
+    width: 100px;
+    border: none;
+    margin-left: 0px;
+}
+
+.user-information .icon {
+    width: 30px;
+    display: inline-block;
+    background-color: white;
+    margin: 0px 10px;
+}
+
+.icon {
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center center;
+    -webkit-mask-position: center center;
+    background: gray;
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon-envelope {
+    -webkit-mask-image: url(../icons/email.svg);
+    mask-image: url(../icons/email.svg);
+  }
+  
+  .icon-phone {
+    -webkit-mask-image: url(../icons/phone.svg);
+    mask-image: url(../icons/phone.svg);
+  }
+
+.video-js .vjs-big-play-button{
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+}
+  
+@media screen and (max-width: 575px) {
+    .user-information {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-information img {
+        margin-right: auto;
+        margin-left: auto;
+        width: 150px;
+        height: 150px;
+    }
+    .user-information .info{
+        font-size: 2rem;
+    }
+    .user-information hr{
+        display: none;
+    }
+    .user-information .info i{
+        width: 24px;
+    }
+
+    .view-container .description .desc-title{
+        font-size: 2.2rem;
+    }
+    .view-container .description .desc-content{
+        font-size: 1.4rem;
+    }
+}
+
+
+.prev{
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    border: none;
+    background: #555;
+    height: 70px;
+    width: 70px;
+    border-radius: 50%;
+    filter: opacity(0.1);
+}
+
+.pdf-controls{
+    position: relative;
+    height: 60px;
+    display: none;
+    max-width: 600px;
+    margin: auto;
+}
+
+.pdf-controls.enable{
+    display: block;
+}
+
+.prev > .icon{
+    display: block;
+    background-color: transparent;
+    width: 36px;
+    height: 36px;
+    margin-left: 0px;
+    border-left: 2px solid white;
+    border-top: 2px solid white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.next{
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    border: none;
+    background: #555;
+    height: 70px;
+    width: 70px;
+    border-radius: 50%;
+    text-align: center;
+    filter: opacity(0.1);       
+}
+
+.next > .icon{
+    display: block;
+    transform: rotate(45deg);
+    background-color: transparent;
+    width: 36px;
+    height: 36px;
+    margin-left: 5px;
+    border-right: 2px solid white;
+    border-top: 2px solid white;
+} 
+
+.page-status{
+    text-align: center;
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    height: 60px;
+    line-height: 60px;
+}
+
+.page-status .page{
+    padding: 2px 5px;
+    border-radius: 2px;
+    color: black;
+    min-width: 30px;
+    display: inline-block;
+    text-align: center;
+    line-height: 20px;
+}
+
+.prev{
+    filter: opacity(0.7);
+}
+
+
+.next{
+    filter: opacity(0.7);
+}
+
+.pdf-toolbar{
+    display: none;
+}
+
+.loader{
+    width: 100px;
+    height: 100px;
+    border: 8px solid #6c757d;
+    border-top: 8px solid transparent;
+    border-radius: 50%;
+    margin: 100px auto;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+}

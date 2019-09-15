@@ -1,0 +1,55 @@
+doctype html
+head
+  meta(charset='utf-8')
+  title #{sender.user_name}
+  base(href='/')
+  meta(name='viewport', content='width=device-width, initial-scale=1, minimun-scale=1.0, maximum-scale=1.0')
+  link(rel='shortcut icon', type='image/x-icon', href='./assets/icons/favicon.ico')
+  meta(property='og:title', content=`${pdf.title}`)
+  meta(property='og:description', content=`${pdf.description}`)
+  meta(property='og:image:width', content='600')
+  meta(property='og:image:height', content='300')
+  meta(property='og:image', content=`${pdf.thumbnail}`)
+  link(rel='stylesheet', type='text/css', href='./assets/css/bootstrap.css')
+  link(rel='stylesheet', type='text/css', href='./assets/plugins/pdf/jquery.touchPDF.css')
+  link(rel='stylesheet', type='text/css', href='./assets/css/pdf.css')  
+  script(type='text/javascript', src='/socket.io/socket.io.js')
+.view-container.container
+  div#viewer
+  .pdf-controls
+    button.prev
+        i.icon.icon-arrow-down
+    button.next
+        i.icon.icon-arrow-down
+    .page-status
+        span.current-page.page
+        |  / 
+        span.total-page.page
+
+  .description
+    .desc-title
+      | #{pdf.title}
+    .desc-content
+      | #{pdf.description}
+.user-information
+  img(src=`${sender.picture_profile}`, onerror="( this.src = './assets/icons/empty_user.png' );")
+  .info
+    .name #{sender.user_name}
+    hr
+    .cell_phone
+      i.icon.icon-phone
+      span #{sender.cell_phone}
+    .email
+      i.icon.icon-envelope
+      | #{sender.email}
+input#pdf(type='hidden', value=`${pdf.url}`)
+script(src='./assets/plugins/pdf/pdf.compatibility.js')
+script(src='./assets/plugins/pdf/pdf.js')
+script(type='text/javascript', src='//code.jquery.com/jquery-1.11.2.min.js')
+script(src='./assets/plugins/pdf/jquery.touchSwipe.js')
+script(src='./assets/plugins/pdf/jquery.touchPDF.js')
+script(src='./assets/plugins/pdf/jquery.panzoom.js')
+script(src='./assets/plugins/pdf/jquery.mousewheel.js')
+
+
+script(type='text/javascript', src='./assets/js/pdf.js')
