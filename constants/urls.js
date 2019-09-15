@@ -11,7 +11,7 @@
       FILE_URL: 'https://app.crmgrow.com/api/file/',
       VIDEO_URL: 'https://app.crmgrow.com/api/video/pipe/',
       MATERIAL_VIEW_VIDEO_URL: 'https://app.crmgrow.com/video',
-      MATERIAL_VIEW_PDF_URL: 'https://app.crmgrow.com/material/view/pdf/',
+      MATERIAL_VIEW_PDF_URL: 'https://app.crmgrow.com/pdf/',
       CONTACT_PAGE_URL: 'https://app.crmgrow.com/contacts/',
       FOLLOWUP_PAGE_URL: 'https://app.crmgrow.com/follow-up/',
       ASSETS_URL: 'https://app.crmgrow.com/assets/',
