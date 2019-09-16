@@ -97,15 +97,16 @@ const get = async(req, res) => {
                 // Calendar sync works on the CalendarView endpoint
                 if(calendar.length>0){
                   for(let i=0; i<calendar.length; i++){
-                    requestUrl = outlook.base.apiEndpoint() + '/Me/calendars/'+calendar[i].Id+'/CalendarView?startDateTime='+params.startDateTime+'&endDateTime='+params.endDateTime;
+                    requestUrl = outlook.base.apiEndpoint() + '/Me/calendars/'+calendar[i].Id+'/CalendarView';
                     
                     apiOptions = {
                       url: requestUrl,
                       token: accessToken,
                       headers: headers,
-
+                      query: params
                     }
                   
+                  console.log('apiOptions', apiOptions)
                   await new Promise((resolve, reject) =>{
                     outlook.base.makeApiCall(apiOptions, function(error, response) {
                       if (error) {
@@ -151,6 +152,9 @@ const get = async(req, res) => {
                                 }
                                 if(typeof  _outlook_calendar_data_list[i].End != 'undefined'){
                                   _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
+                                  _outlook_calendar_data.time_zone = _outlook_calendar_data_list[i].End.TimeZone
+                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_end)
+                                  console.log(' _outlook_calendar_data.time_zone',  _outlook_calendar_data.time_zone)
                                 }else{
                                   _outlook_calendar_data.due_end = ''
                                 }
