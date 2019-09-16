@@ -37,7 +37,7 @@ const get = async(req, res) => {
       // Set up our sync window from midnight on the current day to
       // midnight 7 days from now.
       let startDate = moment().startOf('week');
-      let endDate = moment(startDate).add(30, 'days');
+      let endDate = moment(startDate).add(7, 'days');
       // The start and end date are passed as query parameters
       let params = {
         startDateTime: startDate.toISOString(),
@@ -97,16 +97,15 @@ const get = async(req, res) => {
                 // Calendar sync works on the CalendarView endpoint
                 if(calendar.length>0){
                   for(let i=0; i<calendar.length; i++){
-                    requestUrl = outlook.base.apiEndpoint() + '/Me/calendars/'+calendar[i].Id+'/CalendarView';
+                    requestUrl = outlook.base.apiEndpoint() + '/Me/calendars/'+calendar[i].Id+'/CalendarView?startDateTime='+params.startDateTime+'&endDateTime='+params.endDateTime;
                     
                     apiOptions = {
                       url: requestUrl,
                       token: accessToken,
                       headers: headers,
-                      query: params
+
                     }
                   
-                  console.log('apiOptions', apiOptions)
                   await new Promise((resolve, reject) =>{
                     outlook.base.makeApiCall(apiOptions, function(error, response) {
                       if (error) {
