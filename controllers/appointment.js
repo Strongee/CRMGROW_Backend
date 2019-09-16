@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator/check')
 const outlook = require('node-outlook')
-const moment = require('moment')
+const moment = require('moment-timezone')
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const time_zone = require('../constants/time_zone')
@@ -106,7 +106,6 @@ const get = async(req, res) => {
                       query: params
                     }
                   
-                  console.log('apiOptions', apiOptions)
                   await new Promise((resolve, reject) =>{
                     outlook.base.makeApiCall(apiOptions, function(error, response) {
                       if (error) {
@@ -146,15 +145,18 @@ const get = async(req, res) => {
                                 }
                                 if(typeof  _outlook_calendar_data_list[i].Start != 'undefined'){
                                   _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
-                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_start)
+                                  _outlook_calendar_data.time_zone = _outlook_calendar_data_list[i].Start.TimeZone
+                                  _outlook_calendar_data.due_start = moment.tz(_outlook_calendar_data.due_start,  _outlook_calendar_data.time_zone).toISOString()
+                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_start.toISOString())
                                 }else{
                                   _outlook_calendar_data.due_start = ''
                                 }
                                 if(typeof  _outlook_calendar_data_list[i].End != 'undefined'){
                                   _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
                                   _outlook_calendar_data.time_zone = _outlook_calendar_data_list[i].End.TimeZone
-                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_end)
-                                  console.log(' _outlook_calendar_data.time_zone',  _outlook_calendar_data.time_zone)
+                                  _outlook_calendar_data.due_end = moment.tz(_outlook_calendar_data.due_end,  _outlook_calendar_data.time_zone).toISOString()
+                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_end.toISOString())
+
                                 }else{
                                   _outlook_calendar_data.due_end = ''
                                 }
