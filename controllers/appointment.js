@@ -106,6 +106,7 @@ const get = async(req, res) => {
                       query: params
                     }
                   
+                  console.log('apiOptions', apiOptions)
                   await new Promise((resolve, reject) =>{
                     outlook.base.makeApiCall(apiOptions, function(error, response) {
                       if (error) {
@@ -145,6 +146,7 @@ const get = async(req, res) => {
                                 }
                                 if(typeof  _outlook_calendar_data_list[i].Start != 'undefined'){
                                   _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
+                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_start)
                                 }else{
                                   _outlook_calendar_data.due_start = ''
                                 }
