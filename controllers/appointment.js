@@ -147,7 +147,6 @@ const get = async(req, res) => {
                                   _outlook_calendar_data.due_start = _outlook_calendar_data_list[i].Start.DateTime
                                   _outlook_calendar_data.time_zone = _outlook_calendar_data_list[i].Start.TimeZone
                                   _outlook_calendar_data.due_start = moment.tz(_outlook_calendar_data.due_start,  _outlook_calendar_data.time_zone).toISOString()
-                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_start.toISOString())
                                 }else{
                                   _outlook_calendar_data.due_start = ''
                                 }
@@ -155,7 +154,6 @@ const get = async(req, res) => {
                                   _outlook_calendar_data.due_end = _outlook_calendar_data_list[i].End.DateTime
                                   _outlook_calendar_data.time_zone = _outlook_calendar_data_list[i].End.TimeZone
                                   _outlook_calendar_data.due_end = moment.tz(_outlook_calendar_data.due_end,  _outlook_calendar_data.time_zone).toISOString()
-                                  console.log(' _outlook_calendar_data.due_start',  _outlook_calendar_data.due_end.toISOString())
 
                                 }else{
                                   _outlook_calendar_data.due_end = ''
