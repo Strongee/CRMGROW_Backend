@@ -244,7 +244,10 @@ const getAll = async (req, res) => {
             }
         },
         {
-          $match: { "video": _video_list[i]._id }
+          $match: { 
+                    "video": _video_list[i]._id,
+                    "user": currentUser._id
+                  }
         }
     ])
 

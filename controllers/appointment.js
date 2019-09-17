@@ -24,6 +24,10 @@ const get = async(req, res) => {
   const { currentUser } = req
   let data = []
 
+  let startDate = req.params.date;
+  if(typeof startDate == 'undefined'){
+    startDate =  moment().startOf('week');
+  }
   if(currentUser.connect_calendar){
   
     if(currentUser.connected_email_type == 'outlook'){
@@ -36,8 +40,8 @@ const get = async(req, res) => {
       
       // Set up our sync window from midnight on the current day to
       // midnight 7 days from now.
-      let startDate = moment().startOf('week');
       let endDate = moment(startDate).add(7, 'days');
+      console.log('startDate', startDate)
       // The start and end date are passed as query parameters
       let params = {
         startDateTime: startDate.toISOString(),
