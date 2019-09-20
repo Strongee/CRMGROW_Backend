@@ -27,6 +27,8 @@ const get = async(req, res) => {
   let startDate = req.params.date;
   if(typeof startDate == 'undefined'){
     startDate =  moment().startOf('week');
+  }else {
+    startDate = moment(startDate).startOf('week');
   }
   if(currentUser.connect_calendar){
   
