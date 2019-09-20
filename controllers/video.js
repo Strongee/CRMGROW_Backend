@@ -127,8 +127,11 @@ const create = async (req, res) => {
                   console.log('err', err)
                 })
                 fs.unlinkSync(VIDEO_PATH+file_name)
-            
+                
+                setTimeout(function(){
                   fs.unlinkSync(TEMP_PATH+file_name)
+                }, 1000 * 60 * 60 * 24)
+                
                
             })
          });
