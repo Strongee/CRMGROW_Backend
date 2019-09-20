@@ -7,10 +7,10 @@ const get = async(req, res) => {
   const count = await Activity.find({user: currentUser.id}).count()
   let activity
   if(typeof req.params.id == 'undefined'){
-    activity = await Activity.find({user :currentUser.id}).sort({'created_at': -1}).populate('contacts').limit(20);
+    activity = await Activity.find({user :currentUser.id}).sort({'updated_at': -1}).populate('contacts').limit(20);
   }else{
     const id = parseInt(req.params.id)
-    activity = await Activity.find({user :currentUser.id}).sort({'created_at': -1}).populate('contacts').skip(id).limit(20);
+    activity = await Activity.find({user :currentUser.id}).sort({'updated_at': -1}).populate('contacts').skip(id).limit(20);
   }
 
   return res.send({
