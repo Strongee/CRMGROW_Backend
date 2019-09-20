@@ -241,10 +241,10 @@ const sendBatch = async(req, res) => {
   const {currentUser} = req
   const {cc, bcc, to, subject, content, contacts} = req.body
   
-  if(typeof to == 'undefined' || typeof subject == 'undefined'){
+  if(typeof subject == 'undefined' || subject == ""){
     return res.send({
       status: false,
-      error: 'TO or Subject email must be specified'
+      error: 'Subject email must be specified'
     })
   }
   const msg = {
@@ -253,7 +253,7 @@ const sendBatch = async(req, res) => {
     to: to,
     cc: cc,
     bcc: bcc,
-    html: content + '<br/><br/>' + currentUser.email_signature,
+    html: '<html><head><title>Email</title></head><body>'+content + '<br/><br/>' + currentUser.email_signature+'</body></html>',
   };
       
   sgMail.send(msg).then()
@@ -284,7 +284,7 @@ const sendBatch = async(req, res) => {
     data_list.push(data)
   }
         
-  res.send({
+  return res.send({
     status: true,
     data: data_list
   })

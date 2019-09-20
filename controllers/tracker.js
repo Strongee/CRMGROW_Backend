@@ -95,7 +95,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
       activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
       duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
+      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='line-height:30px;background-color:#2c6fae;border-radius:5px;font-size:15px; padding:10px 25px 10px 25px;display:inline-block; text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
     },
   };
 
