@@ -17,6 +17,7 @@ let app = express();
 app.use(cors())
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
+app.set('trust proxy', true)
 app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({ extended: false, limit: '50mb' }))
