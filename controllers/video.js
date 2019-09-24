@@ -105,7 +105,7 @@ const create = async (req, res) => {
         // setup event handlers
         .on('end', function() {
           console.log('The video is ready to be processed')
-          fs.readFile(VIDEO_PATH+file_name, (err, data) => {
+          fs.readFile(TEMP_PATH+file_name, (err, data) => {
             if (err) throw err;
             console.log('File read was successful', data)
             const today = new Date()
