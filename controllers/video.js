@@ -20,7 +20,10 @@ const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
-const ffmpeg = require('fluent-ffmpeg');
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const spawn = require('child-process-promise').spawn;
+
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
@@ -71,23 +74,10 @@ const create = async (req, res) => {
     if (req.currentUser) {
       const file_name = req.file.filename
       const file_path = req.file.path
-      let process = new ffmpeg(file_path);
  
-      const thumbnail_name = uuidv1() 
-      process.takeScreenshots({
-          count: 1,
-          filename: thumbnail_name
-        }, THUMBNAILS_PATH, function(err) {
-          if(!err){
-            console.log('screenshots were saved')
-          }else{
-            console.log('err', err)
-          }
-      });
       const video = new Video({
         user: req.currentUser.id,
         url: urls.VIDEO_URL+file_name,
-        thumbnail: urls.VIDEO_THUMBNAIL_URL + thumbnail_name+'.png',
         type: req.file.mimetype,
         created_at: new Date()
       })
@@ -98,51 +88,37 @@ const create = async (req, res) => {
         data: _video
       })
       
-      try { 
-        process
-        // set target codec
-        .format('mp4')
-        // setup event handlers
-        .on('end', function() {
-          console.log('The video is ready to be processed')
-          if (fs.existsSync(VIDEO_PATH+file_name)) {
-          fs.readFile(VIDEO_PATH+file_name, (err, data) => {
-            if (err) throw err;
-            console.log('File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'video' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-    
-            s3.upload(params, async (s3Err, upload)=>{
-                if (s3Err) throw s3Err
-                console.log(`File uploaded successfully at ${upload.Location}`)
-                const __video = await Video.findOne({_id: _video.id})
-                __video['url'] = upload.Location
-                __video.save().catch(err=>{
-                  console.log('err', err)
-                })
-                
-                fs.unlinkSync(VIDEO_PATH+file_name)
+    spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
+        if (fs.existsSync(VIDEO_PATH+file_name)) {
+        fs.readFile(VIDEO_PATH+file_name, (err, data) => {
+          if (err) throw err;
+          console.log('File read was successful', data)
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'video' +  year + '/' + month + '/' + file_name, 
+              Body: data,
+              ACL: 'public-read'
+          };
+          s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err) throw s3Err
+              console.log(`File uploaded successfully at ${upload.Location}`)
+              const __video = await Video.findOne({_id: _video.id})
+              __video['url'] = upload.Location
+              __video.save().catch(err=>{
+                console.log('err', err)
+              })
 
-                setTimeout(function(){
-                  fs.unlinkSync(TEMP_PATH+file_name)
-                }, 1000 * 60 * 60 * 2)     
-            })
-         });}
-        }, function (err) {
-          console.log('Error: ' + err);
-        }) // save to file
-        .save(VIDEO_PATH+file_name);
-      } catch (e) {
-        console.log(e.code);
-        console.log(e.msg);
-      }
+              fs.unlinkSync(VIDEO_PATH+file_name)
+
+              setTimeout(function(){
+                fs.unlinkSync(TEMP_PATH+file_name)
+              }, 1000 * 60 * 60 * 2)     
+          })
+       });}
+      }) 
     }
   }
 }
@@ -449,3 +425,5 @@ module.exports = {
     remove,
     getHistory
 }
+
+

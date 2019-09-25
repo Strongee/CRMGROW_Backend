@@ -25,11 +25,13 @@
   },
   "homepage": "https://github.com/teamgrow/backend_admin#readme",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@nguniversal/express-engine": "^1.0.0-beta.3",
     "@sendgrid/mail": "^6.3.1",
     "aws-sdk": "^2.422.0",
     "base64-img": "^1.0.4",
     "bcrypt": "^3.0.5",
+    "child-process-promise": "^2.2.1",
     "cookie-parser": "^1.4.4",
     "core-js": "^3.1.4",
     "cors": "^2.8.5",
