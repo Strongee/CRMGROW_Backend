@@ -502,8 +502,8 @@ const exportCSV = async(req, res) =>{
 const search = async(req, res) =>{
   const { currentUser } = req
   let search = req.body.search
-  let data = []
-  if(search.split(" ")[1] != ""){
+  let activity = []
+  if(!search.split(" ")[1]){
     contacts = await Contact.find({
       $or: [
         {first_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
@@ -523,15 +523,19 @@ const search = async(req, res) =>{
     for(let i=0; i<contacts.length; i++){
       const _activity = await Activity.find({contacts :contacts[i].id}).sort({'updated_at': -1}).limit(1);
       myJSON = JSON.stringify(_activity[0])
-      const activity = JSON.parse(myJSON)
-      delete activity.contacts
-      activity.contacts = contacts
-      data.push(activity)
+      const __activity = JSON.parse(myJSON)
+      delete __activity.contacts
+      __activity.contacts = contacts
+      activity.push(__activity)
     }
 
     return res.send({
       status: true,
-      data
+      data:{
+        activity,
+        search: search
+      }
+
     })
 }
 
