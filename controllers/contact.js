@@ -510,14 +510,14 @@ const search = async(req, res) =>{
         {email: {'$regex': '.*'+search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
         {last_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
         {cell_phone: {'$regex': '.*' + search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id}
-      ]})
+      ]}).sort({first_name: 1})
     }else{
       contacts = await Contact.find({
         $or: [
          {first_name: search.split(" ")[0], last_name: search.split(" ")[1], user: currentUser.id},
          {cell_phone: search, user: currentUser.id} 
         ]
-      })
+      }).sort({first_name: 1})
     }
 
     for(let i=0; i<contacts.length; i++){
