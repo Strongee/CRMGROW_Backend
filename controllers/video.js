@@ -349,16 +349,21 @@ const remove = async (req, res) => {
     try {
       const video = await Video.findOne({ _id: req.params.id, user: currentUser.id})
   
+      console.log('video.url.slice(34)', video.url.slice(44))
       if (video) {
+        console.log('video.url', video.url)
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-          Key: video.url
-        }, function (err,data){})
+          Key: video.url.slice(34)
+        }, function (err,data){
+          console.log('err', err)
+          console.log('data', data)
+        })
 
         video['del'] = true
         video.save()
 
-        res.send({
+        return res.send({
           status: true,
         })
       } else {
