@@ -525,7 +525,7 @@ const search = async(req, res) =>{
       myJSON = JSON.stringify(_activity[0])
       const __activity = JSON.parse(myJSON)
       delete __activity.contacts
-      __activity.contacts = contacts
+      __activity.contacts = contacts[i]
       activity.push(__activity)
     }
 
