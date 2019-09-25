@@ -20,9 +20,6 @@ const upload = multer({ storage: fileStorage })
 router.post('/', UserCtrl.checkAuth, catchError(ContactCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(ContactCtrl.getAll))
 
-// Get a pull contact info for profile page
-router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
-
 // Edit contact by id
 router.put('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.edit))
 
@@ -40,5 +37,11 @@ router.post('/import-csv', UserCtrl.checkAuth, upload.single('csv'), catchError(
 
 // Download contact list as csv file
 router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV))
+
+// Get a search contact info for profile page
+router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search))
+
+// Get a pull contact info for profile page
+router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 
 module.exports = router

@@ -499,10 +499,47 @@ const exportCSV = async(req, res) =>{
   })
 }
 
+const search = async(req, res) =>{
+  const { currentUser } = req
+  let search = req.body.search
+  let data = []
+  if(search.split(" ")[1] != ""){
+    contacts = await Contact.find({
+      $or: [
+        {first_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {email: {'$regex': '.*'+search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {last_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {cell_phone: {'$regex': '.*' + search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id}
+      ]})
+    }else{
+      contacts = await Contact.find({
+        $or: [
+         {first_name: search.split(" ")[0], last_name: search.split(" ")[1], user: currentUser.id},
+         {cell_phone: search, user: currentUser.id} 
+        ]
+      })
+    }
+
+    for(let i=0; i<contacts.length; i++){
+      const _activity = await Activity.find({contacts :contacts[i].id}).sort({'updated_at': -1}).limit(1);
+      myJSON = JSON.stringify(_activity[0])
+      const activity = JSON.parse(myJSON)
+      delete activity.contacts
+      activity.contacts = contacts
+      data.push(activity)
+    }
+
+    return res.send({
+      status: true,
+      data
+    })
+}
+
 module.exports = {
     getAll,
     get,
     create,
+    search,
     remove,
     edit,
     sendBatch,
