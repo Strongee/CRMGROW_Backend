@@ -105,7 +105,8 @@ const create = async (req, res) => {
         // setup event handlers
         .on('end', function() {
           console.log('The video is ready to be processed')
-          fs.readFile(TEMP_PATH+file_name, (err, data) => {
+          if (fs.existsSync(VIDEO_PATH+file_name)) {
+          fs.readFile(VIDEO_PATH+file_name, (err, data) => {
             if (err) throw err;
             console.log('File read was successful', data)
             const today = new Date()
@@ -126,15 +127,14 @@ const create = async (req, res) => {
                 __video.save().catch(err=>{
                   console.log('err', err)
                 })
+                
                 fs.unlinkSync(VIDEO_PATH+file_name)
 
                 setTimeout(function(){
                   fs.unlinkSync(TEMP_PATH+file_name)
-                }, 1000 * 60 * 60 * 2)
-                
-               
+                }, 1000 * 60 * 60 * 2)     
             })
-         });
+         });}
         }, function (err) {
           console.log('Error: ' + err);
         }) // save to file
