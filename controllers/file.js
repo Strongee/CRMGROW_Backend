@@ -30,9 +30,16 @@ const get = (req, res) => {
     const filePath = FILES_PATH + req.params.name
     console.info('File Path:', filePath)
     if (fs.existsSync(filePath)) {
-      const contentType = mime.contentType(path.extname(req.params.name))
-      res.set('Content-Type', contentType)
-      res.sendFile(filePath)
+      if(req.query.resize){
+        const readStream = fs.createReadStream(filePath)
+        let transform = sharp()
+        transform = transform.resize(100, 100)
+        return readStream.pipe(transform).pipe(res)
+      }else{
+        const contentType = mime.contentType(path.extname(req.params.name))
+        res.set('Content-Type', contentType)
+        return res.sendFile(filePath)
+      }
     } else {
       res.status(404).send({
         status: false,
