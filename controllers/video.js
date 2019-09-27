@@ -290,7 +290,7 @@ const sendVideo = async (req, res) => {
      '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
-  console.log('html', html)
+  console.log('html', msg.html)
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
