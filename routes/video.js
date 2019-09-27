@@ -75,6 +75,7 @@ router.post('/send-text', UserCtrl.checkAuth, catchError(VideoCtrl.sendText))
 
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))
+
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
 

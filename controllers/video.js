@@ -24,6 +24,8 @@ const AWS = require('aws-sdk')
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const spawn = require('child-process-promise').spawn;
 
+const sharp = require('sharp');
+
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
@@ -142,8 +144,7 @@ const updateDetail = async (req, res) => {
       })
     }
 
-    editData.url ? delete editData.url : '';
-    editData.thumbnail ? delete editData.thumbnail : '';
+
     for (let key in editData) {
       video[key] = editData[key]
     }
@@ -185,11 +186,20 @@ const getThumbnail = (req, res) => {
   const filePath = THUMBNAILS_PATH + req.params.name
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
-    const contentType = mime.contentType(path.extname(req.params.name))
-    res.set('Content-Type', contentType)
-    res.sendFile(filePath)
+    if(req.query.resize){
+      sharp(filePath).resize({ height: 250, width: 140 }).toFile(outputFile)
+      .then(function(outputFile) {
+        const contentType = mime.contentType(path.extname(req.params.name))
+        res.set('Content-Type', contentType)
+        return res.sendFle(outputFile);
+      })
+    }else{
+      const contentType = mime.contentType(path.extname(req.params.name))
+      res.set('Content-Type', contentType)
+      return res.sendFile(filePath)
+    }
   } else {
-    res.status(404).send({
+    return res.status(404).send({
       status: false,
       error: 'Thumbnail does not exist'
     })
@@ -272,7 +282,7 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p>'+ 
-    '<a href="' + video_link + '" style="background-image:url('+video_preview+');background-size:cover;background-repeat:no-repeat; width: 250px; height: 140px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/play_video.png" style="display:block; position:absolute; left:50%; top:50%;transform:translate(-50%,-50%);width:35px;height:25px;"/></img>' + 
+    '<a href="' + video_link + '" style="background-image:url('+video_preview+');background-size:cover;background-repeat:no-repeat; width: 250px; height: 140px; display: block; position: relative;"><img src="'+urls.ASSETS_URL+'images/video.png" style="display:block; position:absolute; left:50%; top:50%;transform:translate(-50%,-50%);width:35px;height:25px;"/></img>' + 
      '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
