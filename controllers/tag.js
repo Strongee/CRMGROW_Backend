@@ -27,18 +27,12 @@ const create = async(req, res) => {
     })
   }
 
-  await Tag.findAndModify({
-    query: { content: req.body.content},
-    update: {
-      $setOnInsert: {
-        ...req.body,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      }
-    },
-    new: true,   // return new doc if one is upserted
-    upsert: true // insert the document if it does not exist
+
+  await Tag.findOrCreate({ content: req.body.content }, {
+     ...req.body,
+    user: currentUser.id,
+    updated_at: new Date(),
+    created_at: new Date()
   })
   .then(_res => {
     console.log('+res', _res)
