@@ -187,12 +187,14 @@ const getThumbnail = (req, res) => {
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
     if(req.query.resize){
-      sharp(filePath).resize({ height: 250, width: 140 }).toFile(outputFile)
-      .then(function(outputFile) {
+      sharp(filePath)
+      .toBuffer()
+      .then( data => {
         const contentType = mime.contentType(path.extname(req.params.name))
         res.set('Content-Type', contentType)
-        return res.sendFle(outputFile);
+        return data.pipe(res)
       })
+      .catch( err => {});
     }else{
       const contentType = mime.contentType(path.extname(req.params.name))
       res.set('Content-Type', contentType)
@@ -281,7 +283,7 @@ const sendVideo = async (req, res) => {
     to: email,
     from: currentUser.email,
     subject: subject,
-    html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + video_link + '"><img src="'+urls.API_URL+video_preview+'?resize=true"/></a><br/><a href="' + video_link + '"><img src="'+urls.ASSETS_URL+'images/play-button.png"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+    html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + video_link + '"><img src="'+video_preview+'?resize=true"/></a><br/><a href="' + video_link + '"><img src="'+urls.ASSETS_URL+'images/play-button.png"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
   console.log('html', msg.html)
