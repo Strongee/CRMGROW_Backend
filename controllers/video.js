@@ -282,8 +282,8 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p>'+ 
-    '<a href="' + video_link + '"'+
     +'<img src="'+video_preview+'?resize=true"></img></br>'
+    + '<a href="' + video_link + '"'
     +'<img src="'+urls.ASSETS_URL+'images/play-button.png"/></img>' + 
      '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
