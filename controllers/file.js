@@ -5,7 +5,7 @@ const fs = require('fs')
 const File = require('../models/file')
 const { FILES_PATH } = require('../config/path')
 const urls = require('../constants/urls')
-
+const sharp = require('sharp');
 const create = async (req, res) => {
     if (req.file) {
         if (req.currentUser) {
@@ -16,14 +16,11 @@ const create = async (req, res) => {
             })
             file.save()
         }
-        if(req.query.resize){
-          url = urls.FILE_URL + req.file.filename + '?resize=true'
-        }
         return res.send({
           status: true,
           data: {
             file_name: req.file.filename,
-            url: url
+            url:  urls.FILE_URL + req.file.filename
           }
         })
     }
@@ -81,9 +78,12 @@ const remove = async (req, res) => {
 
 const upload = async (req, res) => {
   if (req.file) {
+      if(req.query.resize){
+        url = urls.FILE_URL + req.file.filename + '?resize=true'
+      }
       res.send({
         status: true,
-        url: urls.FILE_URL + req.file.filename
+        url: url
       })
   }
 }

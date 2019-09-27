@@ -11,7 +11,7 @@ const get = async(req, res) => {
     })
   }
 
-  res.send({
+  return res.send({
     status: true,
     data
   })
@@ -27,15 +27,21 @@ const create = async(req, res) => {
     })
   }
 
-  const tag = new Tag({
-    ...req.body,
-    user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
+  await Tag.findAndModify({
+    query: { content: req.body.content},
+    update: {
+      $setOnInsert: {
+        ...req.body,
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date(),
+      }
+    },
+    new: true,   // return new doc if one is upserted
+    upsert: true // insert the document if it does not exist
   })
-
-  tag.save()
   .then(_res => {
+    console.log('+res', _res)
       const data = _res
       res.send({
         status: true,

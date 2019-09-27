@@ -41,6 +41,9 @@ router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV)
 // Get a search contact info for profile page
 router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search))
 
+// Get a easy search contact info for profile page
+router.post('/search-easy', UserCtrl.checkAuth, catchError(ContactCtrl.searchEasy))
+
 // Get a pull contact info for profile page
 router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 

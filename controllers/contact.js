@@ -539,11 +539,38 @@ const search = async(req, res) =>{
     })
 }
 
+const searchEasy = async(req, res) =>{
+  const { currentUser } = req
+  let search = req.body.search
+  if(!search.split(" ")[1]){
+    data = await Contact.find({
+      $or: [
+        {first_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {email: {'$regex': '.*'+search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {last_name: {'$regex': search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id},
+        {cell_phone: {'$regex': '.*' + search.split(" ")[0]+'.*', '$options': 'i'}, user: currentUser.id}
+      ]}).sort({first_name: 1})
+    }else{
+      data = await Contact.find({
+        $or: [
+         {first_name: search.split(" ")[0], last_name: search.split(" ")[1], user: currentUser.id},
+         {cell_phone: search, user: currentUser.id} 
+        ]
+      }).sort({first_name: 1})
+    }
+
+    return res.send({
+      status: true,
+      data
+      })
+}
+
 module.exports = {
     getAll,
     get,
     create,
     search,
+    searchEasy,
     remove,
     edit,
     sendBatch,
