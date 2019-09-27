@@ -24,6 +24,8 @@ const s3 = new AWS.S3({
   region: config.AWS.AWS_S3_REGION
 })
 
+const sharp = require('sharp');
+
 const play = async(req, res) => {  
   const pdf_id = req.query.pdf
   const sender_id = req.query.user
