@@ -282,14 +282,15 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p>'+ 
-    +'<a href="' + video_link + '">'
-    +'<img src="'+video_preview+'?resize=true"/>'
+    +'<a href="' + video_link + '">' +
+    +'<img src="'+video_preview+'?resize=true"/>' +
     +'</a><br/>'
     + '<a href="' + video_link + '">'
     +'<img src="'+urls.ASSETS_URL+'images/play-button.png"/>' + 
      '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
   }
 
+  console.log('html', html)
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
     if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
