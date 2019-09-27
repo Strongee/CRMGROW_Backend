@@ -120,9 +120,16 @@ const getPreview = (req, res) => {
   const filePath = PREVIEW_PATH + req.params.name
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
-    const contentType = mime.contentType(path.extname(req.params.name))
-    res.set('Content-Type', contentType)
-    res.sendFile(filePath)
+    if(req.query.resize){
+      const readStream = fs.createReadStream(filePath)
+      let transform = sharp()
+      transform = transform.resize(250, 140)
+      return readStream.pipe(transform).pipe(res)
+    }else{
+      const contentType = mime.contentType(path.extname(req.params.name))
+      res.set('Content-Type', contentType)
+      return res.sendFile(filePath)
+    }
   } else {
     res.status(404).send({
       status: false,
@@ -194,7 +201,7 @@ const sendPDF = async (req, res) => {
     from: currentUser.email,
     subject: pdf_title,
     html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
-          '<img src='+pdf_prview+'?resize=true"></img>' + pdf_title + 
+          '<img src='+pdf_prview+'?resize=true"></img>' +  
           '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
   }
 
