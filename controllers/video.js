@@ -267,7 +267,7 @@ const sendVideo = async (req, res) => {
 
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  if(typeof subject == 'undefined'){
+  if(subject == '' ){
     subject = video_title
   }
   if(typeof content == 'undefined'){
