@@ -83,14 +83,14 @@ const updateDetail = async (req, res) => {
       pdf["updated_at"] = new Date()
 
       pdf.save().then((_pdf)=>{
-        res.send({
+        return res.send({
           status: true,
           data: _pdf
         })
       })
 
   }else{
-    res.status(401).json({
+    return res.status(401).json({
       status: false,
       error: 'Not_found_preview'
     })

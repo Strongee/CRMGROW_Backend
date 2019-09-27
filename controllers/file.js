@@ -16,11 +16,14 @@ const create = async (req, res) => {
             })
             file.save()
         }
-        res.send({
+        if(req.query.resize){
+          url = urls.FILE_URL + req.file.filename + '?resize=true'
+        }
+        return res.send({
           status: true,
           data: {
             file_name: req.file.filename,
-            url: urls.FILE_URL + req.file.filename
+            url: url
           }
         })
     }
