@@ -187,14 +187,10 @@ const getThumbnail = (req, res) => {
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
     if(req.query.resize){
-      sharp(filePath)
-      .toBuffer()
-      .then( data => {
-        const contentType = mime.contentType(path.extname(req.params.name))
-        res.set('Content-Type', contentType)
-        return data.pipe(res)
-      })
-      .catch( err => {});
+      const readStream = fs.createReadStream(filePath)
+      let transform = sharp()
+      transform = transform.resize(250, 140)
+      return readStream.pipe(transform).pipe(res)
     }else{
       const contentType = mime.contentType(path.extname(req.params.name))
       res.set('Content-Type', contentType)
