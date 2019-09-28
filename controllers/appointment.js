@@ -43,7 +43,6 @@ const get = async(req, res) => {
       // Set up our sync window from midnight on the current day to
       // midnight 7 days from now.
       let endDate = moment(startDate).add(7, 'days');
-      console.log('startDate', startDate)
       // The start and end date are passed as query parameters
       let params = {
         startDateTime: startDate.toISOString(),
@@ -130,6 +129,7 @@ const get = async(req, res) => {
                           } else {
                               const _outlook_calendar_data_list = response.body.value
                               for(let i = 0; i < _outlook_calendar_data_list.length; i++){
+                                console.log(' _outlook_calendar_data_list[i]',  _outlook_calendar_data_list[i])
                                 let guests = [];
                                 if(typeof _outlook_calendar_data_list[i].Attendees != "undefined"){
                                   for( let j = 0; j <_outlook_calendar_data_list[i].Attendees.length; j ++){
@@ -258,10 +258,11 @@ const get = async(req, res) => {
 
       const token = JSON.parse(currentUser.google_refresh_token)
       oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-      calendarList(oauth2Client, data, res)
+      calendarList(oauth2Client, data, res, startDate)
     }
   }else{
-    data = await Appointment.find({user: currentUser.id, del: false})
+    let endDate = moment(startDate).add(7, 'days');
+    data = await Appointment.find({user: currentUser.id, del: false, updated_at: {$gte: startDate.toISOString(), $lt: endDate.toISOString()}})
 
     if (!data) {
       return res.status(401).json({
@@ -276,12 +277,14 @@ const get = async(req, res) => {
   }
 }
 
-const calendarList = (auth, data, res) => {
+const calendarList = (auth, data, res, startDate) => {
 
+  let endDate = moment(startDate).add(7, 'days');
   const calendar = google.calendar({version: 'v3', auth})
   calendar.events.list({
     calendarId: 'primary',
-    timeMin: (new Date()).toISOString(),
+    timeMin: startDate.toISOString(),
+    timeMax: endDate.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
   }, (err, _res) => {
