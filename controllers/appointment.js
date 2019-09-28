@@ -129,7 +129,7 @@ const get = async(req, res) => {
                           } else {
                               const _outlook_calendar_data_list = response.body.value
                               for(let i = 0; i < _outlook_calendar_data_list.length; i++){
-                                console.log(' _outlook_calendar_data_list[i]',  _outlook_calendar_data_list[i])
+                                console.log(' _outlook_calendar_data_list[i]', _outlook_calendar_data_list[i].Subject)
                                 let guests = [];
                                 if(typeof _outlook_calendar_data_list[i].Attendees != "undefined"){
                                   for( let j = 0; j <_outlook_calendar_data_list[i].Attendees.length; j ++){
