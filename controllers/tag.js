@@ -35,7 +35,6 @@ const create = async(req, res) => {
     created_at: new Date()
   })
   .then(_res => {
-    console.log('+res', _res)
       const data = _res
       res.send({
         status: true,

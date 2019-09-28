@@ -79,12 +79,19 @@ const remove = async (req, res) => {
 const upload = async (req, res) => {
   if (req.file) {
       if(req.query.resize){
-        url = urls.FILE_URL + req.file.filename + '?resize=true'
+        const url = urls.FILE_URL + req.file.filename + '?resize=true'
+        res.send({
+          status: true,
+          url: url
+        })
+      }else{
+        const url = urls.FILE_URL + req.file.filename
+        res.send({
+          status: true,
+          url: url
+        })
       }
-      res.send({
-        status: true,
-        url: url
-      })
+      
   }
 }
 
