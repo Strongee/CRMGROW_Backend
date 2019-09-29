@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator/check')
 const Tag = require('../models/tag');
+const Contact = require('../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
