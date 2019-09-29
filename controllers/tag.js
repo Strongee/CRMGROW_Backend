@@ -89,6 +89,17 @@ const filter = async(req, res) =>{
         if(tags[j].content == tags[k].content){
           const contacts = await Contact.find({tag: tags[k].id})
           console.log('contacts', contacts)
+          for(let l=0; l<contacts.length; l++){
+            var index = contacts[l].tag.indexOf(tags[k].id);
+            if (index > -1) {
+              contacts.tag[index] = tags[j].id
+            }
+          }
+          await Tag.deleteOne({_id: tags[k].id})
+          var index = tags.indexOf(tags[k]);
+          if (index > -1) {
+            tags.splice(index, 1);
+          }
         }
       }
     }
