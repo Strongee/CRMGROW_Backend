@@ -87,7 +87,9 @@ const filter = async(req, res) =>{
     for(let j=0; j<tags.length-1; j++){
       for(let k=j+1; k<tags.length; k++){
         if(tags[j].content == tags[k].content){
-          const contacts = await Contact.find({tag: tags[k].id})
+          const contacts = await Contact.find({tag: tags[k].id}).catch(err=>{
+            console.log('err0', err)
+          })
           for(let l=0; l<contacts.length; l++){
             var index = contacts[l].tag.indexOf(tags[k].id);
             if (index > -1) {
@@ -97,6 +99,8 @@ const filter = async(req, res) =>{
               contacts[l].tag[index] = tags[j].id
               await contacts[l].save().then(res=>{
                 console.log('res', res)
+              }).catch(err=>{
+                console.log('err1', err)
               })
             }
           }
