@@ -554,7 +554,7 @@ const searchEasy = async(req, res) =>{
       data = await Contact.find({
         $or: [
          {first_name: search.split(" ")[0], last_name: search.split(" ")[1], user: currentUser.id},
-         {cell_phone: search, user: currentUser.id} 
+         {cell_phone: {'$regex': search+'.*', '$options': 'i'}, user: currentUser.id} 
         ]
       }).sort({first_name: 1})
     }
