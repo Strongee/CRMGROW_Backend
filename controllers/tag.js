@@ -86,10 +86,8 @@ const filter = async(req, res) =>{
 
     for(let j=0; j<tags.length-1; j++){
       for(let k=j+1; k<tags.length; k++){
-        console.log('tags[k].content', tags[k].content)
         if(tags[j].content == tags[k].content){
-          console.log('tags[k].content', tags[k].content)
-          const contacts = await Contact.find({tag: {$ne: tags[k].id}})
+          const contacts = await Contact.find({tag: tags[k].id})
           console.log('contacts', contacts)
         }
       }
