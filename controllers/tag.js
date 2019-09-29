@@ -92,6 +92,7 @@ const filter = async(req, res) =>{
             var index = contacts[l].tag.indexOf(tags[k].id);
             if (index > -1) {
               contacts[l].tag[index] = tags[j].id
+              contacts[l].save()
             }
           }
           await Tag.deleteOne({_id: tags[k].id})
