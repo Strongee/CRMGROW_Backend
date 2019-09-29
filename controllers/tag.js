@@ -82,8 +82,8 @@ const filter = async(req, res) =>{
   //   }
   // }
 
-  const tags = await Tag.find({user: currentUser.id})
-  console.log('contacts', tags)
+  for(let i=0; i<users.length; i++){
+    const tags = await Tag.find({user: users[i].id})
     for(let j=0; j<tags.length-1; j++){
       for(let k=j+1; k<tags.length; k++){
         if(tags[j].content == tags[k].content){
@@ -113,7 +113,7 @@ const filter = async(req, res) =>{
         }
       }
     }
-
+  }
   return res.send({
     status: true
   })
