@@ -83,12 +83,11 @@ const filter = async(req, res) =>{
   // }
 
   const tags = await Tag.find({user: currentUser.id})
-
+  console.log('contacts', tags)
     for(let j=0; j<tags.length-1; j++){
       for(let k=j+1; k<tags.length; k++){
         if(tags[j].content == tags[k].content){
           const contacts = await Contact.find({tag: tags[k].id})
-          console.log('contacts', contacts)
           for(let l=0; l<contacts.length; l++){
             var index = contacts[l].tag.indexOf(tags[k].id);
             if (index > -1) {
