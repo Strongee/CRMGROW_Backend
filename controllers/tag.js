@@ -95,7 +95,9 @@ const filter = async(req, res) =>{
               console.log('tags', contacts[l].tag)
               console.log('index', tags[j].id)
               contacts[l].tag[index] = tags[j].id
-              contacts[l].save()
+              await contacts[l].save().then(res=>{
+                console.log('res', res)
+              })
             }
           }
           await Tag.deleteOne({_id: tags[k].id})
