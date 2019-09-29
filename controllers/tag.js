@@ -82,6 +82,7 @@ const filter = async(req, res) =>{
   //   }
   // }
 
+  const users = User.find({})
   for(let i=0; i<users.length; i++){
     const tags = await Tag.find({user: users[i].id})
     for(let j=0; j<tags.length-1; j++){
