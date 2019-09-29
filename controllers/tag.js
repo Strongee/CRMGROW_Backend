@@ -92,6 +92,8 @@ const filter = async(req, res) =>{
             var index = contacts[l].tag.indexOf(tags[k].id);
             if (index > -1) {
               console.log('index', index)
+              console.log('tags', contacts[l].tag)
+              console.log('index', tags[j].id)
               contacts[l].tag[index] = tags[j].id
               contacts[l].save()
             }
@@ -99,6 +101,7 @@ const filter = async(req, res) =>{
           await Tag.deleteOne({_id: tags[k].id})
           var index = tags.indexOf(tags[k]);
           if (index > -1) {
+            console.log('index2', index)
             tags.splice(index, 1);
           }
         }
