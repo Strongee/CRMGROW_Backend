@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator/check')
+const mongoose = require('mongoose')
 const Tag = require('../models/tag');
 
 const get = async(req, res) => {
@@ -59,7 +60,17 @@ const create = async(req, res) => {
 const search = async(req, res) =>{
   const { currentUser } = req
   let search = req.body.search
-  data = await Tag.find({content: {'$regex': search+'.*', '$options': 'i'}, user: currentUser.id}).sort({content: 1})
+  let limit = search ? 10 : 10000;
+  // data = await Tag.find({content: {'$regex': search+'.*', '$options': 'i'}, user: currentUser.id}).sort({content: 1})
+  data = await Tag.aggregate(
+    [
+        {$match: {"content": {$regex: search + ".*", '$options': 'i'}, user: mongoose.Types.ObjectId(currentUser.id)}},
+        {$group: {"_id": "$content", "id": {$first: "$_id"} }},
+        {$sort: {"_id": 1}},
+        {$project : {"content": "$_id", "_id": "$id"}},
+        {$limit: limit}
+    ]
+    );
 
   return res.send({
       status: true,

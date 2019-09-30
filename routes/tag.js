@@ -8,6 +8,6 @@ const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(TagCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(TagCtrl.get))
-router.get('/search', UserCtrl.checkAuth, catchError(TagCtrl.search))
+router.post('/search', UserCtrl.checkAuth, catchError(TagCtrl.search))
 
 module.exports = router
