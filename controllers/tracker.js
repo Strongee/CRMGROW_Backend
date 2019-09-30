@@ -231,7 +231,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
         activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + created_at,
-        detailed_activity: "<td height='23px' width='120px' style='line-height:23px;background:#2c6fae;border:none;border-radius:5px;font-size:15px; padding:10px 25px 10px 25px;display:block;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration:none;color:white;font-size:16px;background:#2c6fae;'>View Contact</a></td>"
+        detailed_activity: "<td height='23' width='120' style='line-height:23px;background:#2c6fae;border:none;border-radius:5px;font-size:15px; padding:10px 25px 10px 25px;display:block;'><a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='text-decoration:none;color:white;font-size:16px;background:#2c6fae;'>View Contact</a></td>"
       },
     };
   
