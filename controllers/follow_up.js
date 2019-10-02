@@ -337,8 +337,14 @@ const updateChecked  = async(req, res) =>{
   _follow_up.save()
 
   const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: _follow_up.id})
-  reminder['del'] = true
-  reminder.save()
+  if(reminder){
+    reminder['del'] = true
+    reminder.save().catch(err=>{
+      console.log('err', err)
+    })
+  }
+
+
 
   const activity = await Activity.findOne({type: 'follow_ups', follow_ups: _follow_up.id})
   activity['content'] = 'Complete Follow Up'
