@@ -120,6 +120,8 @@ const create = async (req, res) => {
               }, 1000 * 60 * 60 * 2)     
           })
        });}
+      }).catch(err=>{
+        console.log('err', err)
       }) 
     }
   }
