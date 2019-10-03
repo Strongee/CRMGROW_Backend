@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator/check')
+const mongoose = require('mongoose')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
@@ -10,6 +11,8 @@ const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
 const csv = require('csv-parser')
 const config = require('../config/config')
+
+
 
 const getAll = async(req, res) => {
   const { currentUser } = req
