@@ -476,7 +476,9 @@ const exportCSV = async(req, res) =>{
     let tag_array = []
     for(let j=0; j<tag.length; j++){
       const _tag = await Tag.findOne({_id :tag[j]})
-      tag_array.push(_tag.content)
+      if( _tag ){
+        tag_array.push(_tag.content)
+      }      
     }
     
     
