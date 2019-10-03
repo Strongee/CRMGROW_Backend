@@ -565,6 +565,39 @@ const searchEasy = async(req, res) =>{
       })
 }
 
+const getById = async (req, res) => {
+    const { currentUser } = req
+    const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
+
+    if (!_contact) {
+        return res.status(401).json({
+            status: false,
+            error: 'Contact doesn`t exist'
+        })
+    }
+
+    res.send({
+        status: true,
+        data: _contact
+    })
+}
+
+const getByIds = async(req, res) => {
+  const { ids } = req.body
+  let contact_ids = []
+  ids.forEach( e => {
+    contact_ids.push( mongoose.Types.ObjectId(e.ref_id) );
+  })
+  const _contacts = await Contact.find({
+    _id: {$in: contact_ids}
+  })
+
+  res.send({
+    status: true,
+    data: _contacts
+  })  
+}
+
 module.exports = {
     getAll,
     get,
@@ -576,5 +609,7 @@ module.exports = {
     sendBatch,
     sendEmail,
     importCSV,
-    exportCSV
+    exportCSV,
+    getById,
+    getByIds
 }

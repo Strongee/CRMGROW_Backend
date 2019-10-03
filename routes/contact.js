@@ -47,4 +47,10 @@ router.post('/search-easy', UserCtrl.checkAuth, catchError(ContactCtrl.searchEas
 // Get a pull contact info for profile page
 router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 
+// Get a Contact data with ID
+router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
+
+// Get Contacts data with ID array
+router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
+
 module.exports = router
