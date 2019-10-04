@@ -133,3 +133,7 @@
         font-size: 1.4rem;
     }
 }
+
+video{
+    max-height: 75vh;
+}
