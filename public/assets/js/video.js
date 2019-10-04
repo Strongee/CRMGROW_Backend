@@ -42,7 +42,6 @@ var watched_time = 0;
 var duration = document.querySelector("#video-duration").value
 function updateStartTime() {
     let currentTime = vPlayer.currentTime
-    console.log("Start Time", currentTime);
     for( let i = 0; i < trackingTimes.length; i++ ){
         if( trackingTimes[i][0] <= currentTime && currentTime <= trackingTimes[i][1] ){
             currentTrackerIndex = i;
@@ -57,7 +56,6 @@ function updateStartTime() {
 
 function updateEndTime(){
     let currentTime = vPlayer.currentTime
-    console.log("Update Time", currentTime);
     // Seeking Check
     if( trackingTimes[currentTrackerIndex] && trackingTimes[currentTrackerIndex][1] != null && trackingTimes[currentTrackerIndex][1] != undefined && ( trackingTimes[currentTrackerIndex][1] < currentTime - 0.6 || currentTime < trackingTimes[currentTrackerIndex][1]) ) {
         return;
@@ -127,7 +125,6 @@ function reportTime() {
         }
         else{
             if( !reported ){
-                console.log("disconnecting the video");
                 socket.emit('update_video', duration * 1000)
                 socket.emit('close')
                 reported = true;
