@@ -15,6 +15,8 @@ const Activity = mongoose.model('activity',{
     emails: [{ type: mongoose.Schema.Types.ObjectId, ref: 'email' }],
     sms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'sms' }],
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    subject: String,
+    description: String,
     created_at: Date,
     updated_at: Date,
  });

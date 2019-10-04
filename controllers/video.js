@@ -266,6 +266,8 @@ const sendVideo = async (req, res) => {
     videos: video,
     created_at: new Date(),
     updated_at: new Date(),
+    subject: subject,
+    description: content
   })
   activity = await _activity.save().then()
 
@@ -321,6 +323,7 @@ const sendText = async (req, res) => {
     videos: video,
     created_at: new Date(),
     updated_at: new Date(),
+    description: content
   })
   activity = await _activity.save().then()
   

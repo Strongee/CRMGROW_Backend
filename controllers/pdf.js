@@ -184,7 +184,7 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {email, content, pdf, pdf_title, pdf_prview, contact, contact_name} = req.body
+  const {email, content, subject, pdf, pdf_title, pdf_prview, contact, contact_name} = req.body
   const _activity = new Activity({
     content: currentUser.user_name + ' sent pdf using email',
     contacts: contact,
@@ -193,6 +193,8 @@ const sendPDF = async (req, res) => {
     pdfs: pdf,
     created_at: new Date(),
     updated_at: new Date(),
+    subject: subject,
+    description: content
   })     
   const activity = await _activity.save().then()
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -201,7 +203,7 @@ const sendPDF = async (req, res) => {
   const msg = {
     to: email,
     from: currentUser.email,
-    subject: pdf_title,
+    subject: subject || pdf_title,
     html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
           '<img src='+pdf_prview+'?resize=true"></img>' +  
           '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
@@ -240,6 +242,7 @@ const sendText = async (req, res) => {
     pdfs: pdf,
     created_at: new Date(),
     updated_at: new Date(),
+    description: content
   })
 
   const activity = await _activity.save().then()
