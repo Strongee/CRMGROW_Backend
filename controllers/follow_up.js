@@ -344,16 +344,19 @@ const updateChecked  = async(req, res) =>{
     })
   }
 
+  const _contact = await Contact.findOne({_id: _follow_up.contact})
 
-
-  const activity = await Activity.findOne({type: 'follow_ups', follow_ups: _follow_up.id})
-  activity['content'] = 'Complete Follow Up'
-  activity['updated_at'] = new Date()
-
-  const _contact = await Contact.findOne({_id: activity.contacts})
+  const activity = new Activity({
+    content: 'Completed follow up',
+    contacts: _follow_up.contact,
+    user: currentUser.id,
+    type: 'follow_ups',
+    follow_ups: _follow_up.id,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
 
   activity.save().then(_activity => {
-  
     myJSON = JSON.stringify(_activity)
     const data = JSON.parse(myJSON);
     data.contact = _contact
@@ -362,7 +365,8 @@ const updateChecked  = async(req, res) =>{
       data
     })
   }).catch(e => {
-    return res.status(500).send({
+    console.log('follow error', e)
+    return res.status().send({
       status: false,
       error: e
     })
