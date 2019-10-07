@@ -26,7 +26,7 @@
     }
   } else {
     urls = {
-      DOMAIN_URL: 'http://localhost:4200/',
+      DOMAIN_URL: 'https://app.crmgrow.com/',
       API_URL: 'http://localhost:3000/api/',
       LOGIN_URL: 'http://localhost:3000/login',
       PROFILE_URL: 'http://localhost:3000/profile/',
