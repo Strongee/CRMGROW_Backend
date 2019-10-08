@@ -117,7 +117,7 @@ const update = async(req, res) =>{
                                 });
                             }).catch((err)=>{
                             console.log('creating subscripition error', err)
-                            return res.send({
+                            return res.status(400).send({
                                 status: false,
                                 eror: err
                             })
@@ -166,7 +166,7 @@ const update = async(req, res) =>{
                                 });
                     }).catch((err)=>{
                         console.log('creating subscripition error', err)
-                        return res.send({
+                        return res.status(400).send({
                             status: false,
                             eror: err
                         })              
@@ -194,7 +194,7 @@ const update = async(req, res) =>{
                     status: true,
                   });
             }).catch(err=>{
-                res.send({
+                res.status(400).send({
                     status: false,
                     error: err
                 })

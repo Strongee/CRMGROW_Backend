@@ -89,7 +89,7 @@ const create = async(req, res) => {
   if(typeof req.body['email'] != 'undefined'){
     contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
     if(contact_old != null){
-      return res.send({
+      return res.status(400).send({
         status: false,
         error: 'Email must be unique!'
       })
@@ -99,7 +99,7 @@ const create = async(req, res) => {
   if(typeof req.body['cell_phone'] != 'undefined'){
     contact_old = await Contact.findOne({user: currentUser.id, cell_phone: req.body['cell_phone']}) 
     if(contact_old != null){
-      return res.send({
+      return res.status(400).send({
         status: false,
         error: 'Phone number must be unique!'
       })
@@ -155,7 +155,7 @@ const create = async(req, res) => {
     if (e.code = 11000){
       errors = "Email and Phone number must be unique!"
     }
-    return res.status(200).send({
+    return res.status(500).send({
       status: false,
       error: errors || e
     })
@@ -245,7 +245,7 @@ const sendBatch = async(req, res) => {
   const {cc, bcc, to, subject, content, contacts} = req.body
   
   if(typeof subject == 'undefined' || subject == ""){
-    return res.send({
+    return res.status(400).send({
       status: false,
       error: 'Subject email must be specified'
     })

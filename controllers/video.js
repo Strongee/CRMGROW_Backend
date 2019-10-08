@@ -379,7 +379,7 @@ const remove = async (req, res) => {
           status: true,
         })
       } else {
-        res.status(200).send({
+        res.status(400).send({
           status: false,
           error: 'invalid permission'
         })
