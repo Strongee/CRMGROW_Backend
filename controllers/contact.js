@@ -250,48 +250,66 @@ const sendBatch = async(req, res) => {
       error: 'Subject email must be specified'
     })
   }
-  const msg = {
-    from: currentUser.email,
-    subject: subject,
-    to: to,
-    cc: cc,
-    bcc: bcc,
-    html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
-  };
-      
-  sgMail.send(msg).then()
-  const email = new Email({
-    ...req.body,
-    user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date()
-  })
-
-  const _email = await email.save().then()
-  let data_list = []
-  for(let i = 0; i < contacts.length; i ++){
-    const activity = new Activity({
-      content: currentUser.user_name + ' sent email',
-      contacts: contacts[i],
-      user: currentUser.id,
-      type: 'emails',
-      emails: _email.id,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    
-    const _activity = await activity.save().then()
-    myJSON = JSON.stringify(_email)
-    const data = JSON.parse(myJSON);
-    data.activity = _activity
-    data_list.push(data)
-  }
+  if(to.length == 0){
+    for(let i=0; i<bcc.length; i++){
+      const msg = {
+        from: currentUser.email,
+        subject: subject,
+        to: bcc[i],
+        cc: cc,
+        html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
+      }
+      sgMail.send(msg).then().catch(err =>{
+        console.log('err', err)
+      })
+    }
+  }else{
+    const msg = {
+      from: currentUser.email,
+      subject: subject,
+      to: to,
+      cc: cc,
+      bcc: bcc,
+      html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
+    };
         
-  return res.send({
-    status: true,
-    data: data_list
-  })
-         
+    sgMail.send(msg).then().catch(err =>{
+      console.log('err', err)
+    })
+  }
+    const email = new Email({
+      ...req.body,
+      user: currentUser.id,
+      updated_at: new Date(),
+      created_at: new Date()
+    })
+  
+    const _email = await email.save().then().catch(err =>{
+      console.log('err', err)
+    })
+    let data_list = []
+    for(let i = 0; i < contacts.length; i ++){
+      const activity = new Activity({
+        content: currentUser.user_name + ' sent email',
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'emails',
+        emails: _email.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      
+      const _activity = await activity.save().then()
+      myJSON = JSON.stringify(_email)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+      data_list.push(data)
+    }
+          
+    return res.send({
+      status: true,
+      data: data_list
+    })      
 }
 
 const sendEmail = async(req, res) => {

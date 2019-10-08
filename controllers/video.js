@@ -91,9 +91,7 @@ const create = async (req, res) => {
       })
       
     spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
-       console.log('over here1.')
         if (fs.existsSync(VIDEO_PATH+file_name)) {
-          console.log('over here.')
         fs.readFile(VIDEO_PATH+file_name, (err, data) => {
           if (err) throw err;
           console.log('File read was successful', data)
