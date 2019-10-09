@@ -133,14 +133,15 @@ function reportTime() {
     }
 }
 
-vPlayer.on("play", function() {
+vPlayer.on("playing", function() {
     if ( seek_flag || watched_time == 0 ){
         updateStartTime()
+        seek_flag = false
     }
 })
 
 vPlayer.on("timeupdate", function() {
-    if( vPlayer.seeking ){
+    if( vPlayer.seeking || seek_flag ){
         seek_flag = true
     }
     else {
@@ -148,4 +149,8 @@ vPlayer.on("timeupdate", function() {
         updateEndTime()
         reportTime()
     }
+})
+
+vPlayer.on("seeking", () => {
+    seek_flag = true;
 })
