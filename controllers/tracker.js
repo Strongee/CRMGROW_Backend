@@ -276,7 +276,7 @@ const setup = (io) => {
 
       socket.on('update_video', (duration)=>{
         const video_tracker = socket.video_tracker
-        console.log("video_tracking_update", duration);
+        console.log("video_tracking_update", duration, socket.video_tracker);
         if(typeof video_tracker != 'undefined'){
           updateVideo(duration, video_tracker._id).then(()=>{
           }).catch(err=>{
@@ -291,14 +291,14 @@ const setup = (io) => {
             const pdf_tracker = socket.pdf_tracker
             if( !socket.pdf_tracker.viewed ){
               console.log("PDF disconnected");
-              disconnectPDF(pdf_tracker)
+              disconnectPDF(pdf_tracker._id)
             }            
         }else if(socket.type == 'video'){
             console.log('video_disconnecting', socket.video_tracker);
             const video_tracker = socket.video_tracker
             if( !socket.video_tracker.viewed ){
               console.log("disconnected");
-              disconnectVideo(video_tracker)
+              disconnectVideo(video_tracker._id)
             }            
         } 
       })
@@ -308,12 +308,12 @@ const setup = (io) => {
             console.log('disconnecting with full view')  
             const pdf_tracker = socket.pdf_tracker
             socket.pdf_tracker.viewed = true
-            disconnectPDF(pdf_tracker)
+            disconnectPDF(pdf_tracker._id)
         }else if(socket.type == 'video'){
             console.log('disconnecting with full view')
             const video_tracker = socket.video_tracker
             socket.video_tracker.viewed = true
-            disconnectVideo(video_tracker)
+            disconnectVideo(video_tracker._id)
         } 
       })
       //auth(socket)
