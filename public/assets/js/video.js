@@ -57,9 +57,9 @@ function updateStartTime() {
 function updateEndTime(){
     let currentTime = vPlayer.currentTime
     // Seeking Check
-    if( trackingTimes[currentTrackerIndex] && trackingTimes[currentTrackerIndex][1] != null && trackingTimes[currentTrackerIndex][1] != undefined && ( trackingTimes[currentTrackerIndex][1] < currentTime - 0.6 || currentTime < trackingTimes[currentTrackerIndex][1]) ) {
-        return;
-    }
+    // if( trackingTimes[currentTrackerIndex] && trackingTimes[currentTrackerIndex][1] != null && trackingTimes[currentTrackerIndex][1] != undefined && ( trackingTimes[currentTrackerIndex][1] < currentTime - 0.6 || currentTime < trackingTimes[currentTrackerIndex][1]) ) {
+    //     return;
+    // }
     
     if( startOverlapFlag == false ){
         // TODO : Can update the start index as current tracker for Better algorithm
@@ -149,9 +149,3 @@ vPlayer.on("timeupdate", function() {
         reportTime()
     }
 })
-
-// console.log("Current Time", vPlayer.currentTime)
-// console.log("Time Tracker History", trackingTimes)
-// console.log("Total Watched Time", watched_time)
-// console.log("Time Tracker Index", currentTrackerIndex )
-// console.log("status: (start, end)", startOverlapFlag, endOverlapFlag )
