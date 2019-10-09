@@ -254,6 +254,7 @@ const setup = (io) => {
         createPDF(data).then((_pdf_tracker)=>{
           socket.type = 'pdf'
           socket.pdf_tracker = _pdf_tracker
+          console.log("PDF_connection", _pdf_tracker);
         })
       })
 
@@ -262,17 +263,20 @@ const setup = (io) => {
         updatePDF(duration, pdf_tracker._id).catch(err=>{
           console.log('err', err)
         })
+        console.log("PDF_tracking_update", duration);
       })
 
       socket.on('init_video', (data)=>{
         createVideo(data).then((_video_tracker)=>{
           socket.type = 'video'
           socket.video_tracker = _video_tracker
+          console.log("video_connection", _video_tracker);
         })
       })
 
       socket.on('update_video', (duration)=>{
         const video_tracker = socket.video_tracker
+        console.log("video_tracking_update", duration);
         if(typeof video_tracker != 'undefined'){
           updateVideo(duration, video_tracker._id).then(()=>{
           }).catch(err=>{
@@ -283,14 +287,17 @@ const setup = (io) => {
 
       socket.on('disconnect', () => {
         if(socket.type == 'pdf'){
+          console("PDF_disconnecting", socket.pdf_tracker);
             const pdf_tracker = socket.pdf_tracker
             if( !socket.pdf_tracker.viewed ){
+              console.log("PDF disconnected");
               disconnectPDF(pdf_tracker)
             }            
         }else if(socket.type == 'video'){
-            console.log('disconnecting')
+            console.log('video_disconnecting', socket.video_tracker);
             const video_tracker = socket.video_tracker
             if( !socket.video_tracker.viewed ){
+              console.log("disconnected");
               disconnectVideo(video_tracker)
             }            
         } 

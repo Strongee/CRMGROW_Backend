@@ -149,3 +149,9 @@ vPlayer.on("timeupdate", function() {
         reportTime()
     }
 })
+
+// console.log("Current Time", vPlayer.currentTime)
+// console.log("Time Tracker History", trackingTimes)
+// console.log("Total Watched Time", watched_time)
+// console.log("Time Tracker Index", currentTrackerIndex )
+// console.log("status: (start, end)", startOverlapFlag, endOverlapFlag )
