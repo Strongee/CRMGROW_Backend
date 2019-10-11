@@ -254,7 +254,6 @@ const setup = (io) => {
         createPDF(data).then((_pdf_tracker)=>{
           socket.type = 'pdf'
           socket.pdf_tracker = _pdf_tracker
-          console.log("PDF_connection", _pdf_tracker);
         })
       })
 
@@ -263,20 +262,17 @@ const setup = (io) => {
         updatePDF(duration, pdf_tracker._id).catch(err=>{
           console.log('err', err)
         })
-        console.log("PDF_tracking_update", duration);
       })
 
       socket.on('init_video', (data)=>{
         createVideo(data).then((_video_tracker)=>{
           socket.type = 'video'
           socket.video_tracker = _video_tracker
-          console.log("video_connection", _video_tracker);
         })
       })
 
       socket.on('update_video', (duration)=>{
         const video_tracker = socket.video_tracker
-        console.log("video_tracking_update", duration, socket.video_tracker);
         if(typeof video_tracker != 'undefined'){
           updateVideo(duration, video_tracker._id).then(()=>{
           }).catch(err=>{
