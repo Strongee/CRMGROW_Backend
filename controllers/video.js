@@ -89,8 +89,36 @@ const create = async (req, res) => {
         status: true,
         data: _video
       })
-      
-    spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
+
+    if(req.file.mimetype == 'video/quicktime'){
+      fs.readFile(file_path, (err, data) => {
+        if (err) throw err;
+        console.log('File read was successful', data)
+        const today = new Date()
+        const year = today.getYear()
+        const month = today.getMonth()
+        const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'video' +  year + '/' + month + '/' + file_name, 
+            Body: data,
+            ACL: 'public-read'
+        };
+        s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err) throw s3Err
+            console.log(`File uploaded successfully at ${upload.Location}`)
+            const __video = await Video.findOne({_id: _video.id})
+            __video['url'] = upload.Location
+            __video.save().catch(err=>{
+              console.log('err', err)
+            })
+
+            setTimeout(function(){
+              fs.unlinkSync(file_path)
+            }, 1000 * 60 * 60 * 2)     
+        })
+     });
+    }else{
+      spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
         if (fs.existsSync(VIDEO_PATH+file_name)) {
         fs.readFile(VIDEO_PATH+file_name, (err, data) => {
           if (err) throw err;
@@ -123,7 +151,8 @@ const create = async (req, res) => {
       }).catch(err=>{
         console.log('err', err)
       }) 
-    }
+    } 
+  }
   }
 }
 
