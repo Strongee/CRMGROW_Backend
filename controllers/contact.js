@@ -25,7 +25,7 @@ const getAll = async(req, res) => {
     })
   }
 
-  res.send({
+  return res.send({
     status: true,
     data
   })
@@ -360,14 +360,14 @@ const sendEmail = async(req, res) => {
         })   
       })   
     }else {
-      res.status(404).send({
+      return res.status(404).send({
         status: false,
         error: _res[0].statusCode
       })
     }
   }).catch ((e) => {
     console.error(e)
-    res.status(500).send({
+    return res.status(500).send({
       status: false,
       error: 'internal_server_error'
     })
@@ -399,6 +399,75 @@ const importCSV = async(req, res) => {
             contact_old_phone =await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
           if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
+            if(data['tag'] != ''){  
+              const tags = data['tag'].split(' ')
+              await new Promise((resolve, reject) =>{
+                const array_tag = []
+                for(let i=0; i<tags.length; i++){
+                  Tag.findOrCreate({ content: tags[i] }, {
+                    content: tags[i],
+                    user: currentUser.id,
+                    updated_at: new Date(),
+                    created_at: new Date()
+                  })
+                  .then(_res => {
+                    array_tag.push(_res.doc['_id'])
+                    if(i == tags.length-1){
+                      resolve(array_tag)
+                    }
+                  })
+              } 
+            }).then((res)=>{
+              data['tag'] = res 
+              const contact = new Contact({
+                ...data,
+                cell_phone: cell_phone,
+                user: currentUser.id,
+                created_at: new Date(),
+                updated_at: new Date(),
+              })
+              
+            contact.save().then(_contact=>{
+              const activity = new Activity({
+                content: currentUser.user_name + ' added contact',
+                contacts: _contact.id,
+                user: currentUser.id,
+                type: 'contacts',
+                created_at: new Date(),
+                updated_at: new Date(),
+              })
+              activity.save()
+              if(data['note'] != null){
+                const note = new Note({
+                  content: data['note'],
+                  contact: _contact.id,
+                  user: currentUser.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                note.save().then((_note)=>{
+                  const _activity = new Activity({
+                    content: currentUser.user_name + ' added note',
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'notes',
+                    notes: _note.id,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                  })
+                  _activity.save().catch(err=>{
+                    console.log('error', err)
+                  })
+                  resolve()
+                })
+              }
+             }).catch(err=>{
+               console.log('err', err)
+             })
+            })
+          }else{
+            delete data.tag
+            console.log('data', data)
             const contact = new Contact({
               ...data,
               cell_phone: cell_phone,
@@ -438,26 +507,13 @@ const importCSV = async(req, res) => {
                 _activity.save().catch(err=>{
                   console.log('error', err)
                 })
+                resolve()
               })
-            }
-            if(data['tag'] != null){
-              const tags = data['tag'].split(' ')
-              tags.forEach(_tag => {
-                const tag = new Tag({
-                  content: _tag,
-                  user: currentUser.id,
-                  updated_at: new Date(),
-                  created_at: new Date(),
-                })
-                tag.save().catch(err=>{
-                  console.log(err)
-                })
-              });
-              resolve()
             }
            }).catch(err=>{
              console.log('err', err)
            })
+          }          
           }else{
             const field = {
               id: csv_id,
