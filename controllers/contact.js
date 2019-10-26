@@ -386,6 +386,12 @@ const importCSV = async(req, res) => {
           let contact_old_phone = null
           let cell_phone = data['phone']
           csv_id +=1
+          if(!data['email']){
+            data['email'] = ''
+          }
+          if(!data['phone']){
+            data['phone'] = ''
+          }
           if(data['email'] != ''){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
           }
@@ -399,7 +405,7 @@ const importCSV = async(req, res) => {
             contact_old_phone =await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
           if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
-            if(data['tag'] != ''){  
+            if(data['tag'] != '' && typeof data['tag'] != 'undefined'){  
               const tags = data['tag'].split(' ')
               await new Promise((resolve, reject) =>{
                 const array_tag = []
