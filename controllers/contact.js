@@ -395,6 +395,7 @@ const importCSV = async(req, res) => {
           if(data['email'] != ''){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
           }
+          console.log('tags', data['tag'])
           if(data['phone'] !=''){
             let cleaned = ('' + cell_phone).replace(/\D/g, '')
             let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
