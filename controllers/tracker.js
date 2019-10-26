@@ -283,7 +283,7 @@ const setup = (io) => {
 
       socket.on('disconnect', () => {
         if(socket.type == 'pdf'){
-          console("PDF_disconnecting", socket.pdf_tracker);
+          console.log("PDF_disconnecting", socket.pdf_tracker);
             const pdf_tracker = socket.pdf_tracker
             if( !socket.pdf_tracker.viewed ){
               console.log("PDF disconnected");
