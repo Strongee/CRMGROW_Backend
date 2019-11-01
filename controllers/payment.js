@@ -36,7 +36,7 @@ const create = async(payment_data) => {
                 let pricingPlan
                 // const product = config.STRIPE.PRODUCT_ID
                 if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
-                    pricingPlan = '39'
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
