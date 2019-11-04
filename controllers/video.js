@@ -297,8 +297,6 @@ const sendVideo = async (req, res) => {
     description: content
   })
   activity = await _activity.save().then()
-
-  console.log('config.SENDGRID.SENDGRID_KEY', config.SENDGRID.SENDGRID_KEY)
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   if(subject == '' ){
