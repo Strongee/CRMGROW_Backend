@@ -166,7 +166,10 @@ const getAll = async (req, res) => {
             }
         },
         {
-          $match: { "pdf": _pdf_list[i]._id }
+          $match: { 
+                    "pdf": _pdf_list[i]._id,
+                    "user": currentUser._id
+                  }
         }
     ])
 
