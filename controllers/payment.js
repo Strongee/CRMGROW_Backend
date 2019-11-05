@@ -5,7 +5,16 @@ const stripe = require('stripe')(stripeKey)
 
 
 const get = async(req, res) => {
-  const data = await Payment.findOne({_id :req.params.id});
+
+   if (!req.params.id) {
+    return res.status(401).json({
+        status: false,
+        error: 'Payment doesn`t exist'
+    })
+  }
+  const data = await Payment.findOne({_id :req.params.id}).catch(err=>{
+    console.log('err', err)
+  });
   if (!data) {
     return res.status(401).json({
       status: false,
@@ -86,7 +95,7 @@ const update = async(req, res) =>{
                 let pricingPlan
                 // const product = config.STRIPE.PRODUCT_ID
                 if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
-                    pricingPlan = config.STRIPE.PRIMARY_PLA
+                    pricingPlan = config.STRIPE.PRIMARY_PLAN
                 }else{
                     pricingPlan = config.STRIPE.SUPER_PLAN
                 }
