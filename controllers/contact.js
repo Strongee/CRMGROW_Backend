@@ -388,6 +388,7 @@ const importCSV = async(req, res) => {
           csv_id +=1
           if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
             resolve()
+            return;
           }
           if(!data['email']){
             data['email'] = ''
