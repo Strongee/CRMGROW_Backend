@@ -425,12 +425,8 @@ const importCSV = async(req, res) => {
           let cell_phone = data['phone']
           csv_id +=1
           if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
-<<<<<<< HEAD
-            return resolve()
-=======
             resolve()
             return;
->>>>>>> c6911aadeaafa0e17bc3b5ae09cbe08cadbc749b
           }
           if(!data['email']){
             data['email'] = ''
