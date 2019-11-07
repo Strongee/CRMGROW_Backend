@@ -184,6 +184,44 @@ const remove = async(req, res) => {
   })
 }
 
+const removeContacts = async(req, res) => {
+
+  const {currentUser} = req
+  const ids = req.body.ids;
+  var deleted = 0; 
+  var undeleted = 0;
+
+  ids.forEach( id => {
+    if( removeContact(currentUser.id, id) ) {
+      deleted ++;
+    }
+    else{
+      undeleted ++;
+    }
+  })
+
+  res.send({
+    status: true,
+    data: {
+      deleted: deleted,
+      undeleted: undeleted
+    }
+  })
+}
+
+const removeContact = async(user_id, id) => {
+  const data = await Contact.findOne({user: user_id, _id: id })
+  if (!data) {
+      return false;
+  }
+
+  await Contact.deleteOne({_id: id})
+  await Activity.deleteMany({contacts: id})
+  await FollowUp.deleteMany({contact: id})
+  await Appointment.deleteMany({contact: id})
+  return true;
+}
+
 const edit = async(req, res) => {
   const {currentUser} = req
   const editData = req.body
@@ -387,7 +425,7 @@ const importCSV = async(req, res) => {
           let cell_phone = data['phone']
           csv_id +=1
           if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
-            resolve()
+            return resolve()
           }
           if(!data['email']){
             data['email'] = ''
@@ -398,7 +436,6 @@ const importCSV = async(req, res) => {
           if(data['email'] != ''){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
           }
-          console.log('tags', data['tag'])
           if(data['phone'] !=''){
             let cleaned = ('' + cell_phone).replace(/\D/g, '')
             let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
@@ -477,7 +514,6 @@ const importCSV = async(req, res) => {
             })
           }else{
             delete data.tag
-            console.log('data', data)
             const contact = new Contact({
               ...data,
               cell_phone: cell_phone,
@@ -694,6 +730,7 @@ module.exports = {
     search,
     searchEasy,
     remove,
+    removeContacts,
     edit,
     sendBatch,
     sendEmail,
