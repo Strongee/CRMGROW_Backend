@@ -448,7 +448,7 @@ const importCSV = async(req, res) => {
           }
           if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
             if(data['tag'] != '' && typeof data['tag'] != 'undefined'){  
-              const tags = data['tag'].split(' ')
+              const tags = data['tag'].split(/,\s|\s,|,|\s/);
               await new Promise((resolve, reject) =>{
                 const array_tag = []
                 for(let i=0; i<tags.length; i++){

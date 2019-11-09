@@ -56,8 +56,7 @@ const create = async(req, res) => {
 }
 
 const getByLastActivity = async(req, res) => {
-  const { currentUser } = req
-  const count = await Contact.find({user :currentUser.id}).count()
+  const { currentUser } = req  
   let contacts
   if(typeof req.params.id == 'undefined'){
     contacts= await Contact.find({user :currentUser.id}).sort({first_name: 1}).limit(15)
@@ -70,10 +69,12 @@ const getByLastActivity = async(req, res) => {
   for (let i =0; i < contacts.length; i ++){
     const _activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).sort({updated_at : -1 }).limit(1);
     myJSON = JSON.stringify(_activity[0])
-    const __activity = JSON.parse(myJSON)
-    delete __activity.contacts
-    __activity.contacts = contacts[i]
-    activity.push(__activity)
+    if(myJSON){
+      const __activity = JSON.parse(myJSON)
+      delete __activity.contacts
+      __activity.contacts = contacts[i]
+      activity.push(__activity)
+    }    
   }
   
   if (!activity) {
@@ -82,6 +83,8 @@ const getByLastActivity = async(req, res) => {
       error: 'Activity doesn`t exist'
     })
   }
+
+  const count = await Contact.find({user :currentUser.id}).count()
 
   return res.send({
     status: true,
