@@ -280,7 +280,7 @@ const remove = async (req, res) => {
     if (pdf) {
       s3.deleteObject({
         Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-        Key: pdf.url
+        Key: pdf.url.slice(44)
       }, function (err,data){})
 
       pdf['del'] = true
