@@ -89,7 +89,7 @@ const create = async (req, res) => {
         status: true,
         data: _video
       })
-
+      
     if(req.file.mimetype == 'video/quicktime'){
       fs.readFile(file_path, (err, data) => {
         if (err) throw err;
@@ -215,6 +215,7 @@ const get = async (req, res) => {
 
 const getThumbnail = (req, res) => {
   const filePath = THUMBNAILS_PATH + req.params.name
+  
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
     if(req.query.resize){
@@ -312,6 +313,7 @@ const sendVideo = async (req, res) => {
     from: currentUser.email,
     subject: subject,
     html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">'+content+'</p><a href="' + video_link + '" style="height:140px;width:250px;display:block;"><img src="'+video_preview+'?resize=true"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+    
   }
 
   sgMail.send(msg).then((_res) => {
