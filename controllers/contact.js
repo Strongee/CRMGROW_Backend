@@ -289,11 +289,11 @@ const sendBatch = async(req, res) => {
     })
   }
   if(to.length == 0){
-    for(let i=0; i<bcc.length; i++){
+    
       const msg = {
         from: currentUser.email,
         subject: subject,
-        to: bcc[i],
+        to: bcc,
         cc: cc,
         text: content,
         html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
@@ -301,7 +301,7 @@ const sendBatch = async(req, res) => {
       sgMail.send(msg).then().catch(err =>{
         console.log('err', err)
       })
-    }
+  
   }else{
     const msg = {
       from: currentUser.email,
@@ -309,6 +309,7 @@ const sendBatch = async(req, res) => {
       to: to,
       cc: cc,
       bcc: bcc,
+      text: content,
       html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
     };
         
