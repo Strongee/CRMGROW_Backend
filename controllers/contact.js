@@ -296,7 +296,7 @@ const sendBatch = async(req, res) => {
         to: bcc,
         cc: cc,
         text: content,
-        html: '<html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
+        html: '<!DOCTYPE html><html><head><title>Email</title></head><body><p>'+content + '</p><br/><br/>' + currentUser.email_signature+'</body></html>',
       }
       sgMail.send(msg).then().catch(err =>{
         console.log('err', err)
