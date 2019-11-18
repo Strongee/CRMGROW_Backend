@@ -353,28 +353,35 @@ const sendText = async (req, res) => {
     updated_at: new Date(),
     description: content
   })
-  activity = await _activity.save().then()
+  activity = await _activity.save().catch(err=>{
+    console.log('err', err);
+  })
   
-  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
-  const e164Phone = phone(cell_phone)[0]
-  let fromNumber = config.TWILIO.TWILIO_NUMBER
-  const areaCode = req.body['cell_phone'].substring(1, 4)
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id;
+  const e164Phone = phone(cell_phone)[0];
+  let fromNumber = currentUser['proxy_number'];
+ 
+  console.log('fromNumber', fromNumber)
+  if(!fromNumber) {
+    const areaCode = currentUser.cell_phone.substring(1, 4)
+    console.log('areaCode', areaCode)
+    const data = await twilio
+    .availablePhoneNumbers('US')
+    .local.list({
+      areaCode: areaCode,
+    })
   
-  // if(!currentUser['proxy_number']) {
-  //   const data = await twilio
-  //   .availablePhoneNumbers('US')
-  //   .local.list({
-  //     areaCode: areaCode,
-  //   })
-  
-  //   const number = data[0];
-  //   const proxy_number = await twilio.incomingPhoneNumbers.create({
-  //       phoneNumber: number.phoneNumber,
-  //       smsUrl:  urls.SMS_RECEIVE_URL
-  //     })['phoneNumber']
-  //   user['proxy_number'] = proxy_number;
-  //   fromNumber = user['proxy_number'];
-  // }
+    const number = data[0];
+    const proxy_number = await twilio.incomingPhoneNumbers.create({
+        phoneNumber: number.phoneNumber,
+        smsUrl:  urls.SMS_RECEIVE_URL
+      })
+    currentUser['proxy_number'] = proxy_number.phoneNumber;
+    fromNumber = currentUser['proxy_number'];
+    currentUser.save().catch(err=>{
+      console.log('err', err)
+    })
+  }
  
   
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
