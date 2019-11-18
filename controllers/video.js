@@ -360,8 +360,7 @@ const sendText = async (req, res) => {
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id;
   const e164Phone = phone(cell_phone)[0];
   let fromNumber = currentUser['proxy_number'];
- 
-  console.log('fromNumber', fromNumber)
+
   if(!fromNumber) {
     const areaCode = currentUser.cell_phone.substring(1, 4)
     console.log('areaCode', areaCode)
@@ -402,7 +401,7 @@ const sendText = async (req, res) => {
     }
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).catch(err=>{
-      console.log()
+      console.log('err', err)
     })
     
     res.send({
@@ -423,7 +422,6 @@ const remove = async (req, res) => {
           Key: url.slice(44)
         }, function (err,data){
           console.log('err', err)
-          console.log('data', data)
         })
 
         video['del'] = true

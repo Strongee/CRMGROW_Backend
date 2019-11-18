@@ -195,7 +195,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     }
   
     // send text notification
-    if(currentUser.text_notification == true){
+    if(currentUser.text_notification == true && currentUser.cell_phone){
       const e164Phone = phone(currentUser.cell_phone)[0]
       const fromNumber = config.TWILIO.TWILIO_NUMBER
       console.info(`Send SMS: ${fromNumber} -> ${currentUser.cell_phone}`)
@@ -204,16 +204,15 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
           error: 'Invalid Phone Number'
         }
         throw error // Invalid phone number
+      } else {
+        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
+        const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+        const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
+        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+  
+        twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
       }
-    
-      const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
-      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
-      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
-      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-
-      twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
     }
-
 
     // send email notification
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
