@@ -50,27 +50,27 @@ const signUp = async (req, res) => {
       bill_amount: bill_amount
     }
 
-    PaymentCtrl.create(payment_data).then(payment=>{
+    PaymentCtrl.create(payment_data).then(async(payment)=>{
       const password = req.body.password
       const salt = crypto.randomBytes(16).toString('hex')
       const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
       
-      // const areaCode = req.body['cell_phone'].substring(1, 4)
+      const areaCode = req.body['cell_phone'].substring(1, 4)
   
-      // const data = await client
-      // .availablePhoneNumbers('US')
-      // .local.list({
-      //   areaCode: areaCode,
-      // }).catch(err=>{
-      //   console.log('err', err)
-      // })
+      const data = await client
+      .availablePhoneNumbers('US')
+      .local.list({
+        areaCode: areaCode,
+      }).catch(err=>{
+        console.log('err', err)
+      })
   
-      // const number = data[0];
-      // const proxy_number = await client.incomingPhoneNumbers.create({
-      //     phoneNumber: number.phoneNumber,
-      //     smsUrl:  urls.SMS_RECEIVE_URL
-      //   })['phoneNumber']
-      // user['proxy_number'] = proxy_number;
+      const number = data[0];
+      const proxy_number = await client.incomingPhoneNumbers.create({
+          phoneNumber: number.phoneNumber,
+          smsUrl:  urls.SMS_RECEIVE_URL
+        })['phoneNumber']
+      user['proxy_number'] = proxy_number;
       
       const user = new User({
         ...req.body,

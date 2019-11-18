@@ -82,7 +82,7 @@ const receive = async(req, res) => {
     const from = req.body['From']
     const to = req.body['To']
 
-    let currentUser = await User.findOne({twilio_proxy_number: to})
+    let currentUser = await User.findOne({proxy_number: to})
     if(currentUser != null){
       const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
       const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
@@ -91,7 +91,7 @@ const receive = async(req, res) => {
       const e164Phone = phone(currentUser.cell_phone)[0]
       await twilio.messages.create({from: to, body: text, to: e164Phone})
       const sms = new SMS({
-        content: text,
+        content: "Replies from" + contact.first_name + contact.last_name +  '\n' + contact.cell_phone + '\n' + contact.email + '\n' + '\n' + text,
         contact: contact.id,  
         to: currentUser.cell_phone,
         from: from,

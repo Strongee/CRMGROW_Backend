@@ -104,7 +104,7 @@ const update = async(req, res) =>{
                 
                 const pricingPlan = config.STRIPE.PRIMARY_PLAN;
                 const bill_amount = config.STRIPE.PRIMARY_PLAN_AMOUNT;
-                createSubscription(customer.id, pricingPlan, card.id)
+                updateSubscription(customer.id, pricingPlan, card.id)
                         .then(subscription => {
                             // Save card information to DB.
 
@@ -153,7 +153,7 @@ const update = async(req, res) =>{
                     });
                 }
     
-                    createSubscription(customer.id, plan_id, card.id).then(subscription => {
+                    updateSubscription(customer.id, plan_id, card.id).then(subscription => {
                         // Save card information to DB.
                         payment['plan_id'] = plan_id
                         payment['token'] = token.id
@@ -242,6 +242,24 @@ const createSubscription = async(customerId, planId, cardId) => {
                 { plan: planId }
             ],
             trial_period_days: 7,
+            default_source: cardId
+        }, function (err, subscription) {
+            console.log('creating subscription err', err)
+            if (err != null) {
+                return reject(err);
+            }
+            resolve(subscription);
+        });
+    });
+}
+
+const updateSubscription = async(customerId, planId, cardId) => {
+    return new Promise(function (resolve, reject) {
+        stripe.subscriptions.create({
+            customer: customerId,
+            items: [
+                { plan: planId }
+            ],
             default_source: cardId
         }, function (err, subscription) {
             console.log('creating subscription err', err)
