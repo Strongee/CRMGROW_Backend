@@ -24,7 +24,7 @@ const get = async(req, res) => {
   if(data.plan_id == config.STRIPE.PRIMARY_PLAN){
     data['bill_amount'] = config.STRIPE.PRIMARY_PLAN_AMOUNT
   } else {
-    data['bill_amont'] = config.STRIPE.PRIOR_PLAN_AMOUNT
+    data['bill_amount'] = config.STRIPE.PRIOR_PLAN_AMOUNT
   }
   data.save().catch(err=>{
     console.log('err', err)
