@@ -84,6 +84,7 @@ const receive = async(req, res) => {
 
     let currentUser = await User.findOne({proxy_number: to})
     if(currentUser != null){
+      const phoneNumberString = to
       const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
       const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
