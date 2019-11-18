@@ -38,7 +38,7 @@ const get = async(req, res) => {
 
 const create = async(payment_data) => {
     return new Promise(function (resolve, reject) {
-        const {email, token} = payment_data
+        const {email,bill_amount,  token} = payment_data
         findOrcreateCustomer(email).then(customer => {
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
