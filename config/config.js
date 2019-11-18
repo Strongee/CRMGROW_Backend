@@ -43,9 +43,9 @@ const config = {
         BILLING_CYCLE: process.env.BILLING_CYCLE || 'month',
         PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR',
         PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_G5y3Wz6NbVZyQT',
-        SUPER_PLAN: process.env.SUPER_PLAN || 'plan_F7xpLy2LZf6Yay',
-        PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '29',
-        SUPER_PLAN_AMOUNT: process.env.SUPER_PLAN_AMOUNT || '59'
+        PRIOR_PLAN: process.env.PRIOR_PLAN || 'plan_FFnfPJc8bPYCZi',
+        PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '39',
+        PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29'
     }
 }
 

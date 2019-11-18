@@ -8,6 +8,7 @@ const Payment = mongoose.model('payment',{
     token: String,
     subscription: String,
     card_brand: String,
+    bill_amount: String,
     exp_year: String,
     exp_month: String,
     last4: String,

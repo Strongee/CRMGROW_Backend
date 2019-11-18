@@ -54,6 +54,24 @@ const signUp = async (req, res) => {
       const password = req.body.password
       const salt = crypto.randomBytes(16).toString('hex')
       const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
+      
+      // const areaCode = req.body['cell_phone'].substring(1, 4)
+  
+      // const data = await client
+      // .availablePhoneNumbers('US')
+      // .local.list({
+      //   areaCode: areaCode,
+      // }).catch(err=>{
+      //   console.log('err', err)
+      // })
+  
+      // const number = data[0];
+      // const proxy_number = await client.incomingPhoneNumbers.create({
+      //     phoneNumber: number.phoneNumber,
+      //     smsUrl:  urls.SMS_RECEIVE_URL
+      //   })['phoneNumber']
+      // user['proxy_number'] = proxy_number;
+      
       const user = new User({
         ...req.body,
         payment: payment.id,
@@ -134,6 +152,7 @@ const signUp = async (req, res) => {
         delete user.hash
         delete user.salt
         user['payment'] = payment
+        
         res.send({
           status: true,
           data: {
@@ -163,22 +182,6 @@ const signUp = async (req, res) => {
       })
       return;
     })
-
-    // const areaCode = req.body['cell_phone'].substring(1, 4)
-  
-    // const data = await client
-    // .availablePhoneNumbers('US')
-    // .local.list({
-    //   areaCode: areaCode,
-    // })
-
-    // const number = data[0];
-    // const twilio_proxy_number = await client.incomingPhoneNumbers.create({
-    //     phoneNumber: number.phoneNumber,
-    //     smsUrl:  urls.SMS_RECEIVE_URL
-    //   })['phoneNumber']
-
-
   }
 
 const socialSignUp = async(req, res) =>{
@@ -302,7 +305,7 @@ const login = async (req, res) => {
 
   if(user.payment != 'undefined'){
     const payment = await Payment.findOne({_id: user.payment});
-    user['payment'] = payment
+    user['payment'] = payment;
   }
   
   delete user.hash

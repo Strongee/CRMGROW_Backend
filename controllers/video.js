@@ -357,7 +357,26 @@ const sendText = async (req, res) => {
   
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const e164Phone = phone(cell_phone)[0]
-  const fromNumber = config.TWILIO.TWILIO_NUMBER
+  let fromNumber = config.TWILIO.TWILIO_NUMBER
+  const areaCode = req.body['cell_phone'].substring(1, 4)
+  
+  // if(!currentUser['proxy_number']) {
+  //   const data = await twilio
+  //   .availablePhoneNumbers('US')
+  //   .local.list({
+  //     areaCode: areaCode,
+  //   })
+  
+  //   const number = data[0];
+  //   const proxy_number = await twilio.incomingPhoneNumbers.create({
+  //       phoneNumber: number.phoneNumber,
+  //       smsUrl:  urls.SMS_RECEIVE_URL
+  //     })['phoneNumber']
+  //   user['proxy_number'] = proxy_number;
+  //   fromNumber = user['proxy_number'];
+  // }
+ 
+  
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
   if (!e164Phone) {
@@ -394,7 +413,7 @@ const remove = async (req, res) => {
       if (video) {
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-          Key: video.url.slice(44)
+          Key: url.slice(44)
         }, function (err,data){
           console.log('err', err)
           console.log('data', data)
