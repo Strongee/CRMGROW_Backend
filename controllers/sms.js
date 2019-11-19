@@ -18,7 +18,30 @@ const send = async(req, res) => {
     console.log('err', err)
   })
   const e164Phone = phone(contact.cell_phone)[0]
-  const fromNumber = currentUser.twilio_proxy_number
+  let fromNumber = currentUser['proxy_number'];
+
+  if(!fromNumber) {
+    const areaCode = currentUser.cell_phone.substring(1, 4)
+    console.log('areaCode', areaCode)
+    const data = await twilio
+    .availablePhoneNumbers('US')
+    .local.list({
+      areaCode: areaCode,
+    })
+  
+    const number = data[0];
+    const proxy_number = await twilio.incomingPhoneNumbers.create({
+        phoneNumber: number.phoneNumber,
+        smsUrl:  urls.SMS_RECEIVE_URL
+      })
+    currentUser['proxy_number'] = proxy_number.phoneNumber;
+    fromNumber = currentUser['proxy_number'];
+    currentUser.save().catch(err=>{
+      console.log('err', err)
+    })
+  }
+ 
+ 
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
