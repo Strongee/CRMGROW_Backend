@@ -372,7 +372,7 @@ const sendText = async (req, res) => {
 
   if(!fromNumber) {
     const areaCode = currentUser.cell_phone.substring(1, 4)
-    console.log('areaCode', areaCode)
+
     const data = await twilio
     .availablePhoneNumbers('US')
     .local.list({

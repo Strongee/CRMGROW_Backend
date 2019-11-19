@@ -296,6 +296,7 @@ const sendText = async (req, res) => {
 }
 
 const remove = async (req, res) => {
+  const { currentUser } = req
   try {
     const pdf = await PDF.findOne({ _id: req.params.id, user: currentUser.id})
     let url =  pdf.url

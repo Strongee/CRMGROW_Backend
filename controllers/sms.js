@@ -108,7 +108,9 @@ const receive = async(req, res) => {
     const from = req.body['From']
     const to = req.body['To']
 
-    let currentUser = await User.findOne({proxy_number: to})
+    let currentUser = await User.findOne({proxy_number: to}).catch(err =>{
+      console.log('err', err)
+    })
     if(currentUser != null){
       const phoneNumberString = req.body['From']
       const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
@@ -118,6 +120,15 @@ const receive = async(req, res) => {
         console.log('err', err)
       })
       const e164Phone = phone(currentUser.cell_phone)[0]
+      
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+    
+        throw error // Invalid phone number
+      }
+      
       const content =  "Replies from" +  '\n' + contact.first_name + contact.last_name +  '\n' + contact.cell_phone + '\n' + contact.email + '\n' + '\n' + text
       await twilio.messages.create({from: to, body: content, to: e164Phone}).catch(err=>{
         console.log('err', err)
