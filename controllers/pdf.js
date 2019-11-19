@@ -252,7 +252,6 @@ const sendText = async (req, res) => {
 
   const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const e164Phone = phone(cell_phone)[0]
-  console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
   if (!e164Phone) {
     const error = {
@@ -284,6 +283,8 @@ const sendText = async (req, res) => {
       console.log('err', err)
     })
   }
+  
+  console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
     const body = content + '\n' +  pdf_title + '\n' + pdf_link
   
