@@ -106,7 +106,8 @@ const signUp = async (req, res) => {
             templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
             dynamic_template_data: {
               first_name: _res.user_name,
-              video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`
+              video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
+              recruiting_material: `<a href="${urls.MATERIAL_VIEW_VIDEO_URL}">Material Page</a>`
             }
           }
           sgMail.send(msg)

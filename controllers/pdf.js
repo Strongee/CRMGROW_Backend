@@ -252,7 +252,6 @@ const sendText = async (req, res) => {
 
   const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
   const e164Phone = phone(cell_phone)[0]
-  const fromNumber = config.TWILIO.TWILIO_NUMBER
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
   if (!e164Phone) {
@@ -261,6 +260,29 @@ const sendText = async (req, res) => {
     }
 
     throw error // Invalid phone number
+  }
+  
+  let fromNumber = currentUser['proxy_number'];
+
+  if(!fromNumber) {
+    const areaCode = currentUser.cell_phone.substring(1, 4)
+    console.log('areaCode', areaCode)
+    const data = await twilio
+    .availablePhoneNumbers('US')
+    .local.list({
+      areaCode: areaCode,
+    })
+  
+    const number = data[0];
+    const proxy_number = await twilio.incomingPhoneNumbers.create({
+        phoneNumber: number.phoneNumber,
+        smsUrl:  urls.SMS_RECEIVE_URL
+      })
+    currentUser['proxy_number'] = proxy_number.phoneNumber;
+    fromNumber = currentUser['proxy_number'];
+    currentUser.save().catch(err=>{
+      console.log('err', err)
+    })
   }
 
     const body = content + '\n' +  pdf_title + '\n' + pdf_link
@@ -275,13 +297,16 @@ const sendText = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
-    const pdf = await PDF.findOne({ _id: req.params.id})
-
+    const pdf = await PDF.findOne({ _id: req.params.id, user: currentUser.id})
+    let url =  pdf.url
+    
     if (pdf) {
       s3.deleteObject({
         Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-        Key: pdf.url.slice(44)
-      }, function (err,data){})
+        Key: url.slice(44)
+      }, function (err,data){
+        console.log('err', err)
+      })
 
       pdf['del'] = true
       pdf.save()
@@ -292,7 +317,7 @@ const remove = async (req, res) => {
     } else {
       res.status(404).send({
         status: false,
-        error: 'pdf not found'
+        error: 'invalid permission'
       })
     }
   } catch (e) {

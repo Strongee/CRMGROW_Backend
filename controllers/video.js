@@ -359,6 +359,15 @@ const sendText = async (req, res) => {
   
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id;
   const e164Phone = phone(cell_phone)[0];
+  
+  if (!e164Phone) {
+    const error = {
+      error: 'Invalid Phone Number'
+    }
+
+    throw error // Invalid phone number
+  }
+  
   let fromNumber = currentUser['proxy_number'];
 
   if(!fromNumber) {
@@ -382,16 +391,7 @@ const sendText = async (req, res) => {
     })
   }
  
-  
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
-
-  if (!e164Phone) {
-    const error = {
-      error: 'Invalid Phone Number'
-    }
-
-    throw error // Invalid phone number
-  }
 
     let body
     if(typeof content == 'undefined'){
