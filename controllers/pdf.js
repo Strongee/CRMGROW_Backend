@@ -142,8 +142,8 @@ const getPreview = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  let _pdf_list = await PDF.find({user: currentUser.id, del: false})
-  let _pdf_admin = await PDF.find({role: "admin", del: false})
+  let _pdf_list = await PDF.find({user: currentUser.id, del: false}).sort({created_at : 1 })
+  let _pdf_admin = await PDF.find({role: "admin", del: false}).sort({created_at : 1 })
   Array.prototype.push.apply(_pdf_list, _pdf_admin)
 
   if (!_pdf_list) {

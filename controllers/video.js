@@ -380,15 +380,22 @@ const sendText = async (req, res) => {
     })
   
     const number = data[0];
-    const proxy_number = await twilio.incomingPhoneNumbers.create({
+    console.log('number', number)
+    if(typeof number != 'undefined'){
+      const proxy_number = await twilio.incomingPhoneNumbers.create({
         phoneNumber: number.phoneNumber,
         smsUrl:  urls.SMS_RECEIVE_URL
       })
-    currentUser['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = currentUser['proxy_number'];
-    currentUser.save().catch(err=>{
-      console.log('err', err)
-    })
+      
+      console.log('proxy_number', proxy_number)
+      currentUser['proxy_number'] = proxy_number.phoneNumber;
+      fromNumber = currentUser['proxy_number'];
+      currentUser.save().catch(err=>{
+        console.log('err', err)
+      })
+    } else {
+      fromNumber = config.TWILIO.TWILIO_NUMBER
+    } 
   }
  
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
