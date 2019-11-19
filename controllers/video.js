@@ -380,7 +380,18 @@ const sendText = async (req, res) => {
     })
   
     const number = data[0];
-    console.log('number', number)
+
+    if(typeof number == 'undefined'){
+      const areaCode1 = currentUser.cell_phone.substring(1, 3)
+
+      const data1 = await twilio
+      .availablePhoneNumbers('US')
+      .local.list({
+        areaCode: areaCode1,
+      })
+      number = data1[0];
+    }
+    
     if(typeof number != 'undefined'){
       const proxy_number = await twilio.incomingPhoneNumbers.create({
         phoneNumber: number.phoneNumber,
