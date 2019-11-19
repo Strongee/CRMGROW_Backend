@@ -77,7 +77,9 @@ const create = async(payment_data) => {
                         created_at: new Date(),
                     })
                     
-                    const _payment = await payment.save().then()
+                    const _payment = await payment.save().then().catch(err=>{
+                        console.log('err', err)
+                    })
                     resolve(_payment)
                 }).catch(err=>{
                     reject(err)

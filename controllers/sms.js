@@ -14,20 +14,23 @@ const send = async(req, res) => {
 
   const { currentUser } = req
   const {text} = req.body
-  const contact = await Contact.findOne({_id: req.params.id})
+  const contact = await Contact.findOne({_id: req.params.id}).catch(err => {
+    console.log('err', err)
+  })
   const e164Phone = phone(contact.cell_phone)[0]
   const fromNumber = currentUser.twilio_proxy_number
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
-    const error = {
-      error: 'Invalid Phone Number'
-    }
-
-    throw error // Invalid phone number
+    return res.status(401).send({
+      status: false,
+      error: 'Invalid phone number'
+    })
   }
 
-    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone})
+    await twilio.messages.create({from: fromNumber, body: text, to: e164Phone}).catch(err=>{
+      console.log('err', err)
+    })
 
     const sms = new SMS({
         content: req.body.text,
