@@ -286,7 +286,7 @@ const sendText = async (req, res) => {
   
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
 
-    const body = content + '\n' +  pdf_title + '\n' + pdf_link
+    const body = content + '\n' +  pdf_title + '\n' + '\n' + pdf_link
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     

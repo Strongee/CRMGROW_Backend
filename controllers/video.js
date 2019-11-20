@@ -415,7 +415,7 @@ const sendText = async (req, res) => {
     if(typeof content == 'undefined'){
       body = video_link
     }else{
-      body = content + '\n' + video_link
+      body = content + '\n' + '\n' + video_link
     }
   
     twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).catch(err=>{
