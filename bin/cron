@@ -324,7 +324,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
+const video_job = new CronJob('0,30 * * * 0-6', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   const due_date = new Date()
   due_date.setSeconds(0)
