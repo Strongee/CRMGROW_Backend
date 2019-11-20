@@ -90,8 +90,7 @@ const upload = async (req, res) => {
           status: true,
           url: url
         })
-      }
-      
+      }  
   }
 }
 

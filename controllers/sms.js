@@ -116,7 +116,7 @@ const receive = async(req, res) => {
       const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
       const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
-      const contact = await Contact.findOne({cell_phone: phoneNumber}).catch(err=>{
+      const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
         console.log('err', err)
       })
       const e164Phone = phone(currentUser.cell_phone)[0]
