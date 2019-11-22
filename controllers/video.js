@@ -18,6 +18,7 @@ const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
+const GIFEncoder = require('gifencoder');
 
 const extractFrames = require('ffmpeg-extract-frames')
 const { createCanvas, loadImage } = require('canvas')
@@ -139,12 +140,7 @@ const updateDetail = async (req, res) => {
 
 const generatePreview = async(file_path) => {
 
-  return new Promise(async(resolve, reject) => {
-    const canvas = createCanvas(250, 140)
-    const ctx = canvas.getContext('2d');
-    const GIFEncoder = require('gifencoder');
-    const encoder = new GIFEncoder(250, 140);
-    
+  return new Promise(async(resolve, reject) => {    
     let offsets = []
     for(let i=0; i<4000; i+=100){
       offsets.push(i);
@@ -160,10 +156,27 @@ const generatePreview = async(file_path) => {
     
     const play = await loadImage(GIF_PATH+'play-button.png');
     
+    const canvas = createCanvas(250, 140)
+    const ctx = canvas.getContext('2d');
+    const encoder = new GIFEncoder(250, 140);
+    
     for(let i=1; i<40; i++){
       image = await loadImage(GIF_PATH+`screenshot-${i}.jpg`);
       
-      ctx.drawImage(image, 0, 0, 250, 140);
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
       ctx.rect(60, 100, 150, 30);
       ctx.globalAlpha  = 0.7;
       ctx.fillStyle = '#333';
