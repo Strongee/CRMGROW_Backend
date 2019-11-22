@@ -20,7 +20,7 @@ const User = mongoose.model('user',{
      connect_calendar: { type: Boolean, default: false},
      connected_email: String,
      daily_report: { type: Boolean, default: false},
-     weekly_report: { type: Boolean, default: false},
+     weekly_report: { type: Boolean, default: true},
      admin_notification: {type: Number, default: 0},
      desktop_notification: { type: Boolean, default: false},
      desktop_notification_subscription: String,
