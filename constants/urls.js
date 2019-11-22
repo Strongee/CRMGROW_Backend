@@ -10,7 +10,7 @@
       PDF_PREVIEW_URL: 'https://app.crmgrow.com/api/pdf/preview/',
       FILE_URL: 'https://app.crmgrow.com/api/file/',
       VIDEO_URL: 'https://app.crmgrow.com/api/video/pipe/',
-      MATERIAL_VIEW_VIDEO_URL: 'https://app.crmgrow.com/video/',
+      MATERIAL_VIEW_VIDEO_URL: 'https://app.crmgrow.com/video1/',
       MATERIAL_VIEW_PDF_URL: 'https://app.crmgrow.com/pdf/',
       CONTACT_PAGE_URL: 'https://app.crmgrow.com/contacts/',
       FOLLOWUP_PAGE_URL: 'https://app.crmgrow.com/follow-up/',

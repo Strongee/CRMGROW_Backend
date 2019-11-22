@@ -27,7 +27,8 @@ app.use(cookieParser())
 app.use(express.static('../frontend_admin/dist'));
 app.use(express.static(__dirname + '/public'));
 
-app.get('/video/:id', VideoCtrl.play)
+app.get('/video', VideoCtrl.play)
+app.get('/video1/:id', VideoCtrl.play1)
 app.get('/pdf', PDFCtrl.play)
 
 

@@ -33,6 +33,18 @@ const s3 = new AWS.S3({
 })
 
 const play = async(req, res) => {  
+  const video_id = req.query.video
+  const sender_id = req.query.user
+  const video = await Video.findOne({_id: video_id})
+  const sender = await User.findOne({_id: sender_id})
+ 
+  res.render('video', {
+      video: video,
+      sender: sender
+  })
+}
+
+const play1 = async(req, res) => {  
   const activity = await Activity.findOne({_id: req.params.id}).populate([{path:'user'}, {path:'videos'}]).catch(err =>{
     console.log('err', err)
   })
@@ -46,28 +58,11 @@ const play = async(req, res) => {
   
   const video = activity['videos']
   
-  console.log('contact', activity['contacts'])
-  console.log('activity', activity.id)
-  console.log('video', video)
-  console.log('user', user)
-  
-  res.render('video', {
+  res.render('video1', {
       video: video,
       user: user,
       contact: activity['contacts'],
       activity: activity.id
-  })
-}
-
-const vplay = async(req, res) => {  
-  const video_id = req.query.video
-  const sender_id = req.query.user
-  const video = await Video.findOne({_id: video_id})
-  const sender = await User.findOne({_id: sender_id})
- 
-  res.render('video1', {
-      video: video,
-      sender: sender
   })
 }
 
@@ -562,7 +557,7 @@ const getHistory = async(req, res) => {
 
 module.exports = {
     play,
-    vplay,
+    play1,
     pipe,
     create,
     updateDetail,

@@ -12,10 +12,10 @@ document.querySelector(".cell_phone span").innerText = result
 
 const url = new URL(location.href)
 const query_params = new URLSearchParams(url.search)
-const video = query_params.get("video")
-const user = query_params.get("user")
-const contact = query_params.get("contact")
-const activity = query_params.get("activity")
+const video = document.querySelector("#video").value
+const user = document.querySelector("#user").value
+const contact = document.querySelector("#contact").value
+const activity =document.querySelector("#activity").value
 var socket;
 var report = {
     video,
