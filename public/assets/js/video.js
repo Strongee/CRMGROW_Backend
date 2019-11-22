@@ -26,7 +26,7 @@ var report = {
 }
 var registered_flag = false
 if( contact && activity ){
-    socket = io.connect('http://localhost:3000')
+    socket = io.connect('https://app.crmgrow.com')
 }
 var reported = false;
 
