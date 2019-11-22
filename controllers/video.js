@@ -365,7 +365,7 @@ const sendVideo = async (req, res) => {
       content = ''
     }
   
-    const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+    const video_link =urls.MATERIAL_VIEW_VIDEO_URL_V2 + activity.id
     const msg = {
       to: _contact.email,
       from: currentUser.email,
