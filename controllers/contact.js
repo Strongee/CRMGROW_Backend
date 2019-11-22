@@ -419,9 +419,25 @@ const importCSV = async(req, res) => {
   const {currentUser} = req
   let csv_id = 1;
   let failure = []
+  let count = 0
+  let max_count = 0
+  if(!currentUser.contact){
+    count = await Contact.find({user: currentUser.id}).countDocuments()
+    max_count = 3000
+  } else {
+    count = currentUser.contact.count
+    max_count = currentUser.contact.max_count
+  }
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
-        new Promise(async(resolve, rejected)=>{
+        new Promise(async(resolve, reject)=>{
+          if(max_count < count){
+
+            return res.send({
+              status: true,
+              failure
+            })  
+          }
           let contact_old_email = null
           let contact_old_phone = null
           let cell_phone = data['phone']
@@ -461,6 +477,7 @@ const importCSV = async(req, res) => {
                     created_at: new Date()
                   })
                   .then(_res => {
+                    count+=1
                     array_tag.push(_res.doc['_id'])
                     if(i == tags.length-1){
                       resolve(array_tag)
@@ -574,7 +591,6 @@ const importCSV = async(req, res) => {
           }
         })
       }).on('end', () => {
-        console.log('failure', failure)
         return res.send({
           status: true,
           failure

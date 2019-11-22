@@ -25,6 +25,16 @@ const User = mongoose.model('user',{
      desktop_notification: { type: Boolean, default: false},
      desktop_notification_subscription: String,
      text_notification: {type: Boolean, default: false},
+     contact: {
+        is_limit: {type: Boolean, default: false},
+        max_count: {type: Number, default: 3000},
+        count: {type: Number, default: 0}
+     },
+     text: {
+        is_limit: {type: Boolean, default: false},
+        max_count: {type: Number, default: 500},
+        count: {type: Number, default: 0}
+     },
      is_trial: { type: Boolean, default: true},
      expired_at: Date,
      created_at: Date,

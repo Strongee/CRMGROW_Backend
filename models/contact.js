@@ -10,6 +10,7 @@ const Contact = mongoose.model('contact',{
      state: String,
      zip: String,
      cell_phone: {type: String, default: ''},
+     country: {type: String, default: ''},
      brokerage: String,
      tag: Array,
      recruiting_stage: String,

@@ -436,7 +436,7 @@ const sendText = async (req, res) => {
       areaCode: areaCode,
     })
   
-    const number = data[0];
+    let number = data[0];
 
     if(typeof number == 'undefined'){
       const areaCode1 = currentUser.cell_phone.substring(1, 3)

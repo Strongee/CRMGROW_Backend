@@ -4,7 +4,7 @@ const Contact = require('../models/contact')
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const count = await Activity.find({user: currentUser.id}).count()
+  const count = await Activity.find({user: currentUser.id}).countDocuments()
   let activity
   if(typeof req.params.id == 'undefined'){
     activity = await Activity.find({user :currentUser.id}).sort({'updated_at': -1}).populate('contacts').limit(20);
@@ -84,7 +84,7 @@ const getByLastActivity = async(req, res) => {
     })
   }
 
-  const count = await Contact.find({user :currentUser.id}).count()
+  const count = await Contact.find({user :currentUser.id}).countDocuments()
 
   return res.send({
     status: true,
