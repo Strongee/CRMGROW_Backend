@@ -22,7 +22,6 @@ const send = async(req, res) => {
 
   if(!fromNumber) {
     const areaCode = currentUser.cell_phone.substring(1, 4)
-    console.log('areaCode', areaCode)
     const data = await twilio
     .availablePhoneNumbers('US')
     .local.list({
@@ -129,8 +128,8 @@ const receive = async(req, res) => {
         throw error // Invalid phone number
       }
       
-      const content =  "Replies from" +  '\n' + contact.first_name + contact.last_name +  '\n' + contact.cell_phone + '\n' + contact.email + '\n' + '\n' + text
-      await twilio.messages.create({from: to, body: content, to: e164Phone}).catch(err=>{
+      const content =  contact.first_name  + 'please call/text' + currentUser.user_name + 'back at' + currentUser.cell_phone
+      await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
         console.log('err', err)
       })
       const sms = new SMS({
