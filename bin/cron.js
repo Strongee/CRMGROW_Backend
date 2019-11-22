@@ -417,3 +417,4 @@ const video_job = new CronJob('* * * * 0-6', async() =>{
 
 reminder_job.start()
 weekly_report.start()
+video_job.start()
