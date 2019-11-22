@@ -344,7 +344,7 @@ const sendVideo = async (req, res) => {
       subject: subject,
       description: content
     })
-    
+   
     const _video = await Video.findOne({_id: video})
     let preview
     if(_video['preview']){
@@ -404,6 +404,7 @@ const sendText = async (req, res) => {
   const { content, video, video_title, contact} = req.body
 
   const _contact = await Contact.findOne({_id: contact})
+  const cell_phone = _contact.cell_phone
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using sms',
     contacts: contact,
@@ -419,7 +420,7 @@ const sendText = async (req, res) => {
   })
   
   const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-  const e164Phone = phone(_contact.cell_phone)[0];
+  const e164Phone = phone(cell_phone)[0];
   
   if (!e164Phone) {
     const error = {
