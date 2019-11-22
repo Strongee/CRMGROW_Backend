@@ -132,27 +132,27 @@ const receive = async(req, res) => {
       await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
         console.log('err', err)
       })
-      const sms = new SMS({
-        content: text,
-        contact: contact.id,  
-        to: currentUser.cell_phone,
-        from: from,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
+      // const sms = new SMS({
+      //   content: text,
+      //   contact: contact.id,  
+      //   to: currentUser.cell_phone,
+      //   from: from,
+      //   user: currentUser.id,
+      //   updated_at: new Date(),
+      //   created_at: new Date(),
+      // })
   
-      const _sms = await sms.save()
+      // const _sms = await sms.save()
         
-      const activity = new Activity({
-        content: contact.first_name + ' replied text',
-        contacts: contact.id,
-        user: currentUser.id,
-        type: 'sms',
-        sms: _sms.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
+      // const activity = new Activity({
+      //   content: contact.first_name + ' replied text',
+      //   contacts: contact.id,
+      //   user: currentUser.id,
+      //   type: 'sms',
+      //   sms: _sms.id,
+      //   created_at: new Date(),
+      //   updated_at: new Date(),
+      // })
       
       activity.save()
       res.send({

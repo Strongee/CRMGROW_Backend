@@ -187,7 +187,7 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {email, content, subject, pdf, pdf_title, pdf_prview, contact, contact_name} = req.body
+  const {content, subject, pdf, pdf_title, pdf_prview, contact} = req.body
   const _activity = new Activity({
     content: currentUser.user_name + ' sent pdf using email',
     contacts: contact,

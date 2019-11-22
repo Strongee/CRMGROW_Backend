@@ -8,6 +8,7 @@ const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
+const Contact = require('../models/contact')
 const { THUMBNAILS_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
@@ -32,14 +33,29 @@ const s3 = new AWS.S3({
 })
 
 const play = async(req, res) => {  
-  const video_id = req.query.video
-  const sender_id = req.query.user
-  const video = await Video.findOne({_id: video_id})
-  const sender = await User.findOne({_id: sender_id})
- 
+  const activity = await Activity.findOne({_id: req.params.id}).populate([{path:'user'}, {path:'videos'}]).catch(err =>{
+    console.log('err', err)
+  })
+  
+  const data = activity['user']
+  myJSON = JSON.stringify(data)
+  const user = JSON.parse(myJSON);
+  delete user.hash
+  delete user.salt
+  delete user.payment
+  
+  const video = activity['videos']
+  
+  console.log('contact', activity['contacts'])
+  console.log('activity', activity.id)
+  console.log('video', video)
+  console.log('user', user)
+  
   res.render('video', {
       video: video,
-      sender: sender
+      user: user,
+      contact: activity['contacts'],
+      activity: activity.id
   })
 }
 
@@ -315,69 +331,73 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  let {email, content, subject, video, video_title, contact} = req.body
+  let {content, subject, video, video_title, contact} = req.body
 
-  const _activity = new Activity({
-    content: currentUser.user_name + ' sent video using email',
-    contacts: contact,
-    user: currentUser.id,
-    type: 'videos',
-    videos: video,
-    created_at: new Date(),
-    updated_at: new Date(),
-    subject: subject,
-    description: content
-  })
-  
-  const _video = await Video.findOne({_id: video})
-  let preview
-  if(_video['preview']){
-    preview = _video['preview']
-  } else {
-    preview = _video['thumbnail'] + '?resize=true'
-  }
-  activity = await _activity.save().then()
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  if(subject == '' ){
-    subject = video_title
-  }
-  if(typeof content == 'undefined'){
-    content = ''
-  }
-
-  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
-  const msg = {
-    to: email,
-    from: currentUser.email,
-    subject: subject,
-    html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">'
-          +content+'</p><a href="' + video_link + '"><img src="'
-          +preview+'"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
     
-  }
-
-  sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
-    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      res.send({
-        status: true,
-      })
-    }else {
-      console.log('email sending err', msg.to+res[0].statusCode)
-      return res.status(404).send({
-        status: false,
-        error: _res[0].statusCode
-      })
-    }
-  }).catch ((e) => {
-    console.log('email sending err', msg.to)
-    console.error(e)
-    res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
+    const _contact = await Contact.findOne({_id: contact})
+    const _activity = new Activity({
+      content: currentUser.user_name + ' sent video using email',
+      contacts: contact,
+      user: currentUser.id,
+      type: 'videos',
+      videos: video,
+      created_at: new Date(),
+      updated_at: new Date(),
+      subject: subject,
+      description: content
     })
-  })
+    
+    const _video = await Video.findOne({_id: video})
+    let preview
+    if(_video['preview']){
+      preview = _video['preview']
+    } else {
+      preview = _video['thumbnail'] + '?resize=true'
+    }
+    activity = await _activity.save().then()
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  
+    if(subject == '' ){
+      subject = video_title
+    }
+    if(typeof content == 'undefined'){
+      content = ''
+    }
+  
+    const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+    const msg = {
+      to: _contact.email,
+      from: currentUser.email,
+      subject: subject,
+      html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">'
+            +content+'</p><a href="' + video_link + '"><img src="'
+            +preview+'"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+      
+    }
+  
+    sgMail.send(msg).then((_res) => {
+      console.log('mailres.errorcode', _res[0].statusCode);
+      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+        res.send({
+          status: true,
+        })
+      }else {
+        console.log('email sending err', msg.to+res[0].statusCode)
+        return res.status(404).send({
+          status: false,
+          error: _res[0].statusCode
+        })
+      }
+    }).catch ((e) => {
+      console.log('email sending err', msg.to)
+      console.error(e)
+      res.status(500).send({
+        status: false,
+        error: 'internal_server_error'
+      })
+    })
+ 
 }
 
 const sendText = async (req, res) => {
