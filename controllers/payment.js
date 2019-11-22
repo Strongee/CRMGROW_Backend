@@ -92,7 +92,7 @@ const create = async(payment_data) => {
 const update = async(req, res) =>{
     const { plan_id, token} = req.body
     const { currentUser } = req
-
+    console.log('token', token)    
 	findOrcreateCustomer(currentUser.email).then(async(customer) => {
         const payment = await Payment.findOne({customer_id: customer.id})
         if(payment == null){
