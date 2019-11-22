@@ -341,7 +341,9 @@ const video_job = new CronJob('* * * * 0-6', async() =>{
   const videos = await Video.find({converted: false}).catch(err=>{
     console.log('err', err)
   })
+  console.log('video_job', videos)
   if(videos){
+
     for(let i = 0; i <videos.length; i++){
       const video = videos[i]
       const file_path = video.path
@@ -376,7 +378,6 @@ const video_job = new CronJob('* * * * 0-6', async() =>{
          });
         }
       }else{
-        console.log('')
         spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
           if (fs.existsSync(VIDEO_PATH+file_name)) {
           fs.readFile(VIDEO_PATH+file_name, (err, data) => {
