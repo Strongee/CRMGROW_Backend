@@ -331,10 +331,7 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  let {content, subject, video, video_title, contact} = req.body
-
-
-    
+  let {content, subject, video, video_title, contact} = req.body 
     const _contact = await Contact.findOne({_id: contact})
     const _activity = new Activity({
       content: currentUser.user_name + ' sent video using email',
@@ -355,7 +352,9 @@ const sendVideo = async (req, res) => {
     } else {
       preview = _video['thumbnail'] + '?resize=true'
     }
-    activity = await _activity.save().then()
+    activity = await _activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
     if(subject == '' ){
@@ -365,7 +364,7 @@ const sendVideo = async (req, res) => {
       content = ''
     }
   
-    const video_link =urls.MATERIAL_VIEW_VIDEO_URL_V2 + activity.id
+    const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
     const msg = {
       to: _contact.email,
       from: currentUser.email,
@@ -402,8 +401,9 @@ const sendVideo = async (req, res) => {
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, video, video_title, contact} = req.body
+  const { content, video, video_title, contact} = req.body
 
+  const _contact = await Contact.findOne({_id: contact})
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using sms',
     contacts: contact,
@@ -414,12 +414,12 @@ const sendText = async (req, res) => {
     updated_at: new Date(),
     description: content
   })
-  activity = await _activity.save().catch(err=>{
+  activity = await _activity.save().then().catch(err=>{
     console.log('err', err);
   })
   
-  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + '?video=' + video + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id;
-  const e164Phone = phone(cell_phone)[0];
+  const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+  const e164Phone = phone(_contact.cell_phone)[0];
   
   if (!e164Phone) {
     const error = {
