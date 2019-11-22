@@ -68,6 +68,7 @@ const create = async(payment_data) => {
                         subscription: subscripition.id,
                         bill_amount: bill_amount,
                         card: card.id,
+                        card_name: token.card_name,
                         card_brand: token.card.brand,
                         exp_month: token.card.exp_month,
                         exp_year: token.card.exp_year,
@@ -92,7 +93,7 @@ const create = async(payment_data) => {
 const update = async(req, res) =>{
     const { plan_id, token} = req.body
     const { currentUser } = req
-    console.log('token', token)    
+    
 	findOrcreateCustomer(currentUser.email).then(async(customer) => {
         const payment = await Payment.findOne({customer_id: customer.id})
         if(payment == null){
@@ -117,6 +118,7 @@ const update = async(req, res) =>{
                                 card: card.id,
                                 subscription: subscription.id,
                                 card_brand: token.card.brand,
+                                card_name: token.card_name,
                                 exp_month: token.card.exp_month,
                                 exp_year: token.card.exp_year,
                                 last4: token.card.last4,
@@ -160,6 +162,7 @@ const update = async(req, res) =>{
                         payment['plan_id'] = plan_id
                         payment['token'] = token.id
                         payment['card'] = card.id
+                        payment['card_name'] = token.card_name
                         payment['card_brand'] = token.card.brand
                         payment['exp_month'] = token.card.exp_month
                         payment['exp_year'] = token.card.exp_year
