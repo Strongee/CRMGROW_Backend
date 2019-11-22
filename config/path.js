@@ -1,5 +1,6 @@
 module.exports.FILES_PATH = '/var/www/teamgrow/files/'
 module.exports.THUMBNAILS_PATH = '/var/www/teamgrow/thumbnails/'
+module.exports.GIF_PATH = '/var/www/teamgrow/gif/'
 module.exports.PREVIEW_PATH = '/var/www/teamgrow/previews/'
 module.exports.TEMP_PATH = '/var/www/teamgrow/temp/'
 module.exports.VIDEO_PATH = '/var/www/teamgrow/video/'

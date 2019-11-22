@@ -7,13 +7,11 @@ const mime = require('mime-types')
 const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
-const File = require('../models/file')
 const VideoTracker = require('../models/video_tracker')
 const { THUMBNAILS_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
-const mail_contents = require('../constants/mail_contents')
-const {TEMP_PATH, VIDEO_PATH} = require('../config/path')
+const {TEMP_PATH, GIF_PATH } = require('../config/path')
 const uuidv1 = require('uuid/v1')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
@@ -21,9 +19,9 @@ const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const AWS = require('aws-sdk')
 
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const spawn = require('child-process-promise').spawn;
-
+const extractFrames = require('ffmpeg-extract-frames')
+const { createCanvas, loadImage } = require('canvas')
+const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
 
 const s3 = new AWS.S3({
@@ -73,125 +71,145 @@ const pipe = async(req, res) =>{
 
 const create = async (req, res) => {
   if (req.file) {
-    if (req.currentUser) {
-      const file_name = req.file.filename
-      const file_path = req.file.path
- 
-      const video = new Video({
-        user: req.currentUser.id,
-        url: urls.VIDEO_URL+file_name,
-        type: req.file.mimetype,
-        created_at: new Date()
-      })
+    const file_name = req.file.filename
+    
+    const video = new Video({
+      user: req.currentUser.id,
+      url: urls.VIDEO_URL+file_name,
+      type: req.file.mimetype,
+      path: req.file.path,
+      created_at: new Date()
+    })
 
-      const _video = await video.save().then()
-      res.send({
-        status: true,
-        data: _video
-      })
-      
-    if(req.file.mimetype == 'video/quicktime'){
-      fs.readFile(file_path, (err, data) => {
-        if (err) throw err;
-        console.log('File read was successful', data)
-        const today = new Date()
-        const year = today.getYear()
-        const month = today.getMonth()
-        const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-            Key: 'video' +  year + '/' + month + '/' + file_name, 
-            Body: data,
-            ACL: 'public-read'
-        };
-        s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err) throw s3Err
-            console.log(`File uploaded successfully at ${upload.Location}`)
-            const __video = await Video.findOne({_id: _video.id})
-            __video['url'] = upload.Location
-            __video.save().catch(err=>{
-              console.log('err', err)
-            })
-
-            setTimeout(function(){
-              fs.unlinkSync(file_path)
-            }, 1000 * 60 * 60 * 2)     
-        })
-     });
-    }else{
-      spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
-        if (fs.existsSync(VIDEO_PATH+file_name)) {
-        fs.readFile(VIDEO_PATH+file_name, (err, data) => {
-          if (err) throw err;
-          console.log('File read was successful', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'video' +  year + '/' + month + '/' + file_name, 
-              Body: data,
-              ACL: 'public-read'
-          };
-          s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err) throw s3Err
-              console.log(`File uploaded successfully at ${upload.Location}`)
-              const __video = await Video.findOne({_id: _video.id})
-              __video['url'] = upload.Location
-              __video.save().catch(err=>{
-                console.log('err', err)
-              })
-
-              fs.unlinkSync(VIDEO_PATH+file_name)
-
-              setTimeout(function(){
-                fs.unlinkSync(TEMP_PATH+file_name)
-              }, 1000 * 60 * 60 * 2)     
-          })
-       });}
-      }).catch(err=>{
-        console.log('err', err)
-      }) 
-    } 
-  }
+    const _video = await video.save().then().catch(err=>{
+      console.log('err', err)
+    })
+    res.send({
+      status: true,
+      data: _video
+    })
   }
 }
 
-const updateDetail = async (req, res) => {  
-  const {currentUser} = req
+const updateDetail = async (req, res) => {
   const editData = req.body
   let thumbnail;
+  
   if (req.body.thumbnail) { // base 64 image    
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
+  
+  const video = await Video.findOne({_id: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
 
-    const video = await Video.findOne({_id: req.params.id})
+  if (!video) {
+    return res.status(401).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
 
-    if (!video) {
-      return res.status(401).json({
-        status: false,
-        error: 'Invalid_permission'
-      })
-    }
-
-
-    for (let key in editData) {
-      video[key] = editData[key]
-    }
-    if( thumbnail ){
-      video["thumbnail"] = thumbnail
-    }
-    video["updated_at"] = new Date()
-
+  for (let key in editData) {
+    video[key] = editData[key]
+  }
+  if( thumbnail ){
+    video['thumbnail'] = thumbnail
+  }
+ 
+  const file_path = video['path']
+  
+  generatePreview(file_path).then((preview)=>{
+    video['updated_at'] = new Date()
+    video['preview'] = preview
     video.save().then((_video)=>{
       res.send({
         status: true,
         data: _video
       })
+    }).catch(err=>{
+      console.log('err', err)
     })
+  }).catch(err=>{
+    console.log('err', err)
+  })
 }
 
+const generatePreview = async(file_path) => {
+
+  return new Promise(async(resolve, reject) => {
+    const canvas = createCanvas(250, 140)
+    const ctx = canvas.getContext('2d');
+    const GIFEncoder = require('gifencoder');
+    const encoder = new GIFEncoder(250, 140);
+    
+    let offsets = []
+    for(let i=0; i<4000; i+=100){
+      offsets.push(i);
+    }
+    
+    await extractFrames({
+      input: file_path,
+      output: GIF_PATH+'screenshot-%i.jpg',
+      offsets: offsets
+    }).catch(err=>{
+      console.log('err', err)
+    });  
+    
+    const play = await loadImage(GIF_PATH+'play-button.png');
+    
+    for(let i=1; i<40; i++){
+      image = await loadImage(GIF_PATH+`screenshot-${i}.jpg`);
+      
+      ctx.drawImage(image, 0, 0, 250, 140);
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play a video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+    }
+    const file_name = uuidv1()
+    const stream = pngFileStream(GIF_PATH+'frame-??.png')
+      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
+      .pipe(fs.createWriteStream(GIF_PATH+file_name));
+
+      stream.on('finish', () => {
+        if (fs.existsSync(GIF_PATH+file_name)) {
+          fs.readFile(GIF_PATH+file_name, (err, data) => {
+            if (err) throw err;
+            console.log('File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'gif' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err) throw s3Err
+              console.log(`File uploaded successfully at ${upload.Location}`)
+              
+              fs.unlinkSync(GIF_PATH+file_name)
+              resolve(upload.Location)
+            })
+         });}   
+      });
+      stream.on('error', err=>{
+        console.log('err', err)
+        reject(err)
+      });
+    });
+}
 
 const get = async (req, res) => {
   const video = await Video.findOne({_id: req.params.id, del: false})
@@ -284,7 +302,7 @@ const getAll = async (req, res) => {
 
 const sendVideo = async (req, res) => {
   const { currentUser } = req
-  let {email, content, subject, video, video_title, video_preview, contact, contact_name} = req.body
+  let {email, content, subject, video, video_title, contact} = req.body
 
   const _activity = new Activity({
     content: currentUser.user_name + ' sent video using email',
@@ -297,6 +315,14 @@ const sendVideo = async (req, res) => {
     subject: subject,
     description: content
   })
+  
+  const _video = await Video.findOne({_id: video})
+  let preview
+  if(_video['preview']){
+    preview = _video['preview']
+  } else {
+    preview = _video['thumbnail'] + '?resize=true'
+  }
   activity = await _activity.save().then()
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
@@ -312,7 +338,9 @@ const sendVideo = async (req, res) => {
     to: email,
     from: currentUser.email,
     subject: subject,
-    html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">'+content+'</p><a href="' + video_link + '" style="height:140px;width:250px;display:block;"><img src="'+video_preview+'?resize=true"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+    html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap;">'
+          +content+'</p><a href="' + video_link + '"><img src="'
+          +preview+'"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
     
   }
 
