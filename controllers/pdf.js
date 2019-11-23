@@ -5,6 +5,7 @@ const base64Img = require('base64-img');
 const mime = require('mime-types')
 
 const User = require('../models/user')
+const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const PDF = require('../models/pdf')
 const PDFTracker = require('../models/pdf_tracker')
@@ -38,6 +39,27 @@ const play = async(req, res) => {
   })
 }
 
+const play1 = async(req, res) => {  
+  const activity = await Activity.findOne({_id: req.params.id}).populate([{path:'user'}, {path:'pdfs'}]).catch(err =>{
+    console.log('err', err)
+  })
+  
+  const data = activity['user']
+  myJSON = JSON.stringify(data)
+  const user = JSON.parse(myJSON);
+  delete user.hash
+  delete user.salt
+  delete user.payment
+  
+  const pdf = activity['pdfs']
+  
+  res.render('pdf1', {
+      pdf: pdf,
+      user: user,
+      contact: activity['contacts'],
+      activity: activity.id
+  })
+}
 const create = async (req, res) => {
   if (req.file) {
       if(req.currentUser){
@@ -188,6 +210,8 @@ const getAll = async (req, res) => {
 const sendPDF = async (req, res) => {
   const { currentUser } = req
   const {content, subject, pdf, pdf_title, pdf_prview, contact} = req.body
+  const _contact = await Contact.findOne({_id: contact})
+  
   const _activity = new Activity({
     content: currentUser.user_name + ' sent pdf using email',
     contacts: contact,
@@ -202,9 +226,9 @@ const sendPDF = async (req, res) => {
   const activity = await _activity.save().then()
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
   const msg = {
-    to: email,
+    to: _contact.email,
     from: currentUser.email,
     subject: subject || pdf_title,
     html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
@@ -250,7 +274,7 @@ const sendText = async (req, res) => {
 
   const activity = await _activity.save().then()
 
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + '?pdf=' + pdf + '&contact=' + contact + '&user=' + currentUser.id + '&activity=' + activity.id
+  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
   const e164Phone = phone(cell_phone)[0]
 
   if (!e164Phone) {
@@ -265,23 +289,41 @@ const sendText = async (req, res) => {
 
   if(!fromNumber) {
     const areaCode = currentUser.cell_phone.substring(1, 4)
-    console.log('areaCode', areaCode)
+
     const data = await twilio
     .availablePhoneNumbers('US')
     .local.list({
       areaCode: areaCode,
     })
   
-    const number = data[0];
-    const proxy_number = await twilio.incomingPhoneNumbers.create({
+    let number = data[0];
+
+    if(typeof number == 'undefined'){
+      const areaCode1 = currentUser.cell_phone.substring(1, 3)
+
+      const data1 = await twilio
+      .availablePhoneNumbers('US')
+      .local.list({
+        areaCode: areaCode1,
+      })
+      number = data1[0];
+    }
+    
+    if(typeof number != 'undefined'){
+      const proxy_number = await twilio.incomingPhoneNumbers.create({
         phoneNumber: number.phoneNumber,
         smsUrl:  urls.SMS_RECEIVE_URL
       })
-    currentUser['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = currentUser['proxy_number'];
-    currentUser.save().catch(err=>{
-      console.log('err', err)
-    })
+      
+      console.log('proxy_number', proxy_number)
+      currentUser['proxy_number'] = proxy_number.phoneNumber;
+      fromNumber = currentUser['proxy_number'];
+      currentUser.save().catch(err=>{
+        console.log('err', err)
+      })
+    } else {
+      fromNumber = config.TWILIO.TWILIO_NUMBER
+    } 
   }
   
   console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
@@ -368,6 +410,7 @@ const getHistory = async(req, res) => {
 
 module.exports = {
   play,
+  play1,
   create,
   updateDetail,
   get,

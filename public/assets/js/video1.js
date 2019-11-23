@@ -10,8 +10,6 @@ let result = "";
 result = "(" + newStr.slice(0, 3) + ") " + newStr.slice(3, 6) + "-" + newStr.slice(6, 10);
 document.querySelector(".cell_phone span").innerText = result
 
-const url = new URL(location.href)
-const query_params = new URLSearchParams(url.search)
 const video = document.querySelector("#video").value
 const user = document.querySelector("#user").value
 const contact = document.querySelector("#contact").value

@@ -61,22 +61,62 @@ const disconnectPDF = async(pdf_tracker_id) =>{
    // send text notification
    if(currentUser.text_notification == true){
     const e164Phone = phone(currentUser.cell_phone)[0]
-    const fromNumber = config.TWILIO.TWILIO_NUMBER
-    console.info(`Send SMS: ${fromNumber} -> ${currentUser.cell_phone} :`)
+    
     if (!e164Phone) {
       const error = {
         error: 'Invalid Phone Number'
       }
-      throw error // Invalid phone number
-    }
   
-    const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed pdf: ' + pdf.title + '\n'
-    const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
-    const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n '
-    const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-    twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
-      console.log('send sms err: ',err)
-    })
+      throw error // Invalid phone number
+    } else {
+      let fromNumber = currentUser['proxy_number'];
+      if(!fromNumber) {
+        const areaCode = currentUser.cell_phone.substring(1, 4)
+    
+        const data = await twilio
+        .availablePhoneNumbers('US')
+        .local.list({
+          areaCode: areaCode,
+        })
+      
+        let number = data[0];
+    
+        if(typeof number == 'undefined'){
+          const areaCode1 = currentUser.cell_phone.substring(1, 3)
+    
+          const data1 = await twilio
+          .availablePhoneNumbers('US')
+          .local.list({
+            areaCode: areaCode1,
+          })
+          number = data1[0];
+        }
+        
+        if(typeof number != 'undefined'){
+          const proxy_number = await twilio.incomingPhoneNumbers.create({
+            phoneNumber: number.phoneNumber,
+            smsUrl:  urls.SMS_RECEIVE_URL
+          })
+          
+          console.log('proxy_number', proxy_number)
+          currentUser['proxy_number'] = proxy_number.phoneNumber;
+          fromNumber = currentUser['proxy_number'];
+          currentUser.save().catch(err=>{
+            console.log('err', err)
+          })
+        } else {
+          fromNumber = config.TWILIO.TWILIO_NUMBER
+        } 
+      }
+    
+      const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed pdf: ' + pdf.title + '\n'
+      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n '
+      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+      twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
+        console.log('send sms err: ',err)
+      })
+    } 
   }
 
   // send email notification
@@ -197,14 +237,54 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     // send text notification
     if(currentUser.text_notification == true && currentUser.cell_phone){
       const e164Phone = phone(currentUser.cell_phone)[0]
-      const fromNumber = config.TWILIO.TWILIO_NUMBER
-      console.info(`Send SMS: ${fromNumber} -> ${currentUser.cell_phone}`)
+      
       if (!e164Phone) {
         const error = {
           error: 'Invalid Phone Number'
         }
         throw error // Invalid phone number
       } else {
+      
+        let fromNumber = currentUser['proxy_number'];
+        if(!fromNumber) {
+          const areaCode = currentUser.cell_phone.substring(1, 4)
+      
+          const data = await twilio
+          .availablePhoneNumbers('US')
+          .local.list({
+            areaCode: areaCode,
+          })
+        
+          let number = data[0];
+      
+          if(typeof number == 'undefined'){
+            const areaCode1 = currentUser.cell_phone.substring(1, 3)
+      
+            const data1 = await twilio
+            .availablePhoneNumbers('US')
+            .local.list({
+              areaCode: areaCode1,
+            })
+            number = data1[0];
+          }
+          
+          if(typeof number != 'undefined'){
+            const proxy_number = await twilio.incomingPhoneNumbers.create({
+              phoneNumber: number.phoneNumber,
+              smsUrl:  urls.SMS_RECEIVE_URL
+            })
+            
+            console.log('proxy_number', proxy_number)
+            currentUser['proxy_number'] = proxy_number.phoneNumber;
+            fromNumber = currentUser['proxy_number'];
+            currentUser.save().catch(err=>{
+              console.log('err', err)
+            })
+          } else {
+            fromNumber = config.TWILIO.TWILIO_NUMBER
+          } 
+        }
+        
         const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
         const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
         const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
