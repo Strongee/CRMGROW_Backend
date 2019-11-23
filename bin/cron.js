@@ -337,13 +337,12 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const video_job = new CronJob('0 * * 0-6', async() =>{
+const video_job = new CronJob('45 13 * * 0-6', async() =>{
   const videos = await Video.find({converted: false}).catch(err=>{
     console.log('err', err)
   })
   
   if(videos){
-
     for(let i = 0; i <videos.length; i++){
       const video = videos[i]
       const file_path = video.path
@@ -377,6 +376,8 @@ const video_job = new CronJob('0 * * 0-6', async() =>{
          });
         }
       }else{
+        console.log('file_path', file_path)
+        console.log('VIDEO_PATH+file_name', VIDEO_PATH+file_name)
         spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then(()=>{
           console.log('Video converting was successful')
           if (fs.existsSync(VIDEO_PATH+file_name)) {
