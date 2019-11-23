@@ -338,9 +338,11 @@ const setup = (io) => {
 
       socket.on('update_pdf', (duration)=>{
         const pdf_tracker = socket.pdf_tracker
-        updatePDF(duration, pdf_tracker._id).catch(err=>{
-          console.log('err', err)
-        })
+        if(typeof pdf_tracker != 'undefined'){
+          updatePDF(duration, pdf_tracker._id).catch(err=>{
+            console.log('err', err)
+          })
+        }
       })
 
       socket.on('init_video', (data)=>{
