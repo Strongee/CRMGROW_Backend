@@ -1,5 +1,5 @@
 $(function() {
-    let pdf_url = document.querySelector("#pdf").value;
+    let pdf_url = document.querySelector("#url").value;
     var total_pages;
     let total = 0;
     const displayControls = (e) => {

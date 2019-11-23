@@ -348,7 +348,6 @@ const video_job = new CronJob('0 * * 0-6', async() =>{
       const video = videos[i]
       const file_path = video.path
       const file_name = video.path.slice(23)
-      console.log('file_name', file_name)
       
       if(video.type == 'video/quicktime'){
         if (fs.existsSync(file_path)) {
@@ -378,10 +377,14 @@ const video_job = new CronJob('0 * * 0-6', async() =>{
          });
         }
       }else{
-        spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then((_)=>{
+        spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then(()=>{
+          console.log('Video converting was successful')
           if (fs.existsSync(VIDEO_PATH+file_name)) {
           fs.readFile(VIDEO_PATH+file_name, (err, data) => {
-            if (err) throw err;
+            if (err) {
+              console.log('err', err)
+              throw err;
+            }
             console.log('File read was successful', data)
             const today = new Date()
             const year = today.getYear()
@@ -393,7 +396,10 @@ const video_job = new CronJob('0 * * 0-6', async() =>{
                 ACL: 'public-read'
             };
             s3.upload(params, async (s3Err, upload)=>{
-                if (s3Err) throw s3Err
+                if (s3Err) {
+                  console.log('err', s3Err)
+                  throw s3Err
+                }
                 console.log(`File uploaded successfully at ${upload.Location}`)
                 video['url'] = upload.Location
                 video['converted'] = true
