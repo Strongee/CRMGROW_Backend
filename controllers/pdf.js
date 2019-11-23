@@ -209,133 +209,143 @@ const getAll = async (req, res) => {
 
 const sendPDF = async (req, res) => {
   const { currentUser } = req
-  const {content, subject, pdf, pdf_title, pdf_prview, contact} = req.body
-  const _contact = await Contact.findOne({_id: contact})
+  const {content, subject, pdf, pdf_title, pdf_prview, contacts} = req.body
   
-  const _activity = new Activity({
-    content: currentUser.user_name + ' sent pdf using email',
-    contacts: contact,
-    user: currentUser.id,
-    type: 'pdfs',
-    pdfs: pdf,
-    created_at: new Date(),
-    updated_at: new Date(),
-    subject: subject,
-    description: content
-  })     
-  const activity = await _activity.save().then()
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
-  const msg = {
-    to: _contact.email,
-    from: currentUser.email,
-    subject: subject || pdf_title,
-    html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
-          '<img src='+pdf_prview+'?resize=true"></img>' +  
-          '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
-  }
-
-  sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
-    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-      res.send({
-        status: true,
-      })        
-    }else {
-      res.status(404).send({
-        status: false,
-        error: _res[0].statusCode
+  if(contacts){
+    for(let i=0; i<contacts.length; i++){
+      const _contact = await Contact.findOne({_id: contacts[i]})
+  
+      const _activity = new Activity({
+        content: currentUser.user_name + ' sent pdf using email',
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'pdfs',
+        pdfs: pdf,
+        created_at: new Date(),
+        updated_at: new Date(),
+        subject: subject,
+        description: content
+      })     
+      const activity = await _activity.save().then()
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    
+      const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
+      const msg = {
+        to: _contact.email,
+        from: currentUser.email,
+        subject: subject || pdf_title,
+        html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
+              '<img src='+pdf_prview+'?resize=true"></img>' +  
+              '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
+      }
+    
+      sgMail.send(msg).then((_res) => {
+        console.log('mailres.errorcode', _res[0].statusCode);
+        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+          res.send({
+            status: true,
+          })        
+        }else {
+          res.status(404).send({
+            status: false,
+            error: _res[0].statusCode
+          })
+        }
+      }).catch ((e) => {
+        console.error(e)
+        res.status(500).send({
+          status: false,
+          error: 'internal_server_error'
+        })
       })
     }
-  }).catch ((e) => {
-    console.error(e)
-    res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
-    })
-  })
+  }
 }
 
 const sendText = async (req, res) => {
   const { currentUser } = req
-  const { cell_phone, content, pdf, pdf_title, contact} = req.body
+  const { content, pdf, pdf_title, contacts} = req.body
 
-  const _activity = new Activity({
-    content: currentUser.user_name + ' sent pdf using sms',
-    contacts: contact,
-    user: currentUser.id,
-    type: 'pdfs',
-    pdfs: pdf,
-    created_at: new Date(),
-    updated_at: new Date(),
-    description: content
-  })
-
-  const activity = await _activity.save().then()
-
-  const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
-  const e164Phone = phone(cell_phone)[0]
-
-  if (!e164Phone) {
-    const error = {
-      error: 'Invalid Phone Number'
-    }
-
-    throw error // Invalid phone number
-  }
-  
-  let fromNumber = currentUser['proxy_number'];
-
-  if(!fromNumber) {
-    const areaCode = currentUser.cell_phone.substring(1, 4)
-
-    const data = await twilio
-    .availablePhoneNumbers('US')
-    .local.list({
-      areaCode: areaCode,
-    })
-  
-    let number = data[0];
-
-    if(typeof number == 'undefined'){
-      const areaCode1 = currentUser.cell_phone.substring(1, 3)
-
-      const data1 = await twilio
-      .availablePhoneNumbers('US')
-      .local.list({
-        areaCode: areaCode1,
+  if(contacts){
+    for(let i=0; i<contacts.length; i++){
+      const _contact = await Contact.findOne({_id: contacts[i]})
+      const cell_phone = _contact.cell_phone
+      const _activity = new Activity({
+        content: currentUser.user_name + ' sent pdf using sms',
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'pdfs',
+        pdfs: pdf,
+        created_at: new Date(),
+        updated_at: new Date(),
+        description: content
       })
-      number = data1[0];
-    }
     
-    if(typeof number != 'undefined'){
-      const proxy_number = await twilio.incomingPhoneNumbers.create({
-        phoneNumber: number.phoneNumber,
-        smsUrl:  urls.SMS_RECEIVE_URL
-      })
-      
-      console.log('proxy_number', proxy_number)
-      currentUser['proxy_number'] = proxy_number.phoneNumber;
-      fromNumber = currentUser['proxy_number'];
-      currentUser.save().catch(err=>{
+      const activity = await _activity.save().then().catch(err=>{
         console.log('err', err)
       })
-    } else {
-      fromNumber = config.TWILIO.TWILIO_NUMBER
-    } 
-  }
-  
-  console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
-
-    const body = content + '\n' +  pdf_title + '\n' + '\n' + pdf_link
-  
-    twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
     
-    res.send({
-      status: true,
-    })
-           
+      const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
+      const e164Phone = phone(cell_phone)[0]
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+    
+        throw error // Invalid phone number
+      }
+      
+      let fromNumber = currentUser['proxy_number'];
+    
+      if(!fromNumber) {
+        const areaCode = currentUser.cell_phone.substring(1, 4)
+    
+        const data = await twilio
+        .availablePhoneNumbers('US')
+        .local.list({
+          areaCode: areaCode,
+        })
+      
+        let number = data[0];
+    
+        if(typeof number == 'undefined'){
+          const areaCode1 = currentUser.cell_phone.substring(1, 3)
+    
+          const data1 = await twilio
+          .availablePhoneNumbers('US')
+          .local.list({
+            areaCode: areaCode1,
+          })
+          number = data1[0];
+        }
+        
+        if(typeof number != 'undefined'){
+          const proxy_number = await twilio.incomingPhoneNumbers.create({
+            phoneNumber: number.phoneNumber,
+            smsUrl:  urls.SMS_RECEIVE_URL
+          })
+          
+          console.log('proxy_number', proxy_number)
+          currentUser['proxy_number'] = proxy_number.phoneNumber;
+          fromNumber = currentUser['proxy_number'];
+          currentUser.save().catch(err=>{
+            console.log('err', err)
+          })
+        } else {
+          fromNumber = config.TWILIO.TWILIO_NUMBER
+        } 
+      }
+      console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+  
+      const body = content + '\n' +  pdf_title + '\n' + '\n' + pdf_link
+    
+      twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
+      
+      res.send({
+        status: true,
+      })
+    }
+  }    
 }
 
 const remove = async (req, res) => {
