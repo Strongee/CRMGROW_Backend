@@ -84,7 +84,24 @@ const create = async(req, res) => {
       error: errors.array()
     })
   }
-
+  let max_count = 0
+  let count = 0
+  
+  if(!currentUser.contact){
+    count = await Contact.find({user: currentUser.id}).countDocuments()
+    max_count = config.MAX_CONTACT
+  } else {
+    count = currentUser.contact.count
+    max_count = currentUser.contact.max_count
+  }
+  
+  if(max_count < count){
+    return res.status(400).send({
+      status: false,
+      error: 'You are exceed for max contacts'
+    })  
+  }
+  
   let contact_old
   if(typeof req.body['email'] != 'undefined'){
     contact_old = await Contact.findOne({user: currentUser.id, email: req.body['email']}) 
@@ -124,6 +141,13 @@ const create = async(req, res) => {
   
   contact.save()
   .then(_contact => {
+      count+=1
+      const contact_info = {
+        count: count,
+        max_count: max_count
+      }
+      currentUser.contact_info = contact_info
+      currentUser.save()
       const activity = new Activity({
         content: currentUser.user_name + ' added contact',
         contacts: _contact.id,
@@ -423,34 +447,30 @@ const importCSV = async(req, res) => {
   let max_count = 0
   if(!currentUser.contact){
     count = await Contact.find({user: currentUser.id}).countDocuments()
-    max_count = 3000
+    max_count = config.MAX_CONTACT
   } else {
     count = currentUser.contact.count
     max_count = currentUser.contact.max_count
   }
+  
   fs.createReadStream(file.path).pipe(csv())
       .on('data', async(data) => {
         new Promise(async(resolve, reject)=>{
-          if(max_count < count){
-
-            return res.send({
-              status: true,
-              failure
-            })  
-          }
           let contact_old_email = null
           let contact_old_phone = null
           let cell_phone = data['phone']
           csv_id +=1
-          if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
-            resolve()
-            return;
-          }
+          
           if(!data['email']){
             data['email'] = ''
           }
           if(!data['phone']){
             data['phone'] = ''
+          }
+          console.log('first_name', data['first_name'])
+          if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
+            resolve()
+            return;
           }
           if(data['email'] != ''){
             contact_old_email = await Contact.findOne({user: currentUser.id, email: data['email']})
@@ -464,133 +484,152 @@ const importCSV = async(req, res) => {
             }
             contact_old_phone =await Contact.findOne({user: currentUser.id, cell_phone: cell_phone}) 
           }
-          if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' && contact_old_email == null && contact_old_phone == null)){
-            if(data['tag'] != '' && typeof data['tag'] != 'undefined'){  
-              const tags = data['tag'].split(/,\s|\s,|,|\s/);
-              await new Promise((resolve, reject) =>{
-                const array_tag = []
-                for(let i=0; i<tags.length; i++){
-                  Tag.findOrCreate({ content: tags[i] }, {
-                    content: tags[i],
+          if((data['first_name'] != null && data['email'] == '' && data['phone'] == '') || (data['first_name'] != 'first_name' 
+              && contact_old_email == null && contact_old_phone == null))
+          { 
+            count=count+1;
+            if(max_count < count){
+              const field = {
+                id: csv_id,
+                email: data['email'],
+                phone: data['phone'],
+              }
+              failure.push(field)
+              resolve()
+              return;
+            } 
+              if(data['tag'] != '' && typeof data['tag'] != 'undefined'){  
+                const tags = data['tag'].split(/,\s|\s,|,|\s/);
+                new Promise((resolve, reject) =>{
+                  const array_tag = []
+                  for(let i=0; i<tags.length; i++){
+                    Tag.findOrCreate({ content: tags[i] }, {
+                      content: tags[i],
+                      user: currentUser.id,
+                      updated_at: new Date(),
+                      created_at: new Date()
+                    }).then(_res => {
+                      array_tag.push(_res.doc['_id'])
+                      if(i == tags.length-1){
+                        resolve(array_tag)
+                      }
+                    })
+                  } 
+                }).then((res)=>{
+                  data['tag'] = res 
+                  const contact = new Contact({
+                    ...data,
+                    cell_phone: cell_phone,
                     user: currentUser.id,
-                    updated_at: new Date(),
-                    created_at: new Date()
-                  })
-                  .then(_res => {
-                    count+=1
-                    array_tag.push(_res.doc['_id'])
-                    if(i == tags.length-1){
-                      resolve(array_tag)
-                    }
-                  })
-              } 
-            }).then((res)=>{
-              data['tag'] = res 
-              const contact = new Contact({
-                ...data,
-                cell_phone: cell_phone,
-                user: currentUser.id,
-                created_at: new Date(),
-                updated_at: new Date(),
-              })
-              
-            contact.save().then(_contact=>{
-              const activity = new Activity({
-                content: currentUser.user_name + ' added contact',
-                contacts: _contact.id,
-                user: currentUser.id,
-                type: 'contacts',
-                created_at: new Date(),
-                updated_at: new Date(),
-              })
-              activity.save()
-              if(data['note'] != null && data['note'] != ''){
-                const note = new Note({
-                  content: data['note'],
-                  contact: _contact.id,
-                  user: currentUser.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                })
-                note.save().then((_note)=>{
-                  const _activity = new Activity({
-                    content: currentUser.user_name + ' added note',
-                    contacts: _contact.id,
-                    user: currentUser.id,
-                    type: 'notes',
-                    notes: _note.id,
                     created_at: new Date(),
                     updated_at: new Date(),
                   })
-                  _activity.save().catch(err=>{
-                    console.log('error', err)
+                contact.save().then(_contact=>{
+                  const activity = new Activity({
+                    content: currentUser.user_name + ' added contact',
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'contacts',
+                    created_at: new Date(),
+                    updated_at: new Date(),
                   })
-                  resolve()
+                  activity.save()
+                  if(data['note'] != null && data['note'] != ''){
+                    const note = new Note({
+                      content: data['note'],
+                      contact: _contact.id,
+                      user: currentUser.id,
+                      created_at: new Date(),
+                      updated_at: new Date(),
+                    })
+                    note.save().then((_note)=>{
+                      const _activity = new Activity({
+                        content: currentUser.user_name + ' added note',
+                        contacts: _contact.id,
+                        user: currentUser.id,
+                        type: 'notes',
+                        notes: _note.id,
+                        created_at: new Date(),
+                        updated_at: new Date(),
+                      })
+                      _activity.save().catch(err=>{
+                        console.log('error', err)
+                      })
+                      resolve()
+                    })
+                  }
+                 }).catch(err=>{
+                   console.log('err', err)
+                 })
+                }).catch(err=>{
+                  console.log('err', err)
                 })
-              }
-             }).catch(err=>{
-               console.log('err', err)
-             })
-            })
-          }else{
-            delete data.tag
-            const contact = new Contact({
-              ...data,
-              cell_phone: cell_phone,
-              user: currentUser.id,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-            
-          contact.save().then(_contact=>{
-            const activity = new Activity({
-              content: currentUser.user_name + ' added contact',
-              contacts: _contact.id,
-              user: currentUser.id,
-              type: 'contacts',
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-            activity.save()
-            if(data['note'] != null){
-              const note = new Note({
-                content: data['note'],
-                contact: _contact.id,
-                user: currentUser.id,
-                created_at: new Date(),
-                updated_at: new Date(),
-              })
-              note.save().then((_note)=>{
-                const _activity = new Activity({
-                  content: currentUser.user_name + ' added note',
-                  contacts: _contact.id,
+              }else{
+                delete data.tag
+                const contact = new Contact({
+                  ...data,
+                  cell_phone: cell_phone,
                   user: currentUser.id,
-                  type: 'notes',
-                  notes: _note.id,
                   created_at: new Date(),
                   updated_at: new Date(),
                 })
-                _activity.save().catch(err=>{
-                  console.log('error', err)
-                })
-                resolve()
-              })
-            }
-           }).catch(err=>{
-             console.log('err', err)
-           })
-          }          
+                
+                contact.save().then(_contact=>{
+                  const activity = new Activity({
+                    content: currentUser.user_name + ' added contact',
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'contacts',
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                  })
+                  activity.save()
+                  if(data['note'] != null){
+                    const note = new Note({
+                      content: data['note'],
+                      contact: _contact.id,
+                      user: currentUser.id,
+                      created_at: new Date(),
+                      updated_at: new Date(),
+                    })
+                    note.save().then((_note)=>{
+                      const _activity = new Activity({
+                        content: currentUser.user_name + ' added note',
+                        contacts: _contact.id,
+                        user: currentUser.id,
+                        type: 'notes',
+                        notes: _note.id,
+                        created_at: new Date(),
+                        updated_at: new Date(),
+                      })
+                      _activity.save().catch(err=>{
+                        console.log('error', err)
+                      })
+                      resolve()
+                    })
+                  }
+                 }).catch(err=>{
+                   console.log('err', err)
+                 })
+              }      
           }else{
             const field = {
               id: csv_id,
               email: data['email'],
-              phone: data['phone']
+              phone: data['phone'],
             }
             failure.push(field)
             resolve()
           }
         })
       }).on('end', () => {
+        const contact_info = {
+          count: count,
+          max_count: max_count
+        }
+        currentUser.contact_info = contact_info
+        currentUser.save()
+        
         return res.send({
           status: true,
           failure

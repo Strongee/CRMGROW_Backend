@@ -46,7 +46,8 @@ const config = {
         PRIOR_PLAN: process.env.PRIOR_PLAN || 'plan_FFnfPJc8bPYCZi',
         PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '39',
         PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29'
-    }
+    },
+    MAX_CONTACT: process.env.MAX_CONTACT || 3000
 }
 
 module.exports = config;

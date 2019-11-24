@@ -1,10 +1,7 @@
 const express = require('express')
-const fs = require('fs')
 const AWS = require('aws-sdk')
 const multer = require('multer');
 const multerS3 = require('multer-s3')
-const mime = require('mime-types')
-const uuidv1 = require('uuid/v1')
 
 const PDFCtrl = require('../controllers/pdf')
 const UserCtrl = require('../controllers/user')
@@ -32,7 +29,7 @@ const storage = multerS3({
       const month = today.getMonth()
       cb(null, 'pdf ' + year + '/' + month + '/' + file.originalname)
     },
-  })
+  }) 
 
 
 const upload = multer({

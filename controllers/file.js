@@ -1,29 +1,32 @@
 const path = require('path')
 const mime = require('mime-types')
 const fs = require('fs')
+const sharp = require('sharp');
 
 const File = require('../models/file')
 const { FILES_PATH } = require('../config/path')
 const urls = require('../constants/urls')
-const sharp = require('sharp');
+
 const create = async (req, res) => {
-    if (req.file) {
-        if (req.currentUser) {
-            const file = new File({
-                user: req.currentUser.id,
-                name: req.file.filename,
-                type: 'image'
-            })
-            file.save()
-        }
-        return res.send({
-          status: true,
-          data: {
-            file_name: req.file.filename,
-            url:  urls.FILE_URL + req.file.filename
-          }
-        })
+  if (req.file) {
+    const url = urls.FILE_URL + req.file.filename
+    if (req.currentUser) {
+      const file = new File({
+        user: req.currentUser.id,
+        name: req.file.filename,
+        url: url,
+        type: 'image'
+      })
+      file.save()
     }
+    
+    return res.send({
+      status: true,
+      data: {
+        url: url
+      }
+    })
+  }
 }
 
 const get = (req, res) => {
@@ -78,19 +81,19 @@ const remove = async (req, res) => {
 
 const upload = async (req, res) => {
   if (req.file) {
-      if(req.query.resize){
-        const url = urls.FILE_URL + req.file.filename + '?resize=true'
-        res.send({
-          status: true,
-          url: url
-        })
-      }else{
-        const url = urls.FILE_URL + req.file.filename
-        res.send({
-          status: true,
-          url: url
-        })
-      }  
+    if(req.query.resize){
+      const url = urls.FILE_URL + req.file.filename + '?resize=true'
+      res.send({
+        status: true,
+        url: url
+      })
+    }else{
+      const url = urls.FILE_URL + req.file.filename
+      res.send({
+        status: true,
+        url: url
+      })
+    }  
   }
 }
 
