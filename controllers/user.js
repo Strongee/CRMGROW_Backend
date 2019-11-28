@@ -97,7 +97,19 @@ const signUp = async (req, res) => {
   
         sgMail.send(msg)
         
-
+        
+        setTimeout(function(){
+          msg = {
+            to: _res.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+            dynamic_template_data: {
+              first_name: _res.user_name,
+            }
+          }
+          sgMail.send(msg)
+        }, 1000 * 60 * 60 * 24)
+  
   
         setTimeout(function(){
           msg = {
@@ -112,8 +124,6 @@ const signUp = async (req, res) => {
           }
           sgMail.send(msg)
         }, 1000 * 60 * 60 * 24)
-  
-       
   
         setTimeout(function(){
           msg = {

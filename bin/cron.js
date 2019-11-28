@@ -376,6 +376,7 @@ const video_job = new CronJob('0 3 * * *', async() =>{
          });
         }
       }else{
+        if (!fs.existsSync(VIDEO_PATH+file_name)) {
         spawn(ffmpegPath, ['-i',file_path, '-s', 'hd720', '-c:v', 'libx264', '-crf', '23', '-c:a', 'aac', '-strict', `-2`, VIDEO_PATH+file_name]).then(()=>{
           console.log('Video converting was successful')
           if (fs.existsSync(VIDEO_PATH+file_name)) {
@@ -413,6 +414,7 @@ const video_job = new CronJob('0 3 * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         }) 
+      }
       } 
     }
   }
