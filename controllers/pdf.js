@@ -340,7 +340,7 @@ const sendText = async (req, res) => {
       const body = content + '\n' + '\n' + pdf_title + '\n' + '\n' + pdf_link
     
       twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
-        return res.send({
+        res.send({
           status: true,
         })
       }).catch(err=>{
