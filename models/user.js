@@ -38,10 +38,7 @@ const User = mongoose.model('user',{
      recurring: {
          data: {type: String}
      },
-     welcome_email: {
-         all_sent: {type: Boolean, default: false},
-         step: {type: Number, default: 0}
-     },
+     welcome_email: {type: Boolean, default: false},
      is_trial: { type: Boolean, default: true},
      expired_at: Date,
      created_at: Date,

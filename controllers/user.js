@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const randomstring = require('randomstring')
 const User = require('../models/user')
-const UserLog = require('../models/user_log')
 const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
@@ -81,7 +80,9 @@ const signUp = async (req, res) => {
           },
         };
   
-        sgMail.send(msg)
+        sgMail.send(msg).catch(err=>{
+          console.log('err', err)
+        })
   
         msg = {
           to: _res.email,
@@ -96,51 +97,11 @@ const signUp = async (req, res) => {
           }
         }
   
-        sgMail.send(msg)
+        sgMail.send(msg).catch(err=>{
+          console.log('err', err)
+        })
         
-        
-        setTimeout(function(){
-          msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-            }
-          }
-          sgMail.send(msg)
-        }, 1000 * 60 * 60 * 24)
-  
-  
-        setTimeout(function(){
-          msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
-              recruiting_material: `<a href="${urls.MATERIAL_VIEW_VIDEO_URL}">Material Page</a>`
-            }
-          }
-          sgMail.send(msg)
-        }, 1000 * 60 * 60 * 24)
-  
-        setTimeout(function(){
-          msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
-            }
-          }
-          sgMail.send(msg)
-        }, 1000 * 60 * 60 * 48)
-  
-        
-        const token = jwt.sign({id:_res.id}, config.JWT_SECRET, { expiresIn: '3d'})
+        const token = jwt.sign({id:_res.id}, config.JWT_SECRET, { expiresIn: '30d'})
   
         myJSON = JSON.stringify(_res)
         const user = JSON.parse(myJSON);
@@ -286,15 +247,8 @@ const login = async (req, res) => {
     })
   }
 
-  const user_log = new UserLog({
-    user: _user.id,
-    created_at: new Date(),
-    updated_at: new Date()
-  })
-
-  user_log.save()
   // TODO: Include only email for now
-  const token = jwt.sign({id:_user.id}, config.JWT_SECRET)
+  const token = jwt.sign({id:_user.id}, config.JWT_SECRET, { expiresIn: '30d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
 

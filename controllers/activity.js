@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator/check')
 const Activity = require('../models/activity');
 const Contact = require('../models/contact')
+const UserLog = require('../models/user_log')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -86,6 +87,16 @@ const getByLastActivity = async(req, res) => {
 
   const count = await Contact.find({user :currentUser.id}).countDocuments()
 
+  const user_log = new UserLog({
+    user: currentUser.id,
+    created_at: new Date(),
+    updated_at: new Date()
+  })
+
+  user_log.save().catch(err=>{
+    console.log('err', err)
+  })
+  
   return res.send({
     status: true,
     data: {

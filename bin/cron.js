@@ -383,183 +383,90 @@ const video_job = new CronJob('0 3 * * *', async() =>{
 
 const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-  const due_date = new Date()
-  due_date.setSeconds(0)
-  due_date.setMilliseconds(000)
-
-  const reminder_array = await Reminder.find({due_date: due_date, del: false}).catch(err=>{
-    console.log(err)
+  
+  const subscribers = await User.find({'welcome_email': false}).catch(err=>{
+    console.log('err', err)
   })
   
-  for(let i=0; i<reminder_array.length; i ++){
-    const reminder = reminder_array[i]
-    if(reminder['type'] == 'follow_up'){
-      const follow_up = await FollowUp.findOne({_id: reminder.follow_up}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const user = await User.findOne({_id: follow_up.user}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const contact = await Contact.findOne({_id: follow_up.contact}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const msg = {
-        to: user.email,
-        from: mail_contents.FOLLOWUP_REMINDER.MAIL,
-        subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-        templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
-        dynamic_template_data: {
-          contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
-          due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a'),
-          content: follow_up.content,
-          detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-        },
+  if(subscribers){
+    for(let i = 0; i <subscribers.length; i++){
+      const subscriber = subscribers[i]
+      const created_at = new Date(subscriber['created_at']).getTime()
+      const now = new Date().getTime()
+      const offset = now-created_at
+      console.log('offset', offset)
+      if(offset>=(30*60*1000) && offset<60*60*1000){
+          console.log('first_step')
+          msg = {
+            to: subscriber.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
+            dynamic_template_data: {
+              first_name: subscriber.user_name,
+            }
+          }
+          sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+            }else {
+              console.log('email sending err', msg.to+res[0].statusCode)
+            }
+          }).catch(err=>{
+            console.log('err', err)
+          })
       }
-
-      sgMail.send(msg).then((res) => {
-        console.log('mailres.errorcode', res[0].statusCode);
-        if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-          console.log('Successful send to '+msg.to)
-        }else {
-          console.log('email sending err', msg.to+res[0].statusCode)
-        }
-      }).catch((err)=>{
-        console.log('err: ', err)
-      })
-
-      const e164Phone = phone(user.cell_phone)[0]
-      const fromNumber = config.TWILIO.TWILIO_NUMBER
-      console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-        throw error // Invalid phone number
+      if(offset>=(24*60*60*1000) && offset<24.5*60*60*1000){
+          msg = {
+            to: _res.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+            dynamic_template_data: {
+              first_name: _res.user_name,
+              video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
+              recruiting_material: `<a href="${urls.MATERIAL_VIEW_VIDEO_URL}">Material Page</a>`
+            }
+          }
+          sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+            }else {
+              console.log('email sending err', msg.to+res[0].statusCode)
+            }
+          }).catch(err=>{
+            console.log('err', err)
+          })
       }
- 
-      const title = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
-        + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
-      const body = follow_up.content + '\n'
-      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-      twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
-        console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY h:mm a')}`)
-        console.log(`UTC timezone ${moment(follow_up.due_date).toISOString()}`)
-      }).catch(err=>{
-        console.log('send sms err: ',err)
-      })
-
-      reminder['del'] = true
-  
-      reminder.save().catch(err=>{
-        console.log(err)
-      })
-    }else{
-      const appointment = await Appointment.findOne({_id: reminder.appointment}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const user = await User.findOne({_id: appointment.user}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const contact = await Contact.findOne({_id: appointment.contact}).catch((err)=>{
-        console.log('err: ', err)
-        }) 
-      const msg = {
-        to: user.email,
-        from: mail_contents.APPOINTMENT_REMINDER.MAIL,
-        subject: mail_contents.APPOINTMENT_REMINDER.SUBJECT,
-        templateId: config.SENDGRID.SENDGRID_APPOINTMENT_REMINDER_TEMPLATE,
-        dynamic_template_data: {
-          contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
-          due_date: moment(appointment.due_date).utcOffset(user.time_zone).format('h:mm a'),
-          content: appointment.content,
-          detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-        },
+      if(offset>=(48*60*60*1000) && offset<48.5*60*60*1000){
+        msg = {
+            to: _res.email,
+            from: mail_contents.WELCOME_SIGNUP.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
+            dynamic_template_data: {
+              first_name: _res.user_name,
+              login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
+            }
+          }
+        sgMail.send(msg).then((res) => {
+          console.log('mailres.errorcode', res[0].statusCode);
+          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+            console.log('Successful send to '+msg.to)
+            subscriber['welcome_email'] = true
+            subscriber.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else {
+            console.log('email sending err', msg.to+res[0].statusCode)
+          }
+        }).catch(err=>{
+          console.log('err', err)
+        })
       }
-
-      sgMail.send(msg).then((res) => {
-        console.log('mailres.errorcode', res[0].statusCode);
-        if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-          console.log('Successful send to '+msg.to)
-        }else {
-          console.log('email sending err', msg.to+res[0].statusCode)
-        }
-      }).catch((err)=>{
-        console.log('err: ', err)
-      })
-
-      const e164Phone = phone(user.cell_phone)[0]
-      const fromNumber = config.TWILIO.TWILIO_NUMBER
-      console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-        throw error // Invalid phone number
-      }
-    
-      const title = `Appointment today at ${moment(appointment.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
-        + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
-      const body = appointment.content + '\n'
-      const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-      twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
-        console.log(`Reminder at: ${moment(appointment.due_date).utcOffset(user.time_zone).format('h:mm a')}`)
-      }).catch(err=>{
-        console.log('send sms err: ',err)
-      })
-  
-      reminder['del'] = true
-      
-      reminder.save().catch(err=>{
-        console.log(err)
-      })
     }
   }
 }, function () {
   console.log('Reminder Job finished.');
-}, false, 'US/Central'
-)
-
-const video_job = new CronJob('0 3 * * *', async() =>{
-  const videos = await Video.find({converted: false}).catch(err=>{
-    console.log('err', err)
-  })
-  
-  if(videos){
-    for(let i = 0; i <videos.length; i++){
-      const video = videos[i]
-      const file_path = video.path
-      const file_name = video.path.slice(23)
-      
-      if (fs.existsSync(file_path)) {
-        fs.readFile(file_path, (err, data) => {
-            if (err) throw err;
-            console.log('File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'video' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-            s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err) throw s3Err
-              console.log(`File uploaded successfully at ${upload.Location}`)
-              video['url'] = upload.Location
-              video['converted'] = true
-              video.save().then(()=>{
-                fs.unlinkSync(file_path)
-              }).catch(err=>{
-                console.log('err', err)
-              });  
-            })
-         });
-      }
-    }
-  }
-}, function () {
-  console.log('Convert Job finished.');
 }, false, 'US/Central'
 )
 
