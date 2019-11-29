@@ -795,7 +795,7 @@ const getBrokerages = async(req, res) => {
     [ 
     { 
       $match: {user: mongoose.Types.ObjectId(currentUser.id)}},
-      {$group: {"_id": "$group" }},
+      {$group: {"_id": "$brokerage" }},
     ]
     ).catch(err=>{
       console.log('err', err)
