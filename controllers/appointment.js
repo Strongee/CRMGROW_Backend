@@ -85,7 +85,7 @@ const get = async(req, res) => {
       outlook.base.makeApiCall(apiOptions, async function(error, response) {
         if (error) {
           console.log('err',JSON.stringify(error))
-          return res.status(401).json({
+          return res.status(400).json({
             status: false,
             error: error
           })
@@ -115,7 +115,7 @@ const get = async(req, res) => {
                     outlook.base.makeApiCall(apiOptions, function(error, response) {
                       if (error) {
                         console.log('err',JSON.stringify(error))
-                        return res.status(401).json({
+                        return res.status(400).json({
                           status: false,
                           error: error
                         })
@@ -189,7 +189,7 @@ const get = async(req, res) => {
                   outlook.base.makeApiCall(apiOptions, function(error, response) {
                     if (error) {
                       console.log('err',JSON.stringify(error))
-                      return res.status(401).json({
+                      return res.status(400).json({
                         status: false,
                         error: error
                       })
@@ -264,7 +264,7 @@ const get = async(req, res) => {
     data = await Appointment.find({user: currentUser.id, del: false, updated_at: {$gte: startDate.toISOString(), $lt: endDate.toISOString()}})
 
     if (!data) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: false,
         error: 'Activity doesn`t exist'
       })

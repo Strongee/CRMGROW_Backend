@@ -8,7 +8,7 @@ const get = async(req, res) => {
   const data = await PhoneLog.find({user :currentUser.id, contact: contact});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Phone log doesn`t exist'
     })

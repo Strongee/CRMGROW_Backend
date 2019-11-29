@@ -9,7 +9,7 @@ const get = async(req, res) => {
 
   const data = await Note.find({user :currentUser.id, contact: contact});
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Note doesn`t exist'
     })

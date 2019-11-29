@@ -11,7 +11,7 @@ const getAll = async(req, res) => {
   const data = await Contact.find({user: currentUser.id})
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -28,7 +28,7 @@ const get = async(req, res) => {
   const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!_contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -132,7 +132,7 @@ const remove = async(req, res) => {
   const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -154,7 +154,7 @@ const edit = async(req, res) => {
   const contact = await Contact.findOne({user: currentUser.id, _id: req.params.id})
 
   if (!contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })

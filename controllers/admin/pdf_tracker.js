@@ -10,7 +10,7 @@ const get = async(req, res) => {
   const data = await PDFTracker.find({user :currentUser.id, contact: contact});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'PDF log doesn`t exist'
     })

@@ -6,6 +6,7 @@ const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
+const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
 const sgMail = require('@sendgrid/mail')
 const {google} = require('googleapis')
@@ -139,7 +140,7 @@ const signUp = async (req, res) => {
         }, 1000 * 60 * 60 * 48)
   
         
-        const token = jwt.sign({id:_res.id}, config.JWT_SECRET)
+        const token = jwt.sign({id:_res.id}, config.JWT_SECRET, { expiresIn: '3d'})
   
         myJSON = JSON.stringify(_res)
         const user = JSON.parse(myJSON);
@@ -420,7 +421,7 @@ const resetPasswordByOld = async (req, res) => {
 
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: errors.array()
     })
@@ -431,7 +432,7 @@ const resetPasswordByOld = async (req, res) => {
    // Check old password
    const old_hash = crypto.pbkdf2Sync(old_password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
    if (old_hash != _user.hash) {
-     return res.status(401).json({
+     return res.status(400).json({
        status: false,
        error: 'Invalid old password!'
      })
@@ -465,7 +466,7 @@ const syncOutlook = async (req, res) => {
   })
 
   if (!authorizationUri) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Client doesn`t exist'
     })
@@ -562,7 +563,7 @@ const syncGmail = async(req, res) => {
   });
 
   if (!authorizationUri) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Client doesn`t exist'
     })
@@ -590,7 +591,7 @@ const authorizeGmail = async(req, res) => {
   }
   
   if (!tokens) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Client doesn`t exist'
     })
@@ -633,7 +634,7 @@ const syncCalendar = async(req, res) => {
   const user = req.currentUser
   
   if( user.connected_email == undefined){
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Conneted email doesn`t exist'
     })
@@ -777,7 +778,7 @@ const disconCalendar = async(req, res) => {
   const user = req.currentUser
   
   if( user.connected_email == undefined){
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Conneted email doesn`t exist'
     })
@@ -951,7 +952,7 @@ const resetPasswordByCode = async (req, res) => {
   })
 
   if (!user) {
-    return res.status(401).send({
+    return res.status(400).send({
       status: false,
       error: 'no_user'
     })
@@ -998,7 +999,7 @@ const forgotPassword = async (req, res) => {
   const _user = await User.findOne({email: email })
 
   if (!_user) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'no_user'
     })
@@ -1041,7 +1042,24 @@ const forgotPassword = async (req, res) => {
 }
 
 const closeAccount = async(req, res) =>{
-  const {currentUser} = req
+
+    const {currentUser} = req
+    const data = await Contact.find({user: currentUser.id})
+    if (!data) {
+        return false;
+    }
+  
+    for(let i=0; i<data.length; i++){
+      const contact = data[i]
+      await Contact.deleteOne({_id: contact})
+      await Activity.deleteMany({contacts: contact})
+      await FollowUp.deleteMany({contact: contact})
+      await Appointment.deleteMany({contact: contact})
+    }
+     
+    res.send({
+      status: true,
+    })
 }
 
 module.exports = {

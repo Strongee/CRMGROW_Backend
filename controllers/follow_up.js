@@ -20,7 +20,7 @@ const get = async(req, res) => {
   }
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
     })
@@ -158,7 +158,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'OverDue doesn`t exist'
         })
@@ -188,7 +188,7 @@ const getByDate = async(req, res) =>{
     
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Today'
         })
@@ -219,7 +219,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -249,7 +249,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -278,7 +278,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -306,7 +306,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'OverDue doesn`t exist'
         })
@@ -327,7 +327,7 @@ const updateChecked  = async(req, res) =>{
   const _follow_up = await FollowUp.findOne({_id: req.params.id})
 
   if (!_follow_up) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
     })

@@ -44,7 +44,7 @@ const send = async(req, res) => {
   console.info(`Send SMS: ${fromNumber} -> ${contact.cell_phone} :`, text)
 
   if (!e164Phone) {
-    return res.status(401).send({
+    return res.status(400).send({
       status: false,
       error: 'Invalid phone number'
     })
@@ -168,7 +168,7 @@ const get = async(req, res) => {
   const data = await Note.find({user :currentUser.id, contact: contact});
   
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Note doesn`t exist'
     })

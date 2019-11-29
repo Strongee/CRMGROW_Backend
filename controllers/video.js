@@ -118,7 +118,7 @@ const updateDetail = async (req, res) => {
   })
 
   if (!video) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -239,7 +239,7 @@ const get = async (req, res) => {
   const video = await Video.findOne({_id: req.params.id, del: false})
   const user = await User.findOne({_id: video.user})
     if (!video) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: false,
         error: 'Video doesn`t exist'
       })
@@ -286,7 +286,7 @@ const getAll = async (req, res) => {
   Array.prototype.push.apply(_video_list, _video_admin)
 
   if (!_video_list) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Video doesn`t exist'
     })
@@ -480,13 +480,14 @@ const sendText = async (req, res) => {
           body = content + '\n' + '\n' + video_link
         }
       
-        twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).catch(err=>{
+        twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
+          return res.send({
+            status: true,
+          })
+        }).catch(err=>{
           console.log('err', err)
         })
         
-        res.send({
-          status: true,
-        })
     }
   }     
 }

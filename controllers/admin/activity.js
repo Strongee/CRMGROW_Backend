@@ -18,7 +18,7 @@ const get = async(req, res) => {
   }
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Activity doesn`t exist'
     })
@@ -80,7 +80,7 @@ const getByLastActivity = async(req, res) => {
   }
   
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Activity doesn`t exist'
     })

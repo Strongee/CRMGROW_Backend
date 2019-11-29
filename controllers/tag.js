@@ -6,7 +6,7 @@ const get = async(req, res) => {
   const { currentUser } = req
   const data = await Tag.find({user :currentUser.id});
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Tag doesn`t exist'
     })
@@ -29,7 +29,7 @@ const create = async(req, res) => {
   }
 
 
-  await Tag.findOrCreate({ content: req.body.content }, {
+  await Tag.findOrCreate({ content: req.body.content, user: currentUser.id}, {
      ...req.body,
     user: currentUser.id,
     updated_at: new Date(),
@@ -70,13 +70,17 @@ const search = async(req, res) =>{
         {$project : {"content": "$_id", "_id": "$id"}},
         {$limit: limit}
     ]
-    );
+    ).catch(err=>{
+      console.log('err', err)
+    });
 
   return res.send({
       status: true,
       data
     })
 }
+
+
 
 module.exports = {
     get,

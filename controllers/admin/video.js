@@ -42,7 +42,7 @@ const updateDetail = async (req, res) => {
 
       console.log('video', video)
       if (!video) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'Invalid_permission'
         })
@@ -65,7 +65,7 @@ const updateDetail = async (req, res) => {
       })
 
   }else{
-    res.status(401).json({
+    res.status(400).json({
       status: false,
       error: 'Not_found_thumbnail'
     })
@@ -77,7 +77,7 @@ const get = async (req, res) => {
   const video = await Video.findOne({_id: req.params.id})
   const user = await User.findOne({_id: video.user})
     if (!video) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: false,
         error: 'Video doesn`t exist'
       })
@@ -113,7 +113,7 @@ const getAll = async (req, res) => {
   const _video = VideoTracker.find({ user: currentUser.id})
 
   if (!_video) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Video doesn`t exist'
     })

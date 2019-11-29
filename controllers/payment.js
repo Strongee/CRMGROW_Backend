@@ -7,7 +7,7 @@ const stripe = require('stripe')(stripeKey)
 const get = async(req, res) => {
 
    if (typeof req.params.id == 'undefined') {
-    return res.status(401).json({
+    return res.status(400).json({
         status: false,
         error: 'Payment doesn`t exist'
     })
@@ -16,7 +16,7 @@ const get = async(req, res) => {
     console.log('err', err)
   });
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Payment doesn`t exist'
     })
@@ -321,10 +321,30 @@ const deleteCustomer = async(id) => {
     });
 }
 
+const cancel = async(id) => {
+    const payment = await Payment.findOne({_id: id}).catch(err=>{
+        console.log('err', err)
+    })
+    return new Promise((resolve, reject)=>{
+        cancelSubscription(payment.subscription).then(()=>{
+            deleteCustomer(payment.customer_id).then(()=>{
+                resolve()
+            }).catch(err=>{
+                console.log('err', err)
+                reject()
+            })
+        }).catch(err=>{
+            console.log('err', err)
+            reject()
+        })
+    })
+}
+
 module.exports = {
     get,
     create,
     update,
+    cancel,
     cancelSubscription,
     deleteCustomer
 }

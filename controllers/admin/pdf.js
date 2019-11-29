@@ -43,7 +43,7 @@ const updateDetail = async (req, res) => {
 
       console.log('pdf', pdf)
       if (!pdf) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'Invalid_permission'
         })
@@ -65,7 +65,7 @@ const updateDetail = async (req, res) => {
       })
 
   }else{
-    res.status(401).json({
+    res.status(400).json({
       status: false,
       error: 'Not_found_preview'
     })
@@ -78,7 +78,7 @@ const get = async (req, res) => {
   const pdf = await PDF.findOne({_id: req.params.id})
   const user = await User.findOne({_id: pdf.user})
     if (!pdf) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: false,
         error: 'PDF doesn`t exist'
       })
@@ -114,7 +114,7 @@ const getAll = async (req, res) => {
   const _pdf = PDFTracker.find({ user: currentUser.id})
 
   if (!_pdf) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'PDF doesn`t exist'
     })

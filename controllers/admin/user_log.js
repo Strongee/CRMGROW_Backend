@@ -5,9 +5,9 @@ const get = async(req, res) => {
   const { currentUser } = req
   const data = await UserLog.find({user :currentUser.id});
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
-      error: 'Tag doesn`t exist'
+      error: 'User doesn`t exist'
     })
   }
 

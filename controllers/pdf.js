@@ -90,7 +90,7 @@ const updateDetail = async (req, res) => {
       const pdf = await PDF.findOne({user: currentUser.id, _id: req.params.id})
 
       if (!pdf) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'Invalid_permission'
         })
@@ -112,7 +112,7 @@ const updateDetail = async (req, res) => {
       })
 
   }else{
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Not_found_preview'
     })
@@ -124,7 +124,7 @@ const get = async (req, res) => {
   const pdf = await PDF.findOne({_id: req.params.id})
   const user = await User.findOne({_id: pdf.user})
     if (!pdf) {
-      return res.status(401).json({
+      return res.status(400).json({
         status: false,
         error: 'PDF doesn`t exist'
       })
@@ -169,7 +169,7 @@ const getAll = async (req, res) => {
   Array.prototype.push.apply(_pdf_list, _pdf_admin)
 
   if (!_pdf_list) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'PDF doesn`t exist'
     })
@@ -339,10 +339,12 @@ const sendText = async (req, res) => {
   
       const body = content + '\n' + '\n' + pdf_title + '\n' + '\n' + pdf_link
     
-      twilio.messages.create({from: fromNumber, body: body,  to: e164Phone})
-      
-      res.send({
-        status: true,
+      twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
+        return res.send({
+          status: true,
+        })
+      }).catch(err=>{
+        console.log('err', err)
       })
     }
   }    

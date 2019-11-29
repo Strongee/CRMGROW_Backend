@@ -13,13 +13,12 @@ const csv = require('csv-parser')
 const config = require('../config/config')
 
 
-
 const getAll = async(req, res) => {
   const { currentUser } = req
   const data = await Contact.find({user: currentUser.id})
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -36,7 +35,7 @@ const get = async(req, res) => {
   const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!_contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -192,7 +191,7 @@ const remove = async(req, res) => {
   const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -252,7 +251,7 @@ const edit = async(req, res) => {
   const contact = await Contact.findOne({user: currentUser.id, _id: req.params.id})
 
   if (!contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -467,7 +466,7 @@ const importCSV = async(req, res) => {
           if(!data['phone']){
             data['phone'] = ''
           }
-          console.log('first_name', data['first_name'])
+
           if(data['first_name'] == '' && data['email'] == '' && data['phone'] == ''){
             resolve()
             return;
@@ -503,7 +502,7 @@ const importCSV = async(req, res) => {
                 new Promise((resolve, reject) =>{
                   const array_tag = []
                   for(let i=0; i<tags.length; i++){
-                    Tag.findOrCreate({ content: tags[i] }, {
+                    Tag.findOrCreate({ content: tags[i], user: currentUser.id }, {
                       content: tags[i],
                       user: currentUser.id,
                       updated_at: new Date(),
@@ -670,7 +669,7 @@ const exportCSV = async(req, res) =>{
   }
   
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Note doesn`t exist'
     })
@@ -757,7 +756,7 @@ const getById = async (req, res) => {
     const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
 
     if (!_contact) {
-        return res.status(401).json({
+        return res.status(400).json({
             status: false,
             error: 'Contact doesn`t exist'
         })
@@ -785,11 +784,36 @@ const getByIds = async(req, res) => {
   })  
 }
 
+const advanceSearch = async(req, res) => {
+
+}
+
+const getBrokerages = async(req, res) => {
+  const { currentUser } = req
+  
+  data = await Contact.aggregate(
+    [ 
+    { 
+      $match: {user: mongoose.Types.ObjectId(currentUser.id)}},
+      {$group: {"_id": "$group" }},
+    ]
+    ).catch(err=>{
+      console.log('err', err)
+    });
+
+  return res.send({
+      status: true,
+      data
+    })
+}
+
 module.exports = {
     getAll,
     get,
+    getBrokerages,
     create,
     search,
+    advanceSearch,
     searchEasy,
     remove,
     removeContacts,

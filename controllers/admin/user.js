@@ -154,7 +154,7 @@ const editMe = async(req, res) =>{
 const getAll = async (req, res, next) => {
   const _users = await User.find({});
   if(!_users){
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Users doesn`t exist'
     })
@@ -220,7 +220,7 @@ const resetPasswordByOld = async (req, res) => {
    // Check old password
    const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
    if (old_hash != _user.hash) {
-     return res.status(401).json({
+     return res.status(400).json({
        status: false,
        error: 'Invalid old password!'
      })

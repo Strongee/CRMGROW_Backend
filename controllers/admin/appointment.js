@@ -7,7 +7,7 @@ const get = async(req, res) => {
   const data = await Appointment.find({user: currentUser.id});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Appointment doesn`t exist'
     })
@@ -81,7 +81,7 @@ const edit = async(req, res) => {
   const appointment = await Appointment.find({user :currentUser.id, _id: req.params.id});
 
   if (!editData) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })

@@ -16,7 +16,7 @@ const get = async(req, res) => {
   const data = await VideoTracker.find({user :currentUser.id, contact: contact});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Video log doesn`t exist'
     })
