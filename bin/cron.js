@@ -424,7 +424,7 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
             dynamic_template_data: {
               first_name: _res.user_name,
               video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
-              recruiting_material: `<a href="${urls.MATERIAL_VIEW_VIDEO_URL}">Material Page</a>`
+              recruiting_material: `<a href="${urls.MATERIAL_VIEW_PAGE}">Material Page</a>`
             }
           }
           sgMail.send(msg).then((res) => {
