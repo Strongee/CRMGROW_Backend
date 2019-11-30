@@ -46,7 +46,8 @@ router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search))
 
 // Get a easy search contact info for profile page
 router.post('/search-easy', UserCtrl.checkAuth, catchError(ContactCtrl.searchEasy))
-
+// Advanced Search
+router.post('/advance-search', UserCtrl.checkAuth, catchError(ContactCtrl.advanceSearch));
 // Get a Brokerage data 
 router.get('/brokerage', UserCtrl.checkAuth, catchError(ContactCtrl.getBrokerages))
 // Get a Contact data with ID
