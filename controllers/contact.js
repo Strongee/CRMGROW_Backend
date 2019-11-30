@@ -514,8 +514,6 @@ const importCSV = async (req, res) => {
                       ...data,
                       cell_phone: cell_phone,
                       user: currentUser.id,
-                      type: 'notes',
-                      notes: _note.id,
                       created_at: new Date(),
                       updated_at: new Date(),
                     })
@@ -580,7 +578,7 @@ const importCSV = async (req, res) => {
                       updated_at: new Date(),
                     })
                     activity.save()
-                    if(data['note'] != null){
+                    if(!data['note'] && data['note'] != ''){
                       const note = new Note({
                         content: data['note'],
                         contact: _contact.id,
