@@ -394,9 +394,7 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
       const created_at = new Date(subscriber['created_at']).getTime()
       const now = new Date().getTime()
       const offset = now-created_at
-      console.log('offset', offset)
       if(offset>=(30*60*1000) && offset<60*60*1000){
-          console.log('first_step')
           msg = {
             to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
