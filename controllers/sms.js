@@ -154,7 +154,7 @@ const receive = async(req, res) => {
       //   updated_at: new Date(),
       // })
       
-      activity.save()
+      // activity.save()
       res.send({
         status: true,
       })

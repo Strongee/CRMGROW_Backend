@@ -481,7 +481,7 @@ const sendText = async (req, res) => {
         }
       
         twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
-          return res.send({
+          res.send({
             status: true,
           })
         }).catch(err=>{
