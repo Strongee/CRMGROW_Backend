@@ -840,16 +840,13 @@ const advanceSearch = async (req, res) => {
     var zipQuery = { zip: { '$regex': ".*" + zipcodeCondition + ".*" } }
     query['$and'].push(zipQuery)
   }
-
-  console.log("Query", JSON.stringify(query));
-  console.log("=====================");
-
+  
   var contacts = await Contact.find(query);
 
   let activity = [];
   for (let i = 0; i < contacts.length; i++) {
     let e = contacts[i];
-    const _activity = await Activity.find({ contacts: e.id }).sort({ 'updated_at': -1 }).limit(1);
+    const _activity = await Activity.find({ contacts: e.id }).limit(1);
     myJSON = JSON.stringify(_activity[0])
     const __activity = JSON.parse(myJSON)
     delete __activity.contacts
