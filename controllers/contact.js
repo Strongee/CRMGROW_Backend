@@ -61,7 +61,7 @@ const getByLastActivity = async(req, res) => {
     contacts = await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).skip(id).limit(15)
   }
   
-  if (!data) {
+  if (!contacts) {
     return res.status(400).json({
       status: false,
       error: 'Contacts doesn`t exist'
