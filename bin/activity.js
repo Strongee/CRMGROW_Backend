@@ -26,11 +26,13 @@ const migrate = async() => {
                 const last_activity = await Activity.find({contacts: contact.id}).sort({'updated_at': -1}).limit(1).catch(err=>{
                     console.log('err', err)
                 })
-                console.log('last_activity.id',last_activity[0].id)
-                contact['last_activity'] = last_activity[0].id
-                contact.save().catch(err=>{
-                    console.log('err', err)
-                })
+                if(last_activity){
+                    console.log('last_activity.id',last_activity[0].id)
+                    contact['last_activity'] = last_activity[0].id
+                    contact.save().catch(err=>{
+                        console.log('err', err)
+                    })
+                }
             }
         }
     }
