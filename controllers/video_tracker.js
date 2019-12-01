@@ -208,9 +208,11 @@ const disconnect = async(video_tracker_id) =>{
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(query)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
+      Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
+    }).catch(err=>{
+      console.log('err', err)
     })
  
 }

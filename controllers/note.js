@@ -52,6 +52,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_note)
       const data = JSON.parse(myJSON);
       data.activity = _activity

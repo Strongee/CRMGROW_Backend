@@ -167,10 +167,8 @@ const sendVideo = async (req, res) => {
 
   sgMail.send(msg).then((_res) => {
     console.log('mailres.errorcode', _res[0].statusCode);
-    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
-      res.send({
-        status: true,
-      })
+    if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){        
+      console.log('status', _res[0].statusCode)
     }else {
       res.status(404).send({
         status: false,
@@ -183,6 +181,9 @@ const sendVideo = async (req, res) => {
       status: false,
       error: 'internal_server_error'
     })
+  })
+  res.send({
+    status: true,
   })
 }
 

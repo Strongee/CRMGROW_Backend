@@ -1,7 +1,6 @@
 const { validationResult } = require('express-validator/check')
 const Activity = require('../models/activity');
-const Contact = require('../models/contact')
-const UserLog = require('../models/user_log')
+
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -56,86 +55,7 @@ const create = async(req, res) => {
   });
 }
 
-const getByLastActivity = async(req, res) => {
-  const { currentUser } = req  
-  let contacts
-  if(typeof req.params.id == 'undefined'){
-    contacts= await Contact.find({user :currentUser.id}).sort({first_name: 1}).limit(15)
-  }else{
-    const id = parseInt(req.params.id)
-    contacts = await Contact.find({user :currentUser.id}).sort({first_name: 1}).skip(id).limit(15)
-  }
-  
-  let activity = []
-  for (let i =0; i < contacts.length; i ++){
-    const _activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).sort({updated_at : -1 }).limit(1);
-    myJSON = JSON.stringify(_activity[0])
-    if(myJSON){
-      const __activity = JSON.parse(myJSON)
-      delete __activity.contacts
-      __activity.contacts = contacts[i]
-      activity.push(__activity)
-    }    
-  }
-  
-  if (!activity) {
-    return res.status(400).json({
-      status: false,
-      error: 'Activity doesn`t exist'
-    })
-  }
-
-  const count = await Contact.find({user :currentUser.id}).countDocuments()
-
-  const user_log = new UserLog({
-    user: currentUser.id,
-    created_at: new Date(),
-    updated_at: new Date()
-  })
-
-  user_log.save().catch(err=>{
-    console.log('err', err)
-  })
-  
-  return res.send({
-    status: true,
-    data: {
-      activity,
-      count: count
-    }
-  })
-}
-
-const getAllByLastActivity = async(req, res) => {
-  const { currentUser } = req
-  const contacts = await Contact.find({user :currentUser.id}).sort({first_name: 1})
-
-  let data = []
-  for (let i =0; i < contacts.length; i ++){
-    const _activity = await Activity.find({user :currentUser.id, contacts: contacts[i].id}).limit(1);
-    myJSON = JSON.stringify(_activity[0])
-    const __activity = JSON.parse(myJSON)
-    delete __activity.contacts
-    __activity.contacts = contacts[i]
-    data.push(__activity)
-  }
-  
-  if (!data) {
-    return res.status(400).json({
-      status: false,
-      error: 'Activity doesn`t exist'
-    })
-  }
-
-  res.send({
-    status: true,
-    data
-  })
-}
-
 module.exports = {
     get,
     create,
-    getByLastActivity,
-    getAllByLastActivity,
 }

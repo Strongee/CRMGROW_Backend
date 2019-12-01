@@ -439,6 +439,9 @@ const create = async(req, res) => {
       })
   
       activity.save().then(_activity => {
+        Contact.findByIdAndUpdate(_appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
         myJSON = JSON.stringify(_appointment)
         const data = JSON.parse(myJSON);
         data.activity = _activity
@@ -545,6 +548,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(_appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_appointment)
       const data = JSON.parse(myJSON);
       data.activity = _activity
@@ -699,6 +705,9 @@ const edit = async(req, res) => {
       })
     
       activity.save().then(_activity => {
+        Contact.findByIdAndUpdate(_appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
         myJSON = JSON.stringify(_appointment)
         const data = JSON.parse(myJSON);
         data.activity = _activity
@@ -746,6 +755,9 @@ const edit = async(req, res) => {
         })
       
         activity.save().then(_activity => {
+          Contact.findByIdAndUpdate(_appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
           myJSON = JSON.stringify(_appointment)
           const data = JSON.parse(myJSON);
           data.activity = _activity
@@ -832,6 +844,9 @@ const remove = async(req, res) => {
       })
 
       activity.save().then(_activity => {
+        Contact.findByIdAndUpdate(appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
         myJSON = JSON.stringify(appointment)
         const data = JSON.parse(myJSON);
         data.activity = _activity
@@ -876,6 +891,9 @@ const remove = async(req, res) => {
       })
 
       activity.save().then(_activity => {
+        Contact.findByIdAndUpdate(appointment.contact, { $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
         myJSON = JSON.stringify(appointment)
         const data = JSON.parse(myJSON);
         data.activity = _activity

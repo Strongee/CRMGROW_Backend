@@ -36,7 +36,6 @@ const get = async(req, res) => {
 
   const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id }).sort({due_date: 1})
   const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id })
-  console.log('_activity_list',_activity_list)
   let _activity_detail_list = [];
   
   for(let i = 0; i < _activity_list.length; i ++){
@@ -88,7 +87,6 @@ const create = async(req, res) => {
   })
   
 
-  console.log('user', currentUser.id)
   contact.save()
   .then(_contact => {
       const activity = new Activity({
@@ -208,7 +206,6 @@ const sendBatch = async(req, res) => {
       };
       
       // Send msg to each email
-
       promisall.push(new Promise((resolve, reject) => {
           sgMail.send(msg).then((res) => {
               console.log('mailres.errorcode', res[0].statusCode);

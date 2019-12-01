@@ -127,9 +127,11 @@ const createbyDesktop = async(req, res) => {
     })
 
     activity.save().then(_activity => {
-      myJSON = JSON.stringify(_pdf_tracker)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
+      Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
+    }).catch(err=>{
+      console.log('err', err)
     })
   })
 }
@@ -195,25 +197,28 @@ const disconnect = async(pdf_tracker_id) =>{
     },
   };
 
-  sgMail.send(msg).then()
+  sgMail.send(msg).then().catch(err=>{
+    console.log('err', err)
+  })
 
-
-    const activity = new Activity({
-      content: contact.first_name + ' watched pdf',
-      contacts: query.contact,
-      user: currentUser.id,
-      type: 'pdf_trackers',
-      pdf_trackers: query.id,
-      created_at: new Date(),
-      updated_at: new Date(),
+  const activity = new Activity({
+    content: contact.first_name + ' watched pdf',
+    contacts: query.contact,
+    user: currentUser.id,
+    type: 'pdf_trackers',
+    pdf_trackers: query.id,
+    created_at: new Date(),
+    updated_at: new Date(),
+  })
+  
+  activity.save().then(_activity => {
+    Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+      console.log('err', err)
     })
-
-    activity.save().then(_activity => {
-      myJSON = JSON.stringify(query)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
-    })
- 
+    myJSON = JSON.stringify(query)
+    const data = JSON.parse(myJSON);
+    data.activity = _activity
+  })
 }
 
 const update = async(duration, pdf_tracker_id) =>{

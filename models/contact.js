@@ -5,7 +5,7 @@ const Contact = mongoose.model('contact',{
      last_name: {type: String, default: ''},
      email: {type: String, default: ''},
      user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-     last_activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],   
+     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },   
      address: String,
      city: String,
      state: String,

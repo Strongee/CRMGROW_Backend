@@ -416,11 +416,11 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
       }
       if(offset>=(24*60*60*1000) && offset<24.5*60*60*1000){
           msg = {
-            to: _res.email,
+            to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
             templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
             dynamic_template_data: {
-              first_name: _res.user_name,
+              first_name: subscriber.user_name,
               video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
               recruiting_material: `<a href="${urls.MATERIAL_VIEW_PAGE}">Material Page</a>`
             }
@@ -438,11 +438,11 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
       }
       if(offset>=(48*60*60*1000) && offset<48.5*60*60*1000){
         msg = {
-            to: _res.email,
+            to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
             templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
             dynamic_template_data: {
-              first_name: _res.user_name,
+              first_name: subscriber.user_name,
               login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`
             }
           }

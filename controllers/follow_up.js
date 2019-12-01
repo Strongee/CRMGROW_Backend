@@ -80,6 +80,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_followup)
       const data = JSON.parse(myJSON);
       data.activity = _activity
@@ -357,6 +360,9 @@ const updateChecked  = async(req, res) =>{
   })
 
   activity.save().then(_activity => {
+    Contact.findByIdAndUpdate( _follow_up.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+      console.log('err', err)
+    })
     myJSON = JSON.stringify(_activity)
     const data = JSON.parse(myJSON);
     data.contact = _contact

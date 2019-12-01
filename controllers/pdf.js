@@ -226,7 +226,12 @@ const sendPDF = async (req, res) => {
         subject: subject,
         description: content
       })     
-      const activity = await _activity.save().then()
+      const activity = await _activity.save().then().catch(err=>{
+        console.log('err', err);
+      })
+      Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
     
       const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
@@ -242,23 +247,22 @@ const sendPDF = async (req, res) => {
       sgMail.send(msg).then((_res) => {
         console.log('mailres.errorcode', _res[0].statusCode);
         if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-          res.send({
-            status: true,
-          })        
+          console.log('status', _res[0].statusCode)   
         }else {
-          res.status(404).send({
-            status: false,
-            error: _res[0].statusCode
-          })
+          console.log('email sending err', msg.to+res[0].statusCode)
         }
       }).catch ((e) => {
         console.error(e)
-        res.status(500).send({
-          status: false,
-          error: 'internal_server_error'
-        })
       })
     }
+    return res.send({
+      status: true,
+    }) 
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
   }
 }
 
@@ -282,6 +286,9 @@ const sendText = async (req, res) => {
       })
     
       const activity = await _activity.save().then().catch(err=>{
+        console.log('err', err);
+      })
+      Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
         console.log('err', err)
       })
     
@@ -340,14 +347,20 @@ const sendText = async (req, res) => {
       const body = content + '\n' + '\n' + pdf_title + '\n' + '\n' + pdf_link
     
       twilio.messages.create({from: fromNumber, body: body, to: e164Phone}).then(()=>{
-        res.send({
-          status: true,
-        })
+        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
       }).catch(err=>{
         console.log('err', err)
       })
     }
-  }    
+    return res.send({
+      status: true,
+    })
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
+  }
 }
 
 const remove = async (req, res) => {

@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator/check')
 const Appointment = require('../../models/appointment');
 const Activity = require('../../models/activity');
+const Contact = require('../../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -38,7 +39,6 @@ const create = async(req, res) => {
 
   appointment.save()
   .then(_appointment => {
-
     const activity = new Activity({
       content: currentUser.user_name + ' added appointment',
       contacts: _appointment.contact,
@@ -50,6 +50,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(_appointment.contact,{ $set: {last_activity: activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_appointment)
       const data = JSON.parse(myJSON);
       data.activity = _activity

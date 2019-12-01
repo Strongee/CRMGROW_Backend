@@ -46,10 +46,22 @@ router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search))
 
 // Get a easy search contact info for profile page
 router.post('/search-easy', UserCtrl.checkAuth, catchError(ContactCtrl.searchEasy))
+
 // Advanced Search
 router.post('/advance-search', UserCtrl.checkAuth, catchError(ContactCtrl.advanceSearch));
+
+// Get contacts by All last activity
+router.get('/all', UserCtrl.checkAuth, catchError(ContactCtrl.getAllByLastActivity))
+
+// Get contacts by last activity
+router.get('/last', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity))
+
+// Get contacts by last activity
+router.get('/last/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity))
+
 // Get a Brokerage data 
 router.get('/brokerage', UserCtrl.checkAuth, catchError(ContactCtrl.getBrokerages))
+
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
 

@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator/check')
 const PhoneLog = require('../models/phone_log');
 const Activity = require('../models/activity');
+const Contact= require('../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -51,6 +52,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(_phone_log.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_phone_log)
       const data = JSON.parse(myJSON);
       data.activity = _activity

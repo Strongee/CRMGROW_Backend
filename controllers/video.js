@@ -349,7 +349,10 @@ const sendVideo = async (req, res) => {
         } else {
           preview = _video['thumbnail'] + '?resize=true'
         }
-        activity = await _activity.save().then().catch(err=>{
+        const activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
           console.log('err', err)
         })
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -357,11 +360,13 @@ const sendVideo = async (req, res) => {
         if(subject == '' ){
           subject = video_title
         }
+        
         if(typeof content == 'undefined'){
           content = ''
         }
       
         const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+        
         const msg = {
           to: _contact.email,
           from: currentUser.email,
@@ -375,25 +380,23 @@ const sendVideo = async (req, res) => {
         sgMail.send(msg).then((_res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
           if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-            res.send({
-              status: true,
-            })
+            console.log('status', _res[0].statusCode)
           }else {
             console.log('email sending err', msg.to+res[0].statusCode)
-            return res.status(404).send({
-              status: false,
-              error: _res[0].statusCode
-            })
           }
         }).catch ((e) => {
           console.log('email sending err', msg.to)
           console.error(e)
-          res.status(500).send({
-            status: false,
-            error: 'internal_server_error'
-          })
         })
       }
+      return res.send({
+        status: true,
+      })
+    }else {
+      return res.status(400).json({
+        status: false,
+        error: 'Contacts not found'
+      })
     }
 }
 
@@ -415,10 +418,12 @@ const sendText = async (req, res) => {
         updated_at: new Date(),
         description: content
       })
-      activity = await _activity.save().then().catch(err=>{
+      const activity = await _activity.save().then().catch(err=>{
         console.log('err', err);
       })
-      
+      Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
       const e164Phone = phone(cell_phone)[0];
       
@@ -460,7 +465,6 @@ const sendText = async (req, res) => {
             smsUrl:  urls.SMS_RECEIVE_URL
           })
           
-          console.log('proxy_number', proxy_number)
           currentUser['proxy_number'] = proxy_number.phoneNumber;
           fromNumber = currentUser['proxy_number'];
           currentUser.save().catch(err=>{
@@ -470,9 +474,7 @@ const sendText = async (req, res) => {
           fromNumber = config.TWILIO.TWILIO_NUMBER
         } 
       }
-     
-      console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
-    
+  
         let body
         if(typeof content == 'undefined'){
           body = video_link
@@ -481,14 +483,19 @@ const sendText = async (req, res) => {
         }
       
         twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
-          res.send({
-            status: true,
-          })
+          console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
         }).catch(err=>{
           console.log('err', err)
-        })
-        
+        })  
     }
+    return res.send({
+      status: true
+    })
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
   }     
 }
 

@@ -154,8 +154,12 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       updated_at: new Date(),
     })
 
-    activity.save().catch(err=>{
-      console.log('send message err: ',err)
+    activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
+    }).catch(err=>{
+      console.log('err', err)
     })
  
 }
@@ -193,8 +197,15 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       updated_at: new Date(),
     })
 
-    activity.save().catch(err=>{
-      console.log(err)
+    activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
+      myJSON = JSON.stringify(_pdf_tracker)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+    }).catch(err=>{
+      console.log('err', err)
     })
 
     const d = (query['duration']/1000)

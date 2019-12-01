@@ -7,6 +7,7 @@ const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
 const Tag = require('../models/tag')
+const UserLog = require('../models/user_log')
 const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
 const csv = require('csv-parser')
@@ -27,6 +28,64 @@ const getAll = async (req, res) => {
   return res.send({
     status: true,
     data
+  })
+}
+
+const getAllByLastActivity = async(req, res) => {
+  const { currentUser } = req
+  const data = await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).catch(err=>{
+    console.log('err', err)
+  })
+
+  
+  if (!data) {
+    return res.status(400).json({
+      status: false,
+      error: 'Contact doesn`t exist'
+    })
+  }
+
+  res.send({
+    status: true,
+    data
+  })
+}
+
+const getByLastActivity = async(req, res) => {
+  const { currentUser } = req  
+  let contacts
+  if(typeof req.params.id == 'undefined'){
+    contacts= await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).limit(15)
+  }else{
+    const id = parseInt(req.params.id)
+    contacts = await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).skip(id).limit(15)
+  }
+  
+  if (!data) {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts doesn`t exist'
+    })
+  }
+
+  const count = await Contact.find({user :currentUser.id}).countDocuments()
+
+  const user_log = new UserLog({
+    user: currentUser.id,
+    created_at: new Date(),
+    updated_at: new Date()
+  })
+
+  user_log.save().catch(err=>{
+    console.log('err', err)
+  })
+  
+  return res.send({
+    status: true,
+    data: {
+      contacts,
+      count: count
+    }
   })
 }
 
@@ -157,6 +216,10 @@ const create = async (req, res) => {
       })
 
       activity.save().then(_activity => {
+        _contact['last_activity'] = _activity.id
+        _contact.save().catch(err=>{
+          console.log('err', err)
+        })
         myJSON = JSON.stringify(_contact)
         const data = JSON.parse(myJSON);
         data.activity = _activity
@@ -363,6 +426,9 @@ const sendBatch = async (req, res) => {
     })
 
     const _activity = await activity.save().then()
+    Contact.findByIdAndUpdate(contacts[i], { $set: {last_activity: _activity.id} }).catch(err=>{
+      console.log('err', err)
+    })
     myJSON = JSON.stringify(_email)
     const data = JSON.parse(myJSON);
     data.activity = _activity
@@ -413,6 +479,9 @@ const sendEmail = async (req, res) => {
           })
 
           activity.save().then(_activity => {
+            Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+              console.log('err', err)
+            })
             myJSON = JSON.stringify(_email)
             const data = JSON.parse(myJSON);
             data.activity = _activity
@@ -526,7 +595,13 @@ const importCSV = async (req, res) => {
                         created_at: new Date(),
                         updated_at: new Date(),
                       })
-                      activity.save()
+                      activity.save().then((_activity)=>{
+                        Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+                          console.log('err', err)
+                        })
+                      }).catch(err=>{
+                        console.log('err', err)
+                      })
                       if(!data['note'] && data['note'] != ''){
                         const note = new Note({
                           content: data['note'],
@@ -545,7 +620,11 @@ const importCSV = async (req, res) => {
                             created_at: new Date(),
                             updated_at: new Date(),
                           })
-                          _activity.save().catch(err=>{
+                          _activity.save().then((__activity)=>{
+                            Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: __activity.id} }).catch(err=>{
+                              console.log('err', err)
+                            })
+                          }).catch(err=>{
                             console.log('error', err)
                           })
                         })
@@ -577,7 +656,13 @@ const importCSV = async (req, res) => {
                       created_at: new Date(),
                       updated_at: new Date(),
                     })
-                    activity.save()
+                    activity.save().then((_activity)=>{
+                      Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+                        console.log('err', err)
+                      })
+                    }).catch(err=>{
+                      console.log('err', err)
+                    })
                     if(!data['note'] && data['note'] != ''){
                       const note = new Note({
                         content: data['note'],
@@ -596,7 +681,11 @@ const importCSV = async (req, res) => {
                           created_at: new Date(),
                           updated_at: new Date(),
                         })
-                        _activity.save().catch(err=>{
+                        _activity.save().then((__activity)=>{
+                          Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: __activity.id} }).catch(err=>{
+                            console.log('err', err)
+                          })
+                        }).catch(err=>{
                           console.log('error', err)
                         })
                       })
@@ -620,7 +709,9 @@ const importCSV = async (req, res) => {
             max_count: max_count
           }
           currentUser.contact_info = contact_info
-          currentUser.save()
+          currentUser.save().catch(err=>{
+            console.log('err', err)
+          })
           
           return res.send({
             status: true,
@@ -841,7 +932,9 @@ const advanceSearch = async (req, res) => {
     query['$and'].push(zipQuery)
   }
   
-  var contacts = await Contact.find(query);
+  var data = await Contact.find(query).populate('last_activity').sort({first_name: 1}).catch(err=>{
+    console.log('err', err)
+  })
 
   let activity = [];
   for (let i = 0; i < contacts.length; i++) {
@@ -896,6 +989,8 @@ const getBrokerages = async (req, res) => {
 
 module.exports = {
   getAll,
+  getAllByLastActivity,
+  getByLastActivity,
   get,
   getBrokerages,
   create,
