@@ -36,7 +36,7 @@ const migrate = async() => {
         let url =  video.url
         const params = {
           Bucket: 'teamgrow',
-          Key: 'video119/6/Recording #498.mp4'
+          Key: 'video119/6/Recording+%23498.mp4'
         }
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
@@ -47,14 +47,11 @@ const migrate = async() => {
           console.error(err);
         });
         
-        new Promise((resolve, reject) => {s3.getObject(params).createReadStream().
-        on('end', () => { return resolve(); }).on('error', (error) => { return reject(error); }).pipe(fileStream)});
-        
         s3Stream.pipe(fileStream).on('error', function(err) {
           // capture any errors that occur when writing data to the file
           console.error('File Stream:', err);
-        }).on('end', async() => {
-          await generatePreview(file_path).then((preview)=>{
+        }).on('end', () => {
+          generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
             video.save().then((_video)=>{
