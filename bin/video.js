@@ -24,27 +24,31 @@ const s3 = new AWS.S3({
 })
 
 const migrate = async() => {
-  const videos = await Video.find({del: false}).catch(err=>{
-    console.log('err', err)
-  })
+  // const videos = await Video.find({del: false}).catch(err=>{
+  //   console.log('err', err)
+  // })
     
-  if(videos){
-    for(let i=0; i<videos.length; i++){
-      const video = videos[i]
+  // if(videos){
+  //   for(let i=0; i<videos.length; i++){
+  //     const video = videos[i]
       
       if(!video['preview']){
         let url =  video.url
-        console.log('url', url.slice(44))
         const params = {
           Bucket: 'teamgrow',
-          Key: url.slice(44)
+          Key: 'video119/6/EXP+Explained+Simply+and+in+Detail.mp4'
         }
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
-        let s3Stream = s3.getObject(params).createReadStream().catch(err=>{
-          console.log('err', err)
-        });
+        let s3Stream = s3.getObject(params).createReadStream();
         // Listen for errors returned by the service
+        s3Stream.on('error', function(err) {
+          // NoSuchKey: The specified key does not exist
+          console.error(err);
+        });
+        
+        new Promise((resolve, reject) => {s3.getObject(params).createReadStream().
+        on('end', () => { return resolve(); }).on('error', (error) => { return reject(error); }).pipe(fileStream)});
         
         s3Stream.pipe(fileStream).on('error', function(err) {
           // capture any errors that occur when writing data to the file
@@ -61,11 +65,10 @@ const migrate = async() => {
           }).catch(err=>{
             console.log('err', err)
           })
-          break;
         });
       }
-    }
-  }
+  //   }
+  // }
 }
 
 const generatePreview = async(file_path) => {
