@@ -29,15 +29,15 @@ const migrate = async() => {
     console.log('err', err)
   })
     
-  // if(videos){
-  //   for(let i=0; i<videos.length; i++){
-  //     const video = videos[i]
+  if(videos){
+    for(let i=0; i<videos.length; i++){
+      const video = videos[i]
       
-      if(!video['preview']){
+      if(!video['preview'] && new Date(video['created_at']).getMonth()>=9){
         let url =  video.url
         const params = {
           Bucket: 'teamgrow',
-          Key: 'video119/6/Recording #498.mp4'
+          Key: url.slice(44)
         }
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
@@ -61,8 +61,8 @@ const migrate = async() => {
           })
         });
       }
-  //   }
-  // }
+    }
+  }
 }
 
 const generatePreview = async(file_path) => {
