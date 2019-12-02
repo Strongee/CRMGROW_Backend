@@ -24,14 +24,15 @@ const s3 = new AWS.S3({
   region: config.AWS.AWS_S3_REGION
 })
 
-const migrate = async() => {
+let index = 0;
+const video_job = new CronJob('*/10 * * * *', async() =>{
   const videos = await Video.find({del: false}).catch(err=>{
     console.log('err', err)
   })
     
   if(videos){
-    for(let i=0; i<videos.length; i++){
-      const video = videos[i]
+ 
+      const video = videos[index]
       if(!video['preview'] && new Date(video['created_at']).getMonth()>=9 && video['url'].includes('amazonaws.com')){
         let url =  video.url
         const params = {
@@ -48,6 +49,7 @@ const migrate = async() => {
           console.error('File Stream:', err);
         }).on('finish', () => {
           console.log('download end')
+          index+=1
           generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
@@ -61,10 +63,11 @@ const migrate = async() => {
           })
         });
       }
-    }
-  }
 }
-
+}, function () {
+  console.log('Convert Job finished.');
+}, false, 'US/Central'
+)
 const generatePreview = async(file_path) => {
 
   return new Promise(async(resolve, reject) => {    
@@ -151,4 +154,4 @@ const generatePreview = async(file_path) => {
     });
 }
 
-migrate()
+video_job.start()
