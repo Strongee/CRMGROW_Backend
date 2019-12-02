@@ -380,10 +380,6 @@ const updateChecked  = async(req, res) =>{
           })
         }
       
-        const _contact = await Contact.findOne({_id: _follow_up.contact}).catch(err=>{
-          console.log('err', err)
-        })
-      
         const activity = new Activity({
           content: 'Completed follow up',
           contacts: _follow_up.contact,
@@ -398,13 +394,6 @@ const updateChecked  = async(req, res) =>{
           Contact.findByIdAndUpdate( _follow_up.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
             console.log('err', err)
           })
-          myJSON = JSON.stringify(_activity)
-          const data = JSON.parse(myJSON);
-          data.contact = _contact
-          res.send({
-            status: true,
-            data
-          })
         }).catch(e => {
           console.log('follow error', e)
           return res.status().send({
@@ -413,6 +402,10 @@ const updateChecked  = async(req, res) =>{
           })
         });
       }
+      res.send({
+        status: true,
+        data
+      })
     } catch(err){
       return res.status(400).json({
         status: false,
