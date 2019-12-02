@@ -201,9 +201,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
         console.log('err', err)
       })
-      myJSON = JSON.stringify(_pdf_tracker)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
     }).catch(err=>{
       console.log('err', err)
     })

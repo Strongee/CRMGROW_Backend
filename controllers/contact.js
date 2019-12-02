@@ -923,7 +923,7 @@ const advanceSearch = async (req, res) => {
     query['$and'].push(zipQuery)
   }
   
-  var data = await Contact.find(query).populate('last_activity').sort({first_name: 1}).catch(err=>{
+  var contacts = await Contact.find(query).populate('last_activity').sort({first_name: 1}).catch(err=>{
     console.log('err', err)
   })
 

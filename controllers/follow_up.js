@@ -325,58 +325,107 @@ const getByDate = async(req, res) =>{
 
   }
 }
-const updateChecked  = async(req, res) =>{
-  const { currentUser } = req
-  const _follow_up = await FollowUp.findOne({_id: req.params.id})
 
-  if (!_follow_up) {
+const updateArchived = async(req, res) => {
+  const { follow_ups } = req.body
+  if(follow_ups){
+    try{
+      for(let i=0; i<follow_ups.length; i++){
+        const follow_up = follow_ups[i]
+        FollowUp.findByIdAndUpdate(follow_up, { $set: {status: -1} }).catch(err=>{
+          console.log('err', err)
+        })
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: follow_up.id})
+        if(reminder){
+          reminder['del'] = true
+          reminder.save().catch(err=>{
+            console.log('err', err)
+          })
+        }
+      }
+      res.send({
+        status: true,
+        data
+      })
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+  } else {
     return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
     })
   }
+  
+}
 
-  _follow_up.status = 1
-  _follow_up.save()
-
-  const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: _follow_up.id})
-  if(reminder){
-    reminder['del'] = true
-    reminder.save().catch(err=>{
-      console.log('err', err)
+const updateChecked  = async(req, res) =>{
+  const { currentUser } = req
+  const { follow_ups } = req.body
+  if(follow_ups){
+    try{
+      for(let i=0; i<follow_ups.length; i++){
+        const follow_up = follow_ups[i]
+        FollowUp.findByIdAndUpdate(follow_up, { $set: {status: 1} }).catch(err=>{
+          console.log('err', err)
+        })
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: _follow_up.id})
+        if(reminder){
+          reminder['del'] = true
+          reminder.save().catch(err=>{
+            console.log('err', err)
+          })
+        }
+      
+        const _contact = await Contact.findOne({_id: _follow_up.contact}).catch(err=>{
+          console.log('err', err)
+        })
+      
+        const activity = new Activity({
+          content: 'Completed follow up',
+          contacts: _follow_up.contact,
+          user: currentUser.id,
+          type: 'follow_ups',
+          follow_ups: _follow_up.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+      
+        activity.save().then(_activity => {
+          Contact.findByIdAndUpdate( _follow_up.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          myJSON = JSON.stringify(_activity)
+          const data = JSON.parse(myJSON);
+          data.contact = _contact
+          res.send({
+            status: true,
+            data
+          })
+        }).catch(e => {
+          console.log('follow error', e)
+          return res.status().send({
+            status: false,
+            error: e
+          })
+        });
+      }
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+    
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'FollowUp doesn`t exist'
     })
   }
-
-  const _contact = await Contact.findOne({_id: _follow_up.contact})
-
-  const activity = new Activity({
-    content: 'Completed follow up',
-    contacts: _follow_up.contact,
-    user: currentUser.id,
-    type: 'follow_ups',
-    follow_ups: _follow_up.id,
-    created_at: new Date(),
-    updated_at: new Date(),
-  })
-
-  activity.save().then(_activity => {
-    Contact.findByIdAndUpdate( _follow_up.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-      console.log('err', err)
-    })
-    myJSON = JSON.stringify(_activity)
-    const data = JSON.parse(myJSON);
-    data.contact = _contact
-    res.send({
-      status: true,
-      data
-    })
-  }).catch(e => {
-    console.log('follow error', e)
-    return res.status().send({
-      status: false,
-      error: e
-    })
-  });
 }
 
 
@@ -384,5 +433,6 @@ module.exports = {
     get,
     create,
     getByDate,
-    updateChecked
+    updateChecked,
+    updateArchived
 }
