@@ -42,15 +42,11 @@ const migrate = async() => {
         let fileStream = fs.createWriteStream(file_path);
         let s3Stream = s3.getObject(params).createReadStream();
         // Listen for errors returned by the service
-        s3Stream.on('error', function(err) {
-          // NoSuchKey: The specified key does not exist
-          console.error(err);
-        });
         
         s3Stream.pipe(fileStream).on('error', function(err) {
           // capture any errors that occur when writing data to the file
           console.error('File Stream:', err);
-        }).on('close', async() => {
+        }).on('end', async() => {
           await generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
@@ -63,6 +59,7 @@ const migrate = async() => {
             console.log('err', err)
           })
         });
+        break;
       }
     }
   }
