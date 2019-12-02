@@ -37,7 +37,7 @@ const migrate = async() => {
         let url =  video.url
         const params = {
           Bucket: 'teamgrow',
-          Key: 'video119/6/Recording+%23498.mp4'
+          Key: 'video119/6/Recording #498.mp4'
         }
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
