@@ -140,7 +140,7 @@ const generatePreview = async(file_path) => {
             s3.upload(params, async (s3Err, upload)=>{
               if (s3Err) throw s3Err
               console.log(`File uploaded successfully at ${upload.Location}`)
-              
+              fs.unlinkSync(file_path)
               fs.unlinkSync(GIF_PATH+file_name)
               resolve(upload.Location)
             })
