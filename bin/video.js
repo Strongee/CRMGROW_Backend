@@ -6,6 +6,7 @@ const { createCanvas, loadImage } = require('canvas')
 const pngFileStream = require('png-file-stream');
 const fs = require('fs');
 const GIFEncoder = require('gifencoder');
+const CronJob = require('cron').CronJob;
 
 const config = require('../config/config')
 const Video = require('../models/video');
