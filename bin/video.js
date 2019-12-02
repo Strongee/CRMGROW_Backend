@@ -5,6 +5,7 @@ const extractFrames = require('ffmpeg-extract-frames')
 const { createCanvas, loadImage } = require('canvas')
 const pngFileStream = require('png-file-stream');
 const fs = require('fs');
+const GIFEncoder = require('gifencoder');
 
 const config = require('../config/config')
 const Video = require('../models/video');
@@ -33,7 +34,6 @@ const migrate = async() => {
       
       if(!video['preview']){
         let url =  video.url
-        console.log('url', url)
         const params = {
           Bucket: 'teamgrow',
           Key: url.slice(44)
