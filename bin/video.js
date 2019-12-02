@@ -50,7 +50,7 @@ const migrate = async() => {
         s3Stream.pipe(fileStream).on('error', function(err) {
           // capture any errors that occur when writing data to the file
           console.error('File Stream:', err);
-        }).on('close', function() {
+        }).on('close', async() => {
           await generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
