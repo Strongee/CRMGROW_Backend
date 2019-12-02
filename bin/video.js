@@ -32,7 +32,7 @@ const migrate = async() => {
   if(videos){
     for(let i=0; i<videos.length; i++){
       const video = videos[i]
-      if(!video['preview'] && new Date(video['created_at'].getMonth()>=9 && video['url'].indexOf('amazonaws.com')!== -1)){
+      if(!video['preview'] && new Date(video['created_at'].getMonth()>=9 && video['url'].indexOf('amazonaws.com')> 1)){
         let url =  video.url
         const params = {
           Bucket: 'teamgrow',
