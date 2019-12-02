@@ -369,10 +369,16 @@ const updateChecked  = async(req, res) =>{
     try{
       for(let i=0; i<follow_ups.length; i++){
         const follow_up = follow_ups[i]
-        FollowUp.findByIdAndUpdate(follow_up, { $set: {status: 1} }).catch(err=>{
+        const _follow_up = await FollowUp.findOne({_id: follow_up}).catch(err=>{
           console.log('err', err)
         })
-        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: _follow_up.id})
+        
+        _follow_up.status = 1
+        _follow_up.save().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups:follow_up})
         if(reminder){
           reminder['del'] = true
           reminder.save().catch(err=>{
@@ -385,7 +391,7 @@ const updateChecked  = async(req, res) =>{
           contacts: _follow_up.contact,
           user: currentUser.id,
           type: 'follow_ups',
-          follow_ups: _follow_up.id,
+          follow_ups: follow_up,
           created_at: new Date(),
           updated_at: new Date(),
         })
