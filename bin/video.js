@@ -51,10 +51,10 @@ const migrate = async() => {
           // capture any errors that occur when writing data to the file
           console.error('File Stream:', err);
         }).on('close', function() {
-          generatePreview(file_path).then((preview)=>{
+          await generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
-            await video.save().then((_video)=>{
+            video.save().then((_video)=>{
               console.info('Successfully converted')
             }).catch(err=>{
               console.log('err', err)
