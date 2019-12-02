@@ -3,8 +3,6 @@ const sgMail = require('@sendgrid/mail')
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
 const fs = require('fs');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const spawn = require('child-process-promise').spawn;
 const AWS = require('aws-sdk')
 
 const User = require('../models/user')
