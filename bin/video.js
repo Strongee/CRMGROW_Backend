@@ -26,7 +26,7 @@ const s3 = new AWS.S3({
 })
 
 let index = 0;
-const video_job = new CronJob('*/10 * * * *', async() =>{
+const video_job = new CronJob('* * * * * *', async() =>{
   const videos = await Video.find({del: false}).catch(err=>{
     console.log('err', err)
   })
