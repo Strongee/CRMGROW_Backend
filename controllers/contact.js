@@ -769,7 +769,7 @@ const exportCSV = async (req, res) => {
 const search = async (req, res) => {
   const { currentUser } = req
   let search = req.body.search
-  let activity = []
+  let contacts = []
   if (!search.split(" ")[1]) {
     contacts = await Contact.find({
       $or: [
@@ -778,29 +778,20 @@ const search = async (req, res) => {
         { last_name: { '$regex': search.split(" ")[0] + '.*', '$options': 'i' }, user: currentUser.id },
         { cell_phone: { '$regex': '.*' + search.split(" ")[0] + '.*', '$options': 'i' }, user: currentUser.id }
       ]
-    }).sort({ first_name: 1 })
+    }).populate('last_activity').sort({ first_name: 1 })
   } else {
     contacts = await Contact.find({
       $or: [
         { first_name: { '$regex': search.split(" ")[0], '$options': 'i' }, last_name: { '$regex': search.split(" ")[1], '$options': 'i' }, user: currentUser.id },
         { cell_phone: search, user: currentUser.id }
       ]
-    }).sort({ first_name: 1 })
-  }
-
-  for (let i = 0; i < contacts.length; i++) {
-    const _activity = await Activity.find({ contacts: contacts[i].id }).sort({ 'updated_at': -1 }).limit(1);
-    myJSON = JSON.stringify(_activity[0])
-    const __activity = JSON.parse(myJSON)
-    delete __activity.contacts
-    __activity.contacts = contacts[i]
-    activity.push(__activity)
+    }).populate('last_activity').sort({ first_name: 1 })
   }
 
   return res.send({
     status: true,
     data: {
-      activity,
+      contacts,
       search: search
     }
 
