@@ -41,7 +41,9 @@ const migrate = async() => {
         }
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
-        let s3Stream = s3.getObject(params).createReadStream();
+        let s3Stream = s3.getObject(params).createReadStream().catch(err=>{
+          console.log('err', err)
+        });
         // Listen for errors returned by the service
         
         s3Stream.pipe(fileStream).on('error', function(err) {
@@ -59,8 +61,8 @@ const migrate = async() => {
           }).catch(err=>{
             console.log('err', err)
           })
+          break;
         });
-        break;
       }
     }
   }
