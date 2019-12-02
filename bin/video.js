@@ -26,13 +26,12 @@ const s3 = new AWS.S3({
 })
 
 let index = 0;
-const video_job = new CronJob('* * * * * *', async() =>{
+const video_job = new CronJob('* * * * *', async() =>{
   const videos = await Video.find({del: false}).catch(err=>{
     console.log('err', err)
   })
-    index+=1
+  index+=1
   if(videos){
- 
       const video = videos[index]
       if(!video['preview'] && new Date(video['created_at']).getMonth()>=9 && video['url'].includes('amazonaws.com')){
         let url =  video.url
