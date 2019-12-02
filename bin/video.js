@@ -18,6 +18,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .catch(err => console.error('Could not connect to mongo DB', err))
 
 const s3 = new AWS.S3({
+  apiVersion: '2006-03-01',
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
   region: config.AWS.AWS_S3_REGION
@@ -41,16 +42,12 @@ const migrate = async() => {
         const file_path = TEMP_PATH + uuidv1()
         let fileStream = fs.createWriteStream(file_path);
         let s3Stream = s3.getObject(params).createReadStream();
-        // Listen for errors returned by the service
-        s3Stream.on('error', function(err) {
-          // NoSuchKey: The specified key does not exist
-          console.error(err);
-        });
-        
+
         s3Stream.pipe(fileStream).on('error', function(err) {
           // capture any errors that occur when writing data to the file
           console.error('File Stream:', err);
-        }).on('end', () => {
+        }).on('finish', () => {
+          console.log('download end')
           generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
