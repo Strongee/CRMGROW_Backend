@@ -54,7 +54,7 @@ const migrate = async() => {
           generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
-            video.save().then((_video)=>{
+            await video.save().then((_video)=>{
               console.info('Successfully converted')
             }).catch(err=>{
               console.log('err', err)
