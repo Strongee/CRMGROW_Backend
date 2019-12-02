@@ -34,6 +34,7 @@ const migrate = async() => {
       
       if(!video['preview']){
         let url =  video.url
+        console.log('url', url.slice(44))
         const params = {
           Bucket: 'teamgrow',
           Key: url.slice(44)
