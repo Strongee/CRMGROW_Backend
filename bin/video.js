@@ -25,14 +25,13 @@ const s3 = new AWS.S3({
 })
 
 const migrate = async() => {
-  const videos = await Video.findOne({}).catch(err=>{
+  const videos = await Video.find({}).catch(err=>{
     console.log('err', err)
   })
     
   if(videos){
     for(let i=0; i<videos.length; i++){
       const video = videos[i]
-      console.log('date',  new Date(video['created_at']).getMonth())
       if(!video['preview'] && new Date(video['created_at']).getMonth()>=9){
         let url =  video.url
         const params = {
