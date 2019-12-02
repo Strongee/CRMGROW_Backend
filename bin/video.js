@@ -24,9 +24,9 @@ const s3 = new AWS.S3({
 })
 
 const migrate = async() => {
-  // const videos = await Video.find({del: false}).catch(err=>{
-  //   console.log('err', err)
-  // })
+  const video = await Video.findOne({_id: '5d3f45ced77d655d23eadd5b'}).catch(err=>{
+    console.log('err', err)
+  })
     
   // if(videos){
   //   for(let i=0; i<videos.length; i++){
