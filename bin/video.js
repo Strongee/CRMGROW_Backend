@@ -30,7 +30,7 @@ const video_job = new CronJob('* * * * * *', async() =>{
   const videos = await Video.find({del: false}).catch(err=>{
     console.log('err', err)
   })
-    
+    index+=1
   if(videos){
  
       const video = videos[index]
@@ -50,7 +50,6 @@ const video_job = new CronJob('* * * * * *', async() =>{
           console.error('File Stream:', err);
         }).on('finish', () => {
           console.log('download end')
-          index+=1
           generatePreview(file_path).then((preview)=>{
             video['updated_at'] = new Date()
             video['preview'] = preview
