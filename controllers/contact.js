@@ -562,21 +562,22 @@ const importCSV = async (req, res) => {
                   const tags = data['tag'].split(/,\s|\s,|,|\s/);
                   new Promise((resolve, reject) =>{
                     const array_tag = []
+                    let promise_array = []
                     for(let i=0; i<tags.length; i++){
+                      promise_array.push(
                       Tag.findOrCreate({ content: tags[i], user: currentUser.id }, {
                         content: tags[i],
                         user: currentUser.id,
                         updated_at: new Date(),
                         created_at: new Date()
-                      }).then(_res => {
-                        array_tag.push(_res.doc['_id'])
-                        if(i == tags.length-1){
-                          resolve(array_tag)
-                        }
-                       }).catch(err=>{
-                        console.log('err', err)
-                      })
+                      }))
                     } 
+                    Promise.all(promise_array).then((res)=>{
+                      for(let j=0; j<res.length; j++){
+                        array_tag.push(res[j].doc['_id'])
+                      }
+                      resolve(array_tag)
+                    })
                   }).then((res)=>{
                     data['tag'] = res 
                     const contact = new Contact({
@@ -647,7 +648,7 @@ const importCSV = async (req, res) => {
                     updated_at: new Date(),
                   })
                   
-                  await contact.save().then(_contact=>{
+                  contact.save().then(_contact=>{
                     const activity = new Activity({
                       content: currentUser.user_name + ' added contact',
                       contacts: _contact.id,
