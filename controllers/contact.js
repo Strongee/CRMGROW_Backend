@@ -864,7 +864,7 @@ const getByIds = async (req, res) => {
 
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
-  const { searchStr, recruitingStageCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition } = req.body;
+  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition } = req.body;
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
   if (searchStr) {
@@ -898,6 +898,10 @@ const advanceSearch = async (req, res) => {
     var stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
     query['$and'].push(stageQuery);
   }
+  if (labelCondition && labelCondition.length) {
+    var labelQuery = { label: { $in: labelCondition } };
+    query['$and'].push(labelQuery);
+  }
   if (tagsCondition && tagsCondition.length) {
     var tagsQuery = { tag: { $elemMatch: { $in: tagsCondition } } };
     query['$and'].push(tagsQuery);
@@ -927,34 +931,34 @@ const advanceSearch = async (req, res) => {
     console.log('err', err)
   })
 
-  let activity = [];
-  for (let i = 0; i < contacts.length; i++) {
-    let e = contacts[i];
-    const _activity = await Activity.find({ contacts: e.id }).limit(1);
-    myJSON = JSON.stringify(_activity[0])
-    const __activity = JSON.parse(myJSON)
-    delete __activity.contacts
-    if (activityCondition && activityCondition.length) {
-      if (activityCondition.indexOf(__activity.type) === -1) {
-        continue;
-      }
-    }
-    if (activityStart) {
-      if (__activity.created_at < activityStart) {
-        continue;
-      }
-    }
-    if (activityEnd) {
-      if (__activity.created_at > activityEnd) {
-        continue;
-      }
-    }
-    __activity.contacts = e;
-    activity.push(__activity);
-  }
+  // let activity = [];
+  // for (let i = 0; i < contacts.length; i++) {
+  //   let e = contacts[i];
+  //   const _activity = await Activity.find({ contacts: e.id }).limit(1);
+  //   myJSON = JSON.stringify(_activity[0])
+  //   const __activity = JSON.parse(myJSON)
+  //   delete __activity.contacts
+  //   if (activityCondition && activityCondition.length) {
+  //     if (activityCondition.indexOf(__activity.type) === -1) {
+  //       continue;
+  //     }
+  //   }
+  //   if (activityStart) {
+  //     if (__activity.created_at < activityStart) {
+  //       continue;
+  //     }
+  //   }
+  //   if (activityEnd) {
+  //     if (__activity.created_at > activityEnd) {
+  //       continue;
+  //     }
+  //   }
+  //   __activity.contacts = e;
+  //   activity.push(__activity);
+  // }
   return res.send({
     status: true,
-    data: activity
+    data: contacts
   });
 }
 
