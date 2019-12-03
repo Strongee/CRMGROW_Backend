@@ -79,5 +79,4 @@ router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
 
-
 module.exports = router

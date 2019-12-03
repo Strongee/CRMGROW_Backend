@@ -130,19 +130,19 @@ const updateDetail = async (req, res) => {
   if( thumbnail ){
     video['thumbnail'] = thumbnail
   }
- 
-  const file_path = video['path']
   
-  generatePreview(file_path).then((preview)=>{
-    video['updated_at'] = new Date()
-    video['preview'] = preview
-    video.save().then((_video)=>{
-      res.send({
-        status: true,
-        data: _video
-      })
-    }).catch(err=>{
+  if(!video['preview']){
+    const file_path = video['path']
+    video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
+    })
+  }
+  
+  video['updated_at'] = new Date()
+  video.save().then((_video)=>{
+    res.send({
+      status: true,
+      data: _video
     })
   }).catch(err=>{
     console.log('err', err)
@@ -574,6 +574,7 @@ module.exports = {
     play1,
     pipe,
     create,
+    edit,
     updateDetail,
     get,
     getThumbnail,
