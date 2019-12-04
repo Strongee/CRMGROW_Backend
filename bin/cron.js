@@ -16,7 +16,7 @@ const Video = require('../models/video')
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
-const {VIDEO_PATH} = require('../config/path')
+const {VIDEO_PATH, TEMP_PATH} = require('../config/path')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
@@ -343,35 +343,65 @@ const video_job = new CronJob('* * * * * *', async() =>{
   if(videos){
     for(let i = 0; i <videos.length; i++){
       const video = videos[i]
-      console.log('video', video)
-      const file_path = video.path
-      const file_name = video.path.slice(23)
+      let file_path = video.path
+      if(file_path){
+        const file_name = video.path.slice(23)
       
-      if (fs.existsSync(file_path)) {
-        fs.readFile(file_path, (err, data) => {
-            if (err) throw err;
-            console.log('File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'video' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-            s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err) throw s3Err
-              console.log(`File uploaded successfully at ${upload.Location}`)
-              video['url'] = upload.Location
-              video['converted'] = true
-              video.save().then(()=>{
-                fs.unlinkSync(file_path)
-              }).catch(err=>{
-                console.log('err', err)
-              });  
-            })
-         });
+        if (fs.existsSync(file_path)) {
+          fs.readFile(file_path, (err, data) => {
+              if (err) throw err;
+              console.log('File read was successful', data)
+              const today = new Date()
+              const year = today.getYear()
+              const month = today.getMonth()
+              const params = {
+                  Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                  Key: 'video' +  year + '/' + month + '/' + file_name, 
+                  Body: data,
+                  ACL: 'public-read'
+              };
+              s3.upload(params, async (s3Err, upload)=>{
+                if (s3Err) throw s3Err
+                console.log(`File uploaded successfully at ${upload.Location}`)
+                video['url'] = upload.Location
+                video['converted'] = true
+                video.save().then(()=>{
+                  fs.unlinkSync(file_path)
+                }).catch(err=>{
+                  console.log('err', err)
+                });  
+              })
+           });
+        }
+      } else {
+        const file_name = video.url.slice(39)
+        file_path = TEMP_PATH + file_name
+        if (fs.existsSync(file_path)) {
+          fs.readFile(file_path, (err, data) => {
+              if (err) throw err;
+              console.log('File read was successful', data)
+              const today = new Date()
+              const year = today.getYear()
+              const month = today.getMonth()
+              const params = {
+                  Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                  Key: 'video' +  year + '/' + month + '/' + file_name, 
+                  Body: data,
+                  ACL: 'public-read'
+              };
+              s3.upload(params, async (s3Err, upload)=>{
+                if (s3Err) throw s3Err
+                console.log(`File uploaded successfully at ${upload.Location}`)
+                video['url'] = upload.Location
+                video['converted'] = true
+                video.save().then(()=>{
+                  fs.unlinkSync(file_path)
+                }).catch(err=>{
+                  console.log('err', err)
+                });  
+              })
+           });
+        }
       }
     }
   }
