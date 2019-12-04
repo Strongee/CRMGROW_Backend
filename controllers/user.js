@@ -48,7 +48,7 @@ const signUp = async (req, res) => {
     if(isAppleEmail(email)){
       res.status(400).send({
         status: false,
-        error: 'User are trying to login with Apple Email'
+        error: 'Apple email is not support type for sign up in our CRM'
       })
       return;
     }
