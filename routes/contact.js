@@ -71,4 +71,7 @@ router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 // Get Contacts data with ID array
 router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
 
+// Bulk Edit the contacts Label
+router.post('/bulk-label', UserCtrl.checkAuth, catchError(ContactCtrl.bulkEditLabel))
+
 module.exports = router

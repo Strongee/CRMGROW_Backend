@@ -362,6 +362,21 @@ const edit = async (req, res) => {
     });
 }
 
+const bulkEditLabel = async (req, res) => {
+  const {contacts, label} = req.body;
+  Contact.find({_id: {$in: contacts}}).update({$set: {label: label}}).then(() => {
+    res.send({
+      status: true
+    })
+  })
+  .catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err.message || 'Label Update Error'
+    })
+  })
+}
+
 const sendBatch = async (req, res) => {
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
@@ -996,6 +1011,7 @@ module.exports = {
   remove,
   removeContacts,
   edit,
+  bulkEditLabel,
   sendBatch,
   sendEmail,
   importCSV,
