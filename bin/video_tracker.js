@@ -17,8 +17,10 @@ const migrate = async() => {
   for(let i=0; i<video_trackers.length; i++){
     console.log('video_trackers', video_trackers[i])
     const video_tracker = video_trackers[i]
-    video_tracker.videos = video_tracker.video_trackers.id
-    video_tracker.save()
+    video_tracker['videos'] = video_tracker.video_trackers.video
+    video_tracker.save().catch(err=>{
+      console.log('err', err)
+    })
   }
 }
 migrate();
