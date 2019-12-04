@@ -16,7 +16,7 @@ const migrate = async() => {
   
   for(let i=0; i<video_trackers.length; i++){
     const video_tracker = video_trackers[i]
-    
+    console.log('video_tracker.id', video_tracker.id)
     Activity.findByIdAndUpdate(video_tracker.id,{ $set: {videos: video_tracker.video_trackers.video} }).catch(err=>{
       console.log('err', err)
     })
