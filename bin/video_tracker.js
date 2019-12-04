@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Activity = require('../models/activity');
+const VideoTracker = require('../models/video_tracker')
 const { DB_PORT } = require('../config/database');
 
 mongoose.set('useCreateIndex', true)
