@@ -50,6 +50,7 @@ const signUp = async (req, res) => {
         status: false,
         error: 'User are trying to login with Apple Email'
       })
+      return;
     }
     
     const payment_data = {
