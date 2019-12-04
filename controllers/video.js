@@ -328,6 +328,12 @@ const sendVideo = async (req, res) => {
   const { currentUser } = req
   let {content, subject, video, video_title, contacts} = req.body 
     if(contacts){
+      if(contacts.length>15){
+        return res.status(400).json({
+          status: false,
+          error: 'You can sent max 15 contacts'
+        })
+      }
       for(let i=0; i<contacts.length; i++){
         const _contact = await Contact.findOne({_id: contacts[i]})
         const _activity = new Activity({
@@ -405,6 +411,12 @@ const sendText = async (req, res) => {
   const { content, video, video_title, contacts} = req.body
   
   if(contacts){
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can sent max 15 contacts'
+      })
+    }
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
       const cell_phone = _contact.cell_phone
@@ -574,7 +586,6 @@ module.exports = {
     play1,
     pipe,
     create,
-    edit,
     updateDetail,
     get,
     getThumbnail,

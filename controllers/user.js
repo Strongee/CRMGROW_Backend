@@ -44,6 +44,14 @@ const signUp = async (req, res) => {
     }
 
     const {email, token, bill_amount} = req.body 
+    
+    if(isAppleEmail(email)){
+      res.status(400).send({
+        status: false,
+        error: 'User are trying to login with Apple Email'
+      })
+    }
+    
     const payment_data = {
       email: email,
       token: token,
@@ -1016,6 +1024,13 @@ const closeAccount = async(req, res) =>{
     })
 }
 
+const isAppleEmail = (email) => {
+  let mac = /^[a-z0-9](\.?[a-z0-9]){5,}@mac\.com$/;
+  let me = /^[a-z0-9](\.?[a-z0-9]){5,}@me\.com$/;
+  let icloud = /^[a-z0-9](\.?[a-z0-9]){5,}@icloud\.com$/;
+  return mac.test(email) || me.test(email) || icloud.test(email);
+}
+
 module.exports = {
     signUp,
     login,
@@ -1042,6 +1057,7 @@ module.exports = {
     disconText,
     weeklyReport,
     checkAuth,
+    isAppleEmail,
     closeAccount
 }
 

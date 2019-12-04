@@ -212,6 +212,14 @@ const sendPDF = async (req, res) => {
   const {content, subject, pdf, pdf_title, pdf_prview, contacts} = req.body
   
   if(contacts){
+  
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can sent max 15 contacts'
+      })
+    }
+    
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
   
@@ -271,6 +279,14 @@ const sendText = async (req, res) => {
   const { content, pdf, pdf_title, contacts} = req.body
 
   if(contacts){
+  
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can sent max 15 contacts'
+      })
+    }
+    
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
       const cell_phone = _contact.cell_phone
@@ -286,7 +302,7 @@ const sendText = async (req, res) => {
       })
     
       const activity = await _activity.save().then().catch(err=>{
-        console.log('err', err);
+        console.log('err', err)
       })
       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
         console.log('err', err)
@@ -432,6 +448,8 @@ const getHistory = async(req, res) => {
     })
   }
 }
+
+
 
 module.exports = {
   play,
