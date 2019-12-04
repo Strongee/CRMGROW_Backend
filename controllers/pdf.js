@@ -247,7 +247,7 @@ const sendPDF = async (req, res) => {
         to: _contact.email,
         from: currentUser.email,
         subject: subject || pdf_title,
-        html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap;">' + content + '</p><a href="' + pdf_link + '">'+ 
+        html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">' + content + '</p><a href="' + pdf_link + '">'+ 
               '<img src='+pdf_prview+'?resize=true"></img>' +  
               '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
       }
