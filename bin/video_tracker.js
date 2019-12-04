@@ -9,7 +9,9 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 //Fetch or read data from
 
 const migrate = async() => {
-  const video_trackers = await Activity.find({type: 'video_trackers'}).populate('video_trackers')
+  const video_trackers = await Activity.find({type: 'video_trackers'}).populate('video_trackers').catch(err=>{
+    console.log('err', err)
+  })
   
   for(let i=0; i<video_trackers.length; i++){
     console.log('video_trackers', video_trackers[i])
