@@ -1029,7 +1029,8 @@ const isAppleEmail = (email) => {
   let mac = /^[a-z0-9](\.?[a-z0-9]){5,}@mac\.com$/;
   let me = /^[a-z0-9](\.?[a-z0-9]){5,}@me\.com$/;
   let icloud = /^[a-z0-9](\.?[a-z0-9]){5,}@icloud\.com$/;
-  return mac.test(email) || me.test(email) || icloud.test(email);
+  console.log('test',  me.test(String(email).toLowerCase()));
+  return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase());
 }
 
 module.exports = {
