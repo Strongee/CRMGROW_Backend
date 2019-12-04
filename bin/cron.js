@@ -335,7 +335,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const video_job = new CronJob('* * * * * *', async() =>{
+const video_job = new CronJob('0 3 * * *', async() =>{
   const videos = await Video.find({converted: false, del: false}).catch(err=>{
     console.log('err', err)
   })
