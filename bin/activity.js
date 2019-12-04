@@ -20,7 +20,6 @@ const migrate = async() => {
             console.log('err', err)
         })
         if(contacts){
-            console.log('contact length**************', contacts.length)
             for(let j=0; j<contacts.length; j++){
                 const contact = contacts[j]
                 console.log(contact.id)
@@ -29,7 +28,6 @@ const migrate = async() => {
                         console.log('err', err)
                     })
                     if(last_activity[0]){
-                        console.log('last_activity.id',last_activity[0].id)
                         contact['last_activity'] = last_activity[0].id
                         contact.save().catch(err=>{
                             console.log('err', err)

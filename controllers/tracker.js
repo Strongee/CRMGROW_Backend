@@ -150,6 +150,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       user: currentUser.id,
       type: 'pdf_trackers',
       pdf_trackers: query.id,
+      pdfs: pdf.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
@@ -193,6 +194,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       user: currentUser.id,
       type: 'video_trackers',
       video_trackers: query.id,
+      videos: video.id,
       created_at: new Date(),
       updated_at: new Date(),
     })
