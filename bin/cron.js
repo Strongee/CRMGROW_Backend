@@ -335,7 +335,7 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const video_job = new CronJob('0 3 * * *', async() =>{
+const video_job = new CronJob('* * * * * *', async() =>{
   const videos = await Video.find({converted: false}).catch(err=>{
     console.log('err', err)
   })
@@ -343,6 +343,7 @@ const video_job = new CronJob('0 3 * * *', async() =>{
   if(videos){
     for(let i = 0; i <videos.length; i++){
       const video = videos[i]
+      console.log('video', video)
       const file_path = video.path
       const file_name = video.path.slice(23)
       
