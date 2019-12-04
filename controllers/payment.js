@@ -6,7 +6,7 @@ const stripe = require('stripe')(stripeKey)
 
 const get = async(req, res) => {
 
-   if (typeof req.params.id == 'undefined') {
+  if (req.params.id) {
     return res.status(400).json({
         status: false,
         error: 'Payment doesn`t exist'
