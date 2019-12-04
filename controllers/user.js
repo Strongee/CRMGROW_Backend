@@ -1026,10 +1026,9 @@ const closeAccount = async(req, res) =>{
 }
 
 const isAppleEmail = (email) => {
-  let mac = /^[a-z0-9](\.?[a-z0-9]){5,}@mac\.com$/;
-  let me = /^[a-z0-9](\.?[a-z0-9]){5,}@me\.com$/;
-  let icloud = /^[a-z0-9](\.?[a-z0-9]){5,}@icloud\.com$/;
-  console.log('test',  me.test(String(email).toLowerCase()));
+  let mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
+  let me = /^[a-z0-9](\.?[a-z0-9]){2,}@me\.com$/;
+  let icloud = /^[a-z0-9](\.?[a-z0-9]){2,}@icloud\.com$/;
   return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase());
 }
 
