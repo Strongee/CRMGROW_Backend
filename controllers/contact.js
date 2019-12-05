@@ -392,7 +392,7 @@ const sendBatch = async (req, res) => {
   if (to.length == 0) {
 
     const msg = {
-      from: currentUser.email,
+      from: `${currentUser.user_name} <${currentUser.email}>`,
       subject: subject,
       to: bcc,
       cc: cc,
