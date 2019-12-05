@@ -864,12 +864,8 @@ const getById = async (req, res) => {
 
 const getByIds = async (req, res) => {
   const { ids } = req.body
-  let contact_ids = []
-  ids.forEach(e => {
-    contact_ids.push(mongoose.Types.ObjectId(e.ref_id));
-  })
   const _contacts = await Contact.find({
-    _id: { $in: contact_ids }
+    _id: { $in: ids }
   })
 
   res.send({
@@ -986,7 +982,7 @@ const getBrokerages = async (req, res) => {
       {
         $match: { user: mongoose.Types.ObjectId(currentUser.id) }
       },
-      { $group: { "_id": "$group" } },
+      { $group: { "_id": "$brokerage" } },
     ]
   ).catch(err => {
     console.log('err', err)
