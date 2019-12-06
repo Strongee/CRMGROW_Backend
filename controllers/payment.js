@@ -341,9 +341,8 @@ const cancel = async(id) => {
 }
 
 const failed = async(req, res) => {
-    const invoice = req.body
-    console.log('invoice', invoice)
-    const customer_id = invoice['customer']
+    const invoice = req.body.data
+    const customer_id = invoice['object']['customer']
     const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
       console.log('err', err)
     })
@@ -351,6 +350,7 @@ const failed = async(req, res) => {
       console.log('err', err)
     })
     
+    console.log('user', user)
     return res.send({
       status: true
     })
