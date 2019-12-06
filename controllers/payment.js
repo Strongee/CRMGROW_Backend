@@ -340,11 +340,28 @@ const cancel = async(id) => {
     })
 }
 
+const failed = async(req, res) => {
+    const {invoice} = req.body
+    console.log('invoice', invoice)
+    const customer_id = invoice['customer']
+    const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
+      console.log('err', err)
+    })
+    const user = await User.findOne({payment: payment}).catch(err=>{
+      console.log('err', err)
+    })
+    
+    return res.send({
+      status: true
+    })
+  }
+  
 module.exports = {
     get,
     create,
     update,
     cancel,
+    failed,
     cancelSubscription,
     deleteCustomer
 }
