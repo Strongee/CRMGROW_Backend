@@ -245,7 +245,7 @@ const sendPDF = async (req, res) => {
       const pdf_link =urls.MATERIAL_VIEW_PDF_URL + activity.id
       const msg = {
         to: _contact.email,
-        from: currentUser.email,
+        from: `${currentUser.user_name} <${currentUser.email}>`,
         subject: subject || pdf_title,
         html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">' + content + '</p><a href="' + pdf_link + '">'+ 
               '<img src='+pdf_prview+'?resize=true"></img>' +  
