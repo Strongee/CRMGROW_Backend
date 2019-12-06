@@ -876,7 +876,7 @@ const getByIds = async (req, res) => {
 
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
-  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition } = req.body;
+  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materials } = req.body;
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
   if (searchStr) {
@@ -943,34 +943,95 @@ const advanceSearch = async (req, res) => {
     console.log('err', err)
   })
 
-  // let activity = [];
-  // for (let i = 0; i < contacts.length; i++) {
-  //   let e = contacts[i];
-  //   const _activity = await Activity.find({ contacts: e.id }).limit(1);
-  //   myJSON = JSON.stringify(_activity[0])
-  //   const __activity = JSON.parse(myJSON)
-  //   delete __activity.contacts
-  //   if (activityCondition && activityCondition.length) {
-  //     if (activityCondition.indexOf(__activity.type) === -1) {
-  //       continue;
-  //     }
-  //   }
-  //   if (activityStart) {
-  //     if (__activity.created_at < activityStart) {
-  //       continue;
-  //     }
-  //   }
-  //   if (activityEnd) {
-  //     if (__activity.created_at > activityEnd) {
-  //       continue;
-  //     }
-  //   }
-  //   __activity.contacts = e;
-  //   activity.push(__activity);
-  // }
+  let results= [];
+  if((activityCondition && activityCondition.length)||activityStart||activityEnd) {
+    contacts.forEach(e => {
+      if(activityCondition.indexOf(e.last_activity.type)===-1) {
+        return;
+      }
+      if(activityStart) {
+        if(e.last_activity.created_at < activityStart){
+          return;
+        }
+      }
+      if(activityEnd) {
+        if(e.last_activity.created_at > activityStart){
+          return;
+        }
+      }
+      let activity = e.last_activity;
+      if(lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
+        if(lastMaterial['send_video']['flag']){
+          if(lastMaterial['send_video']['material']){
+            if( activity.type == 'videos' && activity.videos === lastMaterial['send_video']['material'] ){
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if ( activity.type == 'videos'){
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if(lastMaterial['send_pdf']['flag']){
+          if(lastMaterial['send_pdf']['material']){
+            if( activity.type == 'pdfs' && activity.videos === lastMaterial['send_pdf']['material'] ){
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if ( activity.type == 'pdfs'){
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if(lastMaterial['watched_video']['flag']){
+          if(lastMaterial['watched_video']['material']){
+            if( activity.type == 'video_trackers' && activity.videos === lastMaterial['watched_video']['material'] ){
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if ( activity.type == 'video_trackers'){
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if(lastMaterial['watched_pdf']['flag']){
+          if(lastMaterial['watched_pdf']['material']){
+            if( activity.type == 'pdf_trackers' && activity.videos === lastMaterial['watched_pdf']['material'] ){
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if ( activity.type == 'pdf_trackers'){
+              results.push(e);
+              return;
+            }
+          }
+        }
+      }
+      results.push(e);
+    })
+  }
+  else {
+    results = contacts;
+  }
+
+  
+
+
+  
   return res.send({
     status: true,
-    data: contacts
+    data: results
   });
 }
 
