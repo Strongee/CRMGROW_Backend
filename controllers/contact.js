@@ -31,13 +31,13 @@ const getAll = async (req, res) => {
   })
 }
 
-const getAllByLastActivity = async(req, res) => {
+const getAllByLastActivity = async (req, res) => {
   const { currentUser } = req
-  const data = await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).catch(err=>{
+  const data = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).catch(err => {
     console.log('err', err)
   })
 
-  
+
   if (!data) {
     return res.status(400).json({
       status: false,
@@ -51,16 +51,16 @@ const getAllByLastActivity = async(req, res) => {
   })
 }
 
-const getByLastActivity = async(req, res) => {
-  const { currentUser } = req  
+const getByLastActivity = async (req, res) => {
+  const { currentUser } = req
   let contacts
-  if(typeof req.params.id == 'undefined'){
-    contacts= await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).limit(15)
-  }else{
+  if (typeof req.params.id == 'undefined') {
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(15)
+  } else {
     const id = parseInt(req.params.id)
-    contacts = await Contact.find({user :currentUser.id}).populate('last_activity').sort({first_name: 1}).skip(id).limit(15)
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).skip(id).limit(15)
   }
-  
+
   if (!contacts) {
     return res.status(400).json({
       status: false,
@@ -68,7 +68,7 @@ const getByLastActivity = async(req, res) => {
     })
   }
 
-  const count = await Contact.find({user :currentUser.id}).countDocuments()
+  const count = await Contact.find({ user: currentUser.id }).countDocuments()
 
   const user_log = new UserLog({
     user: currentUser.id,
@@ -76,10 +76,10 @@ const getByLastActivity = async(req, res) => {
     updated_at: new Date()
   })
 
-  user_log.save().catch(err=>{
+  user_log.save().catch(err => {
     console.log('err', err)
   })
-  
+
   return res.send({
     status: true,
     data: {
@@ -217,7 +217,7 @@ const create = async (req, res) => {
 
       activity.save().then(_activity => {
         _contact['last_activity'] = _activity.id
-        _contact.save().catch(err=>{
+        _contact.save().catch(err => {
           console.log('err', err)
         })
         myJSON = JSON.stringify(_contact)
@@ -363,18 +363,18 @@ const edit = async (req, res) => {
 }
 
 const bulkEditLabel = async (req, res) => {
-  const {contacts, label} = req.body;
-  Contact.find({_id: {$in: contacts}}).update({$set: {label: label}}).then(() => {
+  const { contacts, label } = req.body;
+  Contact.find({ _id: { $in: contacts } }).update({ $set: { label: label } }).then(() => {
     res.send({
       status: true
     })
   })
-  .catch(err => {
-    res.status(500).send({
-      status: false,
-      error: err.message || 'Label Update Error'
+    .catch(err => {
+      res.status(500).send({
+        status: false,
+        error: err.message || 'Label Update Error'
+      })
     })
-  })
 }
 
 const sendBatch = async (req, res) => {
@@ -441,7 +441,7 @@ const sendBatch = async (req, res) => {
     })
 
     const _activity = await activity.save().then()
-    Contact.findByIdAndUpdate(contacts[i], { $set: {last_activity: _activity.id} }).catch(err=>{
+    Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
       console.log('err', err)
     })
     myJSON = JSON.stringify(_email)
@@ -494,7 +494,7 @@ const sendEmail = async (req, res) => {
           })
 
           activity.save().then(_activity => {
-            Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+            Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
               console.log('err', err)
             })
             myJSON = JSON.stringify(_email)
@@ -523,7 +523,7 @@ const sendEmail = async (req, res) => {
 
 const importCSV = async (req, res) => {
   let file = req.file
-  const {currentUser} = req
+  const { currentUser } = req
   let failure = []
   let count = 0
   let max_count = 0
@@ -534,206 +534,206 @@ const importCSV = async (req, res) => {
     count = currentUser.contact.count
     max_count = currentUser.contact.max_count
   }
-  
+
   let contact_array = []
   fs.createReadStream(file.path).pipe(csv())
-      .on('data', async(data) => {
-        contact_array.push(data)
-      }).on('end', () => {
-        let promise_array = []
-        for(let i=0; i<contact_array.length; i++){
-          let promise = new Promise(async(resolve, reject) => {
-            let data =contact_array[i]
-            if(data['first_name'] == ''){
-              data['first_name'] = null
+    .on('data', async (data) => {
+      contact_array.push(data)
+    }).on('end', () => {
+      let promise_array = []
+      for (let i = 0; i < contact_array.length; i++) {
+        let promise = new Promise(async (resolve, reject) => {
+          let data = contact_array[i]
+          if (data['first_name'] == '') {
+            data['first_name'] = null
+          }
+          if (data['email'] == '') {
+            data['email'] = null
+          }
+          if (data['phone'] == '') {
+            data['phone'] = null
+          }
+          if (data['first_name'] || data['email'] || data['phone']) {
+            let cell_phone = data['phone']
+            let cleaned = ('' + cell_phone).replace(/\D/g, '')
+            let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+            if (match) {
+              let intlCode = (match[1] ? '+1 ' : '')
+              cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             }
-            if(data['email'] == ''){
-              data['email'] = null
-            }
-            if(data['phone'] == ''){
-              data['phone'] = null
-            }
-            if(data['first_name'] || data['email'] || data['phone']){
-              let cell_phone = data['phone']
-              let cleaned = ('' + cell_phone).replace(/\D/g, '')
-              let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-              if (match) {  
-                  let intlCode = (match[1] ? '+1 ' : '')
-                  cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+            count = count + 1;
+            if (max_count < count) {
+              const field = {
+                id: i,
+                email: data['email'],
+                phone: data['phone'],
+                err: 'Exceed upload max contacts'
               }
-              count=count+1;
-              if(max_count < count){
-                const field = {
-                  id: i,
-                  email: data['email'],
-                  phone: data['phone'],
-                  err: 'Exceed upload max contacts'
+              failure.push(field)
+              resolve()
+              return
+            }
+            if (data['tag'] != '' && typeof data['tag'] != 'undefined') {
+              const tags = data['tag'].split(/,\s|\s,|,|\s/);
+              new Promise((resolve, reject) => {
+                const array_tag = []
+                let promise_array = []
+                for (let i = 0; i < tags.length; i++) {
+                  promise_array.push(
+                    Tag.findOrCreate({ content: tags[i], user: currentUser.id }, {
+                      content: tags[i],
+                      user: currentUser.id,
+                      updated_at: new Date(),
+                      created_at: new Date()
+                    }))
                 }
-                failure.push(field)
-                resolve()
-                return
-              } 
-              if(data['tag'] != '' && typeof data['tag'] != 'undefined'){  
-                  const tags = data['tag'].split(/,\s|\s,|,|\s/);
-                  new Promise((resolve, reject) =>{
-                    const array_tag = []
-                    let promise_array = []
-                    for(let i=0; i<tags.length; i++){
-                      promise_array.push(
-                      Tag.findOrCreate({ content: tags[i], user: currentUser.id }, {
-                        content: tags[i],
-                        user: currentUser.id,
-                        updated_at: new Date(),
-                        created_at: new Date()
-                      }))
-                    } 
-                    Promise.all(promise_array).then((res)=>{
-                      for(let j=0; j<res.length; j++){
-                        array_tag.push(res[j].doc['_id'])
-                      }
-                      resolve(array_tag)
+                Promise.all(promise_array).then((res) => {
+                  for (let j = 0; j < res.length; j++) {
+                    array_tag.push(res[j].doc['_id'])
+                  }
+                  resolve(array_tag)
+                })
+              }).then((res) => {
+                data['tag'] = res
+                const contact = new Contact({
+                  ...data,
+                  cell_phone: cell_phone,
+                  user: currentUser.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                contact.save().then(_contact => {
+                  const activity = new Activity({
+                    content: currentUser.user_name + ' added contact',
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'contacts',
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                  })
+                  activity.save().then((_activity) => {
+                    Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+                      console.log('err', err)
                     })
-                  }).then((res)=>{
-                    data['tag'] = res 
-                    const contact = new Contact({
-                      ...data,
-                      cell_phone: cell_phone,
+                  }).catch(err => {
+                    console.log('err', err)
+                  })
+                  if (!data['note'] && data['note'] != '') {
+                    const note = new Note({
+                      content: data['note'],
+                      contact: _contact.id,
                       user: currentUser.id,
                       created_at: new Date(),
                       updated_at: new Date(),
                     })
-                    contact.save().then(_contact=>{
-                      const activity = new Activity({
-                        content: currentUser.user_name + ' added contact',
+                    note.save().then((_note) => {
+                      const _activity = new Activity({
+                        content: currentUser.user_name + ' added note',
                         contacts: _contact.id,
                         user: currentUser.id,
-                        type: 'contacts',
+                        type: 'notes',
+                        notes: _note.id,
                         created_at: new Date(),
                         updated_at: new Date(),
                       })
-                      activity.save().then((_activity)=>{
-                        Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+                      _activity.save().then((__activity) => {
+                        Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
                           console.log('err', err)
                         })
-                      }).catch(err=>{
-                        console.log('err', err)
+                      }).catch(err => {
+                        console.log('error', err)
                       })
-                      if(!data['note'] && data['note'] != ''){
-                        const note = new Note({
-                          content: data['note'],
-                          contact: _contact.id,
-                          user: currentUser.id,
-                          created_at: new Date(),
-                          updated_at: new Date(),
-                        })
-                        note.save().then((_note)=>{
-                          const _activity = new Activity({
-                            content: currentUser.user_name + ' added note',
-                            contacts: _contact.id,
-                            user: currentUser.id,
-                            type: 'notes',
-                            notes: _note.id,
-                            created_at: new Date(),
-                            updated_at: new Date(),
-                          })
-                          _activity.save().then((__activity)=>{
-                            Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: __activity.id} }).catch(err=>{
-                              console.log('err', err)
-                            })
-                          }).catch(err=>{
-                            console.log('error', err)
-                          })
-                        })
-                      }
-                      resolve()
-                      return
-                    }).catch(err=>{
-                     console.log('err', err)
                     })
-                  }).catch(err=>{
+                  }
+                  resolve()
+                  return
+                }).catch(err => {
+                  console.log('err', err)
+                })
+              }).catch(err => {
+                console.log('err', err)
+              })
+            } else {
+              delete data.tag
+              const contact = new Contact({
+                ...data,
+                cell_phone: cell_phone,
+                user: currentUser.id,
+                created_at: new Date(),
+                updated_at: new Date(),
+              })
+
+              contact.save().then(_contact => {
+                const activity = new Activity({
+                  content: currentUser.user_name + ' added contact',
+                  contacts: _contact.id,
+                  user: currentUser.id,
+                  type: 'contacts',
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                activity.save().then((_activity) => {
+                  Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
                     console.log('err', err)
                   })
-                }else{
-                  delete data.tag
-                  const contact = new Contact({
-                    ...data,
-                    cell_phone: cell_phone,
+                }).catch(err => {
+                  console.log('err', err)
+                })
+                if (!data['note'] && data['note'] != '') {
+                  const note = new Note({
+                    content: data['note'],
+                    contact: _contact.id,
                     user: currentUser.id,
                     created_at: new Date(),
                     updated_at: new Date(),
                   })
-                  
-                  contact.save().then(_contact=>{
-                    const activity = new Activity({
-                      content: currentUser.user_name + ' added contact',
+                  note.save().then((_note) => {
+                    const _activity = new Activity({
+                      content: currentUser.user_name + ' added note',
                       contacts: _contact.id,
                       user: currentUser.id,
-                      type: 'contacts',
+                      type: 'notes',
+                      notes: _note.id,
                       created_at: new Date(),
                       updated_at: new Date(),
                     })
-                    activity.save().then((_activity)=>{
-                      Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: _activity.id} }).catch(err=>{
+                    _activity.save().then((__activity) => {
+                      Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
                         console.log('err', err)
                       })
-                    }).catch(err=>{
-                      console.log('err', err)
+                    }).catch(err => {
+                      console.log('error', err)
                     })
-                    if(!data['note'] && data['note'] != ''){
-                      const note = new Note({
-                        content: data['note'],
-                        contact: _contact.id,
-                        user: currentUser.id,
-                        created_at: new Date(),
-                        updated_at: new Date(),
-                      })
-                      note.save().then((_note)=>{
-                        const _activity = new Activity({
-                          content: currentUser.user_name + ' added note',
-                          contacts: _contact.id,
-                          user: currentUser.id,
-                          type: 'notes',
-                          notes: _note.id,
-                          created_at: new Date(),
-                          updated_at: new Date(),
-                        })
-                        _activity.save().then((__activity)=>{
-                          Contact.findByIdAndUpdate(_contact.id, { $set: {last_activity: __activity.id} }).catch(err=>{
-                            console.log('err', err)
-                          })
-                        }).catch(err=>{
-                          console.log('error', err)
-                        })
-                      })
-                    }
-                    resolve()
-                    return
-                   }).catch(err=>{
-                     console.log('err', err)
-                   })
+                  })
                 }
-            }else{
-              resolve()         
+                resolve()
+                return
+              }).catch(err => {
+                console.log('err', err)
+              })
             }
-          })
-          promise_array.push(promise)
-        }
-        
-        Promise.all(promise_array).then(function() {
-          const contact_info = {
-            count: count,
-            max_count: max_count
+          } else {
+            resolve()
           }
-          currentUser.contact_info = contact_info
-          currentUser.save().catch(err=>{
-            console.log('err', err)
-          })
-          
-          return res.send({
-            status: true,
-            failure
-          })             
-        });    
+        })
+        promise_array.push(promise)
+      }
+
+      Promise.all(promise_array).then(function () {
+        const contact_info = {
+          count: count,
+          max_count: max_count
+        }
+        currentUser.contact_info = contact_info
+        currentUser.save().catch(err => {
+          console.log('err', err)
+        })
+
+        return res.send({
+          status: true,
+          failure
+        })
+      });
     });
 }
 
@@ -874,10 +874,187 @@ const getByIds = async (req, res) => {
   })
 }
 
+isArray = function(a) {
+  return (!!a) && (a.constructor === Array);
+};
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
-  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materials } = req.body;
+  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materialCondition } = req.body;
+
+  // Material Check
+  let watchedVideoContacts = [];
+  let watchedPdfContacts = [];
+  let notWatchedVideoContacts = [];
+  let notWatchedPdfContacts = [];
+  if (materialCondition['watched_video']['flag']) {
+    let query = []
+    if (materialCondition['watched_video']['material']) {
+      query = [{ 'type': 'videos', 'videos': mongoose.Types.ObjectId(materialCondition['watched_video']['material']) }, { 'type': 'video_trackers', 'videos': mongoose.Types.ObjectId(materialCondition['watched_video']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'videos' }, { 'type': 'video_trackers' }]
+    }
+    watchedVideoContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          "types": { "action": "video_trackers" }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  if (materialCondition['watched_pdf']['flag']) {
+    let query = []
+    if (materialCondition['watched_pdf']['material']) {
+      query = [{ 'type': 'pdfs', 'pdfs': mongoose.Types.ObjectId(materialCondition['watched_pdf']['material']) }, { 'type': 'pdf_trackers', 'pdfs': mongoose.Types.ObjectId(materialCondition['watched_pdf']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'pdfs' }, { 'type': 'pdf_trackers' }]
+    }
+    watchedPdfContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          "types": { "action": "pdf_trackers" }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  if (materialCondition['not_watched_video']['flag']) {
+    let query = []
+    if (materialCondition['not_watched_video']['material']) {
+      query = [{ 'type': 'videos', 'videos': mongoose.Types.ObjectId(materialCondition['not_watched_video']['material']) }, { 'type': 'video_trackers', 'videos': mongoose.Types.ObjectId(materialCondition['not_watched_video']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'videos' }, { 'type': 'video_trackers' }]
+    }
+    notWatchedVideoContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          $nor: [{ "types": { "action": "video_trackers" } }]
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  if (materialCondition['not_watched_pdf']['flag']) {
+    let query = []
+    if (materialCondition['not_watched_pdf']['material']) {
+      query = [{ 'type': 'pdfs', 'pdfs': mongoose.Types.ObjectId(materialCondition['not_watched_pdf']['material']) }, { 'type': 'pdf_trackers', 'pdfs': mongoose.Types.ObjectId(materialCondition['not_watched_pdf']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'pdfs' }, { 'type': 'pdf_trackers' }]
+    }
+    notWatchedPdfContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          $nor: [{ "types": { "action": "pdf_trackers" } }]
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+
+  let materialContacts = [];
+  watchedVideoContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+  watchedPdfContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+  notWatchedVideoContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+  notWatchedPdfContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
+
+  if (materialContacts.length) {
+    let materialQuery = { '_id': { $in: materialContacts } };
+    query['$and'].push(materialQuery);
+  }
 
   if (searchStr) {
     var strQuery = {};
@@ -938,84 +1115,84 @@ const advanceSearch = async (req, res) => {
     var zipQuery = { zip: { '$regex': ".*" + zipcodeCondition + ".*" } }
     query['$and'].push(zipQuery)
   }
-  
-  var contacts = await Contact.find(query).populate('last_activity').sort({first_name: 1}).catch(err=>{
+
+  var contacts = await Contact.find(query).populate('last_activity').sort({ first_name: 1 }).catch(err => {
     console.log('err', err)
   })
 
-  let results= [];
-  if((activityCondition && activityCondition.length)||activityStart||activityEnd) {
+  let results = [];
+  if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
     contacts.forEach(e => {
-      if(activityCondition.indexOf(e.last_activity.type)===-1) {
+      let activity = e.last_activity;
+      if (lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
+        if (lastMaterial['send_video']['flag']) {
+          if (lastMaterial['send_video']['material']) {
+            if (activity.type === 'videos' && activity.videos == lastMaterial['send_video']['material']) {
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if (activity.type === 'videos') {
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if (lastMaterial['send_pdf']['flag']) {
+          if (lastMaterial['send_pdf']['material']) {
+            if (activity.type == 'pdfs' && activity.videos == lastMaterial['send_pdf']['material']) {
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if (activity.type == 'pdfs') {
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if (lastMaterial['watched_video']['flag']) {
+          if (lastMaterial['watched_video']['material']) {
+            if (activity.type == 'video_trackers' && activity.videos == lastMaterial['watched_video']['material']) {
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if (activity.type == 'video_trackers') {
+              results.push(e);
+              return;
+            }
+          }
+        }
+        if (lastMaterial['watched_pdf']['flag']) {
+          if (lastMaterial['watched_pdf']['material']) {
+            if (activity.type == 'pdf_trackers' && activity.videos == lastMaterial['watched_pdf']['material']) {
+              results.push(e);
+              return;
+            }
+          }
+          else {
+            if (activity.type == 'pdf_trackers') {
+              results.push(e);
+              return;
+            }
+          }
+        }
+      }
+      if (activityCondition.indexOf(e.last_activity.type) === -1) {
         return;
       }
-      if(activityStart) {
-        if(e.last_activity.created_at < activityStart){
+      if (activityStart) {
+        if (new Date(e.last_activity.created_at) < new Date(activityStart)) {
           return;
         }
       }
-      if(activityEnd) {
-        if(e.last_activity.created_at > activityStart){
+      if (activityEnd) {
+        if (new Date(e.last_activity.created_at) > new Date(activityEnd)) {
           return;
-        }
-      }
-      let activity = e.last_activity;
-      if(lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
-        if(lastMaterial['send_video']['flag']){
-          if(lastMaterial['send_video']['material']){
-            if( activity.type == 'videos' && activity.videos === lastMaterial['send_video']['material'] ){
-              results.push(e);
-              return;
-            }
-          }
-          else {
-            if ( activity.type == 'videos'){
-              results.push(e);
-              return;
-            }
-          }
-        }
-        if(lastMaterial['send_pdf']['flag']){
-          if(lastMaterial['send_pdf']['material']){
-            if( activity.type == 'pdfs' && activity.videos === lastMaterial['send_pdf']['material'] ){
-              results.push(e);
-              return;
-            }
-          }
-          else {
-            if ( activity.type == 'pdfs'){
-              results.push(e);
-              return;
-            }
-          }
-        }
-        if(lastMaterial['watched_video']['flag']){
-          if(lastMaterial['watched_video']['material']){
-            if( activity.type == 'video_trackers' && activity.videos === lastMaterial['watched_video']['material'] ){
-              results.push(e);
-              return;
-            }
-          }
-          else {
-            if ( activity.type == 'video_trackers'){
-              results.push(e);
-              return;
-            }
-          }
-        }
-        if(lastMaterial['watched_pdf']['flag']){
-          if(lastMaterial['watched_pdf']['material']){
-            if( activity.type == 'pdf_trackers' && activity.videos === lastMaterial['watched_pdf']['material'] ){
-              results.push(e);
-              return;
-            }
-          }
-          else {
-            if ( activity.type == 'pdf_trackers'){
-              results.push(e);
-              return;
-            }
-          }
         }
       }
       results.push(e);
@@ -1025,10 +1202,8 @@ const advanceSearch = async (req, res) => {
     results = contacts;
   }
 
-  
 
 
-  
   return res.send({
     status: true,
     data: results
