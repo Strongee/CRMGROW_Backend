@@ -1,5 +1,6 @@
 const config = require('../config/config')
 const Payment = require('../models/payment')
+const User = require('../models/user')
 const stripeKey = config.STRIPE.SECRET_KEY
 const stripe = require('stripe')(stripeKey)
 
@@ -340,11 +341,28 @@ const cancel = async(id) => {
     })
 }
 
+const failed = async(req, res) => {
+    const invoice = req.body.data
+    const customer_id = invoice['object']['customer']
+    const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
+      console.log('err', err)
+    })
+    const user = await User.findOne({payment: payment}).catch(err=>{
+      console.log('err', err)
+    })
+    
+    console.log('user', user)
+    return res.send({
+      status: true
+    })
+  }
+  
 module.exports = {
     get,
     create,
     update,
     cancel,
+    failed,
     cancelSubscription,
     deleteCustomer
 }

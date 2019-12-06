@@ -9,6 +9,7 @@ const router = express.Router()
 router.post('/', UserCtrl.checkAuth, catchError(FollowUpCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(FollowUpCtrl.get))
 router.get('/date' , UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate))
+router.put('/:id' , UserCtrl.checkAuth, catchError(FollowUpCtrl.edit))
 router.post('/checked', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
 router.post('/archived', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateArchived))
 

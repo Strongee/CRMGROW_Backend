@@ -4,6 +4,7 @@ const FollowUp = require('../models/follow_up')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const Reminder = require('../models/reminder')
+const User = require('../models/user')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -105,6 +106,39 @@ const create = async(req, res) => {
       error: e
     })
   });
+}
+
+const edit = async (req, res) => {
+  const editData = req.body
+  
+  if (req.body.due_date) { 
+    Reminder.findOne({follow_up: req.params.id}).then(_reminder=>{
+      _reminder['due_date'] = req.body.due_date
+      _reminder.save().catch(err=>{
+        console.log('err', err)
+      })
+    }).catch(err=>{
+      console.log('err', err)
+    }) 
+  }
+  
+  const follow_up = await FollowUp.findOne({_id: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
+
+  for (let key in editData) {
+    follow_up[key] = editData[key]
+  }
+  
+  follow_up['updated_at'] = new Date()
+  follow_up.save().then((_follow_up)=>{
+    res.send({
+      status: true,
+      data: _follow_up
+    })
+  }).catch(err=>{
+    console.log('err', err)
+  })
 }
 
 const getByDate = async(req, res) =>{
@@ -427,10 +461,10 @@ const updateChecked  = async(req, res) =>{
   }
 }
 
-
 module.exports = {
     get,
     create,
+    edit,
     getByDate,
     updateChecked,
     updateArchived
