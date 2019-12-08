@@ -1032,7 +1032,7 @@ const isAppleEmail = (email) => {
   return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase());
 }
 
-const checkSuspended = async(req, res) =>{
+const checkSuspended = async(req, res, next) =>{
   const {currentUser} = req
   
   const subscription = currentUser['subscription']
