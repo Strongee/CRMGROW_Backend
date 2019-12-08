@@ -53,7 +53,7 @@ const router = express.Router()
 const upload = multer({ storage: fileStorage })
 
 // Upload a video
-router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('video'), catchError(VideoCtrl.create))
 
 // Upload a thumbnail and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
@@ -68,10 +68,10 @@ router.get('/:id', catchError(VideoCtrl.get))
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
 
 // Send Video
-router.post('/send', UserCtrl.checkAuth, catchError(VideoCtrl.sendVideo))
+router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendVideo))
 
 // Send Video on text
-router.post('/send-text', UserCtrl.checkAuth, catchError(VideoCtrl.sendText))
+router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendText))
 
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))

@@ -17,7 +17,7 @@ const fileStorage = multer.diskStorage({
 
 const upload = multer({ storage: fileStorage })
 
-router.post('/', UserCtrl.checkAuth, catchError(ContactCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(ContactCtrl.getAll))
 
 // Edit contact by id
@@ -30,13 +30,13 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove))
 router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts))
 
 // Send Batch email to contact lists
-router.post('/batch', UserCtrl.checkAuth, catchError(ContactCtrl.sendBatch))
+router.post('/batch', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.sendBatch))
 
 // Send Batch email to contact lists
 router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
 
 // Import contact list as file
-router.post('/import-csv', UserCtrl.checkAuth, upload.single('csv'), catchError(ContactCtrl.importCSV))
+router.post('/import-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.importCSV))
 
 // Download contact list as csv file
 router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV))

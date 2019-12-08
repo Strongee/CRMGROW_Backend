@@ -111,9 +111,14 @@ const create = async(req, res) => {
 const edit = async (req, res) => {
   const editData = req.body
   
-  if (req.body.due_date) { 
+  if (req.body.due_date || req.body.contact) { 
     Reminder.findOne({follow_up: req.params.id}).then(_reminder=>{
-      _reminder['due_date'] = req.body.due_date
+      if(req.body.due_date) {
+        _reminder['due_date'] = req.body.due_date
+      } 
+      if(req.body.contact) {
+        _reminder['contact'] = req.body.contact
+      }
       _reminder.save().catch(err=>{
         console.log('err', err)
       })

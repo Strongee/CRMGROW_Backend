@@ -344,6 +344,7 @@ const cancel = async(id) => {
 const failed = async(req, res) => {
     const invoice = req.body.data
     const customer_id = invoice['object']['customer']
+    const attempt_count = invoice['object']['attempt_count']
     const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
       console.log('err', err)
     })
@@ -351,11 +352,22 @@ const failed = async(req, res) => {
       console.log('err', err)
     })
     
-    console.log('user', user)
+    user['subscription']['is_failed'] = true
+    user['subscription']['failed_at'] = new Date()
+    user['subscription']['attempt_count'] = attempt_count
+    
+    if(attempt_count === 4){
+        user['subscription']['is_suspended'] = true
+        user['subscription']['suspended_at'] = new Date()
+    }
+    user.save().catch(err=>{
+        console.log('err', err)
+    })
+    
     return res.send({
       status: true
     })
-  }
+}
   
 module.exports = {
     get,

@@ -38,7 +38,7 @@ const upload = multer({
 
 
 // Upload a pdf
-router.post('/', UserCtrl.checkAuth, upload.single('pdf'), catchError(PDFCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('pdf'), catchError(PDFCtrl.create))
 
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail))
@@ -53,10 +53,10 @@ router.get('/:id', catchError(PDFCtrl.get))
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll))
 
 // Send PDF
-router.post('/send', UserCtrl.checkAuth, catchError(PDFCtrl.sendPDF))
+router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.sendPDF))
 
 // Send Video on text
-router.post('/send-text', UserCtrl.checkAuth, catchError(PDFCtrl.sendText))
+router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.sendText))
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
