@@ -461,11 +461,41 @@ const updateChecked  = async(req, res) =>{
   }
 }
 
+const bulkUpdate = async(req, res) => {
+  const { ids, content, due_date } = req.body
+  if(ids && ids.length){
+    try{
+      FollowUp.find({_id: {$in: ids}}).updateMany({$set: { 'content': content, 'due_date': due_date}}).then((data) => {
+        res.send({
+          status: true,
+          data
+        })
+      }).catch(err => {
+        res.send({
+          status: false,
+          error: err
+        })
+      })      
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'No selected Follow up(s)'
+    })
+  }  
+}
+
 module.exports = {
     get,
     create,
     edit,
     getByDate,
     updateChecked,
-    updateArchived
+    updateArchived,
+    bulkUpdate
 }

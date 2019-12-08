@@ -12,5 +12,6 @@ router.get('/date' , UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate))
 router.put('/:id' , UserCtrl.checkAuth, catchError(FollowUpCtrl.edit))
 router.post('/checked', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
 router.post('/archived', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateArchived))
+router.post('/update', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkUpdate))
 
 module.exports = router
