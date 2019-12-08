@@ -306,13 +306,13 @@ const checkAuth = async (req, res, next) => {
       next()
     } else {
       console.error('Valid JWT but no user:', decoded)
-      res.status(400).send({
+      res.status(401).send({
         status: false,
         error: 'invalid_user'
       })
     }
   }
-
+  
 const getMe = async(req, res) =>{
   const _user = req.currentUser
   const myJSON = JSON.stringify(_user)
@@ -1032,6 +1032,20 @@ const isAppleEmail = (email) => {
   return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase());
 }
 
+const checkSuspended = async(req, res, next) =>{
+  const {currentUser} = req
+  
+  const subscription = currentUser['subscription']
+  if(subscription['is_suspended']) {
+    res.status(400).send({
+      status: false,
+      error: 'action limited'
+    })
+  } else {
+    next()
+  }
+}
+
 module.exports = {
     signUp,
     login,
@@ -1058,6 +1072,7 @@ module.exports = {
     disconText,
     weeklyReport,
     checkAuth,
+    checkSuspended,
     isAppleEmail,
     closeAccount
 }

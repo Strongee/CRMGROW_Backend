@@ -497,7 +497,45 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
+const subscription_check = new CronJob('0 21 */3 * *', async() =>{
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  
+  const subscribers = await User.find({'subscription.is_failed': true}).catch(err=>{
+    console.log('err', err)
+  })
+  
+  if(subscribers){
+    for(let i = 0; i <subscribers.length; i++){
+      const subscriber = subscribers[i]
+      const subscription = subscriber['subscription']
+      
+      msg = {
+        to: subscriber.email,
+        from: mail_contents.SUPPORT_CRMGROW.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SUBSCRIPTION_FAILED_NOTIFICATION,
+        dynamic_template_data: {
+          first_name: subscriber.user_name,
+        }
+      }
+      sgMail.send(msg).then((res) => {
+        console.log('mailres.errorcode', res[0].statusCode);
+        if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+          console.log('Successful send to '+msg.to)
+        }else {
+          console.log('email sending err', msg.to+res[0].statusCode)
+        }
+      }).catch(err=>{
+        console.log('err', err)
+      })
+    }
+  }
+}, function () {
+  console.log('Subscription Job finished.');
+}, false, 'US/Central'
+)
+
 signup_job.start()
 reminder_job.start()
 weekly_report.start()
 video_job.start()
+subscription_check.start()

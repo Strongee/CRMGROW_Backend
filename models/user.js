@@ -40,6 +40,13 @@ const User = mongoose.model('user',{
      },
      welcome_email: {type: Boolean, default: false},
      is_trial: { type: Boolean, default: true},
+     subscription: {
+        is_failed: {type: Boolean, default: false},
+        failed_at: Date,
+        is_suspended: {type: Boolean, default: false},
+        suspended_at: Date,
+        attempt_count: {type: Number, default: 0}
+     },
      expired_at: Date,
      created_at: Date,
      updated_at: Date,
