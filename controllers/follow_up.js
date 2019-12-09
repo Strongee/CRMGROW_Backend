@@ -191,7 +191,9 @@ const getByDate = async(req, res) =>{
       let data = [];
       
       for(let i = 0; i < _follow_up.length; i ++){
-        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}).catch(err => {
+          console.log('err', err)
+        }) 
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -304,8 +306,8 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'next_month': {
-      const start_month = moment().utcOffset(time_zone).startOf('month').add(1, 'months')
-      const end_month   =  moment().utcOffset(time_zone).add(1, 'months').endOf('month')
+      const start_month = moment().utcOffset(time_zone).add(8, 'day').startOf('day')
+      const end_month = moment().utcOffset(time_zone).add( 30,'days').endOf('day')
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start_month, $lt: end_month}})
       
       let data = [];
@@ -333,8 +335,8 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'future': {
-      const current_time = moment().utcOffset(time_zone);
-      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: current_time}});
+      const start_future = moment().utcOffset(time_zone).add(8, 'day').startOf('day')
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start_future}});
 
       let data = [];
 
@@ -350,7 +352,7 @@ const getByDate = async(req, res) =>{
       if (!data) {
         return res.status(400).json({
           status: false,
-          error: 'OverDue doesn`t exist'
+          error: 'Future doesn`t exist'
         })
       }
 
