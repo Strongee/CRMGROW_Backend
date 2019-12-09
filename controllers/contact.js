@@ -1182,9 +1182,11 @@ const advanceSearch = async (req, res) => {
           }
         }
       }
-      if (activityCondition.indexOf(e.last_activity.type) === -1) {
-        return;
-      }
+      if(activityCondition.length){
+        if (activityCondition.indexOf(e.last_activity.type) === -1) {
+          return;
+        }
+      }      
       if (activityStart) {
         if (new Date(e.last_activity.created_at) < new Date(activityStart)) {
           return;
