@@ -470,7 +470,10 @@ const bulkUpdate = async(req, res) => {
   const { ids, content, due_date } = req.body
   if(ids && ids.length){
     try{
-      FollowUp.find({_id: {$in: ids}}).updateMany({$set: { 'content': content, 'due_date': due_date}}).then((data) => {
+      let query = {}
+      if(content) { query['content'] = content; }
+      if(due_date) { query['due_date'] = due_date; }
+      FollowUp.find({_id: {$in: ids}}).updateMany({$set: query}).then((data) => {
         res.send({
           status: true,
           data
