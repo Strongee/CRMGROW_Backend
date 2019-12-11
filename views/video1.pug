@@ -23,7 +23,8 @@ head
   .col-lg-9.col-md-9.col-sm-9.contact-info-wrapper
     .col-lg-4.col-md-4.phone
       i.icon.icon-phone
-      a.cell_phone(href=`tel:${user.cell_phone}`) #{user.cell_phone}
+      a.cell_phone(href=`tel:${user.cell_phone}`) 
+        span #{user.cell_phone}
     .col-lg-5.col-md-5.email
       i.icon.icon-envelope
       a.user-email(href=`mailto:${user.email}`) #{user.email}
