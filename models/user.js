@@ -13,6 +13,7 @@ const User = mongoose.model('user',{
      email_signature: {type: String, default: ""},
      proxy_number: String,
      picture_profile: String,
+     learn_more: String,
      role: String,
      outlook_refresh_token: String,
      google_refresh_token: String,

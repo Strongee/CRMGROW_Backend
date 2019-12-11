@@ -1039,7 +1039,7 @@ const checkSuspended = async(req, res, next) =>{
   if(subscription['is_suspended']) {
     res.status(400).send({
       status: false,
-      error: 'action limited'
+      error: 'Account is Suspended'
     })
   } else {
     next()
