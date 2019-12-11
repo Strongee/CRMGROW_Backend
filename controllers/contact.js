@@ -264,7 +264,7 @@ const remove = async (req, res) => {
   await Activity.deleteMany({ contacts: req.params.id })
   await FollowUp.deleteMany({ contact: req.params.id })
   await Appointment.deleteMany({ contact: req.params.id })
-
+  
   res.send({
     status: true
   })
@@ -276,7 +276,6 @@ const removeContacts = async (req, res) => {
   const ids = req.body.ids;
   var deleted = 0;
   var undeleted = 0;
-
   ids.forEach(id => {
     if (removeContact(currentUser.id, id)) {
       deleted++;
@@ -594,9 +593,9 @@ const importCSV = async (req, res) => {
                   resolve(array_tag)
                 })
               }).then((res) => {
-                data['tag'] = res
                 const contact = new Contact({
                   ...data,
+                  tag: res,
                   cell_phone: cell_phone,
                   user: currentUser.id,
                   created_at: new Date(),
@@ -618,7 +617,7 @@ const importCSV = async (req, res) => {
                   }).catch(err => {
                     console.log('err', err)
                   })
-                  if (!data['note'] && data['note'] != '') {
+                  if (data['note'] && data['note'] != '') {
                     const note = new Note({
                       content: data['note'],
                       contact: _contact.id,
@@ -679,7 +678,7 @@ const importCSV = async (req, res) => {
                 }).catch(err => {
                   console.log('err', err)
                 })
-                if (!data['note'] && data['note'] != '') {
+                if (data['note'] && data['note'] != '') {
                   const note = new Note({
                     content: data['note'],
                     contact: _contact.id,
