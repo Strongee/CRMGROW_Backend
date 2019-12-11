@@ -222,7 +222,7 @@ const sendPDF = async (req, res) => {
     
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
-  
+      const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const _activity = new Activity({
         content: currentUser.user_name + ' sent pdf using email',
         contacts: contacts[i],
@@ -232,7 +232,7 @@ const sendPDF = async (req, res) => {
         created_at: new Date(),
         updated_at: new Date(),
         subject: subject,
-        description: content
+        description: sendContent
       })     
       const activity = await _activity.save().then().catch(err=>{
         console.log('err', err);
@@ -247,7 +247,7 @@ const sendPDF = async (req, res) => {
         to: _contact.email,
         from: `${currentUser.user_name} <${currentUser.email}>`,
         subject: subject || pdf_title,
-        html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">' + content + '</p><a href="' + pdf_link + '">'+ 
+        html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">' + sendContent + '</p><a href="' + pdf_link + '">'+ 
               '<img src='+pdf_prview+'?resize=true"></img>' +  
               '</a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature+'</body></html>'
       }
@@ -289,6 +289,7 @@ const sendText = async (req, res) => {
     
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
+      const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const cell_phone = _contact.cell_phone
       const _activity = new Activity({
         content: currentUser.user_name + ' sent pdf using sms',
@@ -298,7 +299,7 @@ const sendText = async (req, res) => {
         pdfs: pdf,
         created_at: new Date(),
         updated_at: new Date(),
-        description: content
+        description: sendContent
       })
     
       const activity = await _activity.save().then().catch(err=>{
@@ -360,7 +361,7 @@ const sendText = async (req, res) => {
       }
       console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
   
-      const body = content + '\n' + '\n' + pdf_title + '\n' + '\n' + pdf_link
+      const body = sendContent + '\n' + '\n' + pdf_title + '\n' + '\n' + pdf_link
     
       twilio.messages.create({from: fromNumber, body: body, to: e164Phone}).then(()=>{
         console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)

@@ -336,6 +336,7 @@ const sendVideo = async (req, res) => {
       }
       for(let i=0; i<contacts.length; i++){
         const _contact = await Contact.findOne({_id: contacts[i]})
+        const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
         const _activity = new Activity({
           content: currentUser.user_name + ' sent video using email',
           contacts: contacts[i],
@@ -345,7 +346,7 @@ const sendVideo = async (req, res) => {
           created_at: new Date(),
           updated_at: new Date(),
           subject: subject,
-          description: content
+          description: sendContent
         })
        
         const _video = await Video.findOne({_id: video})
@@ -378,7 +379,7 @@ const sendVideo = async (req, res) => {
           from: `${currentUser.user_name} <${currentUser.email}>`,
           subject: subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">'
-                +content+'</p><a href="' + video_link + '"><img src="'
+                +sendContent+'</p><a href="' + video_link + '"><img src="'
                 +preview+'"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
           
         }
@@ -419,6 +420,7 @@ const sendText = async (req, res) => {
     }
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]})
+      var sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const cell_phone = _contact.cell_phone
       const _activity = new Activity({
         content: currentUser.user_name + ' sent video using sms',
@@ -428,7 +430,7 @@ const sendText = async (req, res) => {
         videos: video,
         created_at: new Date(),
         updated_at: new Date(),
-        description: content
+        description: sendContent
       })
       const activity = await _activity.save().then().catch(err=>{
         console.log('err', err);
@@ -491,7 +493,7 @@ const sendText = async (req, res) => {
         if(typeof content == 'undefined'){
           body = video_link
         }else{
-          body = content + '\n' + '\n' + video_link
+          body = sendContent + '\n' + '\n' + video_link
         }
       
         twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
