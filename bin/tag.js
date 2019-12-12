@@ -19,10 +19,10 @@ const migrate = async() => {
       console.log('err', err)
     })
     
-    console.log('contacts', contacts)
     if(contacts){
       for(let j=0; j<contacts.length; j++){
         const contact = contacts[j]
+        if(!contact[tags]){
           let tags = []
           for(let k=0; k<contact['tag'].length; k++){
             const tag = contact['tag'][k]
@@ -32,8 +32,9 @@ const migrate = async() => {
           contact['tags'] = tags
           contact.save().catch(err=>{
             console.log('err', err)
-          })
+          })      
         }
+      }
     }
   }
 }
