@@ -10,7 +10,9 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 //Fetch or read data from
 
 const migrate = async() => {
-  const contacts = await Contact.find({}).populate('tag')
+  const contacts = await Contact.find({}).populate('tag').catch(err=>{
+    console.log('err', err)
+  })
   for(let i=0; i<contacts.length; i++){
     const contact = contacts[i]
       let tags = []
@@ -20,7 +22,9 @@ const migrate = async() => {
          tags.push(tag.content)
       }
       contact['tags'] = tags
-      contact.save()
+      contact.save().catch(err=>{
+        console.log('err', err)
+      })
     }
   }
 migrate();
