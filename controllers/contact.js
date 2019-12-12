@@ -1126,13 +1126,13 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
         if (lastMaterial['send_video']['flag']) {
           if (lastMaterial['send_video']['material']) {
-            if (activity.type === 'videos' && activity.videos == lastMaterial['send_video']['material']) {
+            if (activity.type == 'videos' && activity.videos == lastMaterial['send_video']['material']) {
               results.push(e);
               return;
             }
           }
           else {
-            if (activity.type === 'videos') {
+            if (activity.type == 'videos') {
               results.push(e);
               return;
             }
@@ -1180,6 +1180,9 @@ const advanceSearch = async (req, res) => {
             }
           }
         }
+      }
+      if(!activityCondition.length && !activityStart && !activityEnd) {
+        return;
       }
       if(activityCondition.length){
         if (activityCondition.indexOf(e.last_activity.type) === -1) {
