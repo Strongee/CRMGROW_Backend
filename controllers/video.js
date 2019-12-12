@@ -61,7 +61,7 @@ const play1 = async(req, res) => {
   let pattern = /^((http|https|ftp):\/\/)/;
   
   if(!pattern.test(user.learn_more)) {
-      user.learn_more = "https://" + user.learn_more;
+      user.learn_more = "http://" + user.learn_more;
   }
   res.render('video1', {
       video: video,
