@@ -22,7 +22,7 @@ const migrate = async() => {
     if(contacts){
       for(let j=0; j<contacts.length; j++){
         const contact = contacts[j]
-        if(!contact[tags]){
+        if(!contact['tags']){
           let tags = []
           for(let k=0; k<contact['tag'].length; k++){
             const tag = contact['tag'][k]
