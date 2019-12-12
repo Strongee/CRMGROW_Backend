@@ -264,7 +264,7 @@ const remove = async (req, res) => {
   await Activity.deleteMany({ contacts: req.params.id })
   await FollowUp.deleteMany({ contact: req.params.id })
   await Appointment.deleteMany({ contact: req.params.id })
-  
+
   res.send({
     status: true
   })
@@ -572,145 +572,68 @@ const importCSV = async (req, res) => {
               resolve()
               return
             }
-            if (data['tag'] != '' && typeof data['tag'] != 'undefined') {
-              const tags = data['tag'].split(/,\s|\s,|,|\s/);
-              new Promise((resolve, reject) => {
-                const array_tag = []
-                let promise_array = []
-                for (let i = 0; i < tags.length; i++) {
-                  promise_array.push(
-                    Tag.findOrCreate({ content: tags[i], user: currentUser.id }, {
-                      content: tags[i],
-                      user: currentUser.id,
-                      updated_at: new Date(),
-                      created_at: new Date()
-                    }))
-                }
-                Promise.all(promise_array).then((res) => {
-                  for (let j = 0; j < res.length; j++) {
-                    array_tag.push(res[j].doc['_id'])
-                  }
-                  resolve(array_tag)
-                })
-              }).then((res) => {
-                const contact = new Contact({
-                  ...data,
-                  tag: res,
-                  cell_phone: cell_phone,
-                  user: currentUser.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                })
-                contact.save().then(_contact => {
-                  const activity = new Activity({
-                    content: currentUser.user_name + ' added contact',
-                    contacts: _contact.id,
-                    user: currentUser.id,
-                    type: 'contacts',
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  })
-                  activity.save().then((_activity) => {
-                    Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-                      console.log('err', err)
-                    })
-                  }).catch(err => {
-                    console.log('err', err)
-                  })
-                  if (data['note'] && data['note'] != '') {
-                    const note = new Note({
-                      content: data['note'],
-                      contact: _contact.id,
-                      user: currentUser.id,
-                      created_at: new Date(),
-                      updated_at: new Date(),
-                    })
-                    note.save().then((_note) => {
-                      const _activity = new Activity({
-                        content: currentUser.user_name + ' added note',
-                        contacts: _contact.id,
-                        user: currentUser.id,
-                        type: 'notes',
-                        notes: _note.id,
-                        created_at: new Date(),
-                        updated_at: new Date(),
-                      })
-                      _activity.save().then((__activity) => {
-                        Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
-                          console.log('err', err)
-                        })
-                      }).catch(err => {
-                        console.log('error', err)
-                      })
-                    })
-                  }
-                  resolve()
-                  return
-                }).catch(err => {
-                  console.log('err', err)
-                })
-              }).catch(err => {
-                console.log('err', err)
-              })
-            } else {
-              delete data.tag
-              const contact = new Contact({
-                ...data,
-                cell_phone: cell_phone,
+            let tags = [];
+            if (data['tags'] != '' && typeof data['tags'] != 'undefined') {
+              tags = data['tags'].split(/,\s|\s,|,|\s/);
+            }
+            delete data.tags
+            const contact = new Contact({
+              ...data,
+              tags: tags,
+              cell_phone: cell_phone,
+              user: currentUser.id,
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+
+            contact.save().then(_contact => {
+              const activity = new Activity({
+                content: currentUser.user_name + ' added contact',
+                contacts: _contact.id,
                 user: currentUser.id,
+                type: 'contacts',
                 created_at: new Date(),
                 updated_at: new Date(),
               })
-
-              contact.save().then(_contact => {
-                const activity = new Activity({
-                  content: currentUser.user_name + ' added contact',
-                  contacts: _contact.id,
-                  user: currentUser.id,
-                  type: 'contacts',
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                })
-                activity.save().then((_activity) => {
-                  Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-                    console.log('err', err)
-                  })
-                }).catch(err => {
+              activity.save().then((_activity) => {
+                Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
                   console.log('err', err)
                 })
-                if (data['note'] && data['note'] != '') {
-                  const note = new Note({
-                    content: data['note'],
-                    contact: _contact.id,
-                    user: currentUser.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  })
-                  note.save().then((_note) => {
-                    const _activity = new Activity({
-                      content: currentUser.user_name + ' added note',
-                      contacts: _contact.id,
-                      user: currentUser.id,
-                      type: 'notes',
-                      notes: _note.id,
-                      created_at: new Date(),
-                      updated_at: new Date(),
-                    })
-                    _activity.save().then((__activity) => {
-                      Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
-                        console.log('err', err)
-                      })
-                    }).catch(err => {
-                      console.log('error', err)
-                    })
-                  })
-                }
-                resolve()
-                return
               }).catch(err => {
                 console.log('err', err)
               })
-            }
+              if (data['note'] && data['note'] != '') {
+                const note = new Note({
+                  content: data['note'],
+                  contact: _contact.id,
+                  user: currentUser.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                })
+                note.save().then((_note) => {
+                  const _activity = new Activity({
+                    content: currentUser.user_name + ' added note',
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'notes',
+                    notes: _note.id,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                  })
+                  _activity.save().then((__activity) => {
+                    Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
+                      console.log('err', err)
+                    })
+                  }).catch(err => {
+                    console.log('error', err)
+                  })
+                })
+              }
+              resolve()
+              return
+            }).catch(err => {
+              console.log('err', err)
+            })
           } else {
             resolve()
           }
@@ -743,28 +666,16 @@ const exportCSV = async (req, res) => {
   let data = []
   for (let i = 0; i < contacts.length; i++) {
     let _data = {
-      contact: contacts[i],
-      note: [],
-      tag: []
+      contact_id: contacts[i],
+      note: []
     }
     const _note = await Note.find({ user: currentUser.id, contact: contacts[i] })
     const _contact = await Contact.findOne({ _id: contacts[i] })
-    const tag = _contact["tag"]
-    let tag_array = []
-    for (let j = 0; j < tag.length; j++) {
-      const _tag = await Tag.findOne({ _id: tag[j] })
-      if (_tag) {
-        tag_array.push(_tag.content)
-      }
-    }
-
-
+    
     if (_note.length != 0) {
       _data["note"] = _note
     }
-    if (tag_array.length != 0) {
-      _data["tag"] = tag_array
-    }
+    _data["contact"] = _contact;
     data.push(_data)
   }
 
@@ -873,7 +784,7 @@ const getByIds = async (req, res) => {
   })
 }
 
-isArray = function(a) {
+isArray = function (a) {
   return (!!a) && (a.constructor === Array);
 };
 const advanceSearch = async (req, res) => {
@@ -1091,7 +1002,7 @@ const advanceSearch = async (req, res) => {
     query['$and'].push(labelQuery);
   }
   if (tagsCondition && tagsCondition.length) {
-    var tagsQuery = { tag: { $elemMatch: { $in: tagsCondition } } };
+    var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
     query['$and'].push(tagsQuery);
   }
   if (brokerageCondition && brokerageCondition.length) {
@@ -1181,14 +1092,14 @@ const advanceSearch = async (req, res) => {
           }
         }
       }
-      if(!activityCondition.length && !activityStart && !activityEnd) {
+      if (!activityCondition.length && !activityStart && !activityEnd) {
         return;
       }
-      if(activityCondition.length){
+      if (activityCondition.length) {
         if (activityCondition.indexOf(e.last_activity.type) === -1) {
           return;
         }
-      }      
+      }
       if (activityStart) {
         if (new Date(e.last_activity.created_at) < new Date(activityStart)) {
           return;

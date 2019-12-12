@@ -15,14 +15,14 @@ const migrate = async() => {
   })
   for(let i=0; users.length; i++){
   
-    const contacts = await Contact.find({user: users[i].id}).populate('tag').catch(err=>{
+    const contacts = await Contact.find({user: users[i]._id}).populate('tag').catch(err=>{
       console.log('err', err)
     })
     
     if(contacts){
       for(let j=0; j<contacts.length; j++){
         const contact = contacts[j]
-        if(!contact[tags]){
+        if(!contact['tags']){
           let tags = []
           for(let k=0; k<contact['tag'].length; k++){
             const tag = contact['tag'][k]
