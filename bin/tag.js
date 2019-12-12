@@ -13,18 +13,23 @@ const migrate = async() => {
   const contacts = await Contact.find({}).populate('tag').catch(err=>{
     console.log('err', err)
   })
-  for(let i=0; i<contacts.length; i++){
-    const contact = contacts[i]
-      let tags = []
-      for(let j=0; j<contact['tag'].length; j++){
-        const tag = contact['tag'][j]
-        console.log('tag', tag.content)
-         tags.push(tag.content)
+  
+  console.log('contacts', contacts)
+  if(contacts){
+    for(let i=0; i<contacts.length; i++){
+      const contact = contacts[i]
+        let tags = []
+        for(let j=0; j<contact['tag'].length; j++){
+          const tag = contact['tag'][j]
+          console.log('tag', tag.content)
+           tags.push(tag.content)
+        }
+        contact['tags'] = tags
+        contact.save().catch(err=>{
+          console.log('err', err)
+        })
       }
-      contact['tags'] = tags
-      contact.save().catch(err=>{
-        console.log('err', err)
-      })
-    }
+  }
+
   }
 migrate();
