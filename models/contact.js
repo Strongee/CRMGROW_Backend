@@ -13,6 +13,7 @@ const Contact = mongoose.model('contact',{
      label: String,
      cell_phone: {type: String, default: ''},
      country: {type: String, default: ''},
+     source: String,
      brokerage: String,
      tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],
      tags: Array,

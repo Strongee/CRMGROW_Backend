@@ -58,6 +58,11 @@ const play1 = async(req, res) => {
   
   const video = activity['videos']
   
+  let pattern = /^((http|https|ftp):\/\/)/;
+  
+  if(!pattern.test(user.learn_more)) {
+      user.learn_more = "http://" + user.learn_more;
+  }
   res.render('video1', {
       video: video,
       user: user,
