@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const User = require('../models/user');
 const Contact = require('../models/contact');
 const Tag = require('../models/tag')
 const { DB_PORT } = require('../config/database');
@@ -8,28 +9,32 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 //Fetch or read data from
-
 const migrate = async() => {
-  const contacts = await Contact.find({}).populate('tag').catch(err=>{
+  const users = await User.find({}).catch(err=>{
     console.log('err', err)
   })
+  for(let i=0; users.length; i++){
   
-  console.log('contacts', contacts)
-  if(contacts){
-    for(let i=0; i<contacts.length; i++){
-      const contact = contacts[i]
-        let tags = []
-        for(let j=0; j<contact['tag'].length; j++){
-          const tag = contact['tag'][j]
-          console.log('tag', tag.content)
-           tags.push(tag.content)
+    const contacts = await Contact.find({user: users[i].id}).populate('tag').catch(err=>{
+      console.log('err', err)
+    })
+    
+    console.log('contacts', contacts)
+    if(contacts){
+      for(let j=0; j<contacts.length; j++){
+        const contact = contacts[j]
+          let tags = []
+          for(let k=0; k<contact['tag'].length; k++){
+            const tag = contact['tag'][k]
+            console.log('tag', tag.content)
+             tags.push(tag.content)
+          }
+          contact['tags'] = tags
+          contact.save().catch(err=>{
+            console.log('err', err)
+          })
         }
-        contact['tags'] = tags
-        contact.save().catch(err=>{
-          console.log('err', err)
-        })
-      }
+    }
   }
-
-  }
+}
 migrate();
