@@ -376,6 +376,20 @@ const bulkEditLabel = async (req, res) => {
     })
 }
 
+const bulkUpdate = async (req, res) => {
+  const { contacts, data} = req.body;
+  Contact.find({_id: {$in: contacts}}).updateMany({$set: data}).then(() => {
+    res.send({
+      status: true
+    })
+  }).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err.message || 'Update Error'
+    })
+  })
+}
+
 const sendBatch = async (req, res) => {
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
@@ -1180,6 +1194,25 @@ const getSources = async (req, res) => {
   })
 }
 
+const getNthContact = async (req, res) => {
+  const { currentUser } = req
+  const skip = req.params.id;
+
+  contact = await Contact.aggregate([
+    {
+      $match: { user: currentUser.id}
+    },
+    {
+      $sort: { "first_name": 1 } 
+    },
+    {
+      $skip: 15
+    }
+  ])
+  
+  
+}
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -1195,11 +1228,13 @@ module.exports = {
   removeContacts,
   edit,
   bulkEditLabel,
+  bulkUpdate,
   sendBatch,
   sendEmail,
   receiveEmail,
   importCSV,
   exportCSV,
   getById,
-  getByIds
+  getByIds,
+  getNthContact
 }

@@ -80,4 +80,10 @@ router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
 // Bulk Edit the contacts Label
 router.post('/bulk-label', UserCtrl.checkAuth, catchError(ContactCtrl.bulkEditLabel))
 
+// Bulk Edit(update) the contacts
+router.post('/bulk-update', UserCtrl.checkAuth, catchError(ContactCtrl.bulkUpdate))
+
+// Get the Nth Contact
+router.get('/nth-get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getNthContact))
+
 module.exports = router
