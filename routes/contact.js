@@ -36,7 +36,7 @@ router.post('/batch', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(Co
 router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
 
 // Receive email notification
-router.post('/receive', UserCtrl.checkAuth, catchError(ContactCtrl.receiveEmail))
+router.post('/receive', catchError(ContactCtrl.receiveEmail))
 
 // Import contact list as file
 router.post('/import-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.importCSV))
