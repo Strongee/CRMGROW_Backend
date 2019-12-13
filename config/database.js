@@ -1,1 +1,1 @@
-module.exports.DB_PORT = process.env.DB_PORT || 'mongodb://localhost:27017/teamgrow1'
+module.exports.DB_PORT = process.env.DB_PORT || 'mongodb://localhost:27017/teamgrow'
