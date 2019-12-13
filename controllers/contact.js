@@ -398,7 +398,13 @@ const sendBatch = async (req, res) => {
       text: content,
       html: '<!DOCTYPE html><html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     }
-    sgMail.send(msg).then().catch(err => {
+    sgMail.send(msg).then((res)=>{
+      console.log('mailres.errorcode', res[0].statusCode);
+      if(res[0].statusCode >= 200 && res[0].statusCode < 400){
+        console.log('Successful send to '+msg.to)
+        console.log('res', res)
+        }
+    }).catch(err => {
       console.log('err', err)
     })
 
@@ -424,13 +430,7 @@ const sendBatch = async (req, res) => {
     created_at: new Date()
   })
 
-  const _email = await email.save().then((res)=>{
-    console.log('mailres.errorcode', res[0].statusCode);
-    if(res[0].statusCode >= 200 && res[0].statusCode < 400){
-      console.log('Successful send to '+msg.to)
-      console.log('res', res)
-    }
-  }).catch(err => {
+  const _email = await email.save().then().catch(err => {
     console.log('err', err)
   })
   let data_list = []
@@ -528,6 +528,7 @@ const sendEmail = async (req, res) => {
 
 const receiveEmail = async(req, res) => {
   
+  console.log('req.body',req.body)
   return res.send({
     status: true
   })
@@ -719,14 +720,12 @@ const search = async (req, res) => {
       ]
     }).populate('last_activity').sort({ first_name: 1 })
   } else {
-    contacts = await Contact.aggregate([
-      {
-        $addToFields: {"full_name": {$concat: ["$first_name", " ", "$last_name"]}}
-      },
-      {
-        $match: {"full_name": {$regex: '.*' + searchStr + ".*", '$options': 'i'}, user: currentUser.id }
-      }
-    ]).populate('last_activity').sort({ first_name: 1 })
+    contacts = await Contact.find({
+      $or: [
+        { first_name: { '$regex': search.split(" ")[0], '$options': 'i' }, last_name: { '$regex': search.split(" ")[1], '$options': 'i' }, user: currentUser.id },
+        { cell_phone: search, user: currentUser.id }
+      ]
+    }).populate('last_activity').sort({ first_name: 1 })
   }
 
   return res.send({
@@ -754,14 +753,12 @@ const searchEasy = async (req, res) => {
       console.log('err', err)
     })
   } else {
-    data = await Contact.aggregate([
-      {
-        $addToFields: {"full_name": {$concat: ["$first_name", " ", "$last_name"]}}
-      },
-      {
-        $match: {"full_name": {$regex: '.*' + searchStr + ".*", '$options': 'i'}, user: currentUser.id }
-      }
-    ]).sort({ first_name: 1 }).limit(8).catch(err => {
+    data = await Contact.find({
+      $or: [
+        { first_name: search.split(" ")[0], last_name: search.split(" ")[1], user: currentUser.id },
+        { cell_phone: { '$regex': search + '.*', '$options': 'i' }, user: currentUser.id }
+      ]
+    }).sort({ first_name: 1 }).limit(8).catch(err => {
       console.log('err', err)
     })
   }
@@ -806,7 +803,7 @@ isArray = function (a) {
 };
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
-  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, sourceCondition, brokerageCondition, lastMaterial, materialCondition } = req.body;
+  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materialCondition } = req.body;
 
   // Material Check
   let watchedVideoContacts = [];
@@ -1022,10 +1019,6 @@ const advanceSearch = async (req, res) => {
     var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
     query['$and'].push(tagsQuery);
   }
-  if (sourceCondition && sourceCondition.length) {
-    var sourceQuery = { source: { $in: sourceCondition } };
-    query['$and'].push(sourceQuery)
-  }
   if (brokerageCondition && brokerageCondition.length) {
     var brokerageQuery = { brokerage: { $in: brokerageCondition } };
     query['$and'].push(brokerageQuery)
@@ -1166,33 +1159,12 @@ const getBrokerages = async (req, res) => {
   })
 }
 
-const getSources = async (req, res) => {
-  const { currentUser } = req
-
-  data = await Contact.aggregate(
-    [
-      {
-        $match: { user: mongoose.Types.ObjectId(currentUser.id) }
-      },
-      { $group: { "_id": "$source" } },
-    ]
-  ).catch(err => {
-    console.log('err', err)
-  });
-
-  return res.send({
-    status: true,
-    data
-  })
-}
-
 module.exports = {
   getAll,
   getAllByLastActivity,
   getByLastActivity,
   get,
   getBrokerages,
-  getSources,
   create,
   search,
   advanceSearch,
