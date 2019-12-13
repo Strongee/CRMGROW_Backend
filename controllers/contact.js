@@ -520,6 +520,13 @@ const sendEmail = async (req, res) => {
   })
 }
 
+const receiveEmail = async(req, res) => {
+  console.log(req.body)
+  return res.send({
+    status: true
+  })
+}
+
 const importCSV = async (req, res) => {
   let file = req.file
   const { currentUser } = req
@@ -1161,6 +1168,7 @@ module.exports = {
   bulkEditLabel,
   sendBatch,
   sendEmail,
+  receiveEmail,
   importCSV,
   exportCSV,
   getById,
