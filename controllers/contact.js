@@ -424,7 +424,13 @@ const sendBatch = async (req, res) => {
     created_at: new Date()
   })
 
-  const _email = await email.save().then().catch(err => {
+  const _email = await email.save().then((res)=>{
+    console.log('mailres.errorcode', res[0].statusCode);
+    if(res[0].statusCode >= 200 && res[0].statusCode < 400){
+      console.log('Successful send to '+msg.to)
+      console.log('res', res)
+    }
+  }).catch(err => {
     console.log('err', err)
   })
   let data_list = []
@@ -521,7 +527,7 @@ const sendEmail = async (req, res) => {
 }
 
 const receiveEmail = async(req, res) => {
-  console.log(req.body)
+  
   return res.send({
     status: true
   })
