@@ -14,6 +14,26 @@ head
   link(rel='stylesheet', type='text/css', href='./assets/plugins/pdf/jquery.touchPDF.css')
   link(rel='stylesheet', type='text/css', href='./assets/css/pdf.css')  
   script(type='text/javascript', src='/socket.io/socket.io.js')
+.stick-bar.row
+  .col-lg-3.col-md-3.col-sm-3.col-xs-12
+    .name #{user.user_name}
+  .col-lg-9.col-md-9.col-sm-9.contact-info-wrapper
+    .col-lg-4.col-md-4.phone
+      i.icon.icon-phone
+      a.cell_phone(href=`tel:${user.cell_phone}`) 
+        span #{user.cell_phone}
+    .col-lg-5.col-md-5.email
+      i.icon.icon-envelope
+      a.user-email(href=`mailto:${user.email}`) #{user.email}
+    .col-lg-3.col-md-3 
+      a.link(href=`${user.learn_more}`) Learn More
+  .dropdown.contact-info-dropdown
+    button.btn.dropdown-toggle(type="button", data-toggle="dropdown") Contact Me
+      i.icon.icon-down
+    .dropdown-menu
+      a.dropdown-item(href=`tel:${user.cell_phone}`) Cell my phone
+      a.dropdown-item(href=`mailto:${user.email}`)  Email me
+      a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
   div#viewer
   .pdf-controls
@@ -31,17 +51,6 @@ head
       | #{pdf.title}
     .desc-content
       | #{pdf.description}
-.user-information
-  img(src=`${user.picture_profile}`, onerror="( this.src = './assets/icons/empty_user.png' );")
-  .info
-    .name #{user.user_name}
-    hr
-    .cell_phone
-      i.icon.icon-phone
-      span #{user.cell_phone}
-    .email
-      i.icon.icon-envelope
-      | #{user.email}
 input#url(type='hidden', value=`${pdf.url}`)
 input#activity(type='hidden', value=`${activity}`)
 input#contact(type='hidden', value=`${contact}`)
@@ -55,4 +64,5 @@ script(src='./assets/plugins/pdf/jquery.touchPDF.js')
 script(src='./assets/plugins/pdf/jquery.panzoom.js')
 script(src='./assets/plugins/pdf/jquery.mousewheel.js')
 
+script(type='text/javascript', src='./assets/js/dropdown.js')
 script(type='text/javascript', src='./assets/js/pdf1.js')
