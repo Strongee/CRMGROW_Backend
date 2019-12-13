@@ -62,6 +62,9 @@ router.get('/last/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActi
 // Get a Brokerage data 
 router.get('/brokerage', UserCtrl.checkAuth, catchError(ContactCtrl.getBrokerages))
 
+// Get Source data
+router.get('/sources', UserCtrl.checkAuth, catchError(ContactCtrl.getSources))
+
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
 
