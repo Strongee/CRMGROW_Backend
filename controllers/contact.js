@@ -420,6 +420,7 @@ const sendBatch = async (req, res) => {
         
         const email = new Email({
           ...req.body,
+          contact: contacts,
           message_id: _res[0].headers['x-message-id'],
           user: currentUser.id,
           updated_at: new Date(),
@@ -533,13 +534,12 @@ const receiveEmail = async(req, res) => {
   console.log('req.body',req.body)
   const message_id = req.body[0].sg_message_id.split('.')[0]
   const event = req.body[0].event
+  const email = req.body[0].email
   const update_data = {event: event}
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(event == 'open'){
-      // send email notification
-      console.log('_email', _email)
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      const contact = await Contact.findOne({_id: _email.contact}).catch(err=>{
+      const contact = await Contact.findOne({email: email}).catch(err=>{
         console.log('err', err)
       })
       
@@ -555,7 +555,7 @@ const receiveEmail = async(req, res) => {
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          email: `<a href="mailto:${email}">${email}</a>`,
           activity: contact.first_name + 'opened email - <b>' + _email.subject + '</b>',
         },
       };
