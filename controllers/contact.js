@@ -537,6 +537,7 @@ const receiveEmail = async(req, res) => {
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(event == 'open'){
       // send email notification
+      console.log('_email', _email)
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       const contact = await Contact.findOne({_id: _email.contact}).catch(err=>{
         console.log('err', err)
