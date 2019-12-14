@@ -537,30 +537,35 @@ const receiveEmail = async(req, res) => {
   const email = req.body[0].email
   const update_data = {event: event}
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
-    if(event == 'open'){
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      const contact = await Contact.findOne({email: email}).catch(err=>{
-        console.log('err', err)
-      })
+    console.log('email', _email)
+    if(_email){
+      if(event == 'open'){
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        
+        const user = await User.findOne({_id: _email.user}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
+          console.log('err', err)
+        })
+
+        const msg = {
+          to: user.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          dynamic_template_data: {
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+            email: `<a href="mailto:${email}">${email}</a>`,
+            activity: contact.first_name + 'opened email - <b>' + _email.subject + '</b>',
+          },
+        };
       
-      const user = await User.findOne({_id: _email.user}).catch(err=>{
-        console.log('err', err)
-      })
-      const msg = {
-        to: user.email,
-        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-        dynamic_template_data: {
-          first_name: contact.first_name,
-          last_name: contact.last_name,
-          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-          email: `<a href="mailto:${email}">${email}</a>`,
-          activity: contact.first_name + 'opened email - <b>' + _email.subject + '</b>',
-        },
-      };
-    
-      sgMail.send(msg).catch(err => console.error(err))   
+        sgMail.send(msg).catch(err => console.error(err))   
+      }
     }
   }).catch(err=>{
     console.log('err', err)
