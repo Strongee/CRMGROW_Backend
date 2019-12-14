@@ -542,7 +542,7 @@ const receiveEmail = async(req, res) => {
         console.log('err', err)
       })
       
-      const user = await User.findOne({_id: email.user}).catch(err=>{
+      const user = await User.findOne({_id: _email.user}).catch(err=>{
         console.log('err', err)
       })
       const msg = {
@@ -555,7 +555,7 @@ const receiveEmail = async(req, res) => {
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
           email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-          activity: contact.first_name + 'opened email - <b>' + email.subject + '</b>',
+          activity: contact.first_name + 'opened email - <b>' + _email.subject + '</b>',
         },
       };
     
