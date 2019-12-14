@@ -456,7 +456,7 @@ const sendBatch = async (req, res) => {
         })
         
       }else {
-        console.log('email sending err', msg.to+res[0].statusCode)
+        console.log('email sending err', msg.to+_res[0].statusCode)
       }
     }).catch(err => {
       console.log('err', err)
@@ -534,31 +534,19 @@ const receiveEmail = async(req, res) => {
   const message_id = req.body[0].sg_message_id.split('.')[0]
   const event = req.body[0].event
   const update_data = {event: event}
-  Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(res)=>{
+  Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(event == 'open'){
       // send email notification
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      const contact = await Contact.findOne({_id: res.contact}).catch(err=>{
+      const contact = await Contact.findOne({_id: _email.contact}).catch(err=>{
         console.log('err', err)
       })
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      const user = await UserLog.
+      const user = await User.findOne({_id: email.user}).catch(err=>{
+        console.log('err', err)
+      })
       const msg = {
-        to: currentUser.email,
+        to: user.email,
         from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
         subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
         templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
