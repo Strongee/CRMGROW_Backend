@@ -412,15 +412,15 @@ const sendBatch = async (req, res) => {
       html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     };
 
-    sgMail.send(msg).then((res) => {
+    sgMail.send(msg).then(async(_res) => {
     
-      console.log('mailres.errorcode', res[0].statusCode);
-      if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+      console.log('mailres.errorcode', _res[0].statusCode);
+      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
         console.log('Successful send to '+msg.to)
         
         const email = new Email({
           ...req.body,
-          message_id: res[0].headers['x-message-id'],
+          message_id: _res[0].headers['x-message-id'],
           user: currentUser.id,
           updated_at: new Date(),
           created_at: new Date()
