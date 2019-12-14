@@ -12,7 +12,7 @@ const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
 const csv = require('csv-parser')
 const config = require('../config/config')
-
+const mail_contents = require('../constants/mail_contents')
 
 const getAll = async (req, res) => {
   const { currentUser } = req
