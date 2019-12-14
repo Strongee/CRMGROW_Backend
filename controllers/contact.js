@@ -1267,5 +1267,6 @@ module.exports = {
   exportCSV,
   getById,
   getByIds,
+  getSources,
   getNthContact
 }
