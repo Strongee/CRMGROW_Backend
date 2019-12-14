@@ -2,12 +2,13 @@ const mongoose = require('mongoose');
 
 const Email = mongoose.model('email',{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    status: { type: Number, default: 0},
+    event: String,
     subject: String,
     content: String,
     to: Array,
     cc: Array,
     bcc: Array,
+    message_id: String,
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' }, 
     created_at: Date,
     updated_at: Date,

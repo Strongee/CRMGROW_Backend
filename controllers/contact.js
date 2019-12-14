@@ -6,7 +6,7 @@ const FollowUp = require('../models/follow_up')
 const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
-const Tag = require('../models/tag')
+const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
@@ -402,27 +402,6 @@ const sendBatch = async (req, res) => {
       error: 'Subject email must be specified'
     })
   }
-  if (to.length == 0) {
-
-    const msg = {
-      from: `${currentUser.user_name} <${currentUser.email}>`,
-      subject: subject,
-      to: bcc,
-      cc: cc,
-      text: content,
-      html: '<!DOCTYPE html><html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-    }
-    sgMail.send(msg).then((res)=>{
-      console.log('mailres.errorcode', res[0].statusCode);
-      if(res[0].statusCode >= 200 && res[0].statusCode < 400){
-        console.log('Successful send to '+msg.to)
-        console.log('res', res)
-        }
-    }).catch(err => {
-      console.log('err', err)
-    })
-
-  } else {
     const msg = {
       from: `${currentUser.user_name} <${currentUser.email}>`,
       subject: subject,
@@ -433,46 +412,55 @@ const sendBatch = async (req, res) => {
       html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     };
 
-    sgMail.send(msg).then().catch(err => {
+    sgMail.send(msg).then((res) => {
+    
+      console.log('mailres.errorcode', res[0].statusCode);
+      if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+        console.log('Successful send to '+msg.to)
+        
+        const email = new Email({
+          ...req.body,
+          message_id: res[0].headers['x-message-id'],
+          user: currentUser.id,
+          updated_at: new Date(),
+          created_at: new Date()
+        })
+      
+        const _email = await email.save().then().catch(err => {
+          console.log('err', err)
+        })
+        let data_list = []
+        for (let i = 0; i < contacts.length; i++) {
+          const activity = new Activity({
+            content: currentUser.user_name + ' sent email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+      
+          const _activity = await activity.save().then()
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          })
+          myJSON = JSON.stringify(_email)
+          const data = JSON.parse(myJSON);
+          data.activity = _activity
+          data_list.push(data)
+        }
+        return res.send({
+          status: true,
+          data: data_list
+        })
+        
+      }else {
+        console.log('email sending err', msg.to+res[0].statusCode)
+      }
+    }).catch(err => {
       console.log('err', err)
     })
-  }
-  const email = new Email({
-    ...req.body,
-    user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date()
-  })
-
-  const _email = await email.save().then().catch(err => {
-    console.log('err', err)
-  })
-  let data_list = []
-  for (let i = 0; i < contacts.length; i++) {
-    const activity = new Activity({
-      content: currentUser.user_name + ' sent email',
-      contacts: contacts[i],
-      user: currentUser.id,
-      type: 'emails',
-      emails: _email.id,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-
-    const _activity = await activity.save().then()
-    Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-      console.log('err', err)
-    })
-    myJSON = JSON.stringify(_email)
-    const data = JSON.parse(myJSON);
-    data.activity = _activity
-    data_list.push(data)
-  }
-
-  return res.send({
-    status: true,
-    data: data_list
-  })
 }
 
 const sendEmail = async (req, res) => {
@@ -543,6 +531,51 @@ const sendEmail = async (req, res) => {
 const receiveEmail = async(req, res) => {
   
   console.log('req.body',req.body)
+  const message_id = req.body[0].sg_message_id.split('.')[0]
+  const event = req.body[0].event
+  const update_data = {event: event}
+  Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(res)=>{
+    if(event == 'open'){
+      // send email notification
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      const contact = await Contact.findOne({_id: res.contact}).catch(err=>{
+        console.log('err', err)
+      })
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      const user = await UserLog.
+      const msg = {
+        to: currentUser.email,
+        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+        subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          activity: contact.first_name + 'opened email - <b>' + email.subject + '</b>',
+        },
+      };
+    
+      sgMail.send(msg).catch(err => console.error(err))   
+    }
+  }).catch(err=>{
+    console.log('err', err)
+  })
   return res.send({
     status: true
   })
