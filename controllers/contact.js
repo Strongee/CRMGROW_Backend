@@ -458,9 +458,17 @@ const sendBatch = async (req, res) => {
         
       }else {
         console.log('email sending err', msg.to+_res[0].statusCode)
+        return res.status(500).send({
+          status: false,
+          error: 'internal_server_error'
+        })
       }
     }).catch(err => {
       console.log('err', err)
+      return res.status(500).send({
+        status: false,
+        error: 'internal_server_error'
+      })
     })
 }
 
@@ -530,8 +538,6 @@ const sendEmail = async (req, res) => {
 }
 
 const receiveEmail = async(req, res) => {
-  
-  console.log('req.body',req.body)
   const message_id = req.body[0].sg_message_id.split('.')[0]
   const event = req.body[0].event
   const email = req.body[0].email
@@ -549,7 +555,23 @@ const receiveEmail = async(req, res) => {
         const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
           console.log('err', err)
         })
-
+        
+        const activity = new Activity({
+          content: user.user_name + ' opened email',
+          contacts: contact.id,
+          user: user.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        const _activity = await activity.save().then()
+        
+        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        })
+        
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -560,11 +582,54 @@ const receiveEmail = async(req, res) => {
             last_name: contact.last_name,
             phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
             email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + 'opened email - <b>' + _email.subject + '</b>',
+            activity: contact.first_name + ' opened email - <b>' + _email.subject + '</b>',
           },
         };
       
         sgMail.send(msg).catch(err => console.error(err))   
+      }
+      if(event == 'click'){
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        
+        const user = await User.findOne({_id: _email.user}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        const activity = new Activity({
+          content: user.user_name + ' clicked email',
+          contacts: contact.id,
+          user: user.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        const _activity = await activity.save().then()
+        
+        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        })
+        
+        const msg = {
+          to: user.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          dynamic_template_data: {
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+            email: `<a href="mailto:${email}">${email}</a>`,
+            activity: contact.first_name + ' clicked email - <b>' + _email.subject + '</b>',
+          },
+        };
+      
+        sgMail.send(msg).catch(err => console.error(err)) 
       }
     }
   }).catch(err=>{
