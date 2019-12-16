@@ -817,7 +817,7 @@ isArray = function (a) {
 };
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
-  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materialCondition } = req.body;
+  const { searchStr, recruitingStageCondition, labelCondition, activityCondition, activityStart, activityEnd, countryCondition, regionCondition, cityCondition, zipcodeCondition, tagsCondition, brokerageCondition, lastMaterial, materialCondition, sourceCondition } = req.body;
 
   // Material Check
   let watchedVideoContacts = [];
@@ -1022,20 +1022,52 @@ const advanceSearch = async (req, res) => {
   }
 
   if (recruitingStageCondition && recruitingStageCondition.length) {
-    var stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
-    query['$and'].push(stageQuery);
+    if(recruitingStageCondition.indexOf(false) !==-1 ) {
+      var stageQuery = { $or : [{recruiting_stage: { $in: recruitingStageCondition}}, {recruiting_stage: ''}, {recruiting_stage: undefined}] };
+      query['$and'].push(stageQuery)
+    }
+    else{
+      var stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
+      query['$and'].push(stageQuery);
+    }    
+  }
+  if(sourceCondition && sourceCondition.length) {
+    if(sourceCondition.indexOf(false) !==-1 ) {
+      var sourceQuery = { $or : [{source: { $in: sourceCondition}}, {source: ''}, {source: undefined}] };
+      query['$and'].push(sourceQuery)
+    }
+    else {
+      var sourceQuery = { source: { $in: sourceCondition } };
+      query['$and'].push(sourceQuery);
+    }    
   }
   if (labelCondition && labelCondition.length) {
+    if(labelCondition.indexOf('') !== -1){
+      labelCondition.push(undefined);
+    }
     var labelQuery = { label: { $in: labelCondition } };
     query['$and'].push(labelQuery);
   }
   if (tagsCondition && tagsCondition.length) {
-    var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
-    query['$and'].push(tagsQuery);
+    if(tagsCondition.indexOf(false) !==-1 ) {
+      tagsCondition.splice(tagsCondition.indexOf(false), 1);
+      var tagsQuery = { $or : [{ tags: { $elemMatch: { $in: tagsCondition } } }, {tags: []}, {tags: undefined}] };
+      query['$and'].push(tagsQuery)
+    }
+    else {
+      var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      query['$and'].push(tagsQuery);
+    }    
   }
   if (brokerageCondition && brokerageCondition.length) {
-    var brokerageQuery = { brokerage: { $in: brokerageCondition } };
-    query['$and'].push(brokerageQuery)
+    if(brokerageCondition.indexOf(false) !==-1 ) {
+      var brokerageQuery = { $or : [{brokerage: { $in: brokerageCondition}}, {brokerage: ''}, {brokerage: undefined}] };
+      query['$and'].push(brokerageQuery)
+    }
+    else {
+      var brokerageQuery = { brokerage: { $in: brokerageCondition } };
+      query['$and'].push(brokerageQuery)
+    }    
   }
   if (countryCondition) {
     var countryQuery = { country: countryCondition };
@@ -1205,11 +1237,9 @@ const getNthContact = async (req, res) => {
       $sort: { "first_name": 1 } 
     },
     {
-      $skip: 15
+      $skip: skip
     }
   ])
-  
-  
 }
 
 module.exports = {
@@ -1218,6 +1248,7 @@ module.exports = {
   getByLastActivity,
   get,
   getBrokerages,
+  getSources,
   create,
   search,
   advanceSearch,
