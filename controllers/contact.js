@@ -543,7 +543,7 @@ const receiveEmail = async(req, res) => {
   const event = req.body[0].event
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
-  console.log('body', req.body[0])
+  console.log('body', req.body)
   const update_data = {event: event}
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
@@ -639,6 +639,7 @@ const receiveEmail = async(req, res) => {
       
         sgMail.send(msg).catch(err => console.error(err)) 
       }
+      
     }
   }).catch(err=>{
     console.log('err', err)
