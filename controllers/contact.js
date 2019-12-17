@@ -1094,6 +1094,14 @@ const advanceSearch = async (req, res) => {
     let materialQuery = { '_id': { $in: materialContacts } };
     query['$and'].push(materialQuery);
   }
+  else {
+    if(materialCondition['not_watched_pdf']['flag'] || materialCondition['not_watched_video']['flag'] || materialCondition['watched_pdf']['flag'] || materialCondition['watched_video']['flag']) {
+      return res.send({
+        status: true,
+        data: []
+      });
+    }
+  }
 
   if (searchStr) {
     var strQuery = {};
