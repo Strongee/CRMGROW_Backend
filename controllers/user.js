@@ -85,7 +85,7 @@ const signUp = async (req, res) => {
             login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
             user_email: _res.email,
             user_password: req.body.password,
-            profile_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
+            contact_link: `<a href="${urls.CONTACT_PAGE_URL}">Click this link - Your Profile</a>`
           },
         };
   
