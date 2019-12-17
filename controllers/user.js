@@ -314,7 +314,10 @@ const checkAuth = async (req, res, next) => {
   }
   
 const getMe = async(req, res) =>{
-  const _user = req.currentUser
+  const {currentUser} = req
+  const _user = await User.findOne({_id: currentUser.id}).populate('payment').catch(err=>{
+    console.log('err', err)
+  })
   const myJSON = JSON.stringify(_user)
   user = JSON.parse(myJSON);
   delete user.hash
