@@ -13,6 +13,7 @@ const fs = require('fs')
 const csv = require('csv-parser')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
+const moment = require('moment')
 
 const getAll = async (req, res) => {
   const { currentUser } = req
@@ -541,9 +542,10 @@ const receiveEmail = async(req, res) => {
   const message_id = req.body[0].sg_message_id.split('.')[0]
   const event = req.body[0].event
   const email = req.body[0].email
+  const time_stamp = req.body[0].timestamp
+  console.log('body', req.body[0])
   const update_data = {event: event}
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
-    console.log('email', _email)
     if(_email){
       if(event == 'open'){
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -572,6 +574,9 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
         
+        let opened = new Date(time_stamp*1000);
+        const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
+        
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -582,7 +587,7 @@ const receiveEmail = async(req, res) => {
             last_name: contact.last_name,
             phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
             email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + ' opened email - <b>' + _email.subject + '</b>',
+            activity: contact.first_name + ' opend email '+ _email.subject + ' at ' + created_at,
           },
         };
       
@@ -615,6 +620,9 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
         
+        let opened = new Date(time_stamp*1000);
+        const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
+
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -625,7 +633,7 @@ const receiveEmail = async(req, res) => {
             last_name: contact.last_name,
             phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
             email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + ' clicked email - <b>' + _email.subject + '</b>',
+            activity: contact.first_name + ' clicked email '+ _email.subject + ' at ' + created_at,
           },
         };
       
