@@ -103,10 +103,10 @@ const get = async (req, res) => {
   const prev_contact = await Contact.find({_id: {$lt: req.params.id}}).sort({_id: -1 }).limit(1)
   let next = null
   let prev = null
-  if(next_contact){
+  if(next_contact[0]){
     next = next_contact[0].id
   }
-  if(prev_contact){
+  if(prev_contact[0]){
     prev = prev_contact[0].id
   }
   contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(15)
