@@ -116,7 +116,7 @@ const signUp = async (req, res) => {
         const user = JSON.parse(myJSON);
         delete user.hash
         delete user.salt
-        user['payment'] = payment
+        user['payment'] = payment.id
         
         res.send({
           status: true,
@@ -260,11 +260,6 @@ const login = async (req, res) => {
   const token = jwt.sign({id:_user.id}, config.JWT_SECRET, { expiresIn: '30d'})
   myJSON = JSON.stringify(_user)
   const user = JSON.parse(myJSON);
-
-  if(user.payment != 'undefined'){
-    const payment = await Payment.findOne({_id: user.payment});
-    user['payment'] = payment;
-  }
   
   delete user.hash
   delete user.salt
