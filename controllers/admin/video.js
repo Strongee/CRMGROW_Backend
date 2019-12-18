@@ -151,6 +151,37 @@ const getAll = async (req, res) => {
   })
 }
 
+getVideos = async (req, res) => {
+  const page = req.params.page;
+  const skip = (page - 1) * 12;
+
+  const videos = await Video.aggregate([
+    {$skip: skip},
+    {$limit: 12},
+    {
+      $lookup: {
+        from: 'user',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'author'
+      }
+    }
+  ]).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+  });
+
+  const videoCounts = await Video.countDocuments({});
+
+  res.send({
+    status: true,
+    data: videos,
+    total: videoCounts
+  })
+}
+
 const sendVideo = async (req, res) => {
   const { currentUser } = req
   const {email, content, video, contact} = req.body
@@ -222,5 +253,6 @@ module.exports = {
     getThumbnail,
     getAll,
     sendVideo,
-    remove
+    remove,
+    getVideos
 }

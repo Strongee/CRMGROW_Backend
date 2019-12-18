@@ -33,7 +33,7 @@ router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 
 // Edit own profile
-router.get('/', UserCtrl.checkAuth, catchError(UserCtrl.getAll))
+router.get('/:page', catchError(UserCtrl.getAll))
 
 // New Password by old one
 router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))

@@ -152,25 +152,24 @@ const editMe = async(req, res) =>{
 }
 
 const getAll = async (req, res, next) => {
-  const _users = await User.find({});
+  const page = req.params.page;
+  const skip = (page - 1) * 15;
+  const _users = await User.aggregate([
+    {$skip: skip},
+    {$limit: 15},
+    {$project: {'salt': 0, 'hash': 0}}
+  ]);
+  const total = await User.countDocuments({});
   if(!_users){
     return res.status(400).json({
       status: false,
       error: 'Users doesn`t exist'
     })
   }
-  let users= [];
-  _users.map((_user)=>{
-    myJSON = JSON.stringify(_user)
-    const data = JSON.parse(myJSON);
-    delete data.salt
-    delete data.hash
-    users.push(data)
-  })
-
   res.send({
     status: true,
-    data: users
+    data: _users,
+    total: total
   })
 }
 
