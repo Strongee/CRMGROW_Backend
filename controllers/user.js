@@ -299,16 +299,7 @@ const checkAuth = async (req, res, next) => {
     })
 
     if (req.currentUser) {
-      let user = req.currentUser
       console.info('Auth Success:', req.currentUser.email)
-      if(user['payment'] == []){
-        console.log('*******************herere')
-        delete user.payment
-          user.save().catch(err=>{
-            console.error(err)
-          })
-      }
-     
       next()
     } else {
       console.error('Valid JWT but no user:', decoded)
