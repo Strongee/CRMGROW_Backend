@@ -101,6 +101,14 @@ const get = async (req, res) => {
   const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
   const next_contact = await Contact.find({_id: {$gt: req.params.id}}).sort({_id: 1 }).limit(1)
   const prev_contact = await Contact.find({_id: {$lt: req.params.id}}).sort({_id: -1 }).limit(1)
+  let next = null
+  let prev = null
+  if(next_contact[0]){
+    next = next_contact[0].id
+  }
+  if(prev_contact[0]){
+    prev = prev_contact[0].id
+  }
   contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(15)
   if (!_contact) {
     return res.status(400).json({
@@ -137,8 +145,8 @@ const get = async (req, res) => {
   const data = await Object.assign(contact, 
       { "follow_up": _follow_up }, 
       { "activity": _activity_detail_list }, 
-      { "next": next_contact[0].id},
-      { "prev": prev_contact[0].id}
+      { "next": next},
+      { "prev": prev}
     );
 
   res.send({
@@ -324,6 +332,12 @@ const removeContact = async (user_id, id) => {
 const edit = async (req, res) => {
   const { currentUser } = req
   const editData = req.body
+  if(!req.params.id){
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact'
+    })
+  }
   const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
 
   if (!contact) {
