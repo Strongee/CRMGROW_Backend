@@ -337,15 +337,8 @@ const edit = async (req, res) => {
       status: false,
       error: 'Invalid Contact'
     })
-  }
-  const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
-
-  if (!contact) {
-    return res.status(400).json({
-      status: false,
-      error: 'Invalid_permission'
-    })
-  }
+  } else {
+    const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
 
   for (let key in editData) {
     contact[key] = editData[key]
@@ -387,6 +380,7 @@ const edit = async (req, res) => {
         error: errors || e
       })
     });
+  }
 }
 
 const bulkEditLabel = async (req, res) => {
