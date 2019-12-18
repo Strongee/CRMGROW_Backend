@@ -8,11 +8,17 @@ const Email = require('../models/email')
 const Note = require('../models/note')
 const User = require('../models/user')
 const UserLog = require('../models/user_log')
+const EmailTracker = require('../models/email_tracker')
 const sgMail = require('@sendgrid/mail')
 const fs = require('fs')
 const csv = require('csv-parser')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
+const webpush = require('web-push');
+const accountSid = config.TWILIO.TWILIO_SID
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
+const phone = require('phone')
+const twilio = require('twilio')(accountSid, authToken)
 const moment = require('moment')
 
 const getAll = async (req, res) => {
@@ -547,36 +553,18 @@ const receiveEmail = async(req, res) => {
   const update_data = {event: event}
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
+      const user = await User.findOne({_id: _email.user}).catch(err=>{
+        console.log('err', err)
+      })
+      
+      const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
+        console.log('err', err)
+      })
+      
+      let opened = new Date(time_stamp*1000);
+      const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
       if(event == 'open'){
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-        
-        const user = await User.findOne({_id: _email.user}).catch(err=>{
-          console.log('err', err)
-        })
-        
-        const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
-          console.log('err', err)
-        })
-        
-        const activity = new Activity({
-          content: user.user_name + ' opened email',
-          contacts: contact.id,
-          user: user.id,
-          type: 'emails',
-          emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-    
-        const _activity = await activity.save().then()
-        
-        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-          console.log('err', err)
-        })
-        
-        let opened = new Date(time_stamp*1000);
-        const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
-        
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -590,39 +578,43 @@ const receiveEmail = async(req, res) => {
             activity: contact.first_name + ' opend email '+ _email.subject + ' at ' + created_at,
           },
         };
-      
-        sgMail.send(msg).catch(err => console.error(err))   
-      }
-      if(event == 'click'){
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-        
-        const user = await User.findOne({_id: _email.user}).catch(err=>{
+        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
           console.log('err', err)
         })
-        
-        const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
+        const email_tracker = new EmailTracker({
+          user: user.id,
+          contact: contact.id,
+          email: _email.id,
+          type: 'open',
+          activity: email_activity.id,
+          updated_at: opened,
+          created_at: opened,
+        })
+        const _email_tracker = await email_tracker.save().then().catch(err=>{
           console.log('err', err)
         })
         
         const activity = new Activity({
-          content: user.user_name + ' clicked email',
+          content: user.user_name + ' opened email',
           contacts: contact.id,
           user: user.id,
-          type: 'emails',
+          type: 'email_trackers',
           emails: _email.id,
+          email_trackers: _email_tracker.id,
           created_at: new Date(),
           updated_at: new Date(),
         })
     
-        const _activity = await activity.save().then()
-        
-        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+        const _activity = await activity.save().then().catch(err=>{
           console.log('err', err)
         })
         
-        let opened = new Date(time_stamp*1000);
-        const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
-
+        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        }) 
+        sgMail.send(msg).catch(err => console.error(err)) 
+      }
+      if(event == 'click'){
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -636,10 +628,167 @@ const receiveEmail = async(req, res) => {
             activity: contact.first_name + ' clicked email '+ _email.subject + ' at ' + created_at,
           },
         };
-      
+        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
+          console.log('err', err)
+        })
+        const email_tracker = new EmailTracker({
+          user: user.id,
+          contact: contact.id,
+          email: _email.id,
+          type: 'click',
+          activity: email_activity.id,
+          updated_at: opened,
+          created_at: opened,
+        })
+        const _email_tracker = await email_tracker.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const activity = new Activity({
+          content: user.user_name + ' clicked email',
+          contacts: contact.id,
+          user: user.id,
+          type: 'email_trackers',
+          emails: _email.id,
+          email_trackers: _email_tracker.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        const _activity = await activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        })
+        
+        sgMail.send(msg).catch(err => console.error(err)) 
+      }
+      if(event == 'unsubscribe'){
+        const msg = {
+          to: user.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          dynamic_template_data: {
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+            email: `<a href="mailto:${email}">${email}</a>`,
+            activity: contact.first_name + ' unsubscribed email '+ _email.subject + ' at ' + created_at,
+          },
+        };
+        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
+          console.log('err', err)
+        })
+        const email_tracker = new EmailTracker({
+          user: user.id,
+          contact: contact.id,
+          email: _email.id,
+          type: 'unsubscribe',
+          activity: email_activity.id,
+          updated_at: opened,
+          created_at: opened,
+        })
+        const _email_tracker = await email_tracker.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const activity = new Activity({
+          content: user.user_name + ' unsubscribed email',
+          contacts: contact.id,
+          user: user.id,
+          type: 'email_trackers',
+          emails: _email.id,
+          email_trackers: _email_tracker.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+    
+        const _activity = await activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        })
         sgMail.send(msg).catch(err => console.error(err)) 
       }
       
+    if(user.desktop_notification){
+        webpush.setVapidDetails(
+          'mailto:support@crmgrow.com',
+          config.VAPID.PUBLIC_VAPID_KEY,
+          config.VAPID.PRIVATE_VAPID_KEY
+        )
+        
+        const subscription = JSON.parse(user.desktop_notification_subscription)
+        const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + event + ' email -' + _email.subject 
+        const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+        const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + event + ' email on ' + created_at
+        const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+        webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+    }  
+    if(user.text_notification){
+      const e164Phone = phone(user.cell_phone)[0]
+    
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+    
+        throw error // Invalid phone number
+      } else {
+        let fromNumber = user['proxy_number'];
+        if(!fromNumber) {
+          const areaCode = user.cell_phone.substring(1, 4)
+      
+          const data = await twilio
+          .availablePhoneNumbers('US')
+          .local.list({
+            areaCode: areaCode,
+          })
+        
+          let number = data[0];
+      
+          if(typeof number == 'undefined'){
+            const areaCode1 = user.cell_phone.substring(1, 3)
+      
+            const data1 = await twilio
+            .availablePhoneNumbers('US')
+            .local.list({
+              areaCode: areaCode1,
+            })
+            number = data1[0];
+          }
+          
+          if(typeof number != 'undefined'){
+            const proxy_number = await twilio.incomingPhoneNumbers.create({
+              phoneNumber: number.phoneNumber,
+              smsUrl:  urls.SMS_RECEIVE_URL
+            })
+            
+            console.log('proxy_number', proxy_number)
+            user['proxy_number'] = proxy_number.phoneNumber;
+            fromNumber = user['proxy_number'];
+            user.save().catch(err=>{
+              console.log('err', err)
+            })
+          } else {
+            fromNumber = config.TWILIO.TWILIO_NUMBER
+          } 
+        }
+      
+        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ event + 'email: ' + _email.subject + '\n'
+        const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+        const body = event + ' on ' + created_at + '\n '
+        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+        twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
+          console.log('send sms err: ',err)
+        })
+      } 
+    } 
     }
   }).catch(err=>{
     console.log('err', err)
