@@ -332,6 +332,12 @@ const removeContact = async (user_id, id) => {
 const edit = async (req, res) => {
   const { currentUser } = req
   const editData = req.body
+  if(!req.params.id){
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact'
+    })
+  }
   const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
 
   if (!contact) {
