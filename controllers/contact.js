@@ -332,14 +332,15 @@ const removeContact = async (user_id, id) => {
 const edit = async (req, res) => {
   const { currentUser } = req
   const editData = req.body
-  console.log('undefined................', req.params.id )
-  if(!req.params.id || typeof req.params.id === 'undefined'){
+  if(!req.params.id || req.params.id === 'undefined'){
     return res.status(400).json({
       status: false,
       error: 'Invalid Contact'
     })
   } else {
-    const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
+    const contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id }).catch(err=>{
+      console.log('err', err)
+    })
 
   for (let key in editData) {
     contact[key] = editData[key]
