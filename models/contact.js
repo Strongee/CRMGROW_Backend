@@ -38,7 +38,6 @@ ContactSchema.pre('save', function(next) {
 })
 
 const Labels = ['','New','Cold','Team','Warm','Hot','Trash'];
-
 const capitalize = (s) => {
     if ((typeof s).toLowerCase() !== 'string') return;
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();

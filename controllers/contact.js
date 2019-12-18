@@ -598,7 +598,7 @@ const receiveEmail = async(req, res) => {
             activity: contact.first_name + ' opend email '+ _email.subject + ' at ' + created_at,
           },
         };
-        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
+        const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
         const email_tracker = new EmailTracker({
@@ -648,7 +648,7 @@ const receiveEmail = async(req, res) => {
             activity: contact.first_name + ' clicked email '+ _email.subject + ' at ' + created_at,
           },
         };
-        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
+        const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
         const email_tracker = new EmailTracker({
@@ -699,7 +699,7 @@ const receiveEmail = async(req, res) => {
             activity: contact.first_name + ' unsubscribed email '+ _email.subject + ' at ' + created_at,
           },
         };
-        const email_activity = await Activity.findOne({contact: contact.id, email: _email.id}).catch(err=>{
+        const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
         const email_tracker = new EmailTracker({
