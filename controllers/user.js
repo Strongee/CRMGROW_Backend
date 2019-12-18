@@ -298,7 +298,9 @@ const checkAuth = async (req, res, next) => {
       if(user['payment'] == []){
         console.log('here******************')
         delete user.payment
-        user.save()
+        user.save().catch(err=>{
+          console.error(err)
+        })
       }
     }).catch(err=>{
       console.log('err', err)
