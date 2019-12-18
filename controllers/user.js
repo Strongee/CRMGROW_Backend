@@ -294,7 +294,9 @@ const checkAuth = async (req, res, next) => {
     }
   
 
-    req.currentUser = await User.findOne({ _id: decoded.id})
+    req.currentUser = await User.findOne({ _id: decoded.id}).catch(err=>{
+      console.log('err', err)
+    })
 
     if (req.currentUser) {
       console.info('Auth Success:', req.currentUser.email)
