@@ -99,7 +99,9 @@ const getByLastActivity = async (req, res) => {
 const get = async (req, res) => {
   const { currentUser } = req
   const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
-
+  const next_contact = await Contact.find({_id: {$gt: curId}}).sort({_id: 1 }).limit(1)
+  const prev_contact = await Contact.find({_id: {$lt: curId}}).sort({_id: -1 }).limit(1)
+  contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(15)
   if (!_contact) {
     return res.status(400).json({
       status: false,
@@ -132,7 +134,12 @@ const get = async (req, res) => {
 
   myJSON = JSON.stringify(_contact)
   const contact = JSON.parse(myJSON);
-  const data = await Object.assign(contact, { "follow_up": _follow_up }, { "activity": _activity_detail_list });
+  const data = await Object.assign(contact, 
+      { "follow_up": _follow_up }, 
+      { "activity": _activity_detail_list }, 
+      { "next": next_contact[0].id},
+      { "prev": prev_contact[0].id}
+    );
 
   res.send({
     status: true,
