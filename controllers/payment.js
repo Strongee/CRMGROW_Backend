@@ -129,11 +129,17 @@ const update = async(req, res) =>{
                                 created_at: new Date(),
                             })
 
-                            payment.save()
-                            
-                            return res.send({
-                                    status: true,
-                                });
+                            payment.save().then(_payment=>{
+                                currentUser['payment'] = _payment.id
+                                currentUser.save().then(()=>{
+                                    return res.send({
+                                        status: true,
+                                        data: _payment.id
+                                    });
+                                }).catch(err=>{
+                                    console.log('err', err)
+                                })
+                            })
                             }).catch((err)=>{
                             console.log('creating subscripition error', err)
                             return res.status(400).send({
@@ -174,6 +180,7 @@ const update = async(req, res) =>{
              
                         return res.send({
                                     status: true,
+                                    data: currentUser.payment
                                 });
                     }).catch((err)=>{
                         console.log('creating subscripition error', err)
@@ -190,7 +197,7 @@ const update = async(req, res) =>{
 
             updateCard(customer_id, card_id, card).then(card=>{
                 // Save card information to DB.
-                const payment = Payment.findOne({id: currentUser.payment})
+                const payment = Payment.findOne({_id: currentUser.payment})
 
                 payment['plan_id'] = pricingPlan
                 payment['card_brand'] = token.card.brand
@@ -202,6 +209,7 @@ const update = async(req, res) =>{
 
                 res.send({
                     status: true,
+                    data: currentUser.payment
                   });
             }).catch(err=>{
                 res.status(400).send({
