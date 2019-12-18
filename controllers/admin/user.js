@@ -160,6 +160,7 @@ const getAll = async (req, res, next) => {
     {$project: {'salt': 0, 'hash': 0}}
   ]);
   const total = await User.countDocuments({});
+  await User.populate(_users, {path: 'payment'})
   if(!_users){
     return res.status(400).json({
       status: false,

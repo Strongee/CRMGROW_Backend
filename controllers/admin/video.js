@@ -157,21 +157,14 @@ getVideos = async (req, res) => {
 
   const videos = await Video.aggregate([
     {$skip: skip},
-    {$limit: 12},
-    {
-      $lookup: {
-        from: 'user',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'author'
-      }
-    }
+    {$limit: 12}
   ]).catch(err => {
     res.status(500).send({
       status: false,
       error: err
     })
   });
+  await Video.populate(videos, {path: 'user', select: 'user_name picture_profile'});
 
   const videoCounts = await Video.countDocuments({});
 
