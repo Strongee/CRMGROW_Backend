@@ -1,4 +1,4 @@
-const Contact = require('../models/contact');
+const mongoose = require('mongoose');
 const Payment = require('../models/payment')
 const { DB_PORT } = require('../config/database');
 
