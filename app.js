@@ -39,7 +39,7 @@ app.get('/auth', (req, res) => {
 
 app.use('/api', indexRouter)
 
-app.get('/admin', (req, res) => {
+app.get('/support', (req, res) => {
     res.sendFile(path.join(__dirname, '../support_admin/dist', 'index.html'));
 }); 
 
