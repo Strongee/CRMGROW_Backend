@@ -151,7 +151,7 @@ const update = async(req, res) =>{
         }else if(payment['card_id'] != token.card.id){
             stripe.customers.deleteSource(
                 payment['customer_id'],
-                payment['card'],
+                payment['card_id'],
                 function(err, confirmation) {})
 
             cancelSubscription(payment['subscription'])
