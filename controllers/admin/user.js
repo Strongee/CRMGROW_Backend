@@ -174,6 +174,21 @@ const getAll = async (req, res, next) => {
   })
 }
 
+const getProfile = async (req, res, next) => {
+  const id = req.params.id;
+  const user = await User.findOne({_id: id}).populate('payment').catch(err => {
+    return res.status(400).json({
+      status: false,
+      error: 'User doesn`t exist'
+    })
+  });
+
+  res.send({
+    status: true,
+    data: user
+  })
+}
+
 const checkAuth = async (req, res, next) => {
   const token = req.get('Authorization')
   let decoded
@@ -243,6 +258,7 @@ module.exports = {
     login,
     editMe,
     getAll,
+    getProfile,
     resetPasswordByOld,
     checkAuth
 }

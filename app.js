@@ -25,6 +25,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.use(cookieParser())
 app.use(express.static('../frontend_admin/dist'));
+app.use(express.static('../support_admin/dist'));
 app.use(express.static(__dirname + '/public'));
 
 app.get('/video', VideoCtrl.play)
@@ -38,8 +39,13 @@ app.get('/auth', (req, res) => {
 
 app.use('/api', indexRouter)
 
+
+app.get('/support', (req, res) => {
+    res.sendFile(path.join(__dirname, '../support_admin/dist', 'index.html'));
+}); 
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend_admin/dist', 'index.html'));
-}); 
+});
 
 module.exports = app    
