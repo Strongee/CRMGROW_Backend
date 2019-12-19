@@ -11,7 +11,7 @@ const migrate = async() => {
   const payments = await Payment.find({}).catch(err=>{
     console.log('err', err)
   })
-  for(let i=0; payments.length; i++){
+  for(let i=0; i<payments.length; i++){
     const payment = payments[i]
     if(payment['card']){
       payment['card_id'] = payment['card']
