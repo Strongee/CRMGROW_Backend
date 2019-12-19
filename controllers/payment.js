@@ -62,7 +62,7 @@ const create = async(payment_data) => {
                 .then(async(subscripition) => {
                     // Save card information to DB.  
                     const payment = new Payment({
-                        email: currentUser.email,
+                        email: email,
                         customer_id: customer.id,
                         plan_id: pricingPlan,
                         token: token.id,
