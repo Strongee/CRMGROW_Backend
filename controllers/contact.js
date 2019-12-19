@@ -99,8 +99,8 @@ const getByLastActivity = async (req, res) => {
 const get = async (req, res) => {
   const { currentUser } = req
   const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
-  const next_contact = await Contact.find({_id: {$gt: req.params.id}}).sort({_id: 1 }).limit(1)
-  const prev_contact = await Contact.find({_id: {$lt: req.params.id}}).sort({_id: -1 }).limit(1)
+  const next_contact = await Contact.find({_id: {$gt: req.params.id}, user: currentUser.id}).sort({ first_name: 1, _id: 1 }).limit(1)
+  const prev_contact = await Contact.find({_id: {$lt: req.params.id}, user: currentUser.id}).sort({ first_name: -1, _id: -1 }).limit(1)
   let next = null
   let prev = null
   if(next_contact[0]){
