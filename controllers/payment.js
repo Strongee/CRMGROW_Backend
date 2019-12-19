@@ -71,7 +71,7 @@ const create = async(payment_data) => {
                         card_id: card.id,
                         card_name: token.card_name,
                         card_brand: token.card.brand,
-                        fingerprint: token.card.fingerprint,
+                        fingerprint: card.fingerprint,
                         exp_month: token.card.exp_month,
                         exp_year: token.card.exp_year,
                         last4: token.card.last4,
@@ -125,7 +125,7 @@ const update = async(req, res) =>{
                                 exp_year: token.card.exp_year,
                                 last4: token.card.last4,
                                 bill_amount: bill_amount,
-                                fingerprint: token.card.fingerprint,
+                                fingerprint: card.fingerprint,
                                 active: true,
                                 updated_at: new Date(),
                                 created_at: new Date(),
@@ -164,7 +164,7 @@ const update = async(req, res) =>{
         if(!payment){
             createCustomer(email).then(async(customer)=>{
                 stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
-                    if(card == null || typeof card == 'undefined'){
+                    if(!card){
                         return res.send({
                             status: true,
                             error: "Card is not valid"
@@ -188,7 +188,7 @@ const update = async(req, res) =>{
                                     card_name: token.card_name,
                                     exp_month: token.card.exp_month,
                                     exp_year: token.card.exp_year,
-                                    fingerprint: token.card.fingerprint,
+                                    fingerprint: card.fingerprint,
                                     last4: token.card.last4,
                                     bill_amount: bill_amount,
                                     active: true,
@@ -218,78 +218,95 @@ const update = async(req, res) =>{
             }).catch(err=>{
                 console.log('err', err)
             })
-        } else if(payment['fingerprint'] != token.card.fingerprint){
-                stripe.customers.deleteSource(
-                    payment['customer_id'],
-                    payment['card_id'],
-                    function(err, confirmation) {})
-    
-                cancelSubscription(payment['subscription']).catch(err=>{
-                    console.log('err', err)
-                })
-    
-                stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
-                    if(card == null || typeof card == 'undefined'){
-                        return res.send({
-                            status: true,
-                            error: "Card is not valid"
-                        });
-                    }
+        } 
+        else{
+            stripe.tokens.retrieve(
+                token.id,
+                function(err, _token) {
+                  // asynchronously called
+                if(!_token){
+                    return res.send({
+                        status: true,
+                        error: "Card is not valid"
+                    });
+                }
+                if(payment['fingerprint'] != _token.card.fingerprint){
+                    stripe.customers.deleteSource(
+                        payment['customer_id'],
+                        payment['card_id'],
+                        function(err, confirmation) {})
         
-                        updateSubscription(customer.id, plan_id, card.id).then(subscription => {
-                            // Save card information to DB.
-                            payment['plan_id'] = plan_id
-                            payment['token'] = token.id
-                            payment['card_id'] = card.id
-                            payment['card_name'] = token.card_name
-                            payment['card_brand'] = token.card.brand
-                            payment['exp_month'] = token.card.exp_month
-                            payment['exp_year'] = token.card.exp_year
-                            payment['last4'] = token.card.last4
-                            payment['subscription'] = subscription.id
-                            payment['fingerprint'] = card.fingerprint
-                            payment['updated_at'] = new Date()
-                            payment.save()
-                 
+                    cancelSubscription(payment['subscription']).catch(err=>{
+                        console.log('err', err)
+                    })
+        
+                    stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
+                        if(card == null || typeof card == 'undefined'){
                             return res.send({
-                                        status: true,
-                                        data: currentUser.payment
-                                    });
-                        }).catch((err)=>{
-                            console.log('creating subscripition error', err)
-                            return res.status(400).send({
-                                status: false,
-                                eror: err
-                            })              
-                        })
-                });
-        }else{
+                                status: true,
+                                error: "Card is not valid"
+                            });
+                        }
+            
+                            updateSubscription(customer.id, plan_id, card.id).then(subscription => {
+                                // Save card information to DB.
+                                payment['plan_id'] = plan_id
+                                payment['token'] = token.id
+                                payment['card_id'] = card.id
+                                payment['card_name'] = token.card_name
+                                payment['card_brand'] = token.card.brand
+                                payment['exp_month'] = token.card.exp_month
+                                payment['exp_year'] = token.card.exp_year
+                                payment['last4'] = token.card.last4
+                                payment['subscription'] = subscription.id
+                                payment['fingerprint'] = card.fingerprint
+                                payment['updated_at'] = new Date()
+                                payment.save()
+                     
+                                return res.send({
+                                            status: true,
+                                            data: currentUser.payment
+                                        });
+                            }).catch((err)=>{
+                                console.log('creating subscripition error', err)
+                                return res.status(400).send({
+                                    status: false,
+                                    eror: err
+                                })              
+                            })
+                    });
+            }
+            else{
                 const customer_id = payment['customer_id']
                 const card = token.card
                 const card_id = payment['card_id']
-    
-                updateCard(customer_id, card_id, card).then(card=>{
+        
+                updateCard(customer_id, card_id, card)
+                    .then(card=>{
                     // Save card information to DB.
-                    const payment = Payment.findOne({_id: currentUser.payment})
-                    payment['card_name'] = token.card_name
-                    payment['card_brand'] = token.card.brand
-                    payment['exp_month'] = token.card.exp_month
-                    payment['exp_year'] = token.card.exp_year
-                    payment['last4'] = token.card.last4
-                    payment['updated_at'] = new Date()
-                    payment.save()
-    
-                    res.send({
-                        status: true,
-                        data: currentUser.payment
-                      });
-                }).catch(err=>{
-                    res.status(400).send({
-                        status: false,
-                        error: err
-                    })
+                        const payment = Payment.findOne({_id: currentUser.payment})
+                                payment['card_name'] = token.card_name
+                                payment['card_brand'] = token.card.brand
+                                payment['exp_month'] = token.card.exp_month
+                                payment['exp_year'] = token.card.exp_year
+                                payment['last4'] = token.card.last4
+                                payment['updated_at'] = new Date()
+                                payment.save()
+        
+                            res.send({
+                                status: true,
+                                data: currentUser.payment
+                            });
+                        })
+                    .catch(err=>{
+                        res.status(400).send({
+                            status: false,
+                            error: err
+                        })
                 })
             }
+        });
+    } 
     }
 }
 const updateCustomerEmail = async(customer_id, email) => {
