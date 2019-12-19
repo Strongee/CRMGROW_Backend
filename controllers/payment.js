@@ -239,7 +239,7 @@ const update = async(req, res) =>{
                         console.log('err', err)
                     })
         
-                    stripe.customers.createSource(payment, {source: token.id}, function(err, card) {
+                    stripe.customers.createSource(payment['customer_id'], {source: token.id}, function(err, card) {
                         if(card == null || typeof card == 'undefined'){
                             return res.send({
                                 status: true,
