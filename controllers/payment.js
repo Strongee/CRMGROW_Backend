@@ -100,7 +100,7 @@ const update = async(req, res) =>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
                     return res.send({
-                        status: true,
+                        status: false,
                         error: "Card is not valid"
                     });
                 }
@@ -165,7 +165,7 @@ const update = async(req, res) =>{
                 stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                     if(!card){
                         return res.send({
-                            status: true,
+                            status: false,
                             error: "Card is not valid"
                         });
                     }
@@ -225,7 +225,7 @@ const update = async(req, res) =>{
                   // asynchronously called
                 if(!_token){
                     return res.send({
-                        status: true,
+                        status: false,
                         error: "Card is not valid"
                     });
                 }
@@ -242,7 +242,7 @@ const update = async(req, res) =>{
                     stripe.customers.createSource(payment['customer_id'], {source: token.id}, function(err, card) {
                         if(card == null || typeof card == 'undefined'){
                             return res.send({
-                                status: true,
+                                status: false,
                                 error: "Card is not valid"
                             });
                         }
