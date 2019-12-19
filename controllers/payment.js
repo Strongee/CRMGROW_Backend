@@ -95,7 +95,7 @@ const create = async(payment_data) => {
 const update = async(req, res) =>{
     const { plan_id, token} = req.body
     const { currentUser } = req
-
+    console.log('*********************token**********************', token)
     if(!currentUser.payment || currentUser.payment == []){
         createCustomer(email).then(async(customer)=>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
@@ -264,7 +264,7 @@ const update = async(req, res) =>{
                         })
                 });
         }else{
-                const customer_id = customer.id
+                const customer_id = payment['customer_id']
                 const card = token.card
                 const card_id = payment['card_id']
     
