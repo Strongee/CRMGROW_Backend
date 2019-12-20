@@ -7,7 +7,7 @@ const stripe = require('stripe')(stripeKey)
 
 const get = async(req, res) => {
 
-  if (!req.params.id) {
+  if (!req.params.id || req.params.id == 'undefined') {
     return res.status(400).json({
         status: false,
         error: 'Payment doesn`t exist'
@@ -96,7 +96,7 @@ const update = async(req, res) =>{
     const { plan_id, token} = req.body
     const { currentUser } = req
     if(!currentUser.payment || currentUser.payment == []){
-        createCustomer(email).then(async(customer)=>{
+        createCustomer(currentUser.email).then(async(customer)=>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
                     return res.send({
