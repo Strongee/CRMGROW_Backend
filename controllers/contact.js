@@ -10,6 +10,7 @@ const User = require('../models/user')
 const UserLog = require('../models/user_log')
 const EmailTracker = require('../models/email_tracker')
 const sgMail = require('@sendgrid/mail')
+const urls = require('../constants/urls')
 const fs = require('fs')
 const csv = require('csv-parser')
 const config = require('../config/config')
@@ -579,21 +580,9 @@ const receiveEmail = async(req, res) => {
       
       let opened = new Date(time_stamp*1000);
       const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
+      let action = ''
       if(event == 'open'){
-        const msg = {
-          to: user.email,
-          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-          dynamic_template_data: {
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-            email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + ' opend email '+ _email.subject + ' at ' + created_at,
-          },
-        };
+        action = 'opened'
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
@@ -628,22 +617,9 @@ const receiveEmail = async(req, res) => {
         Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
           console.log('err', err)
         }) 
-        sgMail.send(msg).catch(err => console.error(err)) 
       }
       if(event == 'click'){
-        const msg = {
-          to: user.email,
-          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-          dynamic_template_data: {
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-            email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + ' clicked email '+ _email.subject + ' at ' + created_at,
-          },
-        };
+        action = 'clicked'
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
@@ -678,23 +654,9 @@ const receiveEmail = async(req, res) => {
         Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
           console.log('err', err)
         })
-        
-        sgMail.send(msg).catch(err => console.error(err)) 
       }
       if(event == 'unsubscribe'){
-        const msg = {
-          to: user.email,
-          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-          dynamic_template_data: {
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-            email: `<a href="mailto:${email}">${email}</a>`,
-            activity: contact.first_name + ' unsubscribed email '+ _email.subject + ' at ' + created_at,
-          },
-        };
+        action = 'unsubscribed'
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
@@ -729,9 +691,23 @@ const receiveEmail = async(req, res) => {
         Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
           console.log('err', err)
         })
-        sgMail.send(msg).catch(err => console.error(err)) 
       }
-      
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
+    const msg = {
+        to: user.email,
+        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+        subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${email}">${email}</a>`,
+          activity: contact.first_name + ' '+action+' email: '+ _email.subject + ' at ' + created_at,
+          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='line-height:30px;background-color:#2c6fae;border-radius:5px;font-size:15px; padding:10px 25px 10px 25px;display:inline-block; text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
+        },
+    };
+    sgMail.send(msg).catch(err => console.error(err)) 
     if(user.desktop_notification){
         webpush.setVapidDetails(
           'mailto:support@crmgrow.com',
@@ -740,9 +716,9 @@ const receiveEmail = async(req, res) => {
         )
         
         const subscription = JSON.parse(user.desktop_notification_subscription)
-        const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + event + ' email -' + _email.subject 
+        const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email' 
         const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
-        const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + event + ' email on ' + created_at
+        const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email: '+_email.subject+' on ' + created_at
         const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
         webpush.sendNotification(subscription, playload).catch(err => console.error(err))
     }  
@@ -796,11 +772,11 @@ const receiveEmail = async(req, res) => {
           } 
         }
       
-        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ event + 'email: ' + _email.subject + '\n'
+        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email: ' +'\n'+ _email.subject + '\n'
         const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
-        const body = event + ' on ' + created_at + '\n '
+        const time = ' on ' + created_at + '\n '
         const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-        twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
+        twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
           console.log('send sms err: ',err)
         })
       } 
