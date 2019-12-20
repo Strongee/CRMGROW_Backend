@@ -45,10 +45,10 @@ const signUp = async (req, res) => {
 
     const {email, token, bill_amount} = req.body 
     
-    if(isAppleEmail(email)){
+    if(isBlockedEmail(email)){
       res.status(400).send({
         status: false,
-        error: 'Apple email is not support type for sign up in our CRM'
+        error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
       })
       return;
     }
@@ -1025,11 +1025,12 @@ const closeAccount = async(req, res) =>{
     })
 }
 
-const isAppleEmail = (email) => {
+const isBlockedEmail = (email) => {
   let mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
   let me = /^[a-z0-9](\.?[a-z0-9]){2,}@me\.com$/;
   let icloud = /^[a-z0-9](\.?[a-z0-9]){2,}@icloud\.com$/;
-  return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase());
+  let yahoo = /^[a-z0-9](\.?[a-z0-9]){2,}@yahoo\.com$/;
+  return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase()) || yahoo.test(String(email).toLowerCase());
 }
 
 const checkSuspended = async(req, res, next) =>{
@@ -1073,7 +1074,7 @@ module.exports = {
     weeklyReport,
     checkAuth,
     checkSuspended,
-    isAppleEmail,
+    isBlockedEmail,
     closeAccount
 }
 
