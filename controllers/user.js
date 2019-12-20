@@ -1020,7 +1020,7 @@ const closeAccount = async(req, res) =>{
       await Appointment.deleteMany({contact: contact})
     }
      
-    res.send({
+    return res.send({
       status: true,
     })
 }

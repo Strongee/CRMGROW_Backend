@@ -308,6 +308,7 @@ const update = async(req, res) =>{
     } 
     }
 }
+
 const updateCustomerEmail = async(customer_id, email) => {
     // Create new customer
     return new Promise(function (resolve, reject) {
@@ -419,7 +420,7 @@ const deleteCustomer = async(id) => {
     });
 }
 
-const cancel = async(id) => {
+const cancelCustomer = async(id) => {
     const payment = await Payment.findOne({_id: id}).catch(err=>{
         console.log('err', err)
     })
@@ -438,7 +439,7 @@ const cancel = async(id) => {
     })
 }
 
-const failed = async(req, res) => {
+const paymentFailed = async(req, res) => {
     const invoice = req.body.data
     const customer_id = invoice['object']['customer']
     const attempt_count = invoice['object']['attempt_count']
@@ -471,8 +472,8 @@ module.exports = {
     get,
     create,
     update,
-    cancel,
-    failed,
+    cancelCustomer,
+    paymentFailed,
     updateCustomerEmail,
     cancelSubscription,
     deleteCustomer

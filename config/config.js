@@ -49,7 +49,8 @@ const config = {
         PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '39',
         PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29'
     },
-    MAX_CONTACT: process.env.MAX_CONTACT || 3000
+    MAX_CONTACT: process.env.MAX_CONTACT || 3000,
+    DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123'
 }
 
 module.exports = config;

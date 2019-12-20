@@ -2,6 +2,10 @@ const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../../models/user')
+const Contact = require('../../models/contact')
+const Tag = require('../../models/tag')
+const Appointment = require('../../models/appointment')
+const Activity = require('../../models/activity')
 const config = require('../../config/config')
 
 const signUp = async (req, res) => {
@@ -253,6 +257,131 @@ const resetPasswordByOld = async (req, res) => {
   })
 }
 
+const create = async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+  let _user = await User.findOne({ email: req.body.email })
+  if(_user != null){
+    res.status(400).send({
+      status: false,
+      error: 'User already exists'
+    })
+    return;
+  }
+
+  const {email} = req.body 
+  
+  if(isBlockedEmail(email)){
+    res.status(400).send({
+      status: false,
+      error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
+    })
+    return;
+  }
+  
+  let password = req.body.password || config.DEFAULT_PASS
+    
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
+    
+    const user = new User({
+      ...req.body,
+      payment: payment.id,
+      salt: salt,
+      hash: hash,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+
+    user.save()
+    .then(_res => {
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+      let msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+          user_email: _res.email,
+          user_password: password,
+          contact_link: `<a href="${urls.CONTACT_PAGE_URL}">Click this link - Your Profile</a>`
+        },
+      };
+
+      sgMail.send(msg).catch(err=>{
+        console.log('err', err)
+      })
+
+      msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+          upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+          upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+          contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
+        }
+      }
+
+      sgMail.send(msg).catch(err=>{
+        console.log('err', err)
+      })
+
+      myJSON = JSON.stringify(_res)
+      const user = JSON.parse(myJSON);
+      delete user.hash
+      delete user.salt
+      
+      res.send({
+        status: true,
+        data: {
+          user
+        }
+      })   
+    })
+    .catch(e => {
+        let errors
+      if (e.errors) {
+        errors = e.errors.map(err => {      
+          delete err.instance
+          return err
+        })
+      }
+      return res.status(500).send({
+        status: false,
+        error: errors || e
+      })
+    });
+}
+
+const closeAccount = async(req, res) =>{
+
+  const data = await Contact.find({user: req.params.id})
+  if (!data) {
+      return false;
+  }
+
+  for(let i=0; i<data.length; i++){
+    const contact = data[i]
+    await Contact.deleteOne({_id: contact})
+    await Activity.deleteMany({contacts: contact})
+    await FollowUp.deleteMany({contact: contact})
+    await Appointment.deleteMany({contact: contact})
+  }
+  await Tag.deleteMany({user: req.params.id})
+  return res.send({
+    status: true,
+  })
+}
+
 module.exports = {
     signUp,
     login,
@@ -260,6 +389,8 @@ module.exports = {
     getAll,
     getProfile,
     resetPasswordByOld,
-    checkAuth
+    checkAuth,
+    create,
+    closeAccount
 }
 
