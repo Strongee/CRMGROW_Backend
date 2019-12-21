@@ -14,6 +14,10 @@ const migrate = async() => {
   for(let i=0; i<users.length; i++){
     const user = users[i]
     user['del'] = false
+    
+    if(user.payment.length == 0){
+      console.log('user', user.payment)
+    }
     user.save().catch(err=>{
       console.log('err', err)
     })
