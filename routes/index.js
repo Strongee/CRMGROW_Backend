@@ -16,6 +16,7 @@ const pdf_tracker = require('./pdf_tracker')
 const sms = require('./sms')
 const payment = require('./payment')
 const admin = require('./admin/index')
+const template = require('./email_template');
 const UserCtrl = require('../controllers/user')
 
 const router = express.Router()
@@ -41,5 +42,6 @@ router.use('/ptrack', pdf_tracker)
 router.use('/sms', sms)
 router.use('/payment', payment)
 router.use('/admin', admin)
+router.use('/template', template)
 
 module.exports = router
