@@ -6,6 +6,7 @@ const Contact = require('../../models/contact')
 const Tag = require('../../models/tag')
 const Appointment = require('../../models/appointment')
 const Activity = require('../../models/activity')
+const PaymentCtrl = require('../../controllers/payment')
 const config = require('../../config/config')
 
 const signUp = async (req, res) => {
@@ -364,6 +365,7 @@ const create = async (req, res) => {
 
 const closeAccount = async(req, res) =>{
 
+  const user = await User.findOne({_id: req.params.id})
   const data = await Contact.find({user: req.params.id})
   if (!data) {
       return false;
@@ -377,6 +379,16 @@ const closeAccount = async(req, res) =>{
     await Appointment.deleteMany({contact: contact})
   }
   await Tag.deleteMany({user: req.params.id})
+  if(user['payment']){
+    PaymentCtrl.cancelCustomer(user['payment']).catch(err=>{
+      console.log('err', err)
+    })
+  }
+  user['del'] = false
+  user.save().catch(err=>{
+    console.log('err', err)
+  })
+  
   return res.send({
     status: true,
   })

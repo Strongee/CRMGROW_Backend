@@ -41,6 +41,7 @@ const User = mongoose.model('user',{
      },
      welcome_email: {type: Boolean, default: false},
      is_trial: { type: Boolean, default: true},
+     is_free: {type: Boolean, default: false},
      subscription: {
         is_failed: {type: Boolean, default: false},
         failed_at: Date,
@@ -51,6 +52,7 @@ const User = mongoose.model('user',{
      expired_at: Date,
      created_at: Date,
      updated_at: Date,
+     del: {type: Boolean, default: false}
  });
 
  module.exports = User

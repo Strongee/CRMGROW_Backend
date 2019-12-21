@@ -47,7 +47,8 @@ const config = {
         PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_G5y3Wz6NbVZyQT',
         PRIOR_PLAN: process.env.PRIOR_PLAN || 'plan_FFnfPJc8bPYCZi',
         PRIMARY_PLAN_AMOUNT: process.env.PRIMARY_PLAN_AMOUNT || '39',
-        PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29'
+        PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29',
+        LIMIT: process.env.LIMIT || 25
     },
     MAX_CONTACT: process.env.MAX_CONTACT || 3000,
     DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123'
