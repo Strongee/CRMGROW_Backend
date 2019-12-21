@@ -230,7 +230,7 @@ const login = async (req, res) => {
     })
   }
 
-  let _user = await User.findOne({ email:  new RegExp(email, "i") })
+  let _user = await User.findOne({ email:  new RegExp(email, "i"), del: false })
 
   if(!_user) {
     _user = await User.findOne({ user_name: user_name })
