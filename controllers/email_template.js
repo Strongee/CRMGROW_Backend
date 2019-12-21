@@ -4,7 +4,7 @@ const get = async(req, res) => {
 
   const id = req.params.id;
 
-  const data = await EmailTemplate.find({_id: id});
+  const data = await EmailTemplate.findOne({_id: id});
   if (!data) {
     return res.status(400).json({
       status: false,
@@ -21,7 +21,7 @@ const get = async(req, res) => {
 const getTemplates = async(req, res) => {
   const { currentUser } = req;
   const page = req.params.page;
-  const { params } = {...req.body};
+  const params = {...req.body};
   const templates = await EmailTemplate.find(params).skip((page-1) * 10).limit(10);
   const total = await EmailTemplate.countDocuments(params);
   return res.json({
@@ -72,11 +72,11 @@ const remove = async (req, res) => {
   const id = req.params.id;
 
   EmailTemplate.deleteOne({_id: id}).then(() => {
-    res.send({
+    return res.send({
       status: true
     })
   }).catch(err => {
-    res.status(500).send({
+    return res.status(500).send({
       status: false,
       error: err.message || 'Remove Template Error'
     })

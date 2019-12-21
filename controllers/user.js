@@ -211,7 +211,7 @@ const socialSignUp = async(req, res) =>{
         error: errors || e
       })
     });
-}
+} 
 
 const login = async (req, res) => {
   const errors = validationResult(req)
