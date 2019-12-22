@@ -1,6 +1,4 @@
 const config = require('../../config/config')
-const Payment = require('../../models/payment')
-const User = require('../../models/user')
 const stripeKey = config.STRIPE.SECRET_KEY
 const stripe = require('stripe')(stripeKey)
 
@@ -43,7 +41,62 @@ const getCustomers = async(req, res) => {
   );
 }
 
+const refundCharge = async(req, res) =>{
+
+  stripe.refunds.create(
+    {charge: req.params.id},
+    function(err, refund) {
+      // asynchronously called
+    }
+  );
+}
+
+const cancelCustomer = async(req, res) => {
+  const payment = await Payment.findOne({customer_id: req.params.id}).catch(err=>{
+      console.log('err', err)
+  })
+  return new Promise((resolve, reject)=>{
+      cancelSubscription(payment.subscription).then(()=>{
+          deleteCustomer(req.params.id).then(()=>{
+              resolve()
+          }).catch(err=>{
+              console.log('err', err)
+              reject()
+          })
+      }).catch(err=>{
+          console.log('err', err)
+          reject()
+      })
+  })
+}
+
+const cancelSubscription = async(subscription_id) => {
+  return new Promise(function (resolve, reject) {
+      stripe.subscriptions.del(subscription_id, function (err, confirmation) {
+          if (err != null)  {
+              return reject(err);
+          }
+          resolve()
+      })
+  });
+}
+
+/**
+* 
+* @param {customer id} id 
+*/
+const deleteCustomer = async(id) => {
+  return new Promise(function (resolve, reject) {
+      stripe.customers.del(id, function (err, confirmation) {
+          if (err) reject(err);
+          resolve(confirmation);
+      });
+  });
+}
+
 module.exports = {
   getTransactions,
-  getCustomers
+  getCustomers,
+  cancelCustomer,
+  refundCharge
 }
