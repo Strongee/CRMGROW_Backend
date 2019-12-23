@@ -42,10 +42,15 @@ const play = async(req, res) => {
     console.log('err', err)
   })
  
-  res.render('video', {
+  if(sender){
+    res.render('video', {
       video: video,
       sender: sender
-  })
+    })
+  } else {
+    res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
+  }
+  
 }
 
 const play1 = async(req, res) => {  
