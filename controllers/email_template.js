@@ -98,11 +98,37 @@ const bulkRemove = (req, res) => {
   })
 }
 
+const search = async (req, res) => {
+  const { currentUser } = req;
+  const str = req.query.q;
+  const option = {...req.body};
+
+  const templates = await EmailTemplate.find({
+    $and: [
+      option,
+      {
+        $or: [
+          { title: { '$regex': '.*' + str + '.*', '$options': 'i' } },
+          { subject: { '$regex': '.*' + str + '.*', '$options': 'i' } },
+          { content: { '$regex': '.*' + str + '.*', '$options': 'i' } },
+        ]
+      },
+      {user: currentUser.id}
+    ]
+  });
+
+  return res.send({
+    status: true,
+    data: templates
+  })
+}
+
 module.exports = {
     create,
     get,
     update,
     remove,
     getTemplates,
-    bulkRemove
+    bulkRemove,
+    search
 }

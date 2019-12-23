@@ -12,6 +12,7 @@ router.put('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.update));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.remove));
 router.post('/list/:page', UserCtrl.checkAuth, catchError(TemplateCtrl.getTemplates));
 router.post('/delete',  UserCtrl.checkAuth, catchError(TemplateCtrl.bulkRemove));
+router.post('/search', UserCtrl.checkAuth, catchError(TemplateCtrl.search));
 
 // router.get('/receive' , UserCtrl.checkAuth, catchError(EmailCtrl.receive))
 
