@@ -35,13 +35,22 @@ const s3 = new AWS.S3({
 const play = async(req, res) => {  
   const video_id = req.query.video
   const sender_id = req.query.user
-  const video = await Video.findOne({_id: video_id})
-  const sender = await User.findOne({_id: sender_id})
+  const video = await Video.findOne({_id: video_id}).catch(err=>{
+    console.log('err', err)
+  })
+  const sender = await User.findOne({_id: sender_id}).catch(err=>{
+    console.log('err', err)
+  })
  
-  res.render('video', {
+  if(sender){
+    res.render('video', {
       video: video,
       sender: sender
-  })
+    })
+  } else {
+    res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
+  }
+  
 }
 
 const play1 = async(req, res) => {  

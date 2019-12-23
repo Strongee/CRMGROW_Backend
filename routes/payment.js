@@ -8,6 +8,7 @@ const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(PaymentCtrl.update))
 router.post('/failed', catchError(PaymentCtrl.paymentFailed))
+router.post('/succeed', catchError(PaymentCtrl.paymentSucceed))
 router.get('/:id' , UserCtrl.checkAuth, catchError(PaymentCtrl.get))
 
 module.exports = router
