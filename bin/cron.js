@@ -503,7 +503,7 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 const subscription_check = new CronJob('0 21 */3 * *', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
-  const subscribers = await User.find({'subscription.is_failed': true}).catch(err=>{
+  const subscribers = await User.find({'subscription.is_failed': true, del: false}).catch(err=>{
     console.log('err', err)
   })
   

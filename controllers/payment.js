@@ -155,7 +155,6 @@ const update = async(req, res) =>{
     }
     
     if(currentUser.payment && currentUser.payment != []){
-    
         const payment = await Payment.findOne({_id: currentUser.payment}).catch(err=>{
             console.log('err', err)
         })
@@ -282,26 +281,27 @@ const update = async(req, res) =>{
         
                 updateCard(customer_id, card_id, card)
                     .then(card=>{
+                    console.log('card', card)
                     // Save card information to DB.
-                        const payment = Payment.findOne({_id: currentUser.payment})
-                                payment['card_name'] = token.card_name
-                                payment['card_brand'] = token.card.brand
-                                payment['exp_month'] = token.card.exp_month
-                                payment['exp_year'] = token.card.exp_year
-                                payment['last4'] = token.card.last4
-                                payment['updated_at'] = new Date()
-                                payment.save()
-        
-                            res.send({
-                                status: true,
-                                data: currentUser.payment
-                            });
-                        })
-                    .catch(err=>{
-                        res.status(400).send({
-                            status: false,
-                            error: err
-                        })
+                        payment['card_name'] = token.card_name
+                        payment['card_brand'] = token.card.brand
+                        payment['exp_month'] = token.card.exp_month
+                        payment['exp_year'] = token.card.exp_year
+                        payment['last4'] = token.card.last4
+                        payment['updated_at'] = new Date()
+                        payment.save().catch(err=>{
+                        console.log('err', err)
+                    })
+                    
+                    res.send({
+                        status: true,
+                        data: currentUser.payment
+                    });
+                }).catch(err=>{
+                    res.status(400).send({
+                        status: false,
+                        error: err
+                    })
                 })
             }
         });
@@ -446,13 +446,14 @@ const paymentFailed = async(req, res) => {
     const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
       console.log('err', err)
     })
-    const user = await User.findOne({payment: payment}).catch(err=>{
+    const user = await User.findOne({payment: payment, del: false}).catch(err=>{
       console.log('err', err)
     })
     
     user['subscription']['is_failed'] = true
     user['subscription']['failed_at'] = new Date()
     user['subscription']['attempt_count'] = attempt_count
+    user['updated_at'] = new Date()
     
     if(attempt_count === 4){
         user['subscription']['is_suspended'] = true
@@ -466,14 +467,38 @@ const paymentFailed = async(req, res) => {
       status: true
     })
 }
-  
-  
+    
+const paymentSucceed = async(req, res) => {
+    const invoice = req.body.data
+    const customer_id = invoice['object']['customer']
+    const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
+      console.log('err', err)
+    })
+    const user = await User.findOne({payment: payment, del: false}).catch(err=>{
+      console.log('err', err)
+    })
+    
+    user['subscription']['is_failed'] = false
+    user['subscription']['failed_at'] = new Date()
+    user['subscription']['attempt_count'] = attempt_count
+    user['updated_at'] = new Date()
+
+    user.save().catch(err=>{
+        console.log('err', err)
+    })
+    
+    return res.send({
+      status: true
+    })
+}    
+
 module.exports = {
     get,
     create,
     update,
     cancelCustomer,
     paymentFailed,
+    paymentSucceed,
     updateCustomerEmail,
     cancelSubscription,
     deleteCustomer
