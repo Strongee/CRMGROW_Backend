@@ -78,6 +78,11 @@ const getByLastActivity = async (req, res) => {
 
   const count = await Contact.find({ user: currentUser.id }).countDocuments()
 
+  currentUser['last_logged'] = new Date()
+  currentUser.save().catch(err=>{
+    console.log('err', err)
+  })
+  
   const user_log = new UserLog({
     user: currentUser.id,
     created_at: new Date(),
