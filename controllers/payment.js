@@ -457,7 +457,7 @@ const paymentFailed = async(req, res) => {
     })
     
     user['subscription']['is_failed'] = true
-    user['subscription']['failed_at'] = new Date()
+    user['subscription']['updated_at'] = new Date()
     user['subscription']['attempt_count'] = attempt_count
     user['updated_at'] = new Date()
     
@@ -485,8 +485,8 @@ const paymentSucceed = async(req, res) => {
     })
     
     user['subscription']['is_failed'] = false
-    user['subscription']['failed_at'] = new Date()
-    user['subscription']['attempt_count'] = attempt_count
+    user['subscription']['updated_at'] = new Date()
+
     user['updated_at'] = new Date()
 
     user.save().catch(err=>{

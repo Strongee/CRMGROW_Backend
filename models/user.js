@@ -44,7 +44,7 @@ const User = mongoose.model('user',{
      is_free: {type: Boolean, default: false},
      subscription: {
         is_failed: {type: Boolean, default: false},
-        failed_at: Date,
+        updated_at: Date,
         is_suspended: {type: Boolean, default: false},
         suspended_at: Date,
         attempt_count: {type: Number, default: 0}
