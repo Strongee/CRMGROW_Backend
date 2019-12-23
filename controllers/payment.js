@@ -289,6 +289,7 @@ const update = async(req, res) =>{
                     .then(_card=>{
                     console.log('card', _card)
                     // Save card information to DB.
+                        payment['card']
                         payment['card_name'] = token.card_name
                         payment['card_brand'] = token.card.brand
                         payment['exp_month'] = token.card.exp_month
@@ -296,19 +297,20 @@ const update = async(req, res) =>{
                         payment['last4'] = token.card.last4
                         payment['updated_at'] = new Date()
                         payment.save().catch(err=>{
-                        console.log('err', err)
-                    })
+                            console.log('err', err)
+                        })
                     
                     return res.send({
                         status: true,
                         data: currentUser.payment
                     });
                 }).catch(err=>{
-                    res.status(400).send({
+                    return res.status(400).send({
                         status: false,
                         error: err
                     })
                 })
+                
             }
         });
     } 
@@ -414,7 +416,7 @@ const deleteCustomer = async(id) => {
  */
  const updateCard = async(customerId, cardId, data) => {
     return new Promise(function (resolve, reject) {
-        stripe.customers.updateCard(
+        stripe.customers.updateSource(
             customerId,
             cardId,
             data,
