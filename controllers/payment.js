@@ -95,7 +95,7 @@ const create = async(payment_data) => {
 const update = async(req, res) =>{
     const { plan_id, token} = req.body
     const { currentUser } = req
-    if(!currentUser.payment || currentUser.payment == []){
+    if(!currentUser.payment){
         createCustomer(currentUser.email).then(async(customer)=>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
@@ -154,11 +154,12 @@ const update = async(req, res) =>{
         })
     }
     
-    if(currentUser.payment && currentUser.payment != []){
+    if(currentUser.payment){
         const payment = await Payment.findOne({_id: currentUser.payment}).catch(err=>{
             console.log('err', err)
         })
     
+        console.log('payment', payment)
         if(!payment){
             createCustomer(email).then(async(customer)=>{
                 stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
@@ -222,6 +223,7 @@ const update = async(req, res) =>{
                 token.id,
                 function(err, _token) {
                   // asynchronously called
+                console.log('_**********', _token)
                 if(!_token){
                     return res.send({
                         status: false,
