@@ -159,7 +159,6 @@ const update = async(req, res) =>{
             console.log('err', err)
         })
     
-        console.log('payment', payment)
         if(!payment){
             createCustomer(email).then(async(customer)=>{
                 stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
@@ -223,7 +222,6 @@ const update = async(req, res) =>{
                 token.id,
                 function(err, _token) {
                   // asynchronously called
-                console.log('_**********', _token)
                 if(!_token){
                     return res.send({
                         status: false,
@@ -282,13 +280,9 @@ const update = async(req, res) =>{
                 const customer_id = payment['customer_id']
                 const card = token.card
                 const card_id = payment['card_id']
-                console.log('card_id', card_id)
-                console.log('card***********', token.card)
-                console.log('customer_id', customer_id)
                 delete card.id
                 updateCard(customer_id, card_id, card)
                     .then(_card=>{
-                    console.log('card', _card)
                     // Save card information to DB.
                         payment['card_name'] = token.card_name
                         payment['card_brand'] = token.card.brand
