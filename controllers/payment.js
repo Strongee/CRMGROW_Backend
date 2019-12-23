@@ -286,8 +286,8 @@ const update = async(req, res) =>{
                 console.log('card***********', token.card)
                 console.log('customer_id', customer_id)
                 updateCard(customer_id, card_id, card)
-                    .then(card=>{
-                    console.log('card', card)
+                    .then(_card=>{
+                    console.log('card', _card)
                     // Save card information to DB.
                         payment['card_name'] = token.card_name
                         payment['card_brand'] = token.card.brand
@@ -299,7 +299,7 @@ const update = async(req, res) =>{
                         console.log('err', err)
                     })
                     
-                    res.send({
+                    return res.send({
                         status: true,
                         data: currentUser.payment
                     });
@@ -419,7 +419,10 @@ const deleteCustomer = async(id) => {
             cardId,
             data,
             function (err, card) {
-                if (err) reject(err);
+                if(err){
+                    console.log('err', err)
+                    reject(err)
+                }
                 resolve(card);
             }
         );
