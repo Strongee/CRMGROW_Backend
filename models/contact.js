@@ -61,6 +61,7 @@ const States = ['','Alabama','Alaska','Arizona','Arkansas','California','Colorad
 'Pennsylvania','Puerto Rico','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan']
 const Countries = ['', 'United States', 'Canada']
+
 const capitalize = (s) => {
     if ((typeof s).toLowerCase() !== 'string') return;
     if(s.split(' ').length ==2){
