@@ -7,7 +7,6 @@ const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
 const User = require('../models/user')
-const UserLog = require('../models/user_log')
 const EmailTracker = require('../models/email_tracker')
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
@@ -77,21 +76,6 @@ const getByLastActivity = async (req, res) => {
   }
 
   const count = await Contact.find({ user: currentUser.id }).countDocuments()
-
-  currentUser['last_logged'] = new Date()
-  currentUser.save().catch(err=>{
-    console.log('err', err)
-  })
-  
-  const user_log = new UserLog({
-    user: currentUser.id,
-    created_at: new Date(),
-    updated_at: new Date()
-  })
-
-  user_log.save().catch(err => {
-    console.log('err', err)
-  })
 
   return res.send({
     status: true,
