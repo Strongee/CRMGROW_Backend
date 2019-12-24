@@ -41,15 +41,6 @@ ContactSchema.pre('save', function(next) {
                 contact.state = capitalize(contact.state);
             }
         }
-        if(contact.country){
-            if(Countries.indexOf(capitalize(contact.country)) === -1) {
-                contact.country = ''
-            }
-            else {
-                contact.country = capitalize(contact.country);
-            }
-        }
-        
     }
     return next();
 })
@@ -60,7 +51,6 @@ const States = ['','Alabama','Alaska','Arizona','Arkansas','California','Colorad
 'Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Palau',
 'Pennsylvania','Puerto Rico','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
 'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan']
-const Countries = ['', 'United States', 'Canada']
 
 const capitalize = (s) => {
     if ((typeof s).toLowerCase() !== 'string') return;
