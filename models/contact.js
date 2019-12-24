@@ -34,7 +34,7 @@ ContactSchema.pre('save', function(next) {
             contact.label = capitalize(contact.label);
         }
         if(contact.state){
-            if(States.toLowerCase().indexOf(contact.state.toLowerCase()) === -1) {
+            if(States.indexOf(capitalize(contact.state)) === -1) {
                 contact.state = ''
             }
             else {
@@ -42,7 +42,7 @@ ContactSchema.pre('save', function(next) {
             }
         }
         if(contact.country){
-            if(Countries.toLowerCase().indexOf(contact.country.toLowerCase()) === -1) {
+            if(Countries.indexOf(capitalize(contact.country)) === -1) {
                 contact.country = ''
             }
             else {
@@ -58,7 +58,8 @@ const Labels = ['','New','Cold','Team','Warm','Hot','Trash'];
 const States = ['','Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Guam','Hawaii',
 'Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri',
 'Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Palau',
-'Pennsylvania','Puerto Rico','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
+'Pennsylvania','Puerto Rico','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
+'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Ontario','Prince Edward Island','Quebec','Saskatchewan']
 const Countries = ['', 'United States', 'Canada']
 const capitalize = (s) => {
     if ((typeof s).toLowerCase() !== 'string') return;
