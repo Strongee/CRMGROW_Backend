@@ -7,7 +7,7 @@ const User = mongoose.model('user',{
      hash: String,
      salt: String,
      cell_phone: String,
-     payment: [{ type: mongoose.Schema.Types.ObjectId, ref: 'payment' }],
+     payment: { type: mongoose.Schema.Types.ObjectId, ref: 'payment' },
      time_zone_info: String,
      time_zone: {type: String, default: "-07:00"},
      email_signature: {type: String, default: ""},
