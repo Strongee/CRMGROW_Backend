@@ -429,7 +429,7 @@ const sendText = async (req, res) => {
     if(contacts.length>15){
       return res.status(400).json({
         status: false,
-        error: 'You can sent max 15 contacts'
+        error: 'You can send max 15 contacts at a time'
       })
     }
     for(let i=0; i<contacts.length; i++){
@@ -597,6 +597,110 @@ const getHistory = async(req, res) => {
   }
 }
 
+const bulkEmail = async(req, res) => {
+  const { currentUser } = req
+  let {content, subject, videos, contacts} = req.body 
+  
+  if(contacts){
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can send max 15 contacts at a time'
+      })
+    }
+    
+    for(let i=0; i<contacts.length; i++){
+      for(let j=0; j<videos.length; j++){
+          const video = videos[i]
+          const _contact = await Contact.findOne({_id: contacts[i]})          
+          const _activity = new Activity({
+            content: currentUser.user_name + ' sent video using email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: video,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: subject,
+            description: sendContent
+          })
+         
+          const _video = await Video.findOne({_id: video})
+          let preview
+          if(_video['preview']){
+            preview = _video['preview']
+          } else {
+            preview = _video['thumbnail'] + '?resize=true'
+          }
+          const activity = await _activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        
+          if(subject == '' ){
+            subject = video.title
+          }
+          
+          if(typeof content == 'undefined'){
+            content = ''
+          }
+        
+          const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+          video_links += '<a href="' + video_link + '"><img src="'+preview+'"/></a><br/>'
+          
+          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          .replace(/{video_title}/ig, video.title).replace(/{video_title:video_description}/ig, `${video.title}-${video.description}`)
+        }
+      }
+      
+      video_links += '<a href="' + video_link + '"><img src="'+preview+'"/></a><br/>'
+      
+      if(content.search(/{video_title}/ig)){
+        content.replace(/{video_title}/ig, video_links)
+      }else{
+        content = content+'</p>'+video_links
+      }
+      const msg = {
+        to: _contact.email,
+        from: `${currentUser.user_name} <${currentUser.email}>`,
+        subject: subject,
+        html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">'
+              +content+'<br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+      }
+    
+      sgMail.send(msg).then((_res) => {
+        console.log('mailres.errorcode', _res[0].statusCode);
+        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+          console.log('status', _res[0].statusCode)
+        }else {
+          console.log('email sending err', msg.to+res[0].statusCode)
+        }
+      }).catch ((e) => {
+        console.log('email sending err', msg.to)
+        console.error(e)
+      })
+      
+      return res.send({
+        status: true,
+      })
+    }else {
+      return res.status(400).json({
+        status: false,
+        error: 'Contacts not found'
+      })
+    }
+  
+}
+
+const bulkText = async(req, res) => {
+}
+
 module.exports = {
     play,
     play1,
@@ -607,6 +711,8 @@ module.exports = {
     getThumbnail,
     getAll,
     sendVideo,
+    bulkEmail,
+    bulkText,
     sendText,
     remove,
     getHistory

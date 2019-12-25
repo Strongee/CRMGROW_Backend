@@ -53,7 +53,8 @@ const User = mongoose.model('user',{
      created_at: Date,
      updated_at: Date,
      last_logged: Date,
-     del: {type: Boolean, default: false}
+     del: {type: Boolean, default: false},
+     admin_loggin: {type: Boolean, default: false},
  });
 
  module.exports = User

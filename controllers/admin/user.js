@@ -7,7 +7,11 @@ const Tag = require('../../models/tag')
 const Appointment = require('../../models/appointment')
 const Activity = require('../../models/activity')
 const PaymentCtrl = require('../../controllers/payment')
+const { isBlockedEmail } = require('../../helpers/helper') 
 const config = require('../../config/config')
+const urls = require('../../constants/urls')
+const mail_contents = require('../../constants/mail_contents')
+const sgMail = require('@sendgrid/mail')
 
 const signUp = async (req, res) => {
   const errors = validationResult(req)
@@ -308,7 +312,6 @@ const create = async (req, res) => {
     
     const user = new User({
       ...req.body,
-      payment: payment.id,
       salt: salt,
       hash: hash,
       updated_at: new Date(),
@@ -357,7 +360,7 @@ const create = async (req, res) => {
       delete user.hash
       delete user.salt
       
-      res.send({
+      return res.send({
         status: true,
         data: {
           user
@@ -365,6 +368,7 @@ const create = async (req, res) => {
       })   
     })
     .catch(e => {
+      console.log('e', e)
         let errors
       if (e.errors) {
         errors = e.errors.map(err => {      

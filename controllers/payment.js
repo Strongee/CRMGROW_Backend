@@ -20,7 +20,7 @@ const get = async(req, res) => {
 //     })
 //   }
   
-  const data = await Payment.findOne({_id :currentUser.payment}).catch(err=>{
+  const data = await Payment.findOne({_id :req.params.id}).catch(err=>{
     console.log('err', err)
   });
   if (!data) {

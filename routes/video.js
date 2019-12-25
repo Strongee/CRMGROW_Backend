@@ -73,6 +73,9 @@ router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(Vid
 // Send Video on text
 router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendText))
 
+// Bulk videos
+router.post('/bulk-video', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkVideo))
+
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 
