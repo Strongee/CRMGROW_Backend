@@ -6,14 +6,21 @@ const stripe = require('stripe')(stripeKey)
 
 
 const get = async(req, res) => {
-
-  if (!req.params.id || req.params.id == 'undefined') {
-    return res.status(400).json({
-        status: false,
-        error: 'Payment doesn`t exist'
-    })
+  const { currentUser } = req;
+  if( !currentUser.payment || currentUser.payment == 'undefined' ) {
+      return res.status(400).json({
+          status: false,
+          error: 'Payment doesn`t exist'
+      })
   }
-  const data = await Payment.findOne({_id :req.params.id}).catch(err=>{
+//   if (!req.params.id || req.params.id == 'undefined') {
+//     return res.status(400).json({
+//         status: false,
+//         error: 'Payment doesn`t exist'
+//     })
+//   }
+  
+  const data = await Payment.findOne({_id :currentUser.payment}).catch(err=>{
     console.log('err', err)
   });
   if (!data) {
