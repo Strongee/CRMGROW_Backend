@@ -166,7 +166,6 @@ const update = async(req, res) =>{
             console.log('err', err)
         })
     
-        console.log('payment', payment)
         if(!payment){
             createCustomer(email).then(async(customer)=>{
                 stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
@@ -179,47 +178,45 @@ const update = async(req, res) =>{
                     
                     const pricingPlan = config.STRIPE.PRIMARY_PLAN;
                     const bill_amount = config.STRIPE.PRIMARY_PLAN_AMOUNT;
-                    updateSubscription(customer.id, pricingPlan, card.id)
-                            .then(subscription => {
-                                // Save card information to DB.
-    
-                                const payment = new Payment({
-                                    email: currentUser.email,
-                                    customer_id: customer.id,
-                                    plan_id: pricingPlan,
-                                    token: token.id,
-                                    card_id: card.id,
-                                    subscription: subscription.id,
-                                    card_brand: token.card.brand,
-                                    card_name: token.card_name,
-                                    exp_month: token.card.exp_month,
-                                    exp_year: token.card.exp_year,
-                                    fingerprint: card.fingerprint,
-                                    last4: token.card.last4,
-                                    bill_amount: bill_amount,
-                                    active: true,
-                                    updated_at: new Date(),
-                                    created_at: new Date(),
-                                })
-    
-                                payment.save().then(_payment=>{
-                                    currentUser['payment'] = _payment.id
-                                    currentUser.save().then(()=>{
-                                        return res.send({
-                                            status: true,
-                                            data: _payment.id
-                                        });
-                                    }).catch(err=>{
-                                        console.log('err', err)
-                                    })
-                                })
-                                }).catch((err)=>{
-                                console.log('creating subscripition error', err)
-                                return res.status(400).send({
-                                    status: false,
-                                    eror: err
-                                })
+                    updateSubscription(customer.id, pricingPlan, card.id).then(subscription => {
+                        // Save card information to DB.
+                        const payment = new Payment({
+                            email: currentUser.email,
+                            customer_id: customer.id,
+                            plan_id: pricingPlan,
+                            token: token.id,
+                            card_id: card.id,
+                            subscription: subscription.id,
+                            card_brand: token.card.brand,
+                            card_name: token.card_name,
+                            exp_month: token.card.exp_month,
+                            exp_year: token.card.exp_year,
+                            fingerprint: card.fingerprint,
+                            last4: token.card.last4,
+                            bill_amount: bill_amount,
+                            active: true,
+                            updated_at: new Date(),
+                            created_at: new Date(),
+                        })
+                        
+                        payment.save().then(_payment=>{
+                            currentUser['payment'] = _payment.id
+                            currentUser.save().then(()=>{
+                                return res.send({
+                                    status: true,
+                                    data: _payment.id
+                                });
+                            }).catch(err=>{
+                                console.log('err', err)
                             })
+                        })
+                    }).catch((err)=>{
+                        console.log('creating subscripition error', err)
+                        return res.status(400).send({
+                            status: false,
+                            eror: err
+                        })
+                    })
                 });
             }).catch(err=>{
                 console.log('err', err)
@@ -230,7 +227,6 @@ const update = async(req, res) =>{
                 token.id,
                 function(err, _token) {
                   // asynchronously called
-                console.log('_**********', _token)
                 if(!_token){
                     return res.send({
                         status: false,
@@ -255,27 +251,27 @@ const update = async(req, res) =>{
                                 error: "Card is not valid"
                             });
                         }
-            
-                            updateSubscription(payment['customer_id'], plan_id, card.id).then(subscription => {
-                                // Save card information to DB.
-                                payment['plan_id'] = plan_id
-                                payment['token'] = token.id
-                                payment['card_id'] = card.id
-                                payment['card_name'] = token.card_name
-                                payment['card_brand'] = token.card.brand
-                                payment['exp_month'] = token.card.exp_month
-                                payment['exp_year'] = token.card.exp_year
-                                payment['last4'] = token.card.last4
-                                payment['subscription'] = subscription.id
-                                payment['fingerprint'] = card.fingerprint
-                                payment['updated_at'] = new Date()
-                                payment.save()
+                        
+                        updateSubscription(payment['customer_id'], plan_id, card.id).then(subscription => {
+                            // Save card information to DB.
+                            payment['plan_id'] = plan_id
+                            payment['token'] = token.id
+                            payment['card_id'] = card.id
+                            payment['card_name'] = token.card_name
+                            payment['card_brand'] = token.card.brand
+                            payment['exp_month'] = token.card.exp_month
+                            payment['exp_year'] = token.card.exp_year
+                            payment['last4'] = token.card.last4
+                            payment['subscription'] = subscription.id
+                            payment['fingerprint'] = card.fingerprint
+                            payment['updated_at'] = new Date()
+                            payment.save()
                      
-                                return res.send({
-                                            status: true,
-                                            data: currentUser.payment
-                                        });
-                            }).catch((err)=>{
+                            return res.send({
+                                status: true,
+                                data: currentUser.payment
+                            });
+                        }).catch((err)=>{
                                 console.log('creating subscripition error', err)
                                 return res.status(400).send({
                                     status: false,
@@ -289,12 +285,9 @@ const update = async(req, res) =>{
                 const customer_id = payment['customer_id']
                 const card = token.card
                 const card_id = payment['card_id']
-                console.log('card_id', card_id)
-                console.log('card***********', token.card)
-                console.log('customer_id', customer_id)
-                updateCard(customer_id, card_id, {name: token.card_name})
+                delete card.id
+                updateCard(customer_id, card_id, card)
                     .then(_card=>{
-                    console.log('card', _card)
                     // Save card information to DB.
                         payment['card_name'] = token.card_name
                         payment['card_brand'] = token.card.brand

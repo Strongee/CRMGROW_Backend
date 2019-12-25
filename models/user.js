@@ -52,6 +52,7 @@ const User = mongoose.model('user',{
      expired_at: Date,
      created_at: Date,
      updated_at: Date,
+     last_logged: Date,
      del: {type: Boolean, default: false}
  });
 
