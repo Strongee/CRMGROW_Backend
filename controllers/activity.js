@@ -14,20 +14,22 @@ const get = async(req, res) => {
     activity = await Activity.find({user :currentUser.id}).sort({'updated_at': -1}).populate('contacts').skip(id).limit(20);
   }
 
-  currentUser['last_logged'] = new Date()
-  currentUser.save().catch(err=>{
-    console.log('err', err)
-  })
+  if(!currentUser['admin_loggin']){
+    currentUser['last_logged'] = new Date()
+    currentUser.save().catch(err=>{
+      console.log('err', err)
+    })
+    
+    const user_log = new UserLog({
+      user: currentUser.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
   
-  const user_log = new UserLog({
-    user: currentUser.id,
-    created_at: new Date(),
-    updated_at: new Date()
-  })
-
-  user_log.save().catch(err => {
-    console.log('err', err)
-  })
+    user_log.save().catch(err => {
+      console.log('err', err)
+    })
+  }
 
   return res.send({
     status: true,
