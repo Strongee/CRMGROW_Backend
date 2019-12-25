@@ -7,6 +7,7 @@ const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
+const { isBlockedEmail } = require('../helpers/validation') 
 const sgMail = require('@sendgrid/mail')
 const {google} = require('googleapis')
 const outlook = require('node-outlook')
@@ -1023,14 +1024,6 @@ const closeAccount = async(req, res) =>{
     return res.send({
       status: true,
     })
-}
-
-const isBlockedEmail = (email) => {
-  let mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
-  let me = /^[a-z0-9](\.?[a-z0-9]){2,}@me\.com$/;
-  let icloud = /^[a-z0-9](\.?[a-z0-9]){2,}@icloud\.com$/;
-  let yahoo = /^[a-z0-9](\.?[a-z0-9]){2,}@yahoo\.com$/;
-  return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase()) || yahoo.test(String(email).toLowerCase());
 }
 
 const checkSuspended = async(req, res, next) =>{

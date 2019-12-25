@@ -18,7 +18,7 @@ router.post('/'
     body('cell_phone').isLength({ min: 9 }).matches(/^[\+\d]?(?:[\d-.\s()]*)$/).withMessage('cell_phone must be a valid phone number!')
   ]
   , catchError(UserCtrl.signUp))
-
+  
 // Login 
 router.post('/login', [
     body('email').optional().isLength({ min: 3 }),
