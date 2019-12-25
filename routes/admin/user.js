@@ -37,7 +37,7 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 router.get('/profile/:id', catchError(UserCtrl.getProfile))
 
 // Get Page users
-router.get('/list/:page', catchError(UserCtrl.getAll))
+router.post('/list/:page', catchError(UserCtrl.getAll))
 
 
 // New Password by old one

@@ -158,14 +158,30 @@ const editMe = async(req, res) =>{
 
 const getAll = async (req, res, next) => {
   const page = req.params.page;
+  const search = {...req.body};
   const skip = (page - 1) * 15;
-  const _users = await User.aggregate([
-    {$skip: skip},
-    {$limit: 15},
-    {$project: {'salt': 0, 'hash': 0}}
-  ]);
-  const total = await User.countDocuments({});
-  await User.populate(_users, {path: 'payment'})
+  const _users = await User.find({
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'role': {$ne: 'admin'}
+      }
+    ]
+    
+  }).skip(skip).limit(15).select({'salt': 0,'hash': 0}).populate('payment');
+  const total = await User.countDocuments({
+    $or: [
+      {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+      {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+      {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+    ]
+  });
   if(!_users){
     return res.status(400).json({
       status: false,

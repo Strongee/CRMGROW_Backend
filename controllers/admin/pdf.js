@@ -226,6 +226,30 @@ const remove = async (req, res) => {
     }
 }
 
+getPdfs = async (req, res) => {
+  const page = req.params.page;
+  const skip = (page - 1) * 12;
+
+  const pdfs = await PDF.aggregate([
+    {$skip: skip},
+    {$limit: 12}
+  ]).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+  });
+  await PDF.populate(pdfs, {path: 'user', select: 'user_name picture_profile'});
+
+  const pdfCounts = await PDF.countDocuments({});
+
+  res.send({
+    status: true,
+    data: pdfs,
+    total: pdfCounts
+  })
+}
+
 module.exports = {
     create,
     updateDetail,
@@ -233,5 +257,6 @@ module.exports = {
     getPreview,
     getAll,
     sendPDF,
-    remove
+    remove,
+    getPdfs
 }
