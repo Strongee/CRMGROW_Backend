@@ -646,7 +646,7 @@ const bulkEmail = async(req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
-            videos: video,
+            videos: video.id,
             created_at: new Date(),
             updated_at: new Date(),
             subject: subject,
@@ -660,8 +660,6 @@ const bulkEmail = async(req, res) => {
             console.log('err', err)
           })
           
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          video_links += '<a href="' + video_link + '"><img src="'+preview+'"/></a><br/>'
           video_subject += `${video.title} `
           if(j < videos.length-1){
             video_titles = video_titles + video.title + ', '  
@@ -774,10 +772,9 @@ const bulkText = async(req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
-            videos: video,
+            videos: video.id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
             description: content
           })
           

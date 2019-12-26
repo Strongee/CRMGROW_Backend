@@ -497,14 +497,19 @@ const paymentSucceed = async(req, res) => {
         user.save().catch(err=>{
             console.log('err', err)
         })
+        return res.send({
+            status: true
+          })
     }else{
         console.log('Payment not found for user: ', customer_id )
+        return res.status(400).json({
+            status: false,
+            error: `Couldn't find user ${customer_id}`
+        })
     }
     
     
-    return res.send({
-      status: true
-    })
+    
 }    
 
 module.exports = {
