@@ -484,18 +484,23 @@ const paymentSucceed = async(req, res) => {
     const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
       console.log('err', err)
     })
-    const user = await User.findOne({payment: payment, del: false}).catch(err=>{
+    const user = await User.findOne({payment: payment.id, del: false}).catch(err=>{
       console.log('err', err)
     })
     
-    user['subscription']['is_failed'] = false
-    user['subscription']['updated_at'] = new Date()
-
-    user['updated_at'] = new Date()
-
-    user.save().catch(err=>{
-        console.log('err', err)
-    })
+    if(user){
+        user['subscription']['is_failed'] = false
+        user['subscription']['updated_at'] = new Date()
+    
+        user['updated_at'] = new Date()
+    
+        user.save().catch(err=>{
+            console.log('err', err)
+        })
+    }else{
+        console.log('Payment not found for user: ', customer_id )
+    }
+    
     
     return res.send({
       status: true
