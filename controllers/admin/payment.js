@@ -1,6 +1,8 @@
 const config = require('../../config/config')
 const stripeKey = config.STRIPE.SECRET_KEY
 const stripe = require('stripe')(stripeKey)
+const Payment = require('../../models/payment')
+const User = require('../../models/user')
 
 const getTransactions = async(req, res) => {
   const customer_id = req.params.id
@@ -25,14 +27,34 @@ const getTransactions = async(req, res) => {
 const getCustomers = async(req, res) => {
   stripe.customers.list(
     {limit: config.STRIPE.LIMIT},
-    function(err, customers) {
+    async function(err, customers) {
       if(err){
         console.log('err', err)
         return res.status(400).json({
           error: err
         })
       }
-      const data = customers.data
+      let data = []
+      const payments = customers.data
+      for(let i =0; i<payments.length; i++){
+        const customer = payments[i]
+        const payment = await Payment.findOne({customer_id: customer.id})
+        if(payment){
+          const _user = await User.findOne({payment: payment.id})
+          if(_user){
+            console.log('_user', _user)
+            myJSON = JSON.stringify(_user)
+            const user = JSON.parse(myJSON)
+            user.payment = payment
+            data.push(user)
+          }else{
+            console.log('customer id err:', customer.id)
+          }
+        }else{
+          console.log('customer id err:', customer.id)
+        }    
+      }
+      
       return res.send({
         status: true,
         data
