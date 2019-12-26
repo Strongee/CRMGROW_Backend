@@ -47,7 +47,7 @@ router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail))
 
 // Get all video
-router.get('/:page', catchError(VideoCtrl.getVideos))
+router.get('/list/:page', catchError(VideoCtrl.getVideos))
 // // Get a video
 // router.get('/:id', catchError(VideoCtrl.get))
 

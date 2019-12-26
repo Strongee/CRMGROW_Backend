@@ -59,5 +59,7 @@ router.post('/send', UserCtrl.checkAuth, catchError(PDFCtrl.sendPDF))
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
 
+router.get('/list/:page', catchError(PDFCtrl.getPdfs))
+
 
 module.exports = router
