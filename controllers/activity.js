@@ -5,7 +5,7 @@ const User = require('../models/user')
 
 const get = async(req, res) => {
   const { currentUser } = req
-  const count = await Activity.find({user: currentUser.id}).countDocuments()
+  const count = await Activity.countDocuments({user: currentUser.id})
   let activity
   if(typeof req.params.id == 'undefined'){
     activity = await Activity.find({user :currentUser.id}).sort({'updated_at': -1}).populate('contacts').limit(20);

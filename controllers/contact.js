@@ -75,7 +75,7 @@ const getByLastActivity = async (req, res) => {
     })
   }
 
-  const count = await Contact.find({ user: currentUser.id }).countDocuments()
+  const count = await Contact.countDocuments({ user: currentUser.id })
 
   return res.send({
     status: true,
@@ -158,7 +158,7 @@ const create = async (req, res) => {
   let count = 0
 
   if (!currentUser.contact) {
-    count = await Contact.find({ user: currentUser.id }).countDocuments()
+    count = await Contact.countDocuments({ user: currentUser.id })
     max_count = config.MAX_CONTACT
   } else {
     count = currentUser.contact.count
@@ -786,7 +786,7 @@ const importCSV = async (req, res) => {
   let count = 0
   let max_count = 0
   if (!currentUser.contact) {
-    count = await Contact.find({ user: currentUser.id }).countDocuments()
+    count = await Contact.countDocuments({ user: currentUser.id })
     max_count = config.MAX_CONTACT
   } else {
     count = currentUser.contact.count
