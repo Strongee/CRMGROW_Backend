@@ -58,26 +58,30 @@ const play1 = async(req, res) => {
     console.log('err', err)
   })
   
-  const data = activity['user']
-  myJSON = JSON.stringify(data)
-  const user = JSON.parse(myJSON);
-  delete user.hash
-  delete user.salt
-  delete user.payment
-  
-  const video = activity['videos']
-  
-  let pattern = /^((http|https|ftp):\/\/)/;
-  
-  if(!pattern.test(user.learn_more)) {
-      user.learn_more = "http://" + user.learn_more;
+  if(activity){
+    const data = activity['user']
+    myJSON = JSON.stringify(data)
+    const user = JSON.parse(myJSON);
+    delete user.hash
+    delete user.salt
+    delete user.payment
+    
+    const video = activity['videos']
+    
+    let pattern = /^((http|https|ftp):\/\/)/;
+    
+    if(!pattern.test(user.learn_more)) {
+        user.learn_more = "http://" + user.learn_more;
+    }
+    return res.render('video1', {
+        video: video,
+        user: user,
+        contact: activity['contacts'],
+        activity: activity.id
+    })
+  }else{
+    return res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
   }
-  res.render('video1', {
-      video: video,
-      user: user,
-      contact: activity['contacts'],
-      activity: activity.id
-  })
 }
 
 const pipe = async(req, res) =>{
