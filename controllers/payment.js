@@ -507,9 +507,6 @@ const paymentSucceed = async(req, res) => {
             error: `Couldn't find user ${customer_id}`
         })
     }
-    
-    
-    
 }    
 
 module.exports = {

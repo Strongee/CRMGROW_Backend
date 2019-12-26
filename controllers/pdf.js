@@ -31,12 +31,18 @@ const play = async(req, res) => {
   const pdf_id = req.query.pdf
   const sender_id = req.query.user
   const pdf = await PDF.findOne({_id: pdf_id})
-  const sender = await User.findOne({_id: sender_id})
+  const sender = await User.findOne({_id: sender_id, del: false})
  
-  res.render('pdf', {
+   
+  if(sender){
+    res.render('pdf', {
       pdf: pdf,
       sender: sender
-  })
+    })
+  } else {
+    res.send('Sorry! This pdf link is expired for some reason. Please try ask to sender to send again.')
+  }
+  
 }
 
 const play1 = async(req, res) => {  

@@ -6,6 +6,7 @@ const Contact = require('../../models/contact')
 const Tag = require('../../models/tag')
 const Appointment = require('../../models/appointment')
 const Activity = require('../../models/activity')
+const Reminder = require('../../models/reminder')
 const PaymentCtrl = require('../../controllers/payment')
 const { isBlockedEmail } = require('../../helpers/helper') 
 const config = require('../../config/config')
@@ -86,14 +87,12 @@ const login = async (req, res) => {
     .exec();  
   }
 
-
   if (!_user) {
     return res.status(401).json({
       status: false,
       error: 'Invalid email or password!'
     })
   }
-
 
   // Check password
   const hash = crypto.pbkdf2Sync(password, _user.salt, 10000, 512, 'sha512').toString('hex');
@@ -103,7 +102,6 @@ const login = async (req, res) => {
       error: 'Invalid email or password!'
     })
   }
-
 
   // TODO: Include only email for now
   const token = jwt.sign({id:_user.id}, config.JWT_SECRET)
@@ -385,20 +383,18 @@ const create = async (req, res) => {
 
 const closeAccount = async(req, res) =>{
 
-  const user = await User.findOne({_id: req.params.id})
-  const data = await Contact.find({user: req.params.id})
-  if (!data) {
-      return false;
-  }
-
-  for(let i=0; i<data.length; i++){
-    const contact = data[i]
-    await Contact.deleteOne({_id: contact})
-    await Activity.deleteMany({contacts: contact})
-    await FollowUp.deleteMany({contact: contact})
-    await Appointment.deleteMany({contact: contact})
-  }
-  await Tag.deleteMany({user: req.params.id})
+  const user = await User.findOne({_id: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
+  if(user){
+    await Contact.deleteMany({user: user.id})
+    await Activity.deleteMany({user: user.id})
+    await FollowUp.deleteMany({user: user.id})
+    await Appointment.deleteMany({user: user.id})
+    await Reminder.deleteMany({user: user.id})
+    await Tag.deleteMany({user: user.id})
+  } 
+  
   if(user['payment']){
     PaymentCtrl.cancelCustomer(user['payment']).catch(err=>{
       console.log('err', err)
@@ -415,14 +411,14 @@ const closeAccount = async(req, res) =>{
 }
 
 module.exports = {
-    signUp,
-    login,
-    editMe,
-    getAll,
-    getProfile,
-    resetPasswordByOld,
-    checkAuth,
-    create,
-    closeAccount
+  signUp,
+  login,
+  editMe,
+  getAll,
+  getProfile,
+  resetPasswordByOld,
+  checkAuth,
+  create,
+  closeAccount
 }
 

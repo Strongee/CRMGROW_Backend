@@ -35,7 +35,7 @@ const signUp = async (req, res) => {
         error: errors.array()
       })
     }
-    let _user = await User.findOne({ email: req.body.email })
+    let _user = await User.findOne({ email: req.body.email, del: false })
     if(_user != null){
       res.status(400).send({
         status: false,
@@ -234,10 +234,9 @@ const login = async (req, res) => {
   let _user = await User.findOne({ email:  new RegExp(email, "i"), del: false })
 
   if(!_user) {
-    _user = await User.findOne({ user_name: user_name })
+    _user = await User.findOne({ user_name: email })
     .exec();  
   }
-
 
   if (!_user) {
     return res.status(401).json({

@@ -38,7 +38,7 @@ const play = async(req, res) => {
   const video = await Video.findOne({_id: video_id}).catch(err=>{
     console.log('err', err)
   })
-  const sender = await User.findOne({_id: sender_id}).catch(err=>{
+  const sender = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
  
