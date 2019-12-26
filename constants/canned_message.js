@@ -8,8 +8,10 @@ const canned_message = [
   'contact_phone',
   'video_title',
   'video_link',
-  'video_title:video_description',
+  'video_description',
+  'video_object',
   'pdf_title',
   'pdf_description',
+  'pdf_object'
 ]
 module.exports = canned_message;

@@ -7,6 +7,7 @@ const EmailTemplate = mongoose.model('email_template',{
     content: String,
     role: String,
     type: String,
+    default: {type: Boolean, default: false},
     category: String,
     created_at: Date,
     updated_at: Date,
