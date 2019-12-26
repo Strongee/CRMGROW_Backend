@@ -527,7 +527,7 @@ const bulkEmail = async(req, res) => {
       if(subject == '' ){
         subject = 'PDF: ' + pdf_subject
       } else {
-        subject.replace(/{pdf_title}/ig, pdf_subject)
+        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
       }
     
         if(content.search(/{pdf_object}/ig) != -1){
