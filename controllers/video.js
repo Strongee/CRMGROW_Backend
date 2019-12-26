@@ -641,12 +641,13 @@ const bulkEmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
+          console.log('video._id', video._id)
           const _activity = new Activity({
             content: currentUser.user_name + ' sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
-            videos: video.id,
+            videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
             subject: subject,
@@ -773,7 +774,7 @@ const bulkText = async(req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
-            videos: video.id,
+            videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
             description: content
