@@ -261,6 +261,9 @@ const login = async (req, res) => {
   } else {
     _user['admin_loggin'] = false
   }
+  _user.save().catch(err=>{
+    console.log('err', err)
+  })
   // TODO: Include only email for now
   const token = jwt.sign({id:_user.id}, config.JWT_SECRET, { expiresIn: '30d'})
   myJSON = JSON.stringify(_user)
