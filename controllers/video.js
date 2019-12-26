@@ -670,7 +670,7 @@ const bulkEmail = async(req, res) => {
             video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
-          const video_object = `<p>VIDEO: <b>${video.title}</b><br/><br/>
+          const video_object = `<p style="max-width: 800px;">VIDEO: <b>${video.title}</b><br/><br/>
                                   DESCRIPTION: ${video.description}<br/><br/>
                                   <a href="${video_link}"><img src="${preview}"/></a><br/>
                                 </p>`
@@ -686,7 +686,7 @@ const bulkEmail = async(req, res) => {
         if(content.search(/{video_object}/ig) != -1){
           content = content.replace(/{video_object}/ig, video_objects)
         }else{
-          content = content+'</p>'+video_objects
+          content = content+video_objects
         }
         
         if(content.search(/{video_title}/ig) != -1){
@@ -732,6 +732,160 @@ const bulkEmail = async(req, res) => {
 }
 
 const bulkText = async(req, res) => {
+  const { currentUser } = req
+  let {content, videos, contacts} = req.body 
+  
+  if(contacts){
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can send max 15 contacts at a time'
+      })
+    }
+    
+    for(let i=0; i<contacts.length; i++){
+      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
+        console.log('err', err)
+      }) 
+      let video_titles = ''
+      let video_descriptions = ''
+      let video_objects = ''
+      for(let j=0; j<videos.length; j++){
+          const video = videos[j]         
+          let preview
+          if(video['preview']){
+            preview = video['preview']
+          } else {
+            preview = video['thumbnail'] + '?resize=true'
+          }
+      
+          
+          if(typeof content == 'undefined'){
+            content = ''
+          }
+          
+          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+          const _activity = new Activity({
+            content: currentUser.user_name + ' sent video using sms',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: video,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: subject,
+            description: content
+          })
+          
+          const activity = await _activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+          video_links += video_link + '\n'
+        
+          if(j < videos.length-1){
+            video_titles = video_titles + video.title + ', '  
+            video_descriptions = video_descriptions + `${video.description}, ` 
+          } else{
+            video_titles = video_titles + video.title
+            video_descriptions = video_descriptions + video.description
+          }
+          const video_object = `VIDEO: ${video.title}\n
+                                  DESCRIPTION: ${video.description}\n
+                                  ${video_link}\n\n`
+          video_objects = video_objects + video_object                      
+      }
+      
+      if(content.search(/{video_object}/ig) != -1){
+        content = content.replace(/{video_object}/ig, video_objects)
+      }else{
+        content = content+video_objects
+      }
+        
+      if(content.search(/{video_title}/ig) != -1){
+        content = content.replace(/{video_title}/ig, video_titles)
+      }
+        
+      if(content.search(/{video_description}/ig) != -1){
+        content = content.replace(/{video_description}/ig, video_descriptions)
+      }
+      
+      
+      
+      const e164Phone = phone(cell_phone)[0];
+      
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number'
+        }
+    
+        throw error // Invalid phone number
+      }
+      
+      let fromNumber = currentUser['proxy_number'];
+    
+      if(!fromNumber) {
+        const areaCode = currentUser.cell_phone.substring(1, 4)
+    
+        const data = await twilio
+        .availablePhoneNumbers('US')
+        .local.list({
+          areaCode: areaCode,
+        })
+      
+        let number = data[0];
+    
+        if(typeof number == 'undefined'){
+          const areaCode1 = currentUser.cell_phone.substring(1, 3)
+    
+          const data1 = await twilio
+          .availablePhoneNumbers('US')
+          .local.list({
+            areaCode: areaCode1,
+          })
+          number = data1[0];
+        }
+        
+        if(typeof number != 'undefined'){
+          const proxy_number = await twilio.incomingPhoneNumbers.create({
+            phoneNumber: number.phoneNumber,
+            smsUrl:  urls.SMS_RECEIVE_URL
+          })
+          
+          currentUser['proxy_number'] = proxy_number.phoneNumber;
+          fromNumber = currentUser['proxy_number'];
+          currentUser.save().catch(err=>{
+            console.log('err', err)
+          })
+        } else {
+          fromNumber = config.TWILIO.TWILIO_NUMBER
+        } 
+      }
+
+      twilio.messages.create({from: fromNumber, body: content,  to: e164Phone}).then(()=>{
+        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+      }).catch(err=>{
+        console.log('err', err)
+      })  
+    }
+    
+    return res.send({
+      status: true,
+    })
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
+  }
 }
 
 module.exports = {

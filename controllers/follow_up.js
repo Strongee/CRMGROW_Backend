@@ -419,7 +419,9 @@ const updateChecked  = async(req, res) =>{
           console.log('err', err)
         })
         
-        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups:follow_up})
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_up:follow_up}).catch(err=>{
+          console.log('err', err)
+        })
         if(reminder){
           reminder['del'] = true
           reminder.save().catch(err=>{
