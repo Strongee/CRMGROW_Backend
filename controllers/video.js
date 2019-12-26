@@ -684,7 +684,7 @@ const bulkEmail = async(req, res) => {
       if(subject == '' ){
         subject = 'VIDEO: ' + video_subject
       } else {
-        subject.replace(/{video_title}/ig, video_subject)
+        subject = subject.replace(/{video_title}/ig, video_subject)
       }
     
         if(content.search(/{video_object}/ig) != -1){
