@@ -376,7 +376,7 @@ const updateArchived = async(req, res) => {
         FollowUp.findByIdAndUpdate(follow_up, { $set: {status: -1} }).catch(err=>{
           console.log('err', err)
         })
-        const reminder = await Reminder.findOne({type: 'follow_up', follow_ups: follow_up.id})
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_up: follow_up.id})
         if(reminder){
           reminder['del'] = true
           reminder.save().catch(err=>{
