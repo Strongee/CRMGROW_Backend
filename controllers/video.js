@@ -668,6 +668,7 @@ const bulkEmail = async(req, res) => {
             video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
           const video_object = `<p style="max-width: 800px;">VIDEO: <b>${video.title}</b><br/><br/>
                                   DESCRIPTION: ${video.description}<br/><br/>
                                   <a href="${video_link}"><img src="${preview}"/></a><br/>

@@ -46,6 +46,10 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // Get the Specific User Profile
 router.get('/profile/:id', catchError(UserCtrl.getProfile))
 
+
+// Get the Specific User Profile
+router.delete('/:id', UserCtrl.checkAuth, catchError(UserCtrl.closeAccount))
+
 // Get Page users
 router.post('/list/:page', catchError(UserCtrl.getAll))
 

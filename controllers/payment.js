@@ -234,7 +234,6 @@ const update = async(req, res) =>{
                     });
                 }
                 if(payment['fingerprint'] != _token.card.fingerprint){
-                    console.log('_token.card', _token.card)
                     stripe.customers.deleteSource(
                         payment['customer_id'],
                         payment['card_id'],

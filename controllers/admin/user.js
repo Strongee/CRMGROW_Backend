@@ -7,6 +7,7 @@ const Tag = require('../../models/tag')
 const Appointment = require('../../models/appointment')
 const Activity = require('../../models/activity')
 const Reminder = require('../../models/reminder')
+const FollowUp = require('../../models/follow_up')
 const PaymentCtrl = require('../../controllers/payment')
 const { isBlockedEmail } = require('../../helpers/helper') 
 const config = require('../../config/config')
@@ -173,15 +174,25 @@ const getAll = async (req, res, next) => {
       },
       {
         'role': {$ne: 'admin'}
+      },
+      {
+        'del': false
       }
     ]
     
   }).skip(skip).limit(15).select({'salt': 0,'hash': 0}).populate('payment');
   const total = await User.countDocuments({
-    $or: [
-      {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
-      {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
-      {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'del': false
+      }
     ]
   });
   if(!_users){
@@ -400,7 +411,7 @@ const closeAccount = async(req, res) =>{
       console.log('err', err)
     })
   }
-  user['del'] = false
+  user['del'] = true
   user.save().catch(err=>{
     console.log('err', err)
   })
