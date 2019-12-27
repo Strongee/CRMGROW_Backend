@@ -42,10 +42,11 @@ const getCustomers = async(req, res) => {
         if(payment){
           const _user = await User.findOne({payment: payment.id})
           if(_user){
-            console.log('_user', _user)
             myJSON = JSON.stringify(_user)
             const user = JSON.parse(myJSON)
             user.payment = payment
+            delete user.hash
+            delete user.salt
             data.push(user)
           }else{
             console.log('customer id err:', customer.id)
