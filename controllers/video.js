@@ -9,10 +9,11 @@ const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const Contact = require('../models/contact')
-const { THUMBNAILS_PATH } = require('../config/path')
+const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
-const {TEMP_PATH, GIF_PATH } = require('../config/path')
+const mail_contents = require('../constants/mail_contents')
+
 const uuidv1 = require('uuid/v1')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
@@ -621,6 +622,8 @@ const bulkEmail = async(req, res) => {
       let video_descriptions = ''
       let video_objects = ''
       let video_subject = ''
+      let video_content = content
+
       for(let j=0; j<videos.length; j++){
           const video = videos[j]         
           let preview
@@ -631,8 +634,8 @@ const bulkEmail = async(req, res) => {
           }
       
           
-          if(typeof content == 'undefined'){
-            content = ''
+          if(typeof video_content == 'undefined'){
+            video_content = ''
           }
           
           subject = subject.replace(/{user_name}/ig, currentUser.user_name)
@@ -640,12 +643,11 @@ const bulkEmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          console.log('video._id', video._id)
           const _activity = new Activity({
             content: currentUser.user_name + ' sent video using email',
             contacts: contacts[i],
@@ -655,7 +657,7 @@ const bulkEmail = async(req, res) => {
             created_at: new Date(),
             updated_at: new Date(),
             subject: subject,
-            description: content
+            description: video_content
           })
           
           const activity = await _activity.save().then().catch(err=>{
@@ -665,7 +667,12 @@ const bulkEmail = async(req, res) => {
             console.log('err', err)
           })
           
-          video_subject += `${video.title} `
+          if(videos.length>=2){
+            video_subject = mail_contents.VIDEO_TITLE
+          }else{
+            video_subject = `${video.title}`
+          }
+          
           if(j < videos.length-1){
             video_titles = video_titles + video.title + ', '  
             video_descriptions = video_descriptions + `${video.description}, ` 
@@ -674,8 +681,8 @@ const bulkEmail = async(req, res) => {
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          const video_object = `<p style="max-width: 800px;">VIDEO: <b>${video.title}</b><br/><br/>
-                                  DESCRIPTION: ${video.description}<br/><br/>
+          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}</b><br/>
+                                  ${video.description}<br/>
                                   <a href="${video_link}"><img src="${preview}"/></a><br/>
                                 </p>`
           video_objects = video_objects + video_object                      
@@ -687,26 +694,26 @@ const bulkEmail = async(req, res) => {
         subject = subject.replace(/{video_title}/ig, video_subject)
       }
     
-        if(content.search(/{video_object}/ig) != -1){
-          content = content.replace(/{video_object}/ig, video_objects)
+        if(video_content.search(/{video_object}/ig) != -1){
+          video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          content = content+video_objects
+          video_content = video_content+video_objects
         }
         
         if(content.search(/{video_title}/ig) != -1){
-          content = content.replace(/{video_title}/ig, video_titles)
+          video_content = video_content.replace(/{video_title}/ig, video_titles)
         }
         
         if(content.search(/{video_description}/ig) != -1){
-          content = content.replace(/{video_description}/ig, video_descriptions)
+          video_content = video_content.replace(/{video_description}/ig, video_descriptions)
         }
         
         const msg = {
           to: _contact.email,
           from: `${currentUser.user_name} <${currentUser.email}>`,
           subject: subject,
-          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">'
-                +content+'<br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
         }
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -754,21 +761,15 @@ const bulkText = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
+      let video_content = content
       for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
-          let preview
-          if(video['preview']){
-            preview = video['preview']
-          } else {
-            preview = video['thumbnail'] + '?resize=true'
-          }
-      
+          const video = videos[j]           
           
-          if(typeof content == 'undefined'){
-            content = ''
+          if(typeof video_content == 'undefined'){
+            video_content = ''
           }
           
-          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -781,7 +782,7 @@ const bulkText = async(req, res) => {
             videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
-            description: content
+            description: video_content
           })
           
           const activity = await _activity.save().then().catch(err=>{
@@ -801,24 +802,24 @@ const bulkText = async(req, res) => {
             video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
-          const video_object = `VIDEO: ${video.title}\n
-                                  DESCRIPTION: ${video.description}\n
-                                  ${video_link}\n\n`
+          const video_object = `${video.title}\n
+                                ${video.description}\n
+                                ${video_link}\n\n`
           video_objects = video_objects + video_object                      
       }
       
-      if(content.search(/{video_object}/ig) != -1){
-        content = content.replace(/{video_object}/ig, video_objects)
+      if(video_content.search(/{video_object}/ig) != -1){
+        video_content = video_content.replace(/{video_object}/ig, video_objects)
       }else{
-        content = content+video_objects
+        video_content = video_content+video_objects
       }
         
-      if(content.search(/{video_title}/ig) != -1){
-        content = content.replace(/{video_title}/ig, video_titles)
+      if(video_content.search(/{video_title}/ig) != -1){
+        video_content = video_content.replace(/{video_title}/ig, video_titles)
       }
         
-      if(content.search(/{video_description}/ig) != -1){
-        content = content.replace(/{video_description}/ig, video_descriptions)
+      if(video_content.search(/{video_description}/ig) != -1){
+        video_content = video_content.replace(/{video_description}/ig, video_descriptions)
       }
       
       
@@ -873,8 +874,8 @@ const bulkText = async(req, res) => {
         } 
       }
 
-      twilio.messages.create({from: fromNumber, body: content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+      twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
+        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, video_content)
       }).catch(err=>{
         console.log('err', err)
       })  

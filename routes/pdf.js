@@ -58,6 +58,12 @@ router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDF
 // Send Video on text
 router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.sendText))
 
+// Bulk videos
+router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkEmail))
+
+// Bulk texts
+router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkTextl))
+
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
 

@@ -477,14 +477,15 @@ const bulkEmail = async(req, res) => {
       let pdf_descriptions = ''
       let pdf_objects = ''
       let pdf_subject = ''
+      let pdf_content = content
       for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
-          if(typeof content == 'undefined'){
-            content = ''
+          if(typeof pdf_content == 'undefined'){
+            pdf_content = ''
           }
           
-          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -494,11 +495,11 @@ const bulkEmail = async(req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
-            pdfs: pdf.id,
+            pdfs: pdf._id,
             created_at: new Date(),
             updated_at: new Date(),
             subject: subject,
-            description: content
+            description: pdf_content
           })
           
           const activity = await _activity.save().then().catch(err=>{
@@ -509,7 +510,13 @@ const bulkEmail = async(req, res) => {
           })
           
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-          pdf_subject += `${pdf.title} `
+          
+          if(pdfs.length>=2){
+            pdf_subject = mail_contents.PDF_TITLE
+          }else{
+            pdf_subject = `${pdf.title}`
+          }
+          
           if(j < pdfs.length-1){
             pdf_titles = pdf_titles + pdf.title + ', '  
             pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
@@ -517,8 +524,8 @@ const bulkEmail = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `<p style="max-width: 800px;">VIDEO: <b>${pdf.title}</b><br/><br/>
-                                  DESCRIPTION: ${pdf.description}<br/><br/>
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}</b><br/>
+                                  ${pdf.description}<br/>
                                   <a href="${pdf_link}"><img src="${pdf.preview}"/></a><br/>
                                 </p>`
           pdf_objects = pdf_objects + pdf_object                      
@@ -530,26 +537,26 @@ const bulkEmail = async(req, res) => {
         subject = subject.replace(/{pdf_title}/ig, pdf_subject)
       }
     
-        if(content.search(/{pdf_object}/ig) != -1){
-          content = content.replace(/{pdf_object}/ig, pdf_objects)
+        if(pdf_content.search(/{pdf_object}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
         }else{
-          content = content+pdf_objects
+          pdf_content = pdf_content+pdf_objects
         }
         
         if(content.search(/{pdf_title}/ig) != -1){
-          content = content.replace(/{pdf_title}/ig, pdf_titles)
+          pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
         }
         
         if(content.search(/{pdf_description}/ig) != -1){
-          content = content.replace(/{pdf_description}/ig, pdf_descriptions)
+          pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
         }
         
         const msg = {
           to: _contact.email,
           from: `${currentUser.user_name} <${currentUser.email}>`,
           subject: subject,
-          html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">'
-                +content+'<br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
+          html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
+                +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
         }
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -597,14 +604,15 @@ const bulkText = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
+      let pdf_content = pdf_content
       for(let j=0; j<pdf.length; j++){
           const pdf = pdfs[j]        
           
-          if(typeof content == 'undefined'){
-            content = ''
+          if(typeof pdf_content == 'undefined'){
+            pdf_content = ''
           }
           
-          content = content.replace(/{user_name}/ig, currentUser.user_name)
+          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -614,10 +622,10 @@ const bulkText = async(req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
-            pdfs: pdf.id,
+            pdfs: pdf._id,
             created_at: new Date(),
             updated_at: new Date(),
-            description: content
+            description: pdf_content
           })
           
           const activity = await _activity.save().then().catch(err=>{
@@ -637,9 +645,9 @@ const bulkText = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `PDF: ${pdf.title}\n
-                                  DESCRIPTION: ${pdf.description}\n
-                                  ${pdf_link}\n\n`
+          const pdf_object = `${pdf.title}\n
+                                ${pdf.description}\n
+                                ${pdf_link}\n\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -707,8 +715,8 @@ const bulkText = async(req, res) => {
         } 
       }
 
-      twilio.messages.create({from: fromNumber, body: content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
+      twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
+        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, pdf_content)
       }).catch(err=>{
         console.log('err', err)
       })  

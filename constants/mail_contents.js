@@ -32,7 +32,9 @@ const mail_contents = {
     NOTIFICATION_APPOINTMENT: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Appointment notification"
-    }
+    },
+    VIDEO_TITLE: "eXp Realty eXplained Videos",
+    PDF_TITLE: "eXp Realty eXplained PDFs"
 }
 
 module.exports = mail_contents;
