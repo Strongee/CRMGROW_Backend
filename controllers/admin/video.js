@@ -169,7 +169,7 @@ const getVideos = async (req, res) => {
 
   const videoCounts = await Video.countDocuments({"del": false});
 
-  res.send({
+  return res.send({
     status: true,
     data: videos,
     total: videoCounts
