@@ -231,11 +231,8 @@ const login = async (req, res) => {
     })
   }
   
-  console.log('email', email)
-  console.log('config.JWT_SECRET', config.JWT_SECRET)
   let _user = await User.findOne({ email:  new RegExp(email, "i"), del: false })
 
-  console.log('user', _user)
   if(!_user) {
     _user = await User.findOne({ user_name: email })
     .exec();  
