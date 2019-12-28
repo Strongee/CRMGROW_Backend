@@ -526,7 +526,7 @@ const bulkEmail = async(req, res) => {
           }
           const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}</b><br/>
                                   ${pdf.description}<br/>
-                                  <a href="${pdf_link}"><img src="${pdf.preview}"/></a><br/>
+                                  <a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/>
                                 </p>`
           pdf_objects = pdf_objects + pdf_object                      
       }
