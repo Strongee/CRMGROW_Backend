@@ -416,74 +416,68 @@ const sendBatch = async (req, res) => {
       error: 'Subject email must be specified'
     })
   }
+  
+  for (let i = 0; i < contacts.length; i++) {  
+    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+    content = video_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
     const msg = {
       from: `${currentUser.user_name} <${currentUser.email}>`,
       subject: subject,
-      to: to,
+      to: to[i],
       cc: cc,
       bcc: bcc,
       text: content,
       html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     };
-
-    sgMail.send(msg).then(async(_res) => {
-    
+    sgMail.send(msg).then(async(_res) => {     
       console.log('mailres.errorcode', _res[0].statusCode);
       if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
         console.log('Successful send to '+msg.to)
-        
         const email = new Email({
           ...req.body,
-          contact: contacts,
+          contact: contacts[i],
           message_id: _res[0].headers['x-message-id'],
           user: currentUser.id,
           updated_at: new Date(),
           created_at: new Date()
         })
-      
+        
         const _email = await email.save().then().catch(err => {
           console.log('err', err)
         })
-        let data_list = []
-        for (let i = 0; i < contacts.length; i++) {
-          const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-      
-          const _activity = await activity.save().then()
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-            console.log('err', err)
-          })
-          myJSON = JSON.stringify(_email)
-          const data = JSON.parse(myJSON);
-          data.activity = _activity
-          data_list.push(data)
-        }
-        return res.send({
-          status: true,
-          data: data_list
+        
+        const activity = new Activity({
+          content: currentUser.user_name + ' sent email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
         })
         
+        const _activity = await activity.save().then()
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+          console.log('err', err)
+        })
       }else {
         console.log('email sending err', msg.to+_res[0].statusCode)
-        return res.status(500).send({
-          status: false,
-          error: 'internal_server_error'
-        })
       }
     }).catch(err => {
       console.log('err', err)
-      return res.status(500).send({
-        status: false,
-        error: 'internal_server_error'
-      })
     })
+  }
+  return res.send({
+    status: true,
+  })
 }
 
 const sendEmail = async (req, res) => {
