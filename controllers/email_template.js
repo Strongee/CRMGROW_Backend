@@ -21,9 +21,16 @@ const get = async(req, res) => {
 const getTemplates = async(req, res) => {
   const { currentUser } = req;
   const page = req.params.page;
-  const params = {...req.body};
-  const templates = await EmailTemplate.find(params).skip((page-1) * 10).limit(10);
-  const total = await EmailTemplate.countDocuments(params);
+  const templates = await EmailTemplate.find(
+    {$or: [
+      {user: currentUser.id},
+      {role: 'admin'}
+    ]}
+  ).skip((page-1) * 10).limit(10);
+  const total = await EmailTemplate.countDocuments({$or: [
+    {user: currentUser.id},
+    {role: 'admin'}
+  ]});
   return res.json({
     status: true,
     data: templates,
@@ -55,8 +62,9 @@ const create = async(req, res) => {
 }
 
 const update = async(req, res) => {
+  const { currentUser } = req
   const id = req.params.id;  
-  EmailTemplate.find({_id: id}).updateOne({$set: {...req.body}}).then(() => {
+  EmailTemplate.find({_id: id, user: currentUser.id}).updateOne({$set: {...req.body}}).then(() => {
     res.send({
       status: true
     })
@@ -71,7 +79,7 @@ const update = async(req, res) => {
 const remove = async (req, res) => {
   const id = req.params.id;
 
-  EmailTemplate.deleteOne({_id: id}).then(() => {
+  EmailTemplate.deleteOne({_id: id, user: currentUser.id}).then(() => {
     return res.send({
       status: true
     })
@@ -86,7 +94,7 @@ const remove = async (req, res) => {
 const bulkRemove = (req, res) => {
   const {ids} = req.body;
 
-  EmailTemplate.deleteMany({_id: {$in: ids}}).then(() => {
+  EmailTemplate.deleteMany({_id: {$in: ids}, user: currentUser.id}).then(() => {
     res.send({
       status: true
     })
@@ -113,7 +121,11 @@ const search = async (req, res) => {
           { content: { '$regex': '.*' + str + '.*', '$options': 'i' } },
         ]
       },
-      {user: currentUser.id}
+      { $or: [
+          {user: currentUser.id},
+          {role: 'admin'}
+        ]
+      }
     ]
   });
 
