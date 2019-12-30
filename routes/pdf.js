@@ -62,7 +62,7 @@ router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErro
 router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkEmail))
 
 // Bulk texts
-router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkTextl))
+router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkText))
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
