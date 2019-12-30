@@ -78,7 +78,7 @@ const update = async(req, res) => {
 
 const remove = async (req, res) => {
   const id = req.params.id;
-
+  const {currentUser} = req
   EmailTemplate.deleteOne({_id: id, user: currentUser.id}).then(() => {
     return res.send({
       status: true
