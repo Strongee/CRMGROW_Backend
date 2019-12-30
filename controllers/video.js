@@ -823,7 +823,7 @@ const bulkText = async(req, res) => {
       
       
       
-      const e164Phone = phone(cell_phone)[0];
+      const e164Phone = phone(_contact.cell_phone)[0];
       
       if (!e164Phone) {
         const error = {
@@ -874,7 +874,7 @@ const bulkText = async(req, res) => {
       }
 
       twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, video_content)
+        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, video_content)
       }).catch(err=>{
         console.log('err', err)
       })  
