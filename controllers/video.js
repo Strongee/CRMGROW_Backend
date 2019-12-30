@@ -793,7 +793,6 @@ const bulkText = async(req, res) => {
           })
           
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          video_links += video_link + '\n'
         
           if(j < videos.length-1){
             video_titles = video_titles + video.title + ', '  
