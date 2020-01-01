@@ -408,7 +408,7 @@ const sendBatch = async (req, res) => {
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const { currentUser } = req
-  const { cc, bcc, to, subject, content, contacts } = req.body
+  let { cc, bcc, to, subject, content, contacts } = req.body
 
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
