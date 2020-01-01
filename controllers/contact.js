@@ -418,6 +418,7 @@ const sendBatch = async (req, res) => {
   }
   
   for (let i = 0; i < contacts.length; i++) {  
+    const _contact = await Contact.findOne({_id: contacts[i]})
     subject = subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
