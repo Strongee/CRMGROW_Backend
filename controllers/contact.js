@@ -552,10 +552,6 @@ const receiveEmail = async(req, res) => {
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
   const update_data = {event: event}
-  console.log('message_id#######################', message_id)
-  console.log('event******************', event)
-  console.log('email*********************', email)
-  console.log('time_stamp', time_stamp)
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
       const user = await User.findOne({_id: _email.user}).catch(err=>{
@@ -613,9 +609,6 @@ const receiveEmail = async(req, res) => {
             console.log('err', err)
           }) 
         } else {
-          res.send({
-            status: true
-          })
           return;
         }
       }
@@ -693,6 +686,7 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
       }
+    console.log('here')
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
     const msg = {
         to: user.email,
