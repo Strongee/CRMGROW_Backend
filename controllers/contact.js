@@ -440,7 +440,8 @@ const sendBatch = async (req, res) => {
     };
     sgMail.send(msg).then(async(_res) => {     
       console.log('mailres.errorcode', _res[0].statusCode);
-      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){                
+      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){  
+        console.log('message_id*******************', message_id)
         console.log('Successful send to '+msg.to)
         const email = new Email({
           ...req.body,
@@ -552,6 +553,9 @@ const receiveEmail = async(req, res) => {
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
   const update_data = {event: event}
+  console.log('message_id#######################', message_id)
+  console.log('event******************', event)
+  console.log('email*********************', email)
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
       const user = await User.findOne({_id: _email.user}).catch(err=>{
