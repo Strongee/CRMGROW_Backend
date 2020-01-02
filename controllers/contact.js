@@ -441,7 +441,7 @@ const sendBatch = async (req, res) => {
     sgMail.send(msg).then(async(_res) => {     
       console.log('mailres.errorcode', _res[0].statusCode);
       if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){  
-        console.log('message_id*******************', message_id)
+        console.log('message_id*******************', _res[0].headers['x-message-id'])
         console.log('Successful send to '+msg.to)
         const email = new Email({
           ...req.body,
@@ -508,7 +508,6 @@ const sendEmail = async (req, res) => {
 
       email.save()
         .then(_email => {
-
           const activity = new Activity({
             content: currentUser.user_name + ' sent email',
             contacts: _contact.id,
@@ -556,6 +555,7 @@ const receiveEmail = async(req, res) => {
   console.log('message_id#######################', message_id)
   console.log('event******************', event)
   console.log('email*********************', email)
+  console.log('time_stamp', time_stamp)
   Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
       const user = await User.findOne({_id: _email.user}).catch(err=>{
@@ -692,7 +692,7 @@ const receiveEmail = async(req, res) => {
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
           email: `<a href="mailto:${email}">${email}</a>`,
           activity: contact.first_name + ' '+action+' email: '+ _email.subject + ' at ' + created_at,
-          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "' style='line-height:30px;background-color:#2c6fae;border-radius:5px;font-size:15px; padding:10px 25px 10px 25px;display:inline-block; text-decoration: none; color: white; font-size: 16px;'>View Contact</a>"
+          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
         },
     };
     sgMail.send(msg).catch(err => console.error(err)) 
