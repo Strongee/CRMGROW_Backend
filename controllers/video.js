@@ -802,7 +802,6 @@ const bulkText = async(req, res) => {
             video_descriptions = video_descriptions + video.description
           }
           const video_object = `${video.title}\n
-                                ${video.description}\n
                                 ${video_link}\n\n`
           video_objects = video_objects + video_object                      
       }
@@ -810,7 +809,7 @@ const bulkText = async(req, res) => {
       if(video_content.search(/{video_object}/ig) != -1){
         video_content = video_content.replace(/{video_object}/ig, video_objects)
       }else{
-        video_content = video_content+video_objects
+        video_content = video_content+'\n'+video_objects
       }
         
       if(video_content.search(/{video_title}/ig) != -1){

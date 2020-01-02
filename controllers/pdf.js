@@ -646,7 +646,6 @@ const bulkText = async(req, res) => {
             pdf_descriptions = pdf_descriptions + pdf.description
           }
           const pdf_object = `${pdf.title}\n
-                                ${pdf.description}\n
                                 ${pdf_link}\n\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
@@ -654,7 +653,7 @@ const bulkText = async(req, res) => {
       if(content.search(/{pdf_object}/ig) != -1){
         content = content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
-        content = content+pdf_objects
+        content = content+'\n'+pdf_objects
       }
         
       if(content.search(/{pdf_title}/ig) != -1){
