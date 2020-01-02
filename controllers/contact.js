@@ -686,7 +686,6 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
       }
-    console.log('here')
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
     const msg = {
         to: user.email,
