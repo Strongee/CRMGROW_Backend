@@ -574,37 +574,49 @@ const receiveEmail = async(req, res) => {
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
-        const email_tracker = new EmailTracker({
-          user: user.id,
-          contact: contact.id,
-          email: _email.id,
-          type: 'open',
-          activity: email_activity.id,
-          updated_at: opened,
-          created_at: opened,
-        })
-        const _email_tracker = await email_tracker.save().then().catch(err=>{
+        
+        let reopened = new Date(time_stamp*1000-5*60*1000)
+        const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
           console.log('err', err)
         })
         
-        const activity = new Activity({
-          content: contact.first_name + ' opened email',
-          contacts: contact.id,
-          user: user.id,
-          type: 'email_trackers',
-          emails: _email.id,
-          email_trackers: _email_tracker.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-    
-        const _activity = await activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-          console.log('err', err)
-        }) 
+        if(!old_activity){
+          const email_tracker = new EmailTracker({
+            user: user.id,
+            contact: contact.id,
+            email: _email.id,
+            type: 'open',
+            activity: email_activity.id,
+            updated_at: opened,
+            created_at: opened,
+          })
+          const _email_tracker = await email_tracker.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          
+          const activity = new Activity({
+            content: contact.first_name + ' opened email',
+            contacts: contact.id,
+            user: user.id,
+            type: 'email_trackers',
+            emails: _email.id,
+            email_trackers: _email_tracker.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+      
+          const _activity = await activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          
+          Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          }) 
+        } else {
+          return res.send({
+            status: true
+          })
+        }
       }
       if(event == 'click'){
         action = 'clicked'
