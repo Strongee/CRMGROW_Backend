@@ -613,9 +613,10 @@ const receiveEmail = async(req, res) => {
             console.log('err', err)
           }) 
         } else {
-          return res.send({
+          res.send({
             status: true
           })
+          return;
         }
       }
       if(event == 'click'){
