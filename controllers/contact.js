@@ -612,7 +612,7 @@ const receiveEmail = async(req, res) => {
         }
       }
       if(event == 'click'){
-        action = 'clicked'
+        action = 'clicked the link on'
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
@@ -630,7 +630,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' clicked email',
+          content: contact.first_name + ' clicked the link on email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
