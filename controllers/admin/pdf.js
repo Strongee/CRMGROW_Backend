@@ -110,7 +110,6 @@ const getAll = async (req, res) => {
   }
 
   const _pdf_list = await PDF.find({user: currentUser.id})
-  console.log('_pdf_list',_pdf_list)
   let _pdf_detail_list = [];
 
   for(let i = 0; i < _pdf_list.length; i ++){
@@ -188,31 +187,30 @@ const sendPDF = async (req, res) => {
 }
 
 const remove = async (req, res) => {
-    const { currentUser } = req
-    try {
-      const pdf = PDF.findOne({ user: currentUser.id, _id: req.params.id})
-  
-      if (pdf) {
-        fs.unlinkSync(PREVIEW_PATH + req.params.id)
-        res.send({
-          status: true,
-          data: {
-            file_name: req.params.id
-          }
-        })
-      } else {
-        res.status(404).send({
-          status: false,
-          error: 'preview_not_found'
-        })
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send({
-        status: false,
-        error: 'internal_server_error'
-      })
-    }
+  try {
+    const pdf = await PDF.findOne({ _id: req.params.id})
+    let url =  pdf.url
+    
+    s3.deleteObject({
+      Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+      Key: url.slice(44)
+    }, function (err,data){
+      console.log('err', err)
+    })
+
+    pdf['del'] = true
+    pdf.save()
+
+    res.send({
+      status: true,
+    })
+  } catch (e) {
+    console.error(e)
+    res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  }
 }
 
 getPdfs = async (req, res) => {
@@ -224,11 +222,9 @@ getPdfs = async (req, res) => {
     {$skip: skip},
     {$limit: 12}
   ]).catch(err => {
-    res.status(500).send({
-      status: false,
-      error: err
-    })
+    console.log('err', err)
   });
+    
   await PDF.populate(pdfs, {path: 'user', select: 'user_name picture_profile'});
 
   const pdfCounts = await PDF.countDocuments({});

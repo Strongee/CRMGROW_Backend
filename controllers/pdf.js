@@ -183,27 +183,32 @@ const getAll = async (req, res) => {
   let _pdf_detail_list = [];
 
   for(let i = 0; i < _pdf_list.length; i ++){
-    const _pdf_detail = await PDFTracker.aggregate([
-        {
-          $lookup:
-            {
-            from:  'pdfs',
-            localField: 'pdf',
-            foreignField: '_id',
-            as: "pdf_detail"
-            }
-        },
-        {
-          $match: { 
-                    "pdf": _pdf_list[i]._id,
-                    "user": currentUser._id
-                  }
-        }
-    ])
+    // const _pdf_detail = await PDFTracker.aggregate([
+    //     {
+    //       $lookup:
+    //         {
+    //         from:  'pdfs',
+    //         localField: 'pdf',
+    //         foreignField: '_id',
+    //         as: "pdf_detail"
+    //         }
+    //     },
+    //     {
+    //       $match: { 
+    //                 "pdf": _pdf_list[i]._id,
+    //                 "user": currentUser._id
+    //               }
+    //     }
+    // ])
+    
+    const view = await PDFTracker.countDocuments({
+      pdf: _pdf_list[i]._id,
+      user: currentUser._id
+    })
 
     myJSON = JSON.stringify(_pdf_list[i])
     const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, {"views": _pdf_detail.length})
+    const pdf_detail = await Object.assign(_pdf, {"views": view})
     _pdf_detail_list.push(pdf_detail)
   }
 

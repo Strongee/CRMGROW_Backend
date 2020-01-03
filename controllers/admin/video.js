@@ -213,24 +213,23 @@ const sendVideo = async (req, res) => {
 }
 
 const remove = async (req, res) => {
-    const { currentUser } = req
     try {
-      const video = Video.findOne({ user: currentUser.id, _id: req.params.id})
-  
-      if (video) {
-        fs.unlinkSync(THUMBNAILS_PATH + req.params.id)
-        res.send({
-          status: true,
-          data: {
-            file_name: req.params.id
-          }
-        })
-      } else {
-        res.status(404).send({
-          status: false,
-          error: 'thumbnail_not_found'
-        })
-      }
+      const video = await Video.findOne({ _id: req.params.id})
+      let url =  video.url
+      
+      s3.deleteObject({
+        Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+        Key: url.slice(44)
+      }, function (err,data){
+        console.log('err', err)
+      })
+
+      video['del'] = true
+      video.save()
+
+      return res.send({
+        status: true,
+      })
     } catch (e) {
       console.error(e)
       res.status(500).send({
