@@ -16,7 +16,6 @@ const create = async (req, res) => {
   if (req.file) {
       if(req.currentUser){
         const pdf = new PDF({
-          user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
           role: 'admin',
@@ -34,38 +33,28 @@ const create = async (req, res) => {
 }
 
 const updateDetail = async (req, res) => {
-  const {currentUser} = req
   if (req.body.preview) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.preview, PREVIEW_PATH, file_name)
-      const pdf = await PDF.findOne({user: currentUser.id, _id: req.params.id})
+    const pdf = await PDF.findOne({_id: req.params.id})
 
-      console.log('pdf', pdf)
-      if (!pdf) {
-        return res.status(400).json({
-          status: false,
-          error: 'Invalid_permission'
-        })
-      }
+    for (let key in editData) {
+      pdf[key] = editData[key]
+    }
+    
+    pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path) 
 
-      for (let key in editData) {
-        pdf[key] = editData[key]
-      }
+    pdf["updated_at"] = new Date()
 
-      pdf['preview'] = process.env.TEAMGROW_DOMAIN + '/api/pdf/preview/' + path.basename(file_path)
-
-      pdf["updated_at"] = new Date()
-
-      pdf.save().then((_pdf)=>{
-        res.send({
-          status: true,
-          data: _pdf
-        })
+    pdf.save().then((_pdf)=>{
+      return res.send({
+        status: true,
+        data: _pdf
       })
-
+    })
   }else{
-    res.status(400).json({
+    return res.status(400).json({
       status: false,
       error: 'Not_found_preview'
     })
