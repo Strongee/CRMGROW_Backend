@@ -2,6 +2,7 @@
     margin-left: auto;
     margin-right: auto;
     margin-top: 70px;
+    position: relative;
 }
 
 .view-container .description {
@@ -286,14 +287,28 @@ a.dropdown-item{
 }
 
 .pdf-controls{
-    position: relative;
+    /* position: relative; */
     height: 60px;
     display: none;
-    max-width: 600px;
-    margin: auto;
+    /* max-width: 600px; */
+    /* margin: auto; */
+    position: absolute;
+    top: 30%;
+    width: 100%;
+    max-width: unset;
+    left: 0px;
+    z-index: 10;
 }
 
 .pdf-controls.enable{
+    display: block;
+}
+
+.page-status{
+    display: none;
+}
+
+.page-status.enable{
     display: block;
 }
 
@@ -341,8 +356,8 @@ a.dropdown-item{
     font-size: 18px;
     margin-top: 20px;
     margin-bottom: 20px;
-    height: 60px;
-    line-height: 60px;
+    height: 36px;
+    line-height: 36px;
 }
 
 .page-status .page{
@@ -386,4 +401,28 @@ a.dropdown-item{
 @-webkit-keyframes spin {
     0% { -webkit-transform: rotate(0deg); }
     100% { -webkit-transform: rotate(360deg); }
+}
+
+#viewer:not(.enable) .pdf-outerdiv {
+    transform: scale(1)!important;
+    width: 100%!important;
+    left: 0px!important;
+    padding: 0px!important;
+    min-height: 300px!important;
+}
+
+#viewer:not(.enable) .pdf-outerdiv .pdf-viewer{
+    width: calc(100% - 5px)!important;
+    left: 0px!important;
+    min-height: 260px!important;
+}
+
+#viewer:not(.enable) .pdf-outerdiv .pdf-viewer .pdf-loading{
+    top: 0px!important;
+}
+
+@media screen and (max-width: 800px) {
+    .view-container {
+        margin-top: 100px;
+    }
 }

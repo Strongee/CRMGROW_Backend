@@ -35,17 +35,16 @@ head
       a.dropdown-item(href=`mailto:${user.email}`)  Email me
       a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
-  div#viewer
   .pdf-controls
     button.prev
         i.icon.icon-arrow-down
     button.next
         i.icon.icon-arrow-down
-    .page-status
-        span.current-page.page
-        |  / 
-        span.total-page.page
-
+  div#viewer  
+  .page-status
+    span.current-page.page
+    |  / 
+    span.total-page.page
   .description
     .desc-title
       | #{pdf.title}

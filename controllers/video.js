@@ -39,14 +39,14 @@ const play = async(req, res) => {
   const video = await Video.findOne({_id: video_id}).catch(err=>{
     console.log('err', err)
   })
-  const sender = await User.findOne({_id: sender_id, del: false}).catch(err=>{
+  const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
  
-  if(sender){
+  if(user){
     res.render('video', {
       video: video,
-      sender: sender
+      user: user
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')

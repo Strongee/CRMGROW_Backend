@@ -37,7 +37,7 @@ const play = async(req, res) => {
   if(sender){
     res.render('pdf', {
       pdf: pdf,
-      sender: sender
+      user: sender
     })
   } else {
     res.send('Sorry! This pdf link is expired for some reason. Please try ask to sender to send again.')

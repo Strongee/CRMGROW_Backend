@@ -5,8 +5,11 @@ $(function() {
     const displayControls = (e) => {
         let totalPages = $("#viewer").pdf("getTotalPages");
         total_pages = totalPages
+        $("#viewer").addClass('enable');
         $(".pdf-controls").addClass("enable");
         $(".page-status .total-page").text(totalPages);
+        $(".page-status").addClass("enable");
+
         $(window).resize();
         setTimeout(() => {
             resetHeight();
@@ -22,13 +25,15 @@ $(function() {
     }
 
     const resetHeight = () => {
-        let pdfDOM = document.querySelector(".pdf-outerdiv");
-        let realHeight = window.getComputedStyle(pdfDOM).height;
-        let transform = window.getComputedStyle(pdfDOM).transform;
-        let scale = transform.replace('matrix(', '').replace(')', '').split(',')[0];
-        scale = parseFloat(scale);
-        scale = scale == 0 ? 1 : scale;
-        document.querySelector("#viewer").style.height = parseFloat(realHeight) * scale + 30 + 'px';
+        if($("#viewer").hasClass("enable")){
+            let pdfDOM = document.querySelector(".pdf-outerdiv");
+            let realHeight = window.getComputedStyle(pdfDOM).height;
+            let transform = window.getComputedStyle(pdfDOM).transform;
+            let scale = transform.replace('matrix(', '').replace(')', '').split(',')[0];
+            scale = parseFloat(scale);
+            scale = scale == 0 ? 1 : scale;
+            document.querySelector("#viewer").style.height = parseFloat(realHeight) * scale + 30 + 'px';
+        }
     }
 
     $(".pdf-controls .prev").click(function(){
@@ -76,6 +81,7 @@ $(function() {
         duration: 0
     }
     var registered_flag = false
+    var reported = false;
     if( contact && activity ){
         socket = io.connect('https://app.crmgrow.com');
     }
@@ -93,12 +99,12 @@ $(function() {
             }
             else{
                 if( !reported ){
-                    console.log("disconnecting the video");
+                    console.log("disconnecting the pdf");
                     socket.emit('update_pdf', duration * 1000)
                     socket.emit('close')
                     reported = true;
                 }            
-            }                
+            }
         }
         total++;
     }
