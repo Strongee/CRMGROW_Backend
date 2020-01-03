@@ -636,7 +636,6 @@ const bulkText = async(req, res) => {
           })
           
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-          pdf_links += pdf_link + '\n'
         
           if(j < pdfs.length-1){
             pdf_titles = pdf_titles + pdf.title + ', '  
