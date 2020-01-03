@@ -12,6 +12,7 @@ const { FILES_PATH } = require('../../config/path')
 const { PREVIEW_PATH } = require('../../config/path')
 const config = require('../../config/config')
 const uuidv1 = require('uuid/v1')
+const AWS = require('aws-sdk')
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
