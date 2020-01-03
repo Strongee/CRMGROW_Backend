@@ -9,7 +9,13 @@ const User = require('../../models/user')
 const VideoTracker = require('../../models/video_tracker')
 const { FILES_PATH } = require('../../config/path')
 const { THUMBNAILS_PATH } = require('../../config/path')
+const config = require('../../config/config')
 const uuidv1 = require('uuid/v1')
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION
+})
 
 const create = async (req, res) => {
   if (req.file) {
@@ -214,7 +220,9 @@ const sendVideo = async (req, res) => {
 
 const remove = async (req, res) => {
     try {
-      const video = await Video.findOne({ _id: req.params.id})
+      const video = await Video.findOne({ _id: req.params.id}).catch(err=>{
+        console.log('err', err)
+      })
       let url =  video.url
       
       s3.deleteObject({
