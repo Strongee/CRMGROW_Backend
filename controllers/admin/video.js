@@ -7,16 +7,24 @@ const mime = require('mime-types')
 const Video = require('../../models/video')
 const User = require('../../models/user')
 const VideoTracker = require('../../models/video_tracker')
-const { FILES_PATH } = require('../../config/path')
+const { GIF_PATH } = require('../../config/path')
 const { THUMBNAILS_PATH } = require('../../config/path')
 const config = require('../../config/config')
 const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
+
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
   region: config.AWS.AWS_S3_REGION
 })
+
+const GIFEncoder = require('gifencoder');
+
+const extractFrames = require('ffmpeg-extract-frames')
+const { createCanvas, loadImage } = require('canvas')
+const pngFileStream = require('png-file-stream');
+const sharp = require('sharp');
 
 const create = async (req, res) => {
   if (req.file) {
@@ -40,45 +48,128 @@ const create = async (req, res) => {
 }
 
 const updateDetail = async (req, res) => {
-  const {currentUser} = req
-  if (req.body.thumbnail) { // base 64 image
-    const editData = req.body
+  const editData = req.body
+  let thumbnail;
+  if (req.body.thumbnail) { // base 64 image    
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-      const video = await Video.findOne({user: currentUser.id, _id: req.params.id})
+    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+  }
+  
+  const video = await Video.findOne({_id: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
 
-      console.log('video', video)
-      if (!video) {
-        return res.status(400).json({
-          status: false,
-          error: 'Invalid_permission'
-        })
-      }
-
-      for (let key in editData) {
-        video[key] = editData[key]
-      }
-
-      video['thumbnail'] = process.env.TEAMGROW_DOMAIN + '/api/video/thumbnail/' + path.basename(file_path)
-
-      video["updated_at"] = new Date()
-
-      video.save().then((_video)=>{
-        console.log('video', video)
-        res.send({
-          status: true,
-          data: _video
-        })
-      })
-
-  }else{
-    res.status(400).json({
-      status: false,
-      error: 'Not_found_thumbnail'
+  for (let key in editData) {
+    video[key] = editData[key]
+  }
+  if( thumbnail ){
+    video['thumbnail'] = thumbnail
+  }
+  
+  if(!video['preview']){
+    const file_path = video['path']
+    video['preview'] = await generatePreview(file_path).catch(err=>{
+      console.log('err', err)
     })
   }
+  
+  video['updated_at'] = new Date()
+  video.save().then((_video)=>{
+    res.send({
+      status: true,
+      data: _video
+    })
+  }).catch(err=>{
+    console.log('err', err)
+  })
 }
 
+const generatePreview = async(file_path) => {
+
+  return new Promise(async(resolve, reject) => {    
+    let offsets = []
+    for(let i=0; i<4000; i+=100){
+      offsets.push(i);
+    }
+    
+    await extractFrames({
+      input: file_path,
+      output: GIF_PATH+'screenshot-%i.jpg',
+      offsets: offsets
+    }).catch(err=>{
+      console.log('err', err)
+    });  
+    
+    const play = await loadImage(GIF_PATH+'play-button.png');
+    
+    const canvas = createCanvas(250, 140)
+    const ctx = canvas.getContext('2d');
+    const encoder = new GIFEncoder(250, 140);
+    
+    for(let i=1; i<40; i++){
+      image = await loadImage(GIF_PATH+`screenshot-${i}.jpg`);
+      
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play a video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+    }
+    const file_name = uuidv1()
+    const stream = pngFileStream(GIF_PATH+'frame-??.png')
+      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
+      .pipe(fs.createWriteStream(GIF_PATH+file_name));
+
+      stream.on('finish', () => {
+        if (fs.existsSync(GIF_PATH+file_name)) {
+          fs.readFile(GIF_PATH+file_name, (err, data) => {
+            if (err) throw err;
+            console.log('File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'gif' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err) throw s3Err
+              console.log(`File uploaded successfully at ${upload.Location}`)
+              
+              fs.unlinkSync(GIF_PATH+file_name)
+              resolve(upload.Location)
+            })
+         });}   
+      });
+      stream.on('error', err=>{
+        console.log('err', err)
+        reject(err)
+      });
+    });
+}
 
 const get = async (req, res) => {
   const video = await Video.findOne({_id: req.params.id})
@@ -102,13 +193,21 @@ const get = async (req, res) => {
 
 const getThumbnail = (req, res) => {
   const filePath = THUMBNAILS_PATH + req.params.name
+  
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
-    const contentType = mime.contentType(path.extname(req.params.name))
-    res.set('Content-Type', contentType)
-    res.sendFile(filePath)
+    if(req.query.resize){
+      const readStream = fs.createReadStream(filePath)
+      let transform = sharp()
+      transform = transform.resize(250, 140)
+      return readStream.pipe(transform).pipe(res)
+    }else{
+      const contentType = mime.contentType(path.extname(req.params.name))
+      res.set('Content-Type', contentType)
+      return res.sendFile(filePath)
+    }
   } else {
-    res.status(404).send({
+    return res.status(404).send({
       status: false,
       error: 'Thumbnail does not exist'
     })
