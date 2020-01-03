@@ -120,7 +120,7 @@ const getAll = async (req, res) => {
   }
 
   const _video_list = await Video.find({user: currentUser.id})
-  console.log('_video_list',_video_list)
+
   let _video_detail_list = [];
 
   for(let i = 0; i < _video_list.length; i ++){

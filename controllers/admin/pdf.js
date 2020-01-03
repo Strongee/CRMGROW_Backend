@@ -231,6 +231,7 @@ getPdfs = async (req, res) => {
   const skip = (page - 1) * 12;
 
   const pdfs = await PDF.aggregate([
+    {$match: { "del": false }},
     {$skip: skip},
     {$limit: 12}
   ]).catch(err => {
