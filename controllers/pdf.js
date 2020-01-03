@@ -524,8 +524,8 @@ const bulkEmail = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}</b><br/>
-                                  ${pdf.description}<br/>
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>
+                                  ${pdf.description}<br/><br/>
                                   <a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/>
                                 </p>`
           pdf_objects = pdf_objects + pdf_object                      
@@ -604,7 +604,7 @@ const bulkText = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
-      let pdf_content = pdf_content
+      let pdf_content = content
       for(let j=0; j<pdf.length; j++){
           const pdf = pdfs[j]        
           
