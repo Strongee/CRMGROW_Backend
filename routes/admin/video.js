@@ -10,6 +10,7 @@ const VideoCtrl = require('../../controllers/admin/video')
 const UserCtrl = require('../../controllers/user')
 const { catchError } = require('../../controllers/error')
 const config  = require('../../config/config')
+const { TEMP_PATH } = require('../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
