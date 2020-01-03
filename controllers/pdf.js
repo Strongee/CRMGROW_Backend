@@ -663,7 +663,7 @@ const bulkText = async(req, res) => {
         content = content.replace(/{pdf_description}/ig, pdf_descriptions)
       }
       
-      const e164Phone = phone(cell_phone)[0];
+      const e164Phone = phone(_contact.cell_phone)[0];
       
       if (!e164Phone) {
         const error = {
@@ -714,7 +714,7 @@ const bulkText = async(req, res) => {
       }
 
       twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, pdf_content)
+        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, pdf_content)
       }).catch(err=>{
         console.log('err', err)
       })  
