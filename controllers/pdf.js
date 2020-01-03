@@ -605,7 +605,7 @@ const bulkText = async(req, res) => {
       let pdf_descriptions = ''
       let pdf_objects = ''
       let pdf_content = content
-      for(let j=0; j<pdf.length; j++){
+      for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
           if(typeof pdf_content == 'undefined'){
