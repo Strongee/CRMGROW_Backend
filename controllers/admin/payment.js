@@ -10,6 +10,7 @@ const getCustomer = async(req, res) => {
     customer_id,
     function(err, customer) {
       console.log('customer', customer)
+      console.log('subscription', customer.subscriptions['data'])
       return res.send({
         status: true
       })
