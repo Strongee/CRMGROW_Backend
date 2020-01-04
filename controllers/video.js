@@ -122,6 +122,19 @@ const create = async (req, res) => {
   }
 }
 
+const createVideo = async (req, res) => {
+  const video = new Video({...req.body, user: req.currentUser.id});
+
+  const _video = await video.save().then().catch(err=>{
+    console.log('err', err)
+  })
+
+  res.send({
+    status: true,
+    data: _video
+  })
+}
+
 const updateDetail = async (req, res) => {
   const editData = req.body
   let thumbnail;
@@ -904,7 +917,8 @@ module.exports = {
     bulkText,
     sendText,
     remove,
-    getHistory
+    getHistory,
+    createVideo
 }
 
 

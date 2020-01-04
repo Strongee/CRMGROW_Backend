@@ -52,6 +52,8 @@ const router = express.Router()
   
 const upload = multer({ storage: fileStorage })
 
+router.post('/create', UserCtrl.checkAuth, catchError(VideoCtrl.createVideo));
+
 // Upload a video
 router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('video'), catchError(VideoCtrl.create))
 

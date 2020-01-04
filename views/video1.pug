@@ -40,8 +40,11 @@ head
 .view-container.container
   //- video#material-video.video-js(controls='', preload='true', playsinline='',  poster=`${video.thumbnail}`, data-setup='{}')
   //-   source(src=`${video.url}`, type=`${video.type}`)
-  video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
-    source(src=`${video.url}`, type=`video/mp4`)
+  if video.type === 'youtube' || video.type === 'vimeo'
+    div#player(data-plyr-provider=`${video.type}` data-plyr-embed-id=`${video.url}`)
+  else 
+    video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
+      source(src=`${video.url}`, type=`video/mp4`)
   .description
     .desc-title
       | #{video.title}
