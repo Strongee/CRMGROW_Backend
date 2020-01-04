@@ -681,10 +681,7 @@ const bulkEmail = async(req, res) => {
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>
-                                  ${video.description}<br/><br/>
-                                  <a href="${video_link}"><img src="${preview}"/></a><br/>
-                                </p>`
+          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
           video_objects = video_objects + video_object                      
       }
       
@@ -801,8 +798,7 @@ const bulkText = async(req, res) => {
             video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
-          const video_object = `${video.title}\n
-                                ${video_link}\n\n`
+          const video_object = `${video.title}\n${video_link}\n\n`
           video_objects = video_objects + video_object                      
       }
       

@@ -529,10 +529,7 @@ const bulkEmail = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>
-                                  ${pdf.description}<br/><br/>
-                                  <a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/>
-                                </p>`
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -649,8 +646,7 @@ const bulkText = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `${pdf.title}\n
-                                ${pdf_link}\n\n`
+          const pdf_object = `${pdf.title}\n${pdf_link}\n\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
       

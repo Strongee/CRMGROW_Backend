@@ -5,10 +5,20 @@ const Payment = require('../../models/payment')
 const User = require('../../models/user')
 
 const getCustomer = async(req, res) => {
+
   const customer_id = req.params.id
+  const data = {
+    email: '',
+    created_at: '',
+    subscribed_at: '',
+    is_trial: false,
+    trial_ended: '',
+    card: ''
+  }
   stripe.customers.retrieve(
     customer_id,
     function(err, customer) {
+      
       console.log('customer', customer)
       console.log('subscription', customer.subscriptions['data'])
       return res.send({
