@@ -183,27 +183,32 @@ const getAll = async (req, res) => {
   let _pdf_detail_list = [];
 
   for(let i = 0; i < _pdf_list.length; i ++){
-    const _pdf_detail = await PDFTracker.aggregate([
-        {
-          $lookup:
-            {
-            from:  'pdfs',
-            localField: 'pdf',
-            foreignField: '_id',
-            as: "pdf_detail"
-            }
-        },
-        {
-          $match: { 
-                    "pdf": _pdf_list[i]._id,
-                    "user": currentUser._id
-                  }
-        }
-    ])
+    // const _pdf_detail = await PDFTracker.aggregate([
+    //     {
+    //       $lookup:
+    //         {
+    //         from:  'pdfs',
+    //         localField: 'pdf',
+    //         foreignField: '_id',
+    //         as: "pdf_detail"
+    //         }
+    //     },
+    //     {
+    //       $match: { 
+    //                 "pdf": _pdf_list[i]._id,
+    //                 "user": currentUser._id
+    //               }
+    //     }
+    // ])
+    
+    const view = await PDFTracker.countDocuments({
+      pdf: _pdf_list[i]._id,
+      user: currentUser._id
+    })
 
     myJSON = JSON.stringify(_pdf_list[i])
     const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, {"views": _pdf_detail.length})
+    const pdf_detail = await Object.assign(_pdf, {"views": view})
     _pdf_detail_list.push(pdf_detail)
   }
 
@@ -524,10 +529,7 @@ const bulkEmail = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}</b><br/>
-                                  ${pdf.description}<br/>
-                                  <a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/>
-                                </p>`
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -604,8 +606,8 @@ const bulkText = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
-      let pdf_content = pdf_content
-      for(let j=0; j<pdf.length; j++){
+      let pdf_content = content
+      for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
           if(typeof pdf_content == 'undefined'){
@@ -636,7 +638,6 @@ const bulkText = async(req, res) => {
           })
           
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-          pdf_links += pdf_link + '\n'
         
           if(j < pdfs.length-1){
             pdf_titles = pdf_titles + pdf.title + ', '  
@@ -645,8 +646,7 @@ const bulkText = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `${pdf.title}\n
-                                ${pdf_link}\n\n`
+          const pdf_object = `${pdf.title}\n${pdf_link}\n\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -664,7 +664,7 @@ const bulkText = async(req, res) => {
         content = content.replace(/{pdf_description}/ig, pdf_descriptions)
       }
       
-      const e164Phone = phone(cell_phone)[0];
+      const e164Phone = phone(_contact.cell_phone)[0];
       
       if (!e164Phone) {
         const error = {
@@ -715,7 +715,7 @@ const bulkText = async(req, res) => {
       }
 
       twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, pdf_content)
+        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, pdf_content)
       }).catch(err=>{
         console.log('err', err)
       })  

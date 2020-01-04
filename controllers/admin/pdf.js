@@ -10,13 +10,19 @@ const PDF = require('../../models/pdf')
 const PDFTracker = require('../../models/pdf_tracker')
 const { FILES_PATH } = require('../../config/path')
 const { PREVIEW_PATH } = require('../../config/path')
+const config = require('../../config/config')
 const uuidv1 = require('uuid/v1')
+const AWS = require('aws-sdk')
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION
+})
 
 const create = async (req, res) => {
   if (req.file) {
       if(req.currentUser){
         const pdf = new PDF({
-          user: req.currentUser.id,
           type: req.file.mimetype,
           url: req.file.location,
           role: 'admin',
@@ -34,38 +40,28 @@ const create = async (req, res) => {
 }
 
 const updateDetail = async (req, res) => {
-  const {currentUser} = req
   if (req.body.preview) { // base 64 image
     const editData = req.body
     const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.preview, PREVIEW_PATH, file_name)
-      const pdf = await PDF.findOne({user: currentUser.id, _id: req.params.id})
+    const pdf = await PDF.findOne({_id: req.params.id})
 
-      console.log('pdf', pdf)
-      if (!pdf) {
-        return res.status(400).json({
-          status: false,
-          error: 'Invalid_permission'
-        })
-      }
+    for (let key in editData) {
+      pdf[key] = editData[key]
+    }
+    
+    pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path) 
 
-      for (let key in editData) {
-        pdf[key] = editData[key]
-      }
+    pdf["updated_at"] = new Date()
 
-      pdf['preview'] = process.env.TEAMGROW_DOMAIN + '/api/pdf/preview/' + path.basename(file_path)
-
-      pdf["updated_at"] = new Date()
-
-      pdf.save().then((_pdf)=>{
-        res.send({
-          status: true,
-          data: _pdf
-        })
+    pdf.save().then((_pdf)=>{
+      return res.send({
+        status: true,
+        data: _pdf
       })
-
+    })
   }else{
-    res.status(400).json({
+    return res.status(400).json({
       status: false,
       error: 'Not_found_preview'
     })
@@ -121,7 +117,6 @@ const getAll = async (req, res) => {
   }
 
   const _pdf_list = await PDF.find({user: currentUser.id})
-  console.log('_pdf_list',_pdf_list)
   let _pdf_detail_list = [];
 
   for(let i = 0; i < _pdf_list.length; i ++){
@@ -199,31 +194,32 @@ const sendPDF = async (req, res) => {
 }
 
 const remove = async (req, res) => {
-    const { currentUser } = req
-    try {
-      const pdf = PDF.findOne({ user: currentUser.id, _id: req.params.id})
-  
-      if (pdf) {
-        fs.unlinkSync(PREVIEW_PATH + req.params.id)
-        res.send({
-          status: true,
-          data: {
-            file_name: req.params.id
-          }
-        })
-      } else {
-        res.status(404).send({
-          status: false,
-          error: 'preview_not_found'
-        })
-      }
-    } catch (e) {
-      console.error(e)
-      res.status(500).send({
-        status: false,
-        error: 'internal_server_error'
-      })
-    }
+  try {
+    const pdf = await PDF.findOne({ _id: req.params.id}).catch(err=>{
+      console.log('err', err)
+    })
+    let url =  pdf.url
+    
+    s3.deleteObject({
+      Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+      Key: url.slice(44)
+    }, function (err,data){
+      console.log('err', err)
+    })
+
+    pdf['del'] = true
+    pdf.save()
+
+    res.send({
+      status: true,
+    })
+  } catch (e) {
+    console.error(e)
+    res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  }
 }
 
 getPdfs = async (req, res) => {
@@ -231,14 +227,13 @@ getPdfs = async (req, res) => {
   const skip = (page - 1) * 12;
 
   const pdfs = await PDF.aggregate([
+    {$match: { "del": false }},
     {$skip: skip},
     {$limit: 12}
   ]).catch(err => {
-    res.status(500).send({
-      status: false,
-      error: err
-    })
+    console.log('err', err)
   });
+    
   await PDF.populate(pdfs, {path: 'user', select: 'user_name picture_profile'});
 
   const pdfCounts = await PDF.countDocuments({});
