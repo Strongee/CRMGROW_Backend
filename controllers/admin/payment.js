@@ -11,9 +11,10 @@ const getCustomer = async(req, res) => {
     email: '',
     created_at: '',
     subscribed_at: '',
-    is_trial: false,
     trial_ended: '',
-    card: ''
+    status: '',
+    card: '',
+    plan: ''
   }
   stripe.customers.retrieve(
     customer_id,
@@ -21,6 +22,14 @@ const getCustomer = async(req, res) => {
       
       console.log('customer', customer)
       console.log('subscription', customer.subscriptions['data'])
+      const subscription = customer.subscriptions['data'][0]
+      data['email'] = customer['email']
+      data['created_at'] = new Date(customer['created_at']*1000)
+      data['subscribed_at'] = new Date(subscription['created']*1000)
+      data['trial_ended'] = new Date(subscription['trial_end']*1000)
+      data['card'] = subscription['default_source']
+      data['status'] = subscription['status']
+      data['plan'] = subscription['plan'].id
       return res.send({
         status: true
       })
@@ -28,6 +37,19 @@ const getCustomer = async(req, res) => {
   );
 }
 
+const getUpcomingInvoice = async(req, res) => {
+  const customer_id = req.params.id
+  stripe.invoices.retrieveUpcoming(
+    {customer: customer_id},
+    function(err, upcoming) {
+      console.log('upcoming', upcoming)
+      return res.send({
+        status: true
+      })
+      // asynchronously called
+    }
+  );
+}
 const getTransactions = async(req, res) => {
   const customer_id = req.params.id
   stripe.charges.list(
@@ -145,6 +167,7 @@ module.exports = {
   getTransactions,
   getCustomer,
   getCustomers,
+  getUpcomingInvoice,
   cancelCustomer,
   refundCharge
 }

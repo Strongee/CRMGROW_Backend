@@ -816,8 +816,6 @@ const bulkText = async(req, res) => {
         video_content = video_content.replace(/{video_description}/ig, video_descriptions)
       }
       
-      
-      
       const e164Phone = phone(_contact.cell_phone)[0];
       
       if (!e164Phone) {
