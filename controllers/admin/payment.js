@@ -4,6 +4,19 @@ const stripe = require('stripe')(stripeKey)
 const Payment = require('../../models/payment')
 const User = require('../../models/user')
 
+const getCustomer = async(req, res) => {
+  const customer_id = req.params.id
+  stripe.customers.retrieve(
+    customer_id,
+    function(err, customer) {
+      console.log('customer', customer)
+      return res.send({
+        status: true
+      })
+    }
+  );
+}
+
 const getTransactions = async(req, res) => {
   const customer_id = req.params.id
   stripe.charges.list(
@@ -119,6 +132,7 @@ const deleteCustomer = async(id) => {
 
 module.exports = {
   getTransactions,
+  getCustomer,
   getCustomers,
   cancelCustomer,
   refundCharge
