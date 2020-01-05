@@ -28,7 +28,7 @@ const s3 = new AWS.S3({
 const sharp = require('sharp');
 
 const play = async(req, res) => {  
-  const image_id = req.query.img
+  const image_id = req.query.image
   const sender_id = req.query.user
   const image = await PDF.findOne({_id: image_id})
   const sender = await User.findOne({_id: sender_id, del: false})
