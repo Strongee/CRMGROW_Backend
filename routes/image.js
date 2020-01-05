@@ -66,3 +66,6 @@ router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErro
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.remove))
+
+
+module.exports = router
