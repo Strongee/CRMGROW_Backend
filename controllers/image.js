@@ -172,8 +172,8 @@ const getPreview = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
-  let _image_list = await PDF.find({user: currentUser.id, del: false}).sort({created_at : 1 })
-  let _image_admin = await PDF.find({role: "admin", del: false}).sort({created_at : 1 })
+  let _image_list = await Image.find({user: currentUser.id, del: false}).sort({created_at : 1 })
+  let _image_admin = await Image.find({role: "admin", del: false}).sort({created_at : 1 })
   Array.prototype.push.apply(_image_list, _image_admin)
 
   if (!_image_list) {
