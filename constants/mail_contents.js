@@ -34,7 +34,8 @@ const mail_contents = {
         SUBJECT: "Appointment notification"
     },
     VIDEO_TITLE: "eXp Realty eXplained Videos",
-    PDF_TITLE: "eXp Realty eXplained PDFs"
+    PDF_TITLE: "eXp Realty eXplained PDFs",
+    IMAGE_TITLE: "eXp Realty eXplained Images"
 }
 
 module.exports = mail_contents;

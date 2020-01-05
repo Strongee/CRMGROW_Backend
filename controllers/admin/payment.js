@@ -10,6 +10,7 @@ const getCustomer = async(req, res) => {
   const data = {
     email: '',
     created_at: '',
+    subscription: '',
     subscribed_at: '',
     trial_ended: '',
     status: '',
@@ -19,12 +20,17 @@ const getCustomer = async(req, res) => {
   stripe.customers.retrieve(
     customer_id,
     function(err, customer) {
-      
-      console.log('customer', customer)
+      if(err){
+        return res.status(400).send({
+          status: false,
+          error: err
+        })
+      }
       console.log('subscription', customer.subscriptions['data'])
       const subscription = customer.subscriptions['data'][0]
       data['email'] = customer['email']
       data['created_at'] = new Date(customer['created_at']*1000)
+      data['subscription'] = subscription['id']
       data['subscribed_at'] = new Date(subscription['created']*1000)
       data['trial_ended'] = new Date(subscription['trial_end']*1000)
       data['card'] = subscription['default_source']
@@ -39,17 +45,29 @@ const getCustomer = async(req, res) => {
 
 const getUpcomingInvoice = async(req, res) => {
   const customer_id = req.params.id
+  const data = {
+    amount_due: '',
+    created: ''
+  }
   stripe.invoices.retrieveUpcoming(
     {customer: customer_id},
     function(err, upcoming) {
-      console.log('upcoming', upcoming)
+      if(err){
+        return res.status(400).send({
+          status: false,
+          error: err
+        })
+      }
+      data['amount_due'] = upcoming['amount_due']/100
+      data['created'] = upcoming['created']
       return res.send({
+        data,
         status: true
       })
-      // asynchronously called
     }
   );
 }
+
 const getTransactions = async(req, res) => {
   const customer_id = req.params.id
   stripe.charges.list(
@@ -58,6 +76,7 @@ const getTransactions = async(req, res) => {
       if(err){
         console.log('err', err)
         return res.status(400).json({
+          status: false,
           error: err
         })
       }
@@ -72,11 +91,15 @@ const getTransactions = async(req, res) => {
 
 const getCustomers = async(req, res) => {
   stripe.customers.list(
-    {limit: config.STRIPE.LIMIT},
+    {
+      limit: config.STRIPE.LIMIT,
+      starting_after: req.params.id
+    },
     async function(err, customers) {
       if(err){
         console.log('err', err)
         return res.status(400).json({
+          status: false,
           error: err
         })
       }
@@ -110,64 +133,157 @@ const getCustomers = async(req, res) => {
   );
 }
 
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
 const refundCharge = async(req, res) =>{
-
   stripe.refunds.create(
     {charge: req.params.id},
-    function(err, refund) {
-      // asynchronously called
+    function(err, data) {
+      if (err)  {
+        return res.status(400).json({
+                status: false,
+                error: err
+              })
+      }
+      
+      return res.send({
+              status: true,
+              data
+            })
     }
   );
 }
 
-const cancelCustomer = async(req, res) => {
-  const payment = await Payment.findOne({customer_id: req.params.id}).catch(err=>{
-      console.log('err', err)
-  })
-  return new Promise((resolve, reject)=>{
-      cancelSubscription(payment.subscription).then(()=>{
-          deleteCustomer(req.params.id).then(()=>{
-              resolve()
-          }).catch(err=>{
-              console.log('err', err)
-              reject()
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
+const cancelSubscription = async(req, res) => {
+  stripe.subscriptions.del(req.params.id, function (err, data) {
+    if (err)  {
+      return res.status(400).json({
+              status: false,
+              error: err
+            })
+    }
+    
+    return res.send({
+            status: true,
+            data
           })
-      }).catch(err=>{
-          console.log('err', err)
-          reject()
-      })
-  })
-}
-
-const cancelSubscription = async(subscription_id) => {
-  return new Promise(function (resolve, reject) {
-      stripe.subscriptions.del(subscription_id, function (err, confirmation) {
-          if (err != null)  {
-              return reject(err);
-          }
-          resolve()
-      })
-  });
+    });
 }
 
 /**
 * 
 * @param {customer id} id 
 */
-const deleteCustomer = async(id) => {
-  return new Promise(function (resolve, reject) {
-      stripe.customers.del(id, function (err, confirmation) {
-          if (err) reject(err);
-          resolve(confirmation);
-      });
+const cancelCustomer = async(req, res) => {
+  stripe.customers.del(req.params.id, function (err, data) {
+  if(err){
+    console.log('err', err)
+    return res.status(400).json({
+      status: false,
+      error: err
+    })
+  }
+  
+  return res.send({
+          status: true,
+          data
+        })
   });
 }
 
+/**
+ * 
+ * @param {*} customer_id 
+ * @param {*} card_id 
+ * @param {*} data 
+ */
+ 
+const updateCard = async(req, res) => {
+  const {customer_id, card_id, data} = req.body
+  stripe.customers.updateSource( customer_id, card_id, data,
+    function (err, data) {
+      if(err){
+        console.log('err', err)
+        return res.status(400).json({
+                status: false,
+                error: err
+              })
+        }
+        
+        return res.send({
+                status: true,
+                data
+              }) 
+          }
+      );
+}
+/**
+ * 
+ * @param {*} customer_id 
+ * @param {*} plan_id 
+ * @param {*} card_id 
+ */
+const updateSubscription = async(req, res) => {
+  const {customer_id, plan_id, card_id} = req.body
+  stripe.subscriptions.create({
+    customer: customer_id,
+    items: [{ plan: plan_id }],
+    default_source: card_id
+  }, function (err, data) {
+    console.log('creating subscription err', err)
+    if (err) {
+      console.log('err', err)
+        return res.status(400).json({
+                status: false,
+                error: err
+              })
+    }
+    return res.send({
+      status: true,
+      data
+    }) 
+  });
+}
+
+/**
+ * 
+ * @param {*} customer_id 
+ * @param {*} email 
+ */
+const updateCustomerEmail = async(req, res) => {
+  const {customer_id, email} = req.body
+  stripe.customers.update(customer_id, {metadata: {email: email}}, async (err) => {
+    if (err) {
+      console.log('err', err)
+      return res.status(400).json({
+              status: false,
+              error: err
+            })
+    }
+    return res.send({
+      status: true,
+    }) 
+  });  
+}
+
+
 module.exports = {
-  getTransactions,
   getCustomer,
   getCustomers,
-  getUpcomingInvoice,
+  updateCustomerEmail,
   cancelCustomer,
-  refundCharge
+  getUpcomingInvoice,
+  getTransactions,
+  refundCharge,
+  updateCard,
+  cancelSubscription,
+  updateSubscription
 }

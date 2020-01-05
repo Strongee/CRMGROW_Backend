@@ -549,9 +549,9 @@ const remove = async (req, res) => {
   const { currentUser } = req
     try {
       const video = await Video.findOne({ _id: req.params.id, user: currentUser.id})
-      let url =  video.url
-  
+ 
       if (video) {
+        let url =  video.url
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
           Key: url.slice(44)

@@ -395,9 +395,9 @@ const remove = async (req, res) => {
   const { currentUser } = req
   try {
     const pdf = await PDF.findOne({ _id: req.params.id, user: currentUser.id})
-    let url =  pdf.url
     
     if (pdf) {
+      let url =  pdf.url
       s3.deleteObject({
         Bucket: config.AWS.AWS_S3_BUCKET_NAME,
         Key: url.slice(44)
