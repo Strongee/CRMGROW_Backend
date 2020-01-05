@@ -33,6 +33,9 @@ const storage = multerS3({
 }) 
 
 
+const upload = multer({
+  storage: storage
+})
 
 // Upload a pdf
 router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('image'), catchError(ImageCtrl.create))
