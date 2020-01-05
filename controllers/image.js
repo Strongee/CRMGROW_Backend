@@ -532,7 +532,6 @@ module.exports = {
   get,
   getAll,
   getPreview,
-  sendText,
   bulkEmail,
   bulkText,
   remove,
