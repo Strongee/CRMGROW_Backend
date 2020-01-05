@@ -535,5 +535,4 @@ module.exports = {
   bulkEmail,
   bulkText,
   remove,
-  getHistory
 }
