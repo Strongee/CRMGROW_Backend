@@ -6,7 +6,7 @@ const Image = mongoose.model('image',{
     description: String,
     preview: String,
     type: String,
-    url: String,
+    url: Array,
     role: String,
     del: { type: Boolean, default: false},
     created_at: Date,

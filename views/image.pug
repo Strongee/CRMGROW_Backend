@@ -34,11 +34,7 @@ head
       a.dropdown-item(href=`mailto:${user.email}`)  Email me
       a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
-  .pdf-controls
-    button.prev
-        i.icon.icon-arrow-down
-    button.next
-        i.icon.icon-arrow-down
+  img(src=`${image.url[0]}`)
   div#viewer  
   .page-status
     span.current-page.page
@@ -49,7 +45,6 @@ head
       | #{image.title}
     .desc-content
       | #{image.description}
-input#url(type='hidden', value=`${image.url}`)
 input#activity(type='hidden', value=`${activity}`)
 input#contact(type='hidden', value=`${contact}`)
 input#user(type='hidden', value=`${user._id}`)

@@ -24,7 +24,6 @@ const s3 = new AWS.S3({
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
   region: config.AWS.AWS_S3_REGION
 })
-
 const sharp = require('sharp');
 
 const play = async(req, res) => {  
@@ -33,7 +32,6 @@ const play = async(req, res) => {
   const image = await PDF.findOne({_id: image_id})
   const sender = await User.findOne({_id: sender_id, del: false})
  
-   
   if(sender){
     res.render('image', {
       image: image,
@@ -66,27 +64,29 @@ const play1 = async(req, res) => {
       activity: activity.id
   })
 }
+
 const create = async (req, res) => {
-  console.log('req.files', req.files)
   if (req.files) {
     const files = req.files
-    files.forEach(file => {
-      console.log('file', file)
-      const image = new Image({
-        user: req.currentUser.id,
-        type: file.mimetype,
-        url: file.location,
-        role: 'user',
-        created_at: new Date()
-      })
+    let url = []
+    for(let i=0; i<files.length; i++){
+      url.push(files[i].location)
+    }
+    
+    const image = new Image({
+      user: req.currentUser.id,
+      type: file.mimetype,
+      url: url,
+      role: 'user',
+      created_at: new Date()
+    })
 
-      image.save().then((data)=>{
-        return res.send({
-          status: true,
-          data
-        })
+    image.save().then((data)=>{
+      return res.send({
+        status: true,
+        data
       })
-    });
+    })
   }
 }
 
@@ -111,7 +111,7 @@ const updateDetail = async (req, res) => {
 
     image['preview'] = urls.IMAGE_PREVIEW_URL + path.basename(file_path) 
 
-    image["updated_at"] = new Date()
+    image['updated_at'] = new Date()
 
     image.save().then((data)=>{
       return res.send({

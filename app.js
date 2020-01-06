@@ -10,6 +10,7 @@ require('dotenv').config({ path: ENV_PATH })
 let indexRouter = require('./routes/index.js');
 const VideoCtrl = require('./controllers/video');
 const PDFCtrl = require('./controllers/pdf');
+const ImageCtrl = require('./controllers/image')
 const { catchError } = require('./controllers/error')
 
 let app = express();
@@ -31,6 +32,7 @@ app.get('/video', VideoCtrl.play)
 app.get('/video1/:id', VideoCtrl.play1)
 app.get('/pdf', PDFCtrl.play)
 app.get('/pdf1/:id', PDFCtrl.play1)
+app.get('/image/:id', ImageCtrl.play1)
 
 app.get('/auth', (req, res) => {
     res.render('auth')
