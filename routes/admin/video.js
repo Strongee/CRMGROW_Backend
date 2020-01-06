@@ -7,7 +7,7 @@ const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
 const VideoCtrl = require('../../controllers/admin/video')
-const UserCtrl = require('../../controllers/user')
+const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../../controllers/error')
 const config  = require('../../config/config')
 const { TEMP_PATH } = require('../../config/path')

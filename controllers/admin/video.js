@@ -5,10 +5,8 @@ const base64Img = require('base64-img');
 const mime = require('mime-types')
 
 const Video = require('../../models/video')
-const User = require('../../models/user')
 const VideoTracker = require('../../models/video_tracker')
-const { GIF_PATH } = require('../../config/path')
-const { THUMBNAILS_PATH } = require('../../config/path')
+const { GIF_PATH, THUMBNAILS_PATH } = require('../../config/path')
 const config = require('../../config/config')
 const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
@@ -171,7 +169,6 @@ const generatePreview = async(file_path) => {
 
 const get = async (req, res) => {
   const video = await Video.findOne({_id: req.params.id})
-  const user = await User.findOne({_id: video.user})
     if (!video) {
       return res.status(400).json({
         status: false,
