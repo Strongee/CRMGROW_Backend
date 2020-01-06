@@ -27,11 +27,12 @@ const sharp = require('sharp');
 const create = async (req, res) => {
   if (req.file) {
     const video = new Video({
-          type: req.file.mimetype,
-          url: req.file.location,
-          role: 'admin',
-          created_at: new Date()
-        })
+      role: 'admin',
+      url: urls.VIDEO_URL+file_name,
+      type: req.file.mimetype,
+      path: req.file.path,
+      created_at: new Date()
+    })
 
     video.save().then((_video)=>{
       res.send({
