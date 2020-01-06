@@ -29,7 +29,7 @@ const sharp = require('sharp');
 const play = async(req, res) => {  
   const image_id = req.query.image
   const sender_id = req.query.user
-  const image = await PDF.findOne({_id: image_id})
+  const image = await Image.findOne({_id: image_id})
   const sender = await User.findOne({_id: sender_id, del: false})
  
   if(sender){
