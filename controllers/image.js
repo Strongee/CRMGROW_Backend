@@ -67,6 +67,7 @@ const play1 = async(req, res) => {
   })
 }
 const create = async (req, res) => {
+  console.log('req.files', req.files)
   if (req.files) {
     const files = req.files
     files.forEach(file => {
