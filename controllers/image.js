@@ -75,7 +75,7 @@ const create = async (req, res) => {
     
     const image = new Image({
       user: req.currentUser.id,
-      type: file.mimetype,
+      type: files[0].mimetype,
       url: url,
       role: 'user',
       created_at: new Date()
