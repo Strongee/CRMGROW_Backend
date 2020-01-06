@@ -28,22 +28,20 @@ const sharp = require('sharp');
 
 const create = async (req, res) => {
   if (req.file) {
-      if(req.currentUser){
-        const video = new Video({
-          user: req.currentUser.id,
+    const video = new Video({
           type: req.file.mimetype,
           url: req.file.location,
           role: 'admin',
           created_at: new Date()
         })
 
-        video.save().then((_video)=>{
-          res.send({
+    video.save().then((_video)=>{
+      res.send({
             status: true,
             data: _video
           })
-        })
-    }
+      })
+    
   }
 }
 
