@@ -82,6 +82,7 @@ const create = async (req, res) => {
     })
 
     image.save().then((data)=>{
+      console.log('data', data)
       return res.send({
         status: true,
         data
