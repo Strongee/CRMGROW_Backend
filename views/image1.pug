@@ -45,7 +45,11 @@ head
       | #{image.title}
     .desc-content
       | #{image.description}
+input#activity(type='hidden', value=`${activity}`)
+input#contact(type='hidden', value=`${contact}`)
+input#user(type='hidden', value=`${user._id}`)
+input#pdf(type='hidden', value=`${image._id}`)
 script(type='text/javascript', src='//code.jquery.com/jquery-1.11.2.min.js')
 
 script(type='text/javascript', src='./assets/js/dropdown.js')
-script(type='text/javascript', src='./assets/js/image.js')
+script(type='text/javascript', src='./assets/js/image1.js')

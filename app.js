@@ -32,6 +32,7 @@ app.get('/video', VideoCtrl.play)
 app.get('/video1/:id', VideoCtrl.play1)
 app.get('/pdf', PDFCtrl.play)
 app.get('/pdf1/:id', PDFCtrl.play1)
+app.get('/image', ImageCtrl.play)
 app.get('/image/:id', ImageCtrl.play1)
 
 app.get('/auth', (req, res) => {
