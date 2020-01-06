@@ -570,7 +570,7 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
         
-        let reopened = new Date(time_stamp*1000-5*60*1000)
+        let reopened = new Date(time_stamp*1000-60*60*1000)
         const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
           console.log('err', err)
         })
@@ -616,6 +616,14 @@ const receiveEmail = async(req, res) => {
         const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
           console.log('err', err)
         })
+        let reclicked = new Date(time_stamp*1000-60*60*1000)
+        const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'click', created_at: {$gte: reclicked}}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        if(old_activity){
+          return;
+        }
         const email_tracker = new EmailTracker({
           user: user.id,
           contact: contact.id,
@@ -701,79 +709,79 @@ const receiveEmail = async(req, res) => {
         },
     };
     sgMail.send(msg).catch(err => console.error(err)) 
-    if(user.desktop_notification){
-        webpush.setVapidDetails(
-          'mailto:support@crmgrow.com',
-          config.VAPID.PUBLIC_VAPID_KEY,
-          config.VAPID.PRIVATE_VAPID_KEY
-        )
+    // if(user.desktop_notification){
+    //     webpush.setVapidDetails(
+    //       'mailto:support@crmgrow.com',
+    //       config.VAPID.PUBLIC_VAPID_KEY,
+    //       config.VAPID.PRIVATE_VAPID_KEY
+    //     )
         
-        const subscription = JSON.parse(user.desktop_notification_subscription)
-        const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email' 
-        const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
-        const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email: '+_email.subject+' on ' + created_at
-        const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
-        webpush.sendNotification(subscription, playload).catch(err => console.error(err))
-    }  
-    if(user.text_notification){
-      const e164Phone = phone(user.cell_phone)[0]
+    //     const subscription = JSON.parse(user.desktop_notification_subscription)
+    //     const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email' 
+    //     const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+    //     const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email: '+_email.subject+' on ' + created_at
+    //     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+    //     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+    // }  
+    // if(user.text_notification){
+    //   const e164Phone = phone(user.cell_phone)[0]
     
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
+    //   if (!e164Phone) {
+    //     const error = {
+    //       error: 'Invalid Phone Number'
+    //     }
     
-        throw error // Invalid phone number
-      } else {
-        let fromNumber = user['proxy_number'];
-        if(!fromNumber) {
-          const areaCode = user.cell_phone.substring(1, 4)
+    //     throw error // Invalid phone number
+    //   } else {
+    //     let fromNumber = user['proxy_number'];
+    //     if(!fromNumber) {
+    //       const areaCode = user.cell_phone.substring(1, 4)
       
-          const data = await twilio
-          .availablePhoneNumbers('US')
-          .local.list({
-            areaCode: areaCode,
-          })
+    //       const data = await twilio
+    //       .availablePhoneNumbers('US')
+    //       .local.list({
+    //         areaCode: areaCode,
+    //       })
         
-          let number = data[0];
+    //       let number = data[0];
       
-          if(typeof number == 'undefined'){
-            const areaCode1 = user.cell_phone.substring(1, 3)
+    //       if(typeof number == 'undefined'){
+    //         const areaCode1 = user.cell_phone.substring(1, 3)
       
-            const data1 = await twilio
-            .availablePhoneNumbers('US')
-            .local.list({
-              areaCode: areaCode1,
-            })
-            number = data1[0];
-          }
+    //         const data1 = await twilio
+    //         .availablePhoneNumbers('US')
+    //         .local.list({
+    //           areaCode: areaCode1,
+    //         })
+    //         number = data1[0];
+    //       }
           
-          if(typeof number != 'undefined'){
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl:  urls.SMS_RECEIVE_URL
-            })
+    //       if(typeof number != 'undefined'){
+    //         const proxy_number = await twilio.incomingPhoneNumbers.create({
+    //           phoneNumber: number.phoneNumber,
+    //           smsUrl:  urls.SMS_RECEIVE_URL
+    //         })
             
-            console.log('proxy_number', proxy_number)
-            user['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = user['proxy_number'];
-            user.save().catch(err=>{
-              console.log('err', err)
-            })
-          } else {
-            fromNumber = config.TWILIO.TWILIO_NUMBER
-          } 
-        }
+    //         console.log('proxy_number', proxy_number)
+    //         user['proxy_number'] = proxy_number.phoneNumber;
+    //         fromNumber = user['proxy_number'];
+    //         user.save().catch(err=>{
+    //           console.log('err', err)
+    //         })
+    //       } else {
+    //         fromNumber = config.TWILIO.TWILIO_NUMBER
+    //       } 
+    //     }
       
-        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email: ' +'\n'+ _email.subject + '\n'
-        const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
-        const time = ' on ' + created_at + '\n '
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-        twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
-          console.log('send sms err: ',err)
-        })
-      } 
-    } 
+    //     const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email: ' +'\n'+ _email.subject + '\n'
+    //     const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+    //     const time = ' on ' + created_at + '\n '
+    //     const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+    //     twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
+    //       console.log('send sms err: ',err)
+    //     })
+    //   } 
+    // } 
     }
   }).catch(err=>{
     console.log('err', err)
