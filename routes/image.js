@@ -38,7 +38,7 @@ const upload = multer({
 })
 
 // Upload a pdf
-router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('image'), catchError(ImageCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.array('image'), catchError(ImageCtrl.create))
 
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.updateDetail))

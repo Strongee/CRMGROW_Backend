@@ -67,23 +67,25 @@ const play1 = async(req, res) => {
   })
 }
 const create = async (req, res) => {
-  if (req.file) {
-      if(req.currentUser){
-        const image = new Image({
-          user: req.currentUser.id,
-          type: req.file.mimetype,
-          url: req.file.location,
-          role: 'user',
-          created_at: new Date()
-        })
+  if (req.files) {
+    const files = req.files
+    files.forEach(file => {
+      console.log('file', file)
+      const image = new Image({
+        user: req.currentUser.id,
+        type: file.mimetype,
+        url: file.location,
+        role: 'user',
+        created_at: new Date()
+      })
 
-        image.save().then((data)=>{
-          return res.send({
-            status: true,
-            data
-          })
+      image.save().then((data)=>{
+        return res.send({
+          status: true,
+          data
         })
-    }
+      })
+    });
   }
 }
 
