@@ -8,6 +8,7 @@ const Video = require('../../models/video')
 const VideoTracker = require('../../models/video_tracker')
 const { GIF_PATH, THUMBNAILS_PATH } = require('../../config/path')
 const config = require('../../config/config')
+const urls = require('../../constants/urls')
 const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
 
@@ -26,6 +27,7 @@ const sharp = require('sharp');
 
 const create = async (req, res) => {
   if (req.file) {
+    const file_name = req.file.filename
     const video = new Video({
       role: 'admin',
       url: urls.VIDEO_URL+file_name,
