@@ -66,6 +66,7 @@ const play1 = async(req, res) => {
 }
 
 const create = async (req, res) => {
+  console.log('here')
   if (req.files) {
     const files = req.files
     let url = []
@@ -80,7 +81,7 @@ const create = async (req, res) => {
       role: 'user',
       created_at: new Date()
     })
-
+    console.log('image')
     image.save().then((data)=>{
       console.log('data', data)
       return res.send({
