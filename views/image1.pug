@@ -34,7 +34,9 @@ head
       a.dropdown-item(href=`mailto:${user.email}`)  Email me
       a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
-  img(src=`${image.url[0]}`)
+  section.slider
+    each image in image.url
+      img(src=`${image}`)
   div#viewer  
   .page-status
     span.current-page.page
@@ -50,6 +52,8 @@ input#contact(type='hidden', value=`${contact}`)
 input#user(type='hidden', value=`${user._id}`)
 input#pdf(type='hidden', value=`${image._id}`)
 script(type='text/javascript', src='//code.jquery.com/jquery-1.11.2.min.js')
-
+script(src='https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.js' )
+link(href='https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.css')
+link(href='https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick-theme.min.css')
 script(type='text/javascript', src='./assets/js/dropdown.js')
 script(type='text/javascript', src='./assets/js/image1.js')

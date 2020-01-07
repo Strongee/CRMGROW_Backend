@@ -58,7 +58,7 @@ const play1 = async(req, res) => {
   const image = activity['images']
   
   res.render('image1', {
-        image: image,
+      image: image,
       user: user,
       contact: activity['contacts'],
       activity: activity.id
@@ -227,13 +227,16 @@ const remove = async (req, res) => {
   try {
     const image = await Image.findOne({ _id: req.params.id, user: currentUser.id})
     if (image) {
-      let url =  image.url
-      s3.deleteObject({
-        Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-        Key: url.slice(44)
-      }, function (err,data){
-        console.log('err', err)
-      })
+      let urls =  image.url
+      for(let i=0; i<urls.length; i++){
+        let url = urls[i]
+        s3.deleteObject({
+          Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+          Key: url.slice(44)
+        }, function (err,data){
+          console.log('err', err)
+        })
+      }
 
       image['del'] = true
       image.save()
