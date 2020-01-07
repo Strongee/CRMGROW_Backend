@@ -35,8 +35,8 @@ head
       a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
   section.slider
-    each image in image.url
-      img(src=`${image}`)
+    each url in image.url
+      img(src=`${url}`)
   div#viewer  
   .page-status
     span.current-page.page
