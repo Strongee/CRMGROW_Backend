@@ -1,5 +1,6 @@
 $(function() {
-
+let total = 0;
+let total_pages =  document.querySelector("#total").value;
 setInterval(() => {
     reportTime();
 }, 1000);
@@ -9,11 +10,11 @@ $(function() {
       dots: true,
       infinite: true,
       speed: 500,
-      fade: true,
+      adaptiveHeight: true,
+      slidesToShow: 3,
       cssEase: 'linear'
     });
-  });
-  
+  });  
 
 const image = document.querySelector("#image").value
 const user = document.querySelector("#user").value

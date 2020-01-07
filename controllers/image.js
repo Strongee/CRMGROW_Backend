@@ -33,7 +33,6 @@ const play = async(req, res) => {
   const sender = await User.findOne({_id: sender_id, del: false})
  
   if(sender){
-    console.log('image', image, sender)
     res.render('image', {
       image: image,
       user: sender

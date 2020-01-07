@@ -350,7 +350,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const query = await ImageTracker.findOne({_id: image_tracker_id})
     const currentUser = await User.findOne({_id: query['user']})
     const contact = await Contact.findOne({_id: query['contact']})
-    const image = await Image.findOne({_id: query['video']})
+    const image = await Image.findOne({_id: query['image']})
   
     const activity = new Activity({
       content: contact.first_name + ' reviewed image',
@@ -565,7 +565,8 @@ const setup = (io) => {
           const image_tracker = socket.image_tracker
           if( !socket.image_tracker.viewed ){
             console.log("disconnected");
-            diconnectImage(image_tracker._id)
+            console.log('image_tracker', image_tracker)
+            disconnectImage(image_tracker._id)
           }
         }
       })

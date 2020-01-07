@@ -3,7 +3,8 @@ $(function() {
     dots: true,
     infinite: true,
     speed: 500,
-    fade: true,
+    adaptiveHeight: true,
+    slidesToShow: 3,
     cssEase: 'linear'
   });
 });
