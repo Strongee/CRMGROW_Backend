@@ -650,18 +650,18 @@ const bulkText = async(req, res) => {
           pdf_objects = pdf_objects + pdf_object                      
       }
       
-      if(content.search(/{pdf_object}/ig) != -1){
-        content = content.replace(/{pdf_object}/ig, pdf_objects)
+      if(pdf_content.search(/{pdf_object}/ig) != -1){
+        pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
         content = content+'\n'+pdf_objects
       }
         
-      if(content.search(/{pdf_title}/ig) != -1){
-        content = content.replace(/{pdf_title}/ig, pdf_titles)
+      if(pdf_content.search(/{pdf_title}/ig) != -1){
+        pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
       }
         
-      if(content.search(/{pdf_description}/ig) != -1){
-        content = content.replace(/{pdf_description}/ig, pdf_descriptions)
+      if(pdf_content.search(/{pdf_description}/ig) != -1){
+        pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
       }
       
       const e164Phone = phone(_contact.cell_phone)[0];

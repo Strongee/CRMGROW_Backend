@@ -417,7 +417,7 @@ const bulkText = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent pdf using sms',
+            content: currentUser.user_name + ' sent image using sms',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
@@ -447,18 +447,19 @@ const bulkText = async(req, res) => {
           image_objects = image_objects + image_object                      
       }
       
-      if(content.search(/{image_object}/ig) != -1){
-        content = content.replace(/{image_object}/ig, image_objects)
+      if(image_content.search(/{image_object}/ig) != -1){
+        image_content = image_content.replace(/{image_object}/ig, image_objects)
       }else{
-        content = content+'\n'+image_objects
+        console.log('image_objects', image_objects)
+        image_content = image_content+'\n'+image_objects
       }
         
-      if(content.search(/{image_title}/ig) != -1){
-        content = content.replace(/{image_title}/ig, image_titles)
+      if(image_content.search(/{image_title}/ig) != -1){
+        image_content = image_content.replace(/{image_title}/ig, image_titles)
       }
         
-      if(content.search(/{image_description}/ig) != -1){
-        content = content.replace(/{image_description}/ig, image_descriptions)
+      if(image_content.search(/{image_description}/ig) != -1){
+        image_content = image_content.replace(/{image_description}/ig, image_descriptions)
       }
       
       const e164Phone = phone(_contact.cell_phone)[0];
