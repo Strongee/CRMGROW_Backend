@@ -5,7 +5,7 @@ setInterval(() => {
 }, 1000);
 
 $(function() {
-    $(".fade").slick({
+    $(".regular").slick({
       dots: true,
       infinite: true,
       speed: 500,
