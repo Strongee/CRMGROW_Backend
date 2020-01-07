@@ -4,12 +4,16 @@ setInterval(() => {
     reportTime();
 }, 1000);
 
-$(".slider").slick({
-    dots: true,
-    infinite: true,
-    slidesToShow: 3,
-    slidesToScroll: 3
-});
+$(function() {
+    $(".fade").slick({
+      dots: true,
+      infinite: true,
+      speed: 500,
+      fade: true,
+      cssEase: 'linear'
+    });
+  });
+  
 
 const image = document.querySelector("#image").value
 const user = document.querySelector("#user").value

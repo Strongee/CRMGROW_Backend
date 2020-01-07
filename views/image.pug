@@ -34,7 +34,7 @@ head
       a.dropdown-item(href=`mailto:${user.email}`)  Email me
       a.dropdown-item(href=`${user.learn_more}`) Learn more
 .view-container.container
-  section.regular.slider
+  section.fade.slider
     each url in image.url
       img(src=`${url}`)
   div#viewer  
@@ -50,5 +50,6 @@ head
 script(type='text/javascript', src='//code.jquery.com/jquery-1.11.2.min.js')
 script(src='//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js' )
 link(href='//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css')
+link(href='//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css' )
 script(type='text/javascript', src='./assets/js/dropdown.js')
 script(type='text/javascript', src='./assets/js/image.js')
