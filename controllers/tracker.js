@@ -54,7 +54,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email +' reviewed pdf -' + pdf.title 
-    const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+    const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
     const body = 'Watched ' + timeWatched + ' on ' + created_at
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -112,7 +112,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       }
     
       const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed pdf: ' + pdf.title + '\n'
-      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n '
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
       twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{
@@ -240,7 +240,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       
       const subscription = JSON.parse(currentUser.desktop_notification_subscription)
       const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
-      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
       const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
       const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -298,7 +298,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         }
         
         const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
-        const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+        const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
         const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
         const contact_link = urls.CONTACT_PAGE_URL + contact.id 
   
@@ -391,7 +391,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     
     const subscription = JSON.parse(currentUser.desktop_notification_subscription)
     const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email +' reviewed image -' + image.title 
-    const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+    const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
     const body = 'Watched ' + timeWatched + ' on ' + created_at
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -449,7 +449,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       }
     
       const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed image: ' + image.title + '\n'
-      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('DD/MM/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+      const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n '
       const contact_link = urls.CONTACT_PAGE_URL + contact.id 
       twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n'+contact_link,  to: e164Phone}).catch(err=>{

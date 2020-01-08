@@ -718,7 +718,7 @@ const receiveEmail = async(req, res) => {
         
     //     const subscription = JSON.parse(user.desktop_notification_subscription)
     //     const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email' 
-    //     const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+    //     const created_at =moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
     //     const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email: '+_email.subject+' on ' + created_at
     //     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
     //     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
@@ -774,7 +774,7 @@ const receiveEmail = async(req, res) => {
     //     }
       
     //     const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email: ' +'\n'+ _email.subject + '\n'
-    //     const created_at =moment(opened).utcOffset(user.time_zone).format('DD/MM/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
+    //     const created_at =moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(opened).utcOffset(user.time_zone).format('h:mm a')
     //     const time = ' on ' + created_at + '\n '
     //     const contact_link = urls.CONTACT_PAGE_URL + contact.id 
     //     twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{

@@ -52,7 +52,7 @@ const daily_report = new CronJob('0 21 * * 1-6', async() =>{
           })
 
           let now = moment();
-          const today = now.format("dddd, MMMM Do YYYY")
+          const today = now.format("MMMM, dddd Do YYYY")
       
           let contacts = []
           for (let j =0; j < activity.length; j ++){
@@ -134,7 +134,7 @@ const weekly_report = new CronJob({
           console.log('err: ', err)
           })
         let now = moment();
-        const today = now.format("dddd, MMMM Do YYYY")
+        const today = now.format("MMMM, dddd Do YYYY")
         
         let contacts = []
         for (let j =0; j < activity.length; j ++){
