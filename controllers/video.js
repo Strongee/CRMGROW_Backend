@@ -123,7 +123,11 @@ const create = async (req, res) => {
 }
 
 const createVideo = async (req, res) => {
-  const video = new Video({...req.body, user: req.currentUser.id});
+  const video = new Video({
+  ...req.body, 
+  user: req.currentUser.id,
+  created_at: new Date()
+  });
 
   const _video = await video.save().then().catch(err=>{
     console.log('err', err)
