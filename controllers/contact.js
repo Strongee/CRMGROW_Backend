@@ -409,7 +409,8 @@ const sendBatch = async (req, res) => {
 
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
-
+  let promise_array = []
+  
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
       status: false,
@@ -438,46 +439,61 @@ const sendBatch = async (req, res) => {
       text: content,
       html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     };
-    sgMail.send(msg).then(async(_res) => {     
-      console.log('mailres.errorcode', _res[0].statusCode);
-      if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){  
-        console.log('Successful send to '+msg.to)
-        const email = new Email({
-          ...req.body,
-          contact: contacts[i],
-          message_id: _res[0].headers['x-message-id'],
-          user: currentUser.id,
-          updated_at: new Date(),
-          created_at: new Date()
-        })
-        
-        const _email = await email.save().then().catch(err => {
-          console.log('err', err)
-        })
-        
-        const activity = new Activity({
-          content: currentUser.user_name + ' sent email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'emails',
-          emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-        
-        const _activity = await activity.save().then()
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-          console.log('err', err)
-        })
-      }else {
-        console.log('email sending err', msg.to+_res[0].statusCode)
-      }
-    }).catch(err => {
-      console.log('err', err)
+    const promise = new Promise((resolve, reject)=>{
+      sgMail.send(msg).then(async(_res) => {     
+        console.log('mailres.errorcode', _res[0].statusCode);
+        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){  
+          console.log('Successful send to '+msg.to)
+          const email = new Email({
+            ...req.body,
+            contact: contacts[i],
+            message_id: _res[0].headers['x-message-id'],
+            user: currentUser.id,
+            updated_at: new Date(),
+            created_at: new Date()
+          })
+          
+          const _email = await email.save().then().catch(err => {
+            console.log('err', err)
+          })
+          
+          const activity = new Activity({
+            content: currentUser.user_name + ' sent email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          
+          const _activity = await activity.save().then()
+            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          })
+          resolve()
+        }else {
+          console.log('email sending err', msg.to+_res[0].statusCode)
+          reject(to[i])
+        }
+      }).catch(err => {
+        console.log('err', err)
+        reject(to[i])
+      })
     })
+    promise_array.push(promise)
   }
-  return res.send({
-    status: true,
+  
+  Promise.all(promise_array).then(()=>{
+    return res.send({
+      status: true,
+    })
+  }).catch((err)=>{
+    console.log('err', err)
+    return res.status(400).json({
+      status: false,
+      error: err
+    })
   })
 }
 

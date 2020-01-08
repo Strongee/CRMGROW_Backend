@@ -51,10 +51,9 @@ const play = async(req, res) => {
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
   }
-  
 }
 
-const play1 = async(req, res) => {  
+const play1 = async(req, res) => { 
   const activity = await Activity.findOne({_id: req.params.id}).populate([{path:'user'}, {path:'videos'}]).catch(err =>{
     console.log('err', err)
   })
@@ -622,7 +621,7 @@ const getHistory = async(req, res) => {
 const bulkEmail = async(req, res) => {
   const { currentUser } = req
   let {content, subject, videos, contacts} = req.body 
-  
+  let promise_array = []
   if(contacts){
     if(contacts.length>15){
       return res.status(400).json({
@@ -640,7 +639,7 @@ const bulkEmail = async(req, res) => {
       let video_objects = ''
       let video_subject = ''
       let video_content = content
-
+      let activity
       for(let j=0; j<videos.length; j++){
           const video = videos[j]         
           let preview
@@ -677,10 +676,7 @@ const bulkEmail = async(req, res) => {
             description: video_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
           
@@ -732,34 +728,59 @@ const bulkEmail = async(req, res) => {
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       
-        sgMail.send(msg).then((_res) => {
+        let promise = new Promise((resolve, reject)=>{
+          sgMail.send(msg).then(async(_res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
           if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
             console.log('status', _res[0].statusCode)
-          }else {
+            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('err', err)
+            })
+            resolve()
+          }else {  
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
             console.log('email sending err', msg.to+res[0].statusCode)
+            reject(_contact.email)
           }
         }).catch ((e) => {
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
           console.log('email sending err', msg.to)
           console.error(e)
+          reject(_contact.email)
+        })
+      })
+      promise_array.push(promise)
+    }
+      
+    Promise.all(promise_array).then(()=>{
+      return res.send({
+        status: true
+      })
+    }).catch(err=>{
+      console.log('err', err)
+      if(err){
+        return res.status(400).json({
+          status: false,
+          error: err
         })
       }
-      
-      return res.send({
-        status: true,
-      })
-    }else {
+    });
+  }else {
       return res.status(400).json({
         status: false,
         error: 'Contacts not found'
       })
-    }  
+  }  
 }
 
 const bulkText = async(req, res) => {
   const { currentUser } = req
   let {content, videos, contacts} = req.body 
-  
+  let promise_array = []
   if(contacts){
     if(contacts.length>15){
       return res.status(400).json({
@@ -776,6 +797,7 @@ const bulkText = async(req, res) => {
       let video_descriptions = ''
       let video_objects = ''
       let video_content = content
+      let activity
       for(let j=0; j<videos.length; j++){
           const video = videos[j]           
           
@@ -799,10 +821,7 @@ const bulkText = async(req, res) => {
             description: video_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
           
@@ -831,16 +850,6 @@ const bulkText = async(req, res) => {
         
       if(video_content.search(/{video_description}/ig) != -1){
         video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-      }
-      
-      const e164Phone = phone(_contact.cell_phone)[0];
-      
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-    
-        throw error // Invalid phone number
       }
       
       let fromNumber = currentUser['proxy_number'];
@@ -883,15 +892,42 @@ const bulkText = async(req, res) => {
         } 
       }
 
-      twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, video_content)
-      }).catch(err=>{
-        console.log('err', err)
-      })  
+      const promise = new Promise((resolve, reject) =>{
+        const e164Phone = phone(_contact.cell_phone)[0];
+      
+        if (!e164Phone) {
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone) // Invalid phone number
+        }
+        twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
+          console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, video_content)
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          resolve()
+        }).catch(err=>{
+          console.log('err', err)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone)
+        })  
+      })
+      promise_array.push(promise)
     }
     
-    return res.send({
-      status: true,
+    Promise.all(promise_array).then(()=>{
+      return res.send({
+        status: true,
+      })
+    }).catch((err)=>{
+      console.log('err', err)
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
     })
   }else {
     return res.status(400).json({

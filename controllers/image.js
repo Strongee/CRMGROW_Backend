@@ -262,6 +262,7 @@ const remove = async (req, res) => {
 const bulkEmail = async(req, res) => {
   const { currentUser } = req
   let {content, subject, images, contacts} = req.body 
+  let promise_array = []
   
   if(contacts){
     if(contacts.length>15){
@@ -280,6 +281,7 @@ const bulkEmail = async(req, res) => {
       let image_objects = ''
       let image_subject = ''
       let image_content = content
+      let activity
       for(let j=0; j<images.length; j++){
         const image = images[j]        
         
@@ -304,13 +306,10 @@ const bulkEmail = async(req, res) => {
             description: image_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-            console.log('err', err)
-          })
-          
+
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
           
           if(images.length>=2){
@@ -364,17 +363,38 @@ const bulkEmail = async(req, res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
           if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
             console.log('status', _res[0].statusCode)
+            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('err', err)
+            })
+            resolve()  
           }else {
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
             console.log('email sending err', msg.to+res[0].statusCode)
+            reject(_contact.email)
           }
         }).catch ((e) => {
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
           console.log('email sending err', msg.to)
           console.error(e)
+          reject(_contact.email)
         })
+        promise_array.push(promise)
       }
       
-      return res.send({
-        status: true,
+      Promise.all(promise_array).then(()=>{
+        return res.send({
+          status: true,
+        })
+      }).catch((err)=>{
+        console.log('err', err)
+        return res.status(400).json({
+          status: false,
+          error: err
+        })
       })
     }else {
       return res.status(400).json({
@@ -387,6 +407,7 @@ const bulkEmail = async(req, res) => {
 const bulkText = async(req, res) => {
   const { currentUser } = req
   let {content, images, contacts} = req.body 
+  let promise_array = []
   
   if(contacts){
     if(contacts.length>15){
@@ -404,6 +425,7 @@ const bulkText = async(req, res) => {
       let image_descriptions = ''
       let image_objects = ''
       let image_content = content
+      let activity
       for(let j=0; j<images.length; j++){
           const image = images[j]        
           
@@ -428,9 +450,6 @@ const bulkText = async(req, res) => {
           })
           
           const activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
             console.log('err', err)
           })
           
@@ -460,16 +479,6 @@ const bulkText = async(req, res) => {
         
       if(image_content.search(/{image_description}/ig) != -1){
         image_content = image_content.replace(/{image_description}/ig, image_descriptions)
-      }
-      
-      const e164Phone = phone(_contact.cell_phone)[0];
-      
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-    
-        throw error // Invalid phone number
       }
       
       let fromNumber = currentUser['proxy_number'];
@@ -512,15 +521,42 @@ const bulkText = async(req, res) => {
         } 
       }
 
-      twilio.messages.create({from: fromNumber, body: image_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, image_content)
-      }).catch(err=>{
-        console.log('err', err)
-      })  
+      const promise = new Promise((resolve, reject) =>{
+        const e164Phone = phone(_contact.cell_phone)[0];
+      
+        if (!e164Phone) {
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone) // Invalid phone number
+        }
+        twilio.messages.create({from: fromNumber, body: image_content,  to: e164Phone}).then(()=>{
+          console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, image_content)
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          resolve()
+        }).catch(err=>{
+          console.log('err', err)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone)
+        })  
+      })
+      promise_array.push(promise)
     }
     
-    return res.send({
-      status: true,
+    Promise.all(promise_array).then(()=>{
+      return res.send({
+        status: true,
+      })
+    }).catch((err)=>{
+      console.log('err', err)
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
     })
   }else {
     return res.status(400).json({

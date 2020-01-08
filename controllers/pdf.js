@@ -465,7 +465,7 @@ const getHistory = async(req, res) => {
 const bulkEmail = async(req, res) => {
   const { currentUser } = req
   let {content, subject, pdfs, contacts} = req.body 
-  
+  let promise_array = []
   if(contacts){
     if(contacts.length>15){
       return res.status(400).json({
@@ -483,6 +483,7 @@ const bulkEmail = async(req, res) => {
       let pdf_objects = ''
       let pdf_subject = ''
       let pdf_content = content
+      let activity
       for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
@@ -507,10 +508,7 @@ const bulkEmail = async(req, res) => {
             description: pdf_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
           
@@ -563,33 +561,59 @@ const bulkEmail = async(req, res) => {
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       
-        sgMail.send(msg).then((_res) => {
-          console.log('mailres.errorcode', _res[0].statusCode);
-          if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-            console.log('status', _res[0].statusCode)
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch ((e) => {
-          console.log('email sending err', msg.to)
-          console.error(e)
+        let promise = new Promise((resolve, reject)=>{
+          sgMail.send(msg).then((_res) => {
+            console.log('mailres.errorcode', _res[0].statusCode);
+            if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+              console.log('status', _res[0].statusCode)
+              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+              resolve()
+            }else {
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              console.log('email sending err', msg.to+res[0].statusCode)
+              reject(_contact.email)
+            }
+          }).catch ((e) => {
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            console.log('email sending err', msg.to)
+            console.error(e)
+            reject(_contact.email)
+          })
         })
+        promise_array.push(promise)
       }
       
-      return res.send({
-        status: true,
-      })
+      Promise.all(promise_array).then(()=>{
+        return res.send({
+          status: true
+        })
+      }).catch(err=>{
+        console.log('err', err)
+        if(err){
+          return res.status(400).json({
+            status: false,
+            error: err
+          })
+        }
+      });
     }else {
-      return res.status(400).json({
-        status: false,
-        error: 'Contacts not found'
-      })
-    }  
+        return res.status(400).json({
+          status: false,
+          error: 'Contacts not found'
+        })
+      }  
 }
 
 const bulkText = async(req, res) => {
   const { currentUser } = req
   let {content, pdfs, contacts} = req.body 
+  let promise_array = []
   
   if(contacts){
     if(contacts.length>15){
@@ -607,6 +631,7 @@ const bulkText = async(req, res) => {
       let pdf_descriptions = ''
       let pdf_objects = ''
       let pdf_content = content
+      let activity
       for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
@@ -631,9 +656,6 @@ const bulkText = async(req, res) => {
           })
           
           const activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
             console.log('err', err)
           })
           
@@ -662,16 +684,6 @@ const bulkText = async(req, res) => {
         
       if(pdf_content.search(/{pdf_description}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
-      }
-      
-      const e164Phone = phone(_contact.cell_phone)[0];
-      
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-    
-        throw error // Invalid phone number
       }
       
       let fromNumber = currentUser['proxy_number'];
@@ -714,15 +726,42 @@ const bulkText = async(req, res) => {
         } 
       }
 
-      twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
-        console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, pdf_content)
-      }).catch(err=>{
-        console.log('err', err)
-      })  
+      const promise = new Promise((resolve, reject) =>{
+        const e164Phone = phone(_contact.cell_phone)[0];
+      
+        if (!e164Phone) {
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone) // Invalid phone number
+        }
+        twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
+          console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, pdf_content)
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          resolve()
+        }).catch(err=>{
+          console.log('err', err)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          reject(_contact.cell_phone)
+        })  
+      })
+      promise_array.push(promise)
     }
     
-    return res.send({
-      status: true,
+    Promise.all(promise_array).then(()=>{
+      return res.send({
+        status: true,
+      })
+    }).catch((err)=>{
+      console.log('err', err)
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
     })
   }else {
     return res.status(400).json({
