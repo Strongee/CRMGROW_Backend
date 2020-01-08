@@ -1575,7 +1575,7 @@ const advanceSearch = async (req, res) => {
       timeQuery = {created_at : {$gte: activityStart}};
     }
     else if(activityEnd) {
-      timeQuery = {created_at : {$lte: activityStart}};
+      timeQuery = {created_at : {$lte: new Date(activityEnd).setHours(23,59,59,999)}};
     }
     lastActivityQueries['$and'] = [activityQueries];
     if(timeQuery) {
