@@ -500,7 +500,7 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const subscription_check = new CronJob('0 21 */3 * *', async() =>{
+const notification_check = new CronJob('0 21 */3 * *', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
   const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'})
