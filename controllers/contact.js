@@ -1100,8 +1100,13 @@ const advanceSearch = async (req, res) => {
   // Material Check
   let watchedVideoContacts = [];
   let watchedPdfContacts = [];
+  let watchedImageContacts = [];
   let notWatchedVideoContacts = [];
   let notWatchedPdfContacts = [];
+  let notWatchedImageContacts = [];
+  let notSentVideoContacts = [];
+  let notSentPdfContacts = [];
+  let notSentImageContacts = [];
   if (materialCondition['watched_video']['flag']) {
     let query = []
     if (materialCondition['watched_video']['material']) {
@@ -1168,6 +1173,40 @@ const advanceSearch = async (req, res) => {
       }
     ]);
   }
+  if (materialCondition['watched_image']['flag']) {
+    let query = []
+    if (materialCondition['watched_image']['material']) {
+      query = [{ 'type': 'images', 'images': mongoose.Types.ObjectId(materialCondition['watched_image']['material']) }, { 'type': 'image_trackers', 'images': mongoose.Types.ObjectId(materialCondition['watched_image']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'images' }, { 'type': 'image_trackers' }]
+    }
+    watchedImageContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          "types": { "action": "image_trackers" }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  
   if (materialCondition['not_watched_video']['flag']) {
     let query = []
     if (materialCondition['not_watched_video']['material']) {
@@ -1234,6 +1273,112 @@ const advanceSearch = async (req, res) => {
       }
     ]);
   }
+  if (materialCondition['not_watched_image']['flag']) {
+    let query = []
+    if (materialCondition['not_watched_image']['material']) {
+      query = [{ 'type': 'images', 'images': mongoose.Types.ObjectId(materialCondition['not_watched_image']['material']) }, { 'type': 'image_trackers', 'images': mongoose.Types.ObjectId(materialCondition['not_watched_image']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'images' }, { 'type': 'image_trackers' }]
+    }
+    notWatchedImageContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
+      },
+      {
+        $group: {
+          _id: { contact: "$contacts", type: "$type" },
+          count: { $sum: 1 }
+        }
+      }, {
+        $group: {
+          _id: "$_id.contact",
+          types: { $addToSet: { "action": "$_id.type" } }
+        }
+      },
+      {
+        $match: {
+          $nor: [{ "types": { "action": "image_trackers" } }]
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+
+  if (materialCondition['not_sent_video']['flag']) {
+    let query = []
+    if (materialCondition['not_sent_video']['material']) {
+      query = [{ 'type': 'videos', 'videos': mongoose.Types.ObjectId(materialCondition['not_sent_video']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'videos' }]
+    }
+    notSentVideoContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $and: query }] }
+      },            
+      {$unwind: '$contacts'},
+      {
+        $group: {
+          _id: { contact: "$contacts"},
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  if (materialCondition['not_sent_pdf']['flag']) {
+    let query = []
+    if (materialCondition['not_sent_pdf']['material']) {
+      query = [{ 'type': 'pdfs', 'pdfs': mongoose.Types.ObjectId(materialCondition['not_sent_pdf']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'pdfs' }]
+    }
+    notSentPdfContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $and: query }] }
+      },      
+      {$unwind: '$contacts'},
+      {
+        $group: {
+          _id: { contact: "$contacts"},
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
+  if (materialCondition['not_sent_image']['flag']) {
+    let query = []
+    if (materialCondition['not_sent_image']['material']) {
+      query = [{ 'type': 'images', 'images': mongoose.Types.ObjectId(materialCondition['not_sent_image']['material']) }]
+    }
+    else {
+      query = [{ 'type': 'images' }]
+    }
+    notSentImageContacts = await Activity.aggregate([
+      {
+        $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $and: query }] }
+      },      
+      {$unwind: '$contacts'},
+      {
+        $group: {
+          _id: { contact: "$contacts"},
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: { "_id": 1 }
+      }
+    ]);
+  }
 
   let materialContacts = [];
   watchedVideoContacts.forEach(e => {
@@ -1244,6 +1389,13 @@ const advanceSearch = async (req, res) => {
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   watchedPdfContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+  watchedImageContacts.forEach(e => {
     if (e._id && isArray(e._id)) {
       materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
       return;
@@ -1264,19 +1416,57 @@ const advanceSearch = async (req, res) => {
     }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
+  notWatchedImageContacts.forEach(e => {
+    if (e._id && isArray(e._id)) {
+      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+      return;
+    }
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  })
+  let excludeMaterialContacts = []
+  notSentVideoContacts.forEach(e => {
+    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
+  })
+  notSentPdfContacts.forEach(e => {
+    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
+  })
+  notSentImageContacts.forEach(e => {
+    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
+  })
 
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
+  let includeMaterialCondition = (materialCondition['not_watched_pdf']['flag'] || 
+                                    materialCondition['not_watched_video']['flag'] || 
+                                    materialCondition['watched_pdf']['flag'] || 
+                                    materialCondition['watched_video']['flag'] || 
+                                    materialCondition['watched_image']['flag'] || 
+                                    materialCondition['not_watched_image']['flag']);
+  let excludeMaterialCondition = (materialCondition['not_sent_video']['flag'] || materialCondition['not_sent_pdf']['flag'] || materialCondition['not_sent_image']['flag'])
   if (materialContacts.length) {
+    // Exclude Contacts from material contacts
     let materialQuery = { '_id': { $in: materialContacts } };
+    if( excludeMaterialContacts.length ) {
+      materialQuery = {$and: [ { '_id': { $in: materialContacts } }, {'_id': {$nin: excludeMaterialContacts}}]}
+    }    
     query['$and'].push(materialQuery);
   }
-  else {
-    if(materialCondition['not_watched_pdf']['flag'] || materialCondition['not_watched_video']['flag'] || materialCondition['watched_pdf']['flag'] || materialCondition['watched_video']['flag']) {
-      return res.send({
-        status: true,
-        data: []
-      });
+  else {    
+    if( includeMaterialCondition ) {
+      if( excludeMaterialContacts ) {
+        query['$and'].push({ '_id': { $nin: excludeMaterialContacts } })
+      }
+      else if(!excludeMaterialCondition){
+        return res.send({
+          status: true,
+          data: []
+        });
+      }      
+    }
+    else {
+      if( excludeMaterialContacts ) {
+        query['$and'].push({ '_id': { $nin: excludeMaterialContacts } })
+      }
     }
   }
 
@@ -1331,10 +1521,10 @@ const advanceSearch = async (req, res) => {
     else {
       var sourceQuery = {};
       if(includeSource) {
-        sourceQuery = { source: { $nin: sourceCondition } };
+        sourceQuery = { source: { $in: sourceCondition } };
       }
       else {
-        sourceQuery = { source: { $in: sourceCondition } };
+        sourceQuery = { source: { $nin: sourceCondition } };
       }      
       query['$and'].push(sourceQuery);
     }    
@@ -1485,7 +1675,7 @@ const advanceSearch = async (req, res) => {
   //   results = contacts;
   // }
   let lastActivityQueries = {};
-  if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
+  if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['send_image']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag'] || lastMaterial['watched_image']['flag'] ) {
     let activityQueries = {};
     let lastActivityQuery;
     // last activity condition
@@ -1497,14 +1687,15 @@ const advanceSearch = async (req, res) => {
       else {
         lastActivityQuery = {type: {$nin: activityCondition}};
         activityQueries['$and'] = [lastActivityQuery];
-      }
-      
+      }      
     }
     // last material activity condition
     let lastSendVideoQuery;
     let lastSendPdfQuery;
+    let lastSendImageQuery;
     let lastWatchedVideoQuery;
     let lastWatchedPdfQuery;
+    let lastWatchedImageQuery;
     // sent video query
     if(lastMaterial['send_video']['flag'])  {
       if(includeLastActivity) {
@@ -1543,6 +1734,25 @@ const advanceSearch = async (req, res) => {
         else {activityQueries['$and'] = [lastSendPdfQuery]}
       }
     }
+    // sent Image query
+    if(lastMaterial['send_image']['flag'])  {
+      if(includeLastActivity) {
+        lastSendImageQuery = {type: 'images'}
+        if(lastMaterial['send_image']['material']) {
+          lastSendImageQuery['images'] = lastMaterial['send_image']['material'];
+        }
+        if(activityQueries['$or']) {activityQueries['$or'].push(lastSendImageQuery)}
+        else {activityQueries['$or'] = [lastSendImageQuery]}  
+      }
+      else {
+        lastSendImageQuery = {type: { $ne: 'images'}}
+        if(lastMaterial['send_image']['material']) {
+          lastSendImageQuery['images'] = {$ne : lastMaterial['send_image']['material']};
+        }
+        if(activityQueries['$and']) {activityQueries['$and'].push(lastSendImageQuery)}
+        else {activityQueries['$and'] = [lastSendImageQuery]}
+      }
+    }
     // watched video query
     if(lastMaterial['watched_video']['flag'])  {
       if(includeLastActivity) {
@@ -1560,8 +1770,7 @@ const advanceSearch = async (req, res) => {
         }
         if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedVideoQuery)}
         else {activityQueries['$and'] = [lastWatchedVideoQuery]}
-      }
-      
+      }      
     }
     // watched pdf query
     if(lastMaterial['watched_pdf']['flag'])  {
@@ -1581,6 +1790,25 @@ const advanceSearch = async (req, res) => {
         if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedPdfQuery)}
         else {activityQueries['$and'] = [lastWatchedPdfQuery]} 
       }      
+    }
+    // watched Image Query
+    if(lastMaterial['watched_image']['flag'])  {
+      if(includeLastActivity) {
+        lastWatchedImageQuery = { type: 'image_trackers'};
+        if(lastMaterial['watched_image']['material']) {
+          lastWatchedImageQuery['images'] = lastMaterial['watched_image']['material'];
+        }
+        if(activityQueries['$or']) {activityQueries['$or'].push(lastWatchedImageQuery)}
+        else {activityQueries['$or'] = [lastWatchedImageQuery]} 
+      }
+      else {
+        lastWatchedImageQuery = { type: {$ne: 'image_trackers'}};
+        if(lastMaterial['watched_image']['material']) {
+          lastWatchedImageQuery['images'] = {$ne: lastMaterial['watched_image']['material']};
+        }
+        if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedImageQuery)}
+        else {activityQueries['$and'] = [lastWatchedImageQuery]}
+      }
     }
     // last activity time
     let timeQuery;

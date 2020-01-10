@@ -32,6 +32,7 @@ const activity =document.querySelector("#activity").value
   var reported = false;
   if( contact && activity ){
       socket = io.connect('https://app.crmgrow.com');
+    // socket = io.connect('http://localhost:3000')
   }
 
   function reportTime() {
