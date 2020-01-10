@@ -359,29 +359,32 @@ const bulkEmail = async(req, res) => {
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       
-        sgMail.send(msg).then((_res) => {
-          console.log('mailres.errorcode', _res[0].statusCode);
-          if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-            console.log('status', _res[0].statusCode)
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve()  
-          }else {
+        let promise = new Promise((resolve, reject) => {
+          sgMail.send(msg).then((_res) => {
+            console.log('mailres.errorcode', _res[0].statusCode);
+            if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+              console.log('status', _res[0].statusCode)
+              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+              resolve()  
+            }else {
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              console.log('email sending err', msg.to+res[0].statusCode)
+              reject(_contact.email)
+            }
+          }).catch ((e) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
-            console.log('email sending err', msg.to+res[0].statusCode)
+            console.log('email sending err', msg.to)
+            console.error(e)
             reject(_contact.email)
-          }
-        }).catch ((e) => {
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
           })
-          console.log('email sending err', msg.to)
-          console.error(e)
-          reject(_contact.email)
-        })
+        }); 
+        
         promise_array.push(promise)
       }
       
