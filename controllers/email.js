@@ -1,3 +1,6 @@
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
@@ -81,8 +84,48 @@ const send = async (req, res) => {
   })
 }
 
+const bulkGmail = () => {
+  const oauth2Client = new OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET, // Client Secret
+    urls.GMAIL_AUTHORIZE_URL
+  );
 
+  oauth2Client.setCredentials({
+    refresh_token: currentUser.refresh_token
+  }); 
+  const accessToken = oauth2Client.getAccessToken()
+  const smtpTransport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+         type: "OAuth2",
+         user: currentUser.email, 
+         clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+         clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+         refreshToken: currentUser.refresh_token,
+         accessToken: accessToken
+    }
+  });
+  
+  return new Promise((resolve, reject)=>{
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      if(error) {
+        Activity.deleteOne({_id: activity.id}).catch(err=>{
+          console.log('err', err)
+        })
+        error.push(_contact.email)
+      } else{
+        Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
+      }
+      smtpTransport.close();
+      resolve()
+    });
+  })
+}
 module.exports = {
     send,
-    receive
+    receive,
+    bulkGmail
 }
