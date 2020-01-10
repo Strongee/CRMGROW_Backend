@@ -503,42 +503,112 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 const subscription_check = new CronJob('0 21 */3 * *', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
-  const subscribers = await User.find({'subscription.is_failed': true, del: false}).catch(err=>{
-    console.log('err', err)
-  })
+  const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'})
   
-  if(subscribers){
-    for(let i = 0; i <subscribers.length; i++){
-      const subscriber = subscribers[i]
-      const subscription = subscriber['subscription']
-      
-      msg = {
-        to: subscriber.email,
-        from: mail_contents.SUPPORT_CRMGROW.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SUBSCRIPTION_FAILED_NOTIFICATION,
-        dynamic_template_data: {
-          first_name: subscriber.user_name,
+  if(payment_notification){
+    const subscribers = await User.find({'subscription.is_failed': true, del: false}).catch(err=>{
+      console.log('err', err)
+    })
+    
+    if(subscribers){
+      for(let i = 0; i <subscribers.length; i++){
+        const subscriber = subscribers[i]
+        const subscription = subscriber['subscription']
+        
+        msg = {
+          to: subscriber.email,
+          from: mail_contents.SUPPORT_CRMGROW.MAIL,
+          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          dynamic_template_data: {
+            first_name: subscriber.user_name,
+            content: payment_notification['content']
+          }
         }
+        sgMail.send(msg).then((res) => {
+          console.log('mailres.errorcode', res[0].statusCode);
+          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+            console.log('Successful send to '+msg.to)
+          }else {
+            console.log('email sending err', msg.to+res[0].statusCode)
+          }
+        }).catch(err=>{
+          console.log('err', err)
+        })
       }
-      sgMail.send(msg).then((res) => {
-        console.log('mailres.errorcode', res[0].statusCode);
-        if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-          console.log('Successful send to '+msg.to)
-        }else {
-          console.log('email sending err', msg.to+res[0].statusCode)
+    }
+  }
+  
+  const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'})
+  if(logger_notification){
+  
+    const subscribers = await User.find({last_logged: new Date(), del: false})
+    if(subscribers){
+      for(let i = 0; i <subscribers.length; i++){
+        const subscriber = subscribers[i]
+        const subscription = subscriber['subscription']
+        
+        msg = {
+          to: subscriber.email,
+          from: mail_contents.SUPPORT_CRMGROW.MAIL,
+          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          dynamic_template_data: {
+            first_name: subscriber.user_name,
+            content: logger_notification['content']
+          }
         }
-      }).catch(err=>{
-        console.log('err', err)
-      })
+        sgMail.send(msg).then((res) => {
+          console.log('mailres.errorcode', res[0].statusCode);
+          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+            console.log('Successful send to '+msg.to)
+          }else {
+            console.log('email sending err', msg.to+res[0].statusCode)
+          }
+        }).catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }
+  }
+  
+  const notifications = await Notification.find({type: 'static', sent: false});
+  
+  if(notifications){
+    const subscribers = await User.find({del: false})
+    for(let i = 0; i <notifications.length; i++){
+      const notification = notification[i]
+      
+      for(let j=0; j<subscribers.length; j++){
+       const subscriber = subscribers[i]
+        msg = {
+          to: subscriber.email,
+          from: mail_contents.SUPPORT_CRMGROW.MAIL,
+          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          dynamic_template_data: {
+            content: subscriber.user_name,
+            content: notification.content
+          }
+        }
+        sgMail.send(msg).then((res) => {
+          console.log('mailres.errorcode', res[0].statusCode);
+          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+            console.log('Successful send to '+msg.to)
+          }else {
+            console.log('email sending err', msg.to+res[0].statusCode)
+          }
+        }).catch(err=>{
+          console.log('err', err)
+        })
+      }
     }
   }
 }, function () {
-  console.log('Subscription Job finished.');
+  console.log('Notification Check Job finished.');
 }, false, 'US/Central'
 )
+
 
 signup_job.start()
 reminder_job.start()
 weekly_report.start()
 video_job.start()
-subscription_check.start()
+notification_check.start()

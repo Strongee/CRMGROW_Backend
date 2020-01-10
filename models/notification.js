@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 
 const Notification = mongoose.model('notification', {
     name: String,
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-    role: String,
+    type: String,
+    del: {type: Boolean, default: false},
+    sent: {type: Boolean, default: false},
+    criteria: String,
     content: String,
     created_at: Date,
     updated_at: Date,
