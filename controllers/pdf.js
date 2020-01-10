@@ -466,6 +466,8 @@ const bulkEmail = async(req, res) => {
   const { currentUser } = req
   let {content, subject, pdfs, contacts} = req.body 
   let promise_array = []
+  let error = []
+  
   if(contacts){
     if(contacts.length>15){
       return res.status(400).json({
@@ -575,7 +577,8 @@ const bulkEmail = async(req, res) => {
                 console.log('err', err)
               })
               console.log('email sending err', msg.to+res[0].statusCode)
-              reject(_contact.email)
+              error.push(_contact.email)
+              resolve()
             }
           }).catch ((e) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
@@ -583,13 +586,20 @@ const bulkEmail = async(req, res) => {
             })
             console.log('email sending err', msg.to)
             console.error(e)
-            reject(_contact.email)
+            error.push(_contact.email)
+            resolve()
           })
         })
         promise_array.push(promise)
       }
       
       Promise.all(promise_array).then(()=>{
+        if(error){
+          return res.status(400).json({
+            status: false,
+            error: error
+          })
+        }
         return res.send({
           status: true
         })
@@ -614,6 +624,7 @@ const bulkText = async(req, res) => {
   const { currentUser } = req
   let {content, pdfs, contacts} = req.body 
   let promise_array = []
+  let error = []
   
   if(contacts){
     if(contacts.length>15){
@@ -733,7 +744,8 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          reject(_contact.cell_phone) // Invalid phone number
+          error.push(_contact.cell_phone)
+          resolve() // Invalid phone number
         }
         twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
           console.info(`Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`, pdf_content)
@@ -746,13 +758,20 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          reject(_contact.cell_phone)
+          error.push(_contact.cell_phone)
+          resolve()
         })  
       })
       promise_array.push(promise)
     }
     
     Promise.all(promise_array).then(()=>{
+      if(error){
+        return res.status(400).json({
+          status: false,
+          error: error
+        })
+      }
       return res.send({
         status: true,
       })

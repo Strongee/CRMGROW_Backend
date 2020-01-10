@@ -410,7 +410,7 @@ const sendBatch = async (req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
   let promise_array = []
-  
+  let error = []
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
       status: false,
@@ -474,17 +474,25 @@ const sendBatch = async (req, res) => {
           resolve()
         }else {
           console.log('email sending err', msg.to+_res[0].statusCode)
-          reject(to[i])
+          error.push(to[i])
+          resolve()
         }
       }).catch(err => {
         console.log('err', err)
-        reject(to[i])
+        error.push(to[i])
+        resolve()
       })
     })
     promise_array.push(promise)
   }
   
   Promise.all(promise_array).then(()=>{
+    if(error){
+      return res.status(400).json({
+        status: false,
+        error: error
+      })
+    }
     return res.send({
       status: true,
     })
