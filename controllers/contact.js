@@ -487,7 +487,7 @@ const sendBatch = async (req, res) => {
   }
   
   Promise.all(promise_array).then(()=>{
-    if(error){
+    if(error.length>0){
       return res.status(400).json({
         status: false,
         error: error
