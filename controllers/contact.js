@@ -474,12 +474,12 @@ const sendBatch = async (req, res) => {
           resolve()
         }else {
           console.log('email sending err', msg.to+_res[0].statusCode)
-          error.push(to[i])
+          error.push(contacts[i])
           resolve()
         }
       }).catch(err => {
         console.log('err', err)
-        error.push(to[i])
+        error.push(contacts[i])
         resolve()
       })
     })

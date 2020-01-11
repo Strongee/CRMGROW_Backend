@@ -577,7 +577,7 @@ const bulkEmail = async(req, res) => {
                 console.log('err', err)
               })
               console.log('email sending err', msg.to+res[0].statusCode)
-              error.push(_contact.email)
+              error.push(contacts[i])
               resolve()
             }
           }).catch ((e) => {
@@ -586,7 +586,7 @@ const bulkEmail = async(req, res) => {
             })
             console.log('email sending err', msg.to)
             console.error(e)
-            error.push(_contact.email)
+            error.push(contacts[i])
             resolve()
           })
         })
@@ -744,7 +744,7 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(_contact.cell_phone)
+          error.push(contacts[i])
           resolve() // Invalid phone number
         }
         twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
@@ -758,7 +758,7 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(_contact.cell_phone)
+          error.push(contacts[i])
           resolve()
         })  
       })

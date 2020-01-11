@@ -750,7 +750,7 @@ const bulkEmail = async(req, res) => {
               console.log('err', err)
             })
             console.log('email sending err', msg.to+res[0].statusCode)
-            error.push(_contact.email)
+            error.push(contacts[i])
           }
         }).catch ((e) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
@@ -758,7 +758,7 @@ const bulkEmail = async(req, res) => {
           })
           console.log('email sending err', msg.to)
           console.error(e)
-          error.push(_contact.email)
+          error.push(contacts[i])
           resolve()
         })
       })
@@ -929,12 +929,13 @@ const bulkGmail = async(req, res) => {
         
       
         let promise = new Promise((resolve, reject)=>{
-          smtpTransport.sendMail(mailOptions, (error, response) => {
-            if(error) {
+          smtpTransport.sendMail(mailOptions, (err, response) => {
+            if(err) {
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
-              error.push(_contact.email)
+              console.log('err', err)
+              error.push(contacts[i])
             } else{
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
@@ -1096,7 +1097,7 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(_contact.cell_phone)
+          error.push(contacts[i])
           resolve() // Invalid phone number
         }
         twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
@@ -1110,7 +1111,7 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(_contact.cell_phone)
+          error.push(contacts[i])
           resolve()
         })  
       })
