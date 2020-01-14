@@ -660,6 +660,8 @@ const createSmsContent = async (req, res) => {
     content: image_content
   })
 
+}
+
 const bulkGmail = (req, res) => {
   const { currentUser } = req
   let {content, subject, images, contacts} = req.body 
