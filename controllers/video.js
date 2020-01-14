@@ -1143,6 +1143,81 @@ const bulkText = async(req, res) => {
   }
 }
 
+const createSmsContent = async (req, res) => {
+  const { currentUser } = req;
+  let { content, subject, videos, contacts } = req.body
+
+  const _contact = await Contact.findOne({_id: contacts[0]}).catch(err => {
+    console.log('err', err)
+  })
+
+  let video_titles = ''
+  let video_descriptions = ''
+  let video_objects = ''
+  let video_subject = ''
+  let video_content = content
+  let activity
+
+  for(let j=0; j<videos.length; j++){
+    const video = videos[j]           
+    
+    if(typeof video_content == 'undefined'){
+      video_content = ''
+    }
+    
+    video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
+    .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+    const _activity = new Activity({
+      content: currentUser.user_name + ' sent video using sms',
+      contacts: contacts[0],
+      user: currentUser.id,
+      type: 'videos',
+      videos: video._id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      description: video_content
+    })
+    
+    activity = await _activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
+    
+    const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+  
+    if(j < videos.length-1){
+      video_titles = video_titles + video.title + ', '  
+      video_descriptions = video_descriptions + `${video.description}, ` 
+    } else{
+      video_titles = video_titles + video.title
+      video_descriptions = video_descriptions + video.description
+    }
+    const video_object = `${video.title}\n${video_link}\n\n`
+    video_objects = video_objects + video_object                      
+  }
+
+  if(video_content.search(/{video_object}/ig) != -1){
+    video_content = video_content.replace(/{video_object}/ig, video_objects)
+  }else{
+    video_content = video_content+'\n'+video_objects
+  }
+    
+  if(video_content.search(/{video_title}/ig) != -1){
+    video_content = video_content.replace(/{video_title}/ig, video_titles)
+  }
+    
+  if(video_content.search(/{video_description}/ig) != -1){
+    video_content = video_content.replace(/{video_description}/ig, video_descriptions)
+  }
+
+  return res.send({
+    status: true,
+    data: video_content
+  })
+}
+
 module.exports = {
     play,
     play1,
@@ -1159,6 +1234,7 @@ module.exports = {
     remove,
     getHistory,
     createVideo,
+    createSmsContent,
     bulkGmail
 }
 

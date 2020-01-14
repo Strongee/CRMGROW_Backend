@@ -790,6 +790,79 @@ const bulkText = async(req, res) => {
   }
 }
 
+const createSmsContent = async (req, res) => {
+  const { currentUser } = req
+  let {content, pdfs, contacts} = req.body 
+
+  const _contact = await Contact.findOne({_id: contacts[0]}).catch(err=>{
+    console.log('err', err)
+  }) 
+  let pdf_titles = ''
+  let pdf_descriptions = ''
+  let pdf_objects = ''
+  let pdf_content = content
+  let activity;
+
+  for(let j=0; j<pdfs.length; j++){
+    const pdf = pdfs[j]        
+    
+    if(typeof pdf_content == 'undefined'){
+      pdf_content = ''
+    }
+    
+    pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
+    .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+    const _activity = new Activity({
+      content: currentUser.user_name + ' sent pdf using sms',
+      contacts: contacts[0],
+      user: currentUser.id,
+      type: 'pdfs',
+      pdfs: pdf._id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      description: pdf_content
+    })
+    
+    const activity = await _activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
+    
+    const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
+  
+    if(j < pdfs.length-1){
+      pdf_titles = pdf_titles + pdf.title + ', '  
+      pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
+    } else{
+      pdf_titles = pdf_titles + pdf.title
+      pdf_descriptions = pdf_descriptions + pdf.description
+    }
+    const pdf_object = `${pdf.title}\n${pdf_link}\n\n`
+    pdf_objects = pdf_objects + pdf_object                      
+  }
+
+  if(pdf_content.search(/{pdf_object}/ig) != -1){
+    pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
+  }else{
+    content = content+'\n'+pdf_objects
+  }
+    
+  if(pdf_content.search(/{pdf_title}/ig) != -1){
+    pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
+  }
+    
+  if(pdf_content.search(/{pdf_description}/ig) != -1){
+    pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
+  }
+
+  return res.send({
+    status: true,
+    data: pdf_content
+  })
+}
+
 module.exports = {
   play,
   play1,
@@ -802,6 +875,7 @@ module.exports = {
   sendText,
   bulkEmail,
   bulkText,
+  createSmsContent,
   remove,
   getHistory
 }

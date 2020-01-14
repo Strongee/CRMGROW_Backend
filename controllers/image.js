@@ -587,6 +587,80 @@ const bulkText = async(req, res) => {
   }
 }
 
+const createSmsContent = async (req, res) => {
+  const { currentUser } = req
+  let {content, images, contacts} = req.body 
+
+  const _contact = await Contact.findOne({_id: contacts[0]}).catch(err=>{
+    console.log('err', err)
+  }) 
+  let image_titles = ''
+  let image_descriptions = ''
+  let image_objects = ''
+  let image_content = content
+  let activity
+
+  for(let j=0; j<images.length; j++){
+    const image = images[j]        
+    
+    if(!image_content){
+      image_content = ''
+    }
+    
+    image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+    .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+    const _activity = new Activity({
+      content: currentUser.user_name + ' sent image using sms',
+      contacts: contacts[0],
+      user: currentUser.id,
+      type: 'images',
+      images: image._id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      description: image_content
+    })
+    
+    const activity = await _activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
+    
+    const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
+  
+    if(j < images.length-1){
+      image_titles = image_titles + image.title + ', '  
+      image_descriptions = image_descriptions + `${image.description}, ` 
+    } else{
+      image_titles = image_titles + image.title
+      image_descriptions = image_descriptions + image.description
+    }
+    const image_object = `${image.title}\n${image_link}\n\n`
+    image_objects = image_objects + image_object                      
+  }
+
+  if(image_content.search(/{image_object}/ig) != -1){
+    image_content = image_content.replace(/{image_object}/ig, image_objects)
+  }else{
+    console.log('image_objects', image_objects)
+    image_content = image_content+'\n'+image_objects
+  }
+    
+  if(image_content.search(/{image_title}/ig) != -1){
+    image_content = image_content.replace(/{image_title}/ig, image_titles)
+  }
+    
+  if(image_content.search(/{image_description}/ig) != -1){
+    image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+  }
+
+  return res.send({
+    status: true,
+    content: image_content
+  })
+}
+
 module.exports = {
   play,
   play1,
@@ -597,5 +671,6 @@ module.exports = {
   getPreview,
   bulkEmail,
   bulkText,
+  createSmsContent,
   remove,
 }

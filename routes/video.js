@@ -81,6 +81,9 @@ router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErr
 // Bulk texts
 router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkText))
 
+// Sms Content 
+router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.createSmsContent));
+
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 
