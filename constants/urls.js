@@ -27,7 +27,39 @@
       INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
       GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
     }
-  } else {
+  } else if(process.env.NODE_ENV === 'staging'){
+    {
+      urls = {
+        DOMAIN_URL: 'https://stg.crmgrow.com/',
+        API_URL: 'https://stg.crmgrow.com/api/',
+        LOGIN_URL: 'https://stg.crmgrow.com/login',
+        PROFILE_URL: 'https://stg.crmgrow.com/profile/',
+        OUTLOOK_AUTHORIZE_URL: 'https://stg.crmgrow.com/profile/outlook',
+        GMAIL_AUTHORIZE_URL: 'https://stg.crmgrow.com/profile/gmail',
+        VIDEO_THUMBNAIL_URL:  'https://stg.crmgrow.com/api/video/thumbnail/',
+        PDF_PREVIEW_URL: 'https://stg.crmgrow.com/api/pdf/preview/',
+        IMAGE_PREVIEW_URL: 'https://stg.crmgrow.com/api/image/preview/',
+        FILE_URL: 'https://stg.crmgrow.com/api/file/',
+        VIDEO_URL: 'https://stg.crmgrow.com/api/video/pipe/',
+        MATERIAL_VIEW_VIDEO_URL: 'https://stg.crmgrow.com/video1/',
+        MATERIAL_VIEW_PAGE: 'https://stg.crmgrow.com/material',
+        MATERIAL_VIEW_PDF_URL: 'https://stg.crmgrow.com/pdf1/',
+        MATERIAL_VIEW_IMAGE_URL: 'https://stg.crmgrow.com/image/',
+        CONTACT_PAGE_URL: 'https://stg.crmgrow.com/contacts/',
+        FOLLOWUP_PAGE_URL: 'https://stg.crmgrow.com/follow-up/',
+        ASSETS_URL: 'https://stg.crmgrow.com/assets/',
+        ACCEPT_INVITATION_URL: 'https://stg.crmgrow.com/api/appointment/accept?',
+        DECLINE_INVITATION_URL: 'https://stg.crmgrow.com/api/appointment/decline?',
+        SMS_RECEIVE_URL: 'https://stg.crmgrow.com/api/sms/receive/',
+        RESET_PASSWORD_URL: 'https://stg.crmgrow.com/reset-password/',
+        AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
+        CONTACT_CSV_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
+        INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
+        GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
+      }
+    }
+
+  }else {
     urls = {
       DOMAIN_URL: 'https://app.crmgrow.com/',
       API_URL: 'http://localhost:3000/api/',
