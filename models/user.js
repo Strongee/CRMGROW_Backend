@@ -15,6 +15,7 @@ const User = mongoose.model('user',{
      picture_profile: String,
      learn_more: String,
      role: String,
+     primary_connected: {type: Boolean, default: false},
      outlook_refresh_token: String,
      google_refresh_token: String,
      connected_email_type: String,

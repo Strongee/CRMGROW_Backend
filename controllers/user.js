@@ -308,6 +308,47 @@ const checkAuth = async (req, res, next) => {
 
     if (req.currentUser) {
       console.info('Auth Success:', req.currentUser.email)
+      if(!req.currentUser.primary_connected){
+        res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
+      }else{
+        next()
+      }
+     
+    } else {
+      console.error('Valid JWT but no user:', decoded)
+      res.status(401).send({
+        status: false,
+        error: 'invalid_user'
+      })
+    }
+  }
+  
+  const checkAuth2 = async (req, res, next) => {
+    const token = req.get('Authorization')
+    let decoded
+    try {
+      decoded = jwt.verify(token, config.JWT_SECRET)
+      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    } catch (err) {
+      console.error(err)
+      
+      return res.status(401).send({
+        status: false,
+        error: err.message
+      })
+      // err
+    }
+  
+
+    req.currentUser = await User.findOne({ _id: decoded.id}).catch(err=>{
+      console.log('err', err)
+    })
+
+    if (req.currentUser) {
+      console.info('Auth Success:', req.currentUser.email)
       next()
     } else {
       console.error('Valid JWT but no user:', decoded)
@@ -490,7 +531,7 @@ const authorizeOutlook = async(req, res) => {
       // Email is in the preferred_username field
       user.email = jwt.preferred_username
       user.connected_email_type = 'outlook'
-      
+      user.primary_connected = true
       user.save()
       .then(_res => {
           res.send({
@@ -581,6 +622,7 @@ const authorizeGmail = async(req, res) => {
     // Email is in the preferred_username field
     user.email = _res.data.email
     user.connected_email_type = 'gmail'
+    user.primary_connected = true
     
     user.save()
     .then(_res => {
@@ -1077,6 +1119,7 @@ module.exports = {
     disconText,
     weeklyReport,
     checkAuth,
+    checkAuth2,
     checkSuspended,
     isBlockedEmail,
     closeAccount
