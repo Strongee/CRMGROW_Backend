@@ -662,7 +662,7 @@ const createSmsContent = async (req, res) => {
 
 }
 
-const bulkGmail = (req, res) => {
+const bulkGmail = async(req, res) => {
   const { currentUser } = req
   let {content, subject, images, contacts} = req.body 
   let promise_array = []

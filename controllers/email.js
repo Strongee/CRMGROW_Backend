@@ -84,7 +84,7 @@ const send = async (req, res) => {
   })
 }
 
-const bulkGmail = () => {
+const bulkGmail = async(req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
   let promise_array = []
