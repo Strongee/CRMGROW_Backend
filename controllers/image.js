@@ -820,7 +820,7 @@ const bulkGmail = async(req, res) => {
     }  
 }
 
-const bulkOutlook = (req, res) => {
+const bulkOutlook = async(req, res) => {
   const { currentUser } = req
   let {content, subject, images, contacts} = req.body 
   let promise_array = []
