@@ -27,7 +27,7 @@ router.post('/login', [
   ], catchError(UserCtrl.login))  
   
   // Edit own profile
-router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe))
+router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe))
 
 // Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
@@ -48,10 +48,10 @@ router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlook)
 router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail))
 
 // Outlook Email authorization
-router.get('/authorize-outlook', UserCtrl.checkAuth, catchError(UserCtrl.authorizeOutlook))
+router.get('/authorize-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeOutlook))
 
 // Gmail authorized
-router.get('/authorize-gmail', UserCtrl.checkAuth, catchError(UserCtrl.authorizeGmail))
+router.get('/authorize-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeGmail))
 
 // Synchronize calendar with connected outlook email
 router.get('/sync-calendar', UserCtrl.checkAuth, catchError(UserCtrl.syncCalendar))
