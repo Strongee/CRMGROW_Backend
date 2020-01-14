@@ -66,6 +66,11 @@ router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErro
 
 // Sms Content
 router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ImageCtrl.createSmsContent))
+// Bulk videos
+router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ImageCtrl.bulkOutlook))
+
+// Bulk videos
+router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ImageCtrl.bulkGmail))
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.remove))

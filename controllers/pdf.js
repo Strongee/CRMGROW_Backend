@@ -557,6 +557,7 @@ const bulkEmail = async(req, res) => {
           to: _contact.email,
           from: `${currentUser.user_name} <${currentUser.email}>`,
           subject: subject,
+          replyTo: 'othersender@example.org',
           html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
                 +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
         }
@@ -643,6 +644,7 @@ const bulkText = async(req, res) => {
       let pdf_objects = ''
       let pdf_content = content
       let activity
+      
       for(let j=0; j<pdfs.length; j++){
           const pdf = pdfs[j]        
           
@@ -863,6 +865,347 @@ const createSmsContent = async (req, res) => {
   })
 }
 
+const bulkOutlook = async(req, res) => {
+  const { currentUser } = req
+  let {content, subject, pdfs, contacts} = req.body 
+  let promise_array = []
+  let error = []
+  
+  let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+  let accessToken
+  await new Promise((resolve, reject) => {
+    token.refresh(function(error, result) {
+      if (error) {
+        reject(error.message)
+      }
+      else {
+        resolve(result.token);
+      }
+    })
+  }).then((token)=>{
+    accessToken = token.access_token
+    
+  }).catch((error) => {
+    console.log('error', error)
+  })
+
+  const client = graph.Client.init({
+    // Use the provided access token to authenticate
+    // requests
+    authProvider: (done) => {
+      done(null, accessToken);
+    }
+  });
+
+  if(contacts){
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can send max 15 contacts at a time'
+      })
+    }
+    
+    for(let i=0; i<contacts.length; i++){
+      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
+        console.log('err', err)
+      }) 
+      let pdf_titles = ''
+      let pdf_descriptions = ''
+      let pdf_objects = ''
+      let pdf_subject = ''
+      let pdf_content = content
+      let activity
+      for(let j=0; j<pdfs.length; j++){
+          const pdf = pdfs[j]        
+          
+          if(typeof pdf_content == 'undefined'){
+            pdf_content = ''
+          }
+          
+          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+          const _activity = new Activity({
+            content: currentUser.user_name + ' sent pdf using email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'pdfs',
+            pdfs: pdf._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: subject,
+            description: pdf_content
+          })
+          
+          activity = await _activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          
+          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
+          
+          if(pdfs.length>=2){
+            pdf_subject = mail_contents.PDF_TITLE
+          }else{
+            pdf_subject = `${pdf.title}`
+          }
+          
+          if(j < pdfs.length-1){
+            pdf_titles = pdf_titles + pdf.title + ', '  
+            pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
+          } else{
+            pdf_titles = pdf_titles + pdf.title
+            pdf_descriptions = pdf_descriptions + pdf.description
+          }
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+          pdf_objects = pdf_objects + pdf_object                      
+      }
+      
+      if(subject == '' ){
+        subject = 'PDF: ' + pdf_subject
+      } else {
+        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+      }
+    
+        if(pdf_content.search(/{pdf_object}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
+        }else{
+          pdf_content = pdf_content+pdf_objects
+        }
+        
+        if(content.search(/{pdf_title}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
+        }
+        
+        if(content.search(/{pdf_description}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
+        }
+        
+        const sendMail = {
+          message: {
+            subject: subject,
+            body: {
+              contentType: "HTML",
+              content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+            },
+            toRecipients: [
+              {
+                emailAddress: {
+                  address: _contact.email,
+                }
+              }
+            ],
+          },
+          saveToSentItems: "false"
+        };
+      
+        let promise = new Promise((resolve, reject)=>{
+          client.api('/me/sendMail')
+          .post(sendMail).then(()=>{
+            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('err', err)
+            })
+          }).catch(err=>{
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            console.log('err', err)
+            error.push(contacts[i])
+          });
+          resolve()
+        })
+      promise_array.push(promise)
+    }
+      
+    Promise.all(promise_array).then(()=>{
+      if(error.length>0){
+        return res.status(400).json({
+          status: false,
+          error: error
+        })
+      }
+      return res.send({
+        status: true
+      })
+    }).catch(err=>{
+      console.log('err', err)
+      if(err){
+        return res.status(400).json({
+          status: false,
+          error: err
+        })
+      }
+    });
+  }else {
+      return res.status(400).json({
+        status: false,
+        error: 'Contacts not found'
+      })
+  }  
+}
+
+const bulkGmail = async(req, res) => {
+  const { currentUser } = req
+  let {content, subject, pdfs, contacts} = req.body 
+  let promise_array = []
+  let error = []
+  
+  const token = JSON.parse(currentUser.google_refresh_token)
+  const smtpTransport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+         type: "oauth2",
+         user: user.currentUser, 
+         clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+         clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+         refreshToken: token.refresh_token
+    }
+  });
+  
+  if(contacts){
+    if(contacts.length>15){
+      return res.status(400).json({
+        status: false,
+        error: 'You can send max 15 contacts at a time'
+      })
+    }
+    
+    for(let i=0; i<contacts.length; i++){
+      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
+        console.log('err', err)
+      }) 
+      let pdf_titles = ''
+      let pdf_descriptions = ''
+      let pdf_objects = ''
+      let pdf_subject = ''
+      let pdf_content = content
+      let activity
+      for(let j=0; j<pdfs.length; j++){
+          const pdf = pdfs[j]        
+          
+          if(typeof pdf_content == 'undefined'){
+            pdf_content = ''
+          }
+          
+          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+          const _activity = new Activity({
+            content: currentUser.user_name + ' sent pdf using email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'pdfs',
+            pdfs: pdf._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: subject,
+            description: pdf_content
+          })
+          
+          activity = await _activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          
+          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
+          
+          if(pdfs.length>=2){
+            pdf_subject = mail_contents.PDF_TITLE
+          }else{
+            pdf_subject = `${pdf.title}`
+          }
+          
+          if(j < pdfs.length-1){
+            pdf_titles = pdf_titles + pdf.title + ', '  
+            pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
+          } else{
+            pdf_titles = pdf_titles + pdf.title
+            pdf_descriptions = pdf_descriptions + pdf.description
+          }
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+          pdf_objects = pdf_objects + pdf_object                      
+      }
+      
+      if(subject == '' ){
+        subject = 'PDF: ' + pdf_subject
+      } else {
+        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+      }
+    
+        if(pdf_content.search(/{pdf_object}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
+        }else{
+          pdf_content = pdf_content+pdf_objects
+        }
+        
+        if(content.search(/{pdf_title}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
+        }
+        
+        if(content.search(/{pdf_description}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
+        }
+        
+        const mailOptions = {
+          from: `${currentUser.user_name} <${currentUser.email}>`,
+          to: _contact.email,
+          subject: subject,
+          generateTextFromHTML: true,
+          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+          +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+        };
+        
+        let promise = new Promise((resolve, reject)=>{
+          smtpTransport.sendMail(mailOptions, (err, response) => {
+            if(err) {
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              console.log('err', err)
+              error.push(contacts[i])
+            } else{
+              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+            }
+            smtpTransport.close();
+            resolve()
+          });
+        })
+        promise_array.push(promise)
+      }
+      
+      Promise.all(promise_array).then(()=>{
+        if(error.length>0){
+          return res.status(400).json({
+            status: false,
+            error: error
+          })
+        }
+        return res.send({
+          status: true
+        })
+      }).catch(err=>{
+        console.log('err', err)
+        if(err){
+          return res.status(400).json({
+            status: false,
+            error: err
+          })
+        }
+      });
+    }else {
+        return res.status(400).json({
+          status: false,
+          error: 'Contacts not found'
+        })
+      }  
+}
+
+
 module.exports = {
   play,
   play1,
@@ -877,5 +1220,7 @@ module.exports = {
   bulkText,
   createSmsContent,
   remove,
-  getHistory
+  getHistory,
+  bulkOutlook,
+  bulkGmail
 }

@@ -427,7 +427,9 @@ const syncOutlook = async (req, res) => {
     'openid',
     'profile',
     'offline_access',
-    'https://outlook.office.com/calendars.readwrite'
+    'email',
+    'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/mail.send'
   ];
 
   // Authorization uri definition
@@ -455,7 +457,9 @@ const authorizeOutlook = async(req, res) => {
     'openid',
     'profile',
     'offline_access',
-    'https://outlook.office.com/calendars.readwrite'
+    'email',
+    'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/mail.send'
   ];
   
   oauth2.authCode.getToken({
@@ -464,6 +468,7 @@ const authorizeOutlook = async(req, res) => {
     scope: scopes.join(' ')
   }, function(error, result){
     if (error) {
+      console.log('err', error)
       return res.status(500).send({
         status: false,
         error: error
@@ -483,7 +488,7 @@ const authorizeOutlook = async(req, res) => {
       let jwt = JSON.parse(decoded_token);
     
       // Email is in the preferred_username field
-      user.connected_email = jwt.preferred_username
+      user.email = jwt.preferred_username
       user.connected_email_type = 'outlook'
       
       user.save()
@@ -520,9 +525,8 @@ const syncGmail = async(req, res) => {
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/calendar',
-    'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile'
+    'https://mail.google.com/'
   ];
   
   const authorizationUri = oauth2Client.generateAuthUrl({
@@ -575,7 +579,7 @@ const authorizeGmail = async(req, res) => {
 
   oauth2.userinfo.v2.me.get(function(err, _res) {
     // Email is in the preferred_username field
-    user.connected_email = _res.data.email
+    user.email = _res.data.email
     user.connected_email_type = 'gmail'
     
     user.save()

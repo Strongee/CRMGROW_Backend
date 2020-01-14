@@ -66,6 +66,11 @@ router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErro
 
 // Sms Content Generate
 router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.createSmsContent))
+//Bulk Gmail
+router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkGmail))
+
+//Bulk Outlook
+router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkOutlook))
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))

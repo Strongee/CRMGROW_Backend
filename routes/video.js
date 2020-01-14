@@ -76,7 +76,13 @@ router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(Vid
 router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendText))
 
 // Bulk videos
-router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkGmail))
+router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkEmail))
+
+// Bulk videos
+router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkOutlook))
+
+// Bulk videos
+router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkGmail))
 
 // Bulk texts
 router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkText))
