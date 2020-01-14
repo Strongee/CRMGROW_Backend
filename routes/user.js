@@ -42,10 +42,10 @@ router.post('/forgot-password', catchError(UserCtrl.forgotPassword))
 router.post('/reset-password', catchError(UserCtrl.resetPasswordByCode))
 
 // Synchronize with outlook email
-router.get('/sync-outlook', UserCtrl.checkAuth, catchError(UserCtrl.syncOutlook))
+router.get('/sync-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.syncOutlook))
 
 // Synchronize with gmail
-router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail))
+router.get('/sync-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.syncGmail))
 
 // Outlook Email authorization
 router.get('/authorize-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeOutlook))
