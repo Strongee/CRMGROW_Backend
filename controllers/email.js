@@ -4,6 +4,7 @@ const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const config = require('../config/config')
 
 const receive = async(req, res) => {
   console.log(req.body)
