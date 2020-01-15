@@ -657,7 +657,7 @@ const createSmsContent = async (req, res) => {
 
   return res.send({
     status: true,
-    content: image_content
+    data: image_content
   })
 
 }
