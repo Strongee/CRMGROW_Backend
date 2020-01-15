@@ -27,6 +27,8 @@ const s3 = new AWS.S3({
 
 const sharp = require('sharp');
 
+const nodemailer = require('nodemailer');
+
 const play = async(req, res) => {  
   const pdf_id = req.query.pdf
   const sender_id = req.query.user

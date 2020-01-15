@@ -25,7 +25,7 @@ const s3 = new AWS.S3({
   region: config.AWS.AWS_S3_REGION
 })
 const sharp = require('sharp');
-
+const nodemailer = require('nodemailer');
 const play = async(req, res) => {  
   const image_id = req.query.image
   const sender_id = req.query.user
