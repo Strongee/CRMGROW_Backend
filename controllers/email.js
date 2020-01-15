@@ -95,7 +95,7 @@ const bulkGmail = async(req, res) => {
     service: "gmail",
     auth: {
          type: "oauth2",
-         user: user.currentUser, 
+         user: currentUser.email, 
          clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
          clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
          refreshToken: token.refresh_token
