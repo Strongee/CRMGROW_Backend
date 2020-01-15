@@ -35,7 +35,7 @@ const send = async (req, res) => {
     html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
   };
 
-  sgMail.send(msg).then((res)=>{
+  sgMail.send(msg).then( async (res) => {
     console.log('mailres.errorcode', res[0].statusCode);
     if(res[0].statusCode >= 200 && res[0].statusCode < 400){
       console.log('Successful send to '+msg.to)
@@ -132,7 +132,7 @@ const bulkGmail = async(req, res) => {
     };
     
     const promise = new Promise((resolve, reject)=>{
-      smtpTransport.sendMail(mailOptions, (err, response) => {
+      smtpTransport.sendMail(mailOptions, async (err, response) => {
         if(err) {
           console.log('err', err)
           error.push(contacts[i])
@@ -255,7 +255,7 @@ const bulkOutlook = async(req, res) => {
           
     const promise = new Promise((resolve, reject)=>{
       client.api('/me/sendMail')
-      .post(sendMail).then(()=>{
+      .post(sendMail).then( async ()=>{
         const email = new Email({
           ...req.body,
           contact: contacts[i],
