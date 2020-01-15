@@ -592,6 +592,8 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
           console.log('mailres.errorcode', res[0].statusCode);
           if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
             console.log('Successful send to '+msg.to)
+            notification['sent'] = true
+
           }else {
             console.log('email sending err', msg.to+res[0].statusCode)
           }
