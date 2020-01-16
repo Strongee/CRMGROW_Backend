@@ -12,6 +12,7 @@ const FollowUp = require('../models/follow_up')
 const Reminder = require('../models/reminder')
 const Appointment = require('../models/appointment')
 const Video = require('../models/video')
+const Notification = require('../models/notification')
 
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -542,7 +543,9 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   if(logger_notification){
     let startdate = moment();
     startdate = startdate.subtract(30, "days");
-    const subscribers = await User.find({last_logged: startdate, del: false})
+    const subscribers = await User.find({last_logged: {$lt: startdate}, del: false}).catch(err=>{
+      console.log('err', err)
+    });
     if(subscribers){
       for(let i = 0; i <subscribers.length; i++){
         const subscriber = subscribers[i]
@@ -572,9 +575,10 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   }
   
   const notifications = await Notification.find({type: 'static', sent: false});
-  
   if(notifications){
-    const subscribers = await User.find({del: false})
+    const subscribers = await User.find({del: false}).catch(err=>{
+      console.log('err', err)
+    })
     for(let i = 0; i <notifications.length; i++){
       const notification = notification[i]
       
@@ -603,6 +607,19 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
         })
       }
     }
+  }
+  
+  let startdate = moment();
+  startdate = startdate.subtract(7, "days");
+  const old_notifications = await Notification.find({type: 'static', created_at: {$lt: startdate}}).catch(err=>{
+    console.log('err', err)
+  });
+  for(let i=0; i<old_notifications.length; i++){
+    const old_notification = old_notifications[i]
+    old_notification['del'] = false
+    old_notification.save().catch(err=>{
+      console.log('err', err)
+    })
   }
 }, function () {
   console.log('Notification Check Job finished.');
