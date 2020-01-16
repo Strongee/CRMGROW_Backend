@@ -9,6 +9,7 @@ const phone_log = require('./phone_log')
 const appointment = require('./appointment')
 const tag = require('./tag')
 const file = require('./file')
+const email = require('./email');
 const video = require('./video')
 const video_tracker = require('./video_tracker')
 const pdf = require('./pdf')
@@ -45,5 +46,5 @@ router.use('/sms', sms)
 router.use('/payment', payment)
 router.use('/admin', admin)
 router.use('/template', template)
-
+router.use('/email', email)
 module.exports = router

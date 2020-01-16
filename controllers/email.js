@@ -4,6 +4,18 @@ const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const config = require('../config/config')
+
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token'
+}
+const oauth2 = require('simple-oauth2')(credentials)
+var graph = require('@microsoft/microsoft-graph-client');
+require('isomorphic-fetch');
 
 const receive = async(req, res) => {
   console.log(req.body)
@@ -35,7 +47,7 @@ const send = async (req, res) => {
     html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
   };
 
-  sgMail.send(msg).then((res)=>{
+  sgMail.send(msg).then( async (res) => {
     console.log('mailres.errorcode', res[0].statusCode);
     if(res[0].statusCode >= 200 && res[0].statusCode < 400){
       console.log('Successful send to '+msg.to)
@@ -95,7 +107,7 @@ const bulkGmail = async(req, res) => {
     service: "gmail",
     auth: {
          type: "oauth2",
-         user: user.currentUser, 
+         user: currentUser.email, 
          clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
          clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
          refreshToken: token.refresh_token
@@ -132,7 +144,7 @@ const bulkGmail = async(req, res) => {
     };
     
     const promise = new Promise((resolve, reject)=>{
-      smtpTransport.sendMail(mailOptions, (err, response) => {
+      smtpTransport.sendMail(mailOptions, async (err, response) => {
         if(err) {
           console.log('err', err)
           error.push(contacts[i])
@@ -255,7 +267,7 @@ const bulkOutlook = async(req, res) => {
           
     const promise = new Promise((resolve, reject)=>{
       client.api('/me/sendMail')
-      .post(sendMail).then(()=>{
+      .post(sendMail).then( async ()=>{
         const email = new Email({
           ...req.body,
           contact: contacts[i],

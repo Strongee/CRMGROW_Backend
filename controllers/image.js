@@ -25,6 +25,18 @@ const s3 = new AWS.S3({
   region: config.AWS.AWS_S3_REGION
 })
 const sharp = require('sharp');
+const nodemailer = require('nodemailer');
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token'
+}
+const oauth2 = require('simple-oauth2')(credentials)
+var graph = require('@microsoft/microsoft-graph-client');
+require('isomorphic-fetch');
+
 
 const play = async(req, res) => {  
   const image_id = req.query.image
@@ -673,7 +685,7 @@ const bulkGmail = async(req, res) => {
     service: "gmail",
     auth: {
          type: "oauth2",
-         user: user.currentUser, 
+         user: currentUser.email, 
          clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
          clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
          refreshToken: token.refresh_token
