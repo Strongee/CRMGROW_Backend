@@ -148,6 +148,7 @@ const bulkGmail = async(req, res) => {
         if(err) {
           console.log('err', err)
           error.push(contacts[i])
+          resolve()
         } else{
           const email = new Email({
             ...req.body,
@@ -171,13 +172,16 @@ const bulkGmail = async(req, res) => {
             updated_at: new Date(),
           })
           
-          const _activity = await activity.save().then()
-            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+          const _activity = await activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(()=>{
+            resolve()
+          }).catch(err => {
             console.log('err', err)
           })
         }
         smtpTransport.close();
-        resolve()
       });
     })
     promise_array.push(promise)
