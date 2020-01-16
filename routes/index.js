@@ -17,8 +17,9 @@ const pdf_tracker = require('./pdf_tracker')
 const sms = require('./sms')
 const payment = require('./payment')
 const admin = require('./admin/index')
-const template = require('./email_template');
-const image = require('./image');
+const template = require('./email_template')
+const image = require('./image')
+const notification = require('./notification')
 const UserCtrl = require('../controllers/user')
 
 const router = express.Router()
