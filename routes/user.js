@@ -83,11 +83,23 @@ router.get('/text-notification',   UserCtrl.checkAuth, catchError(UserCtrl.textN
 // Disconnect Desktop Notification
 router.get('/discon-text',   UserCtrl.checkAuth, catchError(UserCtrl.disconText))
 
-// Edit own profile
-router.post('/social-signup', UserCtrl.checkAuth, catchError(UserCtrl.socialSignUp))
+// Signup Gmail
+router.post('/signup-gmail', catchError(UserCtrl.signUpGmail))
+
+// Signup Outlook
+router.post('/signup-outlook', catchError(UserCtrl.signUpOutlook))
+
+// Social google profile
+router.post('/social-gmail', catchError(UserCtrl.socialGmail))
+
+// Edit outlook profile
+router.post('/social-outlook', catchError(UserCtrl.socialOutlook))
 
 // Edit own profile
 router.put('/social-login', UserCtrl.checkAuth, catchError(UserCtrl.socialLogin))
+
+// Edit own profile
+router.put('/social-singup', UserCtrl.checkAuth, catchError(UserCtrl.socialSignUp))
 
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))

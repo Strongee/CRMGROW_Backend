@@ -151,17 +151,43 @@ const signUp = async (req, res) => {
     })
   }
 
-const socialSignUp = async(req, res) =>{
+const socialSignUp = async(req, res) =>{    
   const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        status: false,
-        error: errors.array()
-      })
-    }
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+  let _user = await User.findOne({ email: req.body.email, del: false })
+  if(_user != null){
+    res.status(400).send({
+      status: false,
+      error: 'User already exists'
+    })
+    return;
+  }
 
+  const {email, token, bill_amount} = req.body 
+  
+  if(isBlockedEmail(email)){
+    res.status(400).send({
+      status: false,
+      error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
+    })
+    return;
+  }
+  
+  const payment_data = {
+    email: email,
+    token: token,
+    bill_amount: bill_amount
+  }
+
+  PaymentCtrl.create(payment_data).then(async(payment)=>{
     const user = new User({
       ...req.body,
+      payment: payment.id,
       updated_at: new Date(),
       created_at: new Date(),
     })
@@ -169,36 +195,52 @@ const socialSignUp = async(req, res) =>{
     user.save()
     .then(_res => {
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-      const msg = {
+      let msg = {
         to: _res.email,
         from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_WELCOME_TEMPLATE,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
         dynamic_template_data: {
-          user_name: _res.user_name,
+          first_name: _res.user_name,
+          login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+          user_email: _res.email,
+          contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
         },
       };
 
-      sgMail.send(msg).then((_msg) => {
-        if(_msg[0].statusCode >= 200 && _msg[0].statusCode < 400){ 
-          myJSON = JSON.stringify(_res)
-          const data = JSON.parse(myJSON);
-          res.send({
-              status: true,
-              data
-          })
-        }else {
-          res.status(404).send({
-            status: false,
-            error: _res[0].statusCode
-          })
-        }
-      }).catch ((e) => {
-        console.error(e)
-        res.status(500).send({
-          status: false,
-          error: 'internal_server_error'
-        })
+      sgMail.send(msg).catch(err=>{
+        console.log('err', err)
       })
+
+      msg = {
+        to: _res.email,
+        from: mail_contents.WELCOME_SIGNUP.MAIL,
+        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+        dynamic_template_data: {
+          first_name: _res.user_name,
+          // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+          upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+          upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+          contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
+        }
+      }
+
+      sgMail.send(msg).catch(err=>{
+        console.log('err', err)
+      })
+      
+      const token = jwt.sign({id:_res.id}, config.JWT_SECRET, { expiresIn: '30d'})
+
+      myJSON = JSON.stringify(_res)
+      const user = JSON.parse(myJSON);
+      user['payment'] = payment.id
+      
+      res.send({
+        status: true,
+        data: {
+          token,
+          user
+        }
+      })   
     })
     .catch(e => {
         let errors
@@ -213,7 +255,187 @@ const socialSignUp = async(req, res) =>{
         error: errors || e
       })
     });
+  }).catch(err=>{
+    console.log('err', err)
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+    return;
+  })
 } 
+
+const signUpGmail = async(req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.SOCIAL_SIGNUP_URL
+  );
+  
+  // generate a url that asks permissions for Blogger and Google Calendar scopes
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://mail.google.com/'
+  ];
+  
+  const authorizationUri = oauth2Client.generateAuthUrl({
+    // 'online' (default) or 'offline' (gets refresh_token)
+    access_type: 'offline',
+  
+    // If you only need one scope you can pass it as a string
+    scope: scopes
+  });
+
+  if (!authorizationUri) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  res.send({
+    status: true,
+    data: authorizationUri
+  })
+}
+
+const signUpOutlook = async(req, res) => {  
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'email',
+    'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/mail.send'
+  ];
+
+  // Authorization uri definition
+  const authorizationUri = oauth2.authCode.authorizeURL({
+    redirect_uri: urls.SOCIAL_SIGNUP_URL,
+    scope: scopes.join(' ')
+  })
+
+  if (!authorizationUri) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  res.send({
+    status: true,
+    data: authorizationUri
+  })
+}
+
+const socialGmail = async(req, res) => {
+  const code = req.query.code
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.SOCIAL_SIGNUP_URL
+  )
+    
+  const {tokens} = await oauth2Client.getToken(code)
+  oauth2Client.setCredentials(tokens)
+  
+  if(typeof tokens.refresh_token !== 'undefined'){
+    return res.status(403).send({
+      status: false,
+    })
+  }
+    
+  if (!tokens) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  
+  let oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2'
+  })
+  
+  oauth2.userinfo.v2.me.get(function(err, _res) {
+    // Email is in the preferred_username field
+      let data = {
+        email: _res.data.email,
+        social_id: _res.data.id,
+        connected_email_type : 'gmail',
+        primary_connected : true  
+      }
+      return res.send({
+        data
+      })
+    }).catch(e => {
+        let errors
+        if (e.errors) {
+          errors = e.errors.map(err => {
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+}
+
+const socialOutlook = async(req, res) => {
+  const user = req.currentUser
+  const code = req.query.code
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'email',
+    'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/mail.send'
+  ];
+  
+  oauth2.authCode.getToken({
+    code: code,
+    redirect_uri: urls.SOCIAL_SIGNUP_URL,
+    scope: scopes.join(' ')
+  }, function(error, result){
+    if (error) {
+      console.log('err', error)
+      return res.status(500).send({
+        status: false,
+        error: error
+      })
+    }
+    else {
+      const outlook_token = oauth2.accessToken.create(result)
+      user.outlook_refresh_token = outlook_token.token.refresh_token
+      let token_parts = outlook_token.token.id_token.split('.');
+    
+      // Token content is in the second part, in urlsafe base64
+      let encoded_token = new Buffer(token_parts[1].replace('-', '+').replace('_', '/'), 'base64');
+    
+      let decoded_token = encoded_token.toString();
+    
+      let jwt = JSON.parse(decoded_token);
+    
+      // Email is in the preferred_username field
+      user.email = jwt.preferred_username
+      user.social_id = jwt.oid
+      user.connected_email_type = 'outlook'
+      console.log('oid', oid)
+      user.primary_connected = true
+      let data = {
+        email : jwt.preferred_username,
+        social_id: jwt.oid,
+        connected_email_type: 'outlook',
+        primary_connected: true
+      } 
+      return res.send({
+        data
+      })
+    }
+  })
+}
 
 const login = async (req, res) => {
   const errors = validationResult(req)
@@ -283,7 +505,42 @@ const login = async (req, res) => {
 }
 
 const socialLogin = async(req, res) =>{
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(401).json({
+      status: false,
+      error: errors.array()
+    })
+  }
 
+  const { social_id } = req.body
+  if (!social_id) {
+    return res.status(401).json({
+      status: false,
+      error: 'missing_social_login'
+    })
+  }
+  
+  let _user = await User.findOne({ soical_id:  new RegExp(social_id, "i"), del: false })
+
+  if (!_user) {
+    return res.status(401).json({
+      status: false,
+      error: 'No existing email or user'
+    })
+  }
+  // TODO: Include only email for now
+  const token = jwt.sign({id:_user.id}, config.JWT_SECRET, { expiresIn: '30d'})
+  myJSON = JSON.stringify(_user)
+  const user = JSON.parse(myJSON);
+  
+  return res.send({
+    status: true,
+    data: {
+      token,
+      user
+    }
+  })
 }
 
 const checkAuth = async (req, res, next) => {
@@ -519,7 +776,6 @@ const authorizeOutlook = async(req, res) => {
     else {
       const outlook_token = oauth2.accessToken.create(result)
       user.outlook_refresh_token = outlook_token.token.refresh_token
-      
       let token_parts = outlook_token.token.id_token.split('.');
     
       // Token content is in the second part, in urlsafe base64
@@ -528,16 +784,17 @@ const authorizeOutlook = async(req, res) => {
       let decoded_token = encoded_token.toString();
     
       let jwt = JSON.parse(decoded_token);
-    
+      console.log('oid', jwt.oid)
       // Email is in the preferred_username field
       user.email = jwt.preferred_username
+      user.social_id = jwt.oid
       user.connected_email_type = 'outlook'
       user.primary_connected = true
       user.save()
       .then(_res => {
           res.send({
             status: true,
-            data: user.connected_email
+            data: user.email
           })
         })
         .catch(e => {
@@ -603,7 +860,7 @@ const authorizeGmail = async(req, res) => {
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
 
-  if(typeof tokens.refresh_token !== 'undefined'){
+  if(typeof tokens.refresh_token == 'undefined'){
     return res.status(403).send({
       status: false,
     })
@@ -622,16 +879,17 @@ const authorizeGmail = async(req, res) => {
   })
 
   oauth2.userinfo.v2.me.get(function(err, _res) {
+    console.log('gmail_oid', _res.data.id)
     // Email is in the preferred_username field
     user.email = _res.data.email
     user.connected_email_type = 'gmail'
     user.primary_connected = true
-    
+    user.social_id = _res.data.id
     user.save()
     .then(_res => {
       res.send({
         status: true,
-        data: user.connected_email
+        data: user.email
       })
     })
     .catch(e => {
@@ -1122,6 +1380,10 @@ module.exports = {
     login,
     socialSignUp,
     socialLogin,
+    signUpGmail,
+    signUpOutlook,
+    socialGmail,
+    socialOutlook,
     getMe,
     editMe,
     getUser,
