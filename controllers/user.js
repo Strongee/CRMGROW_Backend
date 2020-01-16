@@ -604,7 +604,9 @@ const authorizeGmail = async(req, res) => {
   oauth2Client.setCredentials(tokens)
 
   if(typeof tokens.refresh_token !== 'undefined'){
-    user.google_refresh_token = JSON.stringify(tokens)
+    return res.status(403).send({
+      status: false,
+    })
   }
   
   if (!tokens) {
