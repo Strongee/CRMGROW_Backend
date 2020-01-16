@@ -540,8 +540,9 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   
   const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'})
   if(logger_notification){
-  
-    const subscribers = await User.find({last_logged: new Date(), del: false})
+    let startdate = moment();
+    startdate = startdate.subtract(30, "days");
+    const subscribers = await User.find({last_logged: startdate, del: false})
     if(subscribers){
       for(let i = 0; i <subscribers.length; i++){
         const subscriber = subscribers[i]
@@ -592,6 +593,8 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
           console.log('mailres.errorcode', res[0].statusCode);
           if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
             console.log('Successful send to '+msg.to)
+            notification['sent'] = true
+
           }else {
             console.log('email sending err', msg.to+res[0].statusCode)
           }
