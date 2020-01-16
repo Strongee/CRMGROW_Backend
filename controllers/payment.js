@@ -489,6 +489,7 @@ const paymentSucceed = async(req, res) => {
     
     if(user){
         user['subscription']['is_failed'] = false
+        user['subscription']['is_suspended'] = false
         user['subscription']['updated_at'] = new Date()
     
         user['updated_at'] = new Date()

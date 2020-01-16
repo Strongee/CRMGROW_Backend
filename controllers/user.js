@@ -7,6 +7,7 @@ const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
+const UserLog = require('../models/user_log')
 const { isBlockedEmail } = require('../helpers/helper') 
 const sgMail = require('@sendgrid/mail')
 const {google} = require('googleapis')
@@ -1093,6 +1094,27 @@ const checkSuspended = async(req, res, next) =>{
   }
 }
 
+const checkLastLogin = async(req, res, next) => {
+  const { currentUser } = req
+  if(!currentUser['admin_loggin']){
+    currentUser['last_logged'] = new Date()
+    currentUser.save().catch(err=>{
+      console.log('err', err)
+    })
+    
+    const user_log = new UserLog({
+      user: currentUser.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+  
+    user_log.save().catch(err => {
+      console.log('err', err)
+    })
+  }
+  next()
+}
+
 module.exports = {
     signUp,
     login,
@@ -1121,6 +1143,7 @@ module.exports = {
     checkAuth,
     checkAuth2,
     checkSuspended,
+    checkLastLogin,
     isBlockedEmail,
     closeAccount
 }

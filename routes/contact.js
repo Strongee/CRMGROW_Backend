@@ -60,7 +60,7 @@ router.get('/all', UserCtrl.checkAuth, catchError(ContactCtrl.getAllByLastActivi
 router.get('/last', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity))
 
 // Get contacts by last activity
-router.get('/last/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity))
+router.get('/last/:id', UserCtrl.checkAuth, UserCtrl.checkLastLogin, catchError(ContactCtrl.getByLastActivity))
 
 // Get a Brokerage data 
 router.get('/brokerage', UserCtrl.checkAuth, catchError(ContactCtrl.getBrokerages))
