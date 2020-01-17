@@ -1010,7 +1010,7 @@ const bulkOutlook = async(req, res) => {
               }
             ],
           },
-          saveToSentItems: "false"
+          saveToSentItems: "true"
         };
       
         let promise = new Promise((resolve, reject)=>{
