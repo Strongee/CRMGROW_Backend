@@ -84,22 +84,22 @@ router.get('/text-notification',   UserCtrl.checkAuth, catchError(UserCtrl.textN
 router.get('/discon-text',   UserCtrl.checkAuth, catchError(UserCtrl.disconText))
 
 // Signup Gmail
-router.post('/signup-gmail', catchError(UserCtrl.signUpGmail))
+router.get('/signup-gmail', catchError(UserCtrl.signUpGmail))
 
 // Signup Outlook
-router.post('/signup-outlook', catchError(UserCtrl.signUpOutlook))
+router.get('/signup-outlook', catchError(UserCtrl.signUpOutlook))
 
 // Social google profile
-router.post('/social-gmail', catchError(UserCtrl.socialGmail))
+router.get('/social-gmail', catchError(UserCtrl.socialGmail))
 
 // Edit outlook profile
-router.post('/social-outlook', catchError(UserCtrl.socialOutlook))
+router.get('/social-outlook', catchError(UserCtrl.socialOutlook))
 
 // Edit own profile
-router.put('/social-login', UserCtrl.checkAuth, catchError(UserCtrl.socialLogin))
+router.post('/social-login', catchError(UserCtrl.socialLogin))
 
 // Edit own profile
-router.put('/social-singup', UserCtrl.checkAuth, catchError(UserCtrl.socialSignUp))
+router.post('/social-signup', catchError(UserCtrl.socialSignUp))
 
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))

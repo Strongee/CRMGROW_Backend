@@ -67,7 +67,7 @@
       API_URL: 'http://localhost:3000/api/',
       LOGIN_URL: 'https://app.crmgrow.com/login',
       PROFILE_URL: 'http://localhost:3000/profile/',
-      SOCIAL_SIGNUP_URL: 'http://localhost:3000/signup/',
+      SOCIAL_SIGNUP_URL: 'http://localhost:4200/signup',
       OUTLOOK_AUTHORIZE_URL: 'http://localhost:4200/profile/outlook',
       GMAIL_AUTHORIZE_URL: 'http://localhost:4200/profile/gmail',
       VIDEO_THUMBNAIL_URL: 'http://localhost:3000/api/video/thumbnail/',
