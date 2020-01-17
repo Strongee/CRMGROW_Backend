@@ -36,6 +36,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 
 pxl.connect(DB_PORT);
 app.use(pxl.trackPxl);
+
 app.get('/shortly/:linkId', function(req, res){
   console.log('here')
 },pxl.redirect);
