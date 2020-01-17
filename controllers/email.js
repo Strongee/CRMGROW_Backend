@@ -5,7 +5,7 @@ const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
 const config = require('../config/config');
-const 
+const urls = require('../constants/urls')
 const { DB_PORT } = require('../config/database');
 let Pxl = require('pxl-mongodb');
 let pxl = new Pxl();
@@ -14,7 +14,7 @@ let PxlForEmails = require('pxl-for-emails')
 let pxlForEmails = new PxlForEmails({
     pxl,
     getFullShortenedLink(linkId) {
-        return `${}shortly/${ linkId }`
+        return `${urls.DOMAIN_URL}shortly/${ linkId }`
     }
 })
 
