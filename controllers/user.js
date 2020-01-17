@@ -514,7 +514,7 @@ const socialLogin = async (req, res) => {
     })
   }
 
-  let _user = await User.findOne({ soical_id: new RegExp(social_id, "i"), del: false })
+  let _user = await User.findOne({ social_id: new RegExp(social_id, "i"), del: false })
 
   if (!_user) {
     return res.status(401).json({
