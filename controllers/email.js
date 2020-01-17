@@ -145,7 +145,7 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
     let emailMarkup = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>'
-    // mailMarkup = pxlForEmails.addTracking(emailMarkup, { recipient: _contact.email })    
+    mailMarkup = pxlForEmails.addTracking(emailMarkup, { recipient: _contact.email })    
     console.log('emailMarkup', emailMarkup)
     const mailOptions = {
       from: `${currentUser.user_name} <${currentUser.email}>`,

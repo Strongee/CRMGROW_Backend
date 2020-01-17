@@ -365,11 +365,13 @@ const socialGmail = async (req, res) => {
         error: err.message || 'Getting user profile error occured.'
       })
     }
+    
     let data = {
       email: _res.data.email,
       social_id: _res.data.id,
       connected_email_type: 'gmail',
-      primary_connected: true
+      primary_connected: true,
+      google_refresh_token:  JSON.stringify(tokens)
     }
     return res.send({
       status: true,
@@ -379,7 +381,6 @@ const socialGmail = async (req, res) => {
 }
 
 const socialOutlook = async (req, res) => {
-  const user = req.currentUser
   const code = req.query.code
   const scopes = [
     'openid',
@@ -404,7 +405,7 @@ const socialOutlook = async (req, res) => {
     }
     else {
       const outlook_token = oauth2.accessToken.create(result)
-      user.outlook_refresh_token = outlook_token.token.refresh_token
+      let outlook_refresh_token = outlook_token.token.refresh_token
       let token_parts = outlook_token.token.id_token.split('.');
 
       // Token content is in the second part, in urlsafe base64
@@ -414,17 +415,12 @@ const socialOutlook = async (req, res) => {
 
       let jwt = JSON.parse(decoded_token);
 
-      // Email is in the preferred_username field
-      user.email = jwt.preferred_username
-      user.social_id = jwt.oid
-      user.connected_email_type = 'outlook'
-      console.log('oid', oid)
-      user.primary_connected = true
       let data = {
         email: jwt.preferred_username,
         social_id: jwt.oid,
         connected_email_type: 'outlook',
-        primary_connected: true
+        primary_connected: true,
+        outlook_refresh_token: outlook_refresh_token
       }
       return res.send({
         status: true,
@@ -781,7 +777,6 @@ const authorizeOutlook = async (req, res) => {
       let decoded_token = encoded_token.toString();
 
       let jwt = JSON.parse(decoded_token);
-      console.log('oid', jwt.oid)
       // Email is in the preferred_username field
       user.email = jwt.preferred_username
       user.social_id = jwt.oid
@@ -876,12 +871,12 @@ const authorizeGmail = async (req, res) => {
   })
 
   oauth2.userinfo.v2.me.get(function (err, _res) {
-    console.log('gmail_oid', _res.data.id)
     // Email is in the preferred_username field
     user.email = _res.data.email
     user.connected_email_type = 'gmail'
     user.primary_connected = true
     user.social_id = _res.data.id
+    user.google_refresh_token = JSON.stringify(tokens)
     user.save()
       .then(_res => {
         res.send({
