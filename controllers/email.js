@@ -4,7 +4,18 @@ const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
-const config = require('../config/config')
+const config = require('../config/config');
+const { DB_PORT } = require('../config/database');
+let Pxl = require('pxl-mongodb');
+let pxl = new Pxl();
+pxl.connect(DB_PORT);
+let PxlForEmails = require('pxl-for-emails')
+let pxlForEmails = new PxlForEmails({
+    pxl,
+    getFullShortenedLink(linkId) {
+        return `http://localhost:3000/shortly/${ linkId }`
+    }
+})
 
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -133,6 +144,9 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
+    let emailMarkup = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>'
+    // mailMarkup = pxlForEmails.addTracking(emailMarkup, { recipient: _contact.email })    
+    console.log('emailMarkup', emailMarkup)
     const mailOptions = {
       from: `${currentUser.user_name} <${currentUser.email}>`,
       to: _contact.email,
@@ -140,7 +154,7 @@ const bulkGmail = async(req, res) => {
       cc: cc,
       bcc: bcc,
       generateTextFromHTML: true,
-      html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+      html: emailMarkup,
     };
     
     const promise = new Promise((resolve, reject)=>{

@@ -12,7 +12,6 @@ const VideoCtrl = require('./controllers/video');
 const PDFCtrl = require('./controllers/pdf');
 const ImageCtrl = require('./controllers/image')
 const { catchError } = require('./controllers/error')
-
 let app = express();
 
 app.use(cors())

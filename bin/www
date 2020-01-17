@@ -11,8 +11,9 @@ const http        = require('http');
 const socketIO    = require('socket.io');
 
 const mongoose = require('mongoose');
-
-const tracker         = require('../controllers/tracker');
+let Pxl = require('pxl-mongodb');
+let pxl = new Pxl();
+const tracker = require('../controllers/tracker');
 
 /**
  * Get port from environment and store in Express.
@@ -22,7 +23,6 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const { DB_PORT } = require('../config/database');
-
 /**
  * Connect Monogo Database.
  */
@@ -32,6 +32,13 @@ mongoose.set('useCreateIndex', true)
 mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
+
+
+pxl.connect(DB_PORT);
+app.use(pxl.trackPxl);
+app.get('/shortly/:linkId', function(req, res){
+  console.log('here')
+},pxl.redirect);
 
 /**
  * Create HTTP server.
