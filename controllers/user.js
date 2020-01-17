@@ -269,7 +269,7 @@ const signUpGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.SOCIAL_SIGNUP_URL + '/gmail'
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
   );
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
@@ -311,7 +311,7 @@ const signUpOutlook = async (req, res) => {
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
-    redirect_uri: urls.SOCIAL_SIGNUP_URL + '/outlook',
+    redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
     scope: scopes.join(' ')
   })
 
@@ -332,7 +332,7 @@ const socialGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.SOCIAL_SIGNUP_URL + '/gmail'
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
   )
 
 
@@ -392,7 +392,7 @@ const socialOutlook = async (req, res) => {
 
   oauth2.authCode.getToken({
     code: code,
-    redirect_uri: urls.SOCIAL_SIGNUP_URL,
+    redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
     scope: scopes.join(' ')
   }, function (error, result) {
     if (error) {
