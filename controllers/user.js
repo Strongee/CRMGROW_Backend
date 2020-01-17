@@ -514,7 +514,7 @@ const socialLogin = async (req, res) => {
     })
   }
 
-  let _user = await User.findOne({ social_id: new RegExp(social_id, "i"), del: false }).select({google_refresh_token: -1, contact_info: -1, hash:-1, salt: -1, proxy_number: -1, social_id: -1, is_free: -1, is_trial: -1, subscription: -1})
+  let _user = await User.findOne({ social_id: new RegExp(social_id, "i"), del: false })
 
   if (!_user) {
     return res.status(401).json({
