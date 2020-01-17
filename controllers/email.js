@@ -269,10 +269,17 @@ const bulkOutlook = async(req, res) => {
     const sendMail = {
             message: {
               subject: subject,
+              from: {
+                emailAddress: {
+                  name: currentUser.user_name,
+                  address: currentUser.email
+                }
+              },
               body: {
                 contentType: "HTML",
                 content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
               },
+              
               toRecipients: [
                 {
                   emailAddress: {
@@ -315,7 +322,14 @@ const bulkOutlook = async(req, res) => {
         })
       }).catch(err=>{
         console.log('err', err)
-        error.push(contacts[i])
+        if(error.code == 'ErrorMessageSubmissionBlocked'){
+          return res.status(400).json({
+            status: false,
+            error: error.message || 'Please go to the login into your Email box and follow instruction'
+          })
+        }else {
+          error.push(contacts[i])
+        }
       });
       resolve()
     })
