@@ -11,8 +11,6 @@ const http        = require('http');
 const socketIO    = require('socket.io');
 
 const mongoose = require('mongoose');
-let Pxl = require('pxl-mongodb');
-let pxl = new Pxl();
 const tracker = require('../controllers/tracker');
 
 /**
@@ -33,12 +31,6 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 
-
-pxl.connect(DB_PORT);
-app.use(pxl.trackPxl);
-app.get('/shortly/:linkId', function(req, res){
-  console.log('here')
-},pxl.redirect);
 
 /**
  * Create HTTP server.

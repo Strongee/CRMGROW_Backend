@@ -5,17 +5,6 @@ const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
 const config = require('../config/config');
-const { DB_PORT } = require('../config/database');
-let Pxl = require('pxl-mongodb');
-let pxl = new Pxl();
-pxl.connect(DB_PORT);
-let PxlForEmails = require('pxl-for-emails')
-let pxlForEmails = new PxlForEmails({
-    pxl,
-    getFullShortenedLink(linkId) {
-        return `http://localhost:3000/shortly/${ linkId }`
-    }
-})
 
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -144,9 +133,6 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
-    let emailMarkup = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>'
-    mailMarkup = pxlForEmails.addTracking(emailMarkup, { recipient: _contact.email })    
-    console.log('emailMarkup', emailMarkup)
     const mailOptions = {
       from: `${currentUser.user_name} <${currentUser.email}>`,
       to: _contact.email,
@@ -154,7 +140,7 @@ const bulkGmail = async(req, res) => {
       cc: cc,
       bcc: bcc,
       generateTextFromHTML: true,
-      html: emailMarkup,
+      html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
     };
     
     const promise = new Promise((resolve, reject)=>{
@@ -268,10 +254,17 @@ const bulkOutlook = async(req, res) => {
     const sendMail = {
             message: {
               subject: subject,
+              from: {
+                emailAddress: {
+                  name: currentUser.user_name,
+                  address: currentUser.email
+                }
+              },
               body: {
                 contentType: "HTML",
                 content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
               },
+              
               toRecipients: [
                 {
                   emailAddress: {
@@ -280,7 +273,7 @@ const bulkOutlook = async(req, res) => {
                 }
               ],
             },
-            saveToSentItems: "false"
+            saveToSentItems: "true"
           };
           
     const promise = new Promise((resolve, reject)=>{
@@ -314,7 +307,14 @@ const bulkOutlook = async(req, res) => {
         })
       }).catch(err=>{
         console.log('err', err)
-        error.push(contacts[i])
+        if(error.code == 'ErrorMessageSubmissionBlocked'){
+          return res.status(400).json({
+            status: false,
+            error: error.message || 'Please go to the login into your Email box and follow instruction'
+          })
+        }else {
+          error.push(contacts[i])
+        }
       });
       resolve()
     })

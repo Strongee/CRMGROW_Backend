@@ -59,6 +59,6 @@ typings/
 
 # next.js build output
 .next
-.package-lock.json
+package-lock.json
 teamgrow_env
 config
