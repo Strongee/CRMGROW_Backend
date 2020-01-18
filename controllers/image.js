@@ -648,7 +648,7 @@ const createSmsContent = async (req, res) => {
       image_titles = image_titles + image.title
       image_descriptions = image_descriptions + image.description
     }
-    const image_object = `\n${image.title}\n${image_link}\n`
+    const image_object = `\n${image.title}:\n${image_link}\n`
     image_objects = image_objects + image_object                      
   }
 
@@ -656,7 +656,7 @@ const createSmsContent = async (req, res) => {
     image_content = image_content.replace(/{image_object}/ig, image_objects)
   }else{
     console.log('image_objects', image_objects)
-    image_content = image_content+'\n'+image_objects
+    image_content = image_content+image_objects
   }
     
   if(image_content.search(/{image_title}/ig) != -1){

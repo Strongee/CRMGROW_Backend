@@ -1191,14 +1191,14 @@ const createSmsContent = async (req, res) => {
       video_titles = video_titles + video.title
       video_descriptions = video_descriptions + video.description
     }
-    const video_object = `\n${video.title}\n${video_link}\n`
+    const video_object = `\n${video.title}:\n${video_link}\n`
     video_objects = video_objects + video_object                      
   }
 
   if(video_content.search(/{video_object}/ig) != -1){
     video_content = video_content.replace(/{video_object}/ig, video_objects)
   }else{
-    video_content = video_content+'\n'+video_objects
+    video_content = video_content+video_objects
   }
     
   if(video_content.search(/{video_title}/ig) != -1){
