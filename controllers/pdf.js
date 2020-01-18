@@ -680,7 +680,7 @@ const bulkText = async(req, res) => {
             description: pdf_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
           
@@ -693,15 +693,18 @@ const bulkText = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `\n${pdf.title}\n${pdf_link}\n`
+          const pdf_object = `\n${pdf.title}\n\n${pdf_link}\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
-        content = content+'\n'+pdf_objects
+        pdf_content = pdf_content+'\n'+pdf_objects
       }
+
+      console.log(pdf_objects);
+      console.log(content);
         
       if(pdf_content.search(/{pdf_title}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
@@ -860,7 +863,7 @@ const createSmsContent = async (req, res) => {
   if(pdf_content.search(/{pdf_object}/ig) != -1){
     pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
   }else{
-    content = content+pdf_objects
+    pdf_content = pdf_content+pdf_objects
   }
     
   if(pdf_content.search(/{pdf_title}/ig) != -1){

@@ -1029,7 +1029,7 @@ const bulkText = async(req, res) => {
             video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
-          const video_object = `\n${video.title}\n${video_link}\n`
+          const video_object = `\n${video.title}\n\n${video_link}\n`
           video_objects = video_objects + video_object                      
       }
       

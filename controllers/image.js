@@ -474,7 +474,7 @@ const bulkText = async(req, res) => {
             description: image_content
           })
           
-          const activity = await _activity.save().then().catch(err=>{
+          activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
           })
           
@@ -487,7 +487,7 @@ const bulkText = async(req, res) => {
             image_titles = image_titles + image.title
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `\n${image.title}\n${image_link}\n`
+          const image_object = `\n${image.title}\n\n${image_link}\n`
           image_objects = image_objects + image_object                      
       }
       
