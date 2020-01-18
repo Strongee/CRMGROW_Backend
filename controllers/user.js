@@ -791,12 +791,12 @@ const authorizeOutlook = async (req, res) => {
         })
         .catch(e => {
           let errors
-          if (e.errors) {
-            errors = e.errors.map(err => {
-              delete err.instance
-              return err
-            })
-          }
+          // if (e.errors) {
+          //   errors = e.errors.map(err => {
+          //     delete err.instance
+          //     return err
+          //   })
+          // }
           return res.status(500).send({
             status: false,
             error: errors || e
