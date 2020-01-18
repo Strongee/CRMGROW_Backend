@@ -11,6 +11,8 @@ const http        = require('http');
 const socketIO    = require('socket.io');
 
 const mongoose = require('mongoose');
+const tracker = require('../controllers/tracker');
+
 /**
  * Get port from environment and store in Express.
  */
@@ -28,6 +30,7 @@ mongoose.set('useCreateIndex', true)
 mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
+
 
 /**
  * Create HTTP server.
