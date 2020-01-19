@@ -693,7 +693,7 @@ const bulkText = async(req, res) => {
             pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
-          const pdf_object = `\n${pdf.title}\n\n${pdf_link}\n`
+          const pdf_object = `\n${pdf.title}:\n\n${pdf_link}\n`
           pdf_objects = pdf_objects + pdf_object                      
       }
       

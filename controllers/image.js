@@ -487,7 +487,7 @@ const bulkText = async(req, res) => {
             image_titles = image_titles + image.title
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `\n${image.title}\n\n${image_link}\n`
+          const image_object = `\n${image.title}:\n\n${image_link}\n`
           image_objects = image_objects + image_object                      
       }
       
