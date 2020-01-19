@@ -1,6 +1,7 @@
 let express = require("express");
 const path = require('path');
-const logger = require('morgan');
+const morgan = require('morgan');
+const fs = require('fs')
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -17,7 +18,15 @@ let app = express();
 app.use(cors())
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-app.use(logger('dev'))
+// log only 4xx and 5xx responses to console
+app.use(morgan('dev', {
+    skip: function (req, res) { return res.statusCode < 400 }
+}))
+  
+// log all requests to access.log
+app.use(morgan('common', {
+    stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
+}))
 app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({ extended: false, limit: '50mb' }))
 app.use(bodyParser.json());

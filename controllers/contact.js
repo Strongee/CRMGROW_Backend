@@ -727,7 +727,7 @@ const receiveEmail = async(req, res) => {
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-          email: `<a href="mailto:${email}">${email}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
           activity: contact.first_name + ' '+action+' email: '+ _email.subject + ' at ' + created_at,
           detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
         },

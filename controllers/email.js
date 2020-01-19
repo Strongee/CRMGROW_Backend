@@ -1,10 +1,14 @@
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
+const moment = require('moment');
 const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
+const urls = require('../constants/urls');
+const uuidv1 = require('uuid/v1');
 
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -251,6 +255,8 @@ const bulkOutlook = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
+    const message_id = uuidv1()
+    content += `<img src='${urls.TRACK_URL}${message_id}/>`
     const sendMail = {
             message: {
               subject: subject,
@@ -281,6 +287,7 @@ const bulkOutlook = async(req, res) => {
       .post(sendMail).then( async ()=>{
         const email = new Email({
           ...req.body,
+          message_id: message_id,
           contact: contacts[i],
           user: currentUser.id,
           updated_at: new Date(),
@@ -340,9 +347,90 @@ const bulkOutlook = async(req, res) => {
   })
 }
 
+const openTrack = async(req, res) => {
+  const message_id = req.params.id
+  const _email = await Email.findOne({message_id: message_id}).catch(err=>{
+    console.log('err', err)
+  })
+  const user = await User.findOne({_id: _email.user}).catch(err=>{
+    console.log('err', err)
+  })
+  
+  const contact = await Contact.findOne({contact: _email.contact}).catch(err=>{
+    console.log('err', err)
+  })
+  
+  let opened = new Date();
+  
+  const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
+  let action = 'opened'
+  const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
+      console.log('err', err)
+  })
+    
+  let reopened = moment();
+  reopened = reopened.subtract(1, "hours");
+  const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: startdate}}).catch(err=>{
+    console.log('err', err)
+   })
+    
+  if(!old_activity){
+    const email_tracker = new EmailTracker({
+      user: user.id,
+      contact: contact.id,
+      email: _email.id,
+      type: 'open',
+      activity: email_activity.id,
+      updated_at: opened,
+      created_at: opened,
+    })
+      
+    const _email_tracker = await email_tracker.save().then().catch(err=>{
+      console.log('err', err)
+    })
+      
+    const activity = new Activity({
+      content: contact.first_name + ' opened email',
+      contacts: contact.id,
+      user: user.id,
+      type: 'email_trackers',
+      emails: _email.id,
+      email_trackers: _email_tracker.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      })
+  
+    const _activity = await activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
+      
+    Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+      console.log('err', err)
+    }) 
+    
+    
+    const msg = {
+      to: user.email,
+      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      dynamic_template_data: {
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+        activity: contact.first_name + ' '+action+' email: '+ _email.subject + ' at ' + created_at,
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+      },
+    };
+    sgMail.send(msg).catch(err => console.error(err)) 
+  }
+}
+
 module.exports = {
     send,
     receive,
+    openTrack,
     bulkGmail,
     bulkOutlook,
 }
