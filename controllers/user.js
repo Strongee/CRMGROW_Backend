@@ -815,7 +815,7 @@ const syncGmail = async (req, res) => {
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/gmail.send/'
+    'https://www.googleapis.com/auth/gmail.send'
   ];
 
   const authorizationUri = oauth2Client.generateAuthUrl({
