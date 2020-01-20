@@ -274,9 +274,8 @@ const signUpGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://mail.google.com/'
+    'https://www.googleapis.com/auth/gmail.send'
   ];
 
   const authorizationUri = oauth2Client.generateAuthUrl({
@@ -305,7 +304,7 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    'https://graph.microsoft.com/calendars.readwrite ',
+    // 'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send'
   ];
 
@@ -387,7 +386,7 @@ const socialOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    'https://graph.microsoft.com/calendars.readwrite ',
+    // 'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send'
   ];
 
@@ -815,9 +814,8 @@ const syncGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://mail.google.com/'
+    'https://www.googleapis.com/auth/gmail.send/'
   ];
 
   const authorizationUri = oauth2Client.generateAuthUrl({
