@@ -808,6 +808,7 @@ const bulkGmail = async(req, res) => {
 
 
   const token = JSON.parse(currentUser.google_refresh_token)
+  console.log('token****', token)
   const smtpTransport = nodemailer.createTransport({
     service: "gmail",
     auth: {
