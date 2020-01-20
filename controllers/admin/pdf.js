@@ -94,7 +94,7 @@ const getPreview = (req, res) => {
   const filePath = PREVIEW_PATH + req.params.name
   console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
-    const contentType = mime.contentType(path.extname(req.params.name))
+    const contentType = mime.contentType(path.extname(filePath))
     res.set('Content-Type', contentType)
     res.sendFile(filePath)
   } else {

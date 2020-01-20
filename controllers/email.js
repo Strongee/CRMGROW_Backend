@@ -1,6 +1,8 @@
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const moment = require('moment');
+const path = require('path')
+const mime = require('mime-types')
 const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
@@ -9,7 +11,7 @@ const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
 const urls = require('../constants/urls');
 const uuidv1 = require('uuid/v1');
-
+const { TRAKER_PATH } = require('../config/path')
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
   clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
@@ -349,6 +351,7 @@ const bulkOutlook = async(req, res) => {
 
 const openTrack = async(req, res) => {
   const message_id = req.params.id
+  console.log('message_id', message_id)
   const _email = await Email.findOne({message_id: message_id}).catch(err=>{
     console.log('err', err)
   })
@@ -425,6 +428,10 @@ const openTrack = async(req, res) => {
     };
     sgMail.send(msg).catch(err => console.error(err)) 
   }
+  
+  const contentType = mime.contentType(path.extname(TRAKER_PATH))
+  res.set('Content-Type', contentType)
+  return res.sendFile(TRAKER_PATH)
 }
 
 module.exports = {

@@ -200,7 +200,7 @@ const getThumbnail = (req, res) => {
       transform = transform.resize(250, 140)
       return readStream.pipe(transform).pipe(res)
     }else{
-      const contentType = mime.contentType(path.extname(req.params.name))
+      const contentType = mime.contentType(path.extname(filePath))
       res.set('Content-Type', contentType)
       return res.sendFile(filePath)
     }
