@@ -55,6 +55,11 @@ const play = async(req, res) => {
  
    
   if(sender){
+    let pattern = /^((http|https|ftp):\/\/)/;
+    
+    if(!pattern.test(user.learn_more)) {
+      sender.learn_more = "http://" + user.learn_more;
+    }
     res.render('pdf', {
       pdf: pdf,
       user: sender
@@ -70,21 +75,29 @@ const play1 = async(req, res) => {
     console.log('err', err)
   })
   
-  const data = activity['user']
-  myJSON = JSON.stringify(data)
-  const user = JSON.parse(myJSON);
-  delete user.hash
-  delete user.salt
-  delete user.payment
-  
-  const pdf = activity['pdfs']
-  
-  res.render('pdf1', {
-      pdf: pdf,
-      user: user,
-      contact: activity['contacts'],
-      activity: activity.id
-  })
+  if(activity){
+    const data = activity['user']
+    myJSON = JSON.stringify(data)
+    const user = JSON.parse(myJSON);
+    delete user.hash
+    delete user.salt
+    delete user.payment
+    
+    let pattern = /^((http|https|ftp):\/\/)/;
+      
+    if(!pattern.test(user.learn_more)) {
+        user.learn_more = "http://" + user.learn_more;
+    }
+    
+    const pdf = activity['pdfs']
+    
+    res.render('pdf1', {
+        pdf: pdf,
+        user: user,
+        contact: activity['contacts'],
+        activity: activity.id
+    })
+  }
 }
 const create = async (req, res) => {
   if (req.file) {

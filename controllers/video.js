@@ -56,8 +56,14 @@ const play = async(req, res) => {
   const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
+  
  
   if(user){
+    let pattern = /^((http|https|ftp):\/\/)/;
+    
+    if(!pattern.test(user.learn_more)) {
+        user.learn_more = "http://" + user.learn_more;
+    }
     res.render('video', {
       video: video,
       user: user
