@@ -23,6 +23,14 @@ const oauth2 = require('simple-oauth2')(credentials)
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
+const Base64 = require('js-base64').Base64;
+const makeBody = (to, from, subject, message) => {
+  var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
+    "to: ", to, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
+  var encodedMail = Base64.encodeURI(str);
+  return encodedMail;
+}
+
 const receive = async(req, res) => {
   console.log(req.body)
   return res.send({
@@ -108,17 +116,14 @@ const bulkGmail = async(req, res) => {
   let promise_array = []
   let error = []
   
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  )
   const token = JSON.parse(currentUser.google_refresh_token)
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-         type: "oauth2",
-         user: currentUser.email, 
-         clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-         clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-         refreshToken: token.refresh_token
-    }
-  });
+  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
@@ -138,24 +143,23 @@ const bulkGmail = async(req, res) => {
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    
-    const mailOptions = {
-      from: `${currentUser.user_name} <${currentUser.email}>`,
-      to: _contact.email,
-      subject: subject,
-      cc: cc,
-      bcc: bcc,
-      generateTextFromHTML: true,
-      html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-    };
+
+    const email_content = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
+    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );    
     
     const promise = new Promise((resolve, reject)=>{
-      smtpTransport.sendMail(mailOptions, async (err, response) => {
+      gmail.users.messages.send({
+        'userId': currentUser.email,
+        'resource': {
+          raw: rawContent
+        }
+      }, async (err, response) => {
         if(err) {
           console.log('err', err)
           error.push(contacts[i])
           resolve()
-        } else{
+        }
+        else {
           const email = new Email({
             ...req.body,
             contact: contacts[i],
@@ -187,8 +191,8 @@ const bulkGmail = async(req, res) => {
             console.log('err', err)
           })
         }
-        smtpTransport.close();
-      });
+        resolve();
+      })
     })
     promise_array.push(promise)
   }

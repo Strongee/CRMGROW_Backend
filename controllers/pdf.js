@@ -26,7 +26,6 @@ const s3 = new AWS.S3({
 })
 
 const sharp = require('sharp');
-
 const nodemailer = require('nodemailer');
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -38,6 +37,15 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials)
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
+
+const { google } = require('googleapis');
+const Base64 = require('js-base64').Base64;
+const makeBody = (to, from, subject, message) => {
+  var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
+    "to: ", to, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
+  var encodedMail = Base64.encodeURI(str);
+  return encodedMail;
+}
 
 const play = async(req, res) => {  
   const pdf_id = req.query.pdf
@@ -1067,17 +1075,14 @@ const bulkGmail = async(req, res) => {
   let promise_array = []
   let error = []
   
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  )
   const token = JSON.parse(currentUser.google_refresh_token)
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-         type: "oauth2",
-         user: currentUser.email, 
-         clientId: config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-         clientSecret: config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-         refreshToken: token.refresh_token
-    }
-  });
+  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   
   if(contacts){
     if(contacts.length>15){
@@ -1163,32 +1168,32 @@ const bulkGmail = async(req, res) => {
         if(content.search(/{pdf_description}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
         }
-        
-        const mailOptions = {
-          from: `${currentUser.user_name} <${currentUser.email}>`,
-          to: _contact.email,
-          subject: subject,
-          generateTextFromHTML: true,
-          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-          +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
-        };
+
+        const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+          +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
+        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );
         
         let promise = new Promise((resolve, reject)=>{
-          smtpTransport.sendMail(mailOptions, (err, response) => {
+          gmail.users.messages.send({
+            'userId': currentUser.email,
+            'resource': {
+              raw: rawContent
+            }
+          }, (err, response) => {
             if(err) {
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
               console.log('err', err)
               error.push(contacts[i])
-            } else{
+            }
+            else {
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
             }
-            smtpTransport.close();
-            resolve()
-          });
+            resolve();
+          })
         })
         promise_array.push(promise)
       }

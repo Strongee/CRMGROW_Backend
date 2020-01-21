@@ -10,8 +10,8 @@ const config = {
         OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET || 'pzckCYYXIL27}-]snkJ059)',
     },
     GMAIL_CLIENT: {
-        GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID ||'1041066082390-tu3lr856iut1ldd7ohrs33cdc4kubfb9.apps.googleusercontent.com',
-        GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || 't3jCOrRag5Kxf3JCOAWWE6Gt'  
+        GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID ||'990850468296-839k09d6j1qggrhc798f36dc2eqdmt1g.apps.googleusercontent.com',
+        GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || 'C1ipsVYA3rN6i3Z6CGUvNrH4'  
     },
     JWT_SECRET: process.env.JWT_SECRET || 'THIS IS USED TO SIGN AND VERIFY JWT TOKENS',
     SENDGRID: {
