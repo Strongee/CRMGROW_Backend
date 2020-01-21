@@ -10,6 +10,8 @@ router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(EmailCt
 router.get('/receive' , UserCtrl.checkAuth, catchError(EmailCtrl.receive))
 router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(EmailCtrl.bulkOutlook))
 router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(EmailCtrl.bulkGmail))
+router.get('/gmail/:id', UserCtrl.checkAuth, catchError(EmailCtrl.getGmail))
+router.get('/list-gmail', UserCtrl.checkAuth, catchError(EmailCtrl.listGmail))
 router.get('/track/:id', catchError(EmailCtrl.openTrack))
 
 module.exports = router

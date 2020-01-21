@@ -216,6 +216,51 @@ const bulkGmail = async(req, res) => {
   })
 }
 
+const listGmail = async(req, res) => {
+  const {currentUser} = req
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  )
+  const token = JSON.parse(currentUser.google_refresh_token)
+  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
+  gmail.users.messages.list({
+    includeSpamTrash: false,
+    userId: currentUser.email
+  }, function (err, response) {
+    console.log(err);
+    const data = response.data
+    return res.send({
+      data
+    })
+  });
+}
+
+const getGmail = async(req, res) => {
+  const {currentUser} = req
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  )
+  const token = JSON.parse(currentUser.google_refresh_token)
+  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+
+  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
+  gmail.users.messages.get({
+    'userId': currentUser.email,
+    'id': req.params.id
+  }, function(err, response) {
+    console.log(err)
+    const data = response.data
+    return res.send({
+      data
+    })
+  })
+}
+
 const bulkOutlook = async(req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
@@ -442,6 +487,8 @@ module.exports = {
     send,
     receive,
     openTrack,
+    getGmail,
     bulkGmail,
+    listGmail,
     bulkOutlook,
 }
