@@ -421,9 +421,6 @@ const openTrack = async(req, res) => {
   
   let opened = new Date();
   
-  console.log('contact', contact)
-  console.log('user', user)
-  
   const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
   let action = 'opened'
   const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
