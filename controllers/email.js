@@ -410,7 +410,7 @@ const openTrack = async(req, res) => {
     console.log('err', err)
   })
   
-  const contact = await Contact.findOne({contact: _email.contact}).catch(err=>{
+  const contact = await Contact.findOne({_id: _email.contact}).catch(err=>{
     console.log('err', err)
   })
   
