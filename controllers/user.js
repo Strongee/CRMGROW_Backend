@@ -568,7 +568,7 @@ const checkAuth = async (req, res, next) => {
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email)
     
-    if (req.currentUser.primary_connected || req.connected_email_type == 'email') {
+    if (req.currentUser.primary_connected || req.currentUser.connected_email_type == 'email') {
       next()
     } else {
       res.status(402).send({
