@@ -427,7 +427,7 @@ const openTrack = async(req, res) => {
     
   let reopened = moment();
   reopened = reopened.subtract(1, "hours");
-  const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: startdate}}).catch(err=>{
+  const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
     console.log('err', err)
    })
     
