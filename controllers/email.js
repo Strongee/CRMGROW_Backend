@@ -33,6 +33,8 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 }
 
+const sgMail = require('@sendgrid/mail')
+
 const receive = async(req, res) => {
   console.log(req.body)
   return res.send({
@@ -465,7 +467,7 @@ const openTrack = async(req, res) => {
       console.log('err', err)
     }) 
     
-    
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
     const msg = {
       to: user.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
