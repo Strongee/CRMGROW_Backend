@@ -20,7 +20,7 @@ const admin = require('./admin/index')
 const template = require('./email_template')
 const image = require('./image')
 const notification = require('./notification')
-const UserCtrl = require('../controllers/user')
+const garbage = require('./garbage')
 
 const router = express.Router()
 
@@ -49,4 +49,5 @@ router.use('/admin', admin)
 router.use('/template', template)
 router.use('/email', email)
 router.use('/notification', notification)
+router.user('/garbage', garbage)
 module.exports = router
