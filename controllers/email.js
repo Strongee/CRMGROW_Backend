@@ -7,6 +7,7 @@ const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const EmailTracker = require('../models/email_tracker');
 const User = require('../models/user');
 const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
