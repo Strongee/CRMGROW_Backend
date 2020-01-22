@@ -389,7 +389,8 @@ const bulkEmail = async(req, res) => {
         
         const msg = {
           to: _contact.email,
-          from: `${currentUser.user_name} <${currentUser.email}>`,
+          from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+          replyTo: currentUser.email,
           subject: subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
                 +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'

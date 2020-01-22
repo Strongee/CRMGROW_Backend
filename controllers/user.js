@@ -47,13 +47,13 @@ const signUp = async (req, res) => {
 
   const { email, token, bill_amount } = req.body
 
-  if (isBlockedEmail(email)) {
-    res.status(400).send({
-      status: false,
-      error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
-    })
-    return;
-  }
+  // if (isBlockedEmail(email)) {
+  //   res.status(400).send({
+  //     status: false,
+  //     error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
+  //   })
+  //   return;
+  // }
 
   const payment_data = {
     email: email,
@@ -71,6 +71,7 @@ const signUp = async (req, res) => {
       payment: payment.id,
       salt: salt,
       hash: hash,
+      connected_email_type: 'email',
       updated_at: new Date(),
       created_at: new Date(),
     })
@@ -566,13 +567,14 @@ const checkAuth = async (req, res, next) => {
 
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email)
-    if (!req.currentUser.primary_connected) {
+    
+    if (req.currentUser.primary_connected || req.connected_email_type == 'email') {
+      next()
+    } else {
       res.status(402).send({
         status: false,
         error: 'not connnected'
       })
-    } else {
-      next()
     }
 
   } else {

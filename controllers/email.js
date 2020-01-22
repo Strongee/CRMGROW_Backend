@@ -493,6 +493,70 @@ const openTrack = async(req, res) => {
   return res.sendFile(TRAKER_PATH)
 }
 
+const bulkEmail = async(req, res) => {
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+
+  const { currentUser } = req
+  const { contact, content, attachments } = req.body
+  const _contact = await Contact.findOne({ _id: contact })
+  const msg = {
+    from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+    replyTo: currentUser.email,
+    subject: currentUser.user_name + ' sent email',
+    attachments: attachments,
+    html: content + '<br/><br/>' + currentUser.email_signature
+  };
+
+  sgMail.send(msg).then((_res) => {
+    console.log('mailres.errorcode', _res[0].statusCode);
+    if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+      const email = new Email({
+        ...req.body,
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date(),
+      })
+
+      email.save()
+        .then(_email => {
+          const activity = new Activity({
+            content: currentUser.user_name + ' sent email',
+            contacts: _contact.id,
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+
+          activity.save().then(_activity => {
+            Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+              console.log('err', err)
+            })
+            myJSON = JSON.stringify(_email)
+            const data = JSON.parse(myJSON);
+            data.activity = _activity
+            res.send({
+              status: true,
+              data
+            })
+          })
+        })
+    } else {
+      return res.status(404).send({
+        status: false,
+        error: _res[0].statusCode
+      })
+    }
+  }).catch((e) => {
+    console.error(e)
+    return res.status(500).send({
+      status: false,
+      error: 'internal_server_error'
+    })
+  })
+}
+
 module.exports = {
     send,
     receive,
@@ -501,4 +565,5 @@ module.exports = {
     bulkGmail,
     listGmail,
     bulkOutlook,
+    bulkEmail
 }

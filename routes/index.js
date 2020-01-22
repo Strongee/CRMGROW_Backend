@@ -49,5 +49,5 @@ router.use('/admin', admin)
 router.use('/template', template)
 router.use('/email', email)
 router.use('/notification', notification)
-router.user('/garbage', garbage)
+router.use('/garbage', garbage)
 module.exports = router
