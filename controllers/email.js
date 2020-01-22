@@ -7,6 +7,7 @@ const OAuth2 = google.auth.OAuth2;
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const User = require('../models/user');
 const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
 const urls = require('../constants/urls');
@@ -307,7 +308,7 @@ const bulkOutlook = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
     const message_id = uuidv1()
-    content += `<img src='${urls.TRACK_URL}${message_id}/>`
+    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
     const sendMail = {
             message: {
               subject: subject,
