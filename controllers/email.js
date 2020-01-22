@@ -148,6 +148,9 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
+    const message_id = uuidv1()
+    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
+    
     const email_content = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );    
     
@@ -166,6 +169,7 @@ const bulkGmail = async(req, res) => {
         else {
           const email = new Email({
             ...req.body,
+            message_id: message_id,
             contact: contacts[i],
             user: currentUser.id,
             updated_at: new Date(),
@@ -404,7 +408,6 @@ const bulkOutlook = async(req, res) => {
 
 const openTrack = async(req, res) => {
   const message_id = req.params.id
-  console.log('message_id', message_id)
   const _email = await Email.findOne({message_id: message_id}).catch(err=>{
     console.log('err', err)
   })
