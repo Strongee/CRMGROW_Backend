@@ -13,6 +13,10 @@ const config = {
         GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID ||'990850468296-839k09d6j1qggrhc798f36dc2eqdmt1g.apps.googleusercontent.com',
         GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || 'C1ipsVYA3rN6i3Z6CGUvNrH4'  
     },
+    YAHOO_CLIENT: {
+        YAHOO_CLIENT_ID: process.env.YAHOO_CLIENT_ID || 'dj0yJmk9YWphSjhpYUNQemcxJmQ9WVdrOWJFRXdTSGRtTkRnbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTg1',
+        YAHOO_CLIENT_CECRET: process.env.YAHOO_CLIENT_CECRET || '3446d2cd06a1db5d36eda8800bcb3d76485567d2',  
+    },
     JWT_SECRET: process.env.JWT_SECRET || 'THIS IS USED TO SIGN AND VERIFY JWT TOKENS',
     SENDGRID: {
         SENDGRID_KEY: process.env.SENDGRID_KEY || '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',

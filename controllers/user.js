@@ -25,12 +25,13 @@ const credentials = {
 }
 const oauth2 = require('simple-oauth2')(credentials)
 const yahooCredentials = {
-  clientID: 'dj0yJmk9YWphSjhpYUNQemcxJmQ9WVdrOWJFRXdTSGRtTkRnbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTg1',
-  clientSecret: '3446d2cd06a1db5d36eda8800bcb3d76485567d2',
+  clientID: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
+  clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
   site: 'https://api.login.yahoo.com',
-  authorizationPath: '/oauth2/request_auth'
+  authorizationPath: '/oauth2/request_auth',
+  tokenPath: '/oauth2/get_token'
 }
-const yahooOauth2 = require('simple-oauth2')(credentials)
+const yahooOauth2 = require('simple-oauth2')(yahooCredentials)
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const client = require('twilio')(accountSid, authToken)
@@ -825,7 +826,8 @@ const authorizeOutlook = async (req, res) => {
 const syncYahoo = async (req, res) => {
 
   const scopes = [
-    'admg-w'
+    'openid',
+    'admg-w',
   ];
 
   // Authorization uri definition
@@ -882,6 +884,61 @@ const syncGmail = async (req, res) => {
 }
 
 const authorizeYahoo = async(req, res) => {
+  const code = req.query.code
+  const user = req.currentUser
+  
+  yahooOauth2.authCode.getToken({
+    code: code,
+    redirect_uri: 'https://stg.crmgrow.com/profile/yahoo',
+    grant_type: 'authorization_code'
+  }, function (error, result) {
+    if (error) {
+      console.log('err', error)
+      return res.status(500).send({
+        status: false,
+        error: error
+      })
+    }
+    else {
+      console.log('result', result)
+      const yahoo_token = yahooOauth2.accessToken.create(result)
+      user.yahoo_refresh_token = yahoo_token.token.refresh_token
+      let token_parts = yahoo_token.token.id_token.split('.');
+
+      // Token content is in the second part, in urlsafe base64
+      let encoded_token = new Buffer(token_parts[1].replace('-', '+').replace('_', '/'), 'base64');
+
+      let decoded_token = encoded_token.toString();
+
+      let jwt = JSON.parse(decoded_token);
+      // Email is in the preferred_username field
+      console.log('jwt******', jwt)
+      user.email = jwt.preferred_username
+      user.social_id = jwt.oid
+      user.connected_email_type = 'outlook'
+      user.primary_connected = true
+      user.save()
+        .then(_res => {
+          res.send({
+            status: true,
+            data: user.email
+          })
+        })
+        .catch(e => {
+          let errors
+          if (e.errors) {
+            errors = e.errors.map(err => {
+              delete err.instance
+              return err
+            })
+          }
+          return res.status(500).send({
+            status: false,
+            error: errors || e
+          })
+        });
+    }
+  }) 
 }
 
 const authorizeGmail = async (req, res) => {

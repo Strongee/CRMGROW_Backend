@@ -56,6 +56,9 @@ router.get('/authorize-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.author
 // Gmail authorized
 router.get('/authorize-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeGmail))
 
+// Yahoo authorized
+router.get('/authorize-yahoo', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeYahoo))
+
 // Synchronize calendar with connected outlook email
 router.get('/sync-calendar', UserCtrl.checkAuth, catchError(UserCtrl.syncCalendar))
 
