@@ -170,7 +170,7 @@ const bulkGmail = async(req, res) => {
           const email = new Email({
             ...req.body,
             message_id: message_id,
-            contact: contacts[i],
+            contacts: contacts[i],
             user: currentUser.id,
             updated_at: new Date(),
             created_at: new Date()
@@ -347,7 +347,7 @@ const bulkOutlook = async(req, res) => {
         const email = new Email({
           ...req.body,
           message_id: message_id,
-          contact: contacts[i],
+          contacts: contacts[i],
           user: currentUser.id,
           updated_at: new Date(),
           created_at: new Date()
