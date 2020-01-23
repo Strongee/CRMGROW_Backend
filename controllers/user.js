@@ -24,6 +24,13 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
+const yahooCredentials = {
+  clientID: 'dj0yJmk9YWphSjhpYUNQemcxJmQ9WVdrOWJFRXdTSGRtTkRnbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTg1',
+  clientSecret: '3446d2cd06a1db5d36eda8800bcb3d76485567d2',
+  site: 'https://api.login.yahoo.com',
+  authorizationPath: '/oauth2/request_auth'
+}
+const yahooOauth2 = require('simple-oauth2')(credentials)
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const client = require('twilio')(accountSid, authToken)
@@ -815,6 +822,31 @@ const authorizeOutlook = async (req, res) => {
   })
 }
 
+const syncYahoo = async (req, res) => {
+
+  const scopes = [
+    'admg-w'
+  ];
+
+  // Authorization uri definition
+  const authorizationUri = yahooOauth2.authCode.authorizeURL({
+    redirect_uri: 'https://stg.crmgrow.com/profile/yahoo',
+    scope: scopes.join(' ')
+  })
+
+  if (!authorizationUri) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist'
+    })
+  }
+  res.send({
+    status: true,
+    data: authorizationUri
+  })
+}
+
+
 const syncGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -843,10 +875,13 @@ const syncGmail = async (req, res) => {
       error: 'Client doesn`t exist'
     })
   }
-  res.send({
+  return res.send({
     status: true,
     data: authorizationUri
   })
+}
+
+const authorizeYahoo = async(req, res) => {
 }
 
 const authorizeGmail = async (req, res) => {
@@ -1395,6 +1430,8 @@ module.exports = {
   authorizeOutlook,
   syncGmail,
   authorizeGmail,
+  syncYahoo,
+  authorizeYahoo,
   syncCalendar,
   disconCalendar,
   dailyReport,
