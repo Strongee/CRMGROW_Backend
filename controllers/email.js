@@ -35,7 +35,7 @@ const makeBody = (to, from, subject, message) => {
 
 const sgMail = require('@sendgrid/mail')
 
-const receive = async(req, res) => {
+const receive = async (req, res) => {
   console.log(req.body)
   return res.send({
     status: true
@@ -54,7 +54,7 @@ const send = async (req, res) => {
       error: 'Subject email must be specified'
     })
   }
-  
+
   const msg = {
     from: `${currentUser.user_name} <${currentUser.email}>`,
     subject: subject,
@@ -65,10 +65,10 @@ const send = async (req, res) => {
     html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
   };
 
-  sgMail.send(msg).then( async (res) => {
+  sgMail.send(msg).then(async (res) => {
     console.log('mailres.errorcode', res[0].statusCode);
-    if(res[0].statusCode >= 200 && res[0].statusCode < 400){
-      console.log('Successful send to '+msg.to)
+    if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
+      console.log('Successful send to ' + msg.to)
       console.log('res', res)
       const email = new Email({
         ...req.body,
@@ -76,7 +76,7 @@ const send = async (req, res) => {
         updated_at: new Date(),
         created_at: new Date()
       })
-    
+
       const _email = await email.save().then().catch(err => {
         console.log('err', err)
       })
@@ -91,7 +91,7 @@ const send = async (req, res) => {
           created_at: new Date(),
           updated_at: new Date(),
         })
-    
+
         const _activity = await activity.save().then()
         Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
           console.log('err', err)
@@ -101,67 +101,67 @@ const send = async (req, res) => {
         data.activity = _activity
         data_list.push(data)
       }
-    
+
       return res.send({
         status: true,
         data: data_list
       })
-    }else {
-      console.log('email sending err', msg.to+res[0].statusCode)
+    } else {
+      console.log('email sending err', msg.to + res[0].statusCode)
     }
   }).catch(err => {
     console.log('err', err)
   })
 }
 
-const bulkGmail = async(req, res) => {
+const bulkGmail = async (req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
   let promise_array = []
   let error = []
-  
+
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
   const token = JSON.parse(currentUser.google_refresh_token)
-  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  oauth2Client.setCredentials({ refresh_token: token.refresh_token })
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
-  
+
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
       status: false,
       error: 'Subject email must be specified'
     })
   }
-  
-  for (let i = 0; i < contacts.length; i++) {  
-    const _contact = await Contact.findOne({_id: contacts[i]})
+
+  for (let i = 0; i < contacts.length; i++) {
+    const _contact = await Contact.findOne({ _id: contacts[i] })
     subject = subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+
     content = content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     const message_id = uuidv1()
     content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
-    
+
     const email_content = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );    
-    
-    const promise = new Promise((resolve, reject)=>{
+    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content);
+
+    const promise = new Promise((resolve, reject) => {
       gmail.users.messages.send({
         'userId': currentUser.email,
         'resource': {
           raw: rawContent
         }
       }, async (err, response) => {
-        if(err) {
+        if (err) {
           console.log('err', err)
           error.push(contacts[i])
           resolve()
@@ -175,11 +175,11 @@ const bulkGmail = async(req, res) => {
             updated_at: new Date(),
             created_at: new Date()
           })
-          
+
           const _email = await email.save().then().catch(err => {
             console.log('err', err)
           })
-          
+
           const activity = new Activity({
             content: currentUser.user_name + ' sent email',
             contacts: contacts[i],
@@ -189,11 +189,11 @@ const bulkGmail = async(req, res) => {
             created_at: new Date(),
             updated_at: new Date(),
           })
-          
-          const _activity = await activity.save().then().catch(err=>{
+
+          const _activity = await activity.save().then().catch(err => {
             console.log('err', err)
           })
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(()=>{
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
             resolve()
           }).catch(err => {
             console.log('err', err)
@@ -204,9 +204,9 @@ const bulkGmail = async(req, res) => {
     })
     promise_array.push(promise)
   }
-  
-  Promise.all(promise_array).then(()=>{
-    if(error.length>0){
+
+  Promise.all(promise_array).then(() => {
+    if (error.length > 0) {
       return res.status(400).json({
         status: false,
         error: error
@@ -215,7 +215,7 @@ const bulkGmail = async(req, res) => {
     return res.send({
       status: true,
     })
-  }).catch((err)=>{
+  }).catch((err) => {
     console.log('err', err)
     return res.status(400).json({
       status: false,
@@ -224,15 +224,15 @@ const bulkGmail = async(req, res) => {
   })
 }
 
-const listGmail = async(req, res) => {
-  const {currentUser} = req
+const listGmail = async (req, res) => {
+  const { currentUser } = req
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
   const token = JSON.parse(currentUser.google_refresh_token)
-  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  oauth2Client.setCredentials({ refresh_token: token.refresh_token })
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   gmail.users.messages.list({
     includeSpamTrash: false,
@@ -246,21 +246,21 @@ const listGmail = async(req, res) => {
   });
 }
 
-const getGmail = async(req, res) => {
-  const {currentUser} = req
+const getGmail = async (req, res) => {
+  const { currentUser } = req
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
   const token = JSON.parse(currentUser.google_refresh_token)
-  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  oauth2Client.setCredentials({ refresh_token: token.refresh_token })
 
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   gmail.users.messages.get({
     'userId': currentUser.email,
     'id': req.params.id
-  }, function(err, response) {
+  }, function (err, response) {
     console.log(err)
     const data = response.data
     return res.send({
@@ -269,17 +269,17 @@ const getGmail = async(req, res) => {
   })
 }
 
-const bulkOutlook = async(req, res) => {
+const bulkOutlook = async (req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts } = req.body
   let promise_array = []
   let error = []
-  
-  let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+
+  let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
   let accessToken
-  
+
   await new Promise((resolve, reject) => {
-    token.refresh(function(error, result) {
+    token.refresh(function (error, result) {
       if (error) {
         reject(error.message)
       }
@@ -287,13 +287,13 @@ const bulkOutlook = async(req, res) => {
         resolve(result.token);
       }
     })
-  }).then((token)=>{
+  }).then((token) => {
     accessToken = token.access_token
-    
+
   }).catch((error) => {
     console.log('error', error)
   })
-  
+
   const client = graph.Client.init({
     // Use the provided access token to authenticate
     // requests
@@ -301,92 +301,273 @@ const bulkOutlook = async(req, res) => {
       done(null, accessToken);
     }
   });
-  
-  for (let i = 0; i < contacts.length; i++) {  
-    const _contact = await Contact.findOne({_id: contacts[i]})
+
+  for (let i = 0; i < contacts.length; i++) {
+    const _contact = await Contact.findOne({ _id: contacts[i] })
     subject = subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+
     content = content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+
     const message_id = uuidv1()
     content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
     const sendMail = {
-            message: {
-              subject: subject,
-              from: {
-                emailAddress: {
-                  name: currentUser.user_name,
-                  address: currentUser.email
-                }
-              },
-              body: {
-                contentType: "HTML",
-                content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-              },
-              
-              toRecipients: [
-                {
-                  emailAddress: {
-                    address: _contact.email,
-                  }
-                }
-              ],
-            },
-            saveToSentItems: "true"
-          };
-          
-    const promise = new Promise((resolve, reject)=>{
+      message: {
+        subject: subject,
+        from: {
+          emailAddress: {
+            name: currentUser.user_name,
+            address: currentUser.email
+          }
+        },
+        body: {
+          contentType: "HTML",
+          content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+        },
+
+        toRecipients: [
+          {
+            emailAddress: {
+              address: _contact.email,
+            }
+          }
+        ],
+      },
+      saveToSentItems: "true"
+    };
+
+    const promise = new Promise((resolve, reject) => {
       client.api('/me/sendMail')
-      .post(sendMail).then( async ()=>{
-        const email = new Email({
-          ...req.body,
-          message_id: message_id,
-          contact: contacts[i],
-          user: currentUser.id,
-          updated_at: new Date(),
-          created_at: new Date()
-        })
-        
-        const _email = await email.save().then().catch(err => {
-          console.log('err', err)
-        })
-        
-        const activity = new Activity({
-          content: currentUser.user_name + ' sent email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'emails',
-          emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-        
-        const _activity = await activity.save().then()
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-          console.log('err', err)
-        })
-      }).catch(err=>{
-        console.log('err', err)
-        if(error.code == 'ErrorMessageSubmissionBlocked'){
-          return res.status(400).json({
-            status: false,
-            error: error.message || 'Please go to the login into your Email box and follow instruction'
+        .post(sendMail).then(async () => {
+          const email = new Email({
+            ...req.body,
+            message_id: message_id,
+            contact: contacts[i],
+            user: currentUser.id,
+            updated_at: new Date(),
+            created_at: new Date()
           })
-        }else {
-          error.push(contacts[i])
-        }
-      });
+
+          const _email = await email.save().then().catch(err => {
+            console.log('err', err)
+          })
+
+          const activity = new Activity({
+            content: currentUser.user_name + ' sent email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+
+          const _activity = await activity.save().then()
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          })
+        }).catch(err => {
+          console.log('err', err)
+          if (error.code == 'ErrorMessageSubmissionBlocked') {
+            return res.status(400).json({
+              status: false,
+              error: error.message || 'Please go to the login into your Email box and follow instruction'
+            })
+          } else {
+            error.push(contacts[i])
+          }
+        });
       resolve()
     })
     promise_array.push(promise)
   }
-  
+
+  Promise.all(promise_array).then(() => {
+    if (error.length > 0) {
+      return res.status(400).json({
+        status: false,
+        error: error
+      })
+    }
+    return res.send({
+      status: true,
+    })
+  }).catch((err) => {
+    console.log('err', err)
+    return res.status(400).json({
+      status: false,
+      error: err
+    })
+  })
+}
+
+const openTrack = async (req, res) => {
+  const message_id = req.params.id
+  const _email = await Email.findOne({ message_id: message_id }).catch(err => {
+    console.log('err', err)
+  })
+  const user = await User.findOne({ _id: _email.user }).catch(err => {
+    console.log('err', err)
+  })
+
+  const contact = await Contact.findOne({ _id: _email.contacts }).catch(err => {
+    console.log('err', err)
+  })
+
+  let opened = new Date();
+
+  console.log('contact', contact)
+  console.log('user', user)
+
+  const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
+  let action = 'opened'
+  const email_activity = await Activity.findOne({ contacts: contact.id, emails: _email.id }).catch(err => {
+    console.log('err', err)
+  })
+
+  let reopened = moment();
+  reopened = reopened.subtract(1, "hours");
+  const old_activity = await EmailTracker.findOne({ activity: email_activity.id, type: 'open', created_at: { $gte: reopened } }).catch(err => {
+    console.log('err', err)
+  })
+
+  if (!old_activity) {
+    const email_tracker = new EmailTracker({
+      user: user.id,
+      contact: contact.id,
+      email: _email.id,
+      type: 'open',
+      activity: email_activity.id,
+      updated_at: opened,
+      created_at: opened,
+    })
+
+    const _email_tracker = await email_tracker.save().then().catch(err => {
+      console.log('err', err)
+    })
+
+    const activity = new Activity({
+      content: contact.first_name + ' opened email',
+      contacts: contact.id,
+      user: user.id,
+      type: 'email_trackers',
+      emails: _email.id,
+      email_trackers: _email_tracker.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    const _activity = await activity.save().then().catch(err => {
+      console.log('err', err)
+    })
+
+    Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+      console.log('err', err)
+    })
+
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    const msg = {
+      to: user.email,
+      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      dynamic_template_data: {
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+        activity: contact.first_name + ' ' + action + ' email: ' + _email.subject + ' at ' + created_at,
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='" + urls.DOMAIN_URL + "assets/images/contact.png'/></a>"
+      },
+    };
+    sgMail.send(msg).catch(err => console.error(err))
+  }
+
+  const contentType = mime.contentType(path.extname(TRAKER_PATH))
+  res.set('Content-Type', contentType)
+  return res.sendFile(TRAKER_PATH)
+}
+
+const bulkEmail = async (req, res) => {
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+
+  const { currentUser } = req
+  let { to, cc, bcc, contacts, content, attachments, subject } = req.body
+
+  let promise_array = [];
+  let error = [];
+
+  for (let i = 0; i < contacts.length; i++) {
+    const _contact = await Contact.findOne({ _id: contacts[0] })
+    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    content = content.replace(/{user_name}/ig, currentUser.user_name)
+      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+      .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+
+    const msg = {
+      from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+      to: _contact.email,
+      replyTo: currentUser.email,
+      subject: subject,
+      attachments: attachments,
+      html: content + '<br/><br/>' + currentUser.email_signature
+    };
+
+    const promise = new Promise((resolve, reject) => {
+      sgMail.send(msg).then(async (_res) => {
+        if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+          const email = new Email({
+            ...req.body,
+            contact: contacts[i],
+            message_id: _res[0].headers['x-message-id'],
+            user: currentUser.id,
+            updated_at: new Date(),
+            created_at: new Date(),
+          })
+
+          const _email = await email.save().then().catch(err => {
+            console.log('err', err)
+          })
+
+          const activity = new Activity({
+            content: currentUser.user_name + ' sent email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+
+          const _activity = await activity.save().then()
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          })
+
+          resolve()
+        }
+        else {
+          console.log('email sending err', msg.to + _res[0].statusCode)
+          error.push(contacts[i])
+          resolve()
+        }
+      }).catch(err => {
+        console.log('err', err)
+        error.push(contacts[i])
+        resolve()
+      })
+    })
+    promise_array.push(promise)
+  }
   Promise.all(promise_array).then(()=>{
     if(error.length>0){
       return res.status(400).json({
@@ -406,164 +587,13 @@ const bulkOutlook = async(req, res) => {
   })
 }
 
-const openTrack = async(req, res) => {
-  const message_id = req.params.id
-  const _email = await Email.findOne({message_id: message_id}).catch(err=>{
-    console.log('err', err)
-  })
-  const user = await User.findOne({_id: _email.user}).catch(err=>{
-    console.log('err', err)
-  })
-  
-  const contact = await Contact.findOne({_id: _email.contacts}).catch(err=>{
-    console.log('err', err)
-  })
-  
-  let opened = new Date();
-  
-  console.log('contact', contact)
-  console.log('user', user)
-  
-  const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
-  let action = 'opened'
-  const email_activity = await Activity.findOne({contacts: contact.id, emails: _email.id}).catch(err=>{
-      console.log('err', err)
-  })
-    
-  let reopened = moment();
-  reopened = reopened.subtract(1, "hours");
-  const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
-    console.log('err', err)
-   })
-    
-  if(!old_activity){
-    const email_tracker = new EmailTracker({
-      user: user.id,
-      contact: contact.id,
-      email: _email.id,
-      type: 'open',
-      activity: email_activity.id,
-      updated_at: opened,
-      created_at: opened,
-    })
-      
-    const _email_tracker = await email_tracker.save().then().catch(err=>{
-      console.log('err', err)
-    })
-      
-    const activity = new Activity({
-      content: contact.first_name + ' opened email',
-      contacts: contact.id,
-      user: user.id,
-      type: 'email_trackers',
-      emails: _email.id,
-      email_trackers: _email_tracker.id,
-      created_at: new Date(),
-      updated_at: new Date(),
-      })
-  
-    const _activity = await activity.save().then().catch(err=>{
-      console.log('err', err)
-    })
-      
-    Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-      console.log('err', err)
-    }) 
-    
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-    const msg = {
-      to: user.email,
-      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-      dynamic_template_data: {
-        first_name: contact.first_name,
-        last_name: contact.last_name,
-        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-        activity: contact.first_name + ' '+action+' email: '+ _email.subject + ' at ' + created_at,
-        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-      },
-    };
-    sgMail.send(msg).catch(err => console.error(err)) 
-  }
-  
-  const contentType = mime.contentType(path.extname(TRAKER_PATH))
-  res.set('Content-Type', contentType)
-  return res.sendFile(TRAKER_PATH)
-}
-
-const bulkEmail = async(req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-
-  const { currentUser } = req
-  const { contact, content, attachments } = req.body
-  const _contact = await Contact.findOne({ _id: contact })
-  const msg = {
-    from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-    replyTo: currentUser.email,
-    subject: currentUser.user_name + ' sent email',
-    attachments: attachments,
-    html: content + '<br/><br/>' + currentUser.email_signature
-  };
-
-  sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
-    if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-      const email = new Email({
-        ...req.body,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
-
-      email.save()
-        .then(_email => {
-          const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
-            contacts: _contact.id,
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          activity.save().then(_activity => {
-            Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-              console.log('err', err)
-            })
-            myJSON = JSON.stringify(_email)
-            const data = JSON.parse(myJSON);
-            data.activity = _activity
-            res.send({
-              status: true,
-              data
-            })
-          })
-        })
-    } else {
-      return res.status(404).send({
-        status: false,
-        error: _res[0].statusCode
-      })
-    }
-  }).catch((e) => {
-    console.error(e)
-    return res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
-    })
-  })
-}
-
 module.exports = {
-    send,
-    receive,
-    openTrack,
-    getGmail,
-    bulkGmail,
-    listGmail,
-    bulkOutlook,
-    bulkEmail
+  send,
+  receive,
+  openTrack,
+  getGmail,
+  bulkGmail,
+  listGmail,
+  bulkOutlook,
+  bulkEmail
 }
