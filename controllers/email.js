@@ -343,33 +343,6 @@ const bulkOutlook = async (req, res) => {
 
     const promise = new Promise((resolve, reject) => {
       client.api('/me/sendMail')
-<<<<<<< HEAD
-        .post(sendMail).then(async () => {
-          const email = new Email({
-            ...req.body,
-            message_id: message_id,
-            contact: contacts[i],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
-
-          const _email = await email.save().then().catch(err => {
-            console.log('err', err)
-          })
-
-          const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          const _activity = await activity.save().then()
-=======
       .post(sendMail).then( async ()=>{
         const email = new Email({
           ...req.body,
@@ -395,7 +368,6 @@ const bulkOutlook = async (req, res) => {
         })
         
         const _activity = await activity.save().then()
->>>>>>> 7e7320d0ba6f10a84e4bac8e75f4479302ca1793
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
@@ -448,14 +420,7 @@ const openTrack = async (req, res) => {
   })
 
   let opened = new Date();
-<<<<<<< HEAD
-
-  console.log('contact', contact)
-  console.log('user', user)
-
-=======
   
->>>>>>> 7e7320d0ba6f10a84e4bac8e75f4479302ca1793
   const created_at = moment(opened).utcOffset(user.time_zone).format('h:mm a')
   let action = 'opened'
   const email_activity = await Activity.findOne({ contacts: contact.id, emails: _email.id }).catch(err => {
