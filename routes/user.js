@@ -47,6 +47,9 @@ router.get('/sync-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.syncOutlook
 // Synchronize with gmail
 router.get('/sync-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.syncGmail))
 
+// Synchronize with yahoo
+router.get('/sync-yahoo', UserCtrl.checkAuth2, catchError(UserCtrl.syncYahoo))
+
 // Outlook Email authorization
 router.get('/authorize-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.authorizeOutlook))
 
