@@ -586,6 +586,7 @@ const bulkEmail = async (req, res) => {
 
 const bulkYahoo = async(req, res) => {
   
+  const {currentUser} = req
   const mailOptions = {
     from: 'garrettsteve1@yahoo.com',
     to: 'amazingskill8001@gmail.com',
