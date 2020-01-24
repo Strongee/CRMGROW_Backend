@@ -598,13 +598,17 @@ const bulkYahoo = async(req, res) => {
   console.log('yahoo.....', currentUser.yahoo_refresh_token)
   const transporter = nodemailer.createTransport({
       service: 'Yahoo',
+      secure: false,
       auth: {
+        XOAuth2: {
         type: "oauth2",
         user: 'garrettsteve1@yahoo.com', 
         clientId: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
         clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
-        refreshToken: currentUser.yahoo_refresh_token
-      },
+        refreshToken: currentUser.yahoo_refresh_token,
+        access_token: 'wfszBEua7hpFYIeR7HqUF7Y9O22.MHojAH.bsoyOstOzKf2t1DEwO0e9sV8p1lOiTLZnMZ.g9e.waNJBrE1u5zv8G609hLJId4qM7z1E0yb9YeQBeMqqG_9IwV80nSoF55UNpsfzfEULLp4YvHT.PJin6WFUY072JGZnU3FtwrmuMk14nkU1Q.1NZz.M10Zv2hZ02tsBv6GC6ft1nwy1ZsYfuYPsSIrExT4mvKSyhfhV3QLaSJ6wvvc9gMz2DdxAUhKoDPyWnjaE16syPtBRqptBp2pDksQTyI_YLrKOkgRjRmxW_QobEpT7wrUHyuxqhZkRBRhyGeF2V5AFQu1n4G.i2vCIx.V24SEfGP9JhbaEqWrElXZ_psNdlHcFna4TsPTfYIisaCYTpYxx9Lw5Fxw8Sz7p.eWrvqYlfiJjKHgXKyhsMx7puGrhIwa0S7T9oXzQMfPZIlz8AzFfhNzH7F9csJ32NKVFq2UuhlBA4MydqaQrQs3iKNv.q66PXP7Jw__3f9mxrb2e9H1PjHrdvF866BjLKx1JNTAJI23wpicy3f98fHRqVUjzljp0byqxRPmGZUf7HQZRSrvF08qzurNNB8NW2kbb4qVU5vXmpqUqJqBlXTjBknJzyaR7cdNAdqQuulzSQAil.yFLX4I0YOd7N5sJyBcAHpzmoBPpN2RHKPVFraRLWCFLLAd_sSar2i2l4C1tbCaRrVIvjbiEZy3tXI9bjzyEiYE4657Wy3YS9fQ4Fq9UzhOFOYJvaz5lGlBPp.va4nmlXGD7REVS7Tk_NNKlHEU8XgbdFUwrznK56OoUv88rWFxZ3394ku8EKKzJGGhC34GvRB7joZdbElWPPQCrEos6nU80JxyA.FhzYtnee1w_w9NMLR8YfbvgXsWhKT60CJV6GZhV8ien47RcenDwTUJ8BGeSlzn3VDeurPnDqIdB92wpvK6GBmHkAHUJYD0LJcnxNlsmvTy927EaFbzodsPxpcP6th.gzZCIxQj3t.9mpN5.Ld_1xP2dbhWYVrcgumRvY8kzIfMP8Wl1d1xAFqgo'
+      }
+    },
   });
   transporter.sendMail(mailOptions, (err, res) => {
       if (err) {
