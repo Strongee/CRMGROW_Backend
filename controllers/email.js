@@ -594,6 +594,8 @@ const bulkYahoo = async(req, res) => {
     text: 'Test',
     html: '<p>Test</p>',
   };
+  
+  console.log('yahoo.....', currentUser.yahoo_refresh_token)
   const transporter = nodemailer.createTransport({
       service: 'Yahoo',
       auth: {
