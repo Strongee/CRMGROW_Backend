@@ -597,7 +597,8 @@ const bulkYahoo = async(req, res) => {
   
   console.log('yahoo.....', currentUser.yahoo_refresh_token)
   const transporter = nodemailer.createTransport({
-      service: 'Yahoo',
+      service: 'smtp.mail.yahoo.com',
+      port: 465,
       secure: false,
       auth: {
         type: "oauth2",
