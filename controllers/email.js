@@ -34,6 +34,7 @@ const makeBody = (to, from, subject, message) => {
 }
 
 const sgMail = require('@sendgrid/mail')
+const nodemailer = require('nodemailer');
 
 const receive = async (req, res) => {
   console.log(req.body)
@@ -584,12 +585,41 @@ const bulkEmail = async (req, res) => {
   })
 }
 
+const bulkYahoo = async(req, res) => {
+  
+  const mailOptions = {
+    from: 'garrettsteve1@yahoo.com',
+    to: 'amazingskill8001@gmail.com',
+    subject: 'test again',
+    text: 'Test',
+    html: '<p>Test</p>',
+  };
+  const transporter = nodemailer.createTransport({
+      service: 'Yahoo',
+      auth: {
+        type: "oauth2",
+        user: 'garrettsteve1@yahoo.com', 
+        clientId: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
+        clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
+        refreshToken: currentUser.yahoo_refresh_token
+      },
+  });
+  transporter.sendMail(mailOptions, (err, res) => {
+      if (err) {
+          return console.log(err);
+      } else {
+          console.log(JSON.stringify(res));
+      }
+  });
+}
+
 module.exports = {
   send,
   receive,
   openTrack,
   getGmail,
   bulkGmail,
+  bulkYahoo,
   listGmail,
   bulkOutlook,
   bulkEmail
