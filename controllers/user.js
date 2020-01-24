@@ -915,7 +915,7 @@ const authorizeYahoo = async(req, res) => {
       console.log('jwt******', jwt)
       user.email = jwt.preferred_username
       user.social_id = jwt.oid
-      user.connected_email_type = 'outlook'
+      user.connected_email_type = 'yahoo'
       user.primary_connected = true
       user.save()
         .then(_res => {
