@@ -606,8 +606,7 @@ const bulkYahoo = async(req, res) => {
         user: 'garrettsteve1@yahoo.com', 
         clientId: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
         clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
-        refreshToken: currentUser.yahoo_refresh_token,
-        accessToken: 'J1NWafqZ5w77uqJeulrWGowNGEzemT8Bk_eV3Sd7JfC1IVcfVWN2K6EuM3.1I89H791Ao93KaoMzvSITLkyap7bVpyY2qurD_YFQ69dviaekCN9Nw5h_pxHdOazL8ZIn_QKP_EJW15Zzbm05.H8EkUqvsmShDneXsPyM6l9.jF0kKTM_9ir8UgIqoCRRIsun3jy_6r0ZHdQD08nz14CJgXg3U_6yfk7FeKRIZrfSmGPnemiPE1EYd7hS4qg1d6gOUVRcVaJZhbfJsVLNlCd5OK3iXLtk2PkWwCeoFXT6fartt2LdohRw636GzwmGoDYuufySxzf0SOC.ZU9qrdEla4Yblwy_H8aImxcOmake0IvFF2mEAsbrAZVwHdHMW_k35cYT3vMkyBlFf6gfBpVQnmjSlwvKPU27NcFN8oRQsSgnfiFBSamXQ.gXqb1qz8WEvtJtAIcai3qefxDlqfDucSArpNX72_j_SYO0YwfHc25Z15nCsBkQD_ueBYZAOGx.k8IJrgPgPGJ6m2v0.N7sMdEoezOegn96zR1RSuxAExQ35ldXfLbUGAp_vw7LeO_XTOynbTeoxQHgs5c6.JiQ8B8rPAIBmH9I1PuPEIOp_OR0Yi7t0jn5iXvrKHmvyOge0stPsGj4B28wfSyMPC1RJpYwu5Dh81DkAxVoeyjmHtx4aREtUfH8N6pS4N.WkWEJy7gp0MBwENYdY6QUdvb5EK7ovFJGX7hD8YWqYwIgmtAAWV8FUcow322slGZdeN_Vs7jP0mwofojSIYu9rCVMIKWaSIiS_i1MAqTrezJHfq4LetKS8s1wwgwx0t9Cx1kznJMSdMxOEzW2i4fFsWHan_M_XeOxal7pf8T8dw5F2kfRBTC9uIVW6xdRRFgchbCd.UXDoeSWh6D6E2Antm2qjRkGuBxlIZJsnm_2Rs5JLspwHvXwXdIgJn0uXPq5Hutl8EyWX4pFRU2JKQRR9GvGGmI77OLyONRO_aG4kftbwZKpm5UmDpkYlCPhaqIhk1pLDDFfnkC6XJIx4g6FxJQyOvkuuH2B.RYtSxdq7O4n7jq7uS5OyakM0zkKAE7NA6XeE_VGGEmRbAgse890bizIZg--'
+        refreshToken: currentUser.yahoo_refresh_token
       },
   });
   transporter.sendMail(mailOptions, (err, res) => {
