@@ -1473,9 +1473,21 @@ const checkLastLogin = async (req, res, next) => {
   next()
 }
 
+const logout = async(req, res) => {
+  const { currentUser } = req
+  currentUser['admin_loggin'] = false
+  currentUser.save().catch(err => {
+    console.log('err', err)
+  })
+  res.send({
+    status: true,
+  })
+}
+
 module.exports = {
   signUp,
   login,
+  logout,
   socialSignUp,
   socialLogin,
   signUpGmail,
