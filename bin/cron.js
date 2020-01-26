@@ -504,7 +504,9 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 const notification_check = new CronJob('0 21 */3 * *', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
-  const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'})
+  const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'}).catch(err=>{
+    console.log('err', err)
+  })
   
   if(payment_notification){
     const subscribers = await User.find({'subscription.is_failed': true}).catch(err=>{
@@ -539,7 +541,9 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
     }
   }
   
-  const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'})
+  const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'}).catch(err=>{
+    console.log('err', err)
+  })
   if(logger_notification){
     let startdate = moment();
     startdate = startdate.subtract(30, "days");
@@ -573,7 +577,9 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
     }
   }
   
-  const notifications = await Notification.find({type: 'static', sent: false});
+  const notifications = await Notification.find({type: 'static', sent: false}).catch(err=>{
+    console.log('err', err)
+  });
   if(notifications){
     const subscribers = await User.find({del: false}).catch(err=>{
       console.log('err', err)
@@ -582,7 +588,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
       const notification = notification[i]
       
       for(let j=0; j<subscribers.length; j++){
-       const subscriber = subscribers[i]
+       const subscriber = subscribers[j]
         msg = {
           to: subscriber.email,
           from: mail_contents.SUPPORT_CRMGROW.MAIL,
@@ -615,7 +621,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   });
   for(let i=0; i<old_notifications.length; i++){
     const old_notification = old_notifications[i]
-    old_notification['del'] = false
+    old_notification['del'] = true
     old_notification.save().catch(err=>{
       console.log('err', err)
     })
