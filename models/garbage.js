@@ -5,6 +5,7 @@ const Garbage = mongoose.model('garbage',{
       sms:  { type: mongoose.Schema.Types.ObjectId, ref: 'email_template' },
       email: { type: mongoose.Schema.Types.ObjectId, ref: 'email_template' },
     },
+    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     created_at: Date,
     updated_at: Date,
  });
