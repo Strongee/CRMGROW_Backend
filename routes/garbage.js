@@ -8,6 +8,6 @@ const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(GarbageCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(GarbageCtrl.get))
-router.put('/:id', UserCtrl.checkAuth, catchError(GarbageCtrl.edit))
+router.put('/', UserCtrl.checkAuth, catchError(GarbageCtrl.edit))
 
 module.exports = router

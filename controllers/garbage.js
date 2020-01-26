@@ -38,33 +38,46 @@ const create = async(req, res) => {
 }
 
 const edit = async(req, res) => {
+  const user = req.currentUser;
   const editData = req.body
   
-  const garbage = await Garbage.findOne({_id: req.params.id})
+  const garbage = await Garbage.findOne({user: user._id})
   if(!garbage){
-    return res.status(400).json({
-      status: false,
-      error: 'Not found Garbage'
-    })
-  }
-  
-  for (let key in editData) {
-    garbage[key] = editData[key]
-  }
-  
-  garbase.save()
-    .then(()=>{
+    let newGarbage = new Garbage({
+      ...editData,
+      user: user._id
+    });
+
+    newGarbage.save().then(() => {
       return res.send({
         status: true,
       })
-    }).catch(err=>{
-      console.log('err', err)
+    }).catch(err => {
+      console.log('err', err);
       return res.status(500).json({
         status: false,
         error: err.message || 'Internal server error'
       })
     })
-
+  }
+  else {
+    for (let key in editData) {
+      garbage[key] = editData[key]
+    }
+    
+    garbage.save()
+      .then(()=>{
+        return res.send({
+          status: true,
+        })
+      }).catch(err=>{
+        console.log('err', err)
+        return res.status(500).json({
+          status: false,
+          error: err.message || 'Internal server error'
+        })
+      })
+  }
 }
 
 module.exports = {

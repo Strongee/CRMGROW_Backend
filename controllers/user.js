@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const randomstring = require('randomstring')
 const User = require('../models/user')
+const Garbage = require('../models/garbage')
 const Payment = require('../models/payment')
 const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
@@ -632,8 +633,12 @@ const getMe = async (req, res) => {
   const _user = await User.findOne({ _id: currentUser.id }).catch(err => {
     console.log('err', err)
   })
+  const _garbage = await Garbage.findOne({user: currentUser.id}).catch(err => {
+    console.log('err', err);
+  })
   const myJSON = JSON.stringify(_user)
   user = JSON.parse(myJSON);
+  user.garbage = _garbage;
   delete user.hash
   delete user.salt
   res.send({
