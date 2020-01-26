@@ -225,7 +225,9 @@ const update = async(req, res) =>{
            stripe.customers.retrieve(
                 payment['customer_id'],
                 function(err, customer) {
+                 console.log('customer**', customer)
                   if(err){
+                    console.log('customer_errr', err)
                     createCustomer(currentUser.email).then(async(customer)=>{
                         stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                             if(!card){

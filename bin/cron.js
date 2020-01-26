@@ -507,7 +507,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'})
   
   if(payment_notification){
-    const subscribers = await User.find({'subscription.is_failed': true, del: false}).catch(err=>{
+    const subscribers = await User.find({'subscription.is_failed': true}).catch(err=>{
       console.log('err', err)
     })
     
@@ -519,7 +519,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
         msg = {
           to: subscriber.email,
           from: mail_contents.SUPPORT_CRMGROW.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
           dynamic_template_data: {
             first_name: subscriber.user_name,
             content: payment_notification['content']
@@ -543,18 +543,17 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   if(logger_notification){
     let startdate = moment();
     startdate = startdate.subtract(30, "days");
-    const subscribers = await User.find({last_logged: {$lt: startdate}, del: false}).catch(err=>{
+    const users = await User.find({last_logged: {$lt: startdate}}).catch(err=>{
       console.log('err', err)
     });
-    if(subscribers){
-      for(let i = 0; i <subscribers.length; i++){
-        const subscriber = subscribers[i]
-        const subscription = subscriber['subscription']
+    if(users){
+      for(let i = 0; i <users.length; i++){
+        const subscriber = users[i]
         
         msg = {
-          to: subscriber.email,
+          to: users.email,
           from: mail_contents.SUPPORT_CRMGROW.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
           dynamic_template_data: {
             first_name: subscriber.user_name,
             content: logger_notification['content']
@@ -587,7 +586,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
         msg = {
           to: subscriber.email,
           from: mail_contents.SUPPORT_CRMGROW.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTIFICATION,
+          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
           dynamic_template_data: {
             content: subscriber.user_name,
             content: notification.content
