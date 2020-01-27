@@ -269,7 +269,7 @@ const getVideos = async (req, res) => {
       error: err
     })
   });
-  await Video.populate(videos, {path: 'user', select: 'user_name picture_profile'});
+  await Video.populate(videos, {path: 'user', select: {user_name:1, picture_profile: 1}});
 
   const videoCounts = await Video.countDocuments({"del": false});
 
