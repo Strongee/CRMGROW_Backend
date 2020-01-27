@@ -269,6 +269,7 @@ const getVideos = async (req, res) => {
       error: err
     })
   });
+  
   await Video.populate(videos, {path: 'user', select: {user_name:1, picture_profile: 1}});
 
   const videoCounts = await Video.countDocuments({"del": false});
@@ -347,8 +348,9 @@ const remove = async (req, res) => {
 
 const getVideosByUser = async (req, res) => {
   const user = req.params.id
-  const page = req.body.page;
+  const page = parseInt(req.body.page);
   const skip = (page - 1) * 12;
+  console.log('skip', skip)
 
   const videos = await Video.aggregate([
     {$match: { "user": user, "del": false }},
