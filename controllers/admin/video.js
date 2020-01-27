@@ -345,6 +345,33 @@ const remove = async (req, res) => {
     }
 }
 
+const getVideosByUser = async (req, res) => {
+  const user = req.params.id
+  const page = req.body.page;
+  const skip = (page - 1) * 12;
+
+  const videos = await Video.aggregate([
+    {$match: { "user": user }},
+    {$skip: skip},
+    {$limit: 12}
+  ]).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+  });
+  await Video.populate(videos);
+
+  const videoCounts = await Video.countDocuments({"del": false, "user": user });
+
+  return res.send({
+    status: true,
+    data: videos,
+    total: videoCounts
+  })
+}
+
+
 module.exports = {
     create,
     updateDetail,
@@ -353,5 +380,6 @@ module.exports = {
     getAll,
     sendVideo,
     remove,
-    getVideos
+    getVideos,
+    getVideosByUser
 }

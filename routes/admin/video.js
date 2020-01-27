@@ -46,6 +46,10 @@ router.get('/list/:page', catchError(VideoCtrl.getVideos))
 // // Get a video
 // router.get('/:id', catchError(VideoCtrl.get))
 
+// Get all video by user
+router.post('/user/:id', catchError(VideoCtrl.getVideosByUser))
+// // Get a video
+// router.get('/:id', catchError(VideoCtrl.get))
 
 
 // Send Video
