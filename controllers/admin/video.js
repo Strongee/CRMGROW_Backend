@@ -351,7 +351,6 @@ const getVideosByUser = async (req, res) => {
   const user = req.params.id
   const page = parseInt(req.body.page);
   const skip = (page - 1) * 12;
-  console.log('skip', skip)
 
   const videos = await Video.aggregate([
     {$match: { "user": mongoose.Types.ObjectId(user), "del": false }},
@@ -363,8 +362,7 @@ const getVideosByUser = async (req, res) => {
       error: err
     })
   });
-  
-  console.log('videos', videos)
+
   const videoCounts = await Video.countDocuments({"del": false, "user": user });
 
   return res.send({
