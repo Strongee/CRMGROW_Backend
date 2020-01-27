@@ -11,6 +11,7 @@ const config = require('../../config/config')
 const urls = require('../../constants/urls')
 const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
+const mongoose = require('mongoose')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -353,7 +354,7 @@ const getVideosByUser = async (req, res) => {
   console.log('skip', skip)
 
   const videos = await Video.aggregate([
-    {$match: { "user": user, "del": false }},
+    {$match: { "user": mongoose.Types.ObjectId(user), "del": false }},
     {$skip: skip},
     {$limit: 12}
   ]).catch(err => {
