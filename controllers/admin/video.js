@@ -351,7 +351,7 @@ const getVideosByUser = async (req, res) => {
   const skip = (page - 1) * 12;
 
   const videos = await Video.aggregate([
-    {$match: { "user": user }},
+    {$match: { "user": user, "del": false }},
     {$skip: skip},
     {$limit: 12}
   ]).catch(err => {
@@ -360,8 +360,8 @@ const getVideosByUser = async (req, res) => {
       error: err
     })
   });
-  await Video.populate(videos);
-
+  
+  console.log('videos', videos)
   const videoCounts = await Video.countDocuments({"del": false, "user": user });
 
   return res.send({
