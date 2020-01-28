@@ -524,7 +524,7 @@ const bulkEmail = async (req, res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
           const email = new Email({
             ...req.body,
-            contact: contacts[i],
+            contacts: contacts[i],
             message_id: _res[0].headers['x-message-id'],
             user: currentUser.id,
             updated_at: new Date(),
