@@ -371,19 +371,18 @@ const bulkOutlook = async (req, res) => {
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
+        resolve()
         }).catch(err => {
           console.log('err', err)
-          if (error.code == 'ErrorMessageSubmissionBlocked') {
-            return res.status(400).json({
-              status: false,
-              error: error.message || 'Please go to the login into your Email box and follow instruction'
-            })
+          if (err.code == 'ErrorMessageSubmissionBlocked') {
+            reject(err.message || 'Please go to the login into your Email box and follow instruction')
           } else {
             error.push(contacts[i])
+            resolve()
           }
         });
-      resolve()
     })
+    
     promise_array.push(promise)
   }
 
@@ -393,10 +392,11 @@ const bulkOutlook = async (req, res) => {
         status: false,
         error: error
       })
+    } else {
+      return res.send({
+        status: true,
+      })
     }
-    return res.send({
-      status: true,
-    })
   }).catch((err) => {
     console.log('err', err)
     return res.status(400).json({
