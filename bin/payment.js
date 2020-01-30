@@ -49,7 +49,7 @@ const migrate = async() => {
       
         new Promise(function (resolve, reject) {
           stripe.subscriptions.update(payment['subscription'], {
-              customer: payment['customer_id'],
+              cancel_at_period_end: false,
               items: [
                   { plan: 'plan_FFnfPJc8bPYCZi' }
               ],
