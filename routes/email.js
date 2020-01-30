@@ -14,6 +14,6 @@ router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErr
 router.post('/bulk-yahoo', UserCtrl.checkAuth, catchError(EmailCtrl.bulkYahoo))
 router.get('/gmail/:id', UserCtrl.checkAuth, catchError(EmailCtrl.getGmail))
 router.get('/list-gmail', UserCtrl.checkAuth, catchError(EmailCtrl.listGmail))
-router.get('/track/:id', catchError(EmailCtrl.openTrack))
+router.get('/track1/:id', catchError(EmailCtrl.openTrack))
 
 module.exports = router

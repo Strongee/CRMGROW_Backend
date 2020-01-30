@@ -245,6 +245,32 @@ getPdfs = async (req, res) => {
   })
 }
 
+const getPdfsByUser = async (req, res) => {
+  const user = req.params.id
+  const page = parseInt(req.body.page);
+  const skip = (page - 1) * 12;
+
+  const pdfs = await Pdf.aggregate([
+    {$match: { "user": mongoose.Types.ObjectId(user), "del": false }},
+    {$skip: skip},
+    {$limit: 12}
+  ]).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+  });
+
+  const pdfCounts = await Pdf.countDocuments({"del": false, "user": user });
+
+  return res.send({
+    status: true,
+    data: pdfs,
+    total: pdfCounts
+  })
+}
+
+
 module.exports = {
     create,
     updateDetail,
@@ -253,5 +279,6 @@ module.exports = {
     getAll,
     sendPDF,
     remove,
-    getPdfs
+    getPdfs,
+    getPdfsByUser
 }

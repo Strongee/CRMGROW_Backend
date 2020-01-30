@@ -11,6 +11,7 @@ const config = require('../../config/config')
 const urls = require('../../constants/urls')
 const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
+const mongoose = require('mongoose')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -269,7 +270,8 @@ const getVideos = async (req, res) => {
       error: err
     })
   });
-  await Video.populate(videos, {path: 'user', select: 'user_name picture_profile'});
+  
+  await Video.populate(videos, {path: 'user', select: {user_name:1, picture_profile: 1}});
 
   const videoCounts = await Video.countDocuments({"del": false});
 
@@ -345,6 +347,32 @@ const remove = async (req, res) => {
     }
 }
 
+const getVideosByUser = async (req, res) => {
+  const user = req.params.id
+  const page = parseInt(req.body.page);
+  const skip = (page - 1) * 12;
+
+  const videos = await Video.aggregate([
+    {$match: { "user": mongoose.Types.ObjectId(user), "del": false }},
+    {$skip: skip},
+    {$limit: 12}
+  ]).catch(err => {
+    res.status(500).send({
+      status: false,
+      error: err
+    })
+  });
+
+  const videoCounts = await Video.countDocuments({"del": false, "user": user });
+
+  return res.send({
+    status: true,
+    data: videos,
+    total: videoCounts
+  })
+}
+
+
 module.exports = {
     create,
     updateDetail,
@@ -353,5 +381,6 @@ module.exports = {
     getAll,
     sendVideo,
     remove,
-    getVideos
+    getVideos,
+    getVideosByUser
 }

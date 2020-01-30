@@ -63,5 +63,7 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
 
 router.get('/list/:page', catchError(PDFCtrl.getPdfs))
 
+// Get all pdfs by user
+router.post('/user/:id', catchError(PDFCtrl.getPdfsByUser))
 
 module.exports = router

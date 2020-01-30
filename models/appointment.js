@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const Appointment = mongoose.model('appointment',{
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     description: String,
     location: String,

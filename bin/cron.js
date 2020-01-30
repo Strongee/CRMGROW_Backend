@@ -13,6 +13,7 @@ const Reminder = require('../models/reminder')
 const Appointment = require('../models/appointment')
 const Video = require('../models/video')
 const Notification = require('../models/notification')
+const TimeSheet = require('../models/time_line')
 
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -516,7 +517,6 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
     if(subscribers){
       for(let i = 0; i <subscribers.length; i++){
         const subscriber = subscribers[i]
-        const subscription = subscriber['subscription']
         
         msg = {
           to: subscriber.email,
@@ -628,12 +628,16 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   }
 }, function () {
   console.log('Notification Check Job finished.');
-}, false, 'US/Central'
-)
+}, false, 'US/Central')
 
-
+const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
+  const timesheets = await TimeSheet.find({status: 'active', due_date:})
+},  function () {
+  console.log('Reminder Job finished.');
+}, false, 'US/Central')
 signup_job.start()
 reminder_job.start()
 weekly_report.start()
 video_job.start()
 notification_check.start()
+timesheet_check.start()
