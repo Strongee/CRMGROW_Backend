@@ -41,7 +41,6 @@ const migrate = async() => {
     console.log('err', err)
   })
   for(let i=0; i<payments.length; i++){
-    const payment = payments[i]
     const user = await User.findOne({email: 'Scott.Ficinus@exprealty.com', del: false})
     const payment = await Payment.findOne({_id: user.payment})
     if(user){
