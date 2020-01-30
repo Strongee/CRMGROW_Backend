@@ -40,7 +40,7 @@ const migrate = async() => {
   const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
     console.log('err', err)
   })
-  for(let i=0; i<payments.length; i++){
+  for(let i=0; i<5; i++){
     const payment = payments[i]
     const user = await User.findOne({payment: payment.id, del: false})
     if(user){
