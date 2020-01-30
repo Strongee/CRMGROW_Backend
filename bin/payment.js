@@ -39,7 +39,6 @@ const migrate = async() => {
   })
   for(let i=0; i<payments.length; i++){
     const payment = payments[i]
-    console.log('payments', payment)
     const user = await User.findOne({payment: payment.id, del: false})
     console.log('user', user)
     if(user){
