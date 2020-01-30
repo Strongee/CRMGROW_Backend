@@ -40,11 +40,11 @@ const migrate = async() => {
   const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
     console.log('err', err)
   })
-  for(let i=0; i<payments.length; i++){
-    const payment = payments[i]
-    const user = await User.findOne({payment: payment.id, del: false})
-   
-    if(user.email == 'Scott.Ficinus@exprealty.com'){
+  // for(let i=0; i<payments.length; i++){
+  //   const payment = payments[i]
+    const user = await User.findOne({email: 'Scott.Ficinus@exprealty.com', del: false})
+    const payment = await Payment.findOne({_id: user.payment})
+    if(user){
       console.log(user.email)
       
         new Promise(function (resolve, reject) {
@@ -68,6 +68,6 @@ const migrate = async() => {
           });
       });
     }
-  }
+  // }
 }
 migrate();
