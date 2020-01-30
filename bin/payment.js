@@ -42,7 +42,23 @@ const migrate = async() => {
     const user = await User.findOne({payment: payment.id, del: false})
    
     if(user){
-      console.log('user', user.email)
+      console.log(user.email)
+      
+        new Promise(function (resolve, reject) {
+          stripe.subscriptions.update({
+              customer: payment['customer_id'],
+              items: [
+                  { plan: 'plan_FFnfPJc8bPYCZi' }
+              ],
+              default_source: payment['card_id']
+          }, function (err, subscription) {
+              console.log('creating subscription err', err)
+              if (err != null) {
+                 console.log('err', err)
+              }
+              resolve(subscription);
+          });
+      });
     }
   }
 }
