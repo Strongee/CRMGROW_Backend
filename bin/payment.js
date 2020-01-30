@@ -51,30 +51,30 @@ const migrate = async() => {
           stripe.subscriptions.update(payment['subscription'], {
             cancel_at_period_end: true,
             items: [{
-              plan: payment['plan_id']
+              plan: 'plan_G5y3Wz6NbVZyQT'
             }]
           }, function(err, subscription){
             console.log('removing subscription err', err)
           });
           
-          stripe.subscriptions.update(payment['subscription'], {
-              cancel_at_period_end: false,
-              items: [
-                  { plan: 'plan_FFnfPJc8bPYCZi' }
-              ],
-              default_source: payment['card_id']
-          }, function (err, subscription) {
-              console.log('update subscription err', err)
-              if (err != null) {
-                 console.log('err', err)
-              }
-              payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
-              payment['bill_amount'] = '29'
-              payment.save().catch(err=>{
-                console.log('err', err)
-              })
-              resolve(subscription);
-          });
+          // stripe.subscriptions.update(payment['subscription'], {
+          //     cancel_at_period_end: false,
+          //     items: [
+          //         { plan: 'plan_FFnfPJc8bPYCZi' }
+          //     ],
+          //     default_source: payment['card_id']
+          // }, function (err, subscription) {
+          //     console.log('update subscription err', err)
+          //     if (err != null) {
+          //        console.log('err', err)
+          //     }
+          //     payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+          //     payment['bill_amount'] = '29'
+          //     payment.save().catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     resolve(subscription);
+          // });
       });
     }
   // }
