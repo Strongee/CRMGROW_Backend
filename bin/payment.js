@@ -49,13 +49,22 @@ const migrate = async() => {
       
         new Promise(function (resolve, reject) {
           stripe.subscriptions.update(payment['subscription'], {
+            cancel_at_period_end: true,
+            items: [{
+              plan: payment['plan_id']
+            }]
+          }, function(err, subscription){
+            console.log('removing subscription err', err)
+          });
+          
+          stripe.subscriptions.update(payment['subscription'], {
               cancel_at_period_end: false,
               items: [
                   { plan: 'plan_FFnfPJc8bPYCZi' }
               ],
               default_source: payment['card_id']
           }, function (err, subscription) {
-              console.log('creating subscription err', err)
+              console.log('update subscription err', err)
               if (err != null) {
                  console.log('err', err)
               }
