@@ -61,6 +61,7 @@ const migrate = async() => {
           }else{
             payment['subscription'] = subscription.id
             payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+            payment['bill_amount'] = '29'
             payment.save().then(()=>{
               console.log(user.email)
             }).catch(err=>{
