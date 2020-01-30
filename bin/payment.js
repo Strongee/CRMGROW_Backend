@@ -37,14 +37,13 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .catch(err => console.error('Could not connect to mongo DB', err))
 //Fetch or read data from
 const migrate = async() => {
-  // const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
-  //   console.log('err', err)
-  // })
-  // for(let i=0; i<payments.length; i++){
-    const user = await User.findOne({email: 'Scott.Ficinus@exprealty.com', del: false})
-    const payment = await Payment.findOne({_id: user.payment})
+  const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
+    console.log('err', err)
+  })
+  for(let i=0; i<payments.length; i++){
+    const payment = payments[i]
+    const user = await User.findOne({payment: payment.id, del: false})
     if(user){
-      console.log(user.email)
       stripe.subscriptions.del(payment['subscription'], function (err, confirmation) {
         if (err != null)  {
           console.log('deleting subscription err', err)
@@ -62,12 +61,14 @@ const migrate = async() => {
           }else{
             payment['subscription'] = subscription.id
             payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
-            payment.save().catch(err=>{
+            payment.save().then(()=>{
+              console.log(user.email)
+            }).catch(err=>{
               console.log('err', err)
             })
           }
       });
-    // }
+    }
   }
 }
 migrate();
