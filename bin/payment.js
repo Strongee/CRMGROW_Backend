@@ -27,6 +27,9 @@ const mongoose = require('mongoose');
 const Payment = require('../models/payment')
 const User = require('../models/user')
 const { DB_PORT } = require('../config/database');
+const config = require('../config/config')
+const stripeKey = config.STRIPE.SECRET_KEY
+const stripe = require('stripe')(stripeKey)
 
 mongoose.set('useCreateIndex', true)
 mongoose.connect(DB_PORT, {useNewUrlParser: true})
@@ -41,7 +44,7 @@ const migrate = async() => {
     const payment = payments[i]
     const user = await User.findOne({payment: payment.id, del: false})
    
-    if(user){
+    if(user.email == 'Scott.Ficinus@exprealty.com'){
       console.log(user.email)
       
         new Promise(function (resolve, reject) {
@@ -56,6 +59,11 @@ const migrate = async() => {
               if (err != null) {
                  console.log('err', err)
               }
+              payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+              payment['bill_amount'] = '29'
+              payment.save().catch(err=>{
+                console.log('err', err)
+              })
               resolve(subscription);
           });
       });
