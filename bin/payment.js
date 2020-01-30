@@ -40,43 +40,35 @@ const migrate = async() => {
   const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
     console.log('err', err)
   })
-  // for(let i=0; i<payments.length; i++){
-  //   const payment = payments[i]
+  for(let i=0; i<payments.length; i++){
+    const payment = payments[i]
     const user = await User.findOne({email: 'Scott.Ficinus@exprealty.com', del: false})
     const payment = await Payment.findOne({_id: user.payment})
     if(user){
       console.log(user.email)
-      
-        new Promise(function (resolve, reject) {
-          stripe.subscriptions.update(payment['subscription'], {
-            cancel_at_period_end: true,
-            items: [{
-              plan: 'plan_G5y3Wz6NbVZyQT'
-            }]
-          }, function(err, subscription){
-            console.log('removing subscription err', err)
-          });
-          
-          // stripe.subscriptions.update(payment['subscription'], {
-          //     cancel_at_period_end: false,
-          //     items: [
-          //         { plan: 'plan_FFnfPJc8bPYCZi' }
-          //     ],
-          //     default_source: payment['card_id']
-          // }, function (err, subscription) {
-          //     console.log('update subscription err', err)
-          //     if (err != null) {
-          //        console.log('err', err)
-          //     }
-          //     payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
-          //     payment['bill_amount'] = '29'
-          //     payment.save().catch(err=>{
-          //       console.log('err', err)
-          //     })
-          //     resolve(subscription);
-          // });
+      stripe.subscriptions.del(payment['subscription'], function (err, confirmation) {
+        if (err != null)  {
+          console.log('deleting subscription err', err)
+        }
+      })
+      stripe.subscriptions.create({
+          customer: payment['customer_id'],
+          items: [
+              { plan: 'plan_FFnfPJc8bPYCZi' }
+          ],
+          default_source: payment['card_id']
+      }, function (err, subscription) {
+          if (err != null) {
+            console.log('creating subscription err', err)
+          }else{
+            payment['subscription'] = subscription.id
+            payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+            payment.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
       });
     }
-  // }
+  }
 }
 migrate();
