@@ -74,7 +74,7 @@ const migrate = async() => {
 // }
 
   let error = []
-  let customers = []
+  let customerlist = []
   
   const users = await User.find({del: false}).catch(err=>{
     console.log('err', err)
@@ -97,7 +97,7 @@ const migrate = async() => {
             console.log('subscription', customer.subscriptions['data'])
             const subscription = customer.subscriptions['data'][0]
             if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-              customers.push(user.email)
+              customerlist.push(user.email)
             }
           }
         }
