@@ -36,7 +36,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 //Fetch or read data from
-// const migrate = async() => {
+const migrate = async() => {
 //   const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
 //     console.log('err', err)
 //   })
@@ -102,5 +102,5 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
       );
     }  
   }
-
+}
 migrate();
