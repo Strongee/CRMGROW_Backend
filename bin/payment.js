@@ -72,6 +72,9 @@ const migrate = async() => {
 //     }
 //   }
 // }
+
+  let error = []
+  let customers = []
   
   const users = await User.find({del: false}).catch(err=>{
     console.log('err', err)
@@ -80,7 +83,6 @@ const migrate = async() => {
   for(let i=0; i<users.length; i++){
     const user = users[i]
     if(user.payment){
-      console.log('user.payment', user.payment)
       const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
         console.log('err', err)
       })
@@ -90,17 +92,19 @@ const migrate = async() => {
         customer_id,
         function(err, customer) {
           if(err){
-            console.log('err', user.email)
+            error.push(user.email)
           }else{
             console.log('subscription', customer.subscriptions['data'])
             const subscription = customer.subscriptions['data'][0]
             if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-              console.log('email', user.email)
+              customers.push(user.email)
             }
           }
         }
       );
     }  
   }
+  console.log('errors', error)
+  console.log('customers', customers)
 }
 migrate();
