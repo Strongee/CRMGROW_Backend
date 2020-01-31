@@ -635,6 +635,7 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
 // },  function () {
 //   console.log('Reminder Job finished.');
 // }, false, 'US/Central')
+
 signup_job.start()
 reminder_job.start()
 weekly_report.start()

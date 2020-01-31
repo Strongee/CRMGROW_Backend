@@ -36,8 +36,14 @@ const getCustomer = async(req, res) => {
       data['card'] = subscription['default_source']
       data['status'] = subscription['status']
       data['plan'] = subscription['plan'].id
+      if(subscription['plan'].id == config.STRIPE.PRIOR_PLAN){
+        data['bill_amount'] = '29'
+      } else {
+        data['bill_amount'] = '39'
+      }
       return res.send({
-        status: true
+        status: true,
+        data
       })
     }
   );
