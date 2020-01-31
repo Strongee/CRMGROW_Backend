@@ -94,7 +94,6 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
           }else{
             console.log('subscription', customer.subscriptions['data'])
             const subscription = customer.subscriptions['data'][0]
-            data['email'] = customer['email']
             if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
               console.log('email', user.email)
             }
