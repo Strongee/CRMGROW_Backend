@@ -95,10 +95,13 @@ const migrate = async() => {
             error.push(user.email)
           }else{
             if( customer.subscriptions){
-              console.log('subscription', customer.subscriptions)
               const subscription = customer.subscriptions['data'][0]
-              if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                customerlist.push(user.email)
+              if(subscription){
+                if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
+                  customerlist.push(user.email)
+                }
+              }else{
+                error.push(user.email)
               }
             }else{
               error.push(user.email)
