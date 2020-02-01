@@ -122,6 +122,7 @@ const migrate = async() => {
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
+                console.log('subscription', subscription)
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
                   customerlist.push(customer)
                 }
