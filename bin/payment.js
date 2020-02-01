@@ -120,7 +120,7 @@ const migrate = async() => {
         console.log('err', err)
       })
         stripe.customers.retrieve(
-          user.payment,
+          payment.customer_id,
         function(err, customer) {
           if(err){
             error.push(customer)
