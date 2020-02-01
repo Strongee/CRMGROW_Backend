@@ -76,65 +76,65 @@ const migrate = async() => {
   let error = []
   let customerlist = []
   
-  // const users = await User.find({del: false}).catch(err=>{
-  //   console.log('err', err)
-  // })
+  const users = await User.find({del: false}).catch(err=>{
+    console.log('err', err)
+  })
   
-  // for(let i=0; i<users.length; i++){
-  //   const user = users[i]
-  //   if(user.payment){
-  //     const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
-  //       console.log('err', err)
-  //     })
+  for(let i=0; i<users.length; i++){
+    const user = users[i]
+    if(user.payment){
+      const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
+        console.log('err', err)
+      })
       
-  //     const customer_id = payment['customer_id']
-  //     stripe.customers.retrieve(
-  //       customer_id,
-  //       function(err, customer) {
-  //         if(err){
-  //           error.push(user.email)
-  //         }else{
-  //           if( customer.subscriptions){
-  //             const subscription = customer.subscriptions['data'][0]
-  //             if(subscription && subscription['plan']){
-  //               if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-  //                 customerlist.push(user.email)
-  //               }
-  //             }else{
-  //               error.push(user.email)
-  //             }
-  //           }else{
-  //             error.push(user.email)
-  //           }
-  //         }
-  //       }
-  //     );
-  //   }  
-  // }
-   
-        stripe.customers.retrieve(
-        'cus_GdJRGU9GQxv2Fd',
+      const customer_id = payment['customer_id']
+      stripe.customers.retrieve(
+        customer_id,
         function(err, customer) {
           if(err){
-            error.push(customer)
+            error.push(user.email)
           }else{
-            console.log('customer', customer)
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
-                console.log('subscription', subscription)
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                  customerlist.push(customer)
+                  customerlist.push(user.email)
                 }
               }else{
-                error.push(customer)
+                error.push(user.email)
               }
             }else{
-              error.push(customer)
+              error.push(user.email)
             }
           }
         }
       );
+    }  
+  }
+   
+      //   stripe.customers.retrieve(
+      //   'cus_GdJRGU9GQxv2Fd',
+      //   function(err, customer) {
+      //     if(err){
+      //       error.push(customer)
+      //     }else{
+      //       console.log('customer', customer)
+      //       if( customer.subscriptions){
+      //         const subscription = customer.subscriptions['data'][0]
+      //         if(subscription && subscription['plan']){
+      //           console.log('subscription', subscription)
+      //           if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
+      //             customerlist.push(customer)
+      //           }
+      //         }else{
+      //           error.push(customer)
+      //         }
+      //       }else{
+      //         error.push(customer)
+      //       }
+      //     }
+      //   }
+      // );
   console.log('errors', error)
   console.log('customers', customerlist)
 }
