@@ -118,6 +118,7 @@ const migrate = async() => {
           if(err){
             error.push(customer)
           }else{
+            console.log('customer', customer)
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
