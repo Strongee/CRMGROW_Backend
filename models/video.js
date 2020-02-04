@@ -13,6 +13,7 @@ const Video = mongoose.model('video',{
     duration: Number,
     url: String,
     role: String,
+    priority: { type: Number, default: 1000},
     del: { type: Boolean, default: false},
     created_at: Date,
     updated_at: Date,
