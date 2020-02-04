@@ -76,73 +76,73 @@ const migrate = async() => {
   let error = []
   let customerlist = []
   
-  // const users = await User.find({del: false}).catch(err=>{
-  //   console.log('err', err)
-  // })
-  
-  // for(let i=0; i<users.length; i++){
-  //   const user = users[i]
-  //   if(user.payment){
-  //     const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
-  //       console.log('err', err)
-  //     })
-      
-  //     const customer_id = payment['customer_id']
-  //     stripe.customers.retrieve(
-  //       customer_id,
-  //       function(err, customer) {
-  //         if(err){
-  //           error.push(user.email)
-  //         }else{
-  //           if( customer.subscriptions){
-  //             const subscription = customer.subscriptions['data'][0]
-  //             if(subscription && subscription['plan']){
-  //               if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-  //                 customerlist.push(user.email)
-  //               }
-  //             }else{
-  //               error.push(user.email)
-  //             }
-  //           }else{
-  //             error.push(user.email)
-  //           }
-  //         }
-  //       }
-  //     );
-  //   }  
-  // }
-   
-   const user = await User.findOne({del: false, email: 'susan@susanhetrick.com'}).catch(err=>{
+  const users = await User.find({del: false}).catch(err=>{
     console.log('err', err)
   })
   
-        const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
+  for(let i=0; i<users.length; i++){
+    const user = users[i]
+    if(user.payment){
+      const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
         console.log('err', err)
       })
-        stripe.customers.retrieve(
-          payment.customer_id,
+      
+      const customer_id = payment['customer_id']
+      stripe.customers.retrieve(
+        customer_id,
         function(err, customer) {
           if(err){
-            error.push(customer)
+            error.push(user.email)
           }else{
-            console.log('customer', customer)
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
-                console.log('subscription', subscription)
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                  customerlist.push(customer)
+                  customerlist.push(user.email)
                 }
               }else{
-                error.push(customer)
+                error.push(user.email)
               }
             }else{
-              error.push(customer)
+              error.push(user.email)
             }
           }
         }
       );
-  console.log('errors', error)
-  console.log('customers', customerlist)
-}
+    }  
+  }
+   
+//    const user = await User.findOne({del: false, email: 'susan@susanhetrick.com'}).catch(err=>{
+//     console.log('err', err)
+//   })
+  
+//         const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
+//         console.log('err', err)
+//       })
+//         stripe.customers.retrieve(
+//           payment.customer_id,
+//         function(err, customer) {
+//           if(err){
+//             error.push(customer)
+//           }else{
+//             console.log('customer', customer)
+//             if( customer.subscriptions){
+//               const subscription = customer.subscriptions['data'][0]
+//               if(subscription && subscription['plan']){
+//                 console.log('subscription', subscription)
+//                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
+//                   customerlist.push(customer)
+//                 }
+//               }else{
+//                 error.push(customer)
+//               }
+//             }else{
+//               error.push(customer)
+//             }
+//           }
+//         }
+//       );
+//   console.log('errors', error)
+//   console.log('customers', customerlist)
+// }
 migrate();
