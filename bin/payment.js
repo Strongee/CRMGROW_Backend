@@ -92,19 +92,19 @@ const migrate = async() => {
         customer_id,
         function(err, customer) {
           if(err){
-            error.push(user.email)
+            console.log('err', user.email)
           }else{
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                  customerlist.push(user.email)
+                  console.log('email', user.email)
                 }
               }else{
-                error.push(user.email)
+                console.log('err', user.email)
               }
             }else{
-              error.push(user.email)
+              console.log('err', user.email)
             }
           }
         }
@@ -144,5 +144,5 @@ const migrate = async() => {
 //       );
 //   console.log('errors', error)
 //   console.log('customers', customerlist)
-// }
+ }
 migrate();
