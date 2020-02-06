@@ -92,7 +92,7 @@ const migrate = async() => {
         customer_id,
         function(err, customer) {
           if(err){
-            console.log('err', user.email)
+            console.log('err1', user.email)
           }else{
             if( customer.subscriptions){
               const subscription = customer.subscriptions['data'][0]
@@ -101,10 +101,10 @@ const migrate = async() => {
                   console.log('email', user.email)
                 }
               }else{
-                console.log('err', user.email)
+                console.log('err2', user.email)
               }
             }else{
-              console.log('err', user.email)
+              console.log('err3', user.email)
             }
           }
         }
