@@ -74,24 +74,17 @@ const migrate = async() => {
 // }
 
   
-  // const users = await User.find({del: false}).catch(err=>{
-  //   console.log('err', err)
-  // })
+  const users = await User.find({del: false}).catch(err=>{
+    console.log('err', err)
+  })
   
-  // for(let i=0; i<users.length; i++){
-  //   const user = users[i]
-  //   if(user.payment){
-  //     const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
-  //       console.log('err', err)
-  //     })
-      
-      
-      const user = await User.findOne({email: 'timothy.pagel@exprealty.com'}).catch(err=>{
-        console.log('err', err)
-      })
+  for(let i=0; i<users.length; i++){
+    const user = users[i]
+    if(user.payment){
       const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
         console.log('err', err)
       })
+      
       const customer_id = payment['customer_id']
       stripe.customers.retrieve(
         customer_id,
@@ -112,8 +105,13 @@ const migrate = async() => {
                     }, function(err, subscription){
                       if(err){
                         console.log('err', err)
+                      } else {
+                        payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+                        payment['bill_amount'] = '29'
+                        payment.save().catch(err=>{
+                          console.log('err', err)
+                        })
                       }
-                      console.log('subscription', subscription)
                     });
                   // stripe.subscriptions.del(payment['subscription'], function (err, confirmation) {
                   //   if (err != null)  {
@@ -179,8 +177,8 @@ const migrate = async() => {
   //           }else{
   //             console.log('err3', customer)
   //           }
-  //         }
-  //       }
+          }
+        }
   //     );
  }
 migrate();
