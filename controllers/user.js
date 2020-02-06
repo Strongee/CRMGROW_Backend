@@ -54,7 +54,7 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { email, token, bill_amount } = req.body
+  const { email, token } = req.body
 
   // if (isBlockedEmail(email)) {
   //   res.status(400).send({
@@ -67,7 +67,6 @@ const signUp = async (req, res) => {
   const payment_data = {
     email: email,
     token: token,
-    bill_amount: bill_amount
   }
 
   PaymentCtrl.create(payment_data).then(async (payment) => {
