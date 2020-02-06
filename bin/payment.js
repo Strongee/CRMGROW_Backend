@@ -36,7 +36,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 //Fetch or read data from
-const migrate = async() => {
+// const migrate = async() => {
 //   const payments = await Payment.find({plan_id: 'plan_G5y3Wz6NbVZyQT'}).catch(err=>{
 //     console.log('err', err)
 //   })
@@ -73,20 +73,25 @@ const migrate = async() => {
 //   }
 // }
 
-  let error = []
-  let customerlist = []
   
-  const users = await User.find({del: false}).catch(err=>{
-    console.log('err', err)
-  })
+  // const users = await User.find({del: false}).catch(err=>{
+  //   console.log('err', err)
+  // })
   
-  for(let i=0; i<users.length; i++){
-    const user = users[i]
-    if(user.payment){
+  // for(let i=0; i<users.length; i++){
+  //   const user = users[i]
+  //   if(user.payment){
+  //     const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
+  //       console.log('err', err)
+  //     })
+      
+      
+      const user = await User.findOne({email: 'timothy.pagel@exprealty.com'}).catch(err=>{
+        console.log('err', err)
+      })
       const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
         console.log('err', err)
       })
-      
       const customer_id = payment['customer_id']
       stripe.customers.retrieve(
         customer_id,
@@ -98,7 +103,44 @@ const migrate = async() => {
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                  console.log('email', user.email)
+                  const subscription = await stripe.subscriptions.retrieve(payment['subscription']);
+                    stripe.subscriptions.update(payment['subscription'], {
+                      cancel_at_period_end: false,
+                      items: [{
+                        id: subscription.items.data[0].id,
+                        plan: 'plan_FFnfPJc8bPYCZi',
+                      }]
+                    }, function(err, subscription){
+                      if(err){
+                        console.log('err', err)
+                      }
+                      console.log('subscription', subscription)
+                    });
+                  // stripe.subscriptions.del(payment['subscription'], function (err, confirmation) {
+                  //   if (err != null)  {
+                  //     console.log('deleting subscription err', err)
+                  //   }
+                  // })
+                  // stripe.subscriptions.create({
+                  //     customer: payment['customer_id'],
+                  //     items: [
+                  //         { plan: 'plan_FFnfPJc8bPYCZi' }
+                  //     ],
+                  //     default_source: payment['card_id']
+                  // }, function (err, subscription) {
+                  //     if (err != null) {
+                  //       console.log('creating subscription err', err)
+                  //     }else{
+                  //       payment['subscription'] = subscription.id
+                  //       payment['plan_id'] = 'plan_FFnfPJc8bPYCZi'
+                  //       payment['bill_amount'] = '29'
+                  //       payment.save().then(()=>{
+                  //         console.log(user.email)
+                  //       }).catch(err=>{
+                  //         console.log('err', err)
+                  //       })
+                  //     }
+                  // });
                 }
               }else{
                 console.log('err2', user.email)
