@@ -103,7 +103,6 @@ const migrate = async() => {
               const subscription = customer.subscriptions['data'][0]
               if(subscription && subscription['plan']){
                 if(subscription['plan'].id != 'plan_FFnfPJc8bPYCZi'){
-                  const subscription = await stripe.subscriptions.retrieve(payment['subscription']);
                     stripe.subscriptions.update(payment['subscription'], {
                       cancel_at_period_end: false,
                       items: [{
