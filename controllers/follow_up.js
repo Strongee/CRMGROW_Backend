@@ -186,7 +186,7 @@ const getByDate = async(req, res) =>{
   switch(due_date) {
     case 'overdue': {
       const current_time = moment().utcOffset(time_zone).startOf('day');
-      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}});
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}}).sort({created_at: -1});
 
       let data = [];
       

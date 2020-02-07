@@ -13,7 +13,7 @@ const Reminder = require('../models/reminder')
 const Appointment = require('../models/appointment')
 const Video = require('../models/video')
 const Notification = require('../models/notification')
-const TimeSheet = require('../models/time_line')
+const TimeLine = require('../models/time_line')
 
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -540,59 +540,8 @@ const payment_check = new CronJob('0 21 */3 * *', async() =>{
       }
     }
   }
-  
-  
-  const notifications = await Notification.find({type: 'static', sent: false}).catch(err=>{
-    console.log('err', err)
-  });
-  if(notifications){
-    const subscribers = await User.find({del: false}).catch(err=>{
-      console.log('err', err)
-    })
-    for(let i = 0; i <notifications.length; i++){
-      const notification = notification[i]
-      
-      for(let j=0; j<subscribers.length; j++){
-       const subscriber = subscribers[j]
-        msg = {
-          to: subscriber.email,
-          from: mail_contents.SUPPORT_CRMGROW.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
-          dynamic_template_data: {
-            content: subscriber.user_name,
-            content: notification.content
-          }
-        }
-        sgMail.send(msg).then((res) => {
-          console.log('mailres.errorcode', res[0].statusCode);
-          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-            console.log('Successful send to '+msg.to)
-            notification['sent'] = true
-
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch(err=>{
-          console.log('err', err)
-        })
-      }
-    }
-  }
-  
-  let startdate = moment();
-  startdate = startdate.subtract(7, "days");
-  const old_notifications = await Notification.find({type: 'static', created_at: {$lt: startdate}}).catch(err=>{
-    console.log('err', err)
-  });
-  for(let i=0; i<old_notifications.length; i++){
-    const old_notification = old_notifications[i]
-    old_notification['del'] = true
-    old_notification.save().catch(err=>{
-      console.log('err', err)
-    })
-  }
 }, function () {
-  console.log('Notification Check Job finished.');
+  console.log('Payment Check Job finished.');
 }, false, 'US/Central')
 
 const logger_check = new CronJob('0 21 */3 * *', async() =>{
@@ -632,13 +581,78 @@ const logger_check = new CronJob('0 21 */3 * *', async() =>{
     }
   }
 },  function () {
-     console.log('Reminder Job finished.');
+     console.log('Logger check Job finished.');
    }, false, 'US/Central')
-// const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
-//   const timesheets = await TimeSheet.find({status: 'active', due_date:})
-// },  function () {
-//   console.log('Reminder Job finished.');
-// }, false, 'US/Central')
+   
+const notification_check = new CronJob('0 21 * * *', async() =>{
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    
+    const notifications = await Notification.find({type: 'static', sent: false}).catch(err=>{
+      console.log('err', err)
+    });
+    if(notifications){
+      const subscribers = await User.find({del: false}).catch(err=>{
+        console.log('err', err)
+      })
+      for(let i = 0; i <notifications.length; i++){
+        const notification = notification[i]
+        
+        for(let j=0; j<subscribers.length; j++){
+         const subscriber = subscribers[j]
+          msg = {
+            to: subscriber.email,
+            from: mail_contents.SUPPORT_CRMGROW.MAIL,
+            templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
+            dynamic_template_data: {
+              content: subscriber.user_name,
+              content: notification.content
+            }
+          }
+          sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+              notification['sent'] = true
+  
+            }else {
+              console.log('email sending err', msg.to+res[0].statusCode)
+            }
+          }).catch(err=>{
+            console.log('err', err)
+          })
+        }
+      }
+    }
+    
+    let startdate = moment();
+    startdate = startdate.subtract(7, "days");
+    const old_notifications = await Notification.find({type: 'static', created_at: {$lt: startdate}}).catch(err=>{
+      console.log('err', err)
+    });
+    for(let i=0; i<old_notifications.length; i++){
+      const old_notification = old_notifications[i]
+      old_notification['del'] = true
+      old_notification.save().catch(err=>{
+        console.log('err', err)
+      })
+    }
+  }, function () {
+    console.log('Notification Check Job finished.');
+  }, false, 'US/Central')
+  
+  
+const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
+  const due_date = new Date()
+  due_date.setSeconds(0)
+  due_date.setMilliseconds(000)
+  const timelines = await TimeLine.find({status: 'active', due_date: due_date})
+  for(let i=0; i<timelines.length; i++){
+    
+  }
+},  function () {
+  console.log('Reminder Job finished.');
+}, false, 'US/Central')
+
 
 signup_job.start()
 reminder_job.start()
@@ -646,4 +660,5 @@ weekly_report.start()
 video_job.start()
 payment_check.start()
 // logger_check.start()
-// timesheet_check.start()
+notification_check.start()
+//timesheet_check.start()

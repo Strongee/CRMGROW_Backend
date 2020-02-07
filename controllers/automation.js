@@ -1,26 +1,4 @@
-const { validationResult } = require('express-validator/check')
-const mongoose = require('mongoose')
 const Automation = require('../models/automation')
-const Contact = require('../models/contact')
-const Activity = require('../models/activity')
-const FollowUp = require('../models/follow_up')
-const Appointment = require('../models/appointment')
-const Email = require('../models/email')
-const Note = require('../models/note')
-const User = require('../models/user')
-const EmailTracker = require('../models/email_tracker')
-const sgMail = require('@sendgrid/mail')
-const urls = require('../constants/urls')
-const fs = require('fs')
-const csv = require('csv-parser')
-const config = require('../config/config')
-const mail_contents = require('../constants/mail_contents')
-const webpush = require('web-push');
-const accountSid = config.TWILIO.TWILIO_SID
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-const phone = require('phone')
-const twilio = require('twilio')(accountSid, authToken)
-const moment = require('moment')
 
 const get = (req, res) => {
     const id = req.params.id;
