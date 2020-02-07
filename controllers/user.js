@@ -466,7 +466,7 @@ const login = async (req, res) => {
   if (!_user) {
     return res.status(401).json({
       status: false,
-      error: 'Invalid email or password!'
+      error: 'User Email doesn`t exist'
     })
   }
 
@@ -1329,10 +1329,16 @@ const resetPasswordByCode = async (req, res) => {
   if (!user) {
     return res.status(400).send({
       status: false,
-      error: 'no_user'
+      error: 'NO user exist'
     })
   }
-
+  
+  if(!user.salt) {
+    return res.status(400).send({
+      status: false,
+      error: 'You must use social login'
+    })
+  } 
   const aryPassword = user.salt.split(' ')
   if (!aryPassword[1] || aryPassword[1] != code) { // Code mismatch
     return res.status(400).send({

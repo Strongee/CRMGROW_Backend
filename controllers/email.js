@@ -515,6 +515,8 @@ const bulkEmail = async (req, res) => {
       to: _contact.email,
       replyTo: currentUser.email,
       subject: subject,
+      bcc: bcc,
+      cc: cc,
       attachments: attachments,
       html: content + '<br/><br/>' + currentUser.email_signature
     };
@@ -522,6 +524,8 @@ const bulkEmail = async (req, res) => {
     const promise = new Promise((resolve, reject) => {
       sgMail.send(msg).then(async (_res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+          bcc = []
+          cc = []
           const email = new Email({
             ...req.body,
             contacts: contacts[i],
@@ -549,7 +553,6 @@ const bulkEmail = async (req, res) => {
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
-
           resolve()
         }
         else {
