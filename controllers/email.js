@@ -149,9 +149,8 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     const message_id = uuidv1()
-    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
 
-    const email_content = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
+    const email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
@@ -314,8 +313,7 @@ const bulkOutlook = async (req, res) => {
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    const message_id = uuidv1()
-    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
+    const message_id = uuidv1() 
     const sendMail = {
       message: {
         subject: subject,
@@ -327,7 +325,7 @@ const bulkOutlook = async (req, res) => {
         },
         body: {
           contentType: "HTML",
-          content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+          content: '<html><head><title>Email</title></head><body><p>' + content + `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
         },
 
         toRecipients: [
