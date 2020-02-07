@@ -502,7 +502,7 @@ const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
 }, false, 'US/Central'
 )
 
-const notification_check = new CronJob('0 21 */3 * *', async() =>{
+const payment_check = new CronJob('0 21 */3 * *', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
   const payment_notification = await Notification.findOne({type: 'urgent', criteria: 'subscription_failed'}).catch(err=>{
@@ -541,41 +541,6 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
     }
   }
   
-  const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'}).catch(err=>{
-    console.log('err', err)
-  })
-  if(logger_notification){
-    let startdate = moment();
-    startdate = startdate.subtract(30, "days");
-    const users = await User.find({last_logged: {$lt: startdate}}).catch(err=>{
-      console.log('err', err)
-    });
-    if(users){
-      for(let i = 0; i <users.length; i++){
-        const subscriber = users[i]
-        
-        msg = {
-          to: users.email,
-          from: mail_contents.SUPPORT_CRMGROW.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
-          dynamic_template_data: {
-            first_name: subscriber.user_name,
-            content: logger_notification['content']
-          }
-        }
-        sgMail.send(msg).then((res) => {
-          console.log('mailres.errorcode', res[0].statusCode);
-          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-            console.log('Successful send to '+msg.to)
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch(err=>{
-          console.log('err', err)
-        })
-      }
-    }
-  }
   
   const notifications = await Notification.find({type: 'static', sent: false}).catch(err=>{
     console.log('err', err)
@@ -630,6 +595,45 @@ const notification_check = new CronJob('0 21 */3 * *', async() =>{
   console.log('Notification Check Job finished.');
 }, false, 'US/Central')
 
+const logger_check = new CronJob('0 21 */3 * *', async() =>{
+  const logger_notification = await Notification.findOne({type: 'urgent', criteria: 'long_out'}).catch(err=>{
+    console.log('err', err)
+  })
+  if(logger_notification){
+    let startdate = moment();
+    startdate = startdate.subtract(30, "days");
+    const users = await User.find({last_logged: {$lt: startdate}}).catch(err=>{
+      console.log('err', err)
+    });
+    if(users){
+      for(let i = 0; i <users.length; i++){
+        const subscriber = users[i]
+        
+        msg = {
+          to: users.email,
+          from: mail_contents.SUPPORT_CRMGROW.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
+          dynamic_template_data: {
+            first_name: subscriber.user_name,
+            content: logger_notification['content']
+          }
+        }
+        sgMail.send(msg).then((res) => {
+          console.log('mailres.errorcode', res[0].statusCode);
+          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+            console.log('Successful send to '+msg.to)
+          }else {
+            console.log('email sending err', msg.to+res[0].statusCode)
+          }
+        }).catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }
+  }
+},  function () {
+     console.log('Reminder Job finished.');
+   }, false, 'US/Central')
 // const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
 //   const timesheets = await TimeSheet.find({status: 'active', due_date:})
 // },  function () {
@@ -640,5 +644,6 @@ signup_job.start()
 reminder_job.start()
 weekly_report.start()
 video_job.start()
-notification_check.start()
+payment_check.start()
+// logger_check.start()
 // timesheet_check.start()

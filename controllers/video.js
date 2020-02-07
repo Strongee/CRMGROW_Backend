@@ -932,7 +932,7 @@ const bulkGmail = async(req, res) => {
         // });
       
         let promise = new Promise((resolve, reject)=>{
-          var request = gmail.users.messages.send({
+          gmail.users.messages.send({
             'userId': currentUser.email,
             'resource': {
               raw: rawContent
@@ -944,8 +944,7 @@ const bulkGmail = async(req, res) => {
               })
               console.log('err', err)
               error.push(contacts[i])
-            }
-            else {
+            } else {
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })

@@ -54,7 +54,7 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { email, token, bill_amount } = req.body
+  const { email, token } = req.body
 
   // if (isBlockedEmail(email)) {
   //   res.status(400).send({
@@ -67,7 +67,6 @@ const signUp = async (req, res) => {
   const payment_data = {
     email: email,
     token: token,
-    bill_amount: bill_amount
   }
 
   PaymentCtrl.create(payment_data).then(async (payment) => {
@@ -467,7 +466,7 @@ const login = async (req, res) => {
   if (!_user) {
     return res.status(401).json({
       status: false,
-      error: 'Invalid email or password!'
+      error: 'User Email doesn`t exist'
     })
   }
 
@@ -1330,10 +1329,16 @@ const resetPasswordByCode = async (req, res) => {
   if (!user) {
     return res.status(400).send({
       status: false,
-      error: 'no_user'
+      error: 'NO user exist'
     })
   }
-
+  
+  if(!user.salt) {
+    return res.status(400).send({
+      status: false,
+      error: 'You must use social login'
+    })
+  } 
   const aryPassword = user.salt.split(' ')
   if (!aryPassword[1] || aryPassword[1] != code) { // Code mismatch
     return res.status(400).send({

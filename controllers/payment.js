@@ -29,11 +29,8 @@ const get = async(req, res) => {
       error: 'Payment doesn`t exist'
     })
   }
-  if(data.plan_id == config.STRIPE.PRIMARY_PLAN){
-    data['bill_amount'] = config.STRIPE.PRIMARY_PLAN_AMOUNT
-  } else {
-    data['bill_amount'] = config.STRIPE.PRIOR_PLAN_AMOUNT
-  }
+  data['bill_amount'] = config.STRIPE.PRIOR_PLAN_AMOUNT
+  
   data.save().catch(err=>{
     console.log('err', err)
   })
@@ -46,7 +43,7 @@ const get = async(req, res) => {
 
 const create = async(payment_data) => {
     return new Promise(function (resolve, reject) {
-        const {email, bill_amount, token} = payment_data
+        let {email, token} = payment_data
         createCustomer(email).then(customer => {
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
                 if(card == null || typeof card == 'undefined'){
@@ -59,12 +56,8 @@ const create = async(payment_data) => {
                 }
 
                 let pricingPlan
-                // const product = config.STRIPE.PRODUCT_ID
-                if(bill_amount == config.STRIPE.PRIMARY_PLAN_AMOUNT){
-                    pricingPlan = config.STRIPE.PRIMARY_PLAN
-                }else{
-                    pricingPlan = config.STRIPE.PRIOR_PLAN
-                }
+                bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT
+                pricingPlan = config.STRIPE.PRIOR_PLAN
                 createSubscription(customer.id, pricingPlan, card.id)
                 .then(async(subscripition) => {
                     // Save card information to DB.  
@@ -112,8 +105,8 @@ const update = async(req, res) =>{
                     });
                 }
                 
-                const pricingPlan = config.STRIPE.PRIMARY_PLAN;
-                const bill_amount = config.STRIPE.PRIMARY_PLAN_AMOUNT;
+                const pricingPlan = config.STRIPE.PRIOR_PLAN;
+                const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                 updateSubscription(customer.id, pricingPlan, card.id)
                         .then(subscription => {
                             // Save card information to DB.
@@ -176,8 +169,8 @@ const update = async(req, res) =>{
                         });
                     }
                     
-                    const pricingPlan = config.STRIPE.PRIMARY_PLAN;
-                    const bill_amount = config.STRIPE.PRIMARY_PLAN_AMOUNT;
+                    const pricingPlan = config.STRIPE.PRIOR_PLAN;
+                    const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                     updateSubscription(customer.id, pricingPlan, card.id).then(subscription => {
                         // Save card information to DB.
                         const payment = new Payment({
@@ -235,8 +228,8 @@ const update = async(req, res) =>{
                                 });
                             }
                             
-                            const pricingPlan = config.STRIPE.PRIMARY_PLAN;
-                            const bill_amount = config.STRIPE.PRIMARY_PLAN_AMOUNT;
+                            const pricingPlan = config.STRIPE.PRIOR_PLAN;
+                            const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                             updateSubscription(customer.id, pricingPlan, card.id).then(subscription => {
                                 // Save card information to DB.
                                 const payment = new Payment({

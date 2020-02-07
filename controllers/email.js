@@ -149,9 +149,8 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     const message_id = uuidv1()
-    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
 
-    const email_content = '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
+    const email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
@@ -314,8 +313,7 @@ const bulkOutlook = async (req, res) => {
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    const message_id = uuidv1()
-    content += `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>`
+    const message_id = uuidv1() 
     const sendMail = {
       message: {
         subject: subject,
@@ -327,7 +325,7 @@ const bulkOutlook = async (req, res) => {
         },
         body: {
           contentType: "HTML",
-          content: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+          content: '<html><head><title>Email</title></head><body><p>' + content + `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
         },
 
         toRecipients: [
@@ -515,6 +513,8 @@ const bulkEmail = async (req, res) => {
       to: _contact.email,
       replyTo: currentUser.email,
       subject: subject,
+      bcc: bcc,
+      cc: cc,
       attachments: attachments,
       html: content + '<br/><br/>' + currentUser.email_signature
     };
@@ -522,6 +522,8 @@ const bulkEmail = async (req, res) => {
     const promise = new Promise((resolve, reject) => {
       sgMail.send(msg).then(async (_res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+          bcc = []
+          cc = []
           const email = new Email({
             ...req.body,
             contacts: contacts[i],
@@ -549,7 +551,6 @@ const bulkEmail = async (req, res) => {
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
-
           resolve()
         }
         else {
