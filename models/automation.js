@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
 const Automation = mongoose.model('automation',{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
+    automations: Array,
     trigger: String,
     event: String,
     delay: Number,

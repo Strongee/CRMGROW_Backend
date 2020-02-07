@@ -21,6 +21,7 @@ const template = require('./email_template')
 const image = require('./image')
 const notification = require('./notification')
 const garbage = require('./garbage')
+const automation = require('./automation')
 
 const router = express.Router()
 
@@ -50,4 +51,5 @@ router.use('/template', template)
 router.use('/email', email)
 router.use('/notification', notification)
 router.use('/garbage', garbage)
+router.use('/automation', automation)
 module.exports = router
