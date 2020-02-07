@@ -331,9 +331,14 @@ const update = async(req, res) =>{
                             });
                         } else{
                             const customer_id = payment['customer_id']
-                            const card = token.card
+                            const card = {
+                                name: token.card.name,
+                                exp_month: token.card.exp_month,
+                                exp_year: token.card.exp_year
+                            }
                             const card_id = payment['card_id']
                             delete card.id
+                            
                             updateCard(customer_id, card_id, card)
                                 .then(_card=>{
                                 // Save card information to DB.
