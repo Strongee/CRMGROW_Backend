@@ -22,6 +22,7 @@ const image = require('./image')
 const notification = require('./notification')
 const garbage = require('./garbage')
 const automation = require('./automation')
+const timeline = require('./time_line')
 
 const router = express.Router()
 
@@ -52,4 +53,5 @@ router.use('/email', email)
 router.use('/notification', notification)
 router.use('/garbage', garbage)
 router.use('/automation', automation)
+router.use('/timeline', timeline)
 module.exports = router
