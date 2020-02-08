@@ -137,13 +137,16 @@ const bulkGmail = async (req, res) => {
   }
 
   for (let i = 0; i < contacts.length; i++) {
+    let email_subject = subject
+    let email_content = content
+  
     const _contact = await Contact.findOne({ _id: contacts[i] })
-    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+    email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    content = content.replace(/{user_name}/ig, currentUser.user_name)
+    email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -151,7 +154,7 @@ const bulkGmail = async (req, res) => {
     const message_id = uuidv1()
 
     const email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content);
+    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
       gmail.users.messages.send({
@@ -168,6 +171,8 @@ const bulkGmail = async (req, res) => {
         else {
           const email = new Email({
             ...req.body,
+            content: email_content,
+            subject: email_subject,
             message_id: message_id,
             contacts: contacts[i],
             user: currentUser.id,
@@ -302,13 +307,15 @@ const bulkOutlook = async (req, res) => {
   });
 
   for (let i = 0; i < contacts.length; i++) {
+    let email_content = content
+    let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
-    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+    email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    content = content.replace(/{user_name}/ig, currentUser.user_name)
+    email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -316,7 +323,7 @@ const bulkOutlook = async (req, res) => {
     const message_id = uuidv1() 
     const sendMail = {
       message: {
-        subject: subject,
+        subject: email_subject,
         from: {
           emailAddress: {
             name: currentUser.user_name,
@@ -325,7 +332,7 @@ const bulkOutlook = async (req, res) => {
         },
         body: {
           contentType: "HTML",
-          content: '<html><head><title>Email</title></head><body><p>' + content + `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+          content: '<html><head><title>Email</title></head><body><p>' + email_content + `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
         },
 
         toRecipients: [
@@ -344,6 +351,8 @@ const bulkOutlook = async (req, res) => {
       .post(sendMail).then( async ()=>{
         const email = new Email({
           ...req.body,
+          content: email_content,
+          subject: email_subject,
           message_id: message_id,
           contacts: contacts[i],
           user: currentUser.id,
@@ -498,12 +507,14 @@ const bulkEmail = async (req, res) => {
   let error = [];
 
   for (let i = 0; i < contacts.length; i++) {
+    let email_content = content
+    let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
-    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+    email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    content = content.replace(/{user_name}/ig, currentUser.user_name)
+      email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -512,11 +523,11 @@ const bulkEmail = async (req, res) => {
       from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
       to: _contact.email,
       replyTo: currentUser.email,
-      subject: subject,
+      subject: email_subject,
       bcc: bcc,
       cc: cc,
       attachments: attachments,
-      html: content + '<br/><br/>' + currentUser.email_signature
+      html: email_content + '<br/><br/>' + currentUser.email_signature
     };
 
     const promise = new Promise((resolve, reject) => {
@@ -526,6 +537,8 @@ const bulkEmail = async (req, res) => {
           cc = []
           const email = new Email({
             ...req.body,
+            content: email_content,
+            subject: email_subject,
             contacts: contacts[i],
             message_id: _res[0].headers['x-message-id'],
             user: currentUser.id,
