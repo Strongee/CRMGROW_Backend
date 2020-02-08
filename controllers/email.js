@@ -153,7 +153,7 @@ const bulkGmail = async (req, res) => {
 
     const message_id = uuidv1()
 
-    const email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
+    email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
