@@ -285,3 +285,7 @@ a.dropdown-item{
 video{
     max-height: 75vh;
 }
+
+.plyr:fullscreen video {
+    max-height: unset;
+}
