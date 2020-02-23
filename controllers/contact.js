@@ -377,7 +377,7 @@ const edit = async (req, res) => {
 
 const bulkEditLabel = async (req, res) => {
   const { contacts, label } = req.body;
-  Contact.find({ _id: { $in: contacts } }).update({ $set: { label: label } }).then(() => {
+  Contact.find({ _id: { $in: contacts } }).updateMany({ $set: { label: label } }).then(() => {
     res.send({
       status: true
     })
@@ -1115,6 +1115,8 @@ const advanceSearch = async (req, res) => {
   let notSentVideoContacts = [];
   let notSentPdfContacts = [];
   let notSentImageContacts = [];
+
+  let excludeMaterialContacts = [];
   if (materialCondition['watched_video']['flag']) {
     let query = []
     if (materialCondition['watched_video']['material']) {
@@ -1335,9 +1337,19 @@ const advanceSearch = async (req, res) => {
         }
       },
       {
+        $group: {
+          _id: "$_id.contact"
+        }
+      },
+      {
         $project: { "_id": 1 }
       }
     ]);
+    notSentVideoContacts.forEach(e => {
+      if(excludeMaterialContacts.indexOf(e._id)==-1) {
+        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+      }
+    });
   }
   if (materialCondition['not_sent_pdf']['flag']) {
     let query = []
@@ -1359,9 +1371,20 @@ const advanceSearch = async (req, res) => {
         }
       },
       {
+        $group: {
+          _id: "$_id.contact"
+        }
+      },
+      {
         $project: { "_id": 1 }
       }
     ]);
+    notSentPdfContacts.forEach(e => {
+      if(excludeMaterialContacts.indexOf(e._id)==-1) {
+        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+      }
+    })
+    
   }
   if (materialCondition['not_sent_image']['flag']) {
     let query = []
@@ -1374,7 +1397,7 @@ const advanceSearch = async (req, res) => {
     notSentImageContacts = await Activity.aggregate([
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $and: query }] }
-      },      
+      },
       {$unwind: '$contacts'},
       {
         $group: {
@@ -1383,64 +1406,68 @@ const advanceSearch = async (req, res) => {
         }
       },
       {
+        $group: {
+          _id: "$_id.contact"
+        }
+      },
+      {
         $project: { "_id": 1 }
       }
     ]);
+    notSentImageContacts.forEach(e => {
+      if(excludeMaterialContacts.indexOf(e._id)==-1) {
+        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+      }
+    })
   }
 
   let materialContacts = [];
   watchedVideoContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   watchedPdfContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   watchedImageContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedVideoContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedPdfContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedImageContacts.forEach(e => {
-    if (e._id && isArray(e._id)) {
-      materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-      return;
-    }
+    // if (e._id && isArray(e._id)) {
+    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
+    //   return;
+    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
-  let excludeMaterialContacts = []
-  notSentVideoContacts.forEach(e => {
-    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
-  })
-  notSentPdfContacts.forEach(e => {
-    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
-  })
-  notSentImageContacts.forEach(e => {
-    e._id && e._id['contact'] && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id['contact']));
-  })
+
+  // if(excludeMaterialContactsArray.length) {
+  //   excludeMaterialContacts = excludeMaterialContactsArray.reduce((a, b) => a.filter(c => b.includes(c)));
+  // }  
 
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
@@ -1451,17 +1478,20 @@ const advanceSearch = async (req, res) => {
                                     materialCondition['watched_image']['flag'] || 
                                     materialCondition['not_watched_image']['flag']);
   let excludeMaterialCondition = (materialCondition['not_sent_video']['flag'] || materialCondition['not_sent_pdf']['flag'] || materialCondition['not_sent_image']['flag'])
+
   if (materialContacts.length) {
     // Exclude Contacts from material contacts
     let materialQuery = { '_id': { $in: materialContacts } };
-    if( excludeMaterialContacts.length ) {
-      materialQuery = {$and: [ { '_id': { $in: materialContacts } }, {'_id': {$nin: excludeMaterialContacts}}]}
+    if(excludeMaterialCondition) {
+      if( excludeMaterialContacts.length ) {
+        materialQuery = {$or: [ { '_id': { $in: materialContacts } }, {'_id': {$nin: excludeMaterialContacts}}]}
+      }
     }    
     query['$and'].push(materialQuery);
   }
   else {    
     if( includeMaterialCondition ) {
-      if( excludeMaterialContacts ) {
+      if( excludeMaterialContacts.length ) {
         query['$and'].push({ '_id': { $nin: excludeMaterialContacts } })
       }
       else if(!excludeMaterialCondition){
@@ -1469,7 +1499,7 @@ const advanceSearch = async (req, res) => {
           status: true,
           data: []
         });
-      }      
+      }
     }
     else {
       if( excludeMaterialContacts ) {
@@ -1477,7 +1507,7 @@ const advanceSearch = async (req, res) => {
       }
     }
   }
-
+  
   if (searchStr) {
     var strQuery = {};
     if (!searchStr.split(" ")[1]) {
@@ -1834,6 +1864,7 @@ const advanceSearch = async (req, res) => {
       lastActivityQueries['$and'].push(timeQuery);
     }
   }
+  console.log(lastActivityQueries);
   var contacts = await Contact.find(query).populate({path: 'last_activity', match:lastActivityQueries}).sort({ first_name: 1 }).catch(err => {
     console.log('err', err)
   })
