@@ -9,7 +9,7 @@ const Activity = require('../../models/activity')
 const Reminder = require('../../models/reminder')
 const FollowUp = require('../../models/follow_up')
 const PaymentCtrl = require('../../controllers/payment')
-const { isBlockedEmail } = require('../../helpers/helper') 
+const { isBlockedEmail } = require('../../helpers/email') 
 const config = require('../../config/config')
 const urls = require('../../constants/urls')
 const mail_contents = require('../../constants/mail_contents')
@@ -305,14 +305,6 @@ const create = async (req, res) => {
   }
 
   const {email} = req.body 
-  
-  if(isBlockedEmail(email)){
-    res.status(400).send({
-      status: false,
-      error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
-    })
-    return;
-  }
   
   let password = req.body.password || config.DEFAULT_PASS
     

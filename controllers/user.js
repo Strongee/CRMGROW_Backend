@@ -9,7 +9,6 @@ const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
 const UserLog = require('../models/user_log')
-const { isBlockedEmail } = require('../helpers/helper')
 const sgMail = require('@sendgrid/mail')
 const { google } = require('googleapis')
 const outlook = require('node-outlook')
@@ -726,14 +725,14 @@ const checkAuth = async (req, res, next) => {
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email)
     
-    // if (req.currentUser.primary_connected || req.connected_email_type == 'email') {
+    if (req.currentUser.primary_connected || req.connected_email_type == 'email') {
       next()
-    // } else {
-    //   res.status(402).send({
-    //     status: false,
-    //     error: 'not connnected'
-    //   })
-    // }
+    } else {
+      res.status(402).send({
+        status: false,
+        error: 'not connnected'
+      })
+    }
 
   } else {
     console.error('Valid JWT but no user:', decoded)
@@ -1675,7 +1674,6 @@ module.exports = {
   checkAuth2,
   checkSuspended,
   checkLastLogin,
-  isBlockedEmail,
   closeAccount
 }
 

@@ -7,6 +7,7 @@ const Video = require('../models/video');
 const Image = require('../models/image');
 const ImageTracker = require('../models/image_tracker');
 const Activity = require('../models/activity');
+const TimeLineCtrl = require('./time_line');
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
@@ -191,7 +192,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const video = await Video.findOne({_id: query['video']})
   
     const activity = new Activity({
-      content: contact.first_name + ' watched video',
+      content: 'watched video',
       contacts: query.contact,
       user: currentUser.id,
       type: 'video_trackers',
@@ -209,6 +210,60 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
 
+    const timelines = await TimeLine.find({ 
+      contact: query['contact'],
+      status:  {$in:[ "pending", "active" ]},
+      'watched_video': query['video'],
+      'condition.type': 'watched_video',
+      'condition.answer': true,
+    }).catch(err=>{
+      console.log('err', err)
+    })
+    
+    if(timelines.length>0){
+      for(let i=0; i<timelines.lengh; i++){
+        try{
+          const timeline = timelines[i]
+          TimeLineCtrl.runTimeline(timeline.id)
+          const period = timeline['period']
+          timeline['status'] = 'completed'
+          timeline.save().catch(err=>{
+            console.log('err', err)
+          })
+          let now = moment()
+          let due_date = now.add(period, 'hours');
+          due_date.set({minute:0,second:0,millisecond:0})
+          const data = {
+            contact: query['contact'],
+            ref: timeline.ref,
+            due_date: due_date
+          }
+          TimeLineCtrl.activeNext(data).catch(err=>{
+            console.log('err', err)
+          })
+        }catch(err){
+          console.log('err', err)
+        }
+      }
+    }
+    const unwatched_timelines = await TimeLine.find({ 
+      contact: query['contact'],
+      status:  {$in:[ "pending", "active" ]},
+      'watched_video': query['video'],
+      'condition.type': 'watched_video',
+      'condition.answer': false,
+    }).catch(err=>{
+      console.log('err', err)
+    })
+    if(unwatched_timelines.length>0){
+      for(let i=0; i<unwatched_timelines; i++){
+        const timeline = unwatched_timelines[i]
+        timeline['status'] = 'disable'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }
     const d = (query['duration']/1000)
     var h = Math.floor(d / 3600);
     var m = Math.floor(d % 3600 / 60);

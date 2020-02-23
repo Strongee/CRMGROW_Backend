@@ -257,10 +257,10 @@ const sendPDF = async (req, res) => {
   
   if(contacts){
   
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can sent max 15 contacts'
+        error: 'You can sent max 50 contacts'
       })
     }
     
@@ -324,10 +324,10 @@ const sendText = async (req, res) => {
 
   if(contacts){
   
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can sent max 15 contacts'
+        error: 'You can sent max 50 contacts'
       })
     }
     
@@ -502,10 +502,10 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -662,10 +662,10 @@ const bulkText = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -692,7 +692,7 @@ const bulkText = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent pdf using sms',
+            content: 'sent pdf using sms',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
@@ -725,8 +725,6 @@ const bulkText = async(req, res) => {
         pdf_content = pdf_content+'\n'+pdf_objects
       }
 
-      console.log(pdf_objects);
-      console.log(content);
         
       if(pdf_content.search(/{pdf_title}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
@@ -935,10 +933,10 @@ const bulkOutlook = async(req, res) => {
   });
 
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -1099,10 +1097,10 @@ const bulkGmail = async(req, res) => {
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
