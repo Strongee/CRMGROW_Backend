@@ -5,7 +5,7 @@ const TimeLine = mongoose.model('time_line',{
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     status: String,
     due_date: Date,
-    delay: Number,
+    period: Number,
     action: Object,
     ref: Number,
     parent_ref: Number,

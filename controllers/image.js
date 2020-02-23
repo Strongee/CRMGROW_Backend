@@ -303,10 +303,10 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -332,17 +332,17 @@ const bulkEmail = async(req, res) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          const _activity = new Activity({
-            content: currentUser.user_name + ' sent image using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'images',
-            images: image._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: subject,
-            description: image_content
-          })
+        const _activity = new Activity({
+          content: 'sent image using email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'images',
+          images: image._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          subject: subject,
+          description: image_content
+        })
           
           activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
@@ -461,10 +461,10 @@ const bulkText = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -478,27 +478,27 @@ const bulkText = async(req, res) => {
       let image_content = content
       let activity
       for(let j=0; j<images.length; j++){
-          const image = images[j]        
+        const image = images[j]        
+        
+        if(!image_content){
+          image_content = ''
+        }
+        
+        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          if(!image_content){
-            image_content = ''
-          }
-          
-          image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: currentUser.user_name + ' sent image using sms',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'images',
-            images: image._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            description: image_content
-          })
+        const _activity = new Activity({
+          content: 'sent image using sms',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'images',
+          images: image._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          description: image_content
+        })
           
           activity = await _activity.save().then().catch(err=>{
             console.log('err', err)
@@ -715,10 +715,10 @@ const bulkGmail = async(req, res) => {
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -888,10 +888,10 @@ const bulkOutlook = async(req, res) => {
   
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     

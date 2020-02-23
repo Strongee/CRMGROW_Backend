@@ -383,10 +383,10 @@ const sendVideo = async (req, res) => {
   const { currentUser } = req
   let {content, subject, video, video_title, contacts} = req.body 
     if(contacts){
-      if(contacts.length>15){
+      if(contacts.length>50){
         return res.status(400).json({
           status: false,
-          error: 'You can sent max 15 contacts'
+          error: 'You can sent max 50 contacts'
         })
       }
       for(let i=0; i<contacts.length; i++){
@@ -467,10 +467,10 @@ const sendText = async (req, res) => {
   const { content, video, video_title, contacts} = req.body
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     for(let i=0; i<contacts.length; i++){
@@ -645,10 +645,10 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -825,10 +825,10 @@ const bulkGmail = async(req, res) => {
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -988,10 +988,10 @@ const bulkText = async(req, res) => {
   let promise_array = []
   let error = []
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
@@ -1259,10 +1259,10 @@ const bulkOutlook = async(req, res) => {
   });
 
   if(contacts){
-    if(contacts.length>15){
+    if(contacts.length>50){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 15 contacts at a time'
+        error: 'You can send max 50 contacts at a time'
       })
     }
     
