@@ -377,7 +377,7 @@ const edit = async (req, res) => {
 
 const bulkEditLabel = async (req, res) => {
   const { contacts, label } = req.body;
-  Contact.find({ _id: { $in: contacts } }).update({ $set: { label: label } }).then(() => {
+  Contact.find({ _id: { $in: contacts } }).updateMany({ $set: { label: label } }).then(() => {
     res.send({
       status: true
     })
@@ -1864,6 +1864,7 @@ const advanceSearch = async (req, res) => {
       lastActivityQueries['$and'].push(timeQuery);
     }
   }
+  console.log(lastActivityQueries);
   var contacts = await Contact.find(query).populate({path: 'last_activity', match:lastActivityQueries}).sort({ first_name: 1 }).catch(err => {
     console.log('err', err)
   })
