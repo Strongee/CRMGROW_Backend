@@ -213,11 +213,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const timelines = await TimeLine.find({ 
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
-<<<<<<< HEAD
       'watched_video': query['video'],
-=======
-      'action.video': query['video'],
->>>>>>> 04e91f28526084c6cd4a51b16b3c089b11051ae9
       'condition.type': 'watched_video',
       'condition.answer': true,
     }).catch(err=>{
@@ -253,11 +249,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const unwatched_timelines = await TimeLine.find({ 
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
-<<<<<<< HEAD
       'watched_video': query['video'],
-=======
-      'action.video': query['video'],
->>>>>>> 04e91f28526084c6cd4a51b16b3c089b11051ae9
       'condition.type': 'watched_video',
       'condition.answer': false,
     }).catch(err=>{
