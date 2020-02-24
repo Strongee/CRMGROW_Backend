@@ -1373,7 +1373,6 @@ const bulkOutlook = async(req, res) => {
           saveToSentItems: "true"
         };
       
-        console.log('sendMail', sendMail)
         let promise = new Promise((resolve, reject)=>{
           console.log('sendMail', sendMail)
           client.api('/me/sendMail')
