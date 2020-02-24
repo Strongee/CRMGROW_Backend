@@ -33,6 +33,22 @@ const isBlockedEmail = (email) => {
   let yahoo = /^[a-z0-9](\.?[a-z0-9]){2,}@yahoo\.com$/;
   return mac.test(String(email).toLowerCase()) || me.test(String(email).toLowerCase()) || icloud.test(String(email).toLowerCase()) || yahoo.test(String(email).toLowerCase());
 }
+const Base64 = require('js-base64').Base64;
+const makeBody = (to, from, subject, message) => {
+  var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
+    "to: ", to, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
+  var encodedMail = Base64.encodeURI(str);
+  return encodedMail;
+}
+
+const sgMail = require('@sendgrid/mail')
+
+const receive = async (req, res) => {
+  console.log(req.body)
+  return res.send({
+    status: true
+  })
+}
 
 const bulkEmail = async(data) => {
   const {user, subject, content, bcc, cc, contacts} = data
