@@ -26,9 +26,9 @@ var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
 const Base64 = require('js-base64').Base64;
-const makeBody = (to, from, subject, message) => {
+const makeBody = (to, cc, bcc, from, subject, message) => {
   var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
-    "to: ", to, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
+    "to: ", to, "\n",  "cc: ", cc, "\n",  "bcc: ", bcc, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
   var encodedMail = Base64.encodeURI(str);
   return encodedMail;
 }
@@ -154,7 +154,7 @@ const bulkGmail = async (req, res) => {
     const message_id = uuidv1()
 
     email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
+    const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, cc, bcc, email_subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
       gmail.users.messages.send({
