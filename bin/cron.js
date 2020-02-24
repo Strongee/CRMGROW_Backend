@@ -650,10 +650,11 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
   const due_date = new Date()
   due_date.setSeconds(0)
   due_date.setMilliseconds(000)
-  const timelines = await TimeLine.find({status: 'active', due_date: due_date})
+  const timelines = await TimeLine.find({status: 'active', due_date: {$lt: due_date}})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
   for(let i=0; i<timelines.length; i++){
+    console.log("Searched TimeLine ", i, timelines[i])
     const timeline = timelines[i]
     const action = timeline['action']
     let data
@@ -740,6 +741,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         .catch(error => {
           console.log('err', error)
         });
+        console.log("Note Created");
         // code block
         break;
       case 'email':
@@ -767,6 +769,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_email_video':
         data = {
           user: timeline.user,
@@ -780,6 +783,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_text_pdf':
         data = {
           user: timeline.user,
@@ -792,6 +796,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_email_pdf':
         data = {
           user: timeline.user,
@@ -805,6 +810,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_text_image':
         data = {
           user: timeline.user,
@@ -817,6 +823,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_email_image':
         data = {
           user: timeline.user,
@@ -830,6 +837,7 @@ const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
     }
     const period = timeline['period']
     let now = moment()
