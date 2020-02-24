@@ -167,17 +167,11 @@ const disconnectPDF = async(pdf_tracker_id) =>{
         timeline.save().catch(err=>{
           console.log('err', err)
         })
-        let now = moment()
-        let due_date = now.add(period, 'hours');
-        due_date.set({minute:0,second:0,millisecond:0})
         const data = {
           contact: query['contact'],
           ref: timeline.ref,
-          due_date: due_date
         }
-        TimeLineCtrl.activeNext(data).catch(err=>{
-          console.log('err', err)
-        })
+        TimeLineCtrl.activeNext(data)
       }catch(err){
         console.log('err', err)
       }
@@ -286,17 +280,11 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
           timeline.save().catch(err=>{
             console.log('err', err)
           })
-          let now = moment()
-          let due_date = now.add(period, 'hours');
-          due_date.set({minute:0,second:0,millisecond:0})
           const data = {
             contact: query['contact'],
             ref: timeline.ref,
-            due_date: due_date
           }
-          TimeLineCtrl.activeNext(data).catch(err=>{
-            console.log('err', err)
-          })
+          TimeLineCtrl.activeNext(data)
         }catch(err){
           console.log('err', err)
         }
@@ -502,17 +490,11 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
           timeline.save().catch(err=>{
             console.log('err', err)
           })
-          let now = moment()
-          let due_date = now.add(period, 'hours');
-          due_date.set({minute:0,second:0,millisecond:0})
           const data = {
             contact: query['contact'],
             ref: timeline.ref,
-            due_date: due_date
           }
-          TimeLineCtrl.activeNext(data).catch(err=>{
-            console.log('err', err)
-          })
+          TimeLineCtrl.activeNext(data)
         }catch(err){
           console.log('err', err)
         }

@@ -653,209 +653,205 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
   const timelines = await TimeLine.find({status: 'active', due_date: {$lt: due_date}})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
-  for(let i=0; i<timelines.length; i++){
-    console.log("Searched TimeLine ", i, timelines[i])
-    const timeline = timelines[i]
-    const action = timeline['action']
-    let data
-    switch(action.type) {
-      case 'follow_up':
-        const follow_due_date = action.due_date
-        const followUp = new FollowUp({
-          content: action.content,
-          contact: timeline.contact,
-          user: timeline.user,
-          type: 'follow_up',
-          due_date: follow_due_date,
-          updated_at: new Date(),
-          created_at: new Date(),
-        })
-        
-        followUp.save()
-        .then(_followup => {
-          const mins = new Date(_followup.due_date).getMinutes()-30 
-          let reminder_due_date = new Date(_followup.due_date).setMinutes(mins)
-          const reminder = new Reminder({
+  if(timelines){
+    for(let i=0; i<timelines.length; i++){
+      console.log("Searched TimeLine ", i, timelines[i])
+      const timeline = timelines[i]
+      const action = timeline['action']
+      let data
+      switch(action.type) {
+        case 'follow_up':
+          const follow_due_date = action.due_date
+          const followUp = new FollowUp({
+            content: action.content,
             contact: timeline.contact,
-            due_date: reminder_due_date,
-            type: 'follow_up',
             user: timeline.user,
-            follow_up: _followup.id,
-            created_at: new Date(),
+            type: 'follow_up',
+            due_date: follow_due_date,
             updated_at: new Date(),
+            created_at: new Date(),
           })
           
-          reminder.save().catch(err=>{
-            console.log('error', err)
-          })
-      
-          const activity = new Activity({
-            content: 'added follow up',
-            contacts: _followup.contact,
-            user: timeline.user,
-            type: 'follow_ups',
-            follow_ups: _followup.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-      
-          activity.save().then(_activity => {
-            Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-              console.log('err', err)
+          followUp.save()
+          .then(_followup => {
+            const mins = new Date(_followup.due_date).getMinutes()-30 
+            let reminder_due_date = new Date(_followup.due_date).setMinutes(mins)
+            const reminder = new Reminder({
+              contact: timeline.contact,
+              due_date: reminder_due_date,
+              type: 'follow_up',
+              user: timeline.user,
+              follow_up: _followup.id,
+              created_at: new Date(),
+              updated_at: new Date(),
             })
-          }).catch(e => {
+            
+            reminder.save().catch(err=>{
+              console.log('error', err)
+            })
+        
+            const activity = new Activity({
+              content: 'added follow up',
+              contacts: _followup.contact,
+              user: timeline.user,
+              type: 'follow_ups',
+              follow_ups: _followup.id,
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+        
+            activity.save().then(_activity => {
+              Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+            }).catch(e => {
+              console.log('follow error', e)
+            });
+          })
+          .catch(e => {
             console.log('follow error', e)
           });
-        })
-        .catch(e => {
-          console.log('follow error', e)
-        });
-        break;
-      case 'note':
-        const note = new Note({
-          content: action.content,
-          contact: timeline.contact,
-          user: timeline.user,
-          updated_at: new Date(),
-          created_at: new Date(),
-        })
-        
-        note.save()
-        .then(_note => {
-          const activity = new Activity({
-            content: 'added note',
-            contacts: _note.contact,
+          break;
+        case 'note':
+          const note = new Note({
+            content: action.content,
+            contact: timeline.contact,
             user: timeline.user,
-            type: 'notes',
-            notes: _note.id,
-            created_at: new Date(),
             updated_at: new Date(),
+            created_at: new Date(),
           })
-      
-          activity.save().then(_activity => {
-            Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-              console.log('err', err)
+          
+          note.save()
+          .then(_note => {
+            const activity = new Activity({
+              content: 'added note',
+              contacts: _note.contact,
+              user: timeline.user,
+              type: 'notes',
+              notes: _note.id,
+              created_at: new Date(),
+              updated_at: new Date(),
             })
-          })    
-        })
-        .catch(error => {
-          console.log('err', error)
-        });
-        console.log("Note Created");
-        // code block
-        break;
-      case 'email':
-        data = {
-          user: timeline.user,
-          video: action.video,
-          content: action.content,
-          contacts: [timeline.contact]
-        }
-        EmailHelper.bulkEmail(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_text_video':
-        data = {
-          user: timeline.user,
-          videos: [action.video],
-          content: action.content,
-          contacts: [timeline.contact]
-        }
-        TextHelper.bulkVideo(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_email_video':
-        data = {
-          user: timeline.user,
-          content: action.content,
-          subject: action.subject,
-          videos: [action.video],
-          contacts: [timeline.contact]
-        }
-        EmailHelper.bulkVideo(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_text_pdf':
-        data = {
-          user: timeline.user,
-          content: action.content,
-          pdf: action.pdf,
-          contacts: [timeline.contact]
-        }
-        TextHelper.bulkPdf(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_email_pdf':
-        data = {
-          user: timeline.user,
-          content: action.content,
-          subject: action.subject,
-          pdf: action.pdf,
-          contacts: [timeline.contact]
-        }
-        EmailHelper.bulkPdf(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_text_image':
-        data = {
-          user: timeline.user,
-          content: action.content,
-          image: action.image,
-          contacts: [timeline.contact]
-        }
-        TextHelper.bulkImage(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
-      case 'send_email_image':
-        data = {
-          user: timeline.user,
-          content: action.content,
-          image: action.image,
-          subject: action.subject,
-          contacts: [timeline.contact]
-        }
-        EmailHelper.bulkImage(data).then(res=>{
-          console.log('res', res)
-        }).catch(err=>{
-          console.log('err', err)
-        })
-        break;
+        
+            activity.save().then(_activity => {
+              Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+            })    
+          })
+          .catch(error => {
+            console.log('err', error)
+          });
+          console.log("Note Created");
+          // code block
+          break;
+        case 'email':
+          data = {
+            user: timeline.user,
+            video: action.video,
+            content: action.content,
+            contacts: [timeline.contact]
+          }
+          EmailHelper.bulkEmail(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_text_video':
+          data = {
+            user: timeline.user,
+            videos: [action.video],
+            content: action.content,
+            contacts: [timeline.contact]
+          }
+          TextHelper.bulkVideo(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_email_video':
+          data = {
+            user: timeline.user,
+            content: action.content,
+            subject: action.subject,
+            videos: [action.video],
+            contacts: [timeline.contact]
+          }
+          EmailHelper.bulkVideo(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_text_pdf':
+          data = {
+            user: timeline.user,
+            content: action.content,
+            pdf: action.pdf,
+            contacts: [timeline.contact]
+          }
+          TextHelper.bulkPdf(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_email_pdf':
+          data = {
+            user: timeline.user,
+            content: action.content,
+            subject: action.subject,
+            pdf: action.pdf,
+            contacts: [timeline.contact]
+          }
+          EmailHelper.bulkPdf(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_text_image':
+          data = {
+            user: timeline.user,
+            content: action.content,
+            image: action.image,
+            contacts: [timeline.contact]
+          }
+          TextHelper.bulkImage(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+        case 'send_email_image':
+          data = {
+            user: timeline.user,
+            content: action.content,
+            image: action.image,
+            subject: action.subject,
+            contacts: [timeline.contact]
+          }
+          EmailHelper.bulkImage(data).then(res=>{
+            console.log('res', res)
+          }).catch(err=>{
+            console.log('err', err)
+          })
+          break;
+      }
+      
+      timeline['status'] = 'completed'
+      timeline.save().catch(err=>{
+        console.log('err', err)
+      })
+
+      const next_data = {
+        contact: timeline.contact,
+        ref: timeline.ref,
+      }
+      TimeLineCtrl.activeNext(next_data)
     }
-    
-    timeline['status'] = 'completed'
-    timeline.save().catch(err=>{
-      console.log('err', err)
-    })
-    const period = timeline['period']
-    let now = moment()
-    let due_date = now.add(period, 'hours');
-    due_date.set({minute:0,second:0,millisecond:0})
-    const next_data = {
-      contact: timeline.contact,
-      ref: timeline.ref,
-      due_date: due_date
-    }
-    TimeLineCtrl.activeNext(next_data).catch(err=>{
-      console.log('err', err)
-    })
   }
 },  function () {
   console.log('Reminder Job finished.');

@@ -65,15 +65,26 @@ const create = async(req, res) => {
 }
 
 const activeNext = data => {
-  const {contact, ref, due_date} = data
-  return TimeLine.find({
+  const {contact, ref} = data
+
+  const timelines = await TimeLine.fine({
     contact: contact,
     status: 'pending',
     parent_ref: ref,
-  }).updateMany ({
-    status: 'active',
-    due_date: due_date
   })
+  if(timelines){
+    for(let i=0; i<timelines.length; i++){
+      const timeline = timelines[i]
+      const period = timeline['period']
+      let now = moment()
+      let due_date = now.add(period, 'hours');
+      due_date.set({minute:0,second:0,millisecond:0})
+      TimeLine.save({
+        status: 'active',
+        due_date: due_date
+      })
+    }
+  }
 }
 
 const runTimeline = async(id) => {
