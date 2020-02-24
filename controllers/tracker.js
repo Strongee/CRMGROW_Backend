@@ -147,6 +147,62 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   })
 
 
+  const timelines = await TimeLine.find({ 
+    contact: query['contact'],
+    status:  {$in:[ "pending", "active" ]},
+    'action.pdf': query['pdf'],
+    'condition.type': 'watched_pdf',
+    'condition.answer': true,
+  }).catch(err=>{
+    console.log('err', err)
+  })
+  
+  if(timelines.length>0){
+    for(let i=0; i<timelines.lengh; i++){
+      try{
+        const timeline = timelines[i]
+        TimeLineCtrl.runTimeline(timeline.id)
+        const period = timeline['period']
+        timeline['status'] = 'completed'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+        let now = moment()
+        let due_date = now.add(period, 'hours');
+        due_date.set({minute:0,second:0,millisecond:0})
+        const data = {
+          contact: query['contact'],
+          ref: timeline.ref,
+          due_date: due_date
+        }
+        TimeLineCtrl.activeNext(data).catch(err=>{
+          console.log('err', err)
+        })
+      }catch(err){
+        console.log('err', err)
+      }
+    }
+  }
+  const unwatched_timelines = await TimeLine.find({ 
+    contact: query['contact'],
+    status:  {$in:[ "pending", "active" ]},
+    'action.pdf': query['pdf'],
+    'condition.type': 'watched_pdf',
+    'condition.answer': false,
+  }).catch(err=>{
+    console.log('err', err)
+  })
+  if(unwatched_timelines.length>0){
+    for(let i=0; i<unwatched_timelines; i++){
+      const timeline = unwatched_timelines[i]
+      timeline['status'] = 'disable'
+      timeline.save().catch(err=>{
+        console.log('err', err)
+      })
+    }
+  }
+  
+
     const activity = new Activity({
       content: contact.first_name + ' reviewed pdf',
       contacts: query.contact,
@@ -426,6 +482,60 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
 
+    const timelines = await TimeLine.find({ 
+      contact: query['contact'],
+      status:  {$in:[ "pending", "active" ]},
+      'action.pdf': query['pdf'],
+      'condition.type': 'watched_image',
+      'condition.answer': true,
+    }).catch(err=>{
+      console.log('err', err)
+    })
+    
+    if(timelines.length>0){
+      for(let i=0; i<timelines.lengh; i++){
+        try{
+          const timeline = timelines[i]
+          TimeLineCtrl.runTimeline(timeline.id)
+          const period = timeline['period']
+          timeline['status'] = 'completed'
+          timeline.save().catch(err=>{
+            console.log('err', err)
+          })
+          let now = moment()
+          let due_date = now.add(period, 'hours');
+          due_date.set({minute:0,second:0,millisecond:0})
+          const data = {
+            contact: query['contact'],
+            ref: timeline.ref,
+            due_date: due_date
+          }
+          TimeLineCtrl.activeNext(data).catch(err=>{
+            console.log('err', err)
+          })
+        }catch(err){
+          console.log('err', err)
+        }
+      }
+    }
+    const unwatched_timelines = await TimeLine.find({ 
+      contact: query['contact'],
+      status:  {$in:[ "pending", "active" ]},
+      'action.image': query['image'],
+      'condition.type': 'watched_image',
+      'condition.answer': false,
+    }).catch(err=>{
+      console.log('err', err)
+    })
+    if(unwatched_timelines.length>0){
+      for(let i=0; i<unwatched_timelines; i++){
+        const timeline = unwatched_timelines[i]
+        timeline['status'] = 'disable'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }
     const d = (query['duration']/1000)
     var h = Math.floor(d / 3600);
     var m = Math.floor(d % 3600 / 60);
@@ -638,7 +748,7 @@ const setup = (io) => {
           socket.video_tracker.viewed = true
           disconnectVideo(video_tracker._id)
         }else if(socket.type == 'image'){
-          console.log('diconnectiong with full view')
+          console.log('disconnectiong with full view')
           const image_tracker = socket.image_tracker
           socket.image_tracker.viewed = true
           disconnectImage(image_tracker._id)

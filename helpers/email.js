@@ -367,7 +367,9 @@ const bulkVideo = async(data) => {
         let video_content = content
         let activity
         for(let j=0; j<videos.length; j++){
-            const video = videos[j]         
+            const video = await Video.findOne({_id: videos[j]}).catch(err=>{
+              console.log('err', err)
+            })             
             let preview
             if(video['preview']){
               preview = video['preview']
@@ -526,7 +528,9 @@ const bulkVideo = async(data) => {
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
+          const video = await Video.findOne({_id: videos[j]}).catch(err=>{
+            console.log('err', err)
+          })          
           let preview
           if(video['preview']){
             preview = video['preview']
@@ -678,7 +682,9 @@ const bulkVideo = async(data) => {
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
+          const video = await Video.findOne({_id: videos[j]}).catch(err=>{
+            console.log('err', err)
+          })    
           let preview
           if(video['preview']){
             preview = video['preview']
