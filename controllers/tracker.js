@@ -152,7 +152,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     contact: query['contact'],
     status:  {$in:[ "pending", "active" ]},
     'action.pdf': query['pdf'],
-    'condition.type': 'watched_pdf',
+    'condition.case': 'watched_pdf',
     'condition.answer': true,
   }).catch(err=>{
     console.log('err', err)
@@ -182,7 +182,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     contact: query['contact'],
     status:  {$in:[ "pending", "active" ]},
     'action.pdf': query['pdf'],
-    'condition.type': 'watched_pdf',
+    'condition.case': 'watched_pdf',
     'condition.answer': false,
   }).catch(err=>{
     console.log('err', err)
@@ -265,7 +265,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
       'watched_video': query['video'],
-      'condition.type': 'watched_video',
+      'condition.case': 'watched_video',
       'condition.answer': true,
     }).catch(err=>{
       console.log('err', err)
@@ -295,7 +295,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
       'watched_video': query['video'],
-      'condition.type': 'watched_video',
+      'condition.case': 'watched_video',
       'condition.answer': false,
     }).catch(err=>{
       console.log('err', err)
@@ -475,7 +475,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
       'action.pdf': query['pdf'],
-      'condition.type': 'watched_image',
+      'condition.case': 'watched_image',
       'condition.answer': true,
     }).catch(err=>{
       console.log('err', err)
@@ -505,7 +505,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
       'action.image': query['image'],
-      'condition.type': 'watched_image',
+      'condition.case': 'watched_image',
       'condition.answer': false,
     }).catch(err=>{
       console.log('err', err)

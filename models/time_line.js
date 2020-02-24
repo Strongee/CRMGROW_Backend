@@ -11,7 +11,7 @@ const TimeLine = mongoose.model('time_line',{
     parent_ref: Number,
     automation: { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     condition: {
-        type: String,
+        case: String,
         answer: Boolean
     },
     created_at: Date,
