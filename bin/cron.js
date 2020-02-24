@@ -757,7 +757,7 @@ const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
       case 'send_text_video':
         data = {
           user: timeline.user,
-          video: action.video,
+          videos: [action.video],
           content: action.content,
           contacts: [timeline.contact]
         }
@@ -771,7 +771,7 @@ const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
           user: timeline.user,
           content: action.content,
           subject: action.subject,
-          video: action.video,
+          videos: [action.video],
           contacts: [timeline.contact]
         }
         EmailHelper.bulkVideo(data).then(res=>{

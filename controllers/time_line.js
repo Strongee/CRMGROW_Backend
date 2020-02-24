@@ -173,7 +173,7 @@ const runTimeline = async(id) => {
       case 'email':
         data = {
           user: timeline.user,
-          video: action.video,
+          subject: action.subject,
           content: action.content,
           contacts: [timeline.contact]
         }
@@ -186,7 +186,7 @@ const runTimeline = async(id) => {
       case 'send_text_video':
         data = {
           user: timeline.user,
-          video: action.video,
+          videos: [action.video],
           content: action.content,
           contacts: [timeline.contact]
         }
@@ -200,7 +200,7 @@ const runTimeline = async(id) => {
           user: timeline.user,
           content: action.content,
           subject: action.subject,
-          video: action.video,
+          videos: [action.video],
           contacts: [timeline.contact]
         }
         EmailHelper.bulkVideo(data).then(res=>{
