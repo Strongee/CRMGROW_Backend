@@ -153,7 +153,7 @@ const bulkGmail = async (req, res) => {
 
     const message_id = uuidv1()
 
-    email_content = '<html><head><title>Email</title></head><body><p>' + content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
+    email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
 
     const promise = new Promise((resolve, reject) => {
@@ -165,7 +165,13 @@ const bulkGmail = async (req, res) => {
       }, async (err, response) => {
         if (err) {
           console.log('err', err)
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: err
+          })
           resolve()
         }
         else {
@@ -211,7 +217,7 @@ const bulkGmail = async (req, res) => {
 
   Promise.all(promise_array).then(() => {
     if (error.length > 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         error: error
       })
@@ -378,13 +384,19 @@ const bulkOutlook = async (req, res) => {
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
-        resolve()
+          resolve()
         }).catch(err => {
           console.log('err', err)
           if (err.code == 'ErrorMessageSubmissionBlocked') {
             reject(err.message || 'Please go to the login into your Email box and follow instruction')
           } else {
-            error.push(contacts[i])
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: err
+            })
             resolve()
           }
         });
@@ -395,7 +407,7 @@ const bulkOutlook = async (req, res) => {
 
   Promise.all(promise_array).then(() => {
     if (error.length > 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         error: error
       })
@@ -568,12 +580,24 @@ const bulkEmail = async (req, res) => {
         }
         else {
           console.log('email sending err', msg.to + _res[0].statusCode)
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: _res[0].statusCode
+          })
           resolve()
         }
       }).catch(err => {
         console.log('err', err)
-        error.push(contacts[i])
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: err
+        })
         resolve()
       })
     })
@@ -581,7 +605,7 @@ const bulkEmail = async (req, res) => {
   }
   Promise.all(promise_array).then(()=>{
     if(error.length>0){
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         error: error
       })
