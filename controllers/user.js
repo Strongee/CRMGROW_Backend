@@ -725,7 +725,7 @@ const checkAuth = async (req, res, next) => {
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email)
     
-    // if (req.currentUser.primary_connected || req.connected_email_type == 'email') {
+    // if (req.currentUser.primary_connected || req.currentUser.connected_email_type == 'email') {
       next()
     // } else {
     //   res.status(402).send({
@@ -1638,6 +1638,18 @@ const logout = async(req, res) => {
   })
 }
 
+const connectAnotherEmail = async(req, res) => {
+  const {currentUser} = req;
+  currentUser['primary_connected'] = false;
+  currentUser['connected_email_type'] = 'email';
+  currentUser.save().catch(err => {
+    console.log('err', err)
+  })
+  res.send({
+    status: true
+  })
+}
+
 module.exports = {
   signUp,
   login,
@@ -1674,6 +1686,7 @@ module.exports = {
   checkAuth2,
   checkSuspended,
   checkLastLogin,
-  closeAccount
+  closeAccount,
+  connectAnotherEmail
 }
 

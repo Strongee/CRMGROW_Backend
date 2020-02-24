@@ -108,7 +108,11 @@ router.post('/social-login', catchError(UserCtrl.socialLogin))
 // Edit own profile
 router.post('/social-signup', catchError(UserCtrl.socialSignUp))
 
+// Connect Another Email Service
+router.get('/another-con', UserCtrl.checkAuth2, catchError(UserCtrl.connectAnotherEmail))
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))
+
 
 module.exports = router
