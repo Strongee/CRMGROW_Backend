@@ -645,7 +645,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   }, false, 'US/Central')
   
   
-const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
+const timesheet_check = new CronJob('*/5 * * * *', async() =>{
 
   const due_date = new Date()
   due_date.setSeconds(0)
