@@ -1374,19 +1374,21 @@ const bulkOutlook = async(req, res) => {
         };
       
         let promise = new Promise((resolve, reject)=>{
+          console.log('sendMail', sendMail)
           client.api('/me/sendMail')
           .post(sendMail).then(()=>{
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err)
             })
+            resolve()
           }).catch(err=>{
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
             console.log('err', err)
             error.push(contacts[i])
-          });
-          resolve()
+            resolve()
+          });    
         })
       promise_array.push(promise)
     }
