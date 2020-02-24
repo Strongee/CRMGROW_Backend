@@ -751,8 +751,6 @@ const bulkEmail = async(req, res) => {
                 +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
         }
         
-
-      
         let promise = new Promise((resolve, reject)=>{
           sgMail.send(msg).then(async(_res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
@@ -767,7 +765,13 @@ const bulkEmail = async(req, res) => {
               console.log('err', err)
             })
             console.log('email sending err', msg.to+res[0].statusCode)
-            error.push(contacts[i])
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email
+              },
+              err: _res[0].statusCode
+            })
           }
         }).catch ((e) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
@@ -775,7 +779,13 @@ const bulkEmail = async(req, res) => {
           })
           console.log('email sending err', msg.to)
           console.error(e)
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email
+            },
+            err: err
+          })
           resolve()
         })
       })
@@ -784,7 +794,7 @@ const bulkEmail = async(req, res) => {
       
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           error: error
         })
@@ -924,13 +934,6 @@ const bulkGmail = async(req, res) => {
         
         const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );
 
-        // var request = gmail.users.messages.send({
-        //   'userId': currentUser.email,
-        //   'resource': {
-        //     raw: rawContent
-        //   }
-        // });
-      
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
             'userId': currentUser.email,
@@ -943,13 +946,20 @@ const bulkGmail = async(req, res) => {
                 console.log('err', err)
               })
               console.log('err', err)
-              error.push(contacts[i])
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err 
+              })
+              resolve();
             } else {
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
+              resolve()
             }
-            resolve();
           });      
         })
       promise_array.push(promise)
@@ -957,7 +967,7 @@ const bulkGmail = async(req, res) => {
       
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.send({
           status: false,
           error: error
         })
@@ -1105,7 +1115,13 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            err: 'Invalid phone number' 
+          })
           resolve() // Invalid phone number
         }
         twilio.messages.create({from: fromNumber, body: video_content,  to: e164Phone}).then(()=>{
@@ -1119,7 +1135,13 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            err: err
+          })
           resolve()
         })  
       })
@@ -1128,7 +1150,7 @@ const bulkText = async(req, res) => {
     
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           error: error
         })
@@ -1373,7 +1395,6 @@ const bulkOutlook = async(req, res) => {
         };
       
         let promise = new Promise((resolve, reject)=>{
-          console.log('sendMail', sendMail)
           client.api('/me/sendMail')
           .post(sendMail).then(()=>{
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
@@ -1385,7 +1406,13 @@ const bulkOutlook = async(req, res) => {
               console.log('err', err)
             })
             console.log('err', err)
-            error.push(contacts[i])
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email
+              },
+              err: err
+            })
             resolve()
           });    
         })
@@ -1394,7 +1421,7 @@ const bulkOutlook = async(req, res) => {
       
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           error: error
         })
@@ -1427,24 +1454,24 @@ const makeBody = (to, from, subject, message) => {
 }
 
 module.exports = {
-    play,
-    play1,
-    pipe,
-    create,
-    updateDetail,
-    get,
-    getThumbnail,
-    getAll,
-    sendVideo,
-    bulkEmail,
-    bulkText,
-    sendText,
-    remove,
-    getHistory,
-    createVideo,
-    createSmsContent,
-    bulkGmail,
-    bulkOutlook
+  play,
+  play1,
+  pipe,
+  create,
+  updateDetail,
+  get,
+  getThumbnail,
+  getAll,
+  sendVideo,
+  bulkEmail,
+  bulkText,
+  sendText,
+  remove,
+  getHistory,
+  createVideo,
+  createSmsContent,
+  bulkGmail,
+  bulkOutlook
 }
 
 

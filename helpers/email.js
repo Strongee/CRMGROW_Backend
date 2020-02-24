@@ -496,10 +496,10 @@ const bulkVideo = async(data) => {
               console.log('err', err)
             })
             console.log('email sending err', msg.to)
-            console.error(e)
+            console.error(err)
             resolve({
               status: false,
-              err: e,
+              err: err,
               contact: contacts[i]
             })
             resolve()
@@ -915,7 +915,7 @@ const bulkPdf = async(data) => {
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
         replyTo: currentUser.email,
         subject: subject,
-        replyTo: 'othersender@example.org',
+        replyTo: _contact.email,
         html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
               +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
       }
@@ -945,15 +945,15 @@ const bulkPdf = async(data) => {
             contact: contacts[i]
           })
         }
-        }).catch ((e) => {
+        }).catch ((err) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
           console.log('email sending err', msg.to)
-          console.log('err', e)
+          console.log('err', err)
           resolve({
             status: false,
-            err: e,
+            err: err,
             contact: contacts[i]
           })
         })
@@ -1361,15 +1361,15 @@ const bulkImage = async(data) => {
                 contact: contacts[i]
               })
             }
-          }).catch ((e) => {
+          }).catch ((err) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
             console.log('email sending err', msg.to)
-            console.error(e)
+            console.error(err)
             resolve({
               status: false,
-              err: e,
+              err: err,
               contact: contacts[i]
             })
           })

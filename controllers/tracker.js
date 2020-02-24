@@ -7,6 +7,7 @@ const Video = require('../models/video');
 const Image = require('../models/image');
 const ImageTracker = require('../models/image_tracker');
 const Activity = require('../models/activity');
+const TimeLine = require('../models/time_line');
 const TimeLineCtrl = require('./time_line');
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')

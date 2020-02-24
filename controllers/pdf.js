@@ -591,7 +591,7 @@ const bulkEmail = async(req, res) => {
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
           replyTo: currentUser.email,
           subject: subject,
-          replyTo: 'othersender@example.org',
+          replyTo: _contact.email,
           html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
                 +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
         }
@@ -612,16 +612,28 @@ const bulkEmail = async(req, res) => {
                 console.log('err', err)
               })
               console.log('email sending err', msg.to+res[0].statusCode)
-              error.push(contacts[i])
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email
+                },
+                err: _res[0].statusCode
+              })
               resolve()
             }
-          }).catch ((e) => {
+          }).catch ((err) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
             console.log('email sending err', msg.to)
-            console.error(e)
-            error.push(contacts[i])
+            console.error(err)
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email
+              },
+              err: err
+            })
             resolve()
           })
         })
@@ -630,7 +642,7 @@ const bulkEmail = async(req, res) => {
       
       Promise.all(promise_array).then(()=>{
         if(error.length>0){
-          return res.status(400).json({
+          return res.status(200).json({
             status: false,
             error: error
           })
@@ -781,7 +793,13 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            err: err
+          })
           resolve() // Invalid phone number
         }
         twilio.messages.create({from: fromNumber, body: pdf_content,  to: e164Phone}).then(()=>{
@@ -795,7 +813,13 @@ const bulkText = async(req, res) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          error.push(contacts[i])
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            err: err
+          })
           resolve()
         })  
       })
@@ -804,7 +828,7 @@ const bulkText = async(req, res) => {
     
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           error: error
         })
@@ -905,32 +929,6 @@ const bulkOutlook = async(req, res) => {
   let {content, subject, pdfs, contacts} = req.body 
   let promise_array = []
   let error = []
-  
-  let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
-  let accessToken
-  await new Promise((resolve, reject) => {
-    token.refresh(function(error, result) {
-      if (error) {
-        reject(error.message)
-      }
-      else {
-        resolve(result.token);
-      }
-    })
-  }).then((token)=>{
-    accessToken = token.access_token
-    
-  }).catch((error) => {
-    console.log('error', error)
-  })
-
-  const client = graph.Client.init({
-    // Use the provided access token to authenticate
-    // requests
-    authProvider: (done) => {
-      done(null, accessToken);
-    }
-  });
 
   if(contacts){
     if(contacts.length>50){
@@ -941,6 +939,32 @@ const bulkOutlook = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      let accessToken
+      await new Promise((resolve, reject) => {
+        token.refresh(function(error, result) {
+          if (error) {
+            reject(error.message)
+          }
+          else {
+            resolve(result.token);
+          }
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+        
+      }).catch((error) => {
+        console.log('error', error)
+      })
+    
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        }
+      });
+  
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -1042,21 +1066,28 @@ const bulkOutlook = async(req, res) => {
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err)
             })
+            resolve()
           }).catch(err=>{
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
             console.log('err', err)
-            error.push(contacts[i])
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email
+              },
+              err: err
+            })
+            resolve()
           });
-          resolve()
         })
       promise_array.push(promise)
     }
       
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(400).json({
+        return res.status(200).json({
           status: false,
           error: error
         })
@@ -1197,14 +1228,21 @@ const bulkGmail = async(req, res) => {
                 console.log('err', err)
               })
               console.log('err', err)
-              error.push(contacts[i])
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email
+                },
+                err: err
+              })
+              resolve();
             }
             else {
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
+              resolve();
             }
-            resolve();
           })
         })
         promise_array.push(promise)
@@ -1212,7 +1250,7 @@ const bulkGmail = async(req, res) => {
       
       Promise.all(promise_array).then(()=>{
         if(error.length>0){
-          return res.status(400).json({
+          return res.status(200).json({
             status: false,
             error: error
           })
