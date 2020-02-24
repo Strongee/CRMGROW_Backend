@@ -839,9 +839,11 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
         })
         break;
     }
-
-    timeline.update({status: 'completed'})
-
+    
+    timeline['status'] = 'completed'
+    timeline.save().catch(err=>{
+      console.log('err', err)
+    })
     const period = timeline['period']
     let now = moment()
     let due_date = now.add(period, 'hours');
