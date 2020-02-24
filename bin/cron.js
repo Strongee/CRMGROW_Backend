@@ -644,7 +644,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   }, false, 'US/Central')
   
   
-const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
+const timesheet_check = new CronJob('*/5 * * * * *', async() =>{
 
   const due_date = new Date()
   due_date.setSeconds(0)
@@ -848,11 +848,11 @@ const timesheet_check = new CronJob('0 * * * 0-6', async() =>{
 }, false, 'US/Central')
 
 
-signup_job.start()
-reminder_job.start()
-weekly_report.start()
-video_job.start()
-payment_check.start()
-// logger_check.start()
-notification_check.start()
+//signup_job.start()
+//reminder_job.start()
+//weekly_report.start()
+//video_job.start()
+//payment_check.start()
+//logger_check.start()
+//notification_check.start()
 timesheet_check.start()
