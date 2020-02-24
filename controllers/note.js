@@ -43,7 +43,7 @@ const create = async(req, res) => {
   .then(_note => {
 
     const activity = new Activity({
-      content: currentUser.user_name + ' added note',
+      content: 'added note',
       contacts: _note.contact,
       user: currentUser.id,
       type: 'notes',

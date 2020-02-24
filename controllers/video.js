@@ -393,7 +393,7 @@ const sendVideo = async (req, res) => {
         const _contact = await Contact.findOne({_id: contacts[i]})
         const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
         const _activity = new Activity({
-          content: currentUser.user_name + ' sent video using email',
+          content: 'sent video using email',
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -478,7 +478,7 @@ const sendText = async (req, res) => {
       var sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const cell_phone = _contact.cell_phone
       const _activity = new Activity({
-        content: currentUser.user_name + ' sent video using sms',
+        content: 'sent video using sms',
         contacts: contacts[i],
         user: currentUser.id,
         type: 'videos',
@@ -689,7 +689,7 @@ const bulkEmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using email',
+            content: 'sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -866,7 +866,7 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using email',
+            content: 'sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -1017,7 +1017,7 @@ const bulkText = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using sms',
+            content: 'sent video using sms',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -1179,7 +1179,7 @@ const createSmsContent = async (req, res) => {
     .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
     const _activity = new Activity({
-      content: currentUser.user_name + ' sent video using sms',
+      content: 'sent video using sms',
       contacts: contacts[0],
       user: currentUser.id,
       type: 'videos',
@@ -1301,7 +1301,7 @@ const bulkOutlook = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using email',
+            content: 'sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',

@@ -268,7 +268,7 @@ const sendPDF = async (req, res) => {
       const _contact = await Contact.findOne({_id: contacts[i]})
       const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const _activity = new Activity({
-        content: currentUser.user_name + ' sent pdf using email',
+        content: 'sent pdf using email',
         contacts: contacts[i],
         user: currentUser.id,
         type: 'pdfs',
@@ -336,7 +336,7 @@ const sendText = async (req, res) => {
       const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
       const cell_phone = _contact.cell_phone
       const _activity = new Activity({
-        content: currentUser.user_name + ' sent pdf using sms',
+        content: 'sent pdf using sms',
         contacts: contacts[i],
         user: currentUser.id,
         type: 'pdfs',
@@ -532,7 +532,7 @@ const bulkEmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent pdf using email',
+            content: 'sent pdf using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
@@ -853,7 +853,7 @@ const createSmsContent = async (req, res) => {
     .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
     const _activity = new Activity({
-      content: currentUser.user_name + ' sent pdf using sms',
+      content: 'sent pdf using sms',
       contacts: contacts[0],
       user: currentUser.id,
       type: 'pdfs',
@@ -963,7 +963,7 @@ const bulkOutlook = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent pdf using email',
+            content: 'sent pdf using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
@@ -1127,7 +1127,7 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent pdf using email',
+            content: 'sent pdf using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',

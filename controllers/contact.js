@@ -219,7 +219,7 @@ const create = async (req, res) => {
       currentUser.contact_info = contact_info
       currentUser.save()
       const activity = new Activity({
-        content: currentUser.user_name + ' added contact',
+        content: 'added contact',
         contacts: _contact.id,
         user: currentUser.id,
         type: 'contacts',
@@ -883,7 +883,7 @@ const importCSV = async (req, res) => {
 
             contact.save().then(_contact => {
               const activity = new Activity({
-                content: currentUser.user_name + ' added contact',
+                content: 'added contact',
                 contacts: _contact.id,
                 user: currentUser.id,
                 type: 'contacts',
@@ -907,7 +907,7 @@ const importCSV = async (req, res) => {
                 })
                 note.save().then((_note) => {
                   const _activity = new Activity({
-                    content: currentUser.user_name + ' added note',
+                    content: 'added note',
                     contacts: _contact.id,
                     user: currentUser.id,
                     type: 'notes',

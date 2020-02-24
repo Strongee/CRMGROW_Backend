@@ -83,7 +83,7 @@ const send = async (req, res) => {
       let data_list = []
       for (let i = 0; i < contacts.length; i++) {
         const activity = new Activity({
-          content: currentUser.user_name + ' sent email',
+          content: 'sent email',
           contacts: contacts[i],
           user: currentUser.id,
           type: 'emails',
@@ -185,7 +185,7 @@ const bulkGmail = async (req, res) => {
           })
 
           const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
+            content: 'sent email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'emails',
@@ -365,7 +365,7 @@ const bulkOutlook = async (req, res) => {
         })
         
         const activity = new Activity({
-          content: currentUser.user_name + ' sent email',
+          content: 'sent email',
           contacts: contacts[i],
           user: currentUser.id,
           type: 'emails',
@@ -551,7 +551,7 @@ const bulkEmail = async (req, res) => {
           })
 
           const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
+            content: 'sent email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'emails',

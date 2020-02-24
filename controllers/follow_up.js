@@ -71,7 +71,7 @@ const create = async(req, res) => {
     })
 
     const activity = new Activity({
-      content: currentUser.user_name + ' added follow up',
+      content: 'added follow up',
       contacts: _followup.contact,
       user: currentUser.id,
       type: 'follow_ups',

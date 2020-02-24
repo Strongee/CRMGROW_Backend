@@ -429,7 +429,7 @@ const create = async(req, res) => {
     appointment.save().then(_appointment => {
 
       const activity = new Activity({
-        content: currentUser.user_name + ' added appointment',
+        content: 'added appointment',
         contacts: _appointment.contact,
         appointments: _appointment.id,
         user: currentUser.id,
@@ -538,7 +538,7 @@ const create = async(req, res) => {
     })
 
     const activity = new Activity({
-      content: currentUser.user_name + ' added appointment',
+      content: 'added appointment',
       contacts: _appointment.contact,
       appointments: _appointment.id,
       user: currentUser.id,
@@ -695,7 +695,7 @@ const edit = async(req, res) => {
     
       appointment.save() 
       const activity = new Activity({
-        content: currentUser.user_name + ' updated appointment',
+        content: 'updated appointment',
         contacts: _appointment.contact,
         appointments: appointment._id,
         user: currentUser.id,
@@ -745,7 +745,7 @@ const edit = async(req, res) => {
     
       await appointment.save().then(_appointment=>{
         const activity = new Activity({
-          content: currentUser.user_name + ' updated appointment',
+          content: 'updated appointment',
           contacts: _appointment.contact,
           appointments: _appointment.id,
           user: currentUser.id,
@@ -834,7 +834,7 @@ const remove = async(req, res) => {
 
       appointment.save()
       const activity = new Activity({
-        content: currentUser.user_name + ' removed appointment',
+        content: 'removed appointment',
         contacts: appointment.contact,
         appointments: appointment.id,
         user: currentUser.id,
@@ -881,7 +881,7 @@ const remove = async(req, res) => {
 
       appointment.save()
       const activity = new Activity({
-        content: currentUser.user_name + ' removed appointment',
+        content: 'removed appointment',
         contacts: appointment.contact,
         appointments: appointment.id,
         user: currentUser.id,

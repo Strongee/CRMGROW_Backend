@@ -650,7 +650,7 @@ const createSmsContent = async (req, res) => {
     .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
     const _activity = new Activity({
-      content: currentUser.user_name + ' sent image using sms',
+      content: 'sent image using sms',
       contacts: contacts[0],
       user: currentUser.id,
       type: 'images',
@@ -745,7 +745,7 @@ const bulkGmail = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent image using email',
+            content: 'sent image using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
@@ -918,7 +918,7 @@ const bulkOutlook = async(req, res) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent image using email',
+            content: 'sent image using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
