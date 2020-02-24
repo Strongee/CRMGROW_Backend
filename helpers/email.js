@@ -24,7 +24,6 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials)
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
-const sgMail = require('@sendgrid/mail')
 
 const isBlockedEmail = (email) => {
   let mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
