@@ -64,7 +64,7 @@ const create = async(req, res) => {
   }
 }
 
-const activeNext = data => {
+const activeNext = async(data) => {
   const {contact, ref} = data
 
   const timelines = await TimeLine.fine({
