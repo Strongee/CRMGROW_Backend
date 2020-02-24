@@ -839,12 +839,15 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
         })
         break;
     }
+
+    timeline.update({status: 'completed'})
+
     const period = timeline['period']
     let now = moment()
     let due_date = now.add(period, 'hours');
     due_date.set({minute:0,second:0,millisecond:0})
     const next_data = {
-      contact: timeline.conteact,
+      contact: timeline.contact,
       ref: timeline.ref,
       due_date: due_date
     }
