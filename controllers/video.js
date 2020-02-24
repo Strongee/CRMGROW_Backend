@@ -1231,32 +1231,6 @@ const bulkOutlook = async(req, res) => {
   let {content, subject, videos, contacts} = req.body 
   let promise_array = []
   let error = []
-  
-  let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
-  let accessToken
-  await new Promise((resolve, reject) => {
-    token.refresh(function(error, result) {
-      if (error) {
-        reject(error.message)
-      }
-      else {
-        resolve(result.token);
-      }
-    })
-  }).then((token)=>{
-    accessToken = token.access_token
-    
-  }).catch((error) => {
-    console.log('error', error)
-  })
-
-  const client = graph.Client.init({
-    // Use the provided access token to authenticate
-    // requests
-    authProvider: (done) => {
-      done(null, accessToken);
-    }
-  });
 
   if(contacts){
     if(contacts.length>50){
@@ -1267,6 +1241,31 @@ const bulkOutlook = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
+      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      let accessToken
+      await new Promise((resolve, reject) => {
+        token.refresh(function(error, result) {
+          if (error) {
+            reject(error.message)
+          }
+          else {
+            resolve(result.token);
+          }
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+        
+      }).catch((error) => {
+        console.log('error', error)
+      })
+    
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        }
+      });
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
