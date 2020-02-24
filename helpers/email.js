@@ -485,6 +485,11 @@ const bulkVideo = async(data) => {
               })
               console.log('email sending err', msg.to+res[0].statusCode)
               error.push(contacts[i])
+              resolve({
+                status: false,
+                err: err,
+                contact: contacts[i]
+              })
             }
           }).catch ((e) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
@@ -492,7 +497,11 @@ const bulkVideo = async(data) => {
             })
             console.log('email sending err', msg.to)
             console.error(e)
-            error.push(contacts[i])
+            resolve({
+              status: false,
+              err: e,
+              contact: contacts[i]
+            })
             resolve()
           })
         })
@@ -634,10 +643,10 @@ const bulkVideo = async(data) => {
                 console.log('err', err)
               })
               console.log('err', err)
-              error.push(contacts[i])
               resolve({
                 status: false,
-                
+                err: err,
+                contact: contacts[i]
               })
             } else {
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
@@ -942,7 +951,6 @@ const bulkPdf = async(data) => {
           })
           console.log('email sending err', msg.to)
           console.log('err', e)
-          error.push(contacts[i])
           resolve({
             status: false,
             err: e,
@@ -955,7 +963,6 @@ const bulkPdf = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
-    let error = []
     
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -1060,7 +1067,6 @@ const bulkPdf = async(data) => {
               console.log('err', err)
             })
             console.log('err', err)
-            error.push(contacts[i])
             resolve({
               status: false,
               contact: contacts[i],
@@ -1363,7 +1369,7 @@ const bulkImage = async(data) => {
             console.error(e)
             resolve({
               status: false,
-              err: err,
+              err: e,
               contact: contacts[i]
             })
           })
