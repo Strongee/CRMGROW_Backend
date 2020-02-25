@@ -24,7 +24,9 @@ var report = {
 }
 var registered_flag = false
 if( contact && activity ){
-    socket = io.connect(location.protocol + '://' + location.hostname)
+    var siteAddr = location.protocol + '//' + location.hostname;
+    socket = io.connect(siteAddr);
+    console.log("Site Address", siteAddr);
     // socket = io.connect('https://app.crmgrow.com')
     // socket = io.connect('http://localhost:3000')
 }
