@@ -62,10 +62,10 @@ const getByLastActivity = async (req, res) => {
   const { currentUser } = req
   let contacts
   if (typeof req.params.id == 'undefined') {
-    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(15)
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(50)
   } else {
     const id = parseInt(req.params.id)
-    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).skip(id).limit(15)
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).skip(id).limit(50)
   }
 
   if (!contacts) {
