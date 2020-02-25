@@ -21,7 +21,7 @@
         // Multi host is possible, just by passing IPs/hostname as an array
         "host" : "3.14.245.2",
         // Branch
-        "ref"  : "origin/master",
+        "ref"  : "origin/stage",
         // Git repository to clone
         "repo" : "git@github.com:teamgrow/backend_admin.git",
         // Path of the application on target servers
