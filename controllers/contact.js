@@ -391,12 +391,35 @@ const bulkEditLabel = async (req, res) => {
 }
 
 const bulkUpdate = async (req, res) => {
-  const { contacts, data} = req.body;
-  Contact.find({_id: {$in: contacts}}).updateMany({$set: data}).then(() => {
+  const { contacts, data, tags} = req.body;
+  let tagUpdateQuery = {}
+  if(tags.tags && tags.tags.length) {
+    switch(tags.option) {
+      case 2:
+        tagUpdateQuery = {$push: {tags: {$each: tags.tags}}} 
+        break;
+      case 3:
+        tagUpdateQuery = {$pull: {tags: {$in: tags.tags}}} 
+        break;
+      case 4: 
+        tagUpdateQuery = {tags: tags.tags}
+        break;
+    }
+  }
+  let updateQuery = {};
+  if(Object.keys(data).length) {
+    updateQuery = {$set: data}
+  }
+  if(Object.keys(tagUpdateQuery).length) {
+    updateQuery = {...updateQuery, ...tagUpdateQuery}
+  }
+  
+  Contact.find({_id: {$in: contacts}}).updateMany(updateQuery).then(() => {
     res.send({
       status: true
     })
   }).catch(err => {
+    console.log("error", err);
     res.status(500).send({
       status: false,
       error: err.message || 'Update Error'
