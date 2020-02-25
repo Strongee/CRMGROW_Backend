@@ -659,6 +659,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
       const timeline = timelines[i]
       const action = timeline['action']
       let data
+      let error
       switch(action.type) {
         case 'follow_up':
           const follow_due_date = action.due_date
@@ -739,8 +740,8 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
               })
             })    
           })
-          .catch(error => {
-            console.log('err', error)
+          .catch(err => {
+            console.log('err', err)
           });
           console.log("Note Created");
           // code block
@@ -754,6 +755,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           EmailHelper.bulkEmail(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -767,6 +771,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           TextHelper.bulkVideo(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -781,6 +788,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           EmailHelper.bulkVideo(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -794,6 +804,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           TextHelper.bulkPdf(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -808,6 +821,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           EmailHelper.bulkPdf(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -821,6 +837,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           TextHelper.bulkImage(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
@@ -835,13 +854,19 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           }
           EmailHelper.bulkImage(data).then(res=>{
             console.log('res', res)
+            if(res[0].status == false){
+              error.push(res[0].err)
+            }
           }).catch(err=>{
             console.log('err', err)
           })
           break;
       }
-      
-      timeline['status'] = 'completed'
+      if(error.length>0){
+        timeline['status'] = 'error'
+      }else{
+        timeline['status'] = 'completed'
+      }
       timeline.save().catch(err=>{
         console.log('err', err)
       })
