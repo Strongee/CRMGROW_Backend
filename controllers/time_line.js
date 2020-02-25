@@ -67,7 +67,7 @@ const create = async(req, res) => {
 const activeNext = async(data) => {
   const {contact, ref} = data
 
-  const timelines = await TimeLine.fine({
+  const timelines = await TimeLine.find({
     contact: contact,
     status: 'pending',
     parent_ref: ref,
