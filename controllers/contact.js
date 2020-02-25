@@ -391,12 +391,35 @@ const bulkEditLabel = async (req, res) => {
 }
 
 const bulkUpdate = async (req, res) => {
-  const { contacts, data} = req.body;
-  Contact.find({_id: {$in: contacts}}).updateMany({$set: data}).then(() => {
+  const { contacts, data, tags} = req.body;
+  let tagUpdateQuery = {}
+  if(tags.tags && tags.tags.length) {
+    switch(tags.option) {
+      case 2:
+        tagUpdateQuery = {$push: {tags: {$each: tags.tags}}} 
+        break;
+      case 3:
+        tagUpdateQuery = {$pull: {tags: {$in: tags.tags}}} 
+        break;
+      case 4: 
+        tagUpdateQuery = {tags: tags.tags}
+        break;
+    }
+  }
+  let updateQuery = {};
+  if(Object.keys(data).length) {
+    updateQuery = {$set: data}
+  }
+  if(Object.keys(tagUpdateQuery).length) {
+    updateQuery = {...updateQuery, ...tagUpdateQuery}
+  }
+  
+  Contact.find({_id: {$in: contacts}}).updateMany(updateQuery).then(() => {
     res.send({
       status: true
     })
   }).catch(err => {
+    console.log("error", err);
     res.status(500).send({
       status: false,
       error: err.message || 'Update Error'
@@ -1129,6 +1152,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1162,6 +1186,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1195,6 +1220,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1229,6 +1255,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1262,6 +1289,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1295,6 +1323,7 @@ const advanceSearch = async (req, res) => {
       {
         $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id) }, { $or: query }] }
       },
+      {$unwind: '$contacts'},
       {
         $group: {
           _id: { contact: "$contacts", type: "$type" },
@@ -1420,55 +1449,25 @@ const advanceSearch = async (req, res) => {
       }
     })
   }
-
   let materialContacts = [];
   watchedVideoContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   watchedPdfContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   watchedImageContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedVideoContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedPdfContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
   notWatchedImageContacts.forEach(e => {
-    // if (e._id && isArray(e._id)) {
-    //   materialContacts.push(mongoose.Types.ObjectId(e._id[0]));
-    //   return;
-    // }
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   })
-
-  // if(excludeMaterialContactsArray.length) {
-  //   excludeMaterialContacts = excludeMaterialContactsArray.reduce((a, b) => a.filter(c => b.includes(c)));
-  // }  
-
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
   let includeMaterialCondition = (materialCondition['not_watched_pdf']['flag'] || 
@@ -1626,249 +1625,150 @@ const advanceSearch = async (req, res) => {
     query['$and'].push(zipQuery)
   }
 
-  // let results = [];
-  // if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
-  //   contacts.forEach(e => {
-  //     let activity = e.last_activity;
-  //     if (lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag']) {
-  //       if (lastMaterial['send_video']['flag']) {
-  //         if (lastMaterial['send_video']['material']) {
-  //           if (activity.type == 'videos' && activity.videos == lastMaterial['send_video']['material']) {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //         else {
-  //           if (activity.type == 'videos') {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //       }
-  //       if (lastMaterial['send_pdf']['flag']) {
-  //         if (lastMaterial['send_pdf']['material']) {
-  //           if (activity.type == 'pdfs' && activity.videos == lastMaterial['send_pdf']['material']) {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //         else {
-  //           if (activity.type == 'pdfs') {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //       }
-  //       if (lastMaterial['watched_video']['flag']) {
-  //         if (lastMaterial['watched_video']['material']) {
-  //           if (activity.type == 'video_trackers' && activity.videos == lastMaterial['watched_video']['material']) {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //         else {
-  //           if (activity.type == 'video_trackers') {
-  //             results.push(e); 
-  //             return;
-  //           }
-  //         }
-  //       }
-  //       if (lastMaterial['watched_pdf']['flag']) {
-  //         if (lastMaterial['watched_pdf']['material']) {
-  //           if (activity.type == 'pdf_trackers' && activity.videos == lastMaterial['watched_pdf']['material']) {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //         else {
-  //           if (activity.type == 'pdf_trackers') {
-  //             results.push(e);
-  //             return;
-  //           }
-  //         }
-  //       }
-  //     }
-  //     if (!activityCondition.length && !activityStart && !activityEnd) {
-  //       return;
-  //     }
-  //     if (activityCondition.length) {
-  //       if (activityCondition.indexOf(e.last_activity.type) === -1) {
-  //         return;
-  //       }
-  //     }
-  //     if (activityStart) {
-  //       if (new Date(e.last_activity.created_at) < new Date(activityStart)) {
-  //         return;
-  //       }
-  //     }
-  //     if (activityEnd) {
-  //       if (new Date(e.last_activity.created_at) > new Date(activityEnd)) {
-  //         return;
-  //       }
-  //     }
-  //     results.push(e);
-  //   })
-  // }
-  // else {
-  //   results = contacts;
-  // }
-  let lastActivityQueries = {};
-  if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['send_image']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag'] || lastMaterial['watched_image']['flag'] ) {
-    let activityQueries = {};
-    let lastActivityQuery;
-    // last activity condition
-    if(activityCondition && activityCondition.length) {
-      if(includeLastActivity) {
-        lastActivityQuery = {type: {$in: activityCondition}};
-        activityQueries['$or'] = [lastActivityQuery];
-      }
-      else {
-        lastActivityQuery = {type: {$nin: activityCondition}};
-        activityQueries['$and'] = [lastActivityQuery];
-      }      
-    }
-    // last material activity condition
-    let lastSendVideoQuery;
-    let lastSendPdfQuery;
-    let lastSendImageQuery;
-    let lastWatchedVideoQuery;
-    let lastWatchedPdfQuery;
-    let lastWatchedImageQuery;
-    // sent video query
-    if(lastMaterial['send_video']['flag'])  {
-      if(includeLastActivity) {
-        lastSendVideoQuery = {type: 'videos'}
-        if(lastMaterial['send_video']['material']) {
-          lastSendVideoQuery['videos'] = lastMaterial['send_video']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastSendVideoQuery)}
-        else {activityQueries['$or'] = [lastSendVideoQuery]}
-      }
-      else {
-        lastSendVideoQuery = {type: { $ne: 'videos'}}
-        if(lastMaterial['send_video']['material']) {
-          lastSendVideoQuery['videos'] = {$ne : lastMaterial['send_video']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastSendVideoQuery)}
-        else {activityQueries['$and'] = [lastSendVideoQuery]}
-      }
-    }
-    // sent pdf query
-    if(lastMaterial['send_pdf']['flag'])  {
-      if(includeLastActivity) {
-        lastSendPdfQuery = {type: 'pdfs'}
-        if(lastMaterial['send_pdf']['material']) {
-          lastSendPdfQuery['pdfs'] = lastMaterial['send_pdf']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastSendPdfQuery)}
-        else {activityQueries['$or'] = [lastSendPdfQuery]}  
-      }
-      else {
-        lastSendPdfQuery = {type: { $ne: 'pdfs'}}
-        if(lastMaterial['send_pdf']['material']) {
-          lastSendPdfQuery['pdfs'] = {$ne : lastMaterial['send_pdf']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastSendPdfQuery)}
-        else {activityQueries['$and'] = [lastSendPdfQuery]}
-      }
-    }
-    // sent Image query
-    if(lastMaterial['send_image']['flag'])  {
-      if(includeLastActivity) {
-        lastSendImageQuery = {type: 'images'}
-        if(lastMaterial['send_image']['material']) {
-          lastSendImageQuery['images'] = lastMaterial['send_image']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastSendImageQuery)}
-        else {activityQueries['$or'] = [lastSendImageQuery]}  
-      }
-      else {
-        lastSendImageQuery = {type: { $ne: 'images'}}
-        if(lastMaterial['send_image']['material']) {
-          lastSendImageQuery['images'] = {$ne : lastMaterial['send_image']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastSendImageQuery)}
-        else {activityQueries['$and'] = [lastSendImageQuery]}
-      }
-    }
-    // watched video query
-    if(lastMaterial['watched_video']['flag'])  {
-      if(includeLastActivity) {
-        lastWatchedVideoQuery = { type: 'video_trackers'};
-        if(lastMaterial['watched_video']['material']) {
-          lastWatchedVideoQuery['videos'] = lastMaterial['watched_video']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastWatchedVideoQuery)}
-        else {activityQueries['$or'] = [lastWatchedVideoQuery]} 
-      }
-      else {
-        lastWatchedVideoQuery = { type: {$ne: 'video_trackers'}};
-        if(lastMaterial['watched_video']['material']) {
-          lastWatchedVideoQuery['videos'] = {$ne: lastMaterial['watched_video']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedVideoQuery)}
-        else {activityQueries['$and'] = [lastWatchedVideoQuery]}
-      }      
-    }
-    // watched pdf query
-    if(lastMaterial['watched_pdf']['flag'])  {
-      if(includeLastActivity) {
-        lastWatchedPdfQuery = { type: 'pdf_trackers'};
-        if(lastMaterial['watched_pdf']['material']) {
-          lastWatchedPdfQuery['pdfs'] = lastMaterial['watched_pdf']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastWatchedPdfQuery)}
-        else {activityQueries['$or'] = [lastWatchedPdfQuery]} 
-      }
-      else {
-        lastWatchedPdfQuery = { type: {$ne: 'pdf_trackers'}};
-        if(lastMaterial['watched_pdf']['material']) {
-          lastWatchedPdfQuery['pdfs'] = {$ne: lastMaterial['watched_pdf']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedPdfQuery)}
-        else {activityQueries['$and'] = [lastWatchedPdfQuery]} 
-      }      
-    }
-    // watched Image Query
-    if(lastMaterial['watched_image']['flag'])  {
-      if(includeLastActivity) {
-        lastWatchedImageQuery = { type: 'image_trackers'};
-        if(lastMaterial['watched_image']['material']) {
-          lastWatchedImageQuery['images'] = lastMaterial['watched_image']['material'];
-        }
-        if(activityQueries['$or']) {activityQueries['$or'].push(lastWatchedImageQuery)}
-        else {activityQueries['$or'] = [lastWatchedImageQuery]} 
-      }
-      else {
-        lastWatchedImageQuery = { type: {$ne: 'image_trackers'}};
-        if(lastMaterial['watched_image']['material']) {
-          lastWatchedImageQuery['images'] = {$ne: lastMaterial['watched_image']['material']};
-        }
-        if(activityQueries['$and']) {activityQueries['$and'].push(lastWatchedImageQuery)}
-        else {activityQueries['$and'] = [lastWatchedImageQuery]}
-      }
-    }
-    // last activity time
-    let timeQuery;
-    if(activityStart && activityEnd) {
-      timeQuery = {created_at : {$gte: activityStart, $lte: new Date(activityEnd).setHours(23,59,59,999)}};
-    }
-    else if(activityStart) {
-      timeQuery = {created_at : {$gte: activityStart}};
-    }
-    else if(activityEnd) {
-      timeQuery = {created_at : {$lte: new Date(activityEnd).setHours(23,59,59,999)}};
-    }
-    lastActivityQueries['$and'] = [activityQueries];
-    if(timeQuery) {
-      lastActivityQueries['$and'].push(timeQuery);
-    }
-  }
-  console.log(lastActivityQueries);
-  var contacts = await Contact.find(query).populate({path: 'last_activity', match:lastActivityQueries}).sort({ first_name: 1 }).catch(err => {
+  // Activity Time Query 
+  var contacts = await Contact.find(query).populate({path: 'last_activity'}).sort({ first_name: 1 }).catch(err => {
     console.log('err', err)
   })
-  results = contacts;
+
+  let results = [];
+  let resultContactIds = [];
+  if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['send_image']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag'] || lastMaterial['watched_image']['flag']) {
+    contacts.forEach(e => {
+      let activity = e.last_activity;
+      if(activityStart || activityEnd) {
+        if(activityStart) {
+          if (new Date(activity.created_at) < new Date(activityStart)) {
+            return;
+          }
+        }
+        if(activityEnd) {
+          if (new Date(activity.created_at) > new Date(activityEnd)) {
+            return;
+          }
+        }
+        if(!(lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['send_image']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag'] || lastMaterial['watched_image']['flag']) && !activityCondition.length) {
+          results.push(e);
+          resultContactIds.push(e._id);
+          return;
+        }
+      }
+      if (lastMaterial['send_video']['flag']) {
+        if (lastMaterial['send_video']['material']) {
+          if (activity.type == 'videos' && activity.videos == lastMaterial['send_video']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'videos') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (lastMaterial['send_pdf']['flag']) {
+        if (lastMaterial['send_pdf']['material']) {
+          if (activity.type == 'pdfs' && activity.pdfs == lastMaterial['send_pdf']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'pdfs') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (lastMaterial['send_image']['flag']) {
+        if (lastMaterial['send_image']['material']) {
+          if (activity.type == 'images' && activity.images == lastMaterial['send_image']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'images') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (lastMaterial['watched_video']['flag']) {
+        if (lastMaterial['watched_video']['material']) {
+          if (activity.type == 'video_trackers' && activity.videos == lastMaterial['watched_video']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'video_trackers') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (lastMaterial['watched_pdf']['flag']) {
+        if (lastMaterial['watched_pdf']['material']) {
+          if (activity.type == 'pdf_trackers' && activity.pdfs == lastMaterial['watched_pdf']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'pdf_trackers') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (lastMaterial['watched_image']['flag']) {
+        if (lastMaterial['watched_image']['material']) {
+          if (activity.type == 'image_trackers' && activity.pdfs == lastMaterial['watched_image']['material']) {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+        else {
+          if (activity.type == 'image_trackers') {
+            results.push(e);
+            resultContactIds.push(e._id);
+            return;
+          }
+        }
+      }
+      if (activityCondition.length) {
+        if (activityCondition.indexOf(activity.type) !== -1) {
+          results.push(e)
+          resultContactIds.push(e._id);
+          return;
+        }
+      }
+    })
+    if(!includeLastActivity) {
+      results = []
+      contacts.forEach(e => {
+        if(resultContactIds.indexOf(e._id) === -1) {
+          results.push(e)
+        }
+      })
+    }
+  }
+  else {
+    results = contacts;
+  }
+  
 
   return res.send({
     status: true,
