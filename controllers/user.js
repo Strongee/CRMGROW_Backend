@@ -258,14 +258,6 @@ const socialSignUp = async (req, res) => {
 
   const { email, token, bill_amount } = req.body
 
-  if (isBlockedEmail(email)) {
-    res.status(400).send({
-      status: false,
-      error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
-    })
-    return;
-  }
-
   if(!token) {
     const user = new User({
       ...req.body,
