@@ -748,7 +748,8 @@ const bulkEmail = async(req, res) => {
           replyTo: currentUser.email,
           subject: subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
+          text: video_content
         }
         
         let promise = new Promise((resolve, reject)=>{

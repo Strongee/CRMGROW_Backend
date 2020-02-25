@@ -393,7 +393,8 @@ const bulkEmail = async(req, res) => {
           replyTo: currentUser.email,
           subject: subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
+          text: image_content
         }
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
