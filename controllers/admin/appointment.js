@@ -1,13 +1,14 @@
 const { validationResult } = require('express-validator/check')
 const Appointment = require('../../models/appointment');
 const Activity = require('../../models/activity');
+const Contact = require('../../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
   const data = await Appointment.find({user: currentUser.id});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Appointment doesn`t exist'
     })
@@ -35,10 +36,9 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('data', req.body)
+
   appointment.save()
   .then(_appointment => {
-
     const activity = new Activity({
       content: currentUser.user_name + ' added appointment',
       contacts: _appointment.contact,
@@ -50,6 +50,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(_appointment.contact,{ $set: {last_activity: activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_appointment)
       const data = JSON.parse(myJSON);
       data.activity = _activity
@@ -81,7 +84,7 @@ const edit = async(req, res) => {
   const appointment = await Appointment.find({user :currentUser.id, _id: req.params.id});
 
   if (!editData) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })

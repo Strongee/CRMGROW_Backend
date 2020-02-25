@@ -10,6 +10,7 @@ const VideoCtrl = require('../controllers/video')
 const UserCtrl = require('../controllers/user')
 const { catchError } = require('../controllers/error')
 const config  = require('../config/config')
+const { TEMP_PATH } = require('../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -19,26 +20,42 @@ const s3 = new AWS.S3({
 
 const router = express.Router()
 
-const storage = multerS3({
-    s3: s3,
-    bucket: config.AWS.AWS_S3_BUCKET_NAME,
-    acl: 'public-read',
-    metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname});
+// const storage = multerS3({
+//     s3: s3,
+//     bucket: config.AWS.AWS_S3_BUCKET_NAME,
+//     acl: 'public-read',
+//     metadata: function (req, file, cb) {
+//       cb(null, {fieldName: file.fieldname});
+//     },
+//     key: function (req, file, cb) {
+//       const today = new Date()
+//       const year = today.getYear()
+//       const month = today.getMonth()
+//       cb(null, 'video' +  year + '/' + month + '/' + file.originalname)
+//     },
+//   })
+
+
+// const upload = multer({
+//     storage: storage
+//   })
+
+  const fileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, TEMP_PATH)
     },
-    key: function (req, file, cb) {
-      cb(null, 'video' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
-    },
+    filename: (req, file, cb) => {
+      cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
+    }
   })
+  
+  
+const upload = multer({ storage: fileStorage })
 
-
-const upload = multer({
-    storage: storage
-  })
-
+router.post('/create', UserCtrl.checkAuth, catchError(VideoCtrl.createVideo));
 
 // Upload a video
-router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('video'), catchError(VideoCtrl.create))
 
 // Upload a thumbnail and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
@@ -53,10 +70,30 @@ router.get('/:id', catchError(VideoCtrl.get))
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
 
 // Send Video
-router.post('/send', UserCtrl.checkAuth, catchError(VideoCtrl.sendVideo))
+router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendVideo))
+
+// Send Video on text
+router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendText))
+
+// Bulk videos
+router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkEmail))
+
+// Bulk videos
+router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkOutlook))
+
+// Bulk videos
+router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkGmail))
+
+// Bulk texts
+router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkText))
+
+// Sms Content 
+router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.createSmsContent));
+
+// Streaming video
+router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
-
 
 module.exports = router

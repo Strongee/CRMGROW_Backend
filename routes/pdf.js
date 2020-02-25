@@ -1,10 +1,7 @@
 const express = require('express')
-const fs = require('fs')
 const AWS = require('aws-sdk')
 const multer = require('multer');
 const multerS3 = require('multer-s3')
-const mime = require('mime-types')
-const uuidv1 = require('uuid/v1')
 
 const PDFCtrl = require('../controllers/pdf')
 const UserCtrl = require('../controllers/user')
@@ -30,9 +27,9 @@ const storage = multerS3({
       const today = new Date()
       const year = today.getYear()
       const month = today.getMonth()
-      cb(null, 'pdf' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
+      cb(null, 'pdf ' + year + '/' + month + '/' + file.originalname)
     },
-  })
+  }) 
 
 
 const upload = multer({
@@ -41,7 +38,7 @@ const upload = multer({
 
 
 // Upload a pdf
-router.post('/', UserCtrl.checkAuth, upload.single('pdf'), catchError(PDFCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('pdf'), catchError(PDFCtrl.create))
 
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail))
@@ -56,7 +53,24 @@ router.get('/:id', catchError(PDFCtrl.get))
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll))
 
 // Send PDF
-router.post('/send', UserCtrl.checkAuth, catchError(PDFCtrl.sendPDF))
+router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.sendPDF))
+
+// Send Video on text
+router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.sendText))
+
+// Bulk videos
+router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkEmail))
+
+// Bulk texts
+router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkText))
+
+// Sms Content Generate
+router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.createSmsContent))
+//Bulk Gmail
+router.post('/bulk-gmail', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkGmail))
+
+//Bulk Outlook
+router.post('/bulk-outlook', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(PDFCtrl.bulkOutlook))
 
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))

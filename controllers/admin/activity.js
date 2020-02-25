@@ -9,7 +9,6 @@ const get = async(req, res) => {
 
   for(let i = 0; i < _activity.length; i ++){
     const _contacts = await Contact.findOne({_id: _activity[i].contacts}) 
-    console.log('contact', _contacts)
     myJSON = JSON.stringify(_activity[i])
     const activity = JSON.parse(myJSON);
     delete activity.contacts
@@ -18,7 +17,7 @@ const get = async(req, res) => {
   }
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Activity doesn`t exist'
     })
@@ -80,7 +79,7 @@ const getByLastActivity = async(req, res) => {
   }
   
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Activity doesn`t exist'
     })

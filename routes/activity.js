@@ -8,6 +8,6 @@ const router = express.Router()
 
 router.post('/', UserCtrl.checkAuth, catchError(ActivityCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(ActivityCtrl.get))
-router.get('/last', UserCtrl.checkAuth, catchError(ActivityCtrl.getByLastActivity))
+router.get('/:id', UserCtrl.checkAuth, UserCtrl.checkLastLogin , catchError(ActivityCtrl.get))
 
 module.exports = router

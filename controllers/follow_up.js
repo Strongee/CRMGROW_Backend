@@ -1,8 +1,10 @@
 const { validationResult } = require('express-validator/check')
-const moment = require('moment');
-const FollowUp = require('../models/follow_up');
+const moment = require('moment')
+const FollowUp = require('../models/follow_up')
 const Contact = require('../models/contact')
-const Activity = require('../models/activity');
+const Activity = require('../models/activity')
+const Reminder = require('../models/reminder')
+const User = require('../models/user')
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -11,7 +13,6 @@ const get = async(req, res) => {
 
   for(let i = 0; i < _follow_up.length; i ++){
     const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-    console.log('contact', _contact)
     myJSON = JSON.stringify(_follow_up[i])
     const follow_up = JSON.parse(myJSON);
     delete follow_up.contact
@@ -20,7 +21,7 @@ const get = async(req, res) => {
   }
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
     })
@@ -53,8 +54,24 @@ const create = async(req, res) => {
   followUp.save()
   .then(_followup => {
 
+    const mins = new Date(_followup.due_date).getMinutes()-30 
+    let due_date = new Date(_followup.due_date).setMinutes(mins)
+    const reminder = new Reminder({
+      contact: _followup.contact,
+      due_date: due_date,
+      type: 'follow_up',
+      user: currentUser.id,
+      follow_up: _followup.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    reminder.save().catch(err=>{
+      console.log('error', err)
+    })
+
     const activity = new Activity({
-      content: currentUser.user_name + ' added follow up',
+      content: 'added follow up',
       contacts: _followup.contact,
       user: currentUser.id,
       type: 'follow_ups',
@@ -64,26 +81,69 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_followup)
       const data = JSON.parse(myJSON);
       data.activity = _activity
-      res.send({
+      return res.send({
         status: true,
         data
       })
     }).catch(e => {
-      return res.status(500).send({
+      console.log('follow error', e)
+      return res.status().send({
         status: false,
         error: e
       })
     });
   })
   .catch(e => {
-    return res.status(500).send({
+    console.log('follow error', e)
+    return res.status().send({
       status: false,
       error: e
     })
   });
+}
+
+const edit = async (req, res) => {
+  const editData = req.body
+  
+  if (req.body.due_date || req.body.contact) { 
+    Reminder.findOne({follow_up: req.params.id}).then(_reminder=>{
+      if(req.body.due_date) {
+        _reminder['due_date'] = req.body.due_date
+      } 
+      if(req.body.contact) {
+        _reminder['contact'] = req.body.contact
+      }
+      _reminder.save().catch(err=>{
+        console.log('err', err)
+      })
+    }).catch(err=>{
+      console.log('err', err)
+    }) 
+  }
+  
+  const follow_up = await FollowUp.findOne({_id: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
+
+  for (let key in editData) {
+    follow_up[key] = editData[key]
+  }
+  
+  follow_up['updated_at'] = new Date()
+  follow_up.save().then((_follow_up)=>{
+    res.send({
+      status: true,
+      data: _follow_up
+    })
+  }).catch(err=>{
+    console.log('err', err)
+  })
 }
 
 const getByDate = async(req, res) =>{
@@ -125,14 +185,15 @@ const getByDate = async(req, res) =>{
   
   switch(due_date) {
     case 'overdue': {
-      const current_time = moment().utcOffset(time_zone);
-      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}});
+      const current_time = moment().utcOffset(time_zone).startOf('day');
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$lt: current_time}}).sort({created_at: -1});
 
       let data = [];
       
       for(let i = 0; i < _follow_up.length; i ++){
-        const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
+        const _contact = await Contact.findOne({_id: _follow_up[i].contact}).catch(err => {
+          console.log('err', err)
+        }) 
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -141,7 +202,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'OverDue doesn`t exist'
         })
@@ -154,7 +215,6 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'today': {
-      console.log('moment', moment().utcOffset(8))
       const start =  moment().utcOffset(time_zone).startOf('day');      // set to 12:00 am today
       const end =  moment().utcOffset(time_zone).endOf('day');          // set to 23:59 pm today
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start, $lt: end}})
@@ -172,7 +232,7 @@ const getByDate = async(req, res) =>{
     
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Today'
         })
@@ -195,7 +255,6 @@ const getByDate = async(req, res) =>{
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -204,7 +263,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -219,14 +278,13 @@ const getByDate = async(req, res) =>{
     case 'next_week': {
       
       const next_week_start = moment().utcOffset(time_zone).add(2, 'day').startOf('day')
-      const next_week_end = moment().utcOffset(time_zone).add('days', 7).endOf('day')
+      const next_week_end = moment().utcOffset(time_zone).add( 7,'days').endOf('day')
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: next_week_start, $lt: next_week_end}})
 
       let data = [];
       
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -235,7 +293,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -248,15 +306,14 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'next_month': {
-      const start_month = moment().utcOffset(time_zone).startOf('month').add(1, 'months')
-      const end_month   =  moment().utcOffset(time_zone).add(1, 'months').endOf('month')
+      const start_month = moment().utcOffset(time_zone).add(8, 'day').startOf('day')
+      const end_month = moment().utcOffset(time_zone).add( 30,'days').endOf('day')
       const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start_month, $lt: end_month}})
       
       let data = [];
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -265,7 +322,7 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
           error: 'FollowUp doesn`t exist on Tomorrow'
         })
@@ -278,14 +335,13 @@ const getByDate = async(req, res) =>{
       break;
     }
     case 'future': {
-      const current_time = moment().utcOffset(time_zone);
-      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: current_time}});
+      const start_future = moment().utcOffset(time_zone).add(8, 'day').startOf('day')
+      const _follow_up = await FollowUp.find({user :currentUser.id, status: 0, due_date: {$gte: start_future}});
 
       let data = [];
 
       for(let i = 0; i < _follow_up.length; i ++){
         const _contact = await Contact.findOne({_id: _follow_up[i].contact}) 
-        console.log('contact', _contact)
         myJSON = JSON.stringify(_follow_up[i])
         const follow_up = JSON.parse(myJSON);
         delete follow_up.contact
@@ -294,9 +350,9 @@ const getByDate = async(req, res) =>{
       }
 
       if (!data) {
-        return res.status(401).json({
+        return res.status(400).json({
           status: false,
-          error: 'OverDue doesn`t exist'
+          error: 'Future doesn`t exist'
         })
       }
 
@@ -310,53 +366,148 @@ const getByDate = async(req, res) =>{
 
   }
 }
-const updateChecked  = async(req, res) =>{
-  const { currentUser } = req
-  const _follow_up = await FollowUp.findOne({_id: req.params.id})
 
-  if (!_follow_up) {
-    return res.status(401).json({
+const updateArchived = async(req, res) => {
+  const { follow_ups } = req.body
+  if(follow_ups){
+    try{
+      for(let i=0; i<follow_ups.length; i++){
+        const follow_up = follow_ups[i]
+        FollowUp.findByIdAndUpdate(follow_up, { $set: {status: -1} }).catch(err=>{
+          console.log('err', err)
+        })
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_up: follow_up.id})
+        if(reminder){
+          reminder['del'] = true
+          reminder.save().catch(err=>{
+            console.log('err', err)
+          })
+        }
+      }
+      res.send({
+        status: true,
+        data
+      })
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+  } else {
+    return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
     })
   }
-
-  _follow_up.status = 1
-  await _follow_up.save()
-
-  const activity = new Activity({
-    content: _follow_up.content,
-    contacts: _follow_up.contact,
-    user: currentUser.id,
-    type: 'follow_ups',
-    follow_ups: _follow_up._id,
-    created_at: new Date(),
-    updated_at: new Date(),
-  })
-
-  const _contact = await Contact.findOne({_id: activity.contacts})
-
-  activity.save().then(_activity => {
   
-    myJSON = JSON.stringify(_activity)
-    const data = JSON.parse(myJSON);
-    data.contact = _contact
-    res.send({
-      status: true,
-      data
-    })
-  }).catch(e => {
-    return res.status(500).send({
-      status: false,
-      error: e
-    })
-  });
 }
 
+const updateChecked  = async(req, res) =>{
+  const { currentUser } = req
+  const { follow_ups } = req.body
+  if(follow_ups){
+    try{
+      for(let i=0; i<follow_ups.length; i++){
+        const follow_up = follow_ups[i]
+        const _follow_up = await FollowUp.findOne({_id: follow_up}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        _follow_up.status = 1
+        _follow_up.save().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const reminder = await Reminder.findOne({type: 'follow_up', follow_up:follow_up}).catch(err=>{
+          console.log('err', err)
+        })
+        if(reminder){
+          reminder['del'] = true
+          reminder.save().catch(err=>{
+            console.log('err', err)
+          })
+        }
+      
+        const activity = new Activity({
+          content: 'Completed follow up',
+          contacts: _follow_up.contact,
+          user: currentUser.id,
+          type: 'follow_ups',
+          follow_ups: follow_up,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+      
+        activity.save().then(_activity => {
+          Contact.findByIdAndUpdate( _follow_up.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+        }).catch(e => {
+          console.log('follow error', e)
+          return res.status().send({
+            status: false,
+            error: e
+          })
+        });
+      }
+      res.send({
+        status: true,
+        data
+      })
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+    
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'FollowUp doesn`t exist'
+    })
+  }
+}
+
+const bulkUpdate = async(req, res) => {
+  const { ids, content, due_date } = req.body
+  if(ids && ids.length){
+    try{
+      let query = {}
+      if(content) { query['content'] = content; }
+      if(due_date) { query['due_date'] = due_date; }
+      FollowUp.find({_id: {$in: ids}}).updateMany({$set: query}).then((data) => {
+        res.send({
+          status: true,
+          data
+        })
+      }).catch(err => {
+        res.send({
+          status: false,
+          error: err
+        })
+      })      
+    } catch(err){
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    }
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'No selected Follow up(s)'
+    })
+  }  
+}
 
 module.exports = {
     get,
     create,
+    edit,
     getByDate,
-    updateChecked
+    updateChecked,
+    updateArchived,
+    bulkUpdate
 }

@@ -13,7 +13,7 @@ const create = async (req, res) => {
                 name: req.file.filename,
                 type: 'image'
             })
-            await file.save()
+           file.save()
         }
         res.send({
           status: true,
@@ -29,7 +29,7 @@ const get = (req, res) => {
     const filePath = FILES_PATH + req.params.name
     console.info('File Path:', filePath)
     if (fs.existsSync(filePath)) {
-      const contentType = mime.contentType(path.extname(req.params.name))
+      const contentType = mime.contentType(path.extname(filePath))
       res.set('Content-Type', contentType)
       res.sendFile(filePath)
     } else {

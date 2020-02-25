@@ -13,6 +13,7 @@ const video = require('./video')
 const video_tracker = require('./video_tracker')
 const pdf = require('./pdf')
 const pdf_tracker = require('./pdf_tracker')
+const payment = require('./payment')
 const UserCtrl = require('../../controllers/user')
 
 const router = express.Router()
@@ -31,4 +32,5 @@ router.use('/video', video)
 router.use('/vtrack', video_tracker)
 router.use('/pdf', pdf)
 router.use('/ptrack', pdf_tracker)
+router.use('/payment', payment)
 module.exports = router

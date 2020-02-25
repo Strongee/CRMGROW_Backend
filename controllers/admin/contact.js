@@ -4,13 +4,14 @@ const Activity = require('../../models/activity')
 const FollowUp = require('../../models/follow_up')
 const Appointment = require('../../models/appointment')
 const sgMail = require('@sendgrid/mail')
+const config = require('../../config/config')
 
 const getAll = async(req, res) => {
   const { currentUser } = req
   const data = await Contact.find({user: currentUser.id})
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -27,7 +28,7 @@ const get = async(req, res) => {
   const _contact = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!_contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Contact doesn`t exist'
     })
@@ -35,7 +36,6 @@ const get = async(req, res) => {
 
   const _follow_up = await FollowUp.find({user: currentUser.id, contact: req.params.id }).sort({due_date: 1})
   const _activity_list = await Activity.find({user: currentUser.id, contacts: req.params.id })
-  console.log('_activity_list',_activity_list)
   let _activity_detail_list = [];
   
   for(let i = 0; i < _activity_list.length; i ++){
@@ -87,7 +87,6 @@ const create = async(req, res) => {
   })
   
 
-  console.log('user', currentUser.id)
   contact.save()
   .then(_contact => {
       const activity = new Activity({
@@ -131,7 +130,7 @@ const remove = async(req, res) => {
   const data = await Contact.findOne({user: currentUser.id, _id: req.params.id })
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -153,7 +152,7 @@ const edit = async(req, res) => {
   const contact = await Contact.findOne({user: currentUser.id, _id: req.params.id})
 
   if (!contact) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Invalid_permission'
     })
@@ -191,7 +190,7 @@ const edit = async(req, res) => {
 }
 
 const sendBatch = async(req, res) => {
-  sgMail.setApiKey(process.env.SENDGRID_KEY);
+  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
   const {currentUser} = req
   const {email_list, subject, content} = req.body
@@ -207,7 +206,6 @@ const sendBatch = async(req, res) => {
       };
       
       // Send msg to each email
-
       promisall.push(new Promise((resolve, reject) => {
           sgMail.send(msg).then((res) => {
               console.log('mailres.errorcode', res[0].statusCode);

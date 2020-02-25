@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator/check')
 const PhoneLog = require('../models/phone_log');
 const Activity = require('../models/activity');
+const Contact= require('../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
@@ -8,7 +9,7 @@ const get = async(req, res) => {
   const data = await PhoneLog.find({user :currentUser.id, contact: contact});
 
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Phone log doesn`t exist'
     })
@@ -36,12 +37,12 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('data', req.body)
+
   phone_log.save()
   .then(_phone_log => {
 
     const activity = new Activity({
-      content: currentUser.user_name + ' added phone log',
+      content: 'added phone log',
       contacts: _phone_log.contact,
       user: currentUser.id,
       type: 'phone_logs',
@@ -51,6 +52,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate(_phone_log.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_phone_log)
       const data = JSON.parse(myJSON);
       data.activity = _activity

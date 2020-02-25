@@ -8,8 +8,10 @@ const app         = require('../app');
 
 const debug       = require('debug')('myapp:server');
 const http        = require('http');
+const socketIO    = require('socket.io');
 
 const mongoose = require('mongoose');
+const tracker = require('../controllers/tracker');
 
 /**
  * Get port from environment and store in Express.
@@ -19,22 +21,23 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const { DB_PORT } = require('../config/database');
-
 /**
  * Connect Monogo Database.
  */
 
  
-
+mongoose.set('useCreateIndex', true)
 mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
+
 
 /**
  * Create HTTP server.
  */
 
 var server = http.createServer(app);
+const io = socketIO(server);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -45,6 +48,7 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 
+tracker.setup(io);
 
 /**
  * Normalize a port into a number, string, or false.

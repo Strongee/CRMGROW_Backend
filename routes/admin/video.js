@@ -7,9 +7,10 @@ const mime = require('mime-types')
 const uuidv1 = require('uuid/v1')
 
 const VideoCtrl = require('../../controllers/admin/video')
-const UserCtrl = require('../../controllers/user')
+const UserCtrl = require('../../controllers/admin/user')
 const { catchError } = require('../../controllers/error')
 const config  = require('../../config/config')
+const { TEMP_PATH } = require('../../config/path')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -19,23 +20,17 @@ const s3 = new AWS.S3({
 
 const router = express.Router()
 
-const storage = multerS3({
-    s3: s3,
-    bucket: config.AWS.AWS_S3_BUCKET_NAME,
-    acl: 'public-read',
-    metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname});
-    },
-    key: function (req, file, cb) {
-      cb(null, 'video' + year + '/' + month + '/' + uuidv1() + '.' + mime.extension(file.mimetype))
-    },
-  })
+const fileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, TEMP_PATH)
+  },
+  filename: (req, file, cb) => {
+    cb(null, uuidv1() + '.' + mime.extension(file.mimetype))
+  }
+})
 
 
-const upload = multer({
-    storage: storage
-  })
-
+const upload = multer({ storage: fileStorage })
 
 // Upload a video
 router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtrl.create))
@@ -46,11 +41,16 @@ router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail))
 
-// Get a video
-router.get('/:id', catchError(VideoCtrl.get))
-
 // Get all video
-router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
+router.get('/list/:page', catchError(VideoCtrl.getVideos))
+// // Get a video
+// router.get('/:id', catchError(VideoCtrl.get))
+
+// Get all video by user
+router.post('/user/:id', catchError(VideoCtrl.getVideosByUser))
+// // Get a video
+// router.get('/:id', catchError(VideoCtrl.get))
+
 
 // Send Video
 router.post('/send', UserCtrl.checkAuth, catchError(VideoCtrl.sendVideo))

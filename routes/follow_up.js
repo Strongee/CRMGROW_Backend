@@ -6,9 +6,12 @@ const { catchError } = require('../controllers/error')
 
 const router = express.Router()
 
-router.post('/', UserCtrl.checkAuth, catchError(FollowUpCtrl.create))
+router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(FollowUpCtrl.create))
 router.get('/' , UserCtrl.checkAuth, catchError(FollowUpCtrl.get))
 router.get('/date' , UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate))
-router.put('/checked/:id', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
+router.put('/:id' , UserCtrl.checkAuth, catchError(FollowUpCtrl.edit))
+router.post('/checked', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateChecked))
+router.post('/archived', UserCtrl.checkAuth, catchError(FollowUpCtrl.updateArchived))
+router.post('/update', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkUpdate))
 
 module.exports = router

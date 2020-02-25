@@ -1,17 +1,42 @@
 const mail_contents = {
     WELCOME_SIGNUP: {
-        MAIL: "support@teamgrow.awsapps.com",
-        SUBJECT: "Welcome to Teamgrow",
-        TEXT: "Welcome to Teamgrow"
+        MAIL: "CRMGROW <support@crmgrow.com>",
+        SUBJECT: "Welcome to CRMGROW",
+        TEXT: "Welcome to CRMGROW"
     },
-    WELCOME_SEND_VIDEO: {
-        MAIL: "no-reply@teamgrow.awsapps.com",
-        SUBJECT: "Thank you for your interest in EXP.  Please see below video link."
+    SUPPORT_CRMGROW: {
+        MAIL: "CRMGROW <support@crmgrow.com>",
+        SUBJECT: "Support CRMGROW",
+        TEXT: "Support CRMGROW" 
     },
-    WELCOME_SEND_PDF: {
-        MAIL: "no-reply@teamgrow.awsapps.com",
-        SUBJECT: "Thank you for your interest in EXP.  Please see below pdf link."
-    }
+    NOTIFICATION_SEND_MATERIAL: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW video watched notification: "
+    },
+    DAILY_REPORT: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Daily report: "
+    },
+    RESET_PASSWORD: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Rest Password"
+    },
+    FOLLOWUP_REMINDER: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Follow up reminder: "
+    },
+    APPOINTMENT_REMINDER: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Appointment reminder: "
+    },
+    NOTIFICATION_APPOINTMENT: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "Appointment notification"
+    },
+    MAIL_SEND: "mailservice@crmgrow.com",
+    VIDEO_TITLE: "eXp Realty eXplained Videos",
+    PDF_TITLE: "eXp Realty eXplained PDFs",
+    IMAGE_TITLE: "eXp Realty eXplained Images"
 }
 
 module.exports = mail_contents;

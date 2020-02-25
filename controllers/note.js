@@ -1,16 +1,16 @@
 const { validationResult } = require('express-validator/check')
 const Note = require('../models/note');
 const Activity = require('../models/activity');
+const Contact = require('../models/contact');
 
 const get = async(req, res) => {
   const { currentUser } = req
   const query = {...req.query}
   const contact = query['contact']
-  console.log('contact', contact)
+
   const data = await Note.find({user :currentUser.id, contact: contact});
-  console.log('data', data);
   if (!data) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: false,
       error: 'Note doesn`t exist'
     })
@@ -38,12 +38,12 @@ const create = async(req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   })
-  console.log('req.body',req.body)
+  
   note.save()
   .then(_note => {
 
     const activity = new Activity({
-      content: currentUser.user_name + ' added note',
+      content: 'added note',
       contacts: _note.contact,
       user: currentUser.id,
       type: 'notes',
@@ -53,6 +53,9 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
+      Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
       myJSON = JSON.stringify(_note)
       const data = JSON.parse(myJSON);
       data.activity = _activity
