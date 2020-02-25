@@ -661,7 +661,7 @@ const bulkEmail = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -678,7 +678,7 @@ const bulkEmail = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -705,16 +705,14 @@ const bulkEmail = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_titles = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_titles = `${video.title}`
           }
           
-          if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
+          if(j < videos.length-1){  
             video_descriptions = video_descriptions + `${video.description}, ` 
           } else{
-            video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
@@ -723,9 +721,9 @@ const bulkEmail = async(req, res) => {
       }
       
       if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -746,7 +744,7 @@ const bulkEmail = async(req, res) => {
           to: _contact.email,
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
           replyTo: currentUser.email,
-          subject: subject,
+          subject: video_subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
                 +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
           text: video_content
@@ -850,7 +848,7 @@ const bulkGmail = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -866,7 +864,7 @@ const bulkGmail = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -893,16 +891,14 @@ const bulkGmail = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_titles = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_titles = video.title
           }
           
           if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
             video_descriptions = video_descriptions + `${video.description}, ` 
           } else{
-            video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
@@ -910,10 +906,10 @@ const bulkGmail = async(req, res) => {
           video_objects = video_objects + video_object                      
       }
       
-      if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+      if(video_subject == '' ){
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -933,7 +929,7 @@ const bulkGmail = async(req, res) => {
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
-        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );
+        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
 
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
@@ -1295,7 +1291,7 @@ const bulkOutlook = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -1312,7 +1308,7 @@ const bulkOutlook = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -1339,9 +1335,9 @@ const bulkOutlook = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_title = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_title = `${video.title}`
           }
           
           if(j < videos.length-1){
@@ -1356,10 +1352,10 @@ const bulkOutlook = async(req, res) => {
           video_objects = video_objects + video_object                      
       }
       
-      if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+      if(video_subject == '' ){
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -1378,7 +1374,7 @@ const bulkOutlook = async(req, res) => {
         
         const sendMail = {
           message: {
-            subject: subject,
+            subject: video_subject,
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'

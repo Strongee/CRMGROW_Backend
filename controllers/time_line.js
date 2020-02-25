@@ -138,15 +138,23 @@ const runTimeline = async(id) => {
           })
       
           activity.save().then(_activity => {
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
             Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
               console.log('err', err)
             })
-          }).catch(e => {
-            console.log('follow error', e)
+          }).catch(err => {
+            console.log('follow error', err)
           });
         })
-        .catch(e => {
-          console.log('follow error', e)
+        .catch(err => {
+            timeline['status'] = 'error'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          console.log('follow error', err)
         });
         break;
       case 'note':
@@ -174,22 +182,41 @@ const runTimeline = async(id) => {
             Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
               console.log('err', err)
             })
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
           })    
         })
-        .catch(error => {
-          console.log('err', error)
+        .catch(err => {
+          console.log('err', err)
+          timeline['status'] = 'error'
+          timeline.save().catch(err=>{
+            console.log('err', err)
+          })
         });
-        // code block
         break;
       case 'email':
         data = {
           user: timeline.user,
-          subject: action.subject,
+          video: action.video,
           content: action.content,
           contacts: [timeline.contact]
         }
         EmailHelper.bulkEmail(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+             console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
@@ -203,9 +230,22 @@ const runTimeline = async(id) => {
         }
         TextHelper.bulkVideo(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_email_video':
         data = {
           user: timeline.user,
@@ -216,9 +256,22 @@ const runTimeline = async(id) => {
         }
         EmailHelper.bulkVideo(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_text_pdf':
         data = {
           user: timeline.user,
@@ -228,10 +281,23 @@ const runTimeline = async(id) => {
         }
         TextHelper.bulkPdf(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
-      case 'send_email_pdf': 
+        break;
+      case 'send_email_pdf':
         data = {
           user: timeline.user,
           content: action.content,
@@ -241,21 +307,47 @@ const runTimeline = async(id) => {
         }
         EmailHelper.bulkPdf(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
-      case 'send_text_image': 
+        break;
+      case 'send_text_image':
         data = {
           user: timeline.user,
           content: action.content,
-          image:  action.image,
+          image: action.image,
           contacts: [timeline.contact]
         }
         TextHelper.bulkImage(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
       case 'send_email_image':
         data = {
           user: timeline.user,
@@ -266,9 +358,22 @@ const runTimeline = async(id) => {
         }
         EmailHelper.bulkImage(data).then(res=>{
           console.log('res', res)
+          if(res[0].status == false){
+            timeline['status'] = 'error'
+            console.log('err', res[0].err)
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }else{
+            timeline['status'] = 'completed'
+            timeline.save().catch(err=>{
+              console.log('err', err)
+            })
+          }
         }).catch(err=>{
           console.log('err', err)
         })
+        break;
     }
   }
 }

@@ -284,7 +284,7 @@ const getGmail = async (req, res) => {
 
 const bulkOutlook = async (req, res) => {
   const { currentUser } = req
-  let { cc, bcc, to, subject, content, contacts } = req.body
+  let { cc, bcc, to, subject, content, contacts, attachments } = req.body
   let promise_array = []
   let error = []
 
@@ -332,6 +332,7 @@ const bulkOutlook = async (req, res) => {
     const message_id = uuidv1() 
     let cc_array = []
     let bcc_array = []
+    let attachment_array = []
     for(let i=0; i< cc.length; i++){
       cc_array.push({
         emailAddress: {
@@ -344,6 +345,14 @@ const bulkOutlook = async (req, res) => {
         emailAddress: {
           address: bcc[i],
         }
+      })
+    }
+    for(let i=0; i<attachments.lengh; i++){
+      const attachment = attachments[i]
+      attachment_array.push({
+        name: attachment.filename,
+        contentType: attachment.type,
+        contentBytes: attachment.content
       })
     }
     const sendMail = {
@@ -368,6 +377,7 @@ const bulkOutlook = async (req, res) => {
         ],
         ccRecipients: cc_array,
         bccRecipients: bcc_array,
+        attachments: attachment_array,
       saveToSentItems: "true"
       }
     };

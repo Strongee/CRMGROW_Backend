@@ -277,10 +277,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
           const timeline = timelines[i]
           TimeLineCtrl.runTimeline(timeline.id)
           const period = timeline['period']
-          timeline['status'] = 'completed'
-          timeline.save().catch(err=>{
-            console.log('err', err)
-          })
           const data = {
             contact: query['contact'],
             ref: timeline.ref,
