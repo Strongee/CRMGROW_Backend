@@ -396,6 +396,7 @@ const bulkOutlook = async (req, res) => {
         }
       })
     }
+    console.log('attachments', attachments)
     for(let i=0; i<attachments.lengh; i++){
       const attachment = attachments[i]
       attachment_array.push({
