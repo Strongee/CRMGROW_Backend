@@ -118,7 +118,7 @@ const send = async (req, res) => {
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req
-  let { cc, bcc, to, subject, content, contacts } = req.body
+  let { cc, bcc, to, subject, content, contacts, attachments } = req.body
   let promise_array = []
   let error = []
 
