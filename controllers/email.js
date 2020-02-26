@@ -251,6 +251,7 @@ const bulkGmail = async (req, res) => {
         });
         resolve()
       }catch(err){
+        console.log('err', err)
         return res.status(400).json({
           status: false,
           error: err
