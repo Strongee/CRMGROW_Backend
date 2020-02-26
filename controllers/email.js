@@ -214,17 +214,17 @@ const bulkGmail = async (req, res) => {
     //       }).catch(err => {
     //         console.log('err', err)
     //       })
-    //     }
-    //     resolve();
-    //   })
-    // })
-    let attachment_array
+      //     }
+      //     resolve();
+      //   })
+      // })
+      let attachment_array
     if(attachments.length>0){
       attachment_array = [
         {
           type: attachments[0].type,
           name: attachments[0].filename,
-          data:  attachments[0].content
+          data:  attachments[0].content.splice(22)
         }]
     }
     
