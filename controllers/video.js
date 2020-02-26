@@ -753,13 +753,14 @@ const bulkGmail = async(req, res) => {
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
-              console.log('err', err)
+              console.log('err', err.response['statusText'])
               error.push({
                 contact: {
+                  id: contacts[i],
                   first_name: _contact.first_name,
                   email: _contact.email,
                 },
-                err: err 
+                err: err.response['statusText'] 
               })
               resolve();
             } else {
@@ -777,7 +778,7 @@ const bulkGmail = async(req, res) => {
       if(error.length>0){
         return res.send({
           status: false,
-          error: error
+          error
         })
       }
       return res.send({
