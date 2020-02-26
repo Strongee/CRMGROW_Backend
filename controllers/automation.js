@@ -1,4 +1,5 @@
 const Automation = require('../models/automation')
+const TimeLine = require('../models/time_line')
 
 const get = (req, res) => {
     const id = req.params.id;
@@ -25,6 +26,22 @@ const getPage = async (req, res) => {
             {user: currentUser.id}
         ]
     }).skip((page-1) * 10).limit(10);
+
+    // automations.forEach(async(e) => {
+    //     const timelines = await TimeLine.find({
+    //         automation: e._id
+    //     })
+    //     console.log(timelines);
+    //     e['timelines'] = timelines;
+    //     console.log("Automation", e);
+    // })
+    // let timelines = {};
+    // for(let i = 0 ; i < automations.length ; i++ ) {
+    //     const timelines = await TimeLine.find({
+    //         automation: automations[i]['_id']
+    //     });
+    //     const 
+    // }
 
     const total = await Automation.countDocuments({
         user: currentUser.id
