@@ -229,6 +229,7 @@ const bulkGmail = async (req, res) => {
     }
     
     
+    console.log('accessToken', accessToken)
     let promise = new Promise(async(resolve, reject)=>{
       try{
         let body = createBody({
