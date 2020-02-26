@@ -397,7 +397,7 @@ const bulkOutlook = async (req, res) => {
       })
     }
     console.log('attachments', attachments)
-    for(let i=0; i<attachments.lengh; i++){
+    for(let i=0; i<attachments.length; i++){
       const attachment = attachments[i]
       attachment_array.push({
         "@odata.type": "#microsoft.graph.fileAttachment",
