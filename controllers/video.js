@@ -786,37 +786,27 @@ const bulkGmail = async(req, res) => {
         
         
         let promise = new Promise((resolve, reject)=>{
-          let body = createBody({
-            headers: {
-              To: _contact.email,
-              From: `${currentUser.user_name} <${currentUser.email}>`,
-              Subject: video_subject
-            },
-            textHtml: email_content,
-            textPlain: video_content,
-            attachments: [
-              {
-                type: 'image/jpeg',
-                name: 'dog.jpg',
-                data: dogBase64
-              },
-              {
-                type: 'image/png',
-                data: catBase64
-              }
-            ]
-          });
+        let body = createBody({
+          headers: {
+            To: _contact.email,
+            From: `${currentUser.user_name} <${currentUser.email}>`,
+            Subject: video_subject
+          },
+          textHtml: email_content,
+          textPlain: video_content,
+          attachments: attachment_array
+        });
            
-          rp({
-            method: 'POST',
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-            },
-            body: body
-          });    
-        })
+        rp({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+          },
+          body: body
+        });    
+      })
         
       promise_array.push(promise)
     }

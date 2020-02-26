@@ -34,6 +34,8 @@ const makeBody = (to, cc, bcc, from, subject, message) => {
 }
 
 const sgMail = require('@sendgrid/mail')
+const rp = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
 
 const receive = async (req, res) => {
   console.log(req.body)
@@ -159,61 +161,103 @@ const bulkGmail = async (req, res) => {
     const rawContent = makeBody(_contact.email, cc, bcc, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
     cc = []
     bcc = []
-    const promise = new Promise((resolve, reject) => {
-      gmail.users.messages.send({
-        'userId': currentUser.email,
-        'resource': {
-          raw: rawContent
-        }
-      }, async (err, response) => {
-        if (err) {
-          console.log('err', err)
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: err
-          })
-          resolve()
-        }
-        else {
-          const email = new Email({
-            ...req.body,
-            content: email_content,
-            subject: email_subject,
-            message_id: message_id,
-            contacts: contacts[i],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
+    // const promise = new Promise((resolve, reject) => {
+    //   gmail.users.messages.send({
+    //     'userId': currentUser.email,
+    //     'resource': {
+    //       raw: rawContent
+    //     }
+    //   }, async (err, response) => {
+    //     if (err) {
+    //       console.log('err', err)
+    //       error.push({
+    //         contact: {
+    //           first_name: _contact.first_name,
+    //           email: _contact.email,
+    //         },
+    //         err: err
+    //       })
+    //       resolve()
+    //     }
+    //     else {
+    //       const email = new Email({
+    //         ...req.body,
+    //         content: email_content,
+    //         subject: email_subject,
+    //         message_id: message_id,
+    //         contacts: contacts[i],
+    //         user: currentUser.id,
+    //         updated_at: new Date(),
+    //         created_at: new Date()
+    //       })
 
-          const _email = await email.save().then().catch(err => {
-            console.log('err', err)
-          })
+    //       const _email = await email.save().then().catch(err => {
+    //         console.log('err', err)
+    //       })
 
-          const activity = new Activity({
-            content: 'sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
+    //       const activity = new Activity({
+    //         content: 'sent email',
+    //         contacts: contacts[i],
+    //         user: currentUser.id,
+    //         type: 'emails',
+    //         emails: _email.id,
+    //         created_at: new Date(),
+    //         updated_at: new Date(),
+    //       })
 
-          const _activity = await activity.save().then().catch(err => {
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
-            resolve()
-          }).catch(err => {
-            console.log('err', err)
-          })
-        }
-        resolve();
-      })
+    //       const _activity = await activity.save().then().catch(err => {
+    //         console.log('err', err)
+    //       })
+    //       Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
+    //         resolve()
+    //       }).catch(err => {
+    //         console.log('err', err)
+    //       })
+    //     }
+    //     resolve();
+    //   })
+    // })
+    let attachment_array
+    if(attachments>0){
+      attachment_array = [
+        {
+          type: attachments[0].type,
+          name: attachments[0].filename,
+          content:  attachments[0].content
+        }]
+    }
+    
+    
+    let promise = new Promise(async(resolve, reject)=>{
+      try{
+        let body = createBody({
+          headers: {
+            To: _contact.email,
+            From: `${currentUser.user_name} <${currentUser.email}>`,
+            Subject: video_subject
+          },
+          textHtml: email_content,
+          textPlain: video_content,
+          attachments: attachment_array
+        });
+        await rp({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+          },
+          body: body
+        });
+        resolve()
+      }catch(err){
+        return res.status(400).json({
+          status: false,
+          error: err
+        })
+      }
+    }).catch(err=>{
+      console.log('err', err)
     })
     promise_array.push(promise)
   }
