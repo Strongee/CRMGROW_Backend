@@ -244,7 +244,7 @@ const bulkGmail = async (req, res) => {
           textPlain: email_content,
           attachments: attachment_array
         });
-        console.log('****createBody', createBody)
+        console.log('****createBody111', body)
         await rp({
           method: 'POST',
           uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
