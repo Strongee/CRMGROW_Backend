@@ -402,7 +402,7 @@ const bulkOutlook = async (req, res) => {
         "@odata.type": "#microsoft.graph.fileAttachment",
         "name": attachment.filename,
         "contentType": attachment.type,
-        "contentBytes": attachment.content
+        "contentBytes": attachment.content.slice(22)
       })
     }
     const sendMail = {
