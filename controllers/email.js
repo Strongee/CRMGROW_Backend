@@ -129,7 +129,7 @@ const bulkGmail = async (req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
-  const accessToken = await oauth2Client.getAccessToken();
+  await oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if (typeof subject == 'undefined' || subject == "") {
@@ -229,7 +229,7 @@ const bulkGmail = async (req, res) => {
     }
     
     
-    console.log('accessToken', accessToken)
+    console.log('accessToken', oauth2Client.credentials.access_token)
     let promise = new Promise(async(resolve, reject)=>{
       try{
         let body = createBody({
@@ -246,7 +246,7 @@ const bulkGmail = async (req, res) => {
           method: 'POST',
           uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
           },
           body: body
