@@ -1030,9 +1030,9 @@ const bulkOutlook = async(req, res) => {
       }
       
       if(subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_subject
+        pdf_subject = 'PDF: ' + pdf_titles
       } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
