@@ -129,6 +129,7 @@ const bulkGmail = async (req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
+  const accessToken = oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if (typeof subject == 'undefined' || subject == "") {
