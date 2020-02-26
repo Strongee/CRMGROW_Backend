@@ -219,7 +219,7 @@ const bulkGmail = async (req, res) => {
     //   })
     // })
     let attachment_array
-    if(attachments>0){
+    if(attachments.length>0){
       attachment_array = [
         {
           type: attachments[0].type,
