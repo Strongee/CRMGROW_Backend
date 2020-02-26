@@ -583,7 +583,7 @@ const bulkEmail = async(req, res) => {
               err: _res[0].statusCode
             })
           }
-        }).catch ((err) => {
+        }).catch(err => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
