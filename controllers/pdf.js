@@ -526,6 +526,11 @@ const bulkEmail = async(req, res) => {
             pdf_content = ''
           }
           
+          pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
           pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
@@ -539,7 +544,7 @@ const bulkEmail = async(req, res) => {
             pdfs: pdf._id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
+            subject: pdf_subject,
             description: pdf_content
           })
           
@@ -550,26 +555,25 @@ const bulkEmail = async(req, res) => {
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
           
           if(pdfs.length>=2){
-            pdf_subject = mail_contents.PDF_TITLE
+            pdf_titles = mail_contents.PDF_TITLE
           }else{
-            pdf_subject = `${pdf.title}`
+            pdf_titles = `${pdf.title}`
           }
           
           if(j < pdfs.length-1){
-            pdf_titles = pdf_titles + pdf.title + ', '  
             pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
           } else{
-            pdf_titles = pdf_titles + pdf.title
+            
             pdf_descriptions = pdf_descriptions + pdf.description
           }
           const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
           pdf_objects = pdf_objects + pdf_object                      
       }
       
-      if(subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_subject
+      if(pdf_subject == '' ){
+        pdf_subject = 'PDF: ' + pdf_titles
       } else {
-        pdf_subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -578,11 +582,11 @@ const bulkEmail = async(req, res) => {
           pdf_content = pdf_content+pdf_objects
         }
         
-        if(content.search(/{pdf_title}/ig) != -1){
+        if(pdf_content.search(/{pdf_title}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
         }
         
-        if(content.search(/{pdf_description}/ig) != -1){
+        if(pdf_content.search(/{pdf_description}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
         }
         
@@ -982,6 +986,11 @@ const bulkOutlook = async(req, res) => {
             pdf_content = ''
           }
           
+          pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
           pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
@@ -995,7 +1004,7 @@ const bulkOutlook = async(req, res) => {
             pdfs: pdf._id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
+            subject: pdf_subject,
             description: pdf_content
           })
           
@@ -1006,16 +1015,14 @@ const bulkOutlook = async(req, res) => {
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
           
           if(pdfs.length>=2){
-            pdf_subject = mail_contents.PDF_TITLE
+            pdf_titles = mail_contents.PDF_TITLE
           }else{
-            pdf_subject = `${pdf.title}`
+            pdf_titles = `${pdf.title}`
           }
           
           if(j < pdfs.length-1){
-            pdf_titles = pdf_titles + pdf.title + ', '  
             pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
           } else{
-            pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
           const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
@@ -1153,6 +1160,11 @@ const bulkGmail = async(req, res) => {
             pdf_content = ''
           }
           
+          pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
           pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
@@ -1177,16 +1189,14 @@ const bulkGmail = async(req, res) => {
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
           
           if(pdfs.length>=2){
-            pdf_subject = mail_contents.PDF_TITLE
+            pdf_titles = mail_contents.PDF_TITLE
           }else{
-            pdf_subject = `${pdf.title}`
+            pdf_titles = `${pdf.title}`
           }
           
           if(j < pdfs.length-1){
-            pdf_titles = pdf_titles + pdf.title + ', '  
             pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
           } else{
-            pdf_titles = pdf_titles + pdf.title
             pdf_descriptions = pdf_descriptions + pdf.description
           }
           const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
@@ -1194,9 +1204,9 @@ const bulkGmail = async(req, res) => {
       }
       
       if(pdf_subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_subject
+        pdf_subject = 'PDF: ' + pdf_titles
       } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){

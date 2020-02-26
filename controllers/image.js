@@ -326,6 +326,11 @@ const bulkEmail = async(req, res) => {
         if(!image_content){
           image_content = ''
         }
+        
+        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
         image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
@@ -340,7 +345,7 @@ const bulkEmail = async(req, res) => {
           images: image._id,
           created_at: new Date(),
           updated_at: new Date(),
-          subject: subject,
+          subject: image_subject,
           description: image_content
         })
           
@@ -351,26 +356,24 @@ const bulkEmail = async(req, res) => {
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
           
           if(images.length>=2){
-            image_subject = mail_contents.IMAGE_TITLE
+            image_titles = mail_contents.IMAGE_TITLE
           }else{
-            image_subject = `${image.title}`
+            image_titles = `${image.title}`
           }
           
           if(j < images.length-1){
-            image_titles = image_titles + image.title + ', '  
             image_descriptions = image_descriptions + `${image.description}, ` 
           } else{
-            image_titles = image_titles + image.title
             image_descriptions = image_descriptions + image.description
           }
           const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
-      if(subject == '' ){
-        subject = 'Image: ' + image_subject
+      if(image_subject == '' ){
+        image_subject = 'Image: ' + image_titles
       } else {
-        subject = subject.replace(/{image_title}/ig, image_subject)
+        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){
@@ -391,7 +394,7 @@ const bulkEmail = async(req, res) => {
           to: _contact.email,
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
           replyTo: currentUser.email,
-          subject: subject,
+          subject: image_subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
                 +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
           text: image_content

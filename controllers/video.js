@@ -583,12 +583,12 @@ const bulkEmail = async(req, res) => {
               err: _res[0].statusCode
             })
           }
-        }).catch ((e) => {
+        }).catch ((err) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
           console.log('email sending err', msg.to)
-          console.error(e)
+          console.error(err)
           error.push({
             contact: {
               first_name: _contact.first_name,
@@ -1164,7 +1164,7 @@ const bulkOutlook = async(req, res) => {
       if(video_subject == '' ){
         video_subject = 'VIDEO: ' + video_titles
       } else {
-        video_subject = subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
