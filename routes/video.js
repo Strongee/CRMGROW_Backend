@@ -69,12 +69,6 @@ router.get('/:id', catchError(VideoCtrl.get))
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
 
-// Send Video
-router.post('/send', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendVideo))
-
-// Send Video on text
-router.post('/send-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.sendText))
-
 // Bulk videos
 router.post('/bulk-email', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.bulkEmail))
 

@@ -42,10 +42,12 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
-var graph = require('@microsoft/microsoft-graph-client');
+const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
+const rp = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -379,195 +381,6 @@ const getAll = async (req, res) => {
   })
 }
 
-const sendVideo = async (req, res) => {
-  const { currentUser } = req
-  let {content, subject, video, video_title, contacts} = req.body 
-    if(contacts){
-      if(contacts.length>50){
-        return res.status(400).json({
-          status: false,
-          error: 'You can sent max 50 contacts'
-        })
-      }
-      for(let i=0; i<contacts.length; i++){
-        const _contact = await Contact.findOne({_id: contacts[i]})
-        const sendContent = content.replace(/{first_name}/ig, _contact.first_name);
-        const _activity = new Activity({
-          content: 'sent video using email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'videos',
-          videos: video,
-          created_at: new Date(),
-          updated_at: new Date(),
-          subject: subject,
-          description: sendContent
-        })
-       
-        const _video = await Video.findOne({_id: video})
-        let preview
-        if(_video['preview']){
-          preview = _video['preview']
-        } else {
-          preview = _video['thumbnail'] + '?resize=true'
-        }
-        const activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-          console.log('err', err)
-        })
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      
-        if(subject == '' ){
-          subject = video_title
-        }
-        
-        if(typeof content == 'undefined'){
-          content = ''
-        }
-      
-        const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-        
-        const msg = {
-          to: _contact.email,
-          from: `${currentUser.user_name} <${currentUser.email}>`,
-          subject: subject,
-          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">'
-                +sendContent+'</p><a href="' + video_link + '"><img src="'
-                +preview+'"/></a><br/><br/>Thank you<br/><br/>'+ currentUser.email_signature + '</body></html>'
-          
-        }
-      
-        sgMail.send(msg).then((_res) => {
-          console.log('mailres.errorcode', _res[0].statusCode);
-          if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-            console.log('status', _res[0].statusCode)
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch ((e) => {
-          console.log('email sending err', msg.to)
-          console.error(e)
-        })
-      }
-      return res.send({
-        status: true,
-      })
-    }else {
-      return res.status(400).json({
-        status: false,
-        error: 'Contacts not found'
-      })
-    }
-}
-
-const sendText = async (req, res) => {
-  const { currentUser } = req
-  const { content, video, video_title, contacts} = req.body
-  
-  if(contacts){
-    if(contacts.length>50){
-      return res.status(400).json({
-        status: false,
-        error: 'You can send max 50 contacts at a time'
-      })
-    }
-    for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]})
-      var sendContent = content.replace(/{first_name}/ig, _contact.first_name);
-      const cell_phone = _contact.cell_phone
-      const _activity = new Activity({
-        content: 'sent video using sms',
-        contacts: contacts[i],
-        user: currentUser.id,
-        type: 'videos',
-        videos: video,
-        created_at: new Date(),
-        updated_at: new Date(),
-        description: sendContent
-      })
-      const activity = await _activity.save().then().catch(err=>{
-        console.log('err', err);
-      })
-      Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-        console.log('err', err)
-      })
-      const video_link =urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-      const e164Phone = phone(cell_phone)[0];
-      
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-    
-        throw error // Invalid phone number
-      }
-      
-      let fromNumber = currentUser['proxy_number'];
-    
-      if(!fromNumber) {
-        const areaCode = currentUser.cell_phone.substring(1, 4)
-    
-        const data = await twilio
-        .availablePhoneNumbers('US')
-        .local.list({
-          areaCode: areaCode,
-        })
-      
-        let number = data[0];
-    
-        if(typeof number == 'undefined'){
-          const areaCode1 = currentUser.cell_phone.substring(1, 3)
-    
-          const data1 = await twilio
-          .availablePhoneNumbers('US')
-          .local.list({
-            areaCode: areaCode1,
-          })
-          number = data1[0];
-        }
-        
-        if(typeof number != 'undefined'){
-          const proxy_number = await twilio.incomingPhoneNumbers.create({
-            phoneNumber: number.phoneNumber,
-            smsUrl:  urls.SMS_RECEIVE_URL
-          })
-          
-          currentUser['proxy_number'] = proxy_number.phoneNumber;
-          fromNumber = currentUser['proxy_number'];
-          currentUser.save().catch(err=>{
-            console.log('err', err)
-          })
-        } else {
-          fromNumber = config.TWILIO.TWILIO_NUMBER
-        } 
-      }
-  
-        let body
-        if(typeof content == 'undefined'){
-          body = video_link
-        }else{
-          body = sendContent + '\n' + '\n' + video_link
-        }
-      
-        twilio.messages.create({from: fromNumber, body: body,  to: e164Phone}).then(()=>{
-          console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content)
-        }).catch(err=>{
-          console.log('err', err)
-        })  
-    }
-    return res.send({
-      status: true
-    })
-  }else {
-    return res.status(400).json({
-      status: false,
-      error: 'Contacts not found'
-    })
-  }     
-}
-
 const remove = async (req, res) => {
   const { currentUser } = req
     try {
@@ -661,7 +474,7 @@ const bulkEmail = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -678,7 +491,7 @@ const bulkEmail = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -696,7 +509,7 @@ const bulkEmail = async(req, res) => {
             videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
+            subject: video_subject,
             description: video_content
           })
           
@@ -705,16 +518,14 @@ const bulkEmail = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_titles = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_titles = `${video.title}`
           }
           
-          if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
+          if(j < videos.length-1){  
             video_descriptions = video_descriptions + `${video.description}, ` 
           } else{
-            video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
@@ -723,9 +534,9 @@ const bulkEmail = async(req, res) => {
       }
       
       if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -746,7 +557,7 @@ const bulkEmail = async(req, res) => {
           to: _contact.email,
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
           replyTo: currentUser.email,
-          subject: subject,
+          subject: video_subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
                 +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
           text: video_content
@@ -822,7 +633,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos, contacts, attachments} = req.body 
   let promise_array = []
   let error = []
 
@@ -833,6 +644,7 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  const accessToken = oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
@@ -850,7 +662,7 @@ const bulkGmail = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -866,7 +678,7 @@ const bulkGmail = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -884,7 +696,7 @@ const bulkGmail = async(req, res) => {
             videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
+            subject: video_subject,
             description: video_content
           })
           
@@ -893,16 +705,14 @@ const bulkGmail = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_titles = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_titles = video.title
           }
           
           if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
             video_descriptions = video_descriptions + `${video.description}, ` 
           } else{
-            video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
@@ -910,10 +720,10 @@ const bulkGmail = async(req, res) => {
           video_objects = video_objects + video_object                      
       }
       
-      if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+      if(video_subject == '' ){
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -933,36 +743,71 @@ const bulkGmail = async(req, res) => {
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
-        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );
+        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
 
+        // let promise = new Promise((resolve, reject)=>{
+        //   gmail.users.messages.send({
+        //     'userId': currentUser.email,
+        //     'resource': {
+        //       raw: rawContent
+        //     }
+        //   }, (err, response) => {
+        //     if(err) {
+        //       Activity.deleteOne({_id: activity.id}).catch(err=>{
+        //         console.log('err', err)
+        //       })
+        //       console.log('err', err)
+        //       error.push({
+        //         contact: {
+        //           first_name: _contact.first_name,
+        //           email: _contact.email,
+        //         },
+        //         err: err 
+        //       })
+        //       resolve();
+        //     } else {
+        //       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+        //         console.log('err', err)
+        //       })
+        //       resolve()
+        //     }
+        //   });      
+        // })
+        
+        let attachment_array
+        if(attachments>0){
+          attachment_array = [
+            {
+              type: attachments[0].type,
+              name: attachments[0].filename,
+              content:  attachments[0].content
+            }]
+        }
+        
+        
         let promise = new Promise((resolve, reject)=>{
-          gmail.users.messages.send({
-            'userId': currentUser.email,
-            'resource': {
-              raw: rawContent
-            }
-          }, (err, response) => {
-            if(err) {
-              Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err)
-              })
-              console.log('err', err)
-              error.push({
-                contact: {
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err: err 
-              })
-              resolve();
-            } else {
-              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-                console.log('err', err)
-              })
-              resolve()
-            }
-          });      
-        })
+        let body = createBody({
+          headers: {
+            To: _contact.email,
+            From: `${currentUser.user_name} <${currentUser.email}>`,
+            Subject: video_subject
+          },
+          textHtml: email_content,
+          textPlain: video_content,
+          attachments: attachment_array
+        });
+           
+        rp({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+          },
+          body: body
+        });    
+      })
+        
       promise_array.push(promise)
     }
       
@@ -1295,7 +1140,7 @@ const bulkOutlook = async(req, res) => {
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
-      let video_subject = ''
+      let video_subject = subject
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
@@ -1312,7 +1157,7 @@ const bulkOutlook = async(req, res) => {
             video_content = ''
           }
           
-          subject = subject.replace(/{user_name}/ig, currentUser.user_name)
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
@@ -1330,7 +1175,7 @@ const bulkOutlook = async(req, res) => {
             videos: video._id,
             created_at: new Date(),
             updated_at: new Date(),
-            subject: subject,
+            subject: video_subject,
             description: video_content
           })
           
@@ -1339,16 +1184,14 @@ const bulkOutlook = async(req, res) => {
           })
           
           if(videos.length>=2){
-            video_subject = mail_contents.VIDEO_TITLE
+            video_titles = mail_contents.VIDEO_TITLE
           }else{
-            video_subject = `${video.title}`
+            video_titles = `${video.title}`
           }
           
           if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
             video_descriptions = video_descriptions + `${video.description}, ` 
           } else{
-            video_titles = video_titles + video.title
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
@@ -1356,10 +1199,10 @@ const bulkOutlook = async(req, res) => {
           video_objects = video_objects + video_object                      
       }
       
-      if(subject == '' ){
-        subject = 'VIDEO: ' + video_subject
+      if(video_subject == '' ){
+        video_subject = 'VIDEO: ' + video_titles
       } else {
-        subject = subject.replace(/{video_title}/ig, video_subject)
+        video_subject = subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -1378,7 +1221,7 @@ const bulkOutlook = async(req, res) => {
         
         const sendMail = {
           message: {
-            subject: subject,
+            subject: video_subject,
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
@@ -1463,10 +1306,8 @@ module.exports = {
   get,
   getThumbnail,
   getAll,
-  sendVideo,
   bulkEmail,
   bulkText,
-  sendText,
   remove,
   getHistory,
   createVideo,

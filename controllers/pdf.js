@@ -516,7 +516,7 @@ const bulkEmail = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
-      let pdf_subject = ''
+      let pdf_subject = subject
       let pdf_content = content
       let activity
       for(let j=0; j<pdfs.length; j++){
@@ -567,9 +567,9 @@ const bulkEmail = async(req, res) => {
       }
       
       if(subject == '' ){
-        subject = 'PDF: ' + pdf_subject
+        pdf_subject = 'PDF: ' + pdf_subject
       } else {
-        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = subject.replace(/{pdf_title}/ig, pdf_subject)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -590,7 +590,7 @@ const bulkEmail = async(req, res) => {
           to: _contact.email,
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
           replyTo: currentUser.email,
-          subject: subject,
+          subject: pdf_subject,
           replyTo: _contact.email,
           html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
                 +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
@@ -972,7 +972,7 @@ const bulkOutlook = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
-      let pdf_subject = ''
+      let pdf_subject = subject
       let pdf_content = content
       let activity
       for(let j=0; j<pdfs.length; j++){
@@ -1023,9 +1023,9 @@ const bulkOutlook = async(req, res) => {
       }
       
       if(subject == '' ){
-        subject = 'PDF: ' + pdf_subject
+        pdf_subject = 'PDF: ' + pdf_subject
       } else {
-        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_subject)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1044,7 +1044,7 @@ const bulkOutlook = async(req, res) => {
         
         const sendMail = {
           message: {
-            subject: subject,
+            subject: pdf_subject,
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
@@ -1143,7 +1143,7 @@ const bulkGmail = async(req, res) => {
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
-      let pdf_subject = ''
+      let pdf_subject = subject
       let pdf_content = content
       let activity
       for(let j=0; j<pdfs.length; j++){
@@ -1193,10 +1193,10 @@ const bulkGmail = async(req, res) => {
           pdf_objects = pdf_objects + pdf_object                      
       }
       
-      if(subject == '' ){
-        subject = 'PDF: ' + pdf_subject
+      if(pdf_subject == '' ){
+        pdf_subject = 'PDF: ' + pdf_subject
       } else {
-        subject = subject.replace(/{pdf_title}/ig, pdf_subject)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_subject)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1215,7 +1215,7 @@ const bulkGmail = async(req, res) => {
 
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
           +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
-        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, subject, email_content );
+        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
         
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
