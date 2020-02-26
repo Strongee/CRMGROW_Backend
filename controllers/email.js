@@ -237,7 +237,7 @@ const bulkGmail = async (req, res) => {
             Subject: email_subject
           },
           textHtml: email_content,
-          textPlain: video_content,
+          textPlain: email_content,
           attachments: attachment_array
         });
         await rp({
@@ -376,7 +376,7 @@ const bulkOutlook = async (req, res) => {
 
     const message_id = uuidv1() 
     let cc_array = []
-    let bcc_array = []
+    let bcc_array = []  
     let attachment_array = []
     for(let i=0; i< cc.length; i++){
       cc_array.push({
