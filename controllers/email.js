@@ -223,7 +223,7 @@ const bulkGmail = async (req, res) => {
         {
           type: attachments[0].type,
           name: attachments[0].filename,
-          content:  attachments[0].content
+          data:  attachments[0].content
         }]
     }
     
