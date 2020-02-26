@@ -218,14 +218,14 @@ const bulkGmail = async (req, res) => {
       //     resolve();
       //   })
       // })
-      let attachment_array
-      if(attachments.length>0){
-        attachment_array = [
+      let attachment_array = []
+      for(let i=0; i<attachments.length; i++){
+        attachment_array.push(
           {
-            type: attachments[0].type,
-            name: attachments[0].filename,
-            data:  attachments[0].content.slice(22)
-          }]
+            type: attachments[i].type,
+            name: attachments[i].filename,
+            data:  attachments[i].content.slice(22)
+          })
       }
     
     
@@ -236,7 +236,9 @@ const bulkGmail = async (req, res) => {
           headers: {
             To: _contact.email,
             From: `${currentUser.user_name} <${currentUser.email}>`,
-            Subject: email_subject
+            Subject: email_subject,
+            Cc: cc,
+            Bcc: bcc
           },
           textHtml: email_content,
           textPlain: email_content,
@@ -397,9 +399,10 @@ const bulkOutlook = async (req, res) => {
     for(let i=0; i<attachments.lengh; i++){
       const attachment = attachments[i]
       attachment_array.push({
-        name: attachment.filename,
-        contentType: attachment.type,
-        contentBytes: attachment.content
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "name": attachment.filename,
+        "contentType": attachment.type,
+        "contentBytes": attachment.content
       })
     }
     const sendMail = {
