@@ -160,8 +160,7 @@ const bulkGmail = async (req, res) => {
 
     email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
     const rawContent = makeBody(_contact.email, cc, bcc, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
-    cc = []
-    bcc = []
+
     // const promise = new Promise((resolve, reject) => {
     //   gmail.users.messages.send({
     //     'userId': currentUser.email,
@@ -266,6 +265,8 @@ const bulkGmail = async (req, res) => {
       console.log('err', err)
     })
     promise_array.push(promise)
+    cc = []
+    bcc = []
   }
 
   Promise.all(promise_array).then(() => {
