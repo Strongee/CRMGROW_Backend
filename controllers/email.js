@@ -396,7 +396,6 @@ const bulkOutlook = async (req, res) => {
         }
       })
     }
-    console.log('attachments', attachments)
     for(let i=0; i<attachments.length; i++){
       const attachment = attachments[i]
       attachment_array.push({
@@ -406,7 +405,6 @@ const bulkOutlook = async (req, res) => {
         "contentBytes": attachment.content
       })
     }
-    console.log('attachment_array', attachment_array)
     const sendMail = {
       message: {
         subject: email_subject,
