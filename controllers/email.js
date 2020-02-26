@@ -219,14 +219,14 @@ const bulkGmail = async (req, res) => {
       //   })
       // })
       let attachment_array
-    if(attachments.length>0){
-      attachment_array = [
-        {
-          type: attachments[0].type,
-          name: attachments[0].filename,
-          data:  attachments[0].content.slice(22)
-        }]
-    }
+      if(attachments.length>0){
+        attachment_array = [
+          {
+            type: attachments[0].type,
+            name: attachments[0].filename,
+            data:  attachments[0].content.slice(22)
+          }]
+      }
     
     
     console.log('accessToken', oauth2Client.credentials.access_token)
@@ -425,8 +425,8 @@ const bulkOutlook = async (req, res) => {
         ccRecipients: cc_array,
         bccRecipients: bcc_array,
         attachments: attachment_array,
+      },
       saveToSentItems: "true"
-      }
     };
 
     const promise = new Promise((resolve, reject) => {
