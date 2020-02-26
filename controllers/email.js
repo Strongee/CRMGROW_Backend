@@ -234,7 +234,7 @@ const bulkGmail = async (req, res) => {
           headers: {
             To: _contact.email,
             From: `${currentUser.user_name} <${currentUser.email}>`,
-            Subject: video_subject
+            Subject: email_subject
           },
           textHtml: email_content,
           textPlain: video_content,
