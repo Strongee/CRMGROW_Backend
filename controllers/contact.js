@@ -637,7 +637,7 @@ const receiveEmail = async(req, res) => {
           })
           
           const activity = new Activity({
-            content: contact.first_name + ' opened email',
+            content: 'opened email',
             contacts: contact.id,
             user: user.id,
             type: 'email_trackers',
@@ -685,7 +685,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' clicked the link on email',
+          content: 'clicked the link on email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
@@ -722,7 +722,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' unsubscribed email',
+          content: 'unsubscribed email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',

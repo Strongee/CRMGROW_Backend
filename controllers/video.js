@@ -1107,9 +1107,10 @@ const bulkOutlook = async(req, res) => {
         error: 'You can send max 50 contacts at a time'
       })
     }
+    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     
     for(let i=0; i<contacts.length; i++){
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
