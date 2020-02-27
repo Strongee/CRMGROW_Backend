@@ -585,12 +585,12 @@ const bulkEmail = async(req, res) => {
               err: _res[0].statusCode
             })
           }
-        }).catch ((e) => {
+        }).catch(err => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
           console.log('email sending err', msg.to)
-          console.error(e)
+          console.error(err)
           error.push({
             contact: {
               first_name: _contact.first_name,
@@ -786,28 +786,34 @@ const bulkGmail = async(req, res) => {
         
         
         let promise = new Promise((resolve, reject)=>{
-        let body = createBody({
-          headers: {
-            To: _contact.email,
-            From: `${currentUser.user_name} <${currentUser.email}>`,
-            Subject: video_subject
-          },
-          textHtml: email_content,
-          textPlain: video_content,
-          attachments: attachment_array
-        });
-           
-        rp({
-          method: 'POST',
-          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-          },
-          body: body
-        });    
-      })
-        
+          gmail.users.messages.send({
+            'userId': currentUser.email,
+            'resource': {
+              raw: rawContent
+            }
+          }, (err, response) => {
+            if(err) {
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              console.log('err', err.response['statusText'])
+              error.push({
+                contact: {
+                  id: contacts[i],
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err.response['statusText'] 
+              })
+              resolve();
+            } else {
+              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+              resolve()
+            }
+          });      
+        })
       promise_array.push(promise)
     }
       
@@ -815,7 +821,7 @@ const bulkGmail = async(req, res) => {
       if(error.length>0){
         return res.send({
           status: false,
-          error: error
+          error
         })
       }
       return res.send({
@@ -1203,7 +1209,7 @@ const bulkOutlook = async(req, res) => {
       if(video_subject == '' ){
         video_subject = 'VIDEO: ' + video_titles
       } else {
-        video_subject = subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
