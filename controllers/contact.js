@@ -637,7 +637,7 @@ const receiveEmail = async(req, res) => {
           })
           
           const activity = new Activity({
-            content: contact.first_name + ' opened email',
+            content: 'opened email',
             contacts: contact.id,
             user: user.id,
             type: 'email_trackers',
@@ -685,7 +685,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' clicked the link on email',
+          content: 'clicked the link on email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
@@ -722,7 +722,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' unsubscribed email',
+          content: 'unsubscribed email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
@@ -969,6 +969,8 @@ const importCSV = async (req, res) => {
           console.log('err', err)
         })
 
+        
+
         return res.send({
           status: true,
           failure
@@ -1032,11 +1034,14 @@ const search = async (req, res) => {
     }).populate('last_activity').sort({ first_name: 1 })
   }
 
+  const count = await Contact.countDocuments({ user: currentUser.id })
+
   return res.send({
     status: true,
     data: {
       contacts,
-      search: search
+      search: search,
+      total: count
     }
 
   })
@@ -1635,6 +1640,7 @@ const advanceSearch = async (req, res) => {
   if ((activityCondition && activityCondition.length) || activityStart || activityEnd || lastMaterial['send_video']['flag'] || lastMaterial['send_pdf']['flag'] || lastMaterial['send_image']['flag'] || lastMaterial['watched_video']['flag'] || lastMaterial['watched_pdf']['flag'] || lastMaterial['watched_image']['flag']) {
     contacts.forEach(e => {
       let activity = e.last_activity;
+      if(!activity) {return;}
       if(activityStart || activityEnd) {
         if(activityStart) {
           if (new Date(activity.created_at) < new Date(activityStart)) {
@@ -1769,10 +1775,12 @@ const advanceSearch = async (req, res) => {
     results = contacts;
   }
   
+  const count = await Contact.countDocuments({ user: currentUser.id })
 
   return res.send({
     status: true,
-    data: results
+    data: results,
+    total: count
   });
 }
 

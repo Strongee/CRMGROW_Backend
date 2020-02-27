@@ -44,7 +44,7 @@ const signUp = async (req, res) => {
       error: errors.array()
     })
   }
-  let _user = await User.findOne({ email: req.body.email, del: false })
+  let _user = await User.findOne({ email: new RegExp(req.body.email, "i"), del: false })
   if (_user != null) {
     res.status(400).send({
       status: false,
@@ -247,7 +247,7 @@ const socialSignUp = async (req, res) => {
       error: errors.array()
     })
   }
-  let _user = await User.findOne({ email: req.body.email, del: false })
+  let _user = await User.findOne({ email: new RegExp(req.body.email, "i"), del: false })
   if (_user != null) {
     res.status(400).send({
       status: false,

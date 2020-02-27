@@ -34,6 +34,8 @@ const makeBody = (to, cc, bcc, from, subject, message) => {
 }
 
 const sgMail = require('@sendgrid/mail')
+const request = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
 
 const receive = async (req, res) => {
   console.log(req.body)
@@ -116,7 +118,7 @@ const send = async (req, res) => {
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req
-  let { cc, bcc, to, subject, content, contacts } = req.body
+  let { cc, bcc, to, subject, content, contacts, attachments } = req.body
   let promise_array = []
   let error = []
 
@@ -127,7 +129,7 @@ const bulkGmail = async (req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
-  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
+  await oauth2Client.getAccessToken();
 
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
@@ -156,66 +158,89 @@ const bulkGmail = async (req, res) => {
     const message_id = uuidv1()
 
     email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    const rawContent = makeBody(_contact.email, cc, bcc, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
-    cc = []
-    bcc = []
-    const promise = new Promise((resolve, reject) => {
-      gmail.users.messages.send({
-        'userId': currentUser.email,
-        'resource': {
-          raw: rawContent
-        }
-      }, async (err, response) => {
-        if (err) {
+    
+    let attachment_array = []
+    for(let i=0; i<attachments.length; i++){
+      attachment_array.push(
+        {
+          type: attachments[i].type,
+          name: attachments[i].filename,
+          data:  attachments[i].content.slice(22)
+        })
+    }
+      
+    let promise = new Promise(async(resolve, reject)=>{
+      try{
+        let body = createBody({
+          headers: {
+            To: _contact.email,
+            From: `${currentUser.user_name} <${currentUser.email}>`,
+            Subject: email_subject,
+            Cc: cc,
+            Bcc: bcc
+          },
+          textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+          textPlain: email_content,
+          attachments: attachment_array
+        });
+        request({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          headers: {
+            Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+          },
+          body: body
+        })  
+        const email = new Email({
+          ...req.body,
+          content: email_content,
+          subject: email_subject,
+          message_id: message_id,
+          contacts: contacts[i],
+          user: currentUser.id,
+          updated_at: new Date(),
+          created_at: new Date()
+        })
+
+        const _email = await email.save().then().catch(err => {
           console.log('err', err)
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: err
-          })
+        })
+
+        const activity = new Activity({
+          content: 'sent email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+
+        const _activity = await activity.save().then().catch(err => {
+          console.log('err', err)
+        })
+        Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
           resolve()
-        }
-        else {
-          const email = new Email({
-            ...req.body,
-            content: email_content,
-            subject: email_subject,
-            message_id: message_id,
-            contacts: contacts[i],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
-
-          const _email = await email.save().then().catch(err => {
-            console.log('err', err)
-          })
-
-          const activity = new Activity({
-            content: 'sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          const _activity = await activity.save().then().catch(err => {
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
-            resolve()
-          }).catch(err => {
-            console.log('err', err)
-          })
-        }
-        resolve();
-      })
+        }).catch(err => {
+          console.log('err', err)
+        })
+      }catch(err){
+        console.log('err', err)
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: err
+        })
+      }
+    }).catch(err=>{
+      console.log('err', err)
     })
     promise_array.push(promise)
+    cc = []
+    bcc = []
   }
 
   Promise.all(promise_array).then(() => {
@@ -331,7 +356,7 @@ const bulkOutlook = async (req, res) => {
 
     const message_id = uuidv1() 
     let cc_array = []
-    let bcc_array = []
+    let bcc_array = []  
     let attachment_array = []
     for(let i=0; i< cc.length; i++){
       cc_array.push({
@@ -347,12 +372,13 @@ const bulkOutlook = async (req, res) => {
         }
       })
     }
-    for(let i=0; i<attachments.lengh; i++){
+    for(let i=0; i<attachments.length; i++){
       const attachment = attachments[i]
       attachment_array.push({
-        name: attachment.filename,
-        contentType: attachment.type,
-        contentBytes: attachment.content
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "name": attachment.filename,
+        "contentType": attachment.type,
+        "contentBytes": attachment.content.replace(/^data:.+;base64,/, '')
       })
     }
     const sendMail = {
@@ -378,8 +404,8 @@ const bulkOutlook = async (req, res) => {
         ccRecipients: cc_array,
         bccRecipients: bcc_array,
         attachments: attachment_array,
+      },
       saveToSentItems: "true"
-      }
     };
 
     const promise = new Promise((resolve, reject) => {

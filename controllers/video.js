@@ -42,10 +42,12 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token'
 }
 const oauth2 = require('simple-oauth2')(credentials)
-var graph = require('@microsoft/microsoft-graph-client');
+const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
+const rp = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -631,7 +633,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos, contacts, attachments} = req.body 
   let promise_array = []
   let error = []
 
@@ -642,6 +644,7 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  const accessToken = oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
@@ -742,6 +745,46 @@ const bulkGmail = async(req, res) => {
         
         const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
 
+        // let promise = new Promise((resolve, reject)=>{
+        //   gmail.users.messages.send({
+        //     'userId': currentUser.email,
+        //     'resource': {
+        //       raw: rawContent
+        //     }
+        //   }, (err, response) => {
+        //     if(err) {
+        //       Activity.deleteOne({_id: activity.id}).catch(err=>{
+        //         console.log('err', err)
+        //       })
+        //       console.log('err', err)
+        //       error.push({
+        //         contact: {
+        //           first_name: _contact.first_name,
+        //           email: _contact.email,
+        //         },
+        //         err: err 
+        //       })
+        //       resolve();
+        //     } else {
+        //       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+        //         console.log('err', err)
+        //       })
+        //       resolve()
+        //     }
+        //   });      
+        // })
+        
+        let attachment_array
+        if(attachments>0){
+          attachment_array = [
+            {
+              type: attachments[0].type,
+              name: attachments[0].filename,
+              content:  attachments[0].content
+            }]
+        }
+        
+        
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
             'userId': currentUser.email,
@@ -1070,9 +1113,10 @@ const bulkOutlook = async(req, res) => {
         error: 'You can send max 50 contacts at a time'
       })
     }
+    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     
     for(let i=0; i<contacts.length; i++){
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
