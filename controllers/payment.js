@@ -293,7 +293,10 @@ const update = async(req, res) =>{
                 }
                 
                 updateSubscription(payment['customer_id'], plan_id, card.id).then(subscription => {
-                  cancelSubscription(payment['subscription']).then(()=>{
+                  cancelSubscription(payment['subscription']).catch(err=>{
+                    console.log('err', err)
+                  })
+                  try{
                     stripe.customers.deleteSource(
                       payment['customer_id'],
                       payment['card_id'],
@@ -313,14 +316,14 @@ const update = async(req, res) =>{
                         payment.save().catch(err=>{
                           console.log('err', err)
                         })
-                        return res.send({
-                          status: true,
-                          data: currentUser.payment
-                        });
                       })
-                  }).catch(err=>{
+                      return res.send({
+                        status: true,
+                        data: currentUser.payment
+                      });    
+                  }catch(err){
                     console.log('err', err)
-                  })
+                  }
                 }).catch((err)=>{
                     console.log('creating subscripition error', err)
                     return res.status(400).send({
