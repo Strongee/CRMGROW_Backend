@@ -150,14 +150,17 @@ const bulkGmail = async (req, res) => {
     const message_id = uuidv1()
  
     let attachment_array = []
-    for(let i=0; i<attachments.length; i++){
-      attachment_array.push(
-        {
-          type: attachments[i].type,
-          name: attachments[i].filename,
-          data:  attachments[i].content.slice(22)
-        })
+    if(attachments){
+      for(let i=0; i<attachments.length; i++){
+        attachment_array.push(
+          {
+            type: attachments[i].type,
+            name: attachments[i].filename,
+            data:  attachments[i].content.slice(22)
+          })
+      }
     }
+
       
     let promise = new Promise(async(resolve, reject)=>{
       try{
@@ -361,14 +364,16 @@ const bulkOutlook = async (req, res) => {
         }
       })
     }
-    for(let i=0; i<attachments.length; i++){
-      const attachment = attachments[i]
-      attachment_array.push({
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        "name": attachment.filename,
-        "contentType": attachment.type,
-        "contentBytes": attachment.content.replace(/^data:.+;base64,/, '')
-      })
+    if(attachments){
+      for(let i=0; i<attachments.length; i++){
+        const attachment = attachments[i]
+        attachment_array.push({
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          "name": attachment.filename,
+          "contentType": attachment.type,
+          "contentBytes": attachment.content.replace(/^data:.+;base64,/, '')
+        })
+      }
     }
     const sendMail = {
       message: {
