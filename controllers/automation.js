@@ -28,9 +28,10 @@ const getPage = async (req, res) => {
         ]
     }).skip((page-1) * 10).limit(10);
 
+    let automation_array = []
     for(let i=0; i<automations.length; i++){
         const automation = automations[i]
-        contact_count = await TimeLine.aggregate([
+        contacts = await TimeLine.aggregate([
             {
               $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id), "automation":mongoose.Types.ObjectId(automation._id) }] }
             },           
@@ -44,7 +45,10 @@ const getPage = async (req, res) => {
             }
           ])
          console.log('contact_count', contact_count) 
-        automations[i]['contacts'] = contact_count.length
+         myJSON = JSON.stringify(automation)
+         const data = JSON.parse(myJSON);
+         const automation_detail = await Object.assign(data, {"contacts": contacts})
+         automation_array.push(automation_detail)
     }
     // automations.forEach(async(e) => {
     //     const timelines = await TimeLine.find({
@@ -68,7 +72,7 @@ const getPage = async (req, res) => {
 
     return res.json({
         status: true,
-        data: automations,
+        data: automation_array,
         total: total
     })
 }
