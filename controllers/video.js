@@ -742,15 +742,6 @@ const bulkGmail = async(req, res) => {
         
         const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
-        if(attachments>0){
-          attachment_array = [
-            {
-              type: attachments[0].type,
-              name: attachments[0].filename,
-              content:  attachments[0].content
-            }]
-        }
-        
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
             'userId': currentUser.email,
