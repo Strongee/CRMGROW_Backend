@@ -25,14 +25,6 @@ const oauth2 = require('simple-oauth2')(credentials)
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
-const Base64 = require('js-base64').Base64;
-const makeBody = (to, cc, bcc, from, subject, message) => {
-  var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
-    "to: ", to, "\n",  "cc: ", cc, "\n",  "bcc: ", bcc, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
-  var encodedMail = Base64.encodeURI(str);
-  return encodedMail;
-}
-
 const sgMail = require('@sendgrid/mail')
 const request = require('request-promise')
 const createBody = require('gmail-api-create-message-body')
@@ -156,9 +148,7 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     const message_id = uuidv1()
-
-    email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    
+ 
     let attachment_array = []
     for(let i=0; i<attachments.length; i++){
       attachment_array.push(
@@ -314,24 +304,7 @@ const bulkOutlook = async (req, res) => {
   let error = []
 
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
-  let accessToken
-
-  await new Promise((resolve, reject) => {
-    token.refresh(function (error, result) {
-      if (error) {
-        reject(error.message)
-      }
-      else {
-        resolve(result.token);
-      }
-    })
-  }).then((token) => {
-    accessToken = token.access_token
-
-  }).catch((error) => {
-    console.log('error', error)
-  })
-
+  
   const client = graph.Client.init({
     // Use the provided access token to authenticate
     // requests
@@ -341,6 +314,22 @@ const bulkOutlook = async (req, res) => {
   });
 
   for (let i = 0; i < contacts.length; i++) {
+    let accessToken
+    await new Promise((resolve, reject) => {
+      token.refresh(function (error, result) {
+        if (error) {
+          reject(error.message)
+        }
+        else {
+          resolve(result.token);
+        }
+      })
+    }).then((token) => {
+      accessToken = token.access_token
+  
+    }).catch((error) => {
+      console.log('error', error)
+    })
     let email_content = content
     let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
