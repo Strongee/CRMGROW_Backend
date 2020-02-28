@@ -829,7 +829,7 @@ const bulkText = async(req, res) => {
     
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(200).json({
+        return res.status(405).json({
           status: false,
           error: error
         })

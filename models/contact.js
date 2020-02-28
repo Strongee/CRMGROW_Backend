@@ -41,10 +41,16 @@ ContactSchema.pre('save', function(next) {
                 contact.state = capitalize(contact.state);
             }
         }
+        if(contact.country) {
+            if(Countries[contact.country.toUpperCase()]) {
+                contact.country = Countries[contact.country.toUpperCase()]
+            }
+        }
     }
     return next();
 })
 
+const Countries = {'UNITED STATES': 'US', 'UNITED STATE': 'US', 'CANADA': 'CA', }
 const Labels = ['','New','Cold','Team','Warm','Hot','Trash', 'Appt set', 'Appt missed'];
 const States = ['','Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Guam','Hawaii',
 'Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri',

@@ -1793,6 +1793,9 @@ const getBrokerages = async (req, res) => {
         $match: { user: mongoose.Types.ObjectId(currentUser.id) }
       },
       { $group: { "_id": "$brokerage" } },
+      {
+        $sort: { "_id": 1 } 
+      }
     ]
   ).catch(err => {
     console.log('err', err)
@@ -1813,6 +1816,9 @@ const getSources = async (req, res) => {
         $match: { user: mongoose.Types.ObjectId(currentUser.id) }
       },
       { $group: { "_id": "$source" } },
+      {
+        $sort: {"_id": 1}
+      }
     ]
   ).catch(err => {
     console.log('err', err)
@@ -1864,6 +1870,5 @@ module.exports = {
   exportCSV,
   getById,
   getByIds,
-  getSources,
   getNthContact
 }

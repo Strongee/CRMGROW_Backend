@@ -96,6 +96,9 @@ const getAll = async(req, res) => {
       $group: {
         _id: "$tags"
       }
+    },
+    {
+      $sort: {_id: 1}
     }
   ]);
 
