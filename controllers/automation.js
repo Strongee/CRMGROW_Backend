@@ -42,8 +42,9 @@ const getPage = async (req, res) => {
             {
               $project: { "_id": 1 }
             }
-          ]).count()
-        automations[i]['contacts'] = contact_count
+          ])
+         console.log('contact_count', contact_count) 
+        automations[i]['contacts'] = contact_count.length
     }
     // automations.forEach(async(e) => {
     //     const timelines = await TimeLine.find({
