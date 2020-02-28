@@ -1,5 +1,6 @@
 const Automation = require('../models/automation')
 const TimeLine = require('../models/time_line')
+const mongoose = require('mongoose')
 
 const get = (req, res) => {
     const id = req.params.id;
@@ -27,6 +28,27 @@ const getPage = async (req, res) => {
         ]
     }).skip((page-1) * 10).limit(10);
 
+    let automation_array = []
+    for(let i=0; i<automations.length; i++){
+        const automation = automations[i]
+        contacts = await TimeLine.aggregate([
+            {
+              $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id), "automation":mongoose.Types.ObjectId(automation._id) }] }
+            },           
+            {
+              $group: {
+                _id: { contact: "$contact"},
+              }
+            },
+            {
+              $project: { "_id": 1 }
+            }
+          ])
+         myJSON = JSON.stringify(automation)
+         const data = JSON.parse(myJSON);
+         const automation_detail = await Object.assign(data, {"contacts": contacts})
+         automation_array.push(automation_detail)
+    }
     // automations.forEach(async(e) => {
     //     const timelines = await TimeLine.find({
     //         automation: e._id
@@ -49,7 +71,7 @@ const getPage = async (req, res) => {
 
     return res.json({
         status: true,
-        data: automations,
+        data: automation_array,
         total: total
     })
 }

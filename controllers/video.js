@@ -46,8 +46,6 @@ const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
-const rp = require('request-promise')
-const createBody = require('gmail-api-create-message-body')
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -585,12 +583,12 @@ const bulkEmail = async(req, res) => {
               err: _res[0].statusCode
             })
           }
-        }).catch ((e) => {
+        }).catch(err => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
           console.log('email sending err', msg.to)
-          console.error(e)
+          console.error(err)
           error.push({
             contact: {
               first_name: _contact.first_name,
@@ -633,7 +631,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts, attachments} = req.body 
+  let {content, subject, videos, contacts} = req.body 
   let promise_array = []
   let error = []
 
@@ -644,7 +642,6 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-  const accessToken = oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
@@ -744,70 +741,36 @@ const bulkGmail = async(req, res) => {
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
         const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
-
-        // let promise = new Promise((resolve, reject)=>{
-        //   gmail.users.messages.send({
-        //     'userId': currentUser.email,
-        //     'resource': {
-        //       raw: rawContent
-        //     }
-        //   }, (err, response) => {
-        //     if(err) {
-        //       Activity.deleteOne({_id: activity.id}).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       console.log('err', err)
-        //       error.push({
-        //         contact: {
-        //           first_name: _contact.first_name,
-        //           email: _contact.email,
-        //         },
-        //         err: err 
-        //       })
-        //       resolve();
-        //     } else {
-        //       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       resolve()
-        //     }
-        //   });      
-        // })
-        
-        let attachment_array
-        if(attachments>0){
-          attachment_array = [
-            {
-              type: attachments[0].type,
-              name: attachments[0].filename,
-              content:  attachments[0].content
-            }]
-        }
-        
         
         let promise = new Promise((resolve, reject)=>{
-        let body = createBody({
-          headers: {
-            To: _contact.email,
-            From: `${currentUser.user_name} <${currentUser.email}>`,
-            Subject: video_subject
-          },
-          textHtml: email_content,
-          textPlain: video_content,
-          attachments: attachment_array
-        });
-           
-        rp({
-          method: 'POST',
-          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-          },
-          body: body
-        });    
-      })
-        
+          gmail.users.messages.send({
+            'userId': currentUser.email,
+            'resource': {
+              raw: rawContent
+            }
+          }, (err, response) => {
+            if(err) {
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              console.log('err', err.response['statusText'])
+              error.push({
+                contact: {
+                  id: contacts[i],
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err.response['statusText'] 
+              })
+              resolve();
+            } else {
+              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+              resolve()
+            }
+          });      
+        })
       promise_array.push(promise)
     }
       
@@ -815,7 +778,7 @@ const bulkGmail = async(req, res) => {
       if(error.length>0){
         return res.send({
           status: false,
-          error: error
+          error
         })
       }
       return res.send({
@@ -1107,9 +1070,10 @@ const bulkOutlook = async(req, res) => {
         error: 'You can send max 50 contacts at a time'
       })
     }
+    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     
     for(let i=0; i<contacts.length; i++){
-      let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+      
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
@@ -1202,7 +1166,7 @@ const bulkOutlook = async(req, res) => {
       if(video_subject == '' ){
         video_subject = 'VIDEO: ' + video_titles
       } else {
-        video_subject = subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){

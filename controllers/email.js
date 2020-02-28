@@ -25,16 +25,8 @@ const oauth2 = require('simple-oauth2')(credentials)
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
-const Base64 = require('js-base64').Base64;
-const makeBody = (to, cc, bcc, from, subject, message) => {
-  var str = ["Content-Type: text/html; charset=\"UTF-8\"\n", "MIME-Version:1.0\n", "Content-Transfer-Encoding: 7bit\n",
-    "to: ", to, "\n",  "cc: ", cc, "\n",  "bcc: ", bcc, "\n", "from: ", from, "\n", "subject: ", subject, "\n\n", message].join('');
-  var encodedMail = Base64.encodeURI(str);
-  return encodedMail;
-}
-
 const sgMail = require('@sendgrid/mail')
-const rp = require('request-promise')
+const request = require('request-promise')
 const createBody = require('gmail-api-create-message-body')
 
 const receive = async (req, res) => {
@@ -130,7 +122,6 @@ const bulkGmail = async (req, res) => {
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
   await oauth2Client.getAccessToken();
-  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if (typeof subject == 'undefined' || subject == "") {
     return res.status(400).send({
@@ -157,68 +148,9 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     const message_id = uuidv1()
-
-    email_content = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>';
-    const rawContent = makeBody(_contact.email, cc, bcc, `${currentUser.user_name} <${currentUser.email}>`, email_subject, email_content);
-    cc = []
-    bcc = []
-    // const promise = new Promise((resolve, reject) => {
-    //   gmail.users.messages.send({
-    //     'userId': currentUser.email,
-    //     'resource': {
-    //       raw: rawContent
-    //     }
-    //   }, async (err, response) => {
-    //     if (err) {
-    //       console.log('err', err)
-    //       error.push({
-    //         contact: {
-    //           first_name: _contact.first_name,
-    //           email: _contact.email,
-    //         },
-    //         err: err
-    //       })
-    //       resolve()
-    //     }
-    //     else {
-    //       const email = new Email({
-    //         ...req.body,
-    //         content: email_content,
-    //         subject: email_subject,
-    //         message_id: message_id,
-    //         contacts: contacts[i],
-    //         user: currentUser.id,
-    //         updated_at: new Date(),
-    //         created_at: new Date()
-    //       })
-
-    //       const _email = await email.save().then().catch(err => {
-    //         console.log('err', err)
-    //       })
-
-    //       const activity = new Activity({
-    //         content: 'sent email',
-    //         contacts: contacts[i],
-    //         user: currentUser.id,
-    //         type: 'emails',
-    //         emails: _email.id,
-    //         created_at: new Date(),
-    //         updated_at: new Date(),
-    //       })
-
-    //       const _activity = await activity.save().then().catch(err => {
-    //         console.log('err', err)
-    //       })
-    //       Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
-    //         resolve()
-    //       }).catch(err => {
-    //         console.log('err', err)
-    //       })
-      //     }
-      //     resolve();
-      //   })
-      // })
-      let attachment_array = []
+ 
+    let attachment_array = []
+    if(attachments){
       for(let i=0; i<attachments.length; i++){
         attachment_array.push(
           {
@@ -227,9 +159,9 @@ const bulkGmail = async (req, res) => {
             data:  attachments[i].content.slice(22)
           })
       }
-    
-    
-    console.log('accessToken', oauth2Client.credentials.access_token)
+    }
+
+      
     let promise = new Promise(async(resolve, reject)=>{
       try{
         let body = createBody({
@@ -240,11 +172,11 @@ const bulkGmail = async (req, res) => {
             Cc: cc,
             Bcc: bcc
           },
-          textHtml: email_content,
+          textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
           textPlain: email_content,
           attachments: attachment_array
         });
-        await rp({
+        request({
           method: 'POST',
           uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
           headers: {
@@ -252,19 +184,56 @@ const bulkGmail = async (req, res) => {
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
           },
           body: body
-        });
-        resolve()
+        })  
+        const email = new Email({
+          ...req.body,
+          content: email_content,
+          subject: email_subject,
+          message_id: message_id,
+          contacts: contacts[i],
+          user: currentUser.id,
+          updated_at: new Date(),
+          created_at: new Date()
+        })
+
+        const _email = await email.save().then().catch(err => {
+          console.log('err', err)
+        })
+
+        const activity = new Activity({
+          content: 'sent email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+
+        const _activity = await activity.save().then().catch(err => {
+          console.log('err', err)
+        })
+        Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
+          resolve()
+        }).catch(err => {
+          console.log('err', err)
+        })
       }catch(err){
         console.log('err', err)
-        return res.status(400).json({
-          status: false,
-          error: err
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: err
         })
       }
     }).catch(err=>{
       console.log('err', err)
     })
     promise_array.push(promise)
+    cc = []
+    bcc = []
   }
 
   Promise.all(promise_array).then(() => {
@@ -338,24 +307,7 @@ const bulkOutlook = async (req, res) => {
   let error = []
 
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
-  let accessToken
-
-  await new Promise((resolve, reject) => {
-    token.refresh(function (error, result) {
-      if (error) {
-        reject(error.message)
-      }
-      else {
-        resolve(result.token);
-      }
-    })
-  }).then((token) => {
-    accessToken = token.access_token
-
-  }).catch((error) => {
-    console.log('error', error)
-  })
-
+  
   const client = graph.Client.init({
     // Use the provided access token to authenticate
     // requests
@@ -365,6 +317,22 @@ const bulkOutlook = async (req, res) => {
   });
 
   for (let i = 0; i < contacts.length; i++) {
+    let accessToken
+    await new Promise((resolve, reject) => {
+      token.refresh(function (error, result) {
+        if (error) {
+          reject(error.message)
+        }
+        else {
+          resolve(result.token);
+        }
+      })
+    }).then((token) => {
+      accessToken = token.access_token
+  
+    }).catch((error) => {
+      console.log('error', error)
+    })
     let email_content = content
     let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
@@ -396,14 +364,16 @@ const bulkOutlook = async (req, res) => {
         }
       })
     }
-    for(let i=0; i<attachments.length; i++){
-      const attachment = attachments[i]
-      attachment_array.push({
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        "name": attachment.filename,
-        "contentType": attachment.type,
-        "contentBytes": attachment.content.replace(/^data:.+;base64,/, '')
-      })
+    if(attachments){
+      for(let i=0; i<attachments.length; i++){
+        const attachment = attachments[i]
+        attachment_array.push({
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          "name": attachment.filename,
+          "contentType": attachment.type,
+          "contentBytes": attachment.content.replace(/^data:.+;base64,/, '')
+        })
+      }
     }
     const sendMail = {
       message: {

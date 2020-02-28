@@ -34,7 +34,7 @@
         "post-deploy" : "npm install && pm2 start npm -- run staging",
         // Environment variables that must be injected in all applications on this env
         "env"  : {
-          "NODE_ENV": "production"
+          "NODE_ENV": "staging"
         }
       }
     }

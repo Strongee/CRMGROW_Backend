@@ -7,6 +7,7 @@ const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
 const User = require('../models/user')
+const TimeLine = require('../models/time_line')
 const EmailTracker = require('../models/email_tracker')
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
@@ -108,6 +109,9 @@ const get = async (req, res) => {
   }
 
   const _follow_up = await FollowUp.find({ user: currentUser.id, contact: req.params.id }).sort({ due_date: 1 })
+  const _timelines = await TimeLine.find({ user: currentUser.id, contact: req.params.id}).catch(err=>{
+    console.log('err', err)
+  })
   const _activity_list = await Activity.find({ user: currentUser.id, contacts: req.params.id }).sort({ updated_at: 1 })
   let _activity_detail_list = [];
 
@@ -136,10 +140,11 @@ const get = async (req, res) => {
       { "follow_up": _follow_up }, 
       { "activity": _activity_detail_list }, 
       { "next": next},
-      { "prev": prev}
+      { "prev": prev},
+      { "time_lines": _timelines}
     );
 
-  res.send({
+  return res.send({
     status: true,
     data
   })
@@ -637,7 +642,7 @@ const receiveEmail = async(req, res) => {
           })
           
           const activity = new Activity({
-            content: contact.first_name + ' opened email',
+            content: 'opened email',
             contacts: contact.id,
             user: user.id,
             type: 'email_trackers',
@@ -685,7 +690,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' clicked the link on email',
+          content: 'clicked the link on email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
@@ -722,7 +727,7 @@ const receiveEmail = async(req, res) => {
         })
         
         const activity = new Activity({
-          content: contact.first_name + ' unsubscribed email',
+          content: 'unsubscribed email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
