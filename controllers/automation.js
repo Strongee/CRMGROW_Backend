@@ -44,7 +44,6 @@ const getPage = async (req, res) => {
               $project: { "_id": 1 }
             }
           ])
-         console.log('contact_count', contact_count) 
          myJSON = JSON.stringify(automation)
          const data = JSON.parse(myJSON);
          const automation_detail = await Object.assign(data, {"contacts": contacts})
