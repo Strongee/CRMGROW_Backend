@@ -46,8 +46,6 @@ const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
-const rp = require('request-promise')
-const createBody = require('gmail-api-create-message-body')
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -633,7 +631,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts, attachments} = req.body 
+  let {content, subject, videos, contacts} = req.body 
   let promise_array = []
   let error = []
 
@@ -644,7 +642,6 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-  const accessToken = oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
@@ -744,37 +741,7 @@ const bulkGmail = async(req, res) => {
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
         const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
-
-        // let promise = new Promise((resolve, reject)=>{
-        //   gmail.users.messages.send({
-        //     'userId': currentUser.email,
-        //     'resource': {
-        //       raw: rawContent
-        //     }
-        //   }, (err, response) => {
-        //     if(err) {
-        //       Activity.deleteOne({_id: activity.id}).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       console.log('err', err)
-        //       error.push({
-        //         contact: {
-        //           first_name: _contact.first_name,
-        //           email: _contact.email,
-        //         },
-        //         err: err 
-        //       })
-        //       resolve();
-        //     } else {
-        //       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       resolve()
-        //     }
-        //   });      
-        // })
         
-        let attachment_array
         if(attachments>0){
           attachment_array = [
             {
@@ -783,7 +750,6 @@ const bulkGmail = async(req, res) => {
               content:  attachments[0].content
             }]
         }
-        
         
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
