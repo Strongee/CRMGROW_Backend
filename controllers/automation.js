@@ -18,6 +18,22 @@ const get = (req, res) => {
     })
 }
 
+const getStatus = (req, res) => {
+    const id = req.params.id;
+
+    TimeLine.find({automation: id}).then(data => {
+        res.send({
+            status: false,
+            data
+        })
+    }).catch(err => {
+        res.status(500).send({
+            status: false,
+            error: err.message || 'Automation reading is failed.'
+        })
+    })
+}
+
 const getPage = async (req, res) => {
     const {currentUser} = req;
     const page = req.params.page;
@@ -49,21 +65,6 @@ const getPage = async (req, res) => {
          const automation_detail = await Object.assign(data, {"contacts": contacts})
          automation_array.push(automation_detail)
     }
-    // automations.forEach(async(e) => {
-    //     const timelines = await TimeLine.find({
-    //         automation: e._id
-    //     })
-    //     console.log(timelines);
-    //     e['timelines'] = timelines;
-    //     console.log("Automation", e);
-    // })
-    // let timelines = {};
-    // for(let i = 0 ; i < automations.length ; i++ ) {
-    //     const timelines = await TimeLine.find({
-    //         automation: automations[i]['_id']
-    //     });
-    //     const 
-    // }
 
     const total = await Automation.countDocuments({
         user: currentUser.id
@@ -147,6 +148,7 @@ const search = async(req, res) => {
 
 module.exports = {
   get,
+  getStatus,
   getPage,
   create,
   update,

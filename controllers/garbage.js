@@ -40,7 +40,7 @@ const create = async(req, res) => {
 const edit = async(req, res) => {
   const user = req.currentUser;
   const editData = req.body
-  
+  console.log(editData);
   const garbage = await Garbage.findOne({user: user._id})
   if(!garbage){
     let newGarbage = new Garbage({
