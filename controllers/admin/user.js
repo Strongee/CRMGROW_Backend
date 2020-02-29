@@ -346,7 +346,7 @@ const create = async (req, res) => {
         dynamic_template_data: {
           first_name: _res.user_name,
           // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-          upload_avatar:  `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+          upload_avatar:  `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
           upload_spread:  `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
         }
