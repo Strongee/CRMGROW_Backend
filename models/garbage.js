@@ -25,7 +25,6 @@ const Garbage = mongoose.model('garbage',{
       follow_up: {type: Boolean, default: false},
     },
     capture_dialog: {type: Boolean, default: false},
-    
     created_at: Date,
     updated_at: Date,
  });
