@@ -152,7 +152,8 @@ const signUp = async (req, res) => {
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
-   
+    const sub_domain = req.body.user_name.replace(/[^A-Z0-9]/ig, "");
+
     const user = new User({
       ...req.body,
       payment: payment.id,

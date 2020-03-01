@@ -34,6 +34,7 @@ const create = async(req, res) => {
         _time_line = new TimeLine({
           ...automation,
           ref: automation.id,
+          parent_ref: automation.parent,
           user: currentUser.id,
           contact: contact,
           automation: automation_id,
@@ -61,6 +62,7 @@ const create = async(req, res) => {
         time_line = new TimeLine({
           ...automation,
           ref: automation.id,
+          parent_ref: automation.parent,
           user: currentUser.id,
           contact: contact,
           automation: automation_id,
