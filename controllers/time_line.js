@@ -50,7 +50,7 @@ const create = async(req, res) => {
                 contact: contact,
                 ref: timeline.ref,
               }
-              TimeLineCtrl.activeNext(data) 
+              activeNext(data) 
             }catch(err){
               console.log('err', err)
             }
