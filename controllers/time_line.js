@@ -33,6 +33,7 @@ const create = async(req, res) => {
         due_date.set({minute:0,second:0,millisecond:0})
         _time_line = new TimeLine({
           ...automation,
+          ref: automation.id,
           user: currentUser.id,
           contact: contact,
           automation: automation_id,
@@ -60,6 +61,7 @@ const create = async(req, res) => {
       } else {
         time_line = new TimeLine({
           ...automation,
+          ref: automation.id,
           user: currentUser.id,
           contact: contact,
           automation: automation_id,
