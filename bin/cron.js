@@ -16,6 +16,7 @@ const Note = require('../models/note')
 const Notification = require('../models/notification')
 const TimeLine = require('../models/time_line')
 const TimeLineCtrl = require('../controllers/time_line')
+const Garbage = require('../models/garbage')
 
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -25,6 +26,7 @@ const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
+const webpush = require('web-push');
 const EmailHelper = require('../helpers/email')
 const TextHelper = require('../helpers/text')
 
@@ -227,56 +229,79 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         const contact = await Contact.findOne({_id: follow_up.contact}).catch((err)=>{
           console.log('err: ', err)
           }) 
-        const msg = {
-          to: user.email,
-          from: mail_contents.FOLLOWUP_REMINDER.MAIL,
-          subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
-          dynamic_template_data: {
-            contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
-            due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a'),
-            content: follow_up.content,
-            detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-          },
-        }
-  
-        sgMail.send(msg).then((res) => {
-          console.log('mailres.errorcode', res[0].statusCode);
-          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-            console.log('Successful send to '+msg.to)
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch((err)=>{
+        const garbage = await Garbage.findOne({user: user.id}).catch(err=>{
           console.log('err: ', err)
         })
-  
-        const e164Phone = phone(user.cell_phone)[0]
-        const fromNumber = config.TWILIO.TWILIO_NUMBER
-        console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
-        if (!e164Phone) {
-          const error = {
-            error: 'Invalid Phone Number'
+        const email_notification = garbage['email_notification']
+        if(email_notification['follow_up']){
+          const msg = {
+            to: user.email,
+            from: mail_contents.FOLLOWUP_REMINDER.MAIL,
+            subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
+            templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
+            dynamic_template_data: {
+              contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
+              due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a'),
+              content: follow_up.content,
+              detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+            },
           }
-          throw error // Invalid phone number
-        }
-   
-        const title = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
-          + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
-        const body = follow_up.content + '\n'
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-        twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
-          console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY h:mm a')}`)
-          console.log(`UTC timezone ${moment(follow_up.due_date).toISOString()}`)
-        }).catch(err=>{
-          console.log('send sms err: ',err)
-        })
-  
-        reminder['del'] = true
     
-        reminder.save().catch(err=>{
-          console.log(err)
-        })
+          sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+            }else {
+              console.log('email sending err', msg.to+res[0].statusCode)
+            }
+          }).catch((err)=>{
+            console.log('err: ', err)
+          })
+        }
+        const text_notification = garbage['text_notification']
+        if(text_notification['follow_up']){
+          const e164Phone = phone(user.cell_phone)[0]
+          const fromNumber = config.TWILIO.TWILIO_NUMBER
+          console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
+          if (!e164Phone) {
+            const error = {
+              error: 'Invalid Phone Number'
+            }
+            throw error // Invalid phone number
+          }
+     
+          const title = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
+            + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
+          const body = follow_up.content + '\n'
+          const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+          twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
+            console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY h:mm a')}`)
+            console.log(`UTC timezone ${moment(follow_up.due_date).toISOString()}`)
+          }).catch(err=>{
+            console.log('send sms err: ',err)
+          })
+    
+          reminder['del'] = true
+      
+          reminder.save().catch(err=>{
+            console.log(err)
+          })
+        }
+        const desktop_notification = garbage['desktop_notification']
+        if(desktop_notification['follow_up']){
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            config.VAPID.PUBLIC_VAPID_KEY,
+            config.VAPID.PRIVATE_VAPID_KEY
+          )
+          
+          const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+          const title = `CRMGrow follow up reminder`
+          const body = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' + 
+          contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + follow_up.content 
+          const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+          webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+        }
       }
     }else{
       const appointment = await Appointment.findOne({_id: reminder.appointment}).catch((err)=>{
