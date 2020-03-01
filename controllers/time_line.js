@@ -30,7 +30,7 @@ const create = async(req, res) => {
         let now = moment()
         let due_date = now.add(period, 'hours');
         due_date.set({minute:0,second:0,millisecond:0})
-        time_line = new TimeLine({
+        _time_line = new TimeLine({
           ...automation,
           user: currentUser.id,
           contact: contact,
@@ -38,6 +38,23 @@ const create = async(req, res) => {
           due_date: due_date,
           created_at: new Date(),
           updated_at: new Date()
+        })
+        _time_line.save().then(timeline =>{
+          console.log('data', timeline)
+          if(timeline['period'] == 0){
+            try{
+              runTimeline(timeline.id)
+              const data = {
+                contact: contact,
+                ref: timeline.ref,
+              }
+              TimeLineCtrl.activeNext(data) 
+            }catch(err){
+              console.log('err', err)
+            }
+          }
+        }).catch(err=>{
+          console.log('err', err)
         })
       } else {
         time_line = new TimeLine({
@@ -48,10 +65,10 @@ const create = async(req, res) => {
           created_at: new Date(),
           updated_at: new Date()
         })
+        time_line.save().catch(err=>{
+          console.log('err', err)
+        })
       }
-      time_line.save().catch(err=>{
-        console.log('err', err)
-      })
     }
     return res.send({
       status: true
