@@ -8,6 +8,7 @@ const Image = require('../models/image');
 const ImageTracker = require('../models/image_tracker');
 const Activity = require('../models/activity');
 const TimeLine = require('../models/time_line');
+const Garbage = require('../models/garbage');
 const TimeLineCtrl = require('./time_line');
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
@@ -35,7 +36,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   const currentUser = await User.findOne({_id: query['user']})
   const contact = await Contact.findOne({_id: query['contact']})
   const pdf = await PDF.findOne({_id: query['pdf']})
-
+  const garbage = await Garbage.findOne({user: query['garbage']})
+  
   const d = (query['duration']/1000)
   var h = Math.floor(d / 3600);
   var m = Math.floor(d % 3600 / 60);
@@ -46,8 +48,9 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   if (s < 10) {s = "0"+s;}
   let timeWatched = h + ':' + m + ':' + s
 
+  desktop_notification = garbage['desktop_notification']
   // send desktop notification
-  if(currentUser.desktop_notification == true){
+  if(desktop_notification['material'] == true){
     webpush.setVapidDetails(
       'mailto:support@crmgrow.com',
       config.VAPID.PUBLIC_VAPID_KEY,
@@ -61,9 +64,11 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
+  
+  text_notification = garbage['text_notification']
 
    // send text notification
-   if(currentUser.text_notification == true){
+   if(text_notification['material'] == true){
     const e164Phone = phone(currentUser.cell_phone)[0]
     
     if (!e164Phone) {
@@ -123,30 +128,32 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     } 
   }
 
-  // send email notification
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  email_notification = garbage['email_notification']
+  
+  if(email_notification['material']){
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
-  const msg = {
-    to: currentUser.email,
-    from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-    subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-    templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-    dynamic_template_data: {
-      first_name: contact.first_name,
-      last_name: contact.last_name,
-      phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-      email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-      activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
-      duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-    },
-  };
-
-  sgMail.send(msg).then().catch(err=>{
-    console.log('send message err: ',err)
-  })
-
+    const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
+    const msg = {
+      to: currentUser.email,
+      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      dynamic_template_data: {
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+        activity: contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
+        duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+      },
+    };
+  
+    sgMail.send(msg).then().catch(err=>{
+      console.log('send message err: ',err)
+    })
+  }
 
   const timelines = await TimeLine.find({ 
     contact: query['contact'],
@@ -163,7 +170,6 @@ const disconnectPDF = async(pdf_tracker_id) =>{
       try{
         const timeline = timelines[i]
         TimeLineCtrl.runTimeline(timeline.id)
-        const period = timeline['period']
         timeline['status'] = 'completed'
         timeline.save().catch(err=>{
           console.log('err', err)
@@ -241,7 +247,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const currentUser = await User.findOne({_id: query['user']})
     const contact = await Contact.findOne({_id: query['contact']})
     const video = await Video.findOne({_id: query['video']})
-  
+    const garbage = await Garbage.findOne({user: query['user']})
+    
     const activity = new Activity({
       content: 'watched video',
       contacts: query.contact,
@@ -276,7 +283,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         try{
           const timeline = timelines[i]
           TimeLineCtrl.runTimeline(timeline.id)
-          const period = timeline['period']
           const data = {
             contact: query['contact'],
             ref: timeline.ref,
@@ -296,6 +302,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     }).catch(err=>{
       console.log('err', err)
     })
+    
     if(unwatched_timelines.length>0){
       for(let i=0; i<unwatched_timelines; i++){
         const timeline = unwatched_timelines[i]
@@ -305,6 +312,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         })
       }
     }
+    
     const d = (query['duration']/1000)
     var h = Math.floor(d / 3600);
     var m = Math.floor(d % 3600 / 60);
@@ -326,8 +334,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   
     let timeTotal = tH + ':' + tM + ':' + tS
   
+    desktop_notification = garbage.desktop_notification
     // send desktop notification
-    if(currentUser.desktop_notification == true){
+    if(desktop_notification['material'] == true){
       webpush.setVapidDetails(
         'mailto:support@crmgrow.com',
         config.VAPID.PUBLIC_VAPID_KEY,
@@ -342,8 +351,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       webpush.sendNotification(subscription, playload).catch(err => console.error(err))
     }
   
+    text_notification = garbage.text_notification
     // send text notification
-    if(currentUser.text_notification == true && currentUser.cell_phone){
+    if(text_notification['material'] == true && currentUser.cell_phone){
       const e164Phone = phone(currentUser.cell_phone)[0]
       
       if (!e164Phone) {
@@ -352,7 +362,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         }
         throw error // Invalid phone number
       } else {
-      
         let fromNumber = currentUser['proxy_number'];
         if(!fromNumber) {
           const areaCode = currentUser.cell_phone.substring(1, 4)
@@ -402,27 +411,31 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       }
     }
 
+    email_notification = garbage.email_notification
     // send email notification
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-    const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm: a')
-
-    const msg = {
-      to: currentUser.email,
-      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-      dynamic_template_data: {
-        first_name: contact.first_name,
-        last_name: contact.last_name,
-        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-        activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-        duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + created_at,
-        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-      },
-    };
+    
+    if(email_notification['material']){
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm: a')
   
-    sgMail.send(msg).catch(err => console.error(err))   
+      const msg = {
+        to: currentUser.email,
+        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+        subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
+          duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + created_at,
+          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+        },
+      };
+    
+      sgMail.send(msg).catch(err => console.error(err))   
+    }
   }
   
   const updateVideo = async(duration, video_tracker_id) =>{
@@ -447,9 +460,10 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const currentUser = await User.findOne({_id: query['user']})
     const contact = await Contact.findOne({_id: query['contact']})
     const image = await Image.findOne({_id: query['image']})
-  
+    const garbage = await Garbage.findOne({user: query['user']})
+    
     const activity = new Activity({
-      content: contact.first_name + ' reviewed image',
+      content: 'reviewed image',
       contacts: query.contact,
       user: currentUser.id,
       type: 'image_trackers',
@@ -482,7 +496,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         try{
           const timeline = timelines[i]
           TimeLineCtrl.runTimeline(timeline.id)
-          const period = timeline['period']
           timeline['status'] = 'completed'
           timeline.save().catch(err=>{
             console.log('err', err)
@@ -525,8 +538,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     if (s < 10) {s = "0"+s;}
     let timeWatched = h + ':' + m + ':' + s
 
+  const desktop_notification = garbage['desktop_notification']
   // send desktop notification
-  if(currentUser.desktop_notification == true){
+  if(desktop_notification['material'] == true){
     webpush.setVapidDetails(
       'mailto:support@crmgrow.com',
       config.VAPID.PUBLIC_VAPID_KEY,
@@ -541,8 +555,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     webpush.sendNotification(subscription, playload).catch(err => console.error(err))
   }
 
+  const text_notification = garbage['text_notification']
    // send text notification
-   if(currentUser.text_notification == true){
+   if(text_notification['material'] == true){
     const e164Phone = phone(currentUser.cell_phone)[0]
     
     if (!e164Phone) {
@@ -602,29 +617,32 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     } 
   }
 
-  // send email notification
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  const email_notification = garbage['email_notification']
+    // send email notification
+  if(email_notification['material']){
+    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-  const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
-  const msg = {
-    to: currentUser.email,
-    from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-    subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-    templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-    dynamic_template_data: {
-      first_name: contact.first_name,
-      last_name: contact.last_name,
-      phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-      email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-      activity: contact.first_name + ' reviewed image - <b>' + image.title + '</b>',
-      duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
-      detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-    },
-  };
-
-  sgMail.send(msg).then().catch(err=>{
-    console.log('send message err: ',err)
-  })
+    const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm:ss a')
+    const msg = {
+      to: currentUser.email,
+      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      dynamic_template_data: {
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+        activity: contact.first_name + ' reviewed image - <b>' + image.title + '</b>',
+        duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
+        detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+      },
+    };
+  
+    sgMail.send(msg).then().catch(err=>{
+      console.log('send message err: ',err)
+    })
+  }
 }
 
 const updateImage = async(duration, image_tracker_id) =>{
