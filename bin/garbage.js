@@ -14,14 +14,20 @@ const migrate = async() => {
   })
   for(let i=0; i<users.length; i++){
     const user = users[i]
-    Garbage.findOneOrCreate({
+    Garbage.findOne({
       user: user.id
-    },{
-      user: user.id,
-      created_at: new Date(),
-      updated_at: new Date()
     }).then(res=>{
       console.log('data', res)
+      if(!res){
+        const garbage = new Garbage({
+          user: user.id,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        garbage.save().catch(err=>{
+          console.log('err', err)
+        })
+      }
     }).catch(err=>{
       console.log('err', err)
     })
