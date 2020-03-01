@@ -90,6 +90,8 @@ const activeNext = async(data) => {
     status: 'pending',
     parent_ref: ref,
   })
+  console.log('data', data)
+  console.log('timelines', timelines)
   if(timelines){
     for(let i=0; i<timelines.length; i++){
       const timeline = timelines[i]
@@ -100,6 +102,8 @@ const activeNext = async(data) => {
       timeline.save({
         status: 'active',
         due_date: due_date
+      }).catch(err=>{
+        console.log('err', err)
       })
     }
   }
