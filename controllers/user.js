@@ -1421,13 +1421,44 @@ const disconWeekly = async (req, res) => {
 
 const desktopNotification = async (req, res) => {
   const user = req.currentUser
+  const {subscription, option} = req.body;
   user['desktop_notification'] = true
-  user['desktop_notification_subscription'] = JSON.stringify(req.body['subscription'])
-
-  user.save()
-  return res.send({
-    status: true
-  })
+  user['desktop_notification_subscription'] = JSON.stringify(subscription)
+  const garbage = await Garbage.findOne({user: user._id})
+  if(!garbage){
+    let newGarbage = new Garbage({
+      desktop_notification: option,
+      user: user._id
+    });
+    newGarbage.save().then(() => {
+      user.save()
+      return res.send({
+        status: true,
+      })
+    }).catch(err => {
+      console.log('err', err);
+      return res.status(500).json({
+        status: false,
+        error: err.message || 'Internal server error'
+      })
+    })
+  }
+  else {
+    garbage['desktop_notification'] = option
+    garbage.save()
+      .then(()=>{
+        user.save()
+        return res.send({
+          status: true,
+        })
+      }).catch(err=>{
+        console.log('err', err)
+        return res.status(500).json({
+          status: false,
+          error: err.message || 'Internal server error'
+        })
+      })
+  }
 }
 
 const disconDesktop = async (req, res) => {
