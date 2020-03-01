@@ -473,7 +473,9 @@ const bulkVideo = async(data) => {
           Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
             console.log('err', err)
           })
-          resolve()
+          resolve({
+            status: true
+          })
         }else {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
@@ -497,7 +499,9 @@ const bulkVideo = async(data) => {
               err: es[0].statusCode,
               contact: contacts[i]
             })
-            resolve()
+            resolve({
+              status: true
+            })
           })
         })
         promise_array.push(promise)
