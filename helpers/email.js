@@ -439,6 +439,7 @@ const bulkVideo = async(data) => {
         video_subject = 'VIDEO: ' + video_titles
       } else {
         video_subject = video_subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
       
       if(video_content.search(/{video_object}/ig) != -1){
@@ -584,6 +585,7 @@ const bulkVideo = async(data) => {
         video_subject = 'VIDEO: ' + video_titles
       } else {
         video_subject = video_subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -868,7 +870,8 @@ const bulkPdf = async(data) => {
       if(pdf_subject == '' ){
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
-        pdf_subject = subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1013,6 +1016,7 @@ const bulkPdf = async(data) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1160,6 +1164,7 @@ const bulkPdf = async(data) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1297,6 +1302,7 @@ const bulkImage = async(data) => {
         image_subject = 'Image: ' + image_titles
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
         
       if(image_content.search(/{image_object}/ig) != -1){
@@ -1456,6 +1462,7 @@ const bulkImage = async(data) => {
         image_subject = 'Image: ' + image_subject
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){
@@ -1593,7 +1600,8 @@ const bulkImage = async(data) => {
       if(image_subject == '' ){
         image_subject = 'Image: ' + image_titles
       } else {
-        image_subject = subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
       
       if(image_content.search(/{image_object}/ig) != -1){
