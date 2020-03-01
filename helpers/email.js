@@ -502,25 +502,7 @@ const bulkVideo = async(data) => {
         promise_array.push(promise)
       }
         
-      Promise.all(promise_array).then(()=>{
-        if(error.length>0){
-          return res.status(400).json({
-            status: false,
-            error: error
-          })
-        }
-        return res.send({
-          status: true
-        })
-      }).catch(err=>{
-        console.log('err', err)
-        if(err){
-          return res.status(400).json({
-            status: false,
-            error: err
-          })
-        }
-      });
+      return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
 
