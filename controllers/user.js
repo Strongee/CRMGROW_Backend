@@ -9,6 +9,7 @@ const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
 const UserLog = require('../models/user_log')
+const Garbage = require('../models/garbage')
 const sgMail = require('@sendgrid/mail')
 const { google } = require('googleapis')
 const outlook = require('node-outlook')
@@ -162,7 +163,17 @@ const signUp = async (req, res) => {
       updated_at: new Date(),
       created_at: new Date(),
     })
-
+    
+    const garbage = new Garbage({
+      user: user.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+    
+    garbage.save().catch(err=>{
+      console.log('err', err)
+    })
+    
     user.save()
       .then(_res => {
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
@@ -342,6 +353,16 @@ const socialSignUp = async (req, res) => {
       created_at: new Date(),
     })
 
+    const garbage = new Garbage({
+      user: user.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+    
+    garbage.save().catch(err=>{
+      console.log('err', err)
+    })
+    
     user.save()
       .then(_res => {
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
