@@ -1,6 +1,7 @@
 const TimeLine = require('../models/time_line')
 const Automation = require('../models/automation')
 const Contact = require('../models/contact')
+const Note = require('../models/Note')
 const Activity = require('../models/activity')
 const FollowUp = require('../models/follow_up')
 const Reminder = require('../models/reminder')
