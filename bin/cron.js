@@ -788,6 +788,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             video: action.video,
+            subject: action.subject,
             content: action.content,
             contacts: [timeline.contact]
           }

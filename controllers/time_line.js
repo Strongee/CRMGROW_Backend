@@ -25,7 +25,8 @@ const create = async(req, res) => {
     for(let i=0; i<automations.length; i++){
       const automation = automations[i]
       let time_line
-      if(automation['status'] === 'active'){
+      console.log('automation', automation)
+      if(automation['status'] == 'active'){
         const period = automation['period']
         let now = moment()
         let due_date = now.add(period, 'hours');
@@ -57,6 +58,7 @@ const create = async(req, res) => {
           console.log('err', err)
         })
       } else {
+      console.log('false')
         time_line = new TimeLine({
           ...automation,
           user: currentUser.id,
@@ -217,6 +219,7 @@ const runTimeline = async(id) => {
         data = {
           user: timeline.user,
           video: action.video,
+          subject: action.subject,
           content: action.content,
           contacts: [timeline.contact]
         }
