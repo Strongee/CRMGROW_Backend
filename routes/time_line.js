@@ -7,5 +7,6 @@ const { catchError } = require('../controllers/error')
 const router = express.Router()
 
 router.post('/create', UserCtrl.checkAuth, catchError(TimeLineCtrl.create))
+router.get('/cancel/:contact', UserCtrl.checkAuth, catchError(TimeLineCtrl.cancel))
 
 module.exports = router

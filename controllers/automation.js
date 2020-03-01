@@ -1,5 +1,6 @@
 const Automation = require('../models/automation')
 const TimeLine = require('../models/time_line')
+const Contact = require('../models/contact')
 const mongoose = require('mongoose')
 
 const get = (req, res) => {
@@ -18,13 +19,19 @@ const get = (req, res) => {
     })
 }
 
-const getStatus = (req, res) => {
+const getStatus = async (req, res) => {
     const id = req.params.id;
-
-    TimeLine.find({automation: id}).then(data => {
+    const { contacts } = req.body;
+    let assignedContacts = await Contact.find({_id: {$in: contacts}}, '_id first_name last_name email cell_phone').catch(err => {
+        console.log("Error", err);
+    })
+    TimeLine.find({automation: id}).populate().then(data => {
         res.send({
-            status: false,
-            data
+            status: true,
+            data: {
+                timelines: data,
+                contacts: assignedContacts
+            }
         })
     }).catch(err => {
         res.status(500).send({
@@ -55,6 +62,11 @@ const getPage = async (req, res) => {
               $group: {
                 _id: { contact: "$contact"},
               }
+            },
+            {
+                $group: {
+                  _id: "$_id.contact"
+                }
             },
             {
               $project: { "_id": 1 }

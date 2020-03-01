@@ -378,8 +378,24 @@ const runTimeline = async(id) => {
   }
 }
 
+const cancel = (req, res) => {
+  let contact = req.params.contact;
+
+  TimeLine.deleteMany({contact: contact}).then(data => {
+    return res.send({
+      status: true
+    })
+  }, err => {
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
 module.exports = {
   create,
   activeNext,
-  runTimeline
+  runTimeline,
+  cancel
 }
