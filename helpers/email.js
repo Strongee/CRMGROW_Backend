@@ -83,7 +83,6 @@ const bulkEmail = async(data) => {
             bcc = []
             cc = []
             const email = new Email({
-              ...req.body,
               content: email_content,
               subject: email_subject,
               contacts: contacts[i],
@@ -189,7 +188,6 @@ const bulkEmail = async(data) => {
             body: body
           })  
           const email = new Email({
-            ...req.body,
             content: email_content,
             subject: email_subject,
             message_id: message_id,
@@ -310,7 +308,6 @@ const bulkEmail = async(data) => {
         client.api('/me/sendMail')
         .post(sendMail).then( async ()=>{
           const email = new Email({
-            ...req.body,
             content: email_content,
             subject: email_subject,
             message_id: message_id,
