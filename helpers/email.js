@@ -45,7 +45,7 @@ const createBody = require('gmail-api-create-message-body')
 const sgMail = require('@sendgrid/mail')
 
 const bulkEmail = async(data) => {
-  const {user, subject, content, bcc, cc, contacts} = data
+  let {user, subject, content, bcc, cc, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('err', err)
   })
