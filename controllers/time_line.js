@@ -102,10 +102,9 @@ const activeNext = async(data) => {
       let now = moment()
       let due_date = now.add(period, 'hours');
       due_date.set({minute:0,second:0,millisecond:0})
-      timeline.save({
-        status: 'active',
-        due_date: due_date
-      }).catch(err=>{
+      timeline['status'] = 'active'
+      timeline['due_date'] = due_date
+      timeline.save().catch(err=>{
         console.log('err', err)
       })
     }
