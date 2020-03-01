@@ -44,7 +44,6 @@ const create = async(req, res) => {
         _time_line.save().then(timeline =>{
           if(timeline['period'] == 0){
             try{
-              console.log('timeline.id', timeline.id)
               runTimeline(timeline.id)
               const data = {
                 contact: contact,
