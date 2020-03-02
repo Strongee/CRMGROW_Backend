@@ -113,10 +113,11 @@ const activeNext = async(data) => {
 }
 
 const runTimeline = async(id) => {
+  console.log('id', id)
   const timelines = await TimeLine.find({_id: id}).catch(err=>{ 
     console.log('err', err)
   })
-  
+  console.log('tinelines2', timelines)
   for(let i=0; i<timelines.length; i++){
     const timeline = timelines[i]
     const action = timeline['action']
