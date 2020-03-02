@@ -84,6 +84,9 @@ router.post('/bulk-text', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchErro
 // Sms Content 
 router.post('/sms-content', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.createSmsContent));
 
+// Default Video Edit
+router.post('/update-admin', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(VideoCtrl.updateDefault))
+
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 
