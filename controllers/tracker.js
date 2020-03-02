@@ -278,6 +278,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
     
+    console.log('timelines', timelines)
+    
     if(timelines.length>0){
       for(let i=0; i<timelines.lengh; i++){
         try{
