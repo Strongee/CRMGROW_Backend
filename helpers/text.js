@@ -1,6 +1,7 @@
 const User = require('../models/user')
 const Contact = require('../models/contact')
 const config = require('../config/config')
+const Activity = require('../models/activity')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')

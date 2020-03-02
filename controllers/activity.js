@@ -54,7 +54,14 @@ const create = async(req, res) => {
   });
 }
 
+const removeBulk = async(req, res) => {
+  const { currentUser } = req
+  const { contacts } = req.body
+  await Activity.deleteMany({contacts: req.params.id})
+}
+
 module.exports = {
     get,
     create,
+    removeBulk
 }
