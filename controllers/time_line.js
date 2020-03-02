@@ -306,7 +306,7 @@ const runTimeline = async(id) => {
         data = {
           user: timeline.user,
           content: action.content,
-          pdf: action.pdf,
+          pdfs: [action.pdf],
           contacts: [timeline.contact]
         }
         TextHelper.bulkPdf(data).then(res=>{
@@ -332,7 +332,7 @@ const runTimeline = async(id) => {
           user: timeline.user,
           content: action.content,
           subject: action.subject,
-          pdf: action.pdf,
+          pdfs: [action.pdf],
           contacts: [timeline.contact]
         }
         EmailHelper.bulkPdf(data).then(res=>{
@@ -357,7 +357,7 @@ const runTimeline = async(id) => {
         data = {
           user: timeline.user,
           content: action.content,
-          image: action.image,
+          images: [action.image],
           contacts: [timeline.contact]
         }
         TextHelper.bulkImage(data).then(res=>{
@@ -382,7 +382,7 @@ const runTimeline = async(id) => {
         data = {
           user: timeline.user,
           content: action.content,
-          image: action.image,
+          images: [action.image],
           subject: action.subject,
           contacts: [timeline.contact]
         }

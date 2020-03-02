@@ -872,7 +872,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            pdfs: action.pdf,
+            pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
           TextHelper.bulkPdf(data).then(res=>{
@@ -898,7 +898,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
             user: timeline.user,
             content: action.content,
             subject: action.subject,
-            pdfs: action.pdf,
+            pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
           EmailHelper.bulkPdf(data).then(res=>{
@@ -923,7 +923,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            images: action.image,
+            images: [action.image],
             contacts: [timeline.contact]
           }
           TextHelper.bulkImage(data).then(res=>{
@@ -948,7 +948,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            images: action.image,
+            images: [action.image],
             subject: action.subject,
             contacts: [timeline.contact]
           }
