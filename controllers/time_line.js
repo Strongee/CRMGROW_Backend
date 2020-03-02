@@ -93,8 +93,6 @@ const activeNext = async(data) => {
     status: 'pending',
     parent_ref: ref,
   })
-  console.log('data', data)
-  console.log('timelines', timelines)
   if(timelines){
     for(let i=0; i<timelines.length; i++){
       const timeline = timelines[i]
@@ -122,7 +120,14 @@ const runTimeline = async(id) => {
     let data 
     switch(action.type) {
       case 'follow_up':
-        const follow_due_date = action.due_date
+        let follow_due_date
+          if(action.due_date){
+            follow_due_date = action.due_date
+          } else {
+            let now = moment()
+            let follow_due_date = now.add(action.due_duration, 'hours');
+            follow_due_date.set({minute:0,second:0,millisecond:0})
+          }
         const followUp = new FollowUp({
           content: action.content,
           contact: timeline.contact,

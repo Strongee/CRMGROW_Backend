@@ -686,7 +686,14 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
       let data
       switch(action.type) {
         case 'follow_up':
-          const follow_due_date = action.due_date
+          let follow_due_date
+          if(action.due_date){
+            follow_due_date = action.due_date
+          } else {
+            let now = moment()
+            let follow_due_date = now.add(action.due_duration, 'hours');
+            follow_due_date.set({minute:0,second:0,millisecond:0})
+          }
           const followUp = new FollowUp({
             content: action.content,
             contact: timeline.contact,
@@ -865,7 +872,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            pdf: action.pdf,
+            pdfs: action.pdf,
             contacts: [timeline.contact]
           }
           TextHelper.bulkPdf(data).then(res=>{
@@ -891,7 +898,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
             user: timeline.user,
             content: action.content,
             subject: action.subject,
-            pdf: action.pdf,
+            pdfs: action.pdf,
             contacts: [timeline.contact]
           }
           EmailHelper.bulkPdf(data).then(res=>{
@@ -916,7 +923,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            image: action.image,
+            images: action.image,
             contacts: [timeline.contact]
           }
           TextHelper.bulkImage(data).then(res=>{
@@ -941,7 +948,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            image: action.image,
+            images: action.image,
             subject: action.subject,
             contacts: [timeline.contact]
           }
