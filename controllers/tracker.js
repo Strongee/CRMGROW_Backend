@@ -166,7 +166,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   })
   
   if(timelines.length>0){
-    for(let i=0; i<timelines.lengh; i++){
+    for(let i=0; i<timelines.length; i++){
       try{
         const timeline = timelines[i]
         TimeLineCtrl.runTimeline(timeline.id)
@@ -281,7 +281,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     console.log('timelines', timelines)
     
     if(timelines.length>0){
-      for(let i=0; i<timelines.lengh; i++){
+      for(let i=0; i<timelines.length; i++){
         try{
           const timeline = timelines[i]
           TimeLineCtrl.runTimeline(timeline.id)
@@ -494,7 +494,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     })
     
     if(timelines.length>0){
-      for(let i=0; i<timelines.lengh; i++){
+      for(let i=0; i<timelines.length; i++){
         try{
           const timeline = timelines[i]
           TimeLineCtrl.runTimeline(timeline.id)

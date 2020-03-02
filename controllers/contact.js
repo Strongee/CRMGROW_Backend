@@ -108,7 +108,7 @@ const get = async (req, res) => {
     })
   }
 
-  const _follow_up = await FollowUp.find({ user: currentUser.id, contact: req.params.id }).sort({ due_date: 1 })
+  const _follow_up = await FollowUp.find({ user: currentUser.id, contact: req.params.id, status: {$ne: -1}}).sort({ due_date: 1 })
   const _timelines = await TimeLine.find({ user: currentUser.id, contact: req.params.id}).catch(err=>{
     console.log('err', err)
   })
