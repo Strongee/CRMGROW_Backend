@@ -194,7 +194,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     console.log('err', err)
   })
   if(unwatched_timelines.length>0){
-    for(let i=0; i<unwatched_timelines; i++){
+    for(let i=0; i<unwatched_timelines.length; i++){
       const timeline = unwatched_timelines[i]
       timeline['status'] = 'disable'
       timeline.save().catch(err=>{
@@ -306,7 +306,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     })
     
     if(unwatched_timelines.length>0){
-      for(let i=0; i<unwatched_timelines; i++){
+      for(let i=0; i<unwatched_timelines.length; i++){
         const timeline = unwatched_timelines[i]
         timeline['status'] = 'disable'
         timeline.save().catch(err=>{
@@ -522,7 +522,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
     if(unwatched_timelines.length>0){
-      for(let i=0; i<unwatched_timelines; i++){
+      for(let i=0; i<unwatched_timelines.length; i++){
         const timeline = unwatched_timelines[i]
         timeline['status'] = 'disable'
         timeline.save().catch(err=>{
