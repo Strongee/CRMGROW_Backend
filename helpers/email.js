@@ -706,7 +706,7 @@ const bulkVideo = async(data) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using email',
+            content: 'sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -839,7 +839,7 @@ const bulkPdf = async(data) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
         const _activity = new Activity({
-          content: currentUser.user_name + ' sent pdf using email',
+          content: 'sent pdf using email',
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
