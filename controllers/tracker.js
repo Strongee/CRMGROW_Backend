@@ -157,8 +157,8 @@ const disconnectPDF = async(pdf_tracker_id) =>{
 
   const timelines = await TimeLine.find({ 
     contact: query['contact'],
-    status:  {$in:[ "pending", "active" ]},
-    'action.pdf': query['pdf'],
+    status:  "pending",
+    'watched_pdf': query['pdf'],
     'condition.case': 'watched_pdf',
     'condition.answer': true,
   }).catch(err=>{
@@ -187,7 +187,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   const unwatched_timelines = await TimeLine.find({ 
     contact: query['contact'],
     status:  {$in:[ "pending", "active" ]},
-    'action.pdf': query['pdf'],
+    'watched_pdf': query['pdf'],
     'condition.case': 'watched_pdf',
     'condition.answer': false,
   }).catch(err=>{
@@ -270,7 +270,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
 
     const timelines = await TimeLine.find({ 
       contact: query['contact'],
-      status:  {$in:[ "pending", "active" ]},
+      status:  'pending',
       'watched_video': query['video'],
       'condition.case': 'watched_video',
       'condition.answer': true,
@@ -483,8 +483,8 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
 
     const timelines = await TimeLine.find({ 
       contact: query['contact'],
-      status:  {$in:[ "pending", "active" ]},
-      'action.pdf': query['pdf'],
+      status: "pending",
+      'watched_image': query['image'],
       'condition.case': 'watched_image',
       'condition.answer': true,
     }).catch(err=>{
@@ -513,7 +513,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const unwatched_timelines = await TimeLine.find({ 
       contact: query['contact'],
       status:  {$in:[ "pending", "active" ]},
-      'action.image': query['image'],
+      'watched_image': query['image'],
       'condition.case': 'watched_image',
       'condition.answer': false,
     }).catch(err=>{

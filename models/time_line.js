@@ -14,6 +14,9 @@ const TimeLine = mongoose.model('time_line',{
         case: String,
         answer: Boolean
     },
+    watched_video:  { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
+    watched_pdf:  { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
+    watched_image:  { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     created_at: Date,
     updated_at: Date,
  });

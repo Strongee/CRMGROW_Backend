@@ -684,6 +684,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
       const timeline = timelines[i]
       const action = timeline['action']
       let data
+      if(!action){
+        continue;
+      }
       switch(action.type) {
         case 'follow_up':
           let follow_due_date

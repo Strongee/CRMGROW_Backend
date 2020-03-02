@@ -96,6 +96,9 @@ const activeNext = async(data) => {
   if(timelines){
     for(let i=0; i<timelines.length; i++){
       const timeline = timelines[i]
+      if(timeline.condition && timeline.condition.answer == true) {
+        continue;
+      }
       const period = timeline['period']
       let now = moment()
       let due_date = now.add(period, 'hours');
@@ -118,6 +121,9 @@ const runTimeline = async(id) => {
     const timeline = timelines[i]
     const action = timeline['action']
     let data 
+    if(!action){
+      continue;
+    }
     switch(action.type) {
       case 'follow_up':
         let follow_due_date
