@@ -445,17 +445,18 @@ const updateChecked  = async(req, res) =>{
           })
         }).catch(e => {
           console.log('follow error', e)
-          return res.status().send({
+          return res.status(400).send({
             status: false,
             error: e
           })
         });
       }
-      res.send({
+      return res.send({
         status: true,
         data
       })
     } catch(err){
+      console.log('err', err)
       return res.status(400).json({
         status: false,
         error: err
@@ -463,6 +464,7 @@ const updateChecked  = async(req, res) =>{
     }
     
   }else {
+    console.log('FollowUp doesn`t exist')
     return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'
