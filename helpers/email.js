@@ -855,7 +855,8 @@ const bulkPdf = async(data) => {
         })
             
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-            
+        
+        console.log('pdf_link', pdf_link)
         if(pdfs.length>=2){
           pdf_titles = mail_contents.PDF_TITLE
         }else{
