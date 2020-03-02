@@ -7,8 +7,8 @@ const TimeLine = mongoose.model('time_line',{
     due_date: Date,
     period: Number,
     action: Object,
-    ref: Number,
-    parent_ref: Number,
+    ref: String,
+    parent_ref: String,
     automation: { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     condition: {
         case: String,
