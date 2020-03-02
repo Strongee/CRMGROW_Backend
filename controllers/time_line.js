@@ -125,7 +125,7 @@ const runTimeline = async(id) => {
             follow_due_date = action.due_date
           } else {
             let now = moment()
-            let follow_due_date = now.add(action.due_duration, 'hours');
+            follow_due_date = now.add(action.due_duration, 'hours');
             follow_due_date.set({minute:0,second:0,millisecond:0})
           }
         const followUp = new FollowUp({
