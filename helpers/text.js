@@ -304,7 +304,7 @@ const bulkPdf  = async(data) => {
       promise_array.push(promise)
     }
     
-    Promise.all(promise_array)
+    return Promise.all(promise_array)
 }
 
 const bulkImage = async(data) => {
