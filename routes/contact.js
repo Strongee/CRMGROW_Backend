@@ -29,6 +29,8 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove))
 // Remove contacts and their relative info
 router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts))
 
+router.post('/lead', catchError(ContactCtrl.leadContact));
+
 // Send Batch email to contact lists
 router.post('/batch', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.sendBatch))
 

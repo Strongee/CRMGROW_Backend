@@ -54,21 +54,37 @@ const create = async(req, res) => {
   });
 }
 
-const removeBulk = async(req, res) => {
-  const { currentUser } = req
+const removeBulk = (req, res) => {
   const { activities } = req.body
-  try{
-    await Activity.deleteMany({user: currentUser.id, id: {$in: activities}})
+  Activity.deleteMany({_id: {$in: activities}}).then(() => {
     return res.send({
       status: true
     })
-  }catch(err){
-    console.log('err', err)
-  }
+  }).catch(err => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Error in remove all activities'
+    })
+  })  
+}
+
+const removeAll = (req, res) => {
+  const { contact, option } = req.body
+  Activity.deleteMany({contacts: contact, type: {$nin: ['contacts']}}).then(() => {
+    return res.send({
+      status: true
+    })
+  }).catch(err => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Error in remove all activities'
+    })
+  })  
 }
 
 module.exports = {
     get,
     create,
-    removeBulk
+    removeBulk,
+    removeAll
 }

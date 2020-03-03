@@ -1121,6 +1121,44 @@ const getByIds = async (req, res) => {
   })
 }
 
+const leadContact = async (req, res) => {
+  const {user, first_name, email, cell_phone} = req.body
+  const _exists = await Contact.find({
+    email,
+    user
+  }).catch(err => {
+    return res.status(500).send({
+      status: false,
+      error: err.message
+    })
+  })
+
+  if(_exists && _exists.length) {
+    return res.json({
+      status: true
+    })
+  }
+  else {
+    const _contact = new Contact({
+      first_name,
+      email,
+      cell_phone,
+      user
+    })
+    _contact.save().then(data => {
+      return res.send({
+        status: true,
+        data: data
+      })
+    }).catch(err => {
+      return res.status(500).send({
+        status: false,
+        error: err.message
+      })
+    })
+  }  
+}
+
 isArray = function (a) {
   return (!!a) && (a.constructor === Array);
 };
@@ -1884,5 +1922,6 @@ module.exports = {
   exportCSV,
   getById,
   getByIds,
-  getNthContact
+  getNthContact,
+  leadContact
 }

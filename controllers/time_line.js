@@ -434,6 +434,7 @@ const cancel = (req, res) => {
 
 module.exports = {
   create,
+  reCreate,
   activeNext,
   runTimeline,
   cancel

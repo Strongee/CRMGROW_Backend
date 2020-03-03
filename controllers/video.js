@@ -8,6 +8,7 @@ const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
+const Garbage = require('../models/garbage')
 const Contact = require('../models/contact')
 const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH } = require('../config/path')
 const urls = require('../constants/urls')
@@ -26,6 +27,8 @@ const extractFrames = require('ffmpeg-extract-frames')
 const { createCanvas, loadImage } = require('canvas')
 const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
+
+const garbageHelper = require('../helpers/garbage.js')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -56,7 +59,13 @@ const play = async(req, res) => {
   const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
-  
+  const garbage = await Garbage.findOne({user: user._id}).catch(err => {
+    console.log('err', err)
+  })
+  let capture_dialog = false;
+  if(garbage) {
+    capture_dialog = garbage['capture_dialog']
+  }  
  
   if(user){
     let pattern = /^((http|https|ftp):\/\/)/;
@@ -66,7 +75,8 @@ const play = async(req, res) => {
     }
     res.render('video', {
       video: video,
-      user: user
+      user: user,
+      capture_dialog: capture_dialog
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
@@ -204,6 +214,79 @@ const updateDetail = async (req, res) => {
   })
 }
 
+const updateDefault = async (req, res) => {
+  const {video, id} = req.body
+  let thumbnail;
+  let { currentUser } = req
+  if (video.thumbnail) { // base 64 image    
+    const file_name = uuidv1()
+    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
+    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
+  }  
+  const defaultVideo = await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
+    console.log('err', err)
+  })
+  if (!defaultVideo) {
+    return res.status(400).json({
+      status: false,
+      error: 'This Default video not exists'
+    })
+  }
+  // Update Garbage
+  const garbage = await garbageHelper.get(currentUser);
+  if(!garbage) {
+    return res.status(500).send({
+      status: false,
+      error: `Couldn't get the Garbage`
+    })
+  }
+  if(garbage['edited_video']) {
+    garbage['edited_video'].push(id);
+  }
+  else {
+    garbage['edited_video'] = [id]
+  }
+  
+  await garbage.save().catch(err => {
+    return res.status.json({
+      status: false,
+      error: 'Update Garbage Error.'
+    })
+  })
+
+  for (let key in video) {
+    defaultVideo[key] = video[key]
+  }
+  if( thumbnail ){
+    defaultVideo['thumbnail'] = thumbnail
+  }
+  
+  if(!defaultVideo['preview']){
+    const file_path = defaultVideo['path']
+    defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
+      console.log('err', err)
+    })
+  }
+  
+  defaultVideo['updated_at'] = new Date()
+  const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
+  delete defaultVideoJSON['_id'];
+  delete defaultVideoJSON['role'];
+  let newVideo = new Video({
+    ...defaultVideoJSON,
+    user: currentUser._id,
+    default_edited: true
+  })
+  const _video = await newVideo.save().then().catch(err=>{
+    console.log('err', err)
+  })  
+  
+  res.send({
+    status: true,
+    data: _video
+  })
+}
+
 const generatePreview = async(file_path) => {
 
   return new Promise(async(resolve, reject) => {    
@@ -335,9 +418,14 @@ const getThumbnail = (req, res) => {
 
 const getAll = async (req, res) => {
   const {currentUser} = req
+  const garbage = await garbageHelper.get(currentUser);
+  let editedVideos = [];
+  if(garbage) {
+    editedVideos = garbage['edited_video']
+  }
 
   let _video_list = await Video.find({user: currentUser.id, del: false}).sort({priority: 1}).sort({created_at : 1 })
-  let _video_admin = await Video.find({role: "admin", del: false}).sort({priority: 1}).sort({created_at : 1 })
+  let _video_admin = await Video.find({role: "admin", del: false, _id: {$nin: editedVideos}}).sort({priority: 1}).sort({created_at : 1 })
   Array.prototype.push.apply(_video_list, _video_admin)
 
   if (!_video_list) {
@@ -385,6 +473,13 @@ const remove = async (req, res) => {
       const video = await Video.findOne({ _id: req.params.id, user: currentUser.id})
  
       if (video) {
+        if(video['default_edited']) {
+          return res.status(400).send({
+            status: false,
+            error: 'invalid permission'
+          })
+        }
+
         let url =  video.url
         s3.deleteObject({
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
@@ -1270,6 +1365,7 @@ module.exports = {
   pipe,
   create,
   updateDetail,
+  updateDefault,
   get,
   getThumbnail,
   getAll,
