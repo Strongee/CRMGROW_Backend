@@ -17,6 +17,7 @@ head
   link(rel='stylesheet', type='text/css', href='./assets/plugins/plyr/plyr.css')
   script(type='text/javascript', src='./assets/plugins/plyr/plyr.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
+body(class=capture_dialog ? 'is_protected' : '')
 .stick-bar.row
   .col-lg-3.col-md-3.col-sm-3.col-xs-12
     .name #{user.user_name}
@@ -43,13 +44,44 @@ head
   if video.type === 'youtube' || video.type === 'vimeo'
     div#player(data-plyr-provider=`${video.type}` data-plyr-embed-id=`${video.url}`)
   else 
-    video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
+    video#player(poster=`${video.thumbnail}`, preload, controls, name="media")
       source(src=`${video.url}`, type=`video/mp4`)
   .description
     .desc-title
       | #{video.title}
     .desc-content
       | #{video.description}
+.modal-backdrop(class=capture_dialog ? 'show' : '')
+#myModal.modal(class=capture_dialog ? 'show' : '')
+  .modal-dialog
+    .modal-content.p-4.info-step
+      .modal-header.border-bottom-0
+        h3.modal-title Please input your info to see how eXp Realty can help you!
+      .modal-body
+        form#info-form
+          .form-group.custom-form
+            label.form-label Name
+            input.form-control(type="text", name="first_name", placeholder="Type your name", required)
+          .form-group.custom-form
+            label.form-label Email
+            input.form-control(type="email", name="email", placeholder="Type your email", required)
+          .form-group.custom-form
+            label.form-label Phone
+            input.form-control(type="tel", name="cell_phone", placeholder="***-***-****", required)
+          input(type="hidden", name="user", value=`${user._id}`)
+          p
+            | Please read our 
+            a(href='https://crmgrow.com/privacy.html') Privacy Policy
+            |  before submitting.
+          button.btn.btn-lg.btn-primary.submit-btn(type="submit") Submit
+    .modal-content.p-4.thank-content.text-center
+      .modal-header.border-bottom-0.pb-0
+        h3.modal-title.border-bottom-0.py-0 Thank you! Your info has been processed.
+      .modal-body
+        p Please check the button to view the site and find out how eXp can help you grow!
+      .modal-footer.border-top-0.pt-0
+        button.btn.btn-lg.d-block.text-white.w-100#thank-btn View Site
+
 input#video-duration(type='hidden', value=`${video.duration/1000}`)
 input#activity(type='hidden', value=`${activity}`)
 input#contact(type='hidden', value=`${contact}`)

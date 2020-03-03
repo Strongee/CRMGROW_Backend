@@ -17,3 +17,43 @@ const user = query_params.get("user")
 
 // var vPlayer = videojs('material-video');
 var vPlayer = new Plyr("#player");
+
+
+(function($) {
+    $(document).ready(function() {
+        $("#info-form").submit((e) => {
+            e.preventDefault();
+            var formData = $("#info-form").serializeArray();
+            var data = {};
+            formData.forEach(e => {
+                data[e['name']] = e['value']
+            })
+            $("#info-form .btn").addClass('loading')
+            $("#info-form .btn").text('Please wait...')
+            $.ajax({
+                type: 'POST',
+                url: 'api/contact/lead',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                data: JSON.stringify(data),
+                success: function(data) {
+                    $("#myModal").addClass('thank-step')
+
+                    $("#thank-btn").click(() => {
+                        $("body").removeClass("is_protected");
+                        $(".modal-backdrop").removeClass('show');
+                        $("#myModal").removeClass('show');
+                    })
+                    $("#info-form .btn").removeClass('loading')
+                    $("#info-form .btn").text('Submit')
+                },
+                error: function(data) {
+                    $("#info-form .btn").removeClass('loading')
+                    $("#info-form .btn").text('Submit')
+                    alert('Error is occured. Error:', data);
+                }
+            })
+        })
+    })
+})(jQuery)

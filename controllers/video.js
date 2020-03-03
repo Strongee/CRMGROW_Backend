@@ -8,6 +8,7 @@ const User = require('../models/user')
 const Activity = require('../models/activity')
 const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
+const Garbage = require('../models/garbage')
 const Contact = require('../models/contact')
 const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH } = require('../config/path')
 const urls = require('../constants/urls')
@@ -58,7 +59,13 @@ const play = async(req, res) => {
   const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
-  
+  const garbage = await Garbage.findOne({user: user._id}).catch(err => {
+    console.log('err', err)
+  })
+  let capture_dialog = false;
+  if(garbage) {
+    capture_dialog = garbage['capture_dialog']
+  }  
  
   if(user){
     let pattern = /^((http|https|ftp):\/\/)/;
@@ -68,7 +75,8 @@ const play = async(req, res) => {
     }
     res.render('video', {
       video: video,
-      user: user
+      user: user,
+      capture_dialog: capture_dialog
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
