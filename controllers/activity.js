@@ -56,8 +56,15 @@ const create = async(req, res) => {
 
 const removeBulk = async(req, res) => {
   const { currentUser } = req
-  const { contacts } = req.body
-  await Activity.deleteMany({contacts: req.params.id})
+  const { activities } = req.body
+  try{
+    await Activity.deleteMany({user: currentUser.id, id: {$in: activities}})
+    return res.send({
+      status: true
+    })
+  }catch(err){
+    console.log('err', err)
+  }
 }
 
 module.exports = {
