@@ -307,17 +307,8 @@ const bulkOutlook = async (req, res) => {
   let error = []
 
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
-  
-  const client = graph.Client.init({
-    // Use the provided access token to authenticate
-    // requests
-    authProvider: (done) => {
-      done(null, accessToken);
-    }
-  });
-
+  let accessToken
   for (let i = 0; i < contacts.length; i++) {
-    let accessToken
     await new Promise((resolve, reject) => {
       token.refresh(function (error, result) {
         if (error) {
@@ -329,10 +320,16 @@ const bulkOutlook = async (req, res) => {
       })
     }).then((token) => {
       accessToken = token.access_token
-  
     }).catch((error) => {
       console.log('error', error)
     })
+    const client = graph.Client.init({
+      // Use the provided access token to authenticate
+      // requests
+      authProvider: (done) => {
+        done(null, accessToken);
+      }
+    });
     let email_content = content
     let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
