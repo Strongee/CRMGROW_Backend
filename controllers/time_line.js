@@ -431,10 +431,13 @@ const cancel = (req, res) => {
   })
 }
 
+const recreate = async(req, res) => {
+  
+}
 
 module.exports = {
   create,
-  reCreate,
+  recreate,
   activeNext,
   runTimeline,
   cancel
