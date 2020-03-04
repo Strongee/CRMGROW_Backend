@@ -55,7 +55,6 @@ const create = async(req, res) => {
 }
 
 const removeBulk = (req, res) => {
-  const { currentUser } = req
   const { activities } = req.body
   Activity.deleteMany({_id: {$in: activities}}).then(() => {
     return res.send({
@@ -70,9 +69,8 @@ const removeBulk = (req, res) => {
 }
 
 const removeAll = (req, res) => {
-  const { currentUser } = req
   const { contact, option } = req.body
-  Activity.deleteMany({contacts: contact}).then(() => {
+  Activity.deleteMany({contacts: contact, type: {$nin: ['contacts']}}).then(() => {
     return res.send({
       status: true
     })

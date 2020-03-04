@@ -431,7 +431,7 @@ const updateChecked  = async(req, res) =>{
         }
       
         const activity = new Activity({
-          content: 'Completed follow up',
+          content: 'completed follow up',
           contacts: _follow_up.contact,
           user: currentUser.id,
           type: 'follow_ups',

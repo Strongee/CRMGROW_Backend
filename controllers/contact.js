@@ -1139,16 +1139,19 @@ const leadContact = async (req, res) => {
     })
   }
   else {
+    const label = 'New'
     const _contact = new Contact({
       first_name,
       email,
       cell_phone,
+      label,
+      tags: ['leadcapture'],
       user
     })
-    _contact.save().then(data => {
+    _contact.save().then(contact => {
       return res.send({
         status: true,
-        data: data
+        data: contact
       })
     }).catch(err => {
       return res.status(500).send({

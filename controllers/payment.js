@@ -291,8 +291,10 @@ const update = async(req, res) =>{
                     error: "Card is not valid"
                   });
                 }
+                const pricingPlan = config.STRIPE.PRIOR_PLAN;
+                const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                 
-                updateSubscription(payment['customer_id'], plan_id, card.id).then(subscription => {
+                updateSubscription(payment['customer_id'], pricingPlan, card.id).then(subscription => {
                   cancelSubscription(payment['subscription']).catch(err=>{
                     console.log('err', err)
                   })
@@ -302,7 +304,8 @@ const update = async(req, res) =>{
                       payment['card_id'],
                       function(err, confirmation) {
                          // Save card information to DB.
-                        payment['plan_id'] = plan_id
+                        payment['plan_id'] = pricingPlan
+                        payment['bill_amount'] = bill_amount
                         payment['token'] = token.id
                         payment['card_id'] = card.id
                         payment['card_name'] = token.card_name
