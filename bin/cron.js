@@ -987,7 +987,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
 
 
 // signup_job.start()
-// reminder_job.start()
+reminder_job.start()
 // weekly_report.start()
 // video_job.start()
 // payment_check.start()
