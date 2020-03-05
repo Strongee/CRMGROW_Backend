@@ -47,6 +47,12 @@ const create = async(req, res) => {
   const garbage = await Garbage.findOne({_id: currentUser.id}).catch(err=>{
     console.log('err', err)
   })
+
+  let reminder_before = 30;
+  if(garbage) {
+    reminder = garbage.reminder_before
+  }
+
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
@@ -57,7 +63,7 @@ const create = async(req, res) => {
   followUp.save()
   .then(_followup => {
     let startdate = moment(_followup.due_date)
-    const due_date = startdate.subtract(garbage.reminder_before, "mins");
+    const due_date = startdate.subtract(reminder_before, "mins");
     console.log('due_date', due_date)
     const reminder = new Reminder({
       contact: _followup.contact,
@@ -388,8 +394,7 @@ const updateArchived = async(req, res) => {
         }
       }
       res.send({
-        status: true,
-        data
+        status: true
       })
     } catch(err){
       console.log('err', err)
@@ -456,8 +461,7 @@ const updateChecked  = async(req, res) =>{
         });
       }
       return res.send({
-        status: true,
-        data
+        status: true
       })
     } catch(err){
       console.log('err', err)
