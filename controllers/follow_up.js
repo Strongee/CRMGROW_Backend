@@ -4,6 +4,7 @@ const FollowUp = require('../models/follow_up')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const Reminder = require('../models/reminder')
+const Garbage = require('../models/garbage')
 const User = require('../models/user')
 
 const get = async(req, res) => {
@@ -43,7 +44,9 @@ const create = async(req, res) => {
     })
   }
 
- 
+  const garbage = await Garbage.findOne({_id: currentUser.id}).catch(err=>{
+    console.log('err', err)
+  })
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
@@ -53,9 +56,9 @@ const create = async(req, res) => {
   
   followUp.save()
   .then(_followup => {
-
-    const mins = new Date(_followup.due_date).getMinutes()-30 
-    let due_date = new Date(_followup.due_date).setMinutes(mins)
+    let startdate = moment(_followup.due_date)
+    const due_date = startdate.subtract(garbage.reminder_before, "mins");
+    console.log('due_date', due_date)
     const reminder = new Reminder({
       contact: _followup.contact,
       due_date: due_date,

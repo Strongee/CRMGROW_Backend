@@ -983,9 +983,6 @@ const importCSV = async (req, res) => {
         currentUser.save().catch(err => {
           console.log('err', err)
         })
-
-        
-
         return res.send({
           status: true,
           failure

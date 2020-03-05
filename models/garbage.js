@@ -24,6 +24,7 @@ const Garbage = mongoose.model('garbage',{
       email: {type: Boolean, default: true},
       follow_up: {type: Boolean, default: false},
     },
+    reminder_before: {type: Number, default: 30},
     capture_dialog: {type: Boolean, default: false},
     created_at: Date,
     updated_at: Date,
