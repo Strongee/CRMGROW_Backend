@@ -725,7 +725,8 @@ const receiveEmail = async(req, res) => {
         const _email_tracker = await email_tracker.save().then().catch(err=>{
           console.log('err', err)
         })
-        
+
+          
         const activity = new Activity({
           content: 'unsubscribed email',
           contacts: contact.id,
@@ -741,7 +742,7 @@ const receiveEmail = async(req, res) => {
           console.log('err', err)
         })
         
-        Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+        Contact.update({_id: contact.id}, { $set: { last_activity: _activity.id } ,  $push: {tags: {$each: ['unsubscribed']}}}).catch(err => {
           console.log('err', err)
         })
       }
@@ -953,7 +954,7 @@ const importCSV = async (req, res) => {
                     updated_at: new Date(),
                   })
                   _activity.save().then((__activity) => {
-                    Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: __activity.id } }).catch(err => {
+                    Contact.update({_id: _contact.id}, { $set: { last_activity: __activity.id } }).catch(err => {
                       console.log('err', err)
                     })
                   }).catch(err => {
