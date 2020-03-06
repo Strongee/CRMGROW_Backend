@@ -127,7 +127,7 @@ const bulkVideo = async(data) => {
         })
         resolve({
           contact: contacts[i],
-          error: err,
+          error: 'Phone number is not valid format',
           status: false
         }) // Invalid phone number
       }
