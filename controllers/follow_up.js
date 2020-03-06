@@ -44,7 +44,7 @@ const create = async(req, res) => {
     })
   }
 
-  const garbage = await Garbage.findOne({_id: currentUser.id}).catch(err=>{
+  const garbage = await Garbage.findOne({user: currentUser.id}).catch(err=>{
     console.log('err', err)
   })
 
