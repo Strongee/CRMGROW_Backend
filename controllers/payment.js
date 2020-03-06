@@ -92,7 +92,7 @@ const create = async(payment_data) => {
 }
 
 const update = async(req, res) =>{
-  const { plan_id, token} = req.body
+  const { token} = req.body
   const { currentUser } = req
   if(!currentUser.payment){
     createCustomer(currentUser.email).then(async(customer)=>{
