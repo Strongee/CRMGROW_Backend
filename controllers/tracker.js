@@ -267,6 +267,14 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     }).catch(err=>{
       console.log('err', err)
     })
+    
+    console.log('tseteee', { 
+      contact: query['contact'],
+      status:  'pending',
+      'watched_video': query['video'],
+      'condition.case': 'watched_video',
+      'condition.answer': true,
+    })
 
     const timelines = await TimeLine.find({ 
       contact: query['contact'],

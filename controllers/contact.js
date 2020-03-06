@@ -1137,6 +1137,8 @@ const leadContact = async (req, res) => {
     })
   }
   else {
+    const currentUser = await User.findOne({_id: user})
+    const garbage = await Garbage.findOne({user: user})
     const label = 'New'
     const _contact = new Contact({
       first_name,
@@ -1146,6 +1148,7 @@ const leadContact = async (req, res) => {
       tags: ['leadcapture'],
       user
     })
+    email_notification = garbage['email_notification']
     _contact.save().then(contact => {
       return res.send({
         status: true,
