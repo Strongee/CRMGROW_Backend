@@ -250,6 +250,21 @@ const signUp = async (req, res) => {
   })
 }
 
+const checkUser = async (req, res) => {
+  const {email} = req.body;
+  let _user = await User.findOne({email: new RegExp(req.body.email, "i"), del: false});
+  if(_user) {
+    return res.send({
+      status: false
+    })
+  }
+  else {
+    return res.send({
+      status: true
+    })
+  }
+}
+
 const socialSignUp = async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -1706,6 +1721,7 @@ module.exports = {
   signUp,
   login,
   logout,
+  checkUser,
   socialSignUp,
   socialLogin,
   signUpGmail,
