@@ -709,7 +709,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
           })
           
           followUp.save()
-          .then(_followup => {
+          .then(async(_followup) => {
             const garbage = await Garbage.findOne({user: timeline.user}).catch(err=>{
               console.log('err', err)
             })
