@@ -516,22 +516,24 @@ const recreate = async (req, res) => {
 }
 
 const disableNext = async(id) => {
-  let timeline = await TimeLine.find({_id: id}).catch(err=>{
+  let timeline = await TimeLine.findOne({_id: id}).catch(err=>{
     console.log('err', err)
   })
-  timeline['status'] = 'disable'
-  do{
-    let timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
-    if(timelines.lengh == 0){
-      timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disable'})
-    } else {
-      timeline = timelines[0]
-      timeline['status'] = 'disable'
-      timeline.save().catch(err=>{
-        console.log('err', err)
-      })
-    }
-  }while(timelines.lengh>0)
+  if(timeline){
+    timeline['status'] = 'disable'
+    do{
+      let timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
+      if(timelines.length == 0){
+        timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disable'})
+      } else {
+        timeline = timelines[0]
+        timeline['status'] = 'disable'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }while(timelines.length>0)
+  }
 }
 
 module.exports = {
