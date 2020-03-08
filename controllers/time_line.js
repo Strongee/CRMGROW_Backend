@@ -30,7 +30,7 @@ const create = async (req, res) => {
           const period = automation['period']
           let now = moment()
           let tens = now.minutes() / 10
-          due_date = now.add(period, 'hours').minutes(tens);
+          due_date = now.add(period, 'hours').minutes(tens*10);
           due_date.set({ second: 0, millisecond: 0 })
           console.log('due_date', due_date)
           
@@ -106,7 +106,7 @@ const activeNext = async (data) => {
       const period = timeline['period']
       let now = moment()
       let tens = now.minutes() / 10
-      let due_date = now.add(period, 'hours').minutes(tens);
+      let due_date = now.add(period, 'hours').minutes(tens*10);
       due_date.set({ second: 0, millisecond: 0 })
       console.log('***watched due_date', due_date)
       timeline['status'] = 'active'
@@ -137,7 +137,7 @@ const runTimeline = async (id) => {
         } else {
           let now = moment()
           let tens = now.minutes() / 10
-          follow_due_date = now.add(action.due_duration, 'hours').minutes(tens);
+          follow_due_date = now.add(action.due_duration, 'hours').minutes(tens*10);
           follow_due_date.set({second:0,millisecond:0})
           console.log('follow_due_date', follow_due_date)
         }
