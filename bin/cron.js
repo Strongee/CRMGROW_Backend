@@ -655,7 +655,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
     
     let startdate = moment();
     startdate = startdate.subtract(7, "days");
-    const old_notifications = await Notification.find({type: 'static', created_at: {$lt: startdate}}).catch(err=>{
+    const old_notifications = await Notification.find({type: 'static', created_at: {$lte: startdate}}).catch(err=>{
       console.log('err', err)
     });
     for(let i=0; i<old_notifications.length; i++){
@@ -675,7 +675,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
   const due_date = new Date()
   due_date.setSeconds(0)
   due_date.setMilliseconds(000)
-  const timelines = await TimeLine.find({status: 'active', due_date: {$lt: due_date}})
+  const timelines = await TimeLine.find({status: 'active', due_date: {$lte: due_date}})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
   if(timelines){

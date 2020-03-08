@@ -7,8 +7,11 @@ const Appointment = require('../models/appointment')
 const Email = require('../models/email')
 const Note = require('../models/note')
 const User = require('../models/user')
+const Video = require('../models/video')
+const PDF = require('../models/pdf')
 const TimeLine = require('../models/time_line')
 const EmailTracker = require('../models/email_tracker')
+const Garbage = require('../models/garbage')
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
 const fs = require('fs')
@@ -428,171 +431,6 @@ const bulkUpdate = async (req, res) => {
     res.status(500).send({
       status: false,
       error: err.message || 'Update Error'
-    })
-  })
-}
-
-const sendBatch = async (req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-
-  const { currentUser } = req
-  let { cc, bcc, to, subject, content, contacts } = req.body
-  let promise_array = []
-  let error = []
-  if (typeof subject == 'undefined' || subject == "") {
-    return res.status(400).send({
-      status: false,
-      error: 'Subject email must be specified'
-    })
-  }
-  
-  for (let i = 0; i < contacts.length; i++) {  
-    const _contact = await Contact.findOne({_id: contacts[i]})
-    subject = subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-    content = content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    
-    const msg = {
-      from: `${currentUser.user_name} <${currentUser.email}>`,
-      subject: subject,
-      to: to[i],
-      cc: cc,
-      bcc: bcc,
-      text: content,
-      html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-    };
-    const promise = new Promise((resolve, reject)=>{
-      sgMail.send(msg).then(async(_res) => {     
-        console.log('mailres.errorcode', _res[0].statusCode);
-        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){  
-          console.log('Successful send to '+msg.to)
-          const email = new Email({
-            ...req.body,
-            contact: contacts[i],
-            message_id: _res[0].headers['x-message-id'],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
-          
-          const _email = await email.save().then().catch(err => {
-            console.log('err', err)
-          })
-          
-          const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-          
-          const _activity = await activity.save().then()
-            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-            console.log('err', err)
-          })
-          resolve()
-        }else {
-          console.log('email sending err', msg.to+_res[0].statusCode)
-          error.push(contacts[i])
-          resolve()
-        }
-      }).catch(err => {
-        console.log('err', err)
-        error.push(contacts[i])
-        resolve()
-      })
-    })
-    promise_array.push(promise)
-  }
-  
-  Promise.all(promise_array).then(()=>{
-    if(error.length>0){
-      return res.status(400).json({
-        status: false,
-        error: error
-      })
-    }
-    return res.send({
-      status: true,
-    })
-  }).catch((err)=>{
-    console.log('err', err)
-    return res.status(400).json({
-      status: false,
-      error: err
-    })
-  })
-}
-
-const sendEmail = async (req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-
-  const { currentUser } = req
-  const { contact, content, attachments } = req.body
-  const _contact = await Contact.findOne({ _id: contact })
-  const msg = {
-    from: currentUser.email,
-    to: _contact.email,
-    subject: currentUser.user_name + ' sent email',
-    attachments: attachments,
-    html: content + '<br/><br/>' + currentUser.email_signature
-  };
-
-  sgMail.send(msg).then((_res) => {
-    console.log('mailres.errorcode', _res[0].statusCode);
-    if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-      const email = new Email({
-        ...req.body,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date(),
-      })
-
-      email.save()
-        .then(_email => {
-          const activity = new Activity({
-            content: currentUser.user_name + ' sent email',
-            contacts: _contact.id,
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          activity.save().then(_activity => {
-            Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-              console.log('err', err)
-            })
-            myJSON = JSON.stringify(_email)
-            const data = JSON.parse(myJSON);
-            data.activity = _activity
-            res.send({
-              status: true,
-              data
-            })
-          })
-        })
-    } else {
-      return res.status(404).send({
-        status: false,
-        error: _res[0].statusCode
-      })
-    }
-  }).catch((e) => {
-    console.error(e)
-    return res.status(500).send({
-      status: false,
-      error: 'internal_server_error'
     })
   })
 }
@@ -1120,7 +958,7 @@ const getByIds = async (req, res) => {
 }
 
 const leadContact = async (req, res) => {
-  const {user, first_name, email, cell_phone} = req.body
+  const {user, first_name, email, cell_phone, video, pdf} = req.body
   const _exists = await Contact.find({
     email,
     user
@@ -1137,8 +975,6 @@ const leadContact = async (req, res) => {
     })
   }
   else {
-    const currentUser = await User.findOne({_id: user})
-    const garbage = await Garbage.findOne({user: user})
     const label = 'New'
     const _contact = new Contact({
       first_name,
@@ -1148,18 +984,282 @@ const leadContact = async (req, res) => {
       tags: ['leadcapture'],
       user
     })
-    email_notification = garbage['email_notification']
-    _contact.save().then(contact => {
-      return res.send({
-        status: true,
-        data: contact
+    
+    if(video){
+      _contact.save().then(async(contact) => {
+        const _video = await Video.findOne({_id: video}).catch(err=>{
+          console.log('err', err)
+        })
+        const currentUser = await User.findOne({_id: user}).catch(err=>{
+          console.log('err', err)
+        })
+        const garbage = await Garbage.findOne({user: user}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        const _activity = new Activity({
+          content: 'watched read capture video',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'videos',
+          videos: video,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const created_at = moment().utcOffset(currentUser.time_zone).format('h:mm: a')
+        const email_notification = garbage['email_notification']
+        
+        if(email_notification['lead_capture']){
+          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
+          const msg = {
+              to: currentUser.email,
+              from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              dynamic_template_data: {
+                subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+                first_name: first_name,
+                phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
+                email: `<a href="mailto:${email}">${email}</a>`,
+                activity: first_name + ' watched lead capture video - <b>' + _video.title + '</b>at '+created_at,
+                detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+              },
+          };
+          sgMail.send(msg).catch(err => console.error(err))
+        }
+        
+        const desktop_notification = garbage['desktop_notification']
+        if(desktop_notification['lead_capture']){
+            webpush.setVapidDetails(
+              'mailto:support@crmgrow.com',
+              config.VAPID.PUBLIC_VAPID_KEY,
+              config.VAPID.PRIVATE_VAPID_KEY
+            )
+            
+            const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+            const title = contact.first_name + ' watched lead capture video'
+            const created_at =moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment().utcOffset(currentUser.time_zone).format('h:mm a')
+            const body =contact.first_name  + ' - ' + contact.email + ' watched lead capture video: '+  _video.title + ' on ' + created_at
+            const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+            webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+        }
+        
+        const text_notification = garbage['text_notification']
+        if(text_notification['lead_capture']){
+          const e164Phone = phone(currentUser.cell_phone)[0]
+        
+          if (!e164Phone) {
+            const error = {
+              error: 'Invalid Phone Number'
+            }
+        
+            throw error // Invalid phone number
+          } else {
+            let fromNumber = currentUser['proxy_number'];
+            if(!fromNumber) {
+              const areaCode = currentUser.cell_phone.substring(1, 4)
+          
+              const data = await twilio
+              .availablePhoneNumbers('US')
+              .local.list({
+                areaCode: areaCode,
+              })
+            
+              let number = data[0];
+          
+              if(typeof number == 'undefined'){
+                const areaCode1 = currentUser.cell_phone.substring(1, 3)
+          
+                const data1 = await twilio
+                .availablePhoneNumbers('US')
+                .local.list({
+                  areaCode: areaCode1,
+                })
+                number = data1[0];
+              }
+              
+              if(typeof number != 'undefined'){
+                const proxy_number = await twilio.incomingPhoneNumbers.create({
+                  phoneNumber: number.phoneNumber,
+                  smsUrl:  urls.SMS_RECEIVE_URL
+                })
+                
+                console.log('proxy_number', proxy_number)
+                currentUser['proxy_number'] = proxy_number.phoneNumber;
+                fromNumber = currentUser['proxy_number'];
+                currentUser.save().catch(err=>{
+                  console.log('err', err)
+                })
+              } else {
+                fromNumber = config.TWILIO.TWILIO_NUMBER
+              } 
+            }
+          
+            const title = contact.first_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ 'watched lead capture video: ' +'\n'+ _video.title + '\n'
+            const created_at =moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment().utcOffset(currentUser.time_zone).format('h:mm a')
+            const time = ' on ' + created_at + '\n '
+            const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+            twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
+              console.log('send sms err: ',err)
+            })
+          } 
+        } 
+        
+        Contact.update({_id: contact.id},{ $set: {last_activity: activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
+        
+        return res.send({
+          status: true
+        })
+      }).catch(err => {
+        return res.status(500).send({
+          status: false,
+          error: err.message
+        })
       })
-    }).catch(err => {
-      return res.status(500).send({
-        status: false,
-        error: err.message
+    } else if(pdf){
+      _contact.save().then(async(contact) => {
+        const _pdf = await PDF.findOne({_id: pdf}).catch(err=>{
+          console.log('err', err)
+        })
+        const currentUser = await User.findOne({_id: user}).catch(err=>{
+          console.log('err', err)
+        })
+        const garbage = await Garbage.findOne({user: user}).catch(err=>{
+          console.log('err', err)
+        })
+        
+        const _activity = new Activity({
+          content: 'watched read capture pdf',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'pdfs',
+          pdfs: pdf,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        const created_at = moment().utcOffset(currentUser.time_zone).format('h:mm: a')
+        const email_notification = garbage['email_notification']
+        
+        if(email_notification['lead_capture']){
+          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
+          const msg = {
+              to: currentUser.email,
+              from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              dynamic_template_data: {
+                subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+                first_name: first_name,
+                phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
+                email: `<a href="mailto:${email}">${email}</a>`,
+                activity: first_name + ' watched lead capture pdf - <b>' + _pdf.title + '</b>at '+created_at,
+                detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+              },
+          };
+          sgMail.send(msg).catch(err => console.error(err))
+        }
+        
+        const desktop_notification = garbage['desktop_notification']
+        if(desktop_notification['lead_capture']){
+            webpush.setVapidDetails(
+              'mailto:support@crmgrow.com',
+              config.VAPID.PUBLIC_VAPID_KEY,
+              config.VAPID.PRIVATE_VAPID_KEY
+            )
+            
+            const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+            const title = contact.first_name + ' watched lead capture pdf'
+            const created_at =moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment().utcOffset(currentUser.time_zone).format('h:mm a')
+            const body =contact.first_name  + ' - ' + contact.email + ' watched lead capture pdf: '+  _pdf.title + ' on ' + created_at
+            const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+            webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+        }
+        
+        const text_notification = garbage['text_notification']
+        if(text_notification['lead_capture']){
+          const e164Phone = phone(currentUser.cell_phone)[0]
+        
+          if (!e164Phone) {
+            const error = {
+              error: 'Invalid Phone Number'
+            }
+        
+            throw error // Invalid phone number
+          } else {
+            let fromNumber = currentUser['proxy_number'];
+            if(!fromNumber) {
+              const areaCode = currentUser.cell_phone.substring(1, 4)
+          
+              const data = await twilio
+              .availablePhoneNumbers('US')
+              .local.list({
+                areaCode: areaCode,
+              })
+            
+              let number = data[0];
+          
+              if(typeof number == 'undefined'){
+                const areaCode1 = currentUser.cell_phone.substring(1, 3)
+          
+                const data1 = await twilio
+                .availablePhoneNumbers('US')
+                .local.list({
+                  areaCode: areaCode1,
+                })
+                number = data1[0];
+              }
+              
+              if(typeof number != 'undefined'){
+                const proxy_number = await twilio.incomingPhoneNumbers.create({
+                  phoneNumber: number.phoneNumber,
+                  smsUrl:  urls.SMS_RECEIVE_URL
+                })
+                
+                console.log('proxy_number', proxy_number)
+                currentUser['proxy_number'] = proxy_number.phoneNumber;
+                fromNumber = currentUser['proxy_number'];
+                currentUser.save().catch(err=>{
+                  console.log('err', err)
+                })
+              } else {
+                fromNumber = config.TWILIO.TWILIO_NUMBER
+              } 
+            }
+          
+            const title = contact.first_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ 'watched lead capture video: ' +'\n'+ _pdf.title + '\n'
+            const created_at =moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment().utcOffset(currentUser.time_zone).format('h:mm a')
+            const time = ' on ' + created_at + '\n '
+            const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+            twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
+              console.log('send sms err: ',err)
+            })
+          } 
+        } 
+        
+        Contact.update({_id: contact.id},{ $set: {last_activity: activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
+        
+        return res.send({
+          status: true
+        })
+      }).catch(err => {
+        return res.status(500).send({
+          status: false,
+          error: err.message
+        })
       })
-    })
+    }
   }  
 }
 
@@ -1919,8 +2019,6 @@ module.exports = {
   edit,
   bulkEditLabel,
   bulkUpdate,
-  sendBatch,
-  sendEmail,
   receiveEmail,
   importCSV,
   exportCSV,

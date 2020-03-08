@@ -11,7 +11,7 @@ const mail_contents = {
     },
     NOTIFICATION_SEND_MATERIAL: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW video watched notification: "
+        SUBJECT: "CRMGROW material watched notification: "
     },
     DAILY_REPORT: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",

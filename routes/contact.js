@@ -31,12 +31,6 @@ router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
 
-// Send Batch email to contact lists
-router.post('/batch', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.sendBatch))
-
-// Send Batch email to contact lists
-router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
-
 // Receive email notification
 router.post('/receive', catchError(ContactCtrl.receiveEmail))
 
