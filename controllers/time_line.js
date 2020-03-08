@@ -106,8 +106,8 @@ const activeNext = async (data) => {
       const period = timeline['period']
       let now = moment()
       let tens = now.minutes() / 10
-      let due_date = now.add(period, 'hours').minutes(tens*10);
-      due_date.set({ second: 0, millisecond: 0 })
+      let due_date = now.add(period, 'hours').minutes();
+      due_date.set({ minute: tens*10, second: 0, millisecond: 0 })
       console.log('***watched due_date', due_date)
       timeline['status'] = 'active'
       timeline['due_date'] = due_date
