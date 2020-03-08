@@ -112,7 +112,7 @@ const get = async (req, res) => {
   }
 
   const _follow_up = await FollowUp.find({ user: currentUser.id, contact: req.params.id, status: {$ne: -1}}).sort({ due_date: 1 })
-  const _timelines = await TimeLine.find({ user: currentUser.id, contact: req.params.id}).catch(err=>{
+  const _timelines = await TimeLine.find({ user: currentUser.id, contact: req.params.id}).sort({due_date: 1}).catch(err=>{
     console.log('err', err)
   })
   const _activity_list = await Activity.find({ user: currentUser.id, contacts: req.params.id }).sort({ updated_at: 1 })
@@ -2003,6 +2003,28 @@ const getNthContact = async (req, res) => {
   ])
 }
 
+const loadFollows = async (req, res) => {
+  const {currentUser} = req;
+  const {contact} = req.body;
+
+  const _follow_up = await FollowUp.find({ user: currentUser.id, contact: contact, status: {$ne: -1}}).sort({ due_date: 1 })
+  return res.send({
+    status: true,
+    follow_ups: _follow_up
+  })
+}
+
+const loadTimelines = async (req, res) => {
+  const {currentUser} = req;
+  const {contact} = req.body;
+
+  const _timelines = await TimeLine.find({ user: currentUser.id, contact: contact})
+  return res.send({
+    status: true,
+    timelines: _timelines
+  })
+}
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -2025,5 +2047,7 @@ module.exports = {
   getById,
   getByIds,
   getNthContact,
-  leadContact
+  leadContact,
+  loadFollows,
+  loadTimelines
 }

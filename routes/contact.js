@@ -76,6 +76,12 @@ router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
 // Bulk Edit the contacts Label
 router.post('/bulk-label', UserCtrl.checkAuth, catchError(ContactCtrl.bulkEditLabel))
 
+// Load Follows
+router.post('/follows', UserCtrl.checkAuth, catchError(ContactCtrl.loadFollows))
+
+// Load Timelines
+router.post('/timelines', UserCtrl.checkAuth, catchError(ContactCtrl.loadTimelines))
+
 // Bulk Edit(update) the contacts
 router.post('/bulk-update', UserCtrl.checkAuth, catchError(ContactCtrl.bulkUpdate))
 
