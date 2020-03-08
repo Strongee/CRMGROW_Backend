@@ -14,7 +14,7 @@ const create = async (req, res) => {
   const { contacts, automation_id } = req.body
   const _automation = await Automation.findOne({ _id: automation_id }).catch(err => {
     console.log('err', err)
-    res.status(400).json({
+    return res.status(400).json({
       status: false,
       err: err.message || 'Automation found err'
     })
@@ -29,8 +29,10 @@ const create = async (req, res) => {
         if (automation['status'] == 'active') {
           const period = automation['period']
           let now = moment()
-          let due_date = now.add(period, 'hours');
-          due_date.set({ minute: 0, second: 0, millisecond: 0 })
+          let tens = parseInt(now.minutes() / 10)
+          due_date = now.add(period, 'hours').minutes(tens*10);
+          due_date.set({ minute: tens*10, second: 0, millisecond: 0 })
+          
           _time_line = new TimeLine({
             ...automation,
             ref: automation.id,
@@ -102,8 +104,9 @@ const activeNext = async (data) => {
       }
       const period = timeline['period']
       let now = moment()
+      let tens = parseInt(now.minutes() / 10)
       let due_date = now.add(period, 'hours');
-      due_date.set({ minute: 0, second: 0, millisecond: 0 })
+      due_date.set({ minute: tens*10, second: 0, millisecond: 0 })
       timeline['status'] = 'active'
       timeline['due_date'] = due_date
       timeline.save().catch(err => {
@@ -114,11 +117,9 @@ const activeNext = async (data) => {
 }
 
 const runTimeline = async (id) => {
-  console.log('id', id)
   const timelines = await TimeLine.find({ _id: id }).catch(err => {
     console.log('err', err)
   })
-  console.log('tinelines2', timelines)
   for (let i = 0; i < timelines.length; i++) {
     const timeline = timelines[i]
     const action = timeline['action']
@@ -133,8 +134,9 @@ const runTimeline = async (id) => {
           follow_due_date = action.due_date
         } else {
           let now = moment()
-          follow_due_date = now.add(action.due_duration, 'hours');
-          follow_due_date.set({ minute: 0, second: 0, millisecond: 0 })
+          let tens = parseInt(now.minutes() / 10)
+          follow_due_date = now.add(action.due_duration, 'hours').minutes(tens*10);
+          follow_due_date.set({minute: tens*10,second:0,millisecond:0})
         }
         const followUp = new FollowUp({
           content: action.content,
@@ -458,7 +460,7 @@ const recreate = async (req, res) => {
         const period = automation['period']
         let now = moment()
         let due_date = now.add(period, 'hours');
-        due_date.set({ minute: 0, second: 0, millisecond: 0 })
+        due_date.set({ second: 0, millisecond: 0 })
         _time_line = new TimeLine({
           ...automation,
           ref: automation.id,
@@ -513,10 +515,37 @@ const recreate = async (req, res) => {
   }
 }
 
+const disableNext = async(id) => {
+  let timeline = await TimeLine.findOne({_id: id}).catch(err=>{
+    console.log('err', err)
+  })
+  if(timeline){
+    timeline['status'] = 'disable'
+    timeline.save().catch(err=>{
+      console.log('err', err)
+    })
+    let timelines
+    do{
+      timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
+      console.log('disable timelines', timelines)
+      if(timelines.length == 0){
+        timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disable'})
+      } else {
+        timeline = timelines[0]
+        timeline['status'] = 'disable'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+      }
+    }while(timelines.length>0)
+  }
+}
+
 module.exports = {
   create,
   recreate,
   activeNext,
+  disableNext,
   runTimeline,
   cancel
 }
