@@ -521,8 +521,9 @@ const disableNext = async(id) => {
   })
   if(timeline){
     timeline['status'] = 'disable'
+    let timelines
     do{
-      let timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
+      timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
       if(timelines.length == 0){
         timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disable'})
       } else {
