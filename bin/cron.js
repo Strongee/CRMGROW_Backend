@@ -670,7 +670,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   }, false, 'US/Central')
   
   
-const timesheet_check = new CronJob('*/5 * * * *', async() =>{
+const timesheet_check = new CronJob('*/10 * * * *', async() =>{
 
   const due_date = new Date()
   due_date.setSeconds(0)
@@ -694,8 +694,9 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
             follow_due_date = action.due_date
           } else {
             let now = moment()
-            follow_due_date = now.add(action.due_duration, 'hours');
-            follow_due_date.set({minute:0,second:0,millisecond:0})
+            let tens = now.minutes() / 10
+            follow_due_date = now.add(action.due_duration, 'hours').minutes(tens);
+            follow_due_date.set({second:0,millisecond:0})
           }
           const followUp = new FollowUp({
             content: action.content,
@@ -709,8 +710,16 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           
           followUp.save()
           .then(_followup => {
-            const mins = new Date(_followup.due_date).getMinutes()-30 
-            let reminder_due_date = new Date(_followup.due_date).setMinutes(mins)
+            const garbage = await Garbage.findOne({user: timeline.user}).catch(err=>{
+              console.log('err', err)
+            })
+            let reminder_before = 30;
+            if(garbage) {
+              reminder = garbage.reminder_before
+            }
+            let startdate = moment(_followup.due_date)
+            const reminder_due_date = startdate.subtract(reminder_before, "mins");
+            
             const reminder = new Reminder({
               contact: timeline.contact,
               due_date: reminder_due_date,
