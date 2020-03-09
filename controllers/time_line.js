@@ -537,7 +537,7 @@ const disableNext = async(id) => {
           console.log('err', err)
         })
       }
-    }while(timelines.length>0)
+    }while(timelines.length>0 || timeline)
   }
 }
 
