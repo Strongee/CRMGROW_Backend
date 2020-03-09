@@ -137,9 +137,9 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     const msg = {
       to: currentUser.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
       templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
+        subject: mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT,
         first_name: contact.first_name,
         last_name: contact.last_name,
         phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -283,7 +283,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
     
-    console.log('timelines', timelines)
     
     if(timelines.length>0){
       for(let i=0; i<timelines.length; i++){
@@ -427,7 +426,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
         templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
-          subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
+          subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -627,9 +626,9 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     const msg = {
       to: currentUser.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
       templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
+        subject: mail_contents.NOTIFICATION_REVIEWED_IMAGE.SUBJECT,
         first_name: contact.first_name,
         last_name: contact.last_name,
         phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,

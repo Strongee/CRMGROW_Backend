@@ -539,9 +539,9 @@ const openTrack = async (req, res) => {
     const msg = {
       to: user.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
       templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
+        subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
         first_name: contact.first_name,
         last_name: contact.last_name,
         phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,

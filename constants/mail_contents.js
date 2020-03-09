@@ -11,7 +11,22 @@ const mail_contents = {
     },
     NOTIFICATION_SEND_MATERIAL: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW material watched notification: "
+    },
+    NOTIFICATION_WATCHED_VIDEO: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW video watched notification: "
+    },
+    NOTIFICATION_REVIEWED_PDF: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW pdf reviewed notification: "
+    },
+    NOTIFICATION_REVIEWED_IMAGE: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW image reviewed notification: "
+    },
+    NOTIFICATION_OPENED_EMAIL: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW email opened notification: "
     },
     DAILY_REPORT: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
