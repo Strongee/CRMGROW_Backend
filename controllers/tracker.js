@@ -526,10 +526,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     if(unwatched_timelines.length>0){
       for(let i=0; i<unwatched_timelines.length; i++){
         const timeline = unwatched_timelines[i]
-        timeline['status'] = 'disable'
-        timeline.save().catch(err=>{
-          console.log('err', err)
-        })
+        TimeLineCtrl.disableNext(timeline.id)
       }
     }
     const d = (query['duration']/1000)
