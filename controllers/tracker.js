@@ -36,7 +36,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   const currentUser = await User.findOne({_id: query['user']})
   const contact = await Contact.findOne({_id: query['contact']})
   const pdf = await PDF.findOne({_id: query['pdf']})
-  const garbage = await Garbage.findOne({user: query['garbage']})
+  const garbage = await Garbage.findOne({user: query['user']})
   
   const d = (query['duration']/1000)
   var h = Math.floor(d / 3600);
