@@ -595,7 +595,7 @@ const bulkEmail = async (req, res) => {
     const promise = new Promise((resolve, reject) => {
       sgMail.send(msg).then(async (_res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-          
+          console.log('_res[0].statusCode ', _res[0].statusCode )
           const email = new Email({
             ...req.body,
             content: email_content,
