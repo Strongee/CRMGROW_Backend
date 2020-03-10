@@ -373,3 +373,6 @@ body.is_protected .view-container {
         font-weight: 900;
     }
 }
+.privacy-link {
+    font-size: .8rem;
+}

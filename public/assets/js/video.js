@@ -21,6 +21,13 @@ var vPlayer = new Plyr("#player");
 
 (function($) {
     $(document).ready(function() {
+
+        var cleave = new Cleave('.phone-info', {
+            numericOnly: true,
+            blocks: [0, 3, 3, 4],
+            delimiters: ["(", ") ", "-"]
+        });
+
         $("#info-form").submit((e) => {
             e.preventDefault();
             var formData = $("#info-form").serializeArray();
