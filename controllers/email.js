@@ -238,7 +238,7 @@ const bulkGmail = async (req, res) => {
 
   Promise.all(promise_array).then(() => {
     if (error.length > 0) {
-      return res.status(200).json({
+      return res.status(405).json({
         status: false,
         error: error
       })
@@ -307,17 +307,8 @@ const bulkOutlook = async (req, res) => {
   let error = []
 
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
-  
-  const client = graph.Client.init({
-    // Use the provided access token to authenticate
-    // requests
-    authProvider: (done) => {
-      done(null, accessToken);
-    }
-  });
-
+  let accessToken
   for (let i = 0; i < contacts.length; i++) {
-    let accessToken
     await new Promise((resolve, reject) => {
       token.refresh(function (error, result) {
         if (error) {
@@ -329,10 +320,16 @@ const bulkOutlook = async (req, res) => {
       })
     }).then((token) => {
       accessToken = token.access_token
-  
     }).catch((error) => {
       console.log('error', error)
     })
+    const client = graph.Client.init({
+      // Use the provided access token to authenticate
+      // requests
+      authProvider: (done) => {
+        done(null, accessToken);
+      }
+    });
     let email_content = content
     let email_subject = subject
     const _contact = await Contact.findOne({ _id: contacts[i] })
@@ -459,7 +456,7 @@ const bulkOutlook = async (req, res) => {
 
   Promise.all(promise_array).then(() => {
     if (error.length > 0) {
-      return res.status(200).json({
+      return res.status(405).json({
         status: false,
         error: error
       })
@@ -542,9 +539,9 @@ const openTrack = async (req, res) => {
     const msg = {
       to: user.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
       templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
+        subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
         first_name: contact.first_name,
         last_name: contact.last_name,
         phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -598,7 +595,6 @@ const bulkEmail = async (req, res) => {
     const promise = new Promise((resolve, reject) => {
       sgMail.send(msg).then(async (_res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-          
           const email = new Email({
             ...req.body,
             content: email_content,
@@ -659,7 +655,7 @@ const bulkEmail = async (req, res) => {
   }
   Promise.all(promise_array).then(()=>{
     if(error.length>0){
-      return res.status(200).json({
+      return res.status(405).json({
         status: false,
         error: error
       })

@@ -374,6 +374,7 @@ const bulkEmail = async(req, res) => {
         image_subject = 'Image: ' + image_titles
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){
@@ -629,7 +630,7 @@ const bulkText = async(req, res) => {
     
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(200).json({
+        return res.status(405).json({
           status: false,
           error: error
         })
@@ -813,6 +814,7 @@ const bulkGmail = async(req, res) => {
         image_subject = 'Image: ' + image_subject
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){
@@ -946,7 +948,10 @@ const bulkOutlook = async(req, res) => {
           image_content = ''
         }
         
-        image_subject
+        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
@@ -989,6 +994,7 @@ const bulkOutlook = async(req, res) => {
         image_subject = 'Image: ' + image_titles
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){

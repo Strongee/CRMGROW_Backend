@@ -29,11 +29,7 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove))
 // Remove contacts and their relative info
 router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts))
 
-// Send Batch email to contact lists
-router.post('/batch', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.sendBatch))
-
-// Send Batch email to contact lists
-router.post('/email', UserCtrl.checkAuth, catchError(ContactCtrl.sendEmail))
+router.post('/lead', catchError(ContactCtrl.leadContact));
 
 // Receive email notification
 router.post('/receive', catchError(ContactCtrl.receiveEmail))
@@ -79,6 +75,12 @@ router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
 
 // Bulk Edit the contacts Label
 router.post('/bulk-label', UserCtrl.checkAuth, catchError(ContactCtrl.bulkEditLabel))
+
+// Load Follows
+router.post('/follows', UserCtrl.checkAuth, catchError(ContactCtrl.loadFollows))
+
+// Load Timelines
+router.post('/timelines', UserCtrl.checkAuth, catchError(ContactCtrl.loadTimelines))
 
 // Bulk Edit(update) the contacts
 router.post('/bulk-update', UserCtrl.checkAuth, catchError(ContactCtrl.bulkUpdate))

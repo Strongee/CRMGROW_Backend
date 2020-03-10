@@ -92,7 +92,7 @@ const create = async(payment_data) => {
 }
 
 const update = async(req, res) =>{
-  const { plan_id, token} = req.body
+  const { token} = req.body
   const { currentUser } = req
   if(!currentUser.payment){
     createCustomer(currentUser.email).then(async(customer)=>{
@@ -291,15 +291,21 @@ const update = async(req, res) =>{
                     error: "Card is not valid"
                   });
                 }
+                const pricingPlan = config.STRIPE.PRIOR_PLAN;
+                const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                 
-                updateSubscription(payment['customer_id'], plan_id, card.id).then(subscription => {
-                  cancelSubscription(payment['subscription']).then(()=>{
+                updateSubscription(payment['customer_id'], pricingPlan, card.id).then(subscription => {
+                  cancelSubscription(payment['subscription']).catch(err=>{
+                    console.log('err', err)
+                  })
+                  try{
                     stripe.customers.deleteSource(
                       payment['customer_id'],
                       payment['card_id'],
                       function(err, confirmation) {
                          // Save card information to DB.
-                        payment['plan_id'] = plan_id
+                        payment['plan_id'] = pricingPlan
+                        payment['bill_amount'] = bill_amount
                         payment['token'] = token.id
                         payment['card_id'] = card.id
                         payment['card_name'] = token.card_name
@@ -313,14 +319,14 @@ const update = async(req, res) =>{
                         payment.save().catch(err=>{
                           console.log('err', err)
                         })
-                        return res.send({
-                          status: true,
-                          data: currentUser.payment
-                        });
                       })
-                  }).catch(err=>{
+                      return res.send({
+                        status: true,
+                        data: currentUser.payment
+                      });    
+                  }catch(err){
                     console.log('err', err)
-                  })
+                  }
                 }).catch((err)=>{
                     console.log('creating subscripition error', err)
                     return res.status(400).send({

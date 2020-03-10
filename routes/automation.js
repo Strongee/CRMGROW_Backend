@@ -16,6 +16,8 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.remove))
 
 router.get('/list/:page' , UserCtrl.checkAuth, catchError(AutomationCtrl.getPage))
 
+router.post('/detail/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.getStatus))
+
 router.get('/:id' , UserCtrl.checkAuth, catchError(AutomationCtrl.get))
 
 module.exports = router

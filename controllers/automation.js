@@ -1,5 +1,7 @@
 const Automation = require('../models/automation')
 const TimeLine = require('../models/time_line')
+const Contact = require('../models/contact')
+const mongoose = require('mongoose')
 
 const get = (req, res) => {
     const id = req.params.id;
@@ -8,6 +10,28 @@ const get = (req, res) => {
         res.send({
             status: false,
             data
+        })
+    }).catch(err => {
+        res.status(500).send({
+            status: false,
+            error: err.message || 'Automation reading is failed.'
+        })
+    })
+}
+
+const getStatus = async (req, res) => {
+    const id = req.params.id;
+    const { contacts } = req.body;
+    let assignedContacts = await Contact.find({_id: {$in: contacts}}, '_id first_name last_name email cell_phone').catch(err => {
+        console.log("Error", err);
+    })
+    TimeLine.find({automation: id}).populate().then(data => {
+        res.send({
+            status: true,
+            data: {
+                timelines: data,
+                contacts: assignedContacts
+            }
         })
     }).catch(err => {
         res.status(500).send({
@@ -27,21 +51,32 @@ const getPage = async (req, res) => {
         ]
     }).skip((page-1) * 10).limit(10);
 
-    // automations.forEach(async(e) => {
-    //     const timelines = await TimeLine.find({
-    //         automation: e._id
-    //     })
-    //     console.log(timelines);
-    //     e['timelines'] = timelines;
-    //     console.log("Automation", e);
-    // })
-    // let timelines = {};
-    // for(let i = 0 ; i < automations.length ; i++ ) {
-    //     const timelines = await TimeLine.find({
-    //         automation: automations[i]['_id']
-    //     });
-    //     const 
-    // }
+    let automation_array = []
+    for(let i=0; i<automations.length; i++){
+        const automation = automations[i]
+        contacts = await TimeLine.aggregate([
+            {
+              $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id), "automation":mongoose.Types.ObjectId(automation._id) }] }
+            },           
+            {
+              $group: {
+                _id: { contact: "$contact"},
+              }
+            },
+            {
+                $group: {
+                  _id: "$_id.contact"
+                }
+            },
+            {
+              $project: { "_id": 1 }
+            }
+          ])
+         myJSON = JSON.stringify(automation)
+         const data = JSON.parse(myJSON);
+         const automation_detail = await Object.assign(data, {"contacts": contacts})
+         automation_array.push(automation_detail)
+    }
 
     const total = await Automation.countDocuments({
         user: currentUser.id
@@ -49,7 +84,7 @@ const getPage = async (req, res) => {
 
     return res.json({
         status: true,
-        data: automations,
+        data: automation_array,
         total: total
     })
 }
@@ -125,6 +160,7 @@ const search = async(req, res) => {
 
 module.exports = {
   get,
+  getStatus,
   getPage,
   create,
   update,

@@ -1,6 +1,7 @@
 const User = require('../models/user')
 const Contact = require('../models/contact')
 const config = require('../config/config')
+const Activity = require('../models/activity')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
@@ -126,7 +127,7 @@ const bulkVideo = async(data) => {
         })
         resolve({
           contact: contacts[i],
-          error: err,
+          error: 'Phone number is not valid format',
           status: false
         }) // Invalid phone number
       }
@@ -303,7 +304,7 @@ const bulkPdf  = async(data) => {
       promise_array.push(promise)
     }
     
-    Promise.all(promise_array)
+    return Promise.all(promise_array)
 }
 
 const bulkImage = async(data) => {

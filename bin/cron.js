@@ -16,6 +16,7 @@ const Note = require('../models/note')
 const Notification = require('../models/notification')
 const TimeLine = require('../models/time_line')
 const TimeLineCtrl = require('../controllers/time_line')
+const Garbage = require('../models/garbage')
 
 const config = require('../config/config')
 const urls = require('../constants/urls')
@@ -25,6 +26,7 @@ const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
+const webpush = require('web-push');
 const EmailHelper = require('../helpers/email')
 const TextHelper = require('../helpers/text')
 
@@ -203,7 +205,7 @@ const weekly_report = new CronJob({
   timeZone: 'US/Central'
 });
 
-const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
+const reminder_job = new CronJob('*/10 * * * 0-6', async() =>{
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   const due_date = new Date()
   due_date.setSeconds(0)
@@ -227,56 +229,79 @@ const reminder_job = new CronJob('0,30 * * * 0-6', async() =>{
         const contact = await Contact.findOne({_id: follow_up.contact}).catch((err)=>{
           console.log('err: ', err)
           }) 
-        const msg = {
-          to: user.email,
-          from: mail_contents.FOLLOWUP_REMINDER.MAIL,
-          subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
-          dynamic_template_data: {
-            contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
-            due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a'),
-            content: follow_up.content,
-            detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-          },
-        }
-  
-        sgMail.send(msg).then((res) => {
-          console.log('mailres.errorcode', res[0].statusCode);
-          if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
-            console.log('Successful send to '+msg.to)
-          }else {
-            console.log('email sending err', msg.to+res[0].statusCode)
-          }
-        }).catch((err)=>{
+        const garbage = await Garbage.findOne({user: user.id}).catch(err=>{
           console.log('err: ', err)
         })
-  
-        const e164Phone = phone(user.cell_phone)[0]
-        const fromNumber = config.TWILIO.TWILIO_NUMBER
-        console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
-        if (!e164Phone) {
-          const error = {
-            error: 'Invalid Phone Number'
+        const email_notification = garbage['email_notification']
+        if(email_notification['follow_up']){
+          const msg = {
+            to: user.email,
+            from: mail_contents.FOLLOWUP_REMINDER.MAIL,
+            subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
+            templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
+            dynamic_template_data: {
+              contact: contact.first_name + contact.last_name +  ' - ' + contact.email +  ' - ' + contact.cell_phone,
+              due_date: moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a'),
+              content: follow_up.content,
+              detailed_contact: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+            },
           }
-          throw error // Invalid phone number
-        }
-   
-        const title = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
-          + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
-        const body = follow_up.content + '\n'
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-        twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
-          console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY h:mm a')}`)
-          console.log(`UTC timezone ${moment(follow_up.due_date).toISOString()}`)
-        }).catch(err=>{
-          console.log('send sms err: ',err)
-        })
-  
-        reminder['del'] = true
     
-        reminder.save().catch(err=>{
-          console.log(err)
-        })
+          sgMail.send(msg).then((res) => {
+            console.log('mailres.errorcode', res[0].statusCode);
+            if(res[0].statusCode >= 200 && res[0].statusCode < 400){                
+              console.log('Successful send to '+msg.to)
+            }else {
+              console.log('email sending err', msg.to+res[0].statusCode)
+            }
+          }).catch((err)=>{
+            console.log('err: ', err)
+          })
+        }
+        const text_notification = garbage['text_notification']
+        if(text_notification['follow_up']){
+          const e164Phone = phone(user.cell_phone)[0]
+          const fromNumber = config.TWILIO.TWILIO_NUMBER
+          console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`)
+          if (!e164Phone) {
+            const error = {
+              error: 'Invalid Phone Number'
+            }
+            throw error // Invalid phone number
+          }
+     
+          const title = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' +'\n'
+            + contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + '\n'
+          const body = follow_up.content + '\n'
+          const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+          twilio.messages.create({from: fromNumber, body: title+body + '\n'+contact_link,  to: e164Phone}).then(()=>{
+            console.log(`Reminder at: ${moment(follow_up.due_date).utcOffset(user.time_zone).format('MMMM Do YYYY h:mm a')}`)
+            console.log(`UTC timezone ${moment(follow_up.due_date).toISOString()}`)
+          }).catch(err=>{
+            console.log('send sms err: ',err)
+          })
+    
+          reminder['del'] = true
+      
+          reminder.save().catch(err=>{
+            console.log(err)
+          })
+        }
+        const desktop_notification = garbage['desktop_notification']
+        if(desktop_notification['follow_up']){
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            config.VAPID.PUBLIC_VAPID_KEY,
+            config.VAPID.PRIVATE_VAPID_KEY
+          )
+          
+          const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+          const title = `CRMGrow follow up reminder`
+          const body = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' + 
+          contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + follow_up.content 
+          const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+          webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+        }
       }
     }else{
       const appointment = await Appointment.findOne({_id: reminder.appointment}).catch((err)=>{
@@ -630,7 +655,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
     
     let startdate = moment();
     startdate = startdate.subtract(7, "days");
-    const old_notifications = await Notification.find({type: 'static', created_at: {$lt: startdate}}).catch(err=>{
+    const old_notifications = await Notification.find({type: 'static', created_at: {$lte: startdate}}).catch(err=>{
       console.log('err', err)
     });
     for(let i=0; i<old_notifications.length; i++){
@@ -645,12 +670,12 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   }, false, 'US/Central')
   
   
-const timesheet_check = new CronJob('*/5 * * * *', async() =>{
+const timesheet_check = new CronJob('*/10 * * * *', async() =>{
 
   const due_date = new Date()
   due_date.setSeconds(0)
   due_date.setMilliseconds(000)
-  const timelines = await TimeLine.find({status: 'active', due_date: {$lt: due_date}})
+  const timelines = await TimeLine.find({status: 'active', due_date: {$lte: due_date}})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
   if(timelines){
@@ -659,9 +684,20 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
       const timeline = timelines[i]
       const action = timeline['action']
       let data
+      if(!action){
+        continue;
+      }
       switch(action.type) {
         case 'follow_up':
-          const follow_due_date = action.due_date
+          let follow_due_date
+          if(action.due_date){
+            follow_due_date = action.due_date
+          } else {
+            let now = moment()
+            let tens = parseInt(now.minutes() / 10)
+            follow_due_date = now.add(action.due_duration, 'hours');
+            follow_due_date.set({minute: tens*10, second:0,millisecond:0})
+          }
           const followUp = new FollowUp({
             content: action.content,
             contact: timeline.contact,
@@ -673,9 +709,17 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           })
           
           followUp.save()
-          .then(_followup => {
-            const mins = new Date(_followup.due_date).getMinutes()-30 
-            let reminder_due_date = new Date(_followup.due_date).setMinutes(mins)
+          .then(async(_followup) => {
+            const garbage = await Garbage.findOne({user: timeline.user}).catch(err=>{
+              console.log('err', err)
+            })
+            let reminder_before = 30;
+            if(garbage) {
+              reminder = garbage.reminder_before
+            }
+            let startdate = moment(_followup.due_date)
+            const reminder_due_date = startdate.subtract(reminder_before, "mins");
+            
             const reminder = new Reminder({
               contact: timeline.contact,
               due_date: reminder_due_date,
@@ -763,6 +807,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             video: action.video,
+            subject: action.subject,
             content: action.content,
             contacts: [timeline.contact]
           }
@@ -839,7 +884,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            pdf: action.pdf,
+            pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
           TextHelper.bulkPdf(data).then(res=>{
@@ -865,7 +910,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
             user: timeline.user,
             content: action.content,
             subject: action.subject,
-            pdf: action.pdf,
+            pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
           EmailHelper.bulkPdf(data).then(res=>{
@@ -890,7 +935,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            image: action.image,
+            images: [action.image],
             contacts: [timeline.contact]
           }
           TextHelper.bulkImage(data).then(res=>{
@@ -915,7 +960,7 @@ const timesheet_check = new CronJob('*/5 * * * *', async() =>{
           data = {
             user: timeline.user,
             content: action.content,
-            image: action.image,
+            images: [action.image],
             subject: action.subject,
             contacts: [timeline.contact]
           }

@@ -45,7 +45,7 @@ const createBody = require('gmail-api-create-message-body')
 const sgMail = require('@sendgrid/mail')
 
 const bulkEmail = async(data) => {
-  const {user, subject, content, bcc, cc, contacts} = data
+  let {user, subject, content, bcc, cc, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('err', err)
   })
@@ -83,7 +83,6 @@ const bulkEmail = async(data) => {
             bcc = []
             cc = []
             const email = new Email({
-              ...req.body,
               content: email_content,
               subject: email_subject,
               contacts: contacts[i],
@@ -189,7 +188,6 @@ const bulkEmail = async(data) => {
             body: body
           })  
           const email = new Email({
-            ...req.body,
             content: email_content,
             subject: email_subject,
             message_id: message_id,
@@ -310,7 +308,6 @@ const bulkEmail = async(data) => {
         client.api('/me/sendMail')
         .post(sendMail).then( async ()=>{
           const email = new Email({
-            ...req.body,
             content: email_content,
             subject: email_subject,
             message_id: message_id,
@@ -442,6 +439,7 @@ const bulkVideo = async(data) => {
         video_subject = 'VIDEO: ' + video_titles
       } else {
         video_subject = video_subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
       
       if(video_content.search(/{video_object}/ig) != -1){
@@ -475,7 +473,9 @@ const bulkVideo = async(data) => {
           Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
             console.log('err', err)
           })
-          resolve()
+          resolve({
+            status: true
+          })
         }else {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
@@ -499,31 +499,15 @@ const bulkVideo = async(data) => {
               err: es[0].statusCode,
               contact: contacts[i]
             })
-            resolve()
+            resolve({
+              status: true
+            })
           })
         })
         promise_array.push(promise)
       }
         
-      Promise.all(promise_array).then(()=>{
-        if(error.length>0){
-          return res.status(400).json({
-            status: false,
-            error: error
-          })
-        }
-        return res.send({
-          status: true
-        })
-      }).catch(err=>{
-        console.log('err', err)
-        if(err){
-          return res.status(400).json({
-            status: false,
-            error: err
-          })
-        }
-      });
+      return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
 
@@ -605,6 +589,7 @@ const bulkVideo = async(data) => {
         video_subject = 'VIDEO: ' + video_titles
       } else {
         video_subject = video_subject.replace(/{video_title}/ig, video_titles)
+        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
     
         if(video_content.search(/{video_object}/ig) != -1){
@@ -721,7 +706,7 @@ const bulkVideo = async(data) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           const _activity = new Activity({
-            content: currentUser.user_name + ' sent video using email',
+            content: 'sent video using email',
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -854,7 +839,7 @@ const bulkPdf = async(data) => {
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
         const _activity = new Activity({
-          content: currentUser.user_name + ' sent pdf using email',
+          content: 'sent pdf using email',
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -870,7 +855,8 @@ const bulkPdf = async(data) => {
         })
             
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-            
+        
+        console.log('pdf_link', pdf_link)
         if(pdfs.length>=2){
           pdf_titles = mail_contents.PDF_TITLE
         }else{
@@ -889,7 +875,8 @@ const bulkPdf = async(data) => {
       if(pdf_subject == '' ){
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
-        pdf_subject = subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1034,6 +1021,7 @@ const bulkPdf = async(data) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1181,6 +1169,7 @@ const bulkPdf = async(data) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
       
       if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1318,6 +1307,7 @@ const bulkImage = async(data) => {
         image_subject = 'Image: ' + image_titles
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
         
       if(image_content.search(/{image_object}/ig) != -1){
@@ -1477,6 +1467,7 @@ const bulkImage = async(data) => {
         image_subject = 'Image: ' + image_subject
       } else {
         image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
         if(image_content.search(/{image_object}/ig) != -1){
@@ -1614,7 +1605,8 @@ const bulkImage = async(data) => {
       if(image_subject == '' ){
         image_subject = 'Image: ' + image_titles
       } else {
-        image_subject = subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
       
       if(image_content.search(/{image_object}/ig) != -1){

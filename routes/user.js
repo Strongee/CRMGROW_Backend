@@ -26,6 +26,8 @@ router.post('/login', [
     body('password').isLength({ min: 1 })
   ], catchError(UserCtrl.login))  
   
+router.post('/check', catchError(UserCtrl.checkUser));
+
 router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout))
   // Edit own profile
 router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe))

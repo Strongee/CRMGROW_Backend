@@ -68,90 +68,91 @@ const signUp = async (req, res) => {
     token: token,
   }
 
-  if(!token) {
-    const password = req.body.password
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+  // if(!token) {
+  //   const password = req.body.password
+  //   const salt = crypto.randomBytes(16).toString('hex')
+  //   const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
 
-    const user = new User({
-      ...req.body,
-      salt: salt,
-      hash: hash,
-      connected_email_type: 'email',
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
+  //   const user = new User({
+  //     ...req.body,
+  //     salt: salt,
+  //     hash: hash,
+  //     connected_email_type: 'email',
+  //     updated_at: new Date(),
+  //     created_at: new Date(),
+  //   })
 
-    user.save()
-      .then(_res => {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-        let msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-            user_email: _res.email,
-            user_password: req.body.password,
-            contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-          },
-        };
+  //   user.save()
+  //     .then(_res => {
+  //       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+  //       let msg = {
+  //         to: _res.email,
+  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
+  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+  //         dynamic_template_data: {
+  //           first_name: _res.user_name,
+  //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+  //           user_email: _res.email,
+  //           user_password: req.body.password,
+  //           contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
+  //         },
+  //       };
 
-        sgMail.send(msg).catch(err => {
-          console.log('err', err)
-        })
+  //       sgMail.send(msg).catch(err => {
+  //         console.log('err', err)
+  //       })
 
-        msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-            upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-            upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-            contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-          }
-        }
+  //       msg = {
+  //         to: _res.email,
+  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
+  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+  //         dynamic_template_data: {
+  //           first_name: _res.user_name,
+  //           connect_email: `Click here to ensure your contact information and profile picture is uploaded correctly to your profile.`,
+  //           upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+  //           upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+  //           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
+  //         }
+  //       }
 
-        sgMail.send(msg).catch(err => {
-          console.log('err', err)
-        })
+  //       sgMail.send(msg).catch(err => {
+  //         console.log('err', err)
+  //       })
 
-        const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
+  //       const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
 
-        myJSON = JSON.stringify(_res)
-        const user = JSON.parse(myJSON);
-        delete user.hash
-        delete user.salt
+  //       myJSON = JSON.stringify(_res)
+  //       const user = JSON.parse(myJSON);
+  //       delete user.hash
+  //       delete user.salt
 
-        res.send({
-          status: true,
-          data: {
-            token,
-            user
-          }
-        })
-      })
-      .catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
-          })
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e
-        })
-      });
-  }
+  //       res.send({
+  //         status: true,
+  //         data: {
+  //           token,
+  //           user
+  //         }
+  //       })
+  //     })
+  //     .catch(e => {
+  //       let errors
+  //       if (e.errors) {
+  //         errors = e.errors.map(err => {
+  //           delete err.instance
+  //           return err
+  //         })
+  //       }
+  //       return res.status(500).send({
+  //         status: false,
+  //         error: errors || e
+  //       })
+  //     });
+  // }
   PaymentCtrl.create(payment_data).then(async (payment) => {
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+    const sub_domain = req.body.user_name.replace(/[^A-Z0-9]/ig, "");
 
     const user = new User({
       ...req.body,
@@ -162,7 +163,17 @@ const signUp = async (req, res) => {
       updated_at: new Date(),
       created_at: new Date(),
     })
-
+    
+    const garbage = new Garbage({
+      user: user.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+    
+    garbage.save().catch(err=>{
+      console.log('err', err)
+    })
+    
     user.save()
       .then(_res => {
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
@@ -189,8 +200,8 @@ const signUp = async (req, res) => {
           templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
           dynamic_template_data: {
             first_name: _res.user_name,
-            // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-            upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+            connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+            upload_avatar: `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
             upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
             contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
           }
@@ -208,7 +219,7 @@ const signUp = async (req, res) => {
         delete user.salt
         user['payment'] = payment.id
 
-        res.send({
+        return res.send({
           status: true,
           data: {
             token,
@@ -239,6 +250,21 @@ const signUp = async (req, res) => {
   })
 }
 
+const checkUser = async (req, res) => {
+  const {email} = req.body;
+  let _user = await User.findOne({email: new RegExp(req.body.email, "i"), del: false});
+  if(_user) {
+    return res.send({
+      status: false
+    })
+  }
+  else {
+    return res.send({
+      status: true
+    })
+  }
+}
+
 const socialSignUp = async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -258,75 +284,75 @@ const socialSignUp = async (req, res) => {
 
   const { email, token, bill_amount } = req.body
 
-  if(!token) {
-    const user = new User({
-      ...req.body,
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
-    user.save()
-      .then(_res => {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-        let msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-            user_email: _res.email,
-            contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-          },
-        };
+  // if(!token) {
+  //   const user = new User({
+  //     ...req.body,
+  //     updated_at: new Date(),
+  //     created_at: new Date(),
+  //   })
+  //   user.save()
+  //     .then(_res => {
+  //       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+  //       let msg = {
+  //         to: _res.email,
+  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
+  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+  //         dynamic_template_data: {
+  //           first_name: _res.user_name,
+  //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+  //           user_email: _res.email,
+  //           contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
+  //         },
+  //       };
 
-        sgMail.send(msg).catch(err => {
-          console.log('err', err)
-        })
+  //       sgMail.send(msg).catch(err => {
+  //         console.log('err', err)
+  //       })
 
-        msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-            upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-            upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-            contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-          }
-        }
+  //       msg = {
+  //         to: _res.email,
+  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
+  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+  //         dynamic_template_data: {
+  //           first_name: _res.user_name,
+  //           // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+  //           upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+  //           upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+  //           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
+  //         }
+  //       }
 
-        sgMail.send(msg).catch(err => {
-          console.log('err', err)
-        })
+  //       sgMail.send(msg).catch(err => {
+  //         console.log('err', err)
+  //       })
 
-        const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
+  //       const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
 
-        myJSON = JSON.stringify(_res)
-        const user = JSON.parse(myJSON);
+  //       myJSON = JSON.stringify(_res)
+  //       const user = JSON.parse(myJSON);
 
-        res.send({
-          status: true,
-          data: {
-            token,
-            user
-          }
-        })
-      })
-      .catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
-          })
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e
-        })
-      });
-  }
+  //       res.send({
+  //         status: true,
+  //         data: {
+  //           token,
+  //           user
+  //         }
+  //       })
+  //     })
+  //     .catch(e => {
+  //       let errors
+  //       if (e.errors) {
+  //         errors = e.errors.map(err => {
+  //           delete err.instance
+  //           return err
+  //         })
+  //       }
+  //       return res.status(500).send({
+  //         status: false,
+  //         error: errors || e
+  //       })
+  //     });
+  // }
 
   const payment_data = {
     email: email,
@@ -342,6 +368,16 @@ const socialSignUp = async (req, res) => {
       created_at: new Date(),
     })
 
+    const garbage = new Garbage({
+      user: user.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+    
+    garbage.save().catch(err=>{
+      console.log('err', err)
+    })
+    
     user.save()
       .then(_res => {
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
@@ -717,14 +753,14 @@ const checkAuth = async (req, res, next) => {
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email)
     
-    // if (req.currentUser.primary_connected || req.currentUser.connected_email_type == 'email') {
+    if (req.currentUser.primary_connected || req.currentUser.connected_email_type == 'email') {
       next()
-    // } else {
-    //   res.status(402).send({
-    //     status: false,
-    //     error: 'not connnected'
-    //   })
-    // }
+    } else {
+      res.status(402).send({
+        status: false,
+        error: 'not connnected'
+      })
+    }
 
   } else {
     console.error('Valid JWT but no user:', decoded)
@@ -1421,13 +1457,44 @@ const disconWeekly = async (req, res) => {
 
 const desktopNotification = async (req, res) => {
   const user = req.currentUser
+  const {subscription, option} = req.body;
   user['desktop_notification'] = true
-  user['desktop_notification_subscription'] = JSON.stringify(req.body['subscription'])
-
-  user.save()
-  return res.send({
-    status: true
-  })
+  user['desktop_notification_subscription'] = JSON.stringify(subscription)
+  const garbage = await Garbage.findOne({user: user._id})
+  if(!garbage){
+    let newGarbage = new Garbage({
+      desktop_notification: option,
+      user: user._id
+    });
+    newGarbage.save().then(() => {
+      user.save()
+      return res.send({
+        status: true,
+      })
+    }).catch(err => {
+      console.log('err', err);
+      return res.status(500).json({
+        status: false,
+        error: err.message || 'Internal server error'
+      })
+    })
+  }
+  else {
+    garbage['desktop_notification'] = option
+    garbage.save()
+      .then(()=>{
+        user.save()
+        return res.send({
+          status: true,
+        })
+      }).catch(err=>{
+        console.log('err', err)
+        return res.status(500).json({
+          status: false,
+          error: err.message || 'Internal server error'
+        })
+      })
+  }
 }
 
 const disconDesktop = async (req, res) => {
@@ -1654,6 +1721,7 @@ module.exports = {
   signUp,
   login,
   logout,
+  checkUser,
   socialSignUp,
   socialLogin,
   signUpGmail,

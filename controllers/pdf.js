@@ -574,6 +574,7 @@ const bulkEmail = async(req, res) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -833,7 +834,7 @@ const bulkText = async(req, res) => {
     
     Promise.all(promise_array).then(()=>{
       if(error.length>0){
-        return res.status(200).json({
+        return res.status(405).json({
           status: false,
           error: error
         })
@@ -1034,6 +1035,7 @@ const bulkOutlook = async(req, res) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){
@@ -1208,6 +1210,7 @@ const bulkGmail = async(req, res) => {
         pdf_subject = 'PDF: ' + pdf_titles
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
       }
     
         if(pdf_content.search(/{pdf_object}/ig) != -1){

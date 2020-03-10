@@ -4,6 +4,7 @@ const FollowUp = require('../models/follow_up')
 const Contact = require('../models/contact')
 const Activity = require('../models/activity')
 const Reminder = require('../models/reminder')
+const Garbage = require('../models/garbage')
 const User = require('../models/user')
 
 const get = async(req, res) => {
@@ -43,7 +44,15 @@ const create = async(req, res) => {
     })
   }
 
- 
+  const garbage = await Garbage.findOne({user: currentUser.id}).catch(err=>{
+    console.log('err', err)
+  })
+
+  let reminder_before = 30;
+  if(garbage) {
+    reminder = garbage.reminder_before
+  }
+
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
@@ -53,9 +62,9 @@ const create = async(req, res) => {
   
   followUp.save()
   .then(_followup => {
-
-    const mins = new Date(_followup.due_date).getMinutes()-30 
-    let due_date = new Date(_followup.due_date).setMinutes(mins)
+    let startdate = moment(_followup.due_date)
+    const due_date = startdate.subtract(reminder_before, "mins");
+    console.log('due_date', due_date)
     const reminder = new Reminder({
       contact: _followup.contact,
       due_date: due_date,
@@ -385,10 +394,10 @@ const updateArchived = async(req, res) => {
         }
       }
       res.send({
-        status: true,
-        data
+        status: true
       })
     } catch(err){
+      console.log('err', err)
       return res.status(400).json({
         status: false,
         error: err
@@ -430,7 +439,7 @@ const updateChecked  = async(req, res) =>{
         }
       
         const activity = new Activity({
-          content: 'Completed follow up',
+          content: 'completed follow up',
           contacts: _follow_up.contact,
           user: currentUser.id,
           type: 'follow_ups',
@@ -445,17 +454,17 @@ const updateChecked  = async(req, res) =>{
           })
         }).catch(e => {
           console.log('follow error', e)
-          return res.status().send({
+          return res.status(400).send({
             status: false,
             error: e
           })
         });
       }
-      res.send({
-        status: true,
-        data
+      return res.send({
+        status: true
       })
     } catch(err){
+      console.log('err', err)
       return res.status(400).json({
         status: false,
         error: err
@@ -463,6 +472,7 @@ const updateChecked  = async(req, res) =>{
     }
     
   }else {
+    console.log('FollowUp doesn`t exist')
     return res.status(400).json({
       status: false,
       error: 'FollowUp doesn`t exist'

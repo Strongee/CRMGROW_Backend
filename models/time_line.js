@@ -7,13 +7,16 @@ const TimeLine = mongoose.model('time_line',{
     due_date: Date,
     period: Number,
     action: Object,
-    ref: Number,
-    parent_ref: Number,
+    ref: String,
+    parent_ref: String,
     automation: { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     condition: {
         case: String,
         answer: Boolean
     },
+    watched_video:  { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
+    watched_pdf:  { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
+    watched_image:  { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     created_at: Date,
     updated_at: Date,
  });
