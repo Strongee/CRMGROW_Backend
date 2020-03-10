@@ -230,7 +230,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
 }
   
   const createVideo = async(data) => {
-    console.log('create Video data', data)
     const video_tracker = new VideoTracker({
       ...data,
       updated_at: new Date(),
@@ -443,8 +442,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   }
   
   const updateVideo = async(duration, video_tracker_id) =>{
-    console.log('duration', duration)
-    console.log('video_tracker_id', video_tracker_id)
     const video_tracker = await VideoTracker.findOne({_id: video_tracker_id});
     video_tracker['duration'] = duration
     video_tracker['updated_at'] = new Date()
