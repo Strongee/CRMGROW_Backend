@@ -520,7 +520,7 @@ const disableNext = async(id) => {
     console.log('err', err)
   })
   if(timeline){
-    timeline['status'] = 'disable'
+    timeline['status'] = 'disabled'
     timeline.save().catch(err=>{
       console.log('err', err)
     })
@@ -528,10 +528,10 @@ const disableNext = async(id) => {
     do{
       timelines = await TimeLine.find({parent_ref: timeline.ref, contact: timeline.contact, status: 'pending'})  
       if(timelines.length == 0){
-        timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disable'})
+        timeline = await TimeLine.findOne({ref: timeline.parent_ref, contact: timeline.contact, status: 'disabled'})
       } else {
         timeline = timelines[0]
-        timeline['status'] = 'disable'
+        timeline['status'] = 'disabled'
         timeline.save().catch(err=>{
           console.log('err', err)
         })
