@@ -50,7 +50,7 @@ const create = async(req, res) => {
 
   let reminder_before = 30;
   if(garbage) {
-    reminder = garbage.reminder_before
+    reminder_before = garbage.reminder_before
   }
 
   const followUp = new FollowUp({
