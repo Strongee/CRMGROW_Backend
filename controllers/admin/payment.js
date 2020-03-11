@@ -96,11 +96,20 @@ const getTransactions = async(req, res) => {
 }
 
 const getCustomers = async(req, res) => {
-  stripe.customers.list(
-    {
+  let params
+  if(req.params.id){
+    params = {
       limit: config.STRIPE.LIMIT,
       starting_after: req.params.id
-    },
+    }
+  } else {
+    params = {
+      limit: config.STRIPE.LIMIT,
+    }
+  }
+  console.log('payment', params)
+  stripe.customers.list(
+    params,
     async function(err, customers) {
       if(err){
         console.log('err', err)

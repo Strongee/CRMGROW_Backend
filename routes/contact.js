@@ -59,10 +59,10 @@ router.get('/last', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity
 router.get('/last/:id', UserCtrl.checkAuth, UserCtrl.checkLastLogin, catchError(ContactCtrl.getByLastActivity))
 
 // Get a Brokerage data 
-router.get('/brokerage', UserCtrl.checkAuth, catchError(ContactCtrl.getBrokerages))
+router.get('/brokerage', UserCtrl.checkAuth2, catchError(ContactCtrl.getBrokerages))
 
 // Get Source data
-router.get('/sources', UserCtrl.checkAuth, catchError(ContactCtrl.getSources))
+router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources))
 
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))

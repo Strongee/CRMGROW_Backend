@@ -50,7 +50,7 @@ const create = async(req, res) => {
 
   let reminder_before = 30;
   if(garbage) {
-    reminder = garbage.reminder_before
+    reminder_before = garbage.reminder_before
   }
 
   const followUp = new FollowUp({
@@ -63,7 +63,8 @@ const create = async(req, res) => {
   followUp.save()
   .then(_followup => {
     let startdate = moment(_followup.due_date)
-    const due_date = startdate.subtract(reminder_before, "mins");
+    console.log('reminder_before', reminder_before)
+    const due_date = startdate.subtract(reminder_before, "minutes");
     console.log('due_date', due_date)
     const reminder = new Reminder({
       contact: _followup.contact,

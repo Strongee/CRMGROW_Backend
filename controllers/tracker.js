@@ -36,7 +36,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
   const currentUser = await User.findOne({_id: query['user']})
   const contact = await Contact.findOne({_id: query['contact']})
   const pdf = await PDF.findOne({_id: query['pdf']})
-  const garbage = await Garbage.findOne({user: query['garbage']})
+  const garbage = await Garbage.findOne({user: query['user']})
   
   const d = (query['duration']/1000)
   var h = Math.floor(d / 3600);
@@ -265,13 +265,6 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       console.log('err', err)
     })
     
-    console.log('tseteee', { 
-      contact: contact.id,
-      status:  'pending',
-      'watched_video': query['video'],
-      'condition.case': 'watched_video',
-      'condition.answer': true,
-    })
 
     const timelines = await TimeLine.find({ 
       contact: contact.id,
