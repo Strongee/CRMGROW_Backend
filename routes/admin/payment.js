@@ -6,7 +6,7 @@ const { catchError } = require('../../controllers/error')
 
 const router = express.Router()
 
-router.get('/' , UserCtrl.checkAuth, catchError(PaymentCtrl.getCustomers))
+router.get('/pages/:id' , UserCtrl.checkAuth, catchError(PaymentCtrl.getCustomers))
 router.get('/transactions/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.getTransactions))
 router.get('/refund/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.refundCharge))
 router.get('/coming-invoice/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.getUpcomingInvoice))
