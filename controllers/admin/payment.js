@@ -97,7 +97,7 @@ const getTransactions = async(req, res) => {
 
 const getCustomers = async(req, res) => {
   let params
-  if(req.params.id){
+  if(req.params.id != 'null'){
     params = {
       limit: config.STRIPE.LIMIT,
       starting_after: req.params.id
