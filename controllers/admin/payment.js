@@ -107,6 +107,7 @@ const getCustomers = async(req, res) => {
       limit: config.STRIPE.LIMIT,
     }
   }
+  console.log('payment', params)
   stripe.customers.list(
     params,
     async function(err, customers) {
