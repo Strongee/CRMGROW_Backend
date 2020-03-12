@@ -176,7 +176,6 @@ const bulkEmail = async(data) => {
             },
             textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
             textPlain: email_content,
-            attachments: attachment_array
           });
           request({
             method: 'POST',
