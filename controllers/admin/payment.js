@@ -26,10 +26,9 @@ const getCustomer = async(req, res) => {
           error: err
         })
       }
-      console.log('customer***********', customer)
       const subscription = customer.subscriptions['data'][0]
       data['email'] = customer['email']
-      data['created_at'] = new Date(customer['created_at']*1000)
+      data['created_at'] = new Date(customer['created']*1000)
       data['subscription'] = subscription['id']
       data['subscribed_at'] = new Date(subscription['created']*1000)
       data['trial_ended'] = new Date(subscription['trial_end']*1000)
