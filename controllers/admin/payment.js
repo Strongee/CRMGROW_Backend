@@ -26,10 +26,9 @@ const getCustomer = async(req, res) => {
           error: err
         })
       }
-      console.log('subscription', customer.subscriptions['data'])
       const subscription = customer.subscriptions['data'][0]
       data['email'] = customer['email']
-      data['created_at'] = new Date(customer['created_at']*1000)
+      data['created_at'] = new Date(customer['created']*1000)
       data['subscription'] = subscription['id']
       data['subscribed_at'] = new Date(subscription['created']*1000)
       data['trial_ended'] = new Date(subscription['trial_end']*1000)
@@ -64,6 +63,7 @@ const getUpcomingInvoice = async(req, res) => {
           error: err
         })
       }
+      console.log('data', data)
       data['amount_due'] = upcoming['amount_due']/100
       data['created'] = upcoming['created']
       return res.send({
@@ -97,7 +97,7 @@ const getTransactions = async(req, res) => {
 
 const getCustomers = async(req, res) => {
   let params
-  if(req.params.id){
+  if(req.params.id != 'null'){
     params = {
       limit: config.STRIPE.LIMIT,
       starting_after: req.params.id
@@ -107,7 +107,6 @@ const getCustomers = async(req, res) => {
       limit: config.STRIPE.LIMIT,
     }
   }
-  console.log('payment', params)
   stripe.customers.list(
     params,
     async function(err, customers) {

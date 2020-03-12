@@ -965,7 +965,6 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkImage(data).then(res=>{
-            console.log('res', res)
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
@@ -995,11 +994,11 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
 }, false, 'US/Central')
 
 
-signup_job.start()
+// signup_job.start()
 reminder_job.start()
-weekly_report.start()
-video_job.start()
-payment_check.start()
+// weekly_report.start()
+// video_job.start()
+// payment_check.start()
 // logger_check.start()
-notification_check.start()
+// notification_check.start()
 timesheet_check.start()
