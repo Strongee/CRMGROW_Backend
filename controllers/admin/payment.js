@@ -26,7 +26,7 @@ const getCustomer = async(req, res) => {
           error: err
         })
       }
-      console.log('subscription', customer.subscriptions['data'])
+      console.log('customer***********', customer)
       const subscription = customer.subscriptions['data'][0]
       data['email'] = customer['email']
       data['created_at'] = new Date(customer['created_at']*1000)
@@ -107,7 +107,6 @@ const getCustomers = async(req, res) => {
       limit: config.STRIPE.LIMIT,
     }
   }
-  console.log('payment', params)
   stripe.customers.list(
     params,
     async function(err, customers) {
