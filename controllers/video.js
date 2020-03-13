@@ -68,7 +68,6 @@ const play = async(req, res) => {
   if(garbage) {
     capture_dialog = garbage['capture_dialog']
   }  
-  console.log("Garbage", garbage, capture_dialog)
  
   if(user){
     let pattern = /^((http|https|ftp):\/\/)/;
