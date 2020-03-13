@@ -842,7 +842,8 @@ const bulkGmail = async(req, res) => {
         
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
-            'userId': currentUser.email,
+            'auth': oauth2Client,
+            'userId': 'me',
             'resource': {
               raw: rawContent
             }
