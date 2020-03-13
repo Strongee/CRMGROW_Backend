@@ -67,13 +67,6 @@ const updateDetail = async (req, res) => {
     video['thumbnail'] = thumbnail
   }
   
-  if(!video['preview']){
-    const file_path = video['path']
-    video['preview'] = await generatePreview(file_path).catch(err=>{
-      console.log('err', err)
-    })
-  }
-  
   video['updated_at'] = new Date()
   video.save().then((_video)=>{
     res.send({

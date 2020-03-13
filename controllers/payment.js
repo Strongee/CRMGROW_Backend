@@ -218,6 +218,7 @@ const update = async(req, res) =>{
         payment['customer_id'],
         function(err, customer) {
           if(err || customer['deleted']){
+          console.log('customer retrieve error', err)
           createCustomer(currentUser.email).then(async(customer)=>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
               if(!card){
@@ -276,6 +277,7 @@ const update = async(req, res) =>{
           stripe.tokens.retrieve(
             token.id,
             function(err, _token) {
+            console.log('_token', token)
               // asynchronously called
             if(!_token){
               return res.send({
@@ -285,6 +287,7 @@ const update = async(req, res) =>{
             }
             if(payment['fingerprint'] != _token.card.fingerprint){
               stripe.customers.createSource(payment['customer_id'], {source: token.id}, function(err, card) {
+                console.log('_card', card)
                 if(card == null || typeof card == 'undefined'){
                   return res.send({
                     status: false,
@@ -295,14 +298,16 @@ const update = async(req, res) =>{
                 const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
                 
                 updateSubscription(payment['customer_id'], pricingPlan, card.id).then(subscription => {
+                  console.log('updaete Subscription', subscription)
                   cancelSubscription(payment['subscription']).catch(err=>{
-                    console.log('err', err)
+                    console.log('cancel subscription err', err)
                   })
                   try{
                     stripe.customers.deleteSource(
                       payment['customer_id'],
                       payment['card_id'],
                       function(err, confirmation) {
+                        console.log('delete source err', err)
                          // Save card information to DB.
                         payment['plan_id'] = pricingPlan
                         payment['bill_amount'] = bill_amount
@@ -325,7 +330,7 @@ const update = async(req, res) =>{
                         data: currentUser.payment
                       });    
                   }catch(err){
-                    console.log('err', err)
+                    console.log('delete card err', err)
                   }
                 }).catch((err)=>{
                     console.log('creating subscripition error', err)

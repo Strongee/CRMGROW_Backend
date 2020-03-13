@@ -63,7 +63,8 @@ const getUpcomingInvoice = async(req, res) => {
           error: err
         })
       }
-      console.log('data', data)
+      console.log('data', upcoming)
+      data['next_payment_attempt'] =  upcoming['next_payment_attempt']/100
       data['amount_due'] = upcoming['amount_due']/100
       data['created'] = upcoming['created']
       return res.send({
