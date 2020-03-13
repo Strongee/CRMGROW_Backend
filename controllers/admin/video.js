@@ -50,11 +50,6 @@ const create = async (req, res) => {
 const updateDetail = async (req, res) => {
   const editData = req.body
   let thumbnail;
-  if (req.body.thumbnail) { // base 64 image    
-    const file_name = uuidv1()
-    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
-  }
   
   const video = await Video.findOne({_id: req.params.id}).catch(err=>{
     console.log('err', err)
