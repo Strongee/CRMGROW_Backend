@@ -517,7 +517,7 @@ const openTrack = async (req, res) => {
     })
 
     const activity = new Activity({
-      content: contact.first_name + ' opened email',
+      content: 'opened email',
       contacts: contact.id,
       user: user.id,
       type: 'email_trackers',
