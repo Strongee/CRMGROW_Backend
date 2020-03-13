@@ -838,7 +838,7 @@ const bulkGmail = async(req, res) => {
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
-        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
+        const rawContent = makeBody(_contact.email, currentUser.email, video_subject, email_content );
         
         let promise = new Promise((resolve, reject)=>{
           gmail.users.messages.send({
