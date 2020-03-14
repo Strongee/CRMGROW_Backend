@@ -29,6 +29,8 @@ const twilio = require('twilio')(accountSid, authToken)
 const webpush = require('web-push');
 const EmailHelper = require('../helpers/email')
 const TextHelper = require('../helpers/text')
+const { ENV_PATH } = require('../config/path')
+require('dotenv').config({ path: ENV_PATH })
 
 const { DB_PORT } = require('../config/database');
 
@@ -680,7 +682,6 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
   
   if(timelines){
     for(let i=0; i<timelines.length; i++){
-      console.log("Searched TimeLine ", i, timelines[i])
       const timeline = timelines[i]
       const action = timeline['action']
       let data
