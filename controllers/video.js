@@ -638,7 +638,7 @@ const bulkEmail = async(req, res) => {
         if(video_content.search(/{video_object}/ig) != -1){
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          video_content = video_content+video_objects
+          video_content = video_content+'<br/>'+video_objects
         }
         
         if(content.search(/{video_title}/ig) != -1){
@@ -826,7 +826,7 @@ const bulkGmail = async(req, res) => {
         if(video_content.search(/{video_object}/ig) != -1){
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          video_content = video_content+video_objects
+          video_content = video_content+'<br/>'+video_objects
         }
         
         if(content.search(/{video_title}/ig) != -1){
@@ -1311,7 +1311,7 @@ const bulkOutlook = async(req, res) => {
         if(video_content.search(/{video_object}/ig) != -1){
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          video_content = video_content+video_objects
+          video_content = video_content+'<br/>'+video_objects
         }
         
         if(content.search(/{video_title}/ig) != -1){

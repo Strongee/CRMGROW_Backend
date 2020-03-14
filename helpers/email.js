@@ -444,7 +444,7 @@ const bulkVideo = async(data) => {
       if(video_content.search(/{video_object}/ig) != -1){
         video_content = video_content.replace(/{video_object}/ig, video_objects)
       }else{
-        video_content = video_content+video_objects
+        video_content = video_content+'<br/>'+video_objects
       }
           
       if(video_content.search(/{video_title}/ig) != -1){
@@ -594,7 +594,7 @@ const bulkVideo = async(data) => {
         if(video_content.search(/{video_object}/ig) != -1){
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          video_content = video_content+video_objects
+          video_content = video_content+'<br/>'+video_objects
         }
         
         if(video_content.search(/{video_title}/ig) != -1){
@@ -745,7 +745,7 @@ const bulkVideo = async(data) => {
         if(video_content.search(/{video_object}/ig) != -1){
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
-          video_content = video_content+video_objects
+          video_content = video_content+'<br/>'+video_objects
         }
         
         if(video_content.search(/{video_title}/ig) != -1){
@@ -881,7 +881,7 @@ const bulkPdf = async(data) => {
       if(pdf_content.search(/{pdf_object}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
-        pdf_content = pdf_content+pdf_objects
+        pdf_content = pdf_content+'<br/>'+pdf_objects
       }
       
       if(content.search(/{pdf_title}/ig) != -1){
@@ -1026,7 +1026,7 @@ const bulkPdf = async(data) => {
       if(pdf_content.search(/{pdf_object}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
-        pdf_content = pdf_content+pdf_objects
+        pdf_content = pdf_content+'<br/>'+pdf_objects
       }
       
       if(content.search(/{pdf_title}/ig) != -1){
@@ -1174,7 +1174,7 @@ const bulkPdf = async(data) => {
       if(pdf_content.search(/{pdf_object}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
       }else{
-        pdf_content = pdf_content+pdf_objects
+        pdf_content = pdf_content+'<br/>'+pdf_objects
       }
       
       if(pdf_content.search(/{pdf_title}/ig) != -1){
@@ -1312,7 +1312,7 @@ const bulkImage = async(data) => {
       if(image_content.search(/{image_object}/ig) != -1){
         image_content = image_content.replace(/{image_object}/ig, image_objects)
       }else{
-        image_content = image_content+image_objects
+        image_content = image_content+'<br/>'+image_objects
       }
           
       if(image_content.search(/{image_title}/ig) != -1){
@@ -1472,7 +1472,7 @@ const bulkImage = async(data) => {
         if(image_content.search(/{image_object}/ig) != -1){
           image_content = image_content.replace(/{image_object}/ig, image_objects)
         }else{
-          image_content = image_content+image_objects
+          image_content = image_content+'<br/>'+image_objects
         }
         
         if(image_content.search(/{image_title}/ig) != -1){
@@ -1611,7 +1611,7 @@ const bulkImage = async(data) => {
       if(image_content.search(/{image_object}/ig) != -1){
         image_content = image_content.replace(/{image_object}/ig, image_objects)
       }else{
-        image_content = image_content+image_objects
+        image_content = image_content+'<br/>'+image_objects
       }
         
         if(content.search(/{image_title}/ig) != -1){
