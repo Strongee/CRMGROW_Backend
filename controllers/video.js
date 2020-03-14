@@ -25,8 +25,8 @@ const GIFEncoder = require('gifencoder');
 
 const extractFrames = require('ffmpeg-extract-frames')
 const { createCanvas, loadImage } = require('canvas')
-const pngFileStream = require('png-file-stream');
-const sharp = require('sharp');
+const pngFileStream = require('png-file-stream')
+const sharp = require('sharp')
 
 const garbageHelper = require('../helpers/garbage.js')
 
@@ -49,6 +49,8 @@ const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
+const request = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -66,7 +68,6 @@ const play = async(req, res) => {
   if(garbage) {
     capture_dialog = garbage['capture_dialog']
   }  
-  console.log("Garbage", garbage, capture_dialog)
  
   if(user){
     let pattern = /^((http|https|ftp):\/\/)/;
@@ -739,6 +740,7 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  await oauth2Client.getAccessToken();
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
@@ -838,36 +840,74 @@ const bulkGmail = async(req, res) => {
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
           +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
         
-        const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
+        // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
         let promise = new Promise((resolve, reject)=>{
-          gmail.users.messages.send({
-            'userId': currentUser.email,
-            'resource': {
-              raw: rawContent
-            }
-          }, (err, response) => {
-            if(err) {
-              Activity.deleteOne({_id: activity.id}).catch(err=>{
+          // gmail.users.messages.send({
+          //   'auth': oauth2Client,
+          //   'userId': 'me',
+          //   'resource': {
+          //     raw: rawContent
+          //   }
+          // }, (err, response) => {
+          //   if(err) {
+          //     Activity.deleteOne({_id: activity.id}).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     console.log('err', err.response['statusText'])
+          //     error.push({
+          //       contact: {
+          //         id: contacts[i],
+          //         first_name: _contact.first_name,
+          //         email: _contact.email,
+          //       },
+          //       err: err.response['statusText'] 
+          //     })
+          //     resolve();
+          //   } else {
+          //     Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     resolve()
+          //   }
+          // }); 
+          try{
+            let body = createBody({
+              headers: {
+                To: _contact.email,
+                From: `${currentUser.user_name} <${currentUser.email}>`,
+                Subject: video_subject,
+              },
+              textHtml:  email_content,
+              textPlain: email_content,
+            });
+            request({
+              method: 'POST',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              headers: {
+                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+                'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+              },
+              body: body
+            }).then(()=>{
+              Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
-              })
-              console.log('err', err.response['statusText'])
-              error.push({
-                contact: {
-                  id: contacts[i],
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err: err.response['statusText'] 
               })
               resolve();
-            } else {
-              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-                console.log('err', err)
-              })
-              resolve()
-            }
-          });      
+            })
+          }catch(err){
+            console.log('err', err)
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: err
+            })
+          }
         })
       promise_array.push(promise)
     }
