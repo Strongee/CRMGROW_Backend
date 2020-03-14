@@ -4,6 +4,8 @@ const moment = require('moment');
 const CronJob = require('cron').CronJob;
 const fs = require('fs');
 const AWS = require('aws-sdk')
+const { ENV_PATH } = require('../config/path')
+require('dotenv').config({ path: ENV_PATH })
 
 const User = require('../models/user')
 const Contact = require('../models/contact')
@@ -17,7 +19,6 @@ const Notification = require('../models/notification')
 const TimeLine = require('../models/time_line')
 const TimeLineCtrl = require('../controllers/time_line')
 const Garbage = require('../models/garbage')
-
 const config = require('../config/config')
 const urls = require('../constants/urls')
 const mail_contents = require('../constants/mail_contents')
@@ -29,8 +30,6 @@ const twilio = require('twilio')(accountSid, authToken)
 const webpush = require('web-push');
 const EmailHelper = require('../helpers/email')
 const TextHelper = require('../helpers/text')
-const { ENV_PATH } = require('../config/path')
-require('dotenv').config({ path: ENV_PATH })
 
 const { DB_PORT } = require('../config/database');
 
