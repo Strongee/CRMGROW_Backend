@@ -584,7 +584,7 @@ const bulkEmail = async(req, res) => {
         if(pdf_content.search(/{pdf_object}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
         }else{
-          pdf_content = pdf_content+pdf_objects
+          pdf_content = pdf_content+'<br/>'+pdf_objects
         }
         
         if(pdf_content.search(/{pdf_title}/ig) != -1){
@@ -1045,7 +1045,7 @@ const bulkOutlook = async(req, res) => {
         if(pdf_content.search(/{pdf_object}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
         }else{
-          pdf_content = pdf_content+pdf_objects
+          pdf_content = pdf_content+'<br/>'+pdf_objects
         }
         
         if(content.search(/{pdf_title}/ig) != -1){
@@ -1221,7 +1221,7 @@ const bulkGmail = async(req, res) => {
         if(pdf_content.search(/{pdf_object}/ig) != -1){
           pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
         }else{
-          pdf_content = pdf_content+pdf_objects
+          pdf_content = pdf_content+'<br/>'+pdf_objects
         }
         
         if(content.search(/{pdf_title}/ig) != -1){
