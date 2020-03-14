@@ -380,7 +380,7 @@ const bulkEmail = async(req, res) => {
         if(image_content.search(/{image_object}/ig) != -1){
           image_content = image_content.replace(/{image_object}/ig, image_objects)
         }else{
-          image_content = image_content+image_objects
+          image_content = image_content+'<br/>'+image_objects
         }
         
         if(content.search(/{image_title}/ig) != -1){
@@ -820,7 +820,7 @@ const bulkGmail = async(req, res) => {
         if(image_content.search(/{image_object}/ig) != -1){
           image_content = image_content.replace(/{image_object}/ig, image_objects)
         }else{
-          image_content = image_content+image_objects
+          image_content = image_content+'<br/>'+image_objects
         }
         
         if(content.search(/{image_title}/ig) != -1){
@@ -1000,7 +1000,7 @@ const bulkOutlook = async(req, res) => {
         if(image_content.search(/{image_object}/ig) != -1){
           image_content = image_content.replace(/{image_object}/ig, image_objects)
         }else{
-          image_content = image_content+image_objects
+          image_content = image_content+'<br/>'+image_objects
         }
         
         if(content.search(/{image_title}/ig) != -1){
