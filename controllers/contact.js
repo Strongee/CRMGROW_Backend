@@ -1030,7 +1030,7 @@ const leadContact = async (req, res) => {
                 first_name: first_name,
                 phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
                 email: `<a href="mailto:${email}">${email}</a>`,
-                activity: first_name + ' watched lead capture video - <b>' + _video.title + '</b>at '+created_at,
+                activity: first_name + ' watched lead capture video - <b>' + _video.title + '</b> at '+created_at,
                 detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
               },
           };

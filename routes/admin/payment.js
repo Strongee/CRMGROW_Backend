@@ -10,5 +10,6 @@ router.get('/pages/:id' , UserCtrl.checkAuth, catchError(PaymentCtrl.getCustomer
 router.get('/transactions/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.getTransactions))
 router.get('/refund/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.refundCharge))
 router.get('/coming-invoice/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.getUpcomingInvoice))
+router.post('/card', UserCtrl.checkAuth, catchError(PaymentCtrl.getCard))
 router.get('/:id', UserCtrl.checkAuth, catchError(PaymentCtrl.getCustomer))
 module.exports = router

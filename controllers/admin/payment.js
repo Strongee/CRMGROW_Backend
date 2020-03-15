@@ -52,7 +52,8 @@ const getUpcomingInvoice = async(req, res) => {
   const customer_id = req.params.id
   const data = {
     amount_due: '',
-    created: ''
+    created: '',
+    next_payment_attempt: ''
   }
   stripe.invoices.retrieveUpcoming(
     {customer: customer_id},
@@ -63,10 +64,9 @@ const getUpcomingInvoice = async(req, res) => {
           error: err
         })
       }
-      console.log('data', upcoming)
-      data['next_payment_attempt'] =  upcoming['next_payment_attempt']/100
+      data['next_payment_attempt'] =  upcoming['next_payment_attempt']*1000
       data['amount_due'] = upcoming['amount_due']/100
-      data['created'] = upcoming['created']
+      data['created'] = upcoming['created']*1000
       return res.send({
         data,
         status: true
@@ -87,6 +87,7 @@ const getTransactions = async(req, res) => {
           error: err
         })
       }
+      console.log('carges', charges)
       const data = charges.data
       return res.send({
         status: true,
@@ -143,6 +144,32 @@ const getCustomers = async(req, res) => {
       return res.send({
         status: true,
         data
+      })
+    }
+  );
+}
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
+const getCard = async(req, res) => {
+  const {customer_id, card_id} = req.body
+  stripe.customers.retrieveSource(
+      customer_id,
+      card_id,
+    function(err, card) {
+      if(err){
+        return res.status(400).json({
+          status: false,
+          err
+        })
+      }
+      console.log('card', card)
+      return res.send({
+        status: true,
+        data: card
       })
     }
   );
@@ -293,6 +320,7 @@ const updateCustomerEmail = async(req, res) => {
 module.exports = {
   getCustomer,
   getCustomers,
+  getCard,
   updateCustomerEmail,
   cancelCustomer,
   getUpcomingInvoice,
