@@ -280,7 +280,7 @@ const update = async(req, res) =>{
             console.log('_token', token)
               // asynchronously called
             if(!_token){
-              return res.send({
+              return res.status(400).send({
                 status: false,
                 error: "Card is not valid"
               });
@@ -288,8 +288,8 @@ const update = async(req, res) =>{
             if(payment['fingerprint'] != _token.card.fingerprint){
               stripe.customers.createSource(payment['customer_id'], {source: token.id}, function(err, card) {
                 console.log('_card', card)
-                if(card == null || typeof card == 'undefined'){
-                  return res.send({
+                if(!card){
+                  return res.status(400).send({
                     status: false,
                     error: "Card is not valid"
                   });
