@@ -98,7 +98,7 @@ const update = async(req, res) =>{
     createCustomer(currentUser.email).then(async(customer)=>{
       stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
         if(card == null || typeof card == 'undefined'){
-          return res.send({
+          return res.status(400).send({
             status: false,
             error: "Card is not valid"
           });
@@ -162,7 +162,7 @@ const update = async(req, res) =>{
       createCustomer(currentUser.email).then(async(customer)=>{
         stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
           if(!card){
-            return res.send({
+            return res.status(400).send({
               status: false,
               error: "Card is not valid"
             });
@@ -222,7 +222,7 @@ const update = async(req, res) =>{
           createCustomer(currentUser.email).then(async(customer)=>{
             stripe.customers.createSource(customer.id, {source: token.id}, function(err, card) {
               if(!card){
-                return res.send({
+                return res.status(400).send({
                   status: false,
                   error: "Card is not valid"
                 });
