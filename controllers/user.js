@@ -1712,9 +1712,21 @@ const connectAnotherEmail = async(req, res) => {
   currentUser.save().catch(err => {
     console.log('err', err)
   })
-  res.send({
+  return res.send({
     status: true
   })
+}
+
+const disconnectGmail = async(req, res) => {
+  const {currentUser} = req;
+  const oauth2Client = new google.auth.OAuth2(
+    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GMAIL_AUTHORIZE_URL
+  )
+  const token = JSON.parse(currentUser.google_refresh_token)
+  oauth2Client.setCredentials({ refresh_token: token.refresh_token })
+  await oauth2Client.disconnect()
 }
 
 module.exports = {
@@ -1749,6 +1761,7 @@ module.exports = {
   disconWeekly,
   disconDesktop,
   disconText,
+  disconnectGmail,
   weeklyReport,
   checkAuth,
   checkAuth2,

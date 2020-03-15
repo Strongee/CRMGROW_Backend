@@ -50,6 +50,9 @@ router.get('/sync-outlook', UserCtrl.checkAuth2, catchError(UserCtrl.syncOutlook
 // Synchronize with gmail
 router.get('/sync-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.syncGmail))
 
+// Disconnect with gmail
+router.get('/discon-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.disconnectGmail))
+
 // Synchronize with yahoo
 router.get('/sync-yahoo', UserCtrl.checkAuth2, catchError(UserCtrl.syncYahoo))
 
