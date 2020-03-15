@@ -153,6 +153,32 @@ const getCustomers = async(req, res) => {
  * @param {*} req 
  * @param {*} res 
  */
+const getCard = async(req, res) => {
+  const {customer_id, card_id} = req.body
+  stripe.customers.retrieveSource(
+      customer_id,
+      card_id,
+    function(err, card) {
+      if(err){
+        return res.status(400).json({
+          status: false,
+          err
+        })
+      }
+      console.log('card', card)
+      return res.send({
+        status: true,
+        data: card
+      })
+    }
+  );
+}
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
 const refundCharge = async(req, res) =>{
   stripe.refunds.create(
     {charge: req.params.id},
@@ -293,6 +319,7 @@ const updateCustomerEmail = async(req, res) => {
 module.exports = {
   getCustomer,
   getCustomers,
+  getCard,
   updateCustomerEmail,
   cancelCustomer,
   getUpcomingInvoice,
