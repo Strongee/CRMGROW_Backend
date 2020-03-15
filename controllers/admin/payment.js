@@ -87,6 +87,7 @@ const getTransactions = async(req, res) => {
           error: err
         })
       }
+      console.log('carges', charges)
       const data = charges.data
       return res.send({
         status: true,

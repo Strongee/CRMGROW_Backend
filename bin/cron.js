@@ -715,7 +715,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             })
             let reminder_before = 30;
             if(garbage) {
-              reminder = garbage.reminder_before
+              reminder_before = garbage.reminder_before
             }
             let startdate = moment(_followup.due_date)
             const reminder_due_date = startdate.subtract(reminder_before, "mins");
