@@ -11,6 +11,7 @@ const Video = require('../models/video')
 const PDF = require('../models/pdf')
 const TimeLine = require('../models/time_line')
 const EmailTracker = require('../models/email_tracker')
+const Reminder = require('../models/reminder')
 const Garbage = require('../models/garbage')
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
@@ -284,6 +285,8 @@ const remove = async (req, res) => {
   await Activity.deleteMany({ contacts: req.params.id })
   await FollowUp.deleteMany({ contact: req.params.id })
   await Appointment.deleteMany({ contact: req.params.id })
+  await Reminder.deleteMany({ contact: req.params.id })
+  await TimeLine.deleteMany({contact: req.params.id})
 
   res.send({
     status: true
@@ -305,7 +308,7 @@ const removeContacts = async (req, res) => {
     }
   })
 
-  res.send({
+  return res.send({
     status: true,
     data: {
       deleted: deleted,
@@ -324,6 +327,8 @@ const removeContact = async (user_id, id) => {
   await Activity.deleteMany({ contacts: id })
   await FollowUp.deleteMany({ contact: id })
   await Appointment.deleteMany({ contact: id })
+  await Reminder.deleteMany({ contact: id })
+  await TimeLine.deleteMany({contact: id})
   return true;
 }
 
