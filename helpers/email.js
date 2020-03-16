@@ -360,7 +360,6 @@ const bulkEmail = async(data) => {
 
 const bulkVideo = async(data) => {
   let {user, content, subject, videos, contacts} = data
-  console.log('data', data)
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('err', err)
   })
@@ -635,7 +634,9 @@ const bulkVideo = async(data) => {
               Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
-              resolve();
+              resolve({
+                status: true
+              });
             })
           }catch(err){
             console.log('err', err)
@@ -1077,7 +1078,9 @@ const bulkPdf = async(data) => {
             Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err)
             })
-            resolve();
+            resolve({
+              status: true
+            });
           })
         }catch(err){
           console.log('err', err)
@@ -1673,7 +1676,9 @@ const bulkImage = async(data) => {
               Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
-              resolve();
+              resolve({
+                status: true
+              });
             })
           }catch(err){
             console.log('err', err)
