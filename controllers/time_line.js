@@ -31,11 +31,9 @@ const create = async (req, res) => {
           let now = moment()
           let tens = parseInt(now.minutes() / 10)
           now.set({ minute: tens*10, second: 0, millisecond: 0 })
-          console.log('now', now)
           due_date = now.add(period, 'hours')
-          console.log('due_date', due_date)
-          
-          
+          due_date.set({ second: 0, millisecond: 0 })
+
           _time_line = new TimeLine({
             ...automation,
             ref: automation.id,
@@ -111,6 +109,7 @@ const activeNext = async (data) => {
       let tens = parseInt(now.minutes() / 10)
       now.set({ minute: tens*10, second: 0, millisecond: 0 })
       let due_date = now.add(period, 'hours');
+      due_date.set({ second: 0, millisecond: 0 })
       timeline['status'] = 'active'
       timeline['due_date'] = due_date
       timeline.save().catch(err => {
@@ -141,6 +140,7 @@ const runTimeline = async (id) => {
           let tens = parseInt(now.minutes() / 10)
           now.set({minute: tens*10,second:0,millisecond:0})
           follow_due_date = now.add(action.due_duration, 'hours')
+          follow_due_date.set({ second: 0, millisecond: 0 })
         }
         const followUp = new FollowUp({
           content: action.content,
