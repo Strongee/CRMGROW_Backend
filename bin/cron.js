@@ -695,8 +695,8 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
           } else {
             let now = moment()
             let tens = parseInt(now.minutes() / 10)
-            follow_due_date = now.add(action.due_duration, 'hours');
-            follow_due_date.set({minute: tens*10, second:0,millisecond:0})
+            now.set({minute: tens*10, second:0,millisecond:0})
+            follow_due_date = now.add(action.due_duration, 'hours')
           }
           const followUp = new FollowUp({
             content: action.content,
