@@ -192,8 +192,18 @@ const getCard = async(req, res) => {
  * @param {*} res 
  */
 const refundCharge = async(req, res) =>{
+  const {charge, amount, reason } = req.body
+  console.log('data', {
+    charge,
+    amount,
+    reason
+  })
   stripe.refunds.create(
-    {charge: req.params.id},
+    {
+      charge,
+      amount,
+      reason
+    },
     function(err, data) {
       if (err)  {
         return res.status(400).json({
