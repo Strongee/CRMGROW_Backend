@@ -88,7 +88,18 @@ const getTransactions = async(req, res) => {
         })
       }
       console.log('carges', charges)
-      const data = charges.data
+      const charge_list = charges.data
+      let data = []
+      for(let i=0; i<charge_list.length; i++){
+        const charge = {
+          id: charge_list[i].id,
+          amount: charge_list[i].amount/100,
+          description: charge_list[i].description,
+          customer: charge_list[i].customer,
+          date: charge_list[i].created * 1000
+        }
+        data.push(charge)
+      } 
       return res.send({
         status: true,
         data
@@ -181,8 +192,18 @@ const getCard = async(req, res) => {
  * @param {*} res 
  */
 const refundCharge = async(req, res) =>{
+  const {charge, amount, reason } = req.body
+  console.log('data', {
+    charge,
+    amount,
+    reason
+  })
   stripe.refunds.create(
-    {charge: req.params.id},
+    {
+      charge,
+      amount,
+      reason
+    },
     function(err, data) {
       if (err)  {
         return res.status(400).json({
