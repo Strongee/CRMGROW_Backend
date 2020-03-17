@@ -97,13 +97,9 @@ const activeNext = async (data) => {
     status: 'pending',
     parent_ref: ref,
   })
-  console.log('timelines', timelines)
   if (timelines) {
     for (let i = 0; i < timelines.length; i++) {
       const timeline = timelines[i]
-      if (timeline.condition && timeline.condition.answer == true) {
-        continue;
-      }
       const period = timeline['period']
       let now = moment()
       let tens = parseInt(now.minutes() / 10)

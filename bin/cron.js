@@ -687,6 +687,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
       if(!action){
         continue;
       }
+      if(timeline.condition && timeline.condition.answer == true) {
+        timeline['status'] = 'disabled'
+        timeline.save().catch(err=>{
+          console.log('err', err)
+        })
+        continue;
+      }
       switch(action.type) {
         case 'follow_up':
           let follow_due_date
