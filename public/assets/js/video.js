@@ -46,7 +46,8 @@ var vPlayer = new Plyr("#player");
                 data: JSON.stringify(data),
                 success: function(data) {
                     $("#myModal").addClass('thank-step')
-
+                    $("#contact").value(data.contact)
+                    $("#activity").value(data.activity)
                     $("#thank-btn").click(() => {
                         $("body").removeClass("is_protected");
                         $(".modal-backdrop").removeClass('show');

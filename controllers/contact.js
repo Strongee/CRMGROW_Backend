@@ -1003,7 +1003,7 @@ const leadContact = async (req, res) => {
         })
         
         const _activity = new Activity({
-          content: 'watched read capture video',
+          content: 'watched lead capture video',
           contacts: contact.id,
           user: currentUser.id,
           type: 'videos',
@@ -1119,7 +1119,11 @@ const leadContact = async (req, res) => {
         })
         
         return res.send({
-          status: true
+          status: true,
+          data:  {
+            contact: contact.id,
+            activity: activity.id
+          }
         })
       }).catch(err => {
         return res.status(500).send({
@@ -1140,7 +1144,7 @@ const leadContact = async (req, res) => {
         })
         
         const _activity = new Activity({
-          content: 'watched read capture pdf',
+          content: 'watched lead capture pdf',
           contacts: contact.id,
           user: currentUser.id,
           type: 'pdfs',
@@ -1256,7 +1260,11 @@ const leadContact = async (req, res) => {
         })
         
         return res.send({
-          status: true
+          status: true,
+          data:  {
+            contact: contact.id,
+            activity: activity.id
+          }
         })
       }).catch(err => {
         return res.status(500).send({
