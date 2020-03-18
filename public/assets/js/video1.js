@@ -120,7 +120,7 @@ function reportTime() {
                     duration: 0
                 }
                 registered_flag = true;
-                //socket.emit('init_video', report)
+                socket.emit('init_video', report)
             }
             else {
                 socket.emit('update_video', total * 1000)
