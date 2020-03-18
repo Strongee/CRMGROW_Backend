@@ -255,15 +255,7 @@ const checkAuth = async (req, res, next) => {
 const resetPassword = async (req, res) => {
 
   const { user_id, new_password } = req.body
-
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(401).json({
-      status: false,
-      error: errors.array()
-    })
-  }
-
+  console.log('user_id', user_id)
   const _user = await User.findOne({_id: user_id})
 
   const salt = crypto.randomBytes(16).toString('hex')
