@@ -12,7 +12,7 @@ document.querySelector(".cell_phone span").innerText = result
 
 var registered_flag = false
 var reported = false;
-
+var socket;
 // var vPlayer = videojs('material-video');
 var vPlayer = new Plyr("#player");
 // var timer;
@@ -112,7 +112,6 @@ function reportTime() {
                 const user = document.querySelector("#user").value
                 const contact = document.querySelector("#contact").value
                 const activity =document.querySelector("#activity").value
-                var socket;
                 var report = {
                     video,
                     user,
