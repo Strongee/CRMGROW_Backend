@@ -241,6 +241,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   }
 
   const disconnectVideo = async(video_tracker_id) =>{
+    console.log('disconnect video_tracker_id', video_tracker_id)
     const query = await VideoTracker.findOne({_id: video_tracker_id})
     const currentUser = await User.findOne({_id: query['user']})
     const contact = await Contact.findOne({_id: query['contact']})
@@ -436,6 +437,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   }
   
   const updateVideo = async(duration, video_tracker_id) =>{
+    console.log('video_tracker_id', video_tracker_id)
     const video_tracker = await VideoTracker.findOne({_id: video_tracker_id});
     video_tracker['duration'] = duration
     video_tracker['updated_at'] = new Date()
