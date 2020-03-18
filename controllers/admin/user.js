@@ -252,9 +252,9 @@ const checkAuth = async (req, res, next) => {
   }
 }
 
-const resetPasswordByOld = async (req, res) => {
+const resetPassword = async (req, res) => {
 
-  const { old_password, new_password } = req.body
+  const { user_id, new_password } = req.body
 
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -264,26 +264,22 @@ const resetPasswordByOld = async (req, res) => {
     })
   }
 
-  const _user = req.currentUser
-
-   // Check old password
-   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
-   if (old_hash != _user.hash) {
-     return res.status(400).json({
-       status: false,
-       error: 'Invalid old password!'
-     })
-   }
+  const _user = await User.findOne({_id: user_id})
 
   const salt = crypto.randomBytes(16).toString('hex')
   const hash = crypto.pbkdf2Sync(new_password, salt, 10000, 512, 'sha512').toString('hex')
 
   _user.salt = salt
   _user.hash = hash
-  _user.save()
-
-  res.send({
-    status: true
+  _user.save().then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(400).json({
+      status: false,
+      error: err
+    })
   })
 }
 
@@ -419,7 +415,7 @@ module.exports = {
   editMe,
   getAll,
   getProfile,
-  resetPasswordByOld,
+  resetPassword,
   checkAuth,
   create,
   closeAccount
