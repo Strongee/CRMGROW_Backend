@@ -41,8 +41,8 @@
                 success: function(data) {
                     console.log('data', data)
                     $("#myModal").addClass('thank-step')
-                    $("#contact").value(data.contact)
-                    $("#activity").value(data.activity)
+                    $("#contact").val(data.contact)
+                    $("#activity").val(data.activity)
                     $("#thank-btn").click(() => {
                         $("body").removeClass("is_protected");
                         $(".modal-backdrop").removeClass('show');
