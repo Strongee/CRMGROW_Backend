@@ -539,6 +539,7 @@ const disableNext = async(id) => {
   })
   if(timeline){
     timeline['status'] = 'disabled'
+    timeline['updated_at'] = new Date()
     timeline.save().catch(err=>{
       console.log('err', err)
     })
@@ -550,6 +551,7 @@ const disableNext = async(id) => {
       } else {
         timeline = timelines[0]
         timeline['status'] = 'disabled'
+        timeline['updated_at'] = new Date()
         timeline.save().catch(err=>{
           console.log('err', err)
         })

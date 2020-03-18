@@ -688,11 +688,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
         continue;
       }
       if(timeline.condition && timeline.condition.answer == true) {
-        timeline['status'] = 'disabled'
-        timeline['updated_at'] = new Date()
-        timeline.save().catch(err=>{
-          console.log('err', err)
-        })
+        TimeLineCtrl.disableNext(timeline.id)
         continue;
       }
       switch(action.type) {
