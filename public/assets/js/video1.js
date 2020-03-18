@@ -11,13 +11,6 @@ result = "(" + newStr.slice(0, 3) + ") " + newStr.slice(3, 6) + "-" + newStr.sli
 document.querySelector(".cell_phone span").innerText = result
 
 var registered_flag = false
-if( contact && activity ){
-    var siteAddr = location.protocol + '//' + location.hostname;
-    socket = io.connect(siteAddr);
-    console.log("Site Address", siteAddr);
-    // socket = io.connect('https://app.crmgrow.com')
-    // socket = io.connect('http://localhost:3000')
-}
 var reported = false;
 
 // var vPlayer = videojs('material-video');
@@ -31,6 +24,13 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector("#video-duration").value
 function updateStartTime() {
+    if( contact && activity ){
+        var siteAddr = location.protocol + '//' + location.hostname;
+        socket = io.connect(siteAddr);
+        console.log("Site Address", siteAddr);
+        // socket = io.connect('https://app.crmgrow.com')
+        // socket = io.connect('http://localhost:3000')
+    }
     let currentTime = vPlayer.currentTime
     for( let i = 0; i < trackingTimes.length; i++ ){
         if( trackingTimes[i][0] <= currentTime && currentTime <= trackingTimes[i][1] ){
