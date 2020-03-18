@@ -55,6 +55,6 @@ router.post('/list/:page', catchError(UserCtrl.getAll))
 
 
 // New Password by old one
-router.post('/reset-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPassword))
+router.post('/reset-password', UserCtrl.checkAuth, catchError(UserCtrl.resetPassword))
 
 module.exports = router

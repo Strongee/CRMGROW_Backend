@@ -890,6 +890,12 @@ const resetPasswordByOld = async (req, res) => {
 
   const _user = req.currentUser
 
+  if(!_user.salt){
+    return res.status(400).json({
+      status: false,
+      error: 'User has no password'
+    })
+  }
   // Check old password
   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
   if (old_hash != _user.hash) {
@@ -906,7 +912,7 @@ const resetPasswordByOld = async (req, res) => {
   _user.hash = hash
   _user.save()
 
-  res.send({
+  return res.send({
     status: true
   })
 }
