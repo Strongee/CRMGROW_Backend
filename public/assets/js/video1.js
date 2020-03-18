@@ -24,6 +24,8 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector("#video-duration").value
 function updateStartTime() {
+    const contact = document.querySelector("#contact").value
+    const activity =document.querySelector("#activity").value
     if( contact && activity ){
         var siteAddr = location.protocol + '//' + location.hostname;
         socket = io.connect(siteAddr);
