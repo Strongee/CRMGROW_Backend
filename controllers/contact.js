@@ -1003,7 +1003,7 @@ const leadContact = async (req, res) => {
         })
         
         const _activity = new Activity({
-          content: 'watched lead capture video',
+          content: 'LEAD CAPTURE - watched video',
           contacts: contact.id,
           user: currentUser.id,
           type: 'videos',
@@ -1144,7 +1144,7 @@ const leadContact = async (req, res) => {
         })
         
         const _activity = new Activity({
-          content: 'watched lead capture pdf',
+          content: 'LEAD CAPTURE - watched pdf',
           contacts: contact.id,
           user: currentUser.id,
           type: 'pdfs',
