@@ -230,6 +230,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
 }
   
   const createVideo = async(data) => {
+    console.log('data', data)
     const video_tracker = new VideoTracker({
       ...data,
       updated_at: new Date(),
