@@ -296,7 +296,7 @@ const reminder_job = new CronJob('*/10 * * * 0-6', async() =>{
             config.VAPID.PRIVATE_VAPID_KEY
           )
           
-          const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+          const subscription = JSON.parse(user.desktop_notification_subscription)
           const title = `CRMGrow follow up reminder`
           const body = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' + 
           contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + follow_up.content 
