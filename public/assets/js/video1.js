@@ -10,18 +10,6 @@ let result = "";
 result = "(" + newStr.slice(0, 3) + ") " + newStr.slice(3, 6) + "-" + newStr.slice(6, 10);
 document.querySelector(".cell_phone span").innerText = result
 
-const video = document.querySelector("#video").value
-const user = document.querySelector("#user").value
-const contact = document.querySelector("#contact").value
-const activity =document.querySelector("#activity").value
-var socket;
-var report = {
-    video,
-    user,
-    contact,
-    activity,
-    duration: 0
-}
 var registered_flag = false
 if( contact && activity ){
     var siteAddr = location.protocol + '//' + location.hostname;
@@ -118,6 +106,18 @@ function reportTime() {
     if( total != 0 && socket ){
         if( watched_time < duration){
             if (!registered_flag){
+                const video = document.querySelector("#video").value
+                const user = document.querySelector("#user").value
+                const contact = document.querySelector("#contact").value
+                const activity =document.querySelector("#activity").value
+                var socket;
+                var report = {
+                    video,
+                    user,
+                    contact,
+                    activity,
+                    duration: 0
+                }
                 registered_flag = true;
                 socket.emit('init_video', report)
             }
