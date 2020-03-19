@@ -144,7 +144,7 @@ const getCustomers = async(req, res) => {
             user.payment = payment
             if(user.subscription){
               const subscription = user.subscription
-              if(suspended_at.suspended_at){
+              if(subscription.suspended_at){
                 user.status = 'suspended'
               }else if(subscription.is_failed) {
                 user.status = 'failed'

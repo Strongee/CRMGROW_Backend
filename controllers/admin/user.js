@@ -422,7 +422,7 @@ const suspendUser = async(req, res) => {
   }).catch(err=>{
     return res.status(500).send({
       status: false,
-      error: err
+      error: err.message
     })
   })
 }
