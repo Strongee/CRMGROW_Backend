@@ -402,7 +402,7 @@ const closeAccount = async(req, res) =>{
 }
 
 const disableUser = async(req, res) => {
-  User.update({_id: req.params.id}, {del: true}).then(()=>{
+  User.update({_id: req.params.id}, {$set: {del: true} } ).then(()=>{
     return res.send({
       status: true
     })
@@ -415,7 +415,7 @@ const disableUser = async(req, res) => {
 }
 
 const suspendUser = async(req, res) => {
-  User.update({_id: req.params.id}, {'subscription.suspended': true}).then(()=>{
+  User.update({_id: req.params.id}, {$set: {'subscription.suspended': true}}).then(()=>{
     return res.send({
       status: true
     })

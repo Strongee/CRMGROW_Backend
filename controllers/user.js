@@ -159,7 +159,6 @@ const signUp = async (req, res) => {
       payment: payment.id,
       salt: salt,
       hash: hash,
-      connected_email_type: 'email',
       updated_at: new Date(),
       created_at: new Date(),
     })
