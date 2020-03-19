@@ -401,6 +401,32 @@ const closeAccount = async(req, res) =>{
   })
 }
 
+const disableUser = async(req, res) => {
+  User.update({_id: req.params.id}, {del: false}).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
+const suspendUser = async(req, res) => {
+  User.update({_id: req.params.id}, {'subscription.suspended': true}).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
 module.exports = {
   signUp,
   login,
@@ -410,6 +436,8 @@ module.exports = {
   resetPassword,
   checkAuth,
   create,
+  disableUser,
+  suspendUser,
   closeAccount
 }
 
