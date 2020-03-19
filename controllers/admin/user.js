@@ -402,7 +402,7 @@ const closeAccount = async(req, res) =>{
 }
 
 const disableUser = async(req, res) => {
-  User.update({_id: req.params.id}, {del: false}).then(()=>{
+  User.update({_id: req.params.id}, {del: true}).then(()=>{
     return res.send({
       status: true
     })
