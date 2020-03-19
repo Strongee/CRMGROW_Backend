@@ -15,7 +15,7 @@ const getCustomer = async(req, res) => {
     trial_ended: '',
     status: '',
     card: '',
-    plan: ''
+    plan: '',
   }
   stripe.customers.retrieve(
     customer_id,
@@ -35,6 +35,7 @@ const getCustomer = async(req, res) => {
       data['card'] = subscription['default_source']
       data['status'] = subscription['status']
       data['plan'] = subscription['plan'].id
+      
       if(subscription['plan'].id == config.STRIPE.PRIOR_PLAN){
         data['bill_amount'] = '29'
       } else {
@@ -141,6 +142,16 @@ const getCustomers = async(req, res) => {
             myJSON = JSON.stringify(_user)
             const user = JSON.parse(myJSON)
             user.payment = payment
+            if(user.subscription){
+              const subscription = user.subscription
+              if(suspended_at.suspended_at){
+                user.status = 'suspended'
+              }else if(subscription.is_failed) {
+                user.status = 'failed'
+              }else {
+                user.status = 'active'
+              }
+            }
             delete user.hash
             delete user.salt
             data.push(user)

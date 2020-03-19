@@ -427,6 +427,22 @@ const suspendUser = async(req, res) => {
   })
 }
 
+const activateUser = async(req, res) => {
+  User.update({_id: req.params.id}, {
+    'subscription.suspended': false,
+    'del': false
+  }).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
 module.exports = {
   signUp,
   login,
@@ -438,6 +454,7 @@ module.exports = {
   create,
   disableUser,
   suspendUser,
+  activateUser,
   closeAccount
 }
 

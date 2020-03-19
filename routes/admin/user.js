@@ -46,11 +46,14 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // Get the Specific User Profile
 router.get('/profile/:id', catchError(UserCtrl.getProfile))
 
-// Get the Specific User Profile
+// Set the Specific User Profile
 router.get('/disable/:id', catchError(UserCtrl.disableUser))
 
-// Get the Specific User Profile
+// Set the Specific User Profile
 router.get('/suspend/:id', catchError(UserCtrl.suspendUser))
+
+// Set the Specific User Profile
+router.get('/activate/:id', catchError(UserCtrl.activateUser))
 
 // Get the Specific User Profile
 router.delete('/:id', UserCtrl.checkAuth, catchError(UserCtrl.closeAccount))
