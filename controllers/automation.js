@@ -2,6 +2,7 @@ const Automation = require('../models/automation')
 const TimeLine = require('../models/time_line')
 const Contact = require('../models/contact')
 const mongoose = require('mongoose')
+const garbageHelper = require('../helpers/garbage')
 
 const get = (req, res) => {
     const id = req.params.id;
@@ -48,7 +49,7 @@ const getPage = async (req, res) => {
     const garbage = await garbageHelper.get(currentUser);
     let editedAutomations = [];
     if(garbage) {
-        editedAutomations = garbage['edited_video']
+        editedAutomations = garbage['edited_automation']
     }
     
     const automations = await Automation.find({
