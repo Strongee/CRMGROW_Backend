@@ -159,7 +159,7 @@ const editMe = async(req, res) =>{
   });
 }
 
-const getAll = async (req, res, next) => {
+const getAll = async (req, res) => {
   const page = req.params.page;
   const search = {...req.body};
   const skip = (page - 1) * 15;
@@ -208,7 +208,54 @@ const getAll = async (req, res, next) => {
   })
 }
 
-const getProfile = async (req, res, next) => {
+const disableUsers = async (req, res) => {
+  const page = req.params.page;
+  const search = {...req.body};
+  const skip = (page - 1) * 15;
+  const _users = await User.find({
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'del': true
+      }
+    ]
+    
+  }).skip(skip).limit(15).select({'salt': 0,'hash': 0}).populate('payment');
+  
+  const total = await User.countDocuments({
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'del': true
+      }
+    ]
+  });
+  if(!_users){
+    return res.status(400).json({
+      status: false,
+      error: 'Users doesn`t exist'
+    })
+  }
+  return res.send({
+    status: true,
+    data: _users,
+    total: total
+  })
+}
+
+const getProfile = async (req, res) => {
   const id = req.params.id;
   const user = await User.findOne({_id: id}).populate('payment').catch(err => {
     return res.status(400).json({
@@ -402,7 +449,7 @@ const closeAccount = async(req, res) =>{
 }
 
 const disableUser = async(req, res) => {
-  User.update({_id: req.params.id}, {$set: {del: true} } ).then(()=>{
+  User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()} } ).then(()=>{
     return res.send({
       status: true
     })
@@ -415,7 +462,7 @@ const disableUser = async(req, res) => {
 }
 
 const suspendUser = async(req, res) => {
-  User.update({_id: req.params.id}, {$set: {'subscription.suspended': true}}).then(()=>{
+  User.update({_id: req.params.id}, {$set: {'subscription.suspended': true, updated_at: new Date()}}).then(()=>{
     return res.send({
       status: true
     })
@@ -453,6 +500,7 @@ module.exports = {
   checkAuth,
   create,
   disableUser,
+  disableUsers,
   suspendUser,
   activateUser,
   closeAccount
