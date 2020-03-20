@@ -499,9 +499,6 @@ const bulkVideo = async(data) => {
                 err: es[0].statusCode,
                 contact: contacts[i]
               })
-              resolve({
-                status: true
-              })
             })
           })
           promise_array.push(promise)
