@@ -94,7 +94,7 @@
     margin: 0px 10px;
   }
   
-  .icon-down {
+  /* .icon-down {
     -webkit-mask-image: url(../icons/arrow_down.svg);
     mask-image: url(../icons/arrow_down.svg);
     width: 10px;
@@ -102,7 +102,7 @@
     position: absolute;
     bottom: 10px;
     left: 149px;
-  }
+  } */
   
 .video-js .vjs-big-play-button{
     top: 50% !important;
@@ -203,6 +203,7 @@ a.dropdown-item{
 
 .open > .dropdown-menu {
     width: 190px;
+    display: block;
 }
 
 @media screen and (max-width: 768px) {
