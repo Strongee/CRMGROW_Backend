@@ -58,6 +58,9 @@ router.get('/activate/:id', catchError(UserCtrl.activateUser))
 // Get the Specific User Profile
 router.delete('/:id', UserCtrl.checkAuth, catchError(UserCtrl.closeAccount))
 
+// Get the disabled Users Profile
+router.post('/disabled/:page', catchError(UserCtrl.disableUsers))
+
 // Get Page users
 router.post('/list/:page', catchError(UserCtrl.getAll))
 

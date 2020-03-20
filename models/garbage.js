@@ -9,6 +9,7 @@ const Garbage = mongoose.model('garbage',{
     edited_video: [{type: mongoose.Schema.Types.ObjectId, ref: 'video'}],
     edited_pdf: [{type: mongoose.Schema.Types.ObjectId, ref: 'pdf'}],
     edited_image: [{type: mongoose.Schema.Types.ObjectId, ref: 'image'}],
+    edited_automation: [{type: mongoose.Schema.Types.ObjectId, ref: 'automation'}],
     desktop_notification: {
       material: {type: Boolean, default: false},
       email: {type: Boolean, default: false},

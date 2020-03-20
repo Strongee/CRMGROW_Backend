@@ -45,9 +45,16 @@ const getPage = async (req, res) => {
     const {currentUser} = req;
     const page = req.params.page;
 
+    const garbage = await garbageHelper.get(currentUser);
+    let editedAutomations = [];
+    if(garbage) {
+        editedAutomations = garbage['edited_video']
+    }
+    
     const automations = await Automation.find({
         $or: [
-            {user: currentUser.id}
+            {user: currentUser.id},
+            {role: 'admin', id: {$nin: editedAutomations}}
         ]
     }).skip((page-1) * 10).limit(10);
 
@@ -158,6 +165,68 @@ const search = async(req, res) => {
         })    
 }
 
+const updateDefault = async (req, res) => {
+    const {automation, id} = req.body
+    let thumbnail;
+    let { currentUser } = req
+
+    const defaultAutomation= await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
+      console.log('err', err)
+    })
+    if (!defaultAutomation) {
+      return res.status(400).json({
+        status: false,
+        error: 'This Default automation not exists'
+      })
+    }
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if(!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`
+      })
+    }
+    if(garbage['edited_automation']) {
+      garbage['edited_automation'].push(id);
+    }
+    else {
+      garbage['edited_automation'] = [id]
+    }
+    
+    await garbage.save().catch(err => {
+      return res.status.json({
+        status: false,
+        error: 'Update Garbage Error.'
+      })
+    })
+  
+    for (let key in automation) {
+        defaultAutomation[key] = automation[key]
+    }
+    if( thumbnail ){
+        defaultAutomation['thumbnail'] = thumbnail
+    }
+    
+    defaultAutomation['updated_at'] = new Date()
+    const defaultAutomationJSON = JSON.parse(JSON.stringify(defaultAutomation))
+    delete defaultAutomationJSON['_id'];
+    delete defaultAutomationJSON['role'];
+    let newAutomation = new Automation({
+      ...defaultAutomationJSON,
+      user: currentUser._id,
+      default_edited: true
+    })
+    const _automation = await newAutomation.save().then().catch(err=>{
+      console.log('err', err)
+    })  
+    
+    return res.send({
+      status: true,
+      data: _automation
+    })
+  }
+
 module.exports = {
   get,
   getStatus,
@@ -165,5 +234,6 @@ module.exports = {
   create,
   update,
   remove,
+  updateDefault,
   search
 }
