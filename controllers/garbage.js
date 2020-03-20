@@ -1,5 +1,4 @@
 const Garbage = require('../models/garbage');
-const GarbageHelper = require('../helpers/garbage');
 
 const get = async(req, res) => {
   const data = await Garbage.find({_id: req.params.id});
