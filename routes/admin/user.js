@@ -46,15 +46,26 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 // Get the Specific User Profile
 router.get('/profile/:id', catchError(UserCtrl.getProfile))
 
+// Set the Specific User Profile
+router.get('/disable/:id', catchError(UserCtrl.disableUser))
+
+// Set the Specific User Profile
+router.get('/suspend/:id', catchError(UserCtrl.suspendUser))
+
+// Set the Specific User Profile
+router.get('/activate/:id', catchError(UserCtrl.activateUser))
 
 // Get the Specific User Profile
 router.delete('/:id', UserCtrl.checkAuth, catchError(UserCtrl.closeAccount))
+
+// Get the disabled Users Profile
+router.post('/disabled/:page', catchError(UserCtrl.disableUsers))
 
 // Get Page users
 router.post('/list/:page', catchError(UserCtrl.getAll))
 
 
 // New Password by old one
-router.post('/new-password', UserCtrl.checkAuth, [ body('old_password').isLength({ min: 5}), body('new_password').isLength({ min: 5 }) ], catchError(UserCtrl.resetPasswordByOld))
+router.post('/reset-password', UserCtrl.checkAuth, catchError(UserCtrl.resetPassword))
 
 module.exports = router

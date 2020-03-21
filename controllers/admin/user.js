@@ -159,7 +159,7 @@ const editMe = async(req, res) =>{
   });
 }
 
-const getAll = async (req, res, next) => {
+const getAll = async (req, res) => {
   const page = req.params.page;
   const search = {...req.body};
   const skip = (page - 1) * 15;
@@ -208,7 +208,54 @@ const getAll = async (req, res, next) => {
   })
 }
 
-const getProfile = async (req, res, next) => {
+const disableUsers = async (req, res) => {
+  const page = req.params.page;
+  const search = {...req.body};
+  const skip = (page - 1) * 15;
+  const _users = await User.find({
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'del': true
+      }
+    ]
+    
+  }).skip(skip).limit(15).select({'salt': 0,'hash': 0}).populate('payment');
+  
+  const total = await User.countDocuments({
+    $and: [
+      {
+        $or: [
+          {'user_name': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'email': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+          {'cell_phone': {'$regex': '.*' + search.search + '.*', '$options': 'i'}},
+        ]
+      },
+      {
+        'del': true
+      }
+    ]
+  });
+  if(!_users){
+    return res.status(400).json({
+      status: false,
+      error: 'Users doesn`t exist'
+    })
+  }
+  return res.send({
+    status: true,
+    data: _users,
+    total: total
+  })
+}
+
+const getProfile = async (req, res) => {
   const id = req.params.id;
   const user = await User.findOne({_id: id}).populate('payment').catch(err => {
     return res.status(400).json({
@@ -252,38 +299,26 @@ const checkAuth = async (req, res, next) => {
   }
 }
 
-const resetPasswordByOld = async (req, res) => {
+const resetPassword = async (req, res) => {
 
-  const { old_password, new_password } = req.body
-
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(401).json({
-      status: false,
-      error: errors.array()
-    })
-  }
-
-  const _user = req.currentUser
-
-   // Check old password
-   const old_hash = crypto.pbkdf2Sync(old_password, _user.salt, 10000, 512, 'sha512').toString('hex');
-   if (old_hash != _user.hash) {
-     return res.status(400).json({
-       status: false,
-       error: 'Invalid old password!'
-     })
-   }
+  const { user_id, new_password } = req.body
+  console.log('user_id', user_id)
+  const _user = await User.findOne({_id: user_id})
 
   const salt = crypto.randomBytes(16).toString('hex')
   const hash = crypto.pbkdf2Sync(new_password, salt, 10000, 512, 'sha512').toString('hex')
 
   _user.salt = salt
   _user.hash = hash
-  _user.save()
-
-  res.send({
-    status: true
+  _user.save().then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(400).json({
+      status: false,
+      error: err
+    })
   })
 }
 
@@ -413,15 +448,61 @@ const closeAccount = async(req, res) =>{
   })
 }
 
+const disableUser = async(req, res) => {
+  User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()} } ).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
+const suspendUser = async(req, res) => {
+  User.update({_id: req.params.id}, {$set: {'subscription.suspended': true, updated_at: new Date()}}).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err.message
+    })
+  })
+}
+
+const activateUser = async(req, res) => {
+  User.update({_id: req.params.id}, {
+    'subscription.suspended': false,
+    'del': false
+  }).then(()=>{
+    return res.send({
+      status: true
+    })
+  }).catch(err=>{
+    return res.status(500).send({
+      status: false,
+      error: err
+    })
+  })
+}
+
 module.exports = {
   signUp,
   login,
   editMe,
   getAll,
   getProfile,
-  resetPasswordByOld,
+  resetPassword,
   checkAuth,
   create,
+  disableUser,
+  disableUsers,
+  suspendUser,
+  activateUser,
   closeAccount
 }
 

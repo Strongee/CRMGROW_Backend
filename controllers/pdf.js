@@ -249,7 +249,7 @@ const getAll = async (req, res) => {
     _pdf_detail_list.push(pdf_detail)
   }
 
-  res.send({
+  return res.send({
     status: true,
     data: _pdf_detail_list
   })

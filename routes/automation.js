@@ -20,4 +20,7 @@ router.post('/detail/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.getStat
 
 router.get('/:id' , UserCtrl.checkAuth, catchError(AutomationCtrl.get))
 
+// Default Video Edit
+router.post('/update-admin', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(AutomationCtrl.updateDefault))
+
 module.exports = router

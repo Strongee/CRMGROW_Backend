@@ -296,7 +296,7 @@ const reminder_job = new CronJob('*/10 * * * 0-6', async() =>{
             config.VAPID.PRIVATE_VAPID_KEY
           )
           
-          const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+          const subscription = JSON.parse(user.desktop_notification_subscription)
           const title = `CRMGrow follow up reminder`
           const body = `Follow up task due today at ${moment(follow_up.due_date).utcOffset(user.time_zone).format('h:mm a')} with contact name:` + '\n' + 
           contact.first_name + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' + follow_up.content 
@@ -688,10 +688,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
         continue;
       }
       if(timeline.condition && timeline.condition.answer == true) {
-        timeline['status'] = 'disabled'
-        timeline.save().catch(err=>{
-          console.log('err', err)
-        })
+        TimeLineCtrl.disableNext(timeline.id)
         continue;
       }
       switch(action.type) {
@@ -754,6 +751,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
         
             activity.save().then(_activity => {
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -766,6 +764,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
           })
           .catch(err => {
               timeline['status'] = 'error'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -798,6 +797,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
                 console.log('err', err)
               })
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -806,6 +806,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
           .catch(err => {
             console.log('err', err)
             timeline['status'] = 'error'
+            timeline['updated_at'] = new Date()
             timeline.save().catch(err=>{
               console.log('err', err)
             })
@@ -823,12 +824,14 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             console.log('res', res)
             if(res[0].status == false){
               timeline['status'] = 'error'
+              timeline['updated_at'] = new Date()
               console.log('err', res[0].err)
               timeline.save().catch(err=>{
                console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -848,12 +851,14 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             console.log('res', res)
             if(res[0].status == false){
               timeline['status'] = 'error'
+              timeline['updated_at'] = new Date()
               console.log('err', res[0].err)
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -875,11 +880,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -900,11 +907,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -926,11 +935,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -951,11 +962,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -976,11 +989,13 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             if(res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
               timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })

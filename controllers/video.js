@@ -61,15 +61,18 @@ const play = async(req, res) => {
   const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
     console.log('err', err)
   })
-  const garbage = await Garbage.findOne({user: user._id}).catch(err => {
-    console.log('err', err)
-  })
+
   let capture_dialog = false;
-  if(garbage) {
-    capture_dialog = garbage['capture_dialog']
-  }  
- 
+
   if(user){
+    const garbage = await Garbage.findOne({user: user._id}).catch(err => {
+      console.log('err', err)
+    })
+    
+    if(garbage) {
+      capture_dialog = garbage['capture_dialog']
+    }  
+    
     let pattern = /^((http|https|ftp):\/\/)/;
     
     if(!pattern.test(user.learn_more)) {
