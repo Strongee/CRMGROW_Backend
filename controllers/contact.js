@@ -978,7 +978,7 @@ const leadContact = async (req, res) => {
 
   if(_exists && _exists.length) {
     return res.json({
-      status: true
+      status: true,
     })
   }
   else {
