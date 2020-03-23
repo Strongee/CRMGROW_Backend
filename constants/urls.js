@@ -1,3 +1,4 @@
+  let urls
   if(process.env.NODE_ENV === 'production') {
     urls = {
       DOMAIN_URL: 'https://app.crmgrow.com/',
@@ -30,8 +31,7 @@
       GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
     }
   } else if(process.env.NODE_ENV === 'staging'){
-    {
-      urls = {
+    urls = {
         DOMAIN_URL: 'https://stg.crmgrow.com/',
         API_URL: 'https://stg.crmgrow.com/api/',
         LOGIN_URL: 'https://stg.crmgrow.com/login',
@@ -61,8 +61,6 @@
         INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
         GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
       }
-    }
-
   }else {
     urls = {
       DOMAIN_URL: 'https://app.crmgrow.com/',
