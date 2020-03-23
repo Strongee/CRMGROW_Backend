@@ -119,6 +119,13 @@ const play1 = async(req, res) => {
   }
 }
 
+const embedPlay = async(req, res) => {
+  const video = await Video.findOne({_id: req.params.video});
+  res.render('embedVideo', {
+    video: video
+  })
+}
+
 const pipe = async(req, res) =>{
   const filePath = TEMP_PATH + req.params.name
   console.info('File Path:', filePath)
@@ -1406,6 +1413,7 @@ const makeBody = (to, from, subject, message) => {
 module.exports = {
   play,
   play1,
+  embedPlay,
   pipe,
   create,
   updateDetail,
