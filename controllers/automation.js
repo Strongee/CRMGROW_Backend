@@ -47,15 +47,15 @@ const getPage = async (req, res) => {
     const page = req.params.page;
 
     const garbage = await garbageHelper.get(currentUser);
-    let editedAutomations = [];
-    if(garbage) {
-        editedAutomations = garbage['edited_automation']
-    }
+    // let editedAutomations = [];
+    // if(garbage) {
+    //     editedAutomations = garbage['edited_automation']
+    // }
     
     const automations = await Automation.find({
         $or: [
             {user: currentUser.id},
-            {role: 'admin', id: {$nin: editedAutomations}}
+            {role: 'admin'}
         ]
     }).skip((page-1) * 10).limit(10);
 
