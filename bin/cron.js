@@ -821,8 +821,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkEmail(data).then(res=>{
-            console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               timeline['updated_at'] = new Date()
               console.log('err', res[0].err)
@@ -849,7 +848,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
           }
           TextHelper.bulkVideo(data).then(res=>{
             console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               timeline['updated_at'] = new Date()
               console.log('err', res[0].err)
@@ -876,9 +875,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkVideo(data).then(res=>{
-            console.log('data', data)
-            console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
@@ -904,8 +901,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           TextHelper.bulkPdf(data).then(res=>{
-            console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
@@ -932,8 +928,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkPdf(data).then(res=>{
-            console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
@@ -959,8 +954,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           TextHelper.bulkImage(data).then(res=>{
-            console.log('res', res)
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
@@ -987,7 +981,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkImage(data).then(res=>{
-            if(res[0].status == false){
+            if(res[0] && res[0].status == false){
               timeline['status'] = 'error'
               console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
