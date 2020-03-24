@@ -128,10 +128,13 @@ const receive = async(req, res) => {
         throw error // Invalid phone number
       }
       
-      const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
-      await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
-        console.log('err', err)
-      })
+      if(contact){
+        const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
+        await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
+          console.log('err', err)
+        })
+      }
+      
       // const sms = new SMS({
       //   content: text,
       //   contact: contact.id,  
