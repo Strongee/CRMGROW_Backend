@@ -446,7 +446,7 @@ const receiveEmail = async(req, res) => {
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
   const update_data = {event: event}
-  Email.findOneAndUpdate({message_id: message_id}, update_data).then(async(_email)=>{
+  Email.update({message_id: message_id}, update_data).then(async(_email)=>{
     if(_email){
       const user = await User.findOne({_id: _email.user}).catch(err=>{
         console.log('err', err)

@@ -58,8 +58,6 @@ const getPage = async (req, res) => {
             {role: 'admin'}
         ]
     }).skip((page-1) * 10).limit(10);
-
-    console.log('automations', automations)
     let automation_array = []
     for(let i=0; i<automations.length; i++){
         const automation = automations[i]
