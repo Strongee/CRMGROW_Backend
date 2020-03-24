@@ -149,16 +149,24 @@ const remove = async(req, res) => {
 
 const search = async(req, res) => {
     const condition = req.body;
-    const { currentUser } = req;
-
-    Automation.find({user: currentUser.id, title: { '$regex': '.*' + condition.search + '.*', '$options': 'i' }})
-        .then((data) => {
-            res.send({
-                status: false,
-                data
-            })
-        })  
-        .catch(err => {
+    const { currentUser } = req;    
+    Automation.find(
+    {$and: [
+        {
+            $or: [
+                {'user': currentUser.id,},
+                {'role': 'admin'}
+              ]
+            },
+        {
+            'title': { '$regex': '.*' + condition.search + '.*', '$options': 'i' }
+        }
+    ]}).then((data) => {
+        return res.send({
+            status: true,
+            data
+        })
+    }).catch(err => {
             req.status(400).send({
                 status: false
             })
