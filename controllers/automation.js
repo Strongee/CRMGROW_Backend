@@ -85,11 +85,9 @@ const getPage = async (req, res) => {
          automation_array.push(automation_detail)
     }
 
-    const total = await Automation.countDocuments(
-    {$or: [
-        {user: currentUser.id},
-        {role: 'admin'}
-    ]})
+    const total = await Automation.countDocuments({
+        user: currentUser.id
+    })
 
     return res.json({
         status: true,
@@ -151,9 +149,7 @@ const remove = async(req, res) => {
 
 const search = async(req, res) => {
     const condition = req.body;
-    const { currentUser } = req;
-
-    
+    const { currentUser } = req;    
     Automation.find(
     {$and: [
         {
@@ -170,8 +166,7 @@ const search = async(req, res) => {
             status: true,
             data
         })
-    })   
-        .catch(err => {
+    }).catch(err => {
             req.status(400).send({
                 status: false
             })
