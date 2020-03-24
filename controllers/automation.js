@@ -165,7 +165,12 @@ const search = async(req, res) => {
         {
             'title': { '$regex': '.*' + condition.search + '.*', '$options': 'i' }
         }
-    ]})  
+    ]}).then((data) => {
+        return res.send({
+            status: true,
+            data
+        })
+    })   
         .catch(err => {
             req.status(400).send({
                 status: false
