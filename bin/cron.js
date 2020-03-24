@@ -876,6 +876,7 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkVideo(data).then(res=>{
+            console.log('data', data)
             console.log('res', res)
             if(res[0].status == false){
               timeline['status'] = 'error'
