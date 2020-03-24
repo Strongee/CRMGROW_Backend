@@ -84,7 +84,7 @@ router.get('/weekly-report',   UserCtrl.checkAuth, catchError(UserCtrl.weeklyRep
 router.get('/discon-weekly',   UserCtrl.checkAuth, catchError(UserCtrl.disconWeekly))
 
 // Desktop Notification
-router.post('/desktop-notification',   UserCtrl.checkAuth, catchError(UserCtrl.desktopNotification))
+router.post('/desktop-notification',   UserCtrl.checkAuth2, catchError(UserCtrl.desktopNotification))
 
 // Disconnect Desktop Notification
 router.get('/discon-desktop',   UserCtrl.checkAuth, catchError(UserCtrl.disconDesktop))
