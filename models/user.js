@@ -12,6 +12,11 @@ const User = mongoose.model('user',{
      time_zone: {type: String, default: "-07:00"},
      email_signature: {type: String, default: ""},
      proxy_number: String,
+     proxy_phone: {
+      number: String,
+      is_released: {type: Boolean, default: false},
+      updated_at: Date
+     },
      picture_profile: String,
      learn_more: String,
      role: String,

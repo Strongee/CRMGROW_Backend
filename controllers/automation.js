@@ -64,7 +64,7 @@ const getPage = async (req, res) => {
         const automation = automations[i]
         contacts = await TimeLine.aggregate([
             {
-              $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id), "automation":mongoose.Types.ObjectId(automation._id) }] }
+              $match: { $and: [{ "automation":mongoose.Types.ObjectId(automation._id) }] }
             },           
             {
               $group: {
