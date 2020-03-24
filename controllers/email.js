@@ -482,7 +482,6 @@ const bulkOutlook = async (req, res) => {
 
 const openTrack = async (req, res) => {
   const message_id = req.params.id
-  console.log('message_id', message_id)
   const _email = await Email.findOne({ message_id: message_id }).catch(err => {
     console.log('err', err)
   })

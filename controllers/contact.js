@@ -500,7 +500,7 @@ const receiveEmail = async(req, res) => {
               console.log('err', err)
             })
             
-            Contact.findByIdAndUpdate(contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+            Contact.update({_id: contact.id}, { $set: { last_activity: _activity.id } }).catch(err => {
               console.log('err', err)
             }) 
           } else {
