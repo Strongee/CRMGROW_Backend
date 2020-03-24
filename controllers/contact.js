@@ -2040,6 +2040,16 @@ const loadTimelines = async (req, res) => {
   })
 }
 
+const selectAllContacts = async (req, res) => {
+  const {currentUser} = req;
+  
+  const contacts = await Contact.find({user: currentUser.id}).select('_id');
+  return res.send({
+    status: true,
+    data: contacts
+  })
+}
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -2064,5 +2074,6 @@ module.exports = {
   getNthContact,
   leadContact,
   loadFollows,
-  loadTimelines
+  loadTimelines,
+  selectAllContacts
 }

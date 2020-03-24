@@ -32,6 +32,7 @@ app.get('/pdf', PDFCtrl.play)
 app.get('/pdf1/:id', PDFCtrl.play1)
 app.get('/image', ImageCtrl.play)
 app.get('/image/:id', ImageCtrl.play1)
+app.get('/embed/video/:video', VideoCtrl.embedPlay)
 
 app.get('/auth', (req, res) => {
     res.render('auth')
@@ -43,4 +44,4 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
-module.exports = app    
+module.exports = app;
