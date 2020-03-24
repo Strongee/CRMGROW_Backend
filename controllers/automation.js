@@ -59,12 +59,13 @@ const getPage = async (req, res) => {
         ]
     }).skip((page-1) * 10).limit(10);
 
+    console.log('automations', automations)
     let automation_array = []
     for(let i=0; i<automations.length; i++){
         const automation = automations[i]
         contacts = await TimeLine.aggregate([
             {
-              $match: { $and: [{ "automation":mongoose.Types.ObjectId(automation._id) }] }
+              $match: { $and: [{ "user": mongoose.Types.ObjectId(currentUser._id), "automation":mongoose.Types.ObjectId(automation._id) }] }
             },           
             {
               $group: {
