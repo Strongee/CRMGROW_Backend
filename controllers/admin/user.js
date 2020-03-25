@@ -113,7 +113,7 @@ const login = async (req, res) => {
 
   // prevent user's password to be returned
   delete user.password
-  res.send({
+  return res.send({
     status: true,
     data: {
       token,
