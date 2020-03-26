@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const readFile = (fileName, options) => {
   return new Promise(function(resolve, reject) {
     var cb = function cb(err, data) {
