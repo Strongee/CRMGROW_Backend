@@ -144,7 +144,7 @@ const read = (req, res) => {
 
 const remove = async (req, res) => {
   await Page.deleteOne({_id: req.params.id}).catch(err => {
-        req.status(400).send({
+        res.status(400).send({
             status: false
         })
     })
@@ -157,7 +157,7 @@ const remove = async (req, res) => {
 const bulkRemove = async (req, res) => {
   const {ids} = req.body
   await Page.delete({_id: {$in: ids}}).catch(err => {
-    req.status(400).send({
+    res.status(400).send({
         status: false
     })
   })
@@ -220,7 +220,7 @@ const search = async(req, res) => {
     //         data
     //     })
     // }).catch(err => {
-    //         req.status(400).send({
+    //         res.status(400).send({
     //             status: false
     //         })
     //     })    
