@@ -23,6 +23,7 @@ const notification = require('./notification')
 const garbage = require('./garbage')
 const automation = require('./automation')
 const timeline = require('./time_line')
+const page = require('./page')
 
 const router = express.Router()
 
@@ -54,4 +55,5 @@ router.use('/notification', notification)
 router.use('/garbage', garbage)
 router.use('/automation', automation)
 router.use('/timeline', timeline)
+router.use('/page', page)
 module.exports = router

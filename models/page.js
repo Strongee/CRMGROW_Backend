@@ -4,11 +4,18 @@ const Page = mongoose.model('page', {
     slug: String,
     title: String,
     html: String,
-    css: String,
-    meta: String,
+    style: String,
+    meta: {
+        type: {
+            title: String,
+            description: String,
+            image: String
+        }
+    },
     default: String,
     user: String,
-    path: String
+    home: { type: Boolean, default: false},  
+    status: { type: Boolean, default: false}
  });
 
  module.exports = Page
