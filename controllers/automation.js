@@ -140,7 +140,7 @@ const remove = async(req, res) => {
     const id = req.params.id;
 
     await Automation.deleteOne({_id: req.params.id}).catch(err => {
-        req.status(400).send({
+        res.status(400).send({
             status: false
         })
     })
@@ -170,10 +170,10 @@ const search = async(req, res) => {
             data
         })
     }).catch(err => {
-            req.status(400).send({
-                status: false
-            })
-        })    
+    return res.status(400).send({
+            status: false
+        })
+    })    
 }
 
 const updateDefault = async (req, res) => {
