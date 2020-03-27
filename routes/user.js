@@ -116,6 +116,12 @@ router.post('/social-signup', catchError(UserCtrl.socialSignUp))
 // Connect Another Email Service
 router.get('/another-con', UserCtrl.checkAuth2, catchError(UserCtrl.connectAnotherEmail))
 
+// Search user email
+router.post('/search-email', catchError(UserCtrl.searchUserEmail))
+
+// Search nickname
+router.post('/search-nickname', catchError(UserCtrl.searchNickName))
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))
 

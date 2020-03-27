@@ -152,7 +152,6 @@ const signUp = async (req, res) => {
     const password = req.body.password
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
-    const sub_domain = req.body.user_name.replace(/[^A-Z0-9]/ig, "");
 
     const user = new User({
       ...req.body,
@@ -1734,6 +1733,46 @@ const disconnectGmail = async(req, res) => {
   await oauth2Client.disconnect()
 }
 
+const searchUserEmail = (req, res) => {
+  const condition = req.body;
+
+  User.find(
+    {
+      email: { '$regex': '.*' + condition.search + '.*', '$options': 'i' }
+    }
+  ).then((data) => {
+      return res.send({
+          status: true,
+          data
+      })
+  }).catch(err => {
+          res.status(400).send({
+              status: false,
+              err: err.message
+          })
+      })    
+}
+
+const searchNickName = (req, res) => {
+  const condition = req.body;
+  
+  User.find(
+    {
+      nick_name: { '$regex': '.*' + condition.search + '.*', '$options': 'i' }
+    }
+  ).then((data) => {
+      return res.send({
+          status: true,
+          data
+      })
+  }).catch(err => {
+    return res.status(400).send({
+            status: false,
+            err: err.message
+        })
+    })  
+}
+
 module.exports = {
   signUp,
   login,
@@ -1748,6 +1787,8 @@ module.exports = {
   getMe,
   editMe,
   getUser,
+  searchUserEmail,
+  searchNickName,
   resetPasswordByOld,
   resetPasswordByCode,
   forgotPassword,
