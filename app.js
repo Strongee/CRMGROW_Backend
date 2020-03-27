@@ -4,14 +4,15 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { ENV_PATH } = require('./config/path')
-require('dotenv').config({ path: ENV_PATH })
+const { ENV_PATH } = require('./config/path');
+require('dotenv').config({ path: ENV_PATH });
 
 let indexRouter = require('./routes/index.js');
 const VideoCtrl = require('./controllers/video');
 const PDFCtrl = require('./controllers/pdf');
-const ImageCtrl = require('./controllers/image')
-const { catchError } = require('./controllers/error')
+const ImageCtrl = require('./controllers/image');
+const PageCtrl = require('./controllers/page');
+const { catchError } = require('./controllers/error');
 let app = express();
 
 app.use(cors())
@@ -26,22 +27,23 @@ app.use(cookieParser())
 app.use(express.static('../frontend/dist'));
 app.use(express.static(__dirname + '/public'));
 
-app.get('/video', VideoCtrl.play)
-app.get('/video1/:id', VideoCtrl.play1)
-app.get('/pdf', PDFCtrl.play)
-app.get('/pdf1/:id', PDFCtrl.play1)
-app.get('/image', ImageCtrl.play)
-app.get('/image/:id', ImageCtrl.play1)
-app.get('/embed/video/:video', VideoCtrl.embedPlay)
+app.get('/video', catchError(VideoCtrl.play))
+app.get('/video1/:id', catchError(VideoCtrl.play1))
+app.get('/pdf', catchError(PDFCtrl.play))
+app.get('/pdf1/:id', catchError(PDFCtrl.play1))
+app.get('/image', catchError(ImageCtrl.play))
+app.get('/image/:id', catchError(ImageCtrl.play1))
+app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay))
 
 app.get('/auth', (req, res) => {
     res.render('auth')
 })
 
 app.use('/api', indexRouter)
-
-app.get('*', (req, res) => {
+app.get('*', catchError(PageCtrl.display), (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
+
+
 
 module.exports = app;
