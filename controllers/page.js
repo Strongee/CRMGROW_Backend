@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const uuidv1 = require('uuid/v1');
 const config = require('../config/config')
 const User = require('../models/user')
+const Garbage = require('../models/garbage')
 const AWS = require('aws-sdk')
 AWS.config.update({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -231,16 +232,32 @@ const display = async(req, res, next) => {
     
     if(user) {
       const slug = req.originalUrl
-      const page = await Page.findOne({slug: slug, user: user.id}).catch(err=>{
+      console.log('slug', slug)
+      const garbage = await Garbage.findOne({user: user.id}).catch(err=>{
         console.log('err', err)
-      })
-      
-      if(page && user){
-        return res.render('page', {
-          page: page,
-          user: user
+      })      
+      let page
+      if(slug == '/' && garbage.index_page){
+        page = await Page.findOne({_id: garbage.index_page}).catch(err=>{
+          console.log('err', err)
         })
-      }
+        return res.render('page', {
+          page,
+          user
+        })
+      } else {
+        page = await Page.findOne({slug: slug, user: user.id}).catch(err=>{
+          console.log('err', err)
+        })
+        if(page && user){
+          return res.render('page', {
+            page,
+            user
+          })
+        } else {
+          next()
+        }
+      }   
     } else {
       next()
     }   
