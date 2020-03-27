@@ -13,7 +13,7 @@ const Page = mongoose.model('page', {
         }
     },
     default: Boolean,
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },,
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     home: { type: Boolean, default: false},  
     status: { type: Boolean, default: false}
  });
