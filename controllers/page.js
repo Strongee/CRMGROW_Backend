@@ -2,6 +2,7 @@ const Page = require('../models/page')
 const mongoose = require('mongoose')
 const uuidv1 = require('uuid/v1');
 const config = require('../config/config')
+const User = require('../models/user')
 const AWS = require('aws-sdk')
 AWS.config.update({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -157,7 +158,7 @@ const bulkRemove = async (req, res) => {
     })
   })
 
-  res.send({
+  return res.send({
       status: false
   })
 }
@@ -221,11 +222,39 @@ const search = async(req, res) => {
     //     })    
 }
 
+const display = async(req, res, next) => {
+  const sub_domain = req.headers['x-subdomain']
+  if(sub_domain != 'app') {
+    const user = await User.findOne({nickname: sub_domain}).catch(err=>{
+      console.log('err', err)
+    })
+    
+    if(user) {
+      console.log('origin', req.originalUrl)
+      const slug = req.originalUrl
+      const page = await Page.findOne({slug: slug}).catch(err=>{
+        console.log('err', err)
+      })
+      
+      if(page && user){
+        return res.render('page', {
+          page: page,
+        })
+      }
+  
+    } else {
+      next()
+    }   
+  } else {
+    next()
+  }
+}
 
 module.exports = {
   create,
   read,
   update,
+  display,
   remove,
   load,
   bulkRemove,
