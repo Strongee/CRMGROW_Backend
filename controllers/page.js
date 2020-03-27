@@ -12,18 +12,13 @@ var s3 = new AWS.S3();
 
 
 const loadDefault = async (req, res) => {
-  const {currentUser} = req;
-  const page = req.params.page;
-
   const templates = await Page.find( {default: true}).catch(err => {
     throw(err);
-    return;
   });
   if(templates) {
     return res.send({
       status: true,
-      data: templates,
-      total: total
+      data: templates
     })
   }
   else {
