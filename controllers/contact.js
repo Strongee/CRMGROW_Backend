@@ -452,9 +452,12 @@ const receiveEmail = async(req, res) => {
         console.log('err', err)
       })
       
-      const contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
-        console.log('err', err)
-      })
+      let contact
+      if(user) {
+        contact = await Contact.findOne({email: email, user: user.id}).catch(err=>{
+          console.log('err', err)
+        })
+      }
       
       if(contact && user) {
         let opened = new Date(time_stamp*1000);
