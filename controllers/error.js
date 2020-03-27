@@ -1,7 +1,7 @@
 const catchError = (callback) => {
-    return async (req, res) => {
+    return async (req, res, next) => {
       try {
-        await callback(req, res)
+        await callback(req, res, next)
       } catch (e) {
         console.error(e)
         return res.status(500).send({
