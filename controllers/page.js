@@ -224,15 +224,12 @@ const search = async(req, res) => {
 
 const display = async(req, res, next) => {
   const sub_domain = req.headers['x-subdomain']
-  console.log('sub_domain', sub_domain)
   if(sub_domain != 'app') {
     const user = await User.findOne({nick_name: sub_domain}).catch(err=>{
       console.log('err', err)
     })
     
     if(user) {
-      console.log('*************request*******************', req)
-      console.log('*********************************************************origin*************************************', req.originalUrl)
       const slug = req.originalUrl
       const page = await Page.findOne({slug: slug, user: user.id}).catch(err=>{
         console.log('err', err)
@@ -244,7 +241,6 @@ const display = async(req, res, next) => {
           user: user
         })
       }
-  
     } else {
       next()
     }   
