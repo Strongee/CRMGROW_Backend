@@ -84,8 +84,8 @@ body(class=capture_dialog ? 'is_protected' : '')
         button.btn.btn-lg.d-block.text-white.w-100#thank-btn View Site
 
 input#video-duration(type='hidden', value=`${video.duration/1000}`)
-input#activity(type='hidden', value=`${activity}`)
-input#contact(type='hidden', value=`${contact}`)
+input#activity(type='hidden')
+input#contact(type='hidden')
 input#user(type='hidden', value=`${user._id}`)
 input#video(type='hidden', value=`${video._id}`)
 script(type='text/javascript', src='./assets/js/jquery.js')
