@@ -12,7 +12,7 @@ const Page = mongoose.model('page', {
             image: String
         }
     },
-    default: String,
+    default: Boolean,
     user: String,
     home: { type: Boolean, default: false},  
     status: { type: Boolean, default: false}
