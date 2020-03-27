@@ -40,7 +40,7 @@ app.get('/auth', (req, res) => {
 })
 
 app.use('/api', indexRouter)
-app.get('*', catchError(PageCtrl.display), () => {
+app.get('*', catchError(PageCtrl.display), (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
