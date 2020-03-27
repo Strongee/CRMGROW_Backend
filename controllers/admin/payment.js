@@ -201,7 +201,7 @@ const getCards = async(req, res) => {
   stripe.customers.listSources(
     req.params.id,
     {object: 'card', limit: 3},
-    function(err, data) {
+    function(err, cards) {
       if (err)  {
         return res.status(400).json({
                 status: false,
@@ -211,7 +211,7 @@ const getCards = async(req, res) => {
       
       return res.send({
               status: true,
-              data
+              data: cards.data
             })
     }
   );
@@ -234,7 +234,7 @@ const refundCharge = async(req, res) =>{
       amount,
       reason
     },
-    function(err, data) {
+    function(err, refund) {
       if (err)  {
         return res.status(400).json({
                 status: false,
@@ -244,7 +244,6 @@ const refundCharge = async(req, res) =>{
       
       return res.send({
               status: true,
-              data
             })
     }
   );
