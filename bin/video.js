@@ -36,6 +36,7 @@ const video_job = async() =>{
     for(let i = 0; i <videos.length; i++){
       const video = videos[i]
       let file_path = video.path
+      console.log('file_path', file_path)
       if(file_path){
         const file_name = video.path.slice(23)
       
@@ -100,6 +101,7 @@ const video_job = async() =>{
       } else {
         const file_name = video.url.slice(39)
         file_path = TEMP_PATH + file_name
+        console.log('file_path', file_path)
         if (fs.existsSync(file_path)) {
           try{
           fs.readFile(file_path, (err, data) => {
