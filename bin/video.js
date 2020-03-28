@@ -14,6 +14,7 @@ const config = require('../config/config')
 const Video = require('../models/video');
 const { DB_PORT } = require('../config/database')
 const { TEMP_PATH, GIF_PATH } = require('../config/path')
+const FileHelper = require('../helpers/file')
 
 mongoose.set('useCreateIndex', true)
 mongoose.connect(DB_PORT, {useNewUrlParser: true})
@@ -41,7 +42,33 @@ const video_job = async() =>{
         if (fs.existsSync(file_path)) {
           try{
           fs.readFile(file_path, (err, data) => {
-              if (err) throw err;
+              if (err) {
+                FileHelper.readFile(file_path).then(function(data) {
+                  console.log('File read was successful by stream', data)
+                  const today = new Date()
+                  const year = today.getYear()
+                  const month = today.getMonth()
+                  const params = {
+                      Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                      Key: 'video' +  year + '/' + month + '/' + file_name, 
+                      Body: data,
+                      ACL: 'public-read'
+                  };
+                  s3.upload(params, async (s3Err, upload)=>{
+                    if (s3Err) throw s3Err
+                    console.log(`File uploaded successfully at ${upload.Location}`)
+                    video['url'] = upload.Location
+                    video['converted'] = true
+                    video.save().then(()=>{
+                      fs.unlinkSync(file_path)
+                    }).catch(err=>{
+                      console.log('err', err)
+                    });  
+                  })
+                }).catch(function(err) {
+                 console.log(err);
+                })
+              }
               console.log('File read was successful', data)
               const today = new Date()
               const year = today.getYear()
@@ -68,31 +95,6 @@ const video_job = async() =>{
             console.log('file_path', file_path)
             console.log('err', err)
             // read file
-            FileHelper.readFile(file_path).then(function(data) {
-                console.log('File read was successful by stream', data)
-                const today = new Date()
-                const year = today.getYear()
-                const month = today.getMonth()
-                const params = {
-                    Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                    Key: 'video' +  year + '/' + month + '/' + file_name, 
-                    Body: data,
-                    ACL: 'public-read'
-                };
-                s3.upload(params, async (s3Err, upload)=>{
-                  if (s3Err) throw s3Err
-                  console.log(`File uploaded successfully at ${upload.Location}`)
-                  video['url'] = upload.Location
-                  video['converted'] = true
-                  video.save().then(()=>{
-                    fs.unlinkSync(file_path)
-                  }).catch(err=>{
-                    console.log('err', err)
-                  });  
-                })
-            }).catch(function(err) {
-             console.log(err);
-            })
           }
         }
       } else {
@@ -101,7 +103,33 @@ const video_job = async() =>{
         if (fs.existsSync(file_path)) {
           try{
           fs.readFile(file_path, (err, data) => {
-              if (err) throw err;
+              if (err){
+                FileHelper.readFile(file_path).then(function(data) {
+                  console.log('File read was successful by stream', data)
+                  const today = new Date()
+                  const year = today.getYear()
+                  const month = today.getMonth()
+                  const params = {
+                      Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                      Key: 'video' +  year + '/' + month + '/' + file_name, 
+                      Body: data,
+                      ACL: 'public-read'
+                  };
+                  s3.upload(params, async (s3Err, upload)=>{
+                    if (s3Err) throw s3Err
+                    console.log(`File uploaded successfully at ${upload.Location}`)
+                    video['url'] = upload.Location
+                    video['converted'] = true
+                    video.save().then(()=>{
+                      fs.unlinkSync(file_path)
+                    }).catch(err=>{
+                      console.log('err', err)
+                    });  
+                  })
+                }).catch(function(err) {
+                 console.log(err);
+                })
+              }
               console.log('File read was successful', data)
               const today = new Date()
               const year = today.getYear()
@@ -128,31 +156,6 @@ const video_job = async() =>{
             console.log('file_path', file_path)
             console.log('err', err)
             // read file
-            FileHelper.readFile(file_path).then(function(data) {
-                console.log('File read was successful by stream', data)
-                const today = new Date()
-                const year = today.getYear()
-                const month = today.getMonth()
-                const params = {
-                    Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                    Key: 'video' +  year + '/' + month + '/' + file_name, 
-                    Body: data,
-                    ACL: 'public-read'
-                };
-                s3.upload(params, async (s3Err, upload)=>{
-                  if (s3Err) throw s3Err
-                  console.log(`File uploaded successfully at ${upload.Location}`)
-                  video['url'] = upload.Location
-                  video['converted'] = true
-                  video.save().then(()=>{
-                    fs.unlinkSync(file_path)
-                  }).catch(err=>{
-                    console.log('err', err)
-                  });  
-                })
-            }).catch(function(err) {
-             console.log(err);
-            })
           }
         }
       }
