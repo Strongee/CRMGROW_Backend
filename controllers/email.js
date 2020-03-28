@@ -238,8 +238,8 @@ const bulkGmail = async (req, res) => {
       console.log('err', err)
     })
     promise_array.push(promise)
-    cc = []
-    bcc = []
+    // cc = []
+    // bcc = []
   }
 
   Promise.all(promise_array).then(() => {
@@ -456,8 +456,8 @@ const bulkOutlook = async (req, res) => {
     })
     
     promise_array.push(promise)
-    cc_array = []
-    bcc_array = []
+    // cc_array = []
+    // bcc_array = []
   }
 
   Promise.all(promise_array).then(() => {
@@ -738,8 +738,8 @@ const bulkEmail = async (req, res) => {
       })
     })
     promise_array.push(promise)
-    bcc = []
-    cc = []
+    // bcc = []
+    // cc = []
   }
   Promise.all(promise_array).then(()=>{
     if(error.length>0){
