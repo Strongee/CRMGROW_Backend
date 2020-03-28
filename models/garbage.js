@@ -30,6 +30,7 @@ const Garbage = mongoose.model('garbage',{
     },
     reminder_before: {type: Number, default: 30},
     capture_dialog: {type: Boolean, default: false},
+    index_page: {type: mongoose.Schema.Types.ObjectId, ref: 'page'},
     created_at: Date,
     updated_at: Date,
  });
