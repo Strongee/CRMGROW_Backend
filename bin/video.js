@@ -8,7 +8,7 @@ const pngFileStream = require('png-file-stream');
 const fs = require('fs');
 const GIFEncoder = require('gifencoder');
 const CronJob = require('cron').CronJob;
-
+const { ENV_PATH } = require('../config/path')
 require('dotenv').config({ path: ENV_PATH })
 const config = require('../config/config')
 const Video = require('../models/video');
