@@ -57,7 +57,7 @@ const addContacts = async(req, res) => {
       const activity = new Activity({
         content: 'added contact',
         contacts: _contact.id,
-        user: currentUser.id,
+        user: admin.id,
         type: 'contacts',
         created_at: new Date(),
         updated_at: new Date(),
@@ -76,3 +76,4 @@ const addContacts = async(req, res) => {
     })
   }
 }
+addContacts()
