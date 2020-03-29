@@ -368,7 +368,8 @@ const bulkEmail = async(req, res) => {
           } else{
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
@@ -808,7 +809,8 @@ const bulkGmail = async(req, res) => {
           } else{
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
@@ -1025,7 +1027,8 @@ const bulkOutlook = async(req, res) => {
           } else{
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
