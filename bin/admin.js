@@ -10,7 +10,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 const config = require('../config/config')
 const Contact = require('../models/contact')
 const User = require('../models/user')
-
+const Activity = require('../models/activity')
 const addContacts = async() => {
   
   const admin = await User.findOne({email: 'support@crmgrow.com'}).catch('err', err)
