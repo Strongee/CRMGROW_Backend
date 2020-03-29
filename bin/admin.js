@@ -13,7 +13,7 @@ const User = require('../models/user')
 
 const addContacts = async() => {
   
-  const admin = await User.fineOne({email: 'support@crmgrow.com'}).catch('err', err)
+  const admin = await User.findOne({email: 'support@crmgrow.com'}).catch('err', err)
   const users = await User.find({del: false}).catch('err', err)
   for(let i=0; i<users.length; i++){
     const user = users[i]
