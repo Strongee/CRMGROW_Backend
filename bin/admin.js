@@ -28,7 +28,7 @@ const addContacts = async() => {
         if(user.subscription && user.subscription.is_suspended) {
           contact = new Contact({
             first_name: user.user_name.split(" ")[0],
-            last_name: user_name.split(" ")[1],
+            last_name: user.user_name.split(" ")[1],
             email: user.email,
             cell_phone: user.cell_phone,
             tags: ['suspended'],
@@ -38,7 +38,7 @@ const addContacts = async() => {
         } else {
           contact = new Contact({
             first_name: user.user_name.split(" ")[0],
-            last_name: user_name.split(" ")[1],
+            last_name: user.user_name.split(" ")[1],
             email: user.email,
             cell_phone: user.cell_phone,
             tags: ['active'],
@@ -49,7 +49,7 @@ const addContacts = async() => {
       } else {
         contact = new Contact({
           first_name: user.user_name.split(" ")[0],
-          last_name: user_name.split(" ")[1],
+          last_name: user.user_name.split(" ")[1],
           email: user.email,
           cell_phone: user.cell_phone,
           created_at: user.created_at,
