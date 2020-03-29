@@ -11,7 +11,7 @@ const config = require('../config/config')
 const Contact = require('../models/contact')
 const User = require('../models/user')
 
-const addContacts = async(req, res) => {
+const addContacts = async() => {
   
   const admin = await User.fineOne({email: 'support@crmgrow.com'}).catch('err', err)
   const users = await User.find({del: false}).catch('err', err)
