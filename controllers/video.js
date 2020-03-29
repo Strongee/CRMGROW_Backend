@@ -208,7 +208,7 @@ const updateDetail = async (req, res) => {
     video['thumbnail'] = thumbnail
   }
   
-  if(!video['preview']){
+  if(video['path'] && !video['preview']){
     const file_path = video['path']
     video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
