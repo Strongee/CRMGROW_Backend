@@ -431,7 +431,8 @@ const bulkVideo = async(data) => {
             video_descriptions = video_descriptions + video.description
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+          //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
           video_objects = video_objects + video_object                      
         }
         
@@ -581,7 +582,8 @@ const bulkVideo = async(data) => {
               video_descriptions = video_descriptions + video.description
             }
             const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-            const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+            //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+            const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
             video_objects = video_objects + video_object                      
         }
         
@@ -746,7 +748,8 @@ const bulkVideo = async(data) => {
               video_descriptions = video_descriptions + video.description
             }
             const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-            const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+            //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+            const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
             video_objects = video_objects + video_object                      
         }
         
@@ -882,7 +885,8 @@ const bulkPdf = async(data) => {
         } else{
           pdf_descriptions = pdf_descriptions + pdf.description
         }
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         pdf_objects = pdf_objects + pdf_object                      
       }
         
@@ -1028,7 +1032,8 @@ const bulkPdf = async(data) => {
           pdf_descriptions = pdf_descriptions + pdf.description
         }
         
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -1188,7 +1193,8 @@ const bulkPdf = async(data) => {
           pdf_descriptions = pdf_descriptions + pdf.description
         }
         
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
+        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         pdf_objects = pdf_objects + pdf_object                      
       }
       
@@ -1326,7 +1332,8 @@ const bulkImage = async(data) => {
         } else{
           image_descriptions = image_descriptions + image.description
         }
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
         image_objects = image_objects + image_object                      
       }
         
@@ -1486,7 +1493,8 @@ const bulkImage = async(data) => {
           } else{
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
@@ -1626,7 +1634,8 @@ const bulkImage = async(data) => {
           } else{
             image_descriptions = image_descriptions + image.description
           }
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
           image_objects = image_objects + image_object                      
       }
       
