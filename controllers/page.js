@@ -33,8 +33,8 @@ const loadDefault = async (req, res) => {
 
 const create =  async (req, res) => {
   const { currentUser } = req;
-  const { meta } = req.body;
-  if(meta.base64_image) {
+  const { meta, title } = req.body;
+  if(meta && meta.base64_image) {
     const base64Data = new Buffer.from(meta.base64_image.replace(/^data:image\/\w+;base64,/, ""), 'base64');
     const type = meta.base64_image.split(';')[0].split('/')[1];
     let image_name = uuidv1();
@@ -55,8 +55,22 @@ const create =  async (req, res) => {
     }
   }
 
+  // Get the same title pages in this user
+  let slug = title.toLowerCase()            // Convert the string to lowercase letters
+            .trim()                         // Remove whitespace from both sides of a string
+            .replace(/\s+/g, '-')           // Replace spaces with -
+            .replace(/&/g, '-y-')           // Replace & with 'and'
+            .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+            .replace(/\-\-+/g, '-');        // Replace multiple - with single -
+  const samePages = await Page.find({title: {$regex: new RegExp('^' + title + '$', 'i')}, user: currentUser.id});
+  console.log(samePages);
+  if(samePages && samePages.length){
+    slug = slug + '--' + samePages.length 
+  }
+
   const page = new Page({
         ...req.body,
+        slug: '/' + slug,
         user: currentUser.id,
         created_at: new Date(),
         updated_at: new Date()
@@ -76,10 +90,11 @@ const create =  async (req, res) => {
 }
 
 const update = async (req, res) => {
+  const { currentUser } = req;
   const id = req.params.id;
   const data = req.body;
-  const { meta } = data;
-  if(meta.base64_image) {
+  const { meta, title } = data;
+  if(meta && meta.base64_image) {
     if(meta.image) {
       var params = {  Bucket: 'teamgrow', Key: meta.image };
       try {
@@ -111,7 +126,20 @@ const update = async (req, res) => {
     }
   }
 
-  Page.find({_id: id}).update({$set: data}).then(() => {
+  let slug = title.toLowerCase()            // Convert the string to lowercase letters
+                  .trim()                         // Remove whitespace from both sides of a string
+                  .replace(/\s+/g, '-')           // Replace spaces with -
+                  .replace(/&/g, '-y-')           // Replace & with 'and'
+                  .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+                  .replace(/\-\-+/g, '-');        // Replace multiple - with single -
+  const samePages = await Page.find({title: {$regex: new RegExp('^' + title + '$', 'i')}, user: currentUser.id,  id: {$ne: id}});
+  console.log(samePages);
+  if(samePages && samePages.length){
+    slug = slug + '--' + samePages.length 
+  }
+  
+
+  Page.find({_id: id}).update({$set: {...data, sslug: '/' + slug}}).then(() => {
     res.send({
       status: true
     })
