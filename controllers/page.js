@@ -70,7 +70,7 @@ const create =  async (req, res) => {
 
   const page = new Page({
         ...req.body,
-        slug,
+        slug: '/' + slug,
         user: currentUser.id,
         created_at: new Date(),
         updated_at: new Date()
@@ -137,8 +137,9 @@ const update = async (req, res) => {
   if(samePages && samePages.length){
     slug = slug + '--' + samePages.length 
   }
+  
 
-  Page.find({_id: id}).update({$set: data}).then(() => {
+  Page.find({_id: id}).update({$set: {...data, sslug: '/' + slug}}).then(() => {
     res.send({
       status: true
     })
