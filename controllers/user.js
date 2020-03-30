@@ -250,7 +250,7 @@ const signUp = async (req, res) => {
 
 const checkUser = async (req, res) => {
   const {email} = req.body;
-  let _user = await User.findOne({email: new RegExp(req.body.email, "i"), del: false});
+  let _user = await User.findOne({email: {$regex: new RegExp('^' + email + '$', 'i')}, del: false});
   if(_user) {
     return res.send({
       status: false
