@@ -563,10 +563,10 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>50){
+    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 50 contacts at a time'
+        error: `You can send max ${config.MAX_EMAIL} contacts at a time`
       })
     }
     
@@ -755,10 +755,10 @@ const bulkGmail = async(req, res) => {
   let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
 
   if(contacts){
-    if(contacts.length>50){
+    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 50 contacts at a time'
+        error: `You can send max ${config.MAX_EMAIL} contacts at a time`
       })
     }
     
@@ -957,10 +957,10 @@ const bulkText = async(req, res) => {
   let promise_array = []
   let error = []
   if(contacts){
-    if(contacts.length>50){
+    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 50 contacts at a time'
+        error: `You can send max ${config.MAX_EMAIL} contacts at a time`
       })
     }
     
@@ -1214,10 +1214,10 @@ const bulkOutlook = async(req, res) => {
   let error = []
 
   if(contacts){
-    if(contacts.length>50){
+    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
       return res.status(400).json({
         status: false,
-        error: 'You can send max 50 contacts at a time'
+        error: `You can send max ${config.MAX_EMAIL} contacts at a time`
       })
     }
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
