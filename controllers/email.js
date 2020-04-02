@@ -129,6 +129,10 @@ const bulkGmail = async (req, res) => {
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
   await oauth2Client.getAccessToken().catch(err=>{
     console.log('get access err', err)
+    return res.status(402).send({
+      status: false,
+      error: 'not connnected'
+    })
   });
 
   if (typeof subject == 'undefined' || subject == "") {
