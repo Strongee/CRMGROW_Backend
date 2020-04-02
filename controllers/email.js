@@ -190,7 +190,7 @@ const bulkGmail = async (req, res) => {
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
           },
           body: body
-        }).then(()=>{
+        }).then(async()=>{
           const email = new Email({
             ...req.body,
             content: email_content,
