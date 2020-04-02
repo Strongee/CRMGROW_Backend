@@ -232,6 +232,14 @@ const bulkGmail = async (req, res) => {
           })
         }).catch(err=>{
           console.log('err', err)
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: err
+          })
+          resolve()
         })  
       }catch(err){
         console.log('err', err)
@@ -242,6 +250,7 @@ const bulkGmail = async (req, res) => {
           },
           err: err
         })
+        resolve()
       }
     }).catch(err=>{
       console.log('err', err)
