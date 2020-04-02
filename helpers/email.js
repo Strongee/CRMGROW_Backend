@@ -652,8 +652,15 @@ const bulkVideo = async(data) => {
               })
             }     
           })
-        promise_array.push(promise)
+        
+      } else {
+        resolve({
+          status: false,
+          err: 'no contact found',
+          contact: contacts[i]
+        })
       }
+      promise_array.push(promise)
     }
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){ 
@@ -979,6 +986,7 @@ const bulkPdf = async(data) => {
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
+      if(_contact){
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
@@ -1050,11 +1058,11 @@ const bulkPdf = async(data) => {
         pdf_content = pdf_content+'<br/>'+pdf_objects
       }
       
-      if(content.search(/{pdf_title}/ig) != -1){
+      if(pdf_content.search(/{pdf_title}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
       }
       
-      if(content.search(/{pdf_description}/ig) != -1){
+      if(pdf_content.search(/{pdf_description}/ig) != -1){
         pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
       }
       
@@ -1101,9 +1109,16 @@ const bulkPdf = async(data) => {
           })
         } 
       })
-      promise_array.push(promise)
+      
+    } else {
+      resolve({
+        status: false,
+        err: 'no contact found',
+        contact: contacts[i]
+      })
     }
-        
+    promise_array.push(promise)
+    }
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){
     let promise_array = []
@@ -1683,14 +1698,33 @@ const bulkImage = async(data) => {
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
               },
               body: body
-            }).then(()=>{
+            })
+            // }).then(()=>{
+            //   Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+            //     console.log('err', err)
+            //   })
+            //   resolve({
+            //     status: true
+            //   });
+            // }).catch(err=>{
+            //   console.log('gmail send err', err)
+            //   Activity.deleteOne({_id: activity.id}).catch(err=>{
+            //     console.log('err', err)
+            //   })
+            //   error.push({
+            //     contact: {
+            //       first_name: _contact.first_name,
+            //       email: _contact.email,
+            //     },
+            //     err: err
+            //   })
+            // })
               Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
                 console.log('err', err)
               })
               resolve({
                 status: true
               });
-            })
           }catch(err){
             console.log('err', err)
             Activity.deleteOne({_id: activity.id}).catch(err=>{

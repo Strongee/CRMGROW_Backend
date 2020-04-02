@@ -906,6 +906,18 @@ const bulkGmail = async(req, res) => {
                 console.log('err', err)
               })
               resolve();
+            }).catch(err=>{
+              console.log('gmail send err', err)
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err
+              })
             })
           }catch(err){
             console.log('err', err)
