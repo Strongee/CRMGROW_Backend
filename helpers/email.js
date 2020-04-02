@@ -194,7 +194,7 @@ const bulkEmail = async(data) => {
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
               },
               body: body
-            }).then(()=>{
+            }).then(async()=>{
               const email = new Email({
                 content: email_content,
                 subject: email_subject,
