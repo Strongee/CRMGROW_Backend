@@ -137,7 +137,7 @@ const bulkEmail = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type === 'gmail'){
     let promise_array = []
-
+    let promise
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -145,7 +145,15 @@ const bulkEmail = async(data) => {
     )
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({ refresh_token: token.refresh_token })
-    await oauth2Client.getAccessToken();
+    await oauth2Client.getAccessToken().catch(err=>{
+      console.log('get access err', err)
+      return new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: err,
+        })
+      })
+    });
     
     for (let i = 0; i < contacts.length; i++) {
       let email_subject = subject
@@ -154,82 +162,99 @@ const bulkEmail = async(data) => {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
         console.log('err', err)
       })
-      email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-  
-      email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-  
-      const message_id = uuidv1()
-  
-      let promise = new Promise(async(resolve, reject)=>{
-        try{
-          let body = createBody({
-            headers: {
-              To: _contact.email,
-              From: `${currentUser.user_name} <${currentUser.email}>`,
-              Subject: email_subject,
-            },
-            textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-            textPlain: email_content,
-          });
-          request({
-            method: 'POST',
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-            headers: {
-              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-            },
-            body: body
-          })  
-          const email = new Email({
-            content: email_content,
-            subject: email_subject,
-            message_id: message_id,
-            contacts: contacts[i],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
-  
-          const _email = await email.save().then().catch(err => {
+      if(_contact){
+        email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+        email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+        const message_id = uuidv1()
+    
+        promise = new Promise(async(resolve, reject)=>{
+          try{
+            let body = createBody({
+              headers: {
+                To: _contact.email,
+                From: `${currentUser.user_name} <${currentUser.email}>`,
+                Subject: email_subject,
+              },
+              textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+              textPlain: email_content,
+            });
+            request({
+              method: 'POST',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              headers: {
+                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+                'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+              },
+              body: body
+            }).then(()=>{
+              const email = new Email({
+                content: email_content,
+                subject: email_subject,
+                message_id: message_id,
+                contacts: contacts[i],
+                user: currentUser.id,
+                updated_at: new Date(),
+                created_at: new Date()
+              })
+      
+              const _email = await email.save().then().catch(err => {
+                console.log('err', err)
+              })
+      
+              const activity = new Activity({
+                content: 'sent email',
+                contacts: contacts[i],
+                user: currentUser.id,
+                type: 'emails',
+                emails: _email.id,
+                created_at: new Date(),
+                updated_at: new Date(),
+              })
+      
+              const _activity = await activity.save().then().catch(err => {
+                console.log('err', err)
+              })
+              Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
+                resolve({
+                  status: true
+                })
+              }).catch(err => {
+                console.log('err', err)
+              })
+            }).catch(err=>{
+              console.log('err', err)
+              resolve({
+                contact: contacts[i],
+                err: err,
+              })
+            })  
+          }catch(err){
             console.log('err', err)
-          })
-  
-          const activity = new Activity({
-            content: 'sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-  
-          const _activity = await activity.save().then().catch(err => {
-            console.log('err', err)
-          })
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
             resolve({
-              status: true
+            contact: contacts[i],
+            err: err,
             })
-          }).catch(err => {
-            console.log('err', err)
-          })
-        }catch(err){
+          }
+        }).catch(err=>{
           console.log('err', err)
+        })
+      } else {
+        promise = new Promise((resolve, reject)=>{
           resolve({
-          contact: contacts[i],
-          err: err,
+            status: false,
+            err: 'no contact found',
+            contact: contacts[i]
           })
-        }
-      }).catch(err=>{
-        console.log('err', err)
-      })
+        })
+      }
       promise_array.push(promise)
     }
     
@@ -509,7 +534,8 @@ const bulkVideo = async(data) => {
       return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
-
+    let promise
+    
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -517,8 +543,15 @@ const bulkVideo = async(data) => {
     )
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({ refresh_token: token.refresh_token })
-    await oauth2Client.getAccessToken();
-    let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
+    await oauth2Client.getAccessToken().catch(err=>{
+      console.log('get access err', err)
+      return new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: err,
+        })
+      })
+    });
     
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
@@ -613,7 +646,7 @@ const bulkVideo = async(data) => {
           
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
-          let promise = new Promise((resolve, reject)=>{
+          promise = new Promise((resolve, reject)=>{
             try{
               let body = createBody({
                 headers: {
@@ -639,6 +672,16 @@ const bulkVideo = async(data) => {
                 resolve({
                   status: true
                 });
+              }).catch(err=>{
+                console.log('err', err)
+                Activity.deleteOne({_id: activity.id}).catch(err=>{
+                  console.log('err', err)
+                })
+                resolve({
+                  status: false,
+                  err: err,
+                  contact: contacts[i]
+                })
               })
             }catch(err){
               console.log('err', err)
@@ -652,12 +695,13 @@ const bulkVideo = async(data) => {
               })
             }     
           })
-        
       } else {
-        resolve({
-          status: false,
-          err: 'no contact found',
-          contact: contacts[i]
+        promise = new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: 'no contact found',
+            contact: contacts[i]
+          })
         })
       }
       promise_array.push(promise)
@@ -971,7 +1015,7 @@ const bulkPdf = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
-    
+    let promise
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -979,9 +1023,16 @@ const bulkPdf = async(data) => {
     )
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-    await oauth2Client.getAccessToken();
-    let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
-    
+    await oauth2Client.getAccessToken().catch(err=>{
+      console.log('get access err', err)
+      return new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: err,
+        })
+      })
+    });
+      
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
@@ -1070,7 +1121,7 @@ const bulkPdf = async(data) => {
             +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
           
-      let promise = new Promise((resolve, reject)=>{
+      promise = new Promise((resolve, reject)=>{
         try{
           let body = createBody({
             headers: {
@@ -1096,6 +1147,16 @@ const bulkPdf = async(data) => {
             resolve({
               status: true
             });
+          }).catch(err=>{
+            console.log('err', err)
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            resolve({
+              status: false,
+              err: err,
+              contact: contacts[i]
+            })
           })
         }catch(err){
           console.log('err', err)
@@ -1111,10 +1172,12 @@ const bulkPdf = async(data) => {
       })
       
     } else {
-      resolve({
-        status: false,
-        err: 'no contact found',
-        contact: contacts[i]
+      promise = new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: 'no contact found',
+          contact: contacts[i]
+        })
       })
     }
     promise_array.push(promise)
@@ -1582,7 +1645,7 @@ const bulkImage = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
     let promise_array = []
-    
+    let promise
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -1590,153 +1653,163 @@ const bulkImage = async(data) => {
     )
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-    await oauth2Client.getAccessToken();
-    let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
-      
+    await oauth2Client.getAccessToken().catch(err=>{
+      console.log('get access err', err)
+      return new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: err,
+        })
+      })
+    });
+   
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
-      let image_titles = ''
-      let image_descriptions = ''
-      let image_objects = ''
-      let image_subject = subject
-      let image_content = content
-      let activity
-      for(let j=0; j<images.length; j++){
-        const image = images[j]        
-        
-        if(!image_content){
-          image_content = ''
-        }
+      if(_contact){
+        let image_titles = ''
+        let image_descriptions = ''
+        let image_objects = ''
+        let image_subject = subject
+        let image_content = content
+        let activity
+        for(let j=0; j<images.length; j++){
+          const image = images[j]        
           
-        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+          if(!image_content){
+            image_content = ''
+          }
+            
+          image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          const _activity = new Activity({
-            content: 'sent image using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'images',
-            images: image._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: subject,
-            description: image_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-
-          const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
-          
-          if(images.length>=2){
-            image_titles = mail_contents.IMAGE_TITLE
-          }else{
-            image_titles = `${image.title}`
-          }
-          
-          if(j < images.length-1){ 
-            image_descriptions = image_descriptions + `${image.description}, ` 
-          } else{
-            image_descriptions = image_descriptions + image.description
-          }
-          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-          image_objects = image_objects + image_object                      
-      }
-      
-      if(image_subject == '' ){
-        image_subject = 'Image: ' + image_titles
-      } else {
-        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
-        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
-      }
-      
-      if(image_content.search(/{image_object}/ig) != -1){
-        image_content = image_content.replace(/{image_object}/ig, image_objects)
-      }else{
-        image_content = image_content+'<br/>'+image_objects
-      }
-        
-        if(content.search(/{image_title}/ig) != -1){
-          image_content = image_content.replace(/{image_title}/ig, image_titles)
-        }
-        
-        if(content.search(/{image_description}/ig) != -1){
-          image_content = image_content.replace(/{image_description}/ig, image_descriptions)
-        }
-
-        const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-          +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
-        // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
-        
-        let promise = new Promise((resolve, reject)=>{
-          try{
-            let body = createBody({
-              headers: {
-                To: _contact.email,
-                From: `${currentUser.user_name} <${currentUser.email}>`,
-                Subject: image_subject,
-              },
-              textHtml:  email_content,
-              textPlain: email_content,
-            });
-            request({
-              method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-              headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-                'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-              },
-              body: body
+          image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+            .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+            
+            const _activity = new Activity({
+              content: 'sent image using email',
+              contacts: contacts[i],
+              user: currentUser.id,
+              type: 'images',
+              images: image._id,
+              created_at: new Date(),
+              updated_at: new Date(),
+              subject: subject,
+              description: image_content
             })
-            // }).then(()=>{
-            //   Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-            //     console.log('err', err)
-            //   })
-            //   resolve({
-            //     status: true
-            //   });
-            // }).catch(err=>{
-            //   console.log('gmail send err', err)
-            //   Activity.deleteOne({_id: activity.id}).catch(err=>{
-            //     console.log('err', err)
-            //   })
-            //   error.push({
-            //     contact: {
-            //       first_name: _contact.first_name,
-            //       email: _contact.email,
-            //     },
-            //     err: err
-            //   })
-            // })
-              Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+            
+            activity = await _activity.save().then().catch(err=>{
+              console.log('err', err)
+            })
+  
+            const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
+            
+            if(images.length>=2){
+              image_titles = mail_contents.IMAGE_TITLE
+            }else{
+              image_titles = `${image.title}`
+            }
+            
+            if(j < images.length-1){ 
+              image_descriptions = image_descriptions + `${image.description}, ` 
+            } else{
+              image_descriptions = image_descriptions + image.description
+            }
+            //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+            const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+            image_objects = image_objects + image_object                      
+        }
+        
+        if(image_subject == '' ){
+          image_subject = 'Image: ' + image_titles
+        } else {
+          image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+          image_subject = image_subject.replace(/{material_title}/ig, image_titles)
+        }
+        
+        if(image_content.search(/{image_object}/ig) != -1){
+          image_content = image_content.replace(/{image_object}/ig, image_objects)
+        }else{
+          image_content = image_content+'<br/>'+image_objects
+        }
+          
+          if(content.search(/{image_title}/ig) != -1){
+            image_content = image_content.replace(/{image_title}/ig, image_titles)
+          }
+          
+          if(content.search(/{image_description}/ig) != -1){
+            image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+          }
+  
+          const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
+          // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
+          
+          promise = new Promise((resolve, reject)=>{
+            try{
+              let body = createBody({
+                headers: {
+                  To: _contact.email,
+                  From: `${currentUser.user_name} <${currentUser.email}>`,
+                  Subject: image_subject,
+                },
+                textHtml:  email_content,
+                textPlain: email_content,
+              });
+              request({
+                method: 'POST',
+                uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+                headers: {
+                  Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+                  'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+                },
+                body: body
+              }).then(()=>{
+                Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+                  console.log('err', err)
+                })
+                resolve({
+                  status: true
+                });
+              }).catch(err=>{
+                console.log('gmail send err', err)
+                Activity.deleteOne({_id: activity.id}).catch(err=>{
+                  console.log('err', err)
+                })
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    email: _contact.email,
+                  },
+                  err: err
+                })
+              })
+            }catch(err){
+              console.log('err', err)
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
               resolve({
-                status: true
-              });
-          }catch(err){
-            console.log('err', err)
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
+                status: false,
+                err: err,
+                contact: contacts[i]
+              })
+            } 
+          })
+        }else{
+          promise = new Promise((resolve, reject)=>{
             resolve({
               status: false,
-              err: err,
+              err: 'no contact found',
               contact: contacts[i]
             })
-          } 
-        })    
+          })
+        }
         promise_array.push(promise)
       }
       

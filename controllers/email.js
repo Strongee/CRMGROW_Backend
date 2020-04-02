@@ -196,46 +196,45 @@ const bulkGmail = async (req, res) => {
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
           },
           body: body
-        })
-        // }).then(async()=>{
-        //   const email = new Email({
-        //     ...req.body,
-        //     content: email_content,
-        //     subject: email_subject,
-        //     message_id: message_id,
-        //     contacts: contacts[i],
-        //     user: currentUser.id,
-        //     updated_at: new Date(),
-        //     created_at: new Date()
-        //   })
+        }).then(async()=>{
+          const email = new Email({
+            ...req.body,
+            content: email_content,
+            subject: email_subject,
+            message_id: message_id,
+            contacts: contacts[i],
+            user: currentUser.id,
+            updated_at: new Date(),
+            created_at: new Date()
+          })
   
-        //   const _email = await email.save().then().catch(err => {
-        //     console.log('err', err)
-        //   })
+          const _email = await email.save().then().catch(err => {
+            console.log('err', err)
+          })
   
-        //   const activity = new Activity({
-        //     content: 'sent email',
-        //     contacts: contacts[i],
-        //     user: currentUser.id,
-        //     type: 'emails',
-        //     emails: _email.id,
-        //     created_at: new Date(),
-        //     updated_at: new Date(),
-        //   })
+          const activity = new Activity({
+            content: 'sent email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'emails',
+            emails: _email.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
   
-        //   const _activity = await activity.save().then().catch(err => {
-        //     console.log('err', err)
-        //   })
-        //   Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
-        //     resolve()
-        //   }).catch(err => {
-        //     console.log('err', err)
-        //   })
-        // }).catch(err=>{
-        //   console.log('err', err)
-        // })  
+          const _activity = await activity.save().then().catch(err => {
+            console.log('err', err)
+          })
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
+            resolve()
+          }).catch(err => {
+            console.log('err', err)
+          })
+        }).catch(err=>{
+          console.log('err', err)
+        })  
       }catch(err){
-        console.log('err1', err)
+        console.log('err', err)
         error.push({
           contact: {
             first_name: _contact.first_name,
@@ -248,8 +247,6 @@ const bulkGmail = async (req, res) => {
       console.log('err', err)
     })
     promise_array.push(promise)
-    // cc = []
-    // bcc = []
   }
 
   Promise.all(promise_array).then(() => {

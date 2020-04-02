@@ -884,18 +884,18 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkEmail(data).then(res=>{
-            if(res[0] && res[0].status == false){
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
+              timeline['updated_at'] = new Date()
+              timeline.save().catch(err=>{
+                console.log('err', err)
+              })
+            }else{
               timeline['status'] = 'error'
               timeline['updated_at'] = new Date()
               console.log('err', res[0].err)
               timeline.save().catch(err=>{
                console.log('err', err)
-              })
-            }else{
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
               })
             }
           }).catch(err=>{
@@ -910,17 +910,16 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           TextHelper.bulkVideo(data).then(res=>{
-            console.log('res', res)
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
-              console.log('err', res[0].err)
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
               timeline['updated_at'] = new Date()
+              console.log('err', res[0].err)
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
@@ -938,15 +937,15 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkVideo(data).then(res=>{
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
+              console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
@@ -964,15 +963,15 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           TextHelper.bulkPdf(data).then(res=>{
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
+              console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
@@ -991,15 +990,15 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkPdf(data).then(res=>{
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
+              console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
@@ -1017,15 +1016,15 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           TextHelper.bulkImage(data).then(res=>{
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
+              console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
@@ -1044,15 +1043,15 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             contacts: [timeline.contact]
           }
           EmailHelper.bulkImage(data).then(res=>{
-            if(res[0] && res[0].status == false){
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
+            if(res[0] && res[0].status == true){
+              timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
             }else{
-              timeline['status'] = 'completed'
+              timeline['status'] = 'error'
+              console.log('err', res[0].err)
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
                 console.log('err', err)
