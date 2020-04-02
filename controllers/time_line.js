@@ -248,16 +248,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         EmailHelper.bulkEmail(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
@@ -274,16 +274,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         TextHelper.bulkVideo(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
@@ -328,16 +328,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         TextHelper.bulkPdf(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
@@ -355,16 +355,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         EmailHelper.bulkPdf(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
@@ -381,16 +381,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         TextHelper.bulkImage(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
@@ -408,16 +408,16 @@ const runTimeline = async (id) => {
           contacts: [timeline.contact]
         }
         EmailHelper.bulkImage(data).then(res => {
-          if (res[0] && res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })

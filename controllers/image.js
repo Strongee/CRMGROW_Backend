@@ -451,7 +451,7 @@ const bulkEmail = async(req, res) => {
       
       Promise.all(promise_array).then(()=>{
         if(error.length>0){
-          return res.status(200).json({
+          return res.status(405).json({
             status: false,
             error: error
           })
@@ -890,6 +890,19 @@ const bulkGmail = async(req, res) => {
                 console.log('err', err)
               })
               resolve();
+            }).catch(err=>{
+              console.log('gmail send err', err)
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err
+              })
+              resolve()
             })
           }catch(err){
             console.log('err', err)
@@ -903,6 +916,7 @@ const bulkGmail = async(req, res) => {
               },
               err: err
             })
+            resolve()
           }
         })
         
@@ -911,7 +925,7 @@ const bulkGmail = async(req, res) => {
       
       Promise.all(promise_array).then(()=>{
         if(error.length>0){
-          return res.status(200).json({
+          return res.status(405).json({
             status: false,
             error: error
           })
@@ -1100,7 +1114,7 @@ const bulkOutlook = async(req, res) => {
       
       Promise.all(promise_array).then(()=>{
         if(error.length>0){
-          return res.status(200).json({
+          return res.status(405).json({
             status: false,
             error: error
           })
