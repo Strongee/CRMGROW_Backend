@@ -757,8 +757,7 @@ const bulkGmail = async(req, res) => {
       status: false,
       error: 'not connnected'
     })
-  });;
-  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
+  });
 
   if(contacts){
     if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
@@ -924,6 +923,7 @@ const bulkGmail = async(req, res) => {
                 },
                 err: err
               })
+              resolve();
             })
           }catch(err){
             console.log('err', err)
@@ -937,6 +937,7 @@ const bulkGmail = async(req, res) => {
               },
               err: err
             })
+            resolve();
           }
         })
       promise_array.push(promise)

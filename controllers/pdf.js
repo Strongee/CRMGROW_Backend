@@ -1308,6 +1308,7 @@ const bulkGmail = async(req, res) => {
                 },
                 err: err
               })
+              resolve()
             })
           }catch(err){
             console.log('err', err)
@@ -1321,6 +1322,7 @@ const bulkGmail = async(req, res) => {
               },
               err: err
             })
+            resolve()
           }
         })
         promise_array.push(promise)

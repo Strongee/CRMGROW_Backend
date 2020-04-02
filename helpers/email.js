@@ -1781,12 +1781,10 @@ const bulkImage = async(data) => {
                 Activity.deleteOne({_id: activity.id}).catch(err=>{
                   console.log('err', err)
                 })
-                error.push({
-                  contact: {
-                    first_name: _contact.first_name,
-                    email: _contact.email,
-                  },
-                  err: err
+                resolve({
+                  status: false,
+                  err: err,
+                  contact: contacts[i]
                 })
               })
             }catch(err){
