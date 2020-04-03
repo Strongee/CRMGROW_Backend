@@ -1247,7 +1247,7 @@ const bulkOutlook = async(req, res) => {
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
           if (error) {
-            reject(error.message)
+            reject(error)
           }
           else {
             resolve(result.token);
