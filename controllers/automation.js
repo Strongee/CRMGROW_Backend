@@ -121,9 +121,33 @@ const create = (req, res) => {
     })
 }
 
-const update = (req, res) => {
+const update = async (req, res) => {
+    const {currentUser} = req;
     const id = req.params.id;
     const data = req.body;
+    let automation = await Automation.findOne({_id: id});
+    automation = JSON.parse(JSON.stringify(automation));
+    console.log(automation, automation.role)
+    if(automation) {
+        if(automation.user != currentUser.id) {
+            if(automation.role == 'admin') {
+                return res.status(400).send({
+                    status: false,
+                    error: `couldn't update admin automation`
+                })
+            }
+            return res.status(400).send({
+                status: false,
+                error: `This is not your automation so couldn't update.`
+            })
+        }
+    }
+    else {
+        return res.status(400).send({
+            status: false,
+            error: `Automation doesn't exist`
+        })
+    }
     Automation.find({_id: id}).update({$set: data}).then(() => {
         res.send({
             status: true

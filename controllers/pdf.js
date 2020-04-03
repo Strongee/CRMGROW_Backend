@@ -966,7 +966,11 @@ const bulkOutlook = async(req, res) => {
         accessToken = token.access_token
         
       }).catch((error) => {
-        console.log('error', error)
+        console.log('outlook token grant error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
     
       const client = graph.Client.init({

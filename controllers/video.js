@@ -1258,6 +1258,10 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
     
       const client = graph.Client.init({

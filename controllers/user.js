@@ -1244,7 +1244,11 @@ const syncCalendar = async (req, res) => {
       }).then((token) => {
         accessToken = token.access_token
       }).catch((error) => {
-        console.log('error', error)
+        console.log('outlook token grant error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
 
       let createEventParameters = {
@@ -1358,7 +1362,11 @@ const disconCalendar = async (req, res) => {
       }).then((token) => {
         accessToken = token.access_token
       }).catch((error) => {
-        console.log('error', error)
+        console.log('outlook token grant error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
 
       let deleteEventParameters = {

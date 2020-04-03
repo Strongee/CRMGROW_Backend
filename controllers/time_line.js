@@ -302,16 +302,16 @@ const runTimeline = async (id) => {
         }
         EmailHelper.bulkVideo(data).then(res => {
           console.log('res', res)
-          if (res[0].status == false) {
-            timeline['status'] = 'error'
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
             timeline['updated_at'] = new Date()
-            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
           } else {
-            timeline['status'] = 'completed'
+            timeline['status'] = 'error'
             timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
             timeline.save().catch(err => {
               console.log('err', err)
             })
