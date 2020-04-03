@@ -278,8 +278,14 @@ const bulkEmail = async(data) => {
       }).then((token) => {
         accessToken = token.access_token
     
-      }).catch((error) => {
-        console.log('error', error)
+      }).catch((err) => {
+        console.log('outlook token grant error', err)
+        return new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
+        })
       })
     
       const client = graph.Client.init({
@@ -724,8 +730,14 @@ const bulkVideo = async(data) => {
     }).then((token)=>{
       accessToken = token.access_token
       
-    }).catch((error) => {
-      console.log('error', error)
+    }).catch((err) => {
+      console.log('outlook token grant error', err)
+        return new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
+        })
     })
   
     const client = graph.Client.init({
@@ -1202,8 +1214,14 @@ const bulkPdf = async(data) => {
       }).then((token)=>{
         accessToken = token.access_token
         
-      }).catch((error) => {
-        console.log('error', error)
+      }).catch((err) => {
+        console.log('outlook token grant error', err)
+        return new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
+        })
       })
     
       const client = graph.Client.init({
@@ -1503,8 +1521,14 @@ const bulkImage = async(data) => {
     }).then((token)=>{
       accessToken = token.access_token
       
-    }).catch((error) => {
-      console.log('error', error)
+    }).catch((err) => {
+      console.log('outlook token grant error', err)
+        return new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
+        })
     })
   
     const client = graph.Client.init({
