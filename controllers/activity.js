@@ -100,9 +100,6 @@ const removeBulk = async (req, res) => {
     }).catch(err=>{
       console.log('err', err)
     })
-    return res.send({
-      status: true
-    })
   }).catch(err => {
     return res.status(500).send({
       status: false,
