@@ -54,7 +54,7 @@ const config = {
         PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29',
         LIMIT: process.env.LIMIT || 50
     },
-    MAX_EMAIL: process.eventNames.MAX_EMAIL || 50,
+    MAX_EMAIL: process.env.MAX_EMAIL || 50,
     MAX_CONTACT: process.env.MAX_CONTACT || 3000,
     DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123'
 }
