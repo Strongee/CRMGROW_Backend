@@ -98,7 +98,7 @@ const update = async (req, res) => {
     if(meta.image) {
       var params = {  Bucket: 'teamgrow', Key: meta.image };
       try {
-        await s3.deleteObject(data).promise();
+        await s3.deleteObject(params).promise();
         delete meta.image
       } catch (error) {
          console.log(error)
