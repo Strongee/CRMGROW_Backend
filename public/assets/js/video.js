@@ -40,19 +40,22 @@
                 data: JSON.stringify(data),
                 success: function(data) {
                     console.log('data', data)
-                    $("#myModal").addClass('thank-step')
+                    // $("#myModal").addClass('thank-step')
                     const response = data.data
                     if(response){
                         $("#contact").val(response.contact)
                         $("#activity").val(response.activity)
                     }
-                    $("#thank-btn").click(() => {
-                        $("body").removeClass("is_protected");
-                        $(".modal-backdrop").removeClass('show');
-                        $("#myModal").removeClass('show');
-                    })
+                    // $("#thank-btn").click(() => {
+                    //     $("body").removeClass("is_protected");
+                    //     $(".modal-backdrop").removeClass('show');
+                    //     $("#myModal").removeClass('show');
+                    // })
                     $("#info-form .btn").removeClass('loading')
                     $("#info-form .btn").text('Submit')
+                    $("body").removeClass("is_protected");
+                    $(".modal-backdrop").removeClass('show');
+                    $("#myModal").removeClass('show');
                 },
                 error: function(data) {
                     $("#info-form .btn").removeClass('loading')

@@ -166,7 +166,7 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    const message_id = uuidv1() + new Date()
+    const message_id = uuidv1()
  
     let attachment_array = []
     if(attachments){
