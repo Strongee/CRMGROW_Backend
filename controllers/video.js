@@ -770,6 +770,7 @@ const bulkGmail = async(req, res) => {
     for(let i=0; i<contacts.length; i++){
       if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
         setTimeout(function() {
+          console.log('timeout******************')
         }, 1000);
       }
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
