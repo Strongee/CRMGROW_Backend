@@ -528,7 +528,7 @@ const bulkVideo = async(data) => {
               console.error(err)
               resolve({
                 status: false,
-                err: res[0].statusCode,
+                err: err,
                 contact: contacts[i]
               })
             })
