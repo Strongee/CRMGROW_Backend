@@ -563,13 +563,6 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
-      return res.status(400).json({
-        status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`
-      })
-    }
-    
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
     
     for(let i=0; i<contacts.length; i++){
@@ -743,36 +736,31 @@ const bulkGmail = async(req, res) => {
   let {content, subject, videos, contacts} = req.body 
   let promise_array = []
   let error = []
-
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
-  const token = JSON.parse(currentUser.google_refresh_token)
-  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-  await oauth2Client.getAccessToken().catch(err=>{
-    console.log('get access err', err)
-    return res.status(402).send({
-      status: false,
-      error: 'not connnected'
-    })
-  });
-
+  
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
       })
     }
     
+    const token = JSON.parse(currentUser.google_refresh_token)
+    oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+    await oauth2Client.getAccessToken().catch(err=>{
+      console.log('get access err', err)
+      return res.status(402).send({
+        status: false,
+        error: 'not connnected'
+      })
+    });
+    
     for(let i=0; i<contacts.length; i++){
-      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
-        setTimeout(function() {
-          console.log('timeout******************')
-        }, 5000);
-      }
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -981,7 +969,7 @@ const bulkText = async(req, res) => {
   let promise_array = []
   let error = []
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -1238,7 +1226,7 @@ const bulkOutlook = async(req, res) => {
   let error = []
 
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -1247,10 +1235,6 @@ const bulkOutlook = async(req, res) => {
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     
     for(let i=0; i<contacts.length; i++){
-      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
-        setTimeout(function() {
-        }, 1000);
-      }
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
