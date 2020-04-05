@@ -305,7 +305,7 @@ const bulkEmail = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -481,7 +481,7 @@ const bulkText = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -746,7 +746,7 @@ const bulkGmail = async(req, res) => {
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
   
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -754,10 +754,6 @@ const bulkGmail = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
-      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
-        setTimeout(function() {
-        }, 1000);
-      }
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -958,7 +954,7 @@ const bulkOutlook = async(req, res) => {
   let error = []
   
   if(contacts){
-    if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -966,10 +962,6 @@ const bulkOutlook = async(req, res) => {
     }
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     for(let i=0; i<contacts.length; i++){    
-      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
-        setTimeout(function() {
-        }, 1000);
-      }
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
