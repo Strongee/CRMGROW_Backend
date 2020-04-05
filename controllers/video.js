@@ -852,35 +852,35 @@ const bulkGmail = async(req, res) => {
         
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
-        // let promise = new Promise((resolve, reject)=>{
-        //   gmail.users.messages.send({
-        //     'auth': oauth2Client,
-        //     'userId': 'me',
-        //     'resource': {
-        //       raw: rawContent
-        //     }
-        //   }, (err, response) => {
-        //     if(err) {
-        //       Activity.deleteOne({_id: activity.id}).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       console.log('err', err.response['statusText'])
-        //       error.push({
-        //         contact: {
-        //           id: contacts[i],
-        //           first_name: _contact.first_name,
-        //           email: _contact.email,
-        //         },
-        //         err: err.response['statusText'] 
-        //       })
-        //       resolve();
-        //     } else {
-        //       Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-        //         console.log('err', err)
-        //       })
-        //       resolve()
-        //     }
-        //   }); 
+        let promise = new Promise((resolve, reject)=>{
+          // gmail.users.messages.send({
+          //   'auth': oauth2Client,
+          //   'userId': 'me',
+          //   'resource': {
+          //     raw: rawContent
+          //   }
+          // }, (err, response) => {
+          //   if(err) {
+          //     Activity.deleteOne({_id: activity.id}).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     console.log('err', err.response['statusText'])
+          //     error.push({
+          //       contact: {
+          //         id: contacts[i],
+          //         first_name: _contact.first_name,
+          //         email: _contact.email,
+          //       },
+          //       err: err.response['statusText'] 
+          //     })
+          //     resolve();
+          //   } else {
+          //     Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     resolve()
+          //   }
+          // }); 
           try{
             let body = createBody({
               headers: {
