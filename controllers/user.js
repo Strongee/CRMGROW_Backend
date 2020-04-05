@@ -1764,24 +1764,19 @@ const searchUserEmail = (req, res) => {
       })    
 }
 
-const searchNickName = (req, res) => {
-  const condition = req.body;
-  
-  User.find(
-    {
-      nick_name: { '$regex': '.*' + condition.search + '.*', '$options': 'i' }
-    }
-  ).then((data) => {
-      return res.send({
-          status: true,
-          data
-      })
-  }).catch(err => {
-    return res.status(400).send({
-            status: false,
-            err: err.message
-        })
-    })  
+const searchNickName = async (req, res) => {
+  const {nick_name} = req.body;
+  let _user = await User.findOne({nick_name: {$regex: new RegExp('^' + nick_name + '$', 'i')}, del: false});
+  if(_user) {
+    return res.send({
+      status: false
+    })
+  }
+  else {
+    return res.send({
+      status: true
+    })
+  }
 }
 
 module.exports = {
