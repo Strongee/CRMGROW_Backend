@@ -905,7 +905,7 @@ const bulkGmail = async(req, res) => {
               })
               resolve();
             }).catch(err=>{
-              console.log('gmail send err', err)
+              // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
