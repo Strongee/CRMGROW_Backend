@@ -86,7 +86,10 @@ const getPage = async (req, res) => {
     }
 
     const total = await Automation.countDocuments({
-        user: currentUser.id
+        $or: [
+            {user: currentUser.id},
+            {role: 'admin'}
+        ]
     })
 
     return res.json({

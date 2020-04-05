@@ -743,22 +743,12 @@ const bulkGmail = async(req, res) => {
   let {content, subject, videos, contacts} = req.body 
   let promise_array = []
   let error = []
-
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
-  const token = JSON.parse(currentUser.google_refresh_token)
-  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-  await oauth2Client.getAccessToken().catch(err=>{
-    console.log('get access err', err)
-    return res.status(402).send({
-      status: false,
-      error: 'not connnected'
-    })
-  });
-
+  
   if(contacts){
     if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
       return res.status(400).json({
@@ -768,6 +758,17 @@ const bulkGmail = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
+      if(i%config.MAX_CONTACT_LIMIT ==0) {    
+        const token = JSON.parse(currentUser.google_refresh_token)
+        oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+        await oauth2Client.getAccessToken().catch(err=>{
+          console.log('get access err', err)
+          return res.status(402).send({
+            status: false,
+            error: 'not connnected'
+          })
+        });
+      }
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -912,7 +913,7 @@ const bulkGmail = async(req, res) => {
               })
               resolve();
             }).catch(err=>{
-              console.log('gmail send err', err)
+              // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
               })
@@ -1242,7 +1243,10 @@ const bulkOutlook = async(req, res) => {
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     
     for(let i=0; i<contacts.length; i++){
-      
+      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
+        setTimeout(function() {
+        }, 1000);
+      }
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
@@ -1258,6 +1262,10 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
     
       const client = graph.Client.init({

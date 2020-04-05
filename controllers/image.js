@@ -744,7 +744,6 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
-  let gmail = google.gmail({ auth: oauth2Client, version: 'v1' });
   
   if(contacts){
     if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
@@ -755,6 +754,10 @@ const bulkGmail = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
+      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
+        setTimeout(function() {
+        }, 1000);
+      }
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -963,6 +966,10 @@ const bulkOutlook = async(req, res) => {
     }
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     for(let i=0; i<contacts.length; i++){    
+      if(i!=0 && (i%config.MAX_CONTACT_LIMIT ==0)) {
+        setTimeout(function() {
+        }, 1000);
+      }
       let accessToken
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
@@ -977,7 +984,11 @@ const bulkOutlook = async(req, res) => {
         accessToken = token.access_token
         
       }).catch((error) => {
-        console.log('error', error)
+        console.log('outlook token grant error', error)
+        return res.status(402).send({
+          status: false,
+          error: 'not connnected'
+        })
       })
     
       const client = graph.Client.init({

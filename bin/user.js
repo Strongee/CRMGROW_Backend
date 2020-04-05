@@ -60,7 +60,7 @@ const migrate = async() => {
   const users = await User.find({del: false}).catch(err=>{
     console.log('err', err)
   })
-  const total = 0
+  let total = 0
   for(let i=0; i<users.length; i++){
     const user = users[i]
     const counts = await Contact.countDocuments({user: user.id})

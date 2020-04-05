@@ -142,6 +142,13 @@ const bulkGmail = async (req, res) => {
     })
   }
 
+  if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    return res.status(400).json({
+      status: false,
+      error: `You can send max ${config.MAX_EMAIL} contacts at a time`
+    })
+  }
+  
   for (let i = 0; i < contacts.length; i++) {
     let email_subject = subject
     let email_content = content
@@ -159,7 +166,7 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    const message_id = uuidv1() + new Date()
+    const message_id = uuidv1()
  
     let attachment_array = []
     if(attachments){
@@ -330,6 +337,14 @@ const bulkOutlook = async (req, res) => {
 
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
   let accessToken
+  
+  if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+    return res.status(400).json({
+      status: false,
+      error: `You can send max ${config.MAX_EMAIL} contacts at a time`
+    })
+  }
+  
   for (let i = 0; i < contacts.length; i++) {
     await new Promise((resolve, reject) => {
       token.refresh(function (error, result) {
@@ -343,7 +358,11 @@ const bulkOutlook = async (req, res) => {
     }).then((token) => {
       accessToken = token.access_token
     }).catch((error) => {
-      console.log('error', error)
+      console.log('outlook token grant error', error)
+      return res.status(402).send({
+        status: false,
+        error: 'not connnected'
+      })
     })
     const client = graph.Client.init({
       // Use the provided access token to authenticate
