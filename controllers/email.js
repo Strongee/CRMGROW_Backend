@@ -142,7 +142,7 @@ const bulkGmail = async (req, res) => {
     })
   }
 
-  if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+  if(contacts.length>config.MAX_EMAIL){
     return res.status(400).json({
       status: false,
       error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -338,7 +338,7 @@ const bulkOutlook = async (req, res) => {
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
   let accessToken
   
-  if(contacts.length>config.MAX_EMAIL && currentUser.role != 'admin'){
+  if(contacts.length>config.MAX_EMAIL){
     return res.status(400).json({
       status: false,
       error: `You can send max ${config.MAX_EMAIL} contacts at a time`

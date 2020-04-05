@@ -938,7 +938,7 @@ const syncOutlook = async (req, res) => {
       error: 'Client doesn`t exist'
     })
   }
-  res.send({
+  return res.send({
     status: true,
     data: authorizationUri
   })
