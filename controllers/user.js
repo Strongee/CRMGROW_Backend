@@ -549,6 +549,8 @@ const socialGmail = async (req, res) => {
         error: err.message || 'Getting user profile error occured.'
       })
     }
+
+    console.log(_res);
     
     let data = {
       email: _res.data.email,
@@ -598,6 +600,7 @@ const socialOutlook = async (req, res) => {
       let decoded_token = encoded_token.toString();
 
       let jwt = JSON.parse(decoded_token);
+      console.log(jwt);
 
       let data = {
         email: jwt.preferred_username,
