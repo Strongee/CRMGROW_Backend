@@ -445,7 +445,7 @@ const receiveEmail = async(req, res) => {
   const event = req.body[0].event
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
-  const _email = await Email.findOne({message_id: message_id}).catch('err', err)
+  const _email = await Email.findOne({message_id: message_id}).catch(err=>{console.log('err', err)})
   if(_email){
     const user = await User.findOne({_id: _email.user}).catch(err=>{
       console.log('err', err)
