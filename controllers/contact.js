@@ -446,6 +446,7 @@ const receiveEmail = async(req, res) => {
   const email = req.body[0].email
   const time_stamp = req.body[0].timestamp
   const update_data = {event: event}
+  console.log('email', email)
   Email.update({message_id: message_id}, update_data).then(async(_email)=>{
     console.log('_email', _email)
     if(_email){
