@@ -456,8 +456,59 @@ const bulkImage = async(data) => {
     return Promise.all(promise_array)
 }
 
+const getTwilioNumber = async(id) => {
+  const user = await User.findOne({_id: id}).catch(err=>{
+    console.log('err', err)
+  })
+  let areaCode
+  let countryCode
+  let fromNumber
+  const phone = user.phone
+  if (phone) {
+    areaCode = phone.areaCode
+    countryCode = phone.countryCode
+  } else {
+    areaCode = user.cell_phone.substring(1, 4)
+    countryCode = "US"
+  }
+  const data = await twilio
+  .availablePhoneNumbers(countryCode)
+  .local.list({
+    areaCode: areaCode,
+  })
+
+  let number = data[0];
+
+  if(!number){
+    const areaCode1 = areaCode.slice(1)
+
+    const data1 = await twilio
+    .availablePhoneNumbers(countryCode)
+    .local.list({
+      areaCode: areaCode1,
+    })
+    number = data1[0];
+  }
+  
+  if(!number){
+    const proxy_number = await twilio.incomingPhoneNumbers.create({
+      phoneNumber: number.phoneNumber,
+      smsUrl:  urls.SMS_RECEIVE_URL
+    })
+    
+    user['proxy_number'] = proxy_number.phoneNumber;
+    fromNumber = user['proxy_number'];
+    user.save().catch(err=>{
+      console.log('err', err)
+    })
+  } else {
+    fromNumber = config.TWILIO.TWILIO_NUMBER
+  } 
+  return fromNumber
+}
 module.exports = {
   bulkVideo,
   bulkPdf,
-  bulkImage
+  bulkImage,
+  getTwilioNumber
 }

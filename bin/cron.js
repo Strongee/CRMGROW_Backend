@@ -738,11 +738,11 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   }, false, 'US/Central')
   
   
-const timesheet_check = new CronJob('*/10 * * * *', async() =>{
+const timesheet_check = new CronJob('* * * * *', async() =>{
 
   const due_date = new Date()
-  due_date.setSeconds(0)
-  due_date.setMilliseconds(000)
+  // due_date.setSeconds(0)
+  // due_date.setMilliseconds(000)
   const timelines = await TimeLine.find({status: 'active', due_date: {$lte: due_date}})
   sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
@@ -765,8 +765,9 @@ const timesheet_check = new CronJob('*/10 * * * *', async() =>{
             follow_due_date = action.due_date
           } else {
             let now = moment()
-            let tens = parseInt(now.minutes() / 10)
-            now.set({minute: tens*10, second:0,millisecond:0})
+            // let tens = parseInt(now.minutes() / 10)
+            // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+            now.set({ second: 0, millisecond: 0 })
             follow_due_date = now.add(action.due_duration, 'hours')
             follow_due_date.set({ second: 0, millisecond: 0 })
           }

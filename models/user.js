@@ -8,6 +8,14 @@ const User = mongoose.model('user',{
      hash: String,
      salt: String,
      cell_phone: String,
+     phone: {
+      number: String,
+      internationalNumber: String,
+      nationalNumber: String,
+      countryCode: String,
+      areaCode: String,
+      dialCode: String
+    },
      payment: { type: mongoose.Schema.Types.ObjectId, ref: 'payment' },
      time_zone_info: String,
      time_zone: {type: String, default: "-07:00"},
