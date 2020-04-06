@@ -29,8 +29,9 @@ const create = async (req, res) => {
         if (automation['status'] == 'active') {
           const period = automation['period']
           let now = moment()
-          let tens = parseInt(now.minutes() / 10)
-          now.set({ minute: tens*10, second: 0, millisecond: 0 })
+          // let tens = parseInt(now.minutes() / 10)
+          // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+          now.set({ second: 0, millisecond: 0 })
           due_date = now.add(period, 'hours')
           due_date.set({ second: 0, millisecond: 0 })
 
@@ -102,8 +103,9 @@ const activeNext = async (data) => {
       const timeline = timelines[i]
       const period = timeline['period']
       let now = moment()
-      let tens = parseInt(now.minutes() / 10)
-      now.set({ minute: tens*10, second: 0, millisecond: 0 })
+      // let tens = parseInt(now.minutes() / 10)
+      // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+      now.set({ second: 0, millisecond: 0 })
       let due_date = now.add(period, 'hours');
       due_date.set({ second: 0, millisecond: 0 })
       timeline['status'] = 'active'
@@ -133,8 +135,9 @@ const runTimeline = async (id) => {
           follow_due_date = action.due_date
         } else {
           let now = moment()
-          let tens = parseInt(now.minutes() / 10)
-          now.set({minute: tens*10,second:0,millisecond:0})
+          // let tens = parseInt(now.minutes() / 10)
+          // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+          now.set({ second: 0, millisecond: 0 })
           follow_due_date = now.add(action.due_duration, 'hours')
           follow_due_date.set({ second: 0, millisecond: 0 })
         }

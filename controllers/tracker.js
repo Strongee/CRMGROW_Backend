@@ -80,42 +80,7 @@ const disconnectPDF = async(pdf_tracker_id) =>{
     } else {
       let fromNumber = currentUser['proxy_number'];
       if(!fromNumber) {
-        const areaCode = currentUser.cell_phone.substring(1, 4)
-    
-        const data = await twilio
-        .availablePhoneNumbers('US')
-        .local.list({
-          areaCode: areaCode,
-        })
-      
-        let number = data[0];
-    
-        if(typeof number == 'undefined'){
-          const areaCode1 = currentUser.cell_phone.substring(1, 3)
-    
-          const data1 = await twilio
-          .availablePhoneNumbers('US')
-          .local.list({
-            areaCode: areaCode1,
-          })
-          number = data1[0];
-        }
-        
-        if(typeof number != 'undefined'){
-          const proxy_number = await twilio.incomingPhoneNumbers.create({
-            phoneNumber: number.phoneNumber,
-            smsUrl:  urls.SMS_RECEIVE_URL
-          })
-          
-          console.log('proxy_number', proxy_number)
-          currentUser['proxy_number'] = proxy_number.phoneNumber;
-          fromNumber = currentUser['proxy_number'];
-          currentUser.save().catch(err=>{
-            console.log('err', err)
-          })
-        } else {
-          fromNumber = config.TWILIO.TWILIO_NUMBER
-        } 
+        fromNumber = config.TWILIO.TWILIO_NUMBER 
       }
     
       const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed pdf: ' + pdf.title + '\n'
@@ -360,42 +325,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       } else {
         let fromNumber = currentUser['proxy_number'];
         if(!fromNumber) {
-          const areaCode = currentUser.cell_phone.substring(1, 4)
-      
-          const data = await twilio
-          .availablePhoneNumbers('US')
-          .local.list({
-            areaCode: areaCode,
-          })
-        
-          let number = data[0];
-      
-          if(typeof number == 'undefined'){
-            const areaCode1 = currentUser.cell_phone.substring(1, 3)
-      
-            const data1 = await twilio
-            .availablePhoneNumbers('US')
-            .local.list({
-              areaCode: areaCode1,
-            })
-            number = data1[0];
-          }
-          
-          if(typeof number != 'undefined'){
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl:  urls.SMS_RECEIVE_URL
-            })
-            
-            console.log('proxy_number', proxy_number)
-            currentUser['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = currentUser['proxy_number'];
-            currentUser.save().catch(err=>{
-              console.log('err', err)
-            })
-          } else {
-            fromNumber = config.TWILIO.TWILIO_NUMBER
-          } 
+          fromNumber = config.TWILIO.TWILIO_NUMBER 
         }
         
         const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
@@ -562,42 +492,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
     } else {
       let fromNumber = currentUser['proxy_number'];
       if(!fromNumber) {
-        const areaCode = currentUser.cell_phone.substring(1, 4)
-    
-        const data = await twilio
-        .availablePhoneNumbers('US')
-        .local.list({
-          areaCode: areaCode,
-        })
-      
-        let number = data[0];
-    
-        if(typeof number == 'undefined'){
-          const areaCode1 = currentUser.cell_phone.substring(1, 3)
-    
-          const data1 = await twilio
-          .availablePhoneNumbers('US')
-          .local.list({
-            areaCode: areaCode1,
-          })
-          number = data1[0];
-        }
-        
-        if(typeof number != 'undefined'){
-          const proxy_number = await twilio.incomingPhoneNumbers.create({
-            phoneNumber: number.phoneNumber,
-            smsUrl:  urls.SMS_RECEIVE_URL
-          })
-          
-          console.log('proxy_number', proxy_number)
-          currentUser['proxy_number'] = proxy_number.phoneNumber;
-          fromNumber = currentUser['proxy_number'];
-          currentUser.save().catch(err=>{
-            console.log('err', err)
-          })
-        } else {
-          fromNumber = config.TWILIO.TWILIO_NUMBER
-        } 
+        fromNumber = config.TWILIO.TWILIO_NUMBER 
       }
     
       const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+' Reviewed image: ' + image.title + '\n'
