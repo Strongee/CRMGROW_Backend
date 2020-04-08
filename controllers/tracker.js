@@ -346,10 +346,10 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   
       const msg = {
         to: currentUser.email,
-        from: `${mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
+        from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
         templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
-          subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
+          subject: `${mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
