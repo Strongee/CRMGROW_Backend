@@ -166,8 +166,14 @@ const bulkGmail = async (req, res) => {
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
-    const message_id = uuidv1()
- 
+    const message_id = uuidv1()+'-'+new Date().getTime()
+    let textHtml
+    if(cc.length > 0 || bcc.length>0){
+      textHtml = '<html><head><title>Email</title></head><body><p>' + email_content +  '</p><br/><br/>' + currentUser.email_signature + '</body></html>'
+    } else {
+      textHtml = '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>'
+    }
+      
     let attachment_array = []
     if(attachments){
       for(let i=0; i<attachments.length; i++){
@@ -191,7 +197,7 @@ const bulkGmail = async (req, res) => {
             Cc: cc,
             Bcc: bcc
           },
-          textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+          textHtml: textHtml,
           textPlain: email_content,
           attachments: attachment_array
         });

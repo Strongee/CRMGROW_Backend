@@ -111,29 +111,28 @@ const receive = async(req, res) => {
       console.log('err', err)
     })
     if(currentUser != null){
-      const phoneNumberString = req.body['From']
-      const cleaned = ('' + phoneNumberString).replace(/\D/g, '')
-      const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-      const phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
+      const phoneNumber = req.body['From']
       const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
         console.log('err', err)
       })
-      const e164Phone = phone(currentUser.cell_phone)[0]
       
+      const e164Phone = phone(currentUser.cell_phone)[0]
+        
       if (!e164Phone) {
         const error = {
           error: 'Invalid Phone Number'
         }
-    
+      
         throw error // Invalid phone number
       }
-      
+        
       if(contact){
         const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
         await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
           console.log('err', err)
         })
       }
+      
       
       // const sms = new SMS({
       //   content: text,
@@ -158,7 +157,7 @@ const receive = async(req, res) => {
       // })
       
       // activity.save()
-      res.send({
+      return res.send({
         status: true,
       })
     }  

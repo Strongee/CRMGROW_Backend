@@ -203,12 +203,12 @@ const create = async (req, res) => {
   }
 
   let cell_phone = req.body.cell_phone
-  let cleaned = ('' + cell_phone).replace(/\D/g, '')
-  let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-  if (match) {
-    let intlCode = (match[1] ? '+1 ' : '')
-    cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-  }
+  // let cleaned = ('' + cell_phone).replace(/\D/g, '')
+  // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+  // if (match) {
+  //   let intlCode = (match[1] ? '+1 ' : '')
+  //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+  // }
 
   const contact = new Contact({
     ...req.body,
@@ -351,12 +351,12 @@ const edit = async (req, res) => {
 
   if (typeof req.body.cell_phone != 'undefined') {
     let cell_phone = req.body.cell_phone
-    let cleaned = ('' + cell_phone).replace(/\D/g, '')
-    let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-    if (match) {
-      let intlCode = (match[1] ? '+1 ' : '')
-      cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-    }
+    // let cleaned = ('' + cell_phone).replace(/\D/g, '')
+    // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+    // if (match) {
+    //   let intlCode = (match[1] ? '+1 ' : '')
+    //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+    // }
     contact["cell_phone"] = cell_phone
   }
 
@@ -731,12 +731,12 @@ const importCSV = async (req, res) => {
           }
           if (data['first_name'] || data['email'] || data['phone']) {
             let cell_phone = data['phone']
-            let cleaned = ('' + cell_phone).replace(/\D/g, '')
-            let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-            if (match) {
-              let intlCode = (match[1] ? '+1 ' : '')
-              cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-            }
+            // let cleaned = ('' + cell_phone).replace(/\D/g, '')
+            // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+            // if (match) {
+            //   let intlCode = (match[1] ? '+1 ' : '')
+            //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+            // }
             count = count + 1;
             if (max_count < count) {
               const field = {
