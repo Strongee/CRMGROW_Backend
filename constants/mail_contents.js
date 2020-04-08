@@ -14,19 +14,19 @@ const mail_contents = {
     },
     NOTIFICATION_WATCHED_VIDEO: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW video watched notification: "
+        SUBJECT: "CRMGROW video watched: "
     },
     NOTIFICATION_REVIEWED_PDF: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW pdf reviewed notification: "
+        SUBJECT: "CRMGROW pdf reviewed: "
     },
     NOTIFICATION_REVIEWED_IMAGE: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW image reviewed notification: "
+        SUBJECT: "CRMGROW image reviewed: "
     },
     NOTIFICATION_OPENED_EMAIL: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
-        SUBJECT: "CRMGROW email opened notification: "
+        SUBJECT: "CRMGROW email opened: "
     },
     DAILY_REPORT: {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
