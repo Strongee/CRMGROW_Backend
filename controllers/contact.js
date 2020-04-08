@@ -605,7 +605,7 @@ const receiveEmail = async(req, res) => {
             from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
             templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
             dynamic_template_data: {
-              subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
+              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
               first_name: contact.first_name,
               last_name: contact.last_name,
               phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
