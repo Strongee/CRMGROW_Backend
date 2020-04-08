@@ -119,7 +119,7 @@ const generatePreview = async(file_path) => {
       ctx.globalAlpha = 1.0;
       ctx.font = '20px Impact'
       ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play a video', 70, 120)
+      ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
       fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)

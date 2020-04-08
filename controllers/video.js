@@ -78,7 +78,7 @@ const play = async(req, res) => {
     if(!pattern.test(user.learn_more)) {
         user.learn_more = "http://" + user.learn_more;
     }
-    res.render('video', {
+    return res.render('video', {
       video: video,
       user: user,
       capture_dialog: capture_dialog
@@ -106,8 +106,21 @@ const play1 = async(req, res) => {
     let pattern = /^((http|https|ftp):\/\/)/;
     
     if(!pattern.test(user.learn_more)) {
-        user.learn_more = "http://" + user.learn_more;
+      user.learn_more = "http://" + user.learn_more;  
     }
+    if(user.social_link){
+      const social_link = user.social_link
+      if(!pattern.test(social_link.facebook)){
+        user.facebook = social_link.facebook
+      }
+      if(!pattern.test(social_link.twitter)){
+        user.twitter = social_link.twitter
+      }
+      if(!pattern.test(social_link.instagram)){
+        user.instagram = social_link.instagram
+      }
+    }
+    
     return res.render('video1', {
         video: video,
         user: user,
@@ -345,7 +358,7 @@ const generatePreview = async(file_path) => {
       ctx.globalAlpha = 1.0;
       ctx.font = '20px Impact'
       ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play a video', 70, 120)
+      ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
       fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
