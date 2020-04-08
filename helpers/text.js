@@ -494,10 +494,12 @@ const getTwilioNumber = async(id) => {
     const proxy_number = await twilio.incomingPhoneNumbers.create({
       phoneNumber: number.phoneNumber,
       smsUrl:  urls.SMS_RECEIVE_URL
+    }).then().catch(err=>{
+      console.log('proxy number error', err)
     })
     
     user['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = user['proxy_number'];
+    fromNumber = proxy_number.phoneNumber;
     user.save().catch(err=>{
       console.log('err', err)
     })
