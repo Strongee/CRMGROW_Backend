@@ -1055,7 +1055,7 @@ const bulkText = async(req, res) => {
       let fromNumber = currentUser['proxy_number'];
     
       if(!fromNumber) {
-        fromNumber = textHelper.getTwilioNumber(currentUser.id)
+        fromNumber = await textHelper.getTwilioNumber(currentUser.id)
       }
       console.log('fromNumber', fromNumber)
       const promise = new Promise((resolve, reject) =>{
