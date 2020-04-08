@@ -76,7 +76,8 @@ const User = mongoose.model('user',{
       facebook: String,
       twitter: String,
       instagram: String
-     }
+     },
+     company: {type: String, default: 'eXp Realty'}
  });
 
  module.exports = User
