@@ -449,8 +449,10 @@ const getAll = async (req, res) => {
     editedVideos = garbage['edited_video']
   }
 
+  const company = currentUser.company || 'eXp Realty'
+  console.log('company', company)
   let _video_list = await Video.find({user: currentUser.id, del: false}).sort({priority: 1}).sort({created_at : 1 })
-  let _video_admin = await Video.find({role: "admin", del: false, _id: {$nin: editedVideos}}).sort({priority: 1}).sort({created_at : 1 })
+  let _video_admin = await Video.find({role: "admin", del: false, _id: {$nin: editedVideos}, company: company}).sort({priority: 1}).sort({created_at : 1 })
   Array.prototype.push.apply(_video_list, _video_admin)
 
   if (!_video_list) {
