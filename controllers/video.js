@@ -1059,9 +1059,9 @@ const bulkText = async(req, res) => {
       }
       console.log('fromNumber', fromNumber)
       const promise = new Promise((resolve, reject) =>{
-        console.log('_contact.cell_phone', contact.cell_phone)
+        console.log('_contact.cell_phone', _contact.cell_phone)
         const e164Phone = phone(_contact.cell_phone)[0];
-      
+        console.log('e164Phone', e164Phone)
         if (!e164Phone) {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
