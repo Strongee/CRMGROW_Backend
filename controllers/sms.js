@@ -127,13 +127,13 @@ const receive = async(req, res) => {
       // }
      
         
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
+      // if (!e164Phone) {
+      //   const error = {
+      //     error: 'Invalid Phone Number'
+      //   }
       
-        throw error // Invalid phone number
-      }
+      //   throw error // Invalid phone number
+      // }
         
       if(contact){
         const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
