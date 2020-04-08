@@ -507,7 +507,7 @@ const getTwilioNumber = async(id) => {
   return fromNumber
 }
 
-const matchPhoneNumber = (phoneNumberString) => {
+const matchUSPhoneNumber = (phoneNumberString) => {
   let cleaned = ('' + phoneNumberString).replace(/\D/g, '')
   let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   let phoneNumber
@@ -522,5 +522,5 @@ module.exports = {
   bulkPdf,
   bulkImage,
   getTwilioNumber,
-  matchPhoneNumber
+  matchUSPhoneNumber
 }

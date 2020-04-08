@@ -5,6 +5,7 @@ const Activity = require('../models/activity')
 const SMS = require('../models/sms')
 const urls = require('../constants/urls')
 const config = require('../config/config')
+const TextHelper = require('../helpers/text')
 const accountSid = config.TWILIO.TWILIO_SID
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
 
@@ -112,11 +113,19 @@ const receive = async(req, res) => {
     })
     if(currentUser != null){
       const phoneNumber = req.body['From']
+  
       const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
         console.log('err', err)
       })
       
-      const e164Phone = phone(currentUser.cell_phone)[0]
+      // let phoneNumberString
+      // if(currentUser.phone) {
+      //   const userPhone = currentUser.phone
+      //   phoneNumberString = userPhone.internationalNumber
+      // } else {
+      //   phoneNumberString = TextHelper.matchUSPhoneNumber(currentUser.cell_phone)
+      // }
+     
         
       if (!e164Phone) {
         const error = {
