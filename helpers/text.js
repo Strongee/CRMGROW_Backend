@@ -490,8 +490,7 @@ const getTwilioNumber = async(id) => {
     })
     number = data1[0];
   }
-  console.log('number', number)
-  console.log('number type', typeof number)
+  
   if(typeof number != 'undefined'){
     const proxy_number = await twilio.incomingPhoneNumbers.create({
       phoneNumber: number.phoneNumber,
@@ -501,7 +500,6 @@ const getTwilioNumber = async(id) => {
     })
     
     user['proxy_number'] = proxy_number.phoneNumber;
-    console.log(' proxy_number.phoneNumber',  proxy_number.phoneNumber)
     fromNumber = proxy_number.phoneNumber;
     user.save().catch(err=>{
       console.log('err', err)
