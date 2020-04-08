@@ -506,9 +506,21 @@ const getTwilioNumber = async(id) => {
   } 
   return fromNumber
 }
+
+const matchPhoneNumber = (phoneNumberString) => {
+  let cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+  let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+  let phoneNumber
+  if (match) {
+    phoneNumber = '(' + match[2] + ') ' + match[3] + '-' + match[4]
+  }
+  return phoneNumber
+}
+
 module.exports = {
   bulkVideo,
   bulkPdf,
   bulkImage,
-  getTwilioNumber
+  getTwilioNumber,
+  matchPhoneNumber
 }
