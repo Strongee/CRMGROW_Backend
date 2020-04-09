@@ -63,7 +63,8 @@ const play = async(req, res) => {
   })
 
   let capture_dialog = false;
-
+  let capture_delay = 1
+  
   if(user){
     const garbage = await Garbage.findOne({user: user._id}).catch(err => {
       console.log('err', err)
@@ -71,6 +72,7 @@ const play = async(req, res) => {
     
     if(garbage) {
       capture_dialog = garbage['capture_dialog']
+      capture_delay = garbage['capture_delay']
     }  
     
     let pattern = /^((http|https|ftp):\/\/)/;
@@ -81,7 +83,8 @@ const play = async(req, res) => {
     return res.render('video', {
       video: video,
       user: user,
-      capture_dialog: capture_dialog
+      capture_dialog: capture_dialog,
+      capture_delay: capture_delay
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
