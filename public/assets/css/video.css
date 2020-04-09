@@ -103,6 +103,21 @@
     background-color: white;
     margin: 0px 10px;
   }
+
+  .icon-facebook {
+    background-image: url(../icons/fb_icon.svg);
+    width: 30px;
+  }
+
+  .icon-twitter {
+    background-image: url(../icons/tw_icon.svg);
+    width: 30px;
+  }
+
+  .icon-linkedin {
+    background-image: url(../icons/ln_icon.svg);
+    width: 30px;
+  }
   
   /* .icon-down {
     -webkit-mask-image: url(../icons/arrow_down.svg);
@@ -142,6 +157,10 @@
     font-size: 28px;
     line-height: 32px;
     color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 3px;
 }
 
 .stick-bar .phone{
@@ -380,4 +399,45 @@ body.is_protected .view-container {
 
 .plyr__video-wrapper{
     background: white!important;
+}
+
+.profile-bar {
+    width: 102px;
+    height: 30px;
+    display: flex;
+    margin-left: 3px;
+    margin-bottom: 2px;
+}
+
+.profile-bar a {
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.profile-bar a .icon {
+    width: 30px;
+    height: 30px;
+    display: block;
+    background-size: contain;
+}
+
+.d-flex {
+    display: flex;
+}
+.justify-content-center {
+    justify-content: center;
+}
+
+@media screen and (max-width: 1200px) {
+    .name-wrapper {
+        display: block!important;
+    }
+    .profile-bar {        
+        margin-left: auto;
+        margin-right: auto;
+    }
 }

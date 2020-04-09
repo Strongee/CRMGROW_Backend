@@ -31,6 +31,12 @@ const Garbage = mongoose.model('garbage',{
     reminder_before: {type: Number, default: 30},
     capture_dialog: {type: Boolean, default: false},
     capture_delay: {type: Number, default: 1},
+    capture_videos: {type: Array, default: []},
+    capture_field: {
+      email: {type: Boolean, default: true},
+      cell_phone: {type: Boolean, default: true},
+      first_name: {type: Boolean, default: true}
+    },
     index_page: {type: mongoose.Schema.Types.ObjectId, ref: 'page'},
     created_at: Date,
     updated_at: Date,
