@@ -16,6 +16,25 @@
 (function($) {
     $(document).ready(function() {
 
+        let delayTime = parseInt($("#delay").val());
+        let showable = $('#showable').val();
+        if(showable == 'true') {
+            if(delayTime) {
+                setTimeout(() => {
+                    // Show The Modal & BackDrop
+                    $("#myModal").addClass('show');
+                    $(".modal-backdrop").addClass('show');
+                    // Protect the Body Form
+                    $('body').addClass('is_protected');
+                    // Pause the Video
+                    vPlayer.pause();
+                }, delayTime * 60000);
+            } else {
+                vPlayer.pause();
+            }
+        }
+
+
         var cleave = new Cleave('.phone-info', {
             numericOnly: true,
             blocks: [0, 3, 3, 4],

@@ -75,7 +75,7 @@ const User = mongoose.model('user',{
      social_link: {
       facebook: String,
       twitter: String,
-      instagram: String
+      linkedin: String
      },
      company: {type: String, default: 'eXp Realty'}
  });
