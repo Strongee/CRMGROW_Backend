@@ -377,3 +377,7 @@ body.is_protected .view-container {
 .privacy-link {
     font-size: .7rem;
 }
+
+.plyr__video-wrapper{
+    background: white!important;
+}
