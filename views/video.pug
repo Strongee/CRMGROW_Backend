@@ -51,7 +51,7 @@ body(class=capture_dialog && !capture_delay ? 'is_protected' : '')
   if video.type === 'youtube' || video.type === 'vimeo'
     div#player(data-plyr-provider=`${video.type}` data-plyr-embed-id=`${video.url}`)
   else 
-    video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
+    video#player(poster=`${video.thumbnail}`, autoplay, playsinline, controls, name="media")
       source(src=`${video.url}`, type=`video/mp4`)
   .description
     .desc-title
@@ -101,4 +101,3 @@ script(type='text/javascript', src='./assets/js/jquery.js')
 script(type='text/javascript', src='./assets/js/dropdown.js')
 script(type='text/javascript', src='./assets/js/cleave.min.js')
 script(type='text/javascript', src='./assets/js/video.js')
-script(type='text/javascript', src='./assets/js/video1.js')
