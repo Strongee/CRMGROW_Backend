@@ -30,7 +30,7 @@ const Garbage = mongoose.model('garbage',{
     },
     reminder_before: {type: Number, default: 30},
     capture_dialog: {type: Boolean, default: false},
-    capture_delay: {type: Number, default: 1},
+    capture_delay: {type: Number, default: 0},
     capture_videos: {type: Array, default: []},
     capture_field: {
       email: {type: Boolean, default: true},
