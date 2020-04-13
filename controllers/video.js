@@ -119,20 +119,20 @@ const play1 = async(req, res) => {
     const video = activity['videos']
     
     let pattern = /^((http|https|ftp):\/\/)/;
-    
+    let social_link
     if(!pattern.test(user.learn_more)) {
       user.learn_more = "http://" + user.learn_more;  
     }
     if(user.social_link){
-      const social_link = user.social_link
-      if(!pattern.test(social_link.facebook)){
-        user.facebook = social_link.facebook
+      social_link = user.social_link
+      if(social_link.facebook && !pattern.test(social_link.facebook)){
+        social_link.facebook = "http://" + social_link.facebook; 
       }
-      if(!pattern.test(social_link.twitter)){
-        user.twitter = social_link.twitter
+      if(social_link.twitter && !pattern.test(social_link.twitter)){
+        social_link.twitter = "http://" + social_link.twitter
       }
-      if(!pattern.test(social_link.instagram)){
-        user.instagram = social_link.instagram
+      if(social_link.lik && !pattern.test(social_link.twitter)){
+        social_link.twitter = "http://" + social_link.twitter
       }
     }
     
@@ -140,7 +140,8 @@ const play1 = async(req, res) => {
         video: video,
         user: user,
         contact: activity['contacts'],
-        activity: activity.id
+        activity: activity.id,
+        social_link: social_link
     })
   }else{
     return res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
