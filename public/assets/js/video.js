@@ -74,8 +74,8 @@ var duration = document.querySelector("#video-duration").value;
                         $("#contact").val(response.contact)
                         $("#activity").val(response.activity)
                         // socket = io.connect('http://localhost:3000')
-                        // var siteAddr = location.protocol + '//' + location.hostname;
-                        // socket = io.connect(siteAddr);
+                        var siteAddr = location.protocol + '//' + location.hostname;
+                        socket = io.connect(siteAddr);
                         vPlayer.play();
                     }
                     $("#info-form .btn").removeClass('loading')
