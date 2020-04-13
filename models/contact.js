@@ -51,7 +51,7 @@ ContactSchema.pre('save', function(next) {
 })
 
 const Countries = {'UNITED STATES': 'US', 'UNITED STATE': 'US', 'CANADA': 'CA', }
-const Labels = ['','New','Cold','Team','Warm','Hot','Trash', 'Appt set', 'Appt missed'];
+const Labels = ['','New','Cold','Team','Warm','Hot','Trash', 'Appt set', 'Appt missed', 'Lead'];
 const States = ['','Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Guam','Hawaii',
 'Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri',
 'Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Palau',
