@@ -1778,6 +1778,20 @@ const searchNickName = async (req, res) => {
     })
   }
 }
+const searchPhone = async (req, res) => {
+  let {cell_phone} = req.body;
+  let _user = await User.findOne({cell_phone: cell_phone, del: false});
+  if(_user) {
+    return res.send({
+      status: false
+    })
+  }
+  else {
+    return res.send({
+      status: true
+    })
+  }
+}
 
 module.exports = {
   signUp,
@@ -1795,6 +1809,7 @@ module.exports = {
   getUser,
   searchUserEmail,
   searchNickName,
+  searchPhone,
   resetPasswordByOld,
   resetPasswordByCode,
   forgotPassword,
