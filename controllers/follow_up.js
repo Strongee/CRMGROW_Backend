@@ -513,6 +513,97 @@ const bulkUpdate = async(req, res) => {
   }  
 }
 
+const bulkCreate = async(req, res) => {
+  const { currentUser } = req
+  const { contacts, content, due_date } = req.body
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array()
+    })
+  }
+
+  const garbage = await Garbage.findOne({user: currentUser.id}).catch(err=>{
+    console.log('err', err)
+  })
+
+  let reminder_before = 30;
+  if(garbage) {
+    reminder_before = garbage.reminder_before
+  }
+
+  for(let i=0; i<contacts.length; i++){
+    const contact = contacts[i]
+    const followUp = new FollowUp({
+      content: content,
+      due_date: due_date,
+      contact: contact,
+      user: currentUser.id,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+    
+    followUp.save()
+    .then(_followup => {
+      let startdate = moment(_followup.due_date)
+      console.log('reminder_before', reminder_before)
+      const due_date = startdate.subtract(reminder_before, "minutes");
+      console.log('due_date', due_date)
+      const reminder = new Reminder({
+        contact: _followup.contact,
+        due_date: due_date,
+        type: 'follow_up',
+        user: currentUser.id,
+        follow_up: _followup.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+  
+      reminder.save().catch(err=>{
+        console.log('error', err)
+      })
+  
+      const activity = new Activity({
+        content: 'added follow up',
+        contacts: _followup.contact,
+        user: currentUser.id,
+        type: 'follow_ups',
+        follow_ups: _followup.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+  
+      activity.save().then(_activity => {
+        Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
+        myJSON = JSON.stringify(_followup)
+        const data = JSON.parse(myJSON);
+        data.activity = _activity
+        
+      }).catch(e => {
+        console.log('follow error', e)
+        return res.status().send({
+          status: false,
+          error: e
+        })
+      });
+    })
+    .catch(e => {
+      console.log('follow error', e)
+      return res.status().send({
+        status: false,
+        error: e
+      })
+    });
+  }
+  return res.send({
+    status: true,
+    data
+  })
+}
+
 module.exports = {
     get,
     create,
@@ -520,5 +611,6 @@ module.exports = {
     getByDate,
     updateChecked,
     updateArchived,
-    bulkUpdate
+    bulkUpdate,
+    bulkCreate
 }

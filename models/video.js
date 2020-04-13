@@ -9,6 +9,7 @@ const Video = mongoose.model('video',{
     preview: String,
     converted: { type: Boolean, default: false},
     custom_thumbnail: { type: Boolean, default: false},
+    recording: {type: Boolean, default: false},
     path: String,
     type: String,
     duration: Number,
