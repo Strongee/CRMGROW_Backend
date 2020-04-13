@@ -41,7 +41,9 @@ var duration = document.querySelector("#video-duration").value;
                     vPlayer.pause();
                 }, delayTime * 60000);
             } else {
-                vPlayer.pause();
+                vPlayer.once('play', () => {
+                  vPlayer.pause();
+                })                
             }
         }
 
