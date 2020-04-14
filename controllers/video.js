@@ -96,7 +96,7 @@ const play = async(req, res) => {
       capture_dialog: capture_dialog,
       capture_delay: capture_delay,
       capture_field: capture_field || {},
-      social_link: user.social_link,
+      social_link: user.social_link || {},
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
@@ -119,7 +119,7 @@ const play1 = async(req, res) => {
     const video = activity['videos']
     
     let pattern = /^((http|https|ftp):\/\/)/;
-    let social_link
+    let social_link = {}
     if(!pattern.test(user.learn_more)) {
       user.learn_more = "http://" + user.learn_more;  
     }
