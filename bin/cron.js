@@ -743,7 +743,9 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   
 
 const video_convert = new CronJob('0 1 * * *', async() =>{
-    const videos = await Video.find({recording: true, converted: false, del: false})
+    const videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
+      console.log('err', err)
+    })
     for(let i=0; i<videos.length; i++){
       const video = videos[i]
       let file_path = video.path
@@ -752,6 +754,7 @@ const video_convert = new CronJob('0 1 * * *', async() =>{
             const new_file = uuidv1() + '.mov'
             const new_path = TEMP_PATH + new_file
             let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
+            console.log('args', args)
             const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
             ffmpegConvert.on('end', function(){
               console.log('converted end', file_path)
