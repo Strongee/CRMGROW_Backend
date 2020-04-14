@@ -18,8 +18,8 @@ head
   script(type='text/javascript', src='./assets/plugins/plyr/plyr.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
 .stick-bar.row
-  .col-lg-3.col-md-3.col-sm-3.col-xs-12
-    .name #{user.user_name}
+  .col-lg-3.col-md-3.col-sm-3.col-xs-12.d-flex.justify-content-center.name-wrapper
+    .name(title=user.user_name) #{user.user_name}
     .profile-bar
         a.facebook(class=social_link['facebook']?'d-block':'d-none' href=social_link['facebook']) 
           i.icon.icon-facebook

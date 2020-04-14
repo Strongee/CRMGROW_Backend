@@ -51,7 +51,7 @@ body(class=capture_dialog && !capture_delay ? 'is_protected' : '')
   if video.type === 'youtube' || video.type === 'vimeo'
     div#player(data-plyr-provider=`${video.type}` data-plyr-embed-id=`${video.url}`)
   else 
-    video#player(poster=`${video.thumbnail}`, autoplay, playsinline, controls, name="media")
+    video#player(poster=`${video.thumbnail}`, autoplay, playsinline, preload, controls, name="media")
       source(src=`${video.url}`, type=`video/mp4`)
   .description
     .desc-title
