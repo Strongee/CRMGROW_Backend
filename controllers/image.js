@@ -944,7 +944,7 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('outlook token grant error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })

@@ -934,7 +934,7 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('outlook token grant error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })
@@ -1115,7 +1115,7 @@ const bulkGmail = async(req, res) => {
   oauth2Client.setCredentials({refresh_token: token.refresh_token})
   await oauth2Client.getAccessToken().catch(err=>{
     console.log('get access err', err)
-    return res.status(402).send({
+    return res.status(406).send({
       status: false,
       error: 'not connnected'
     })

@@ -206,161 +206,163 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
 
   const disconnectVideo = async(video_tracker_id) =>{
     const query = await VideoTracker.findOne({_id: video_tracker_id})
-    const currentUser = await User.findOne({_id: query['user']})
+    const currentUser = await User.findOne({_id: query['user'], del: false})
     const contact = await Contact.findOne({_id: query['contact']})
     const video = await Video.findOne({_id: query['video']})
     const garbage = await Garbage.findOne({user: query['user']})
     
-    const activity = new Activity({
-      content: 'watched video',
-      contacts: query.contact,
-      user: currentUser.id,
-      type: 'video_trackers',
-      video_trackers: query.id,
-      videos: video.id,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-
-    activity.save().then(_activity => {
-      Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+    if(currentUser && contact){
+      const activity = new Activity({
+        content: 'watched video',
+        contacts: query.contact,
+        user: currentUser.id,
+        type: 'video_trackers',
+        video_trackers: query.id,
+        videos: video.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+  
+      activity.save().then(_activity => {
+        Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+          console.log('err', err)
+        })
+      }).catch(err=>{
         console.log('err', err)
       })
-    }).catch(err=>{
-      console.log('err', err)
-    })
-    
-
-    const timelines = await TimeLine.find({ 
-      contact: contact.id,
-      status:  'active',
-      'watched_video': query['video'],
-      'condition.case': 'watched_video',
-      'condition.answer': true,
-    }).catch(err=>{
-      console.log('err', err)
-    })
-    
-    
-    if(timelines.length>0){
-      for(let i=0; i<timelines.length; i++){
-        try{
-          const timeline = timelines[i]
-          TimeLineCtrl.runTimeline(timeline.id)
-          const data = {
-            contact: contact.id,
-            ref: timeline.ref,
+      
+  
+      const timelines = await TimeLine.find({ 
+        contact: contact.id,
+        status:  'active',
+        'watched_video': query['video'],
+        'condition.case': 'watched_video',
+        'condition.answer': true,
+      }).catch(err=>{
+        console.log('err', err)
+      })
+      
+      
+      if(timelines.length>0){
+        for(let i=0; i<timelines.length; i++){
+          try{
+            const timeline = timelines[i]
+            TimeLineCtrl.runTimeline(timeline.id)
+            const data = {
+              contact: contact.id,
+              ref: timeline.ref,
+            }
+            TimeLineCtrl.activeNext(data)
+          }catch(err){
+            console.log('err', err)
           }
-          TimeLineCtrl.activeNext(data)
-        }catch(err){
-          console.log('err', err)
         }
       }
-    }
-    const unwatched_timelines = await TimeLine.find({ 
-      contact: contact.id,
-      status:  'active',
-      'watched_video': query['video'],
-      'condition.case': 'watched_video',
-      'condition.answer': false,
-    }).catch(err=>{
-      console.log('err', err)
-    })
-    
-    if(unwatched_timelines.length>0){
-      for(let i=0; i<unwatched_timelines.length; i++){
-        const timeline = unwatched_timelines[i]
-        TimeLineCtrl.disableNext(timeline.id)
+      const unwatched_timelines = await TimeLine.find({ 
+        contact: contact.id,
+        status:  'active',
+        'watched_video': query['video'],
+        'condition.case': 'watched_video',
+        'condition.answer': false,
+      }).catch(err=>{
+        console.log('err', err)
+      })
+      
+      if(unwatched_timelines.length>0){
+        for(let i=0; i<unwatched_timelines.length; i++){
+          const timeline = unwatched_timelines[i]
+          TimeLineCtrl.disableNext(timeline.id)
+        }
       }
-    }
+      
+      const d = (query['duration']/1000)
+      var h = Math.floor(d / 3600);
+      var m = Math.floor(d % 3600 / 60);
+      var s = Math.floor(d % 3600 % 60);
     
-    const d = (query['duration']/1000)
-    var h = Math.floor(d / 3600);
-    var m = Math.floor(d % 3600 / 60);
-    var s = Math.floor(d % 3600 % 60);
-  
-    if (h   < 10) {h   = "0"+h;}
-    if (m < 10) {m = "0"+m;}
-    if (s < 10) {s = "0"+s;}
-    let timeWatched = h + ':' + m + ':' + s
-  
-    const tD = Math.floor(video.duration/1000);
-    var tH = Math.floor(tD / 3600);
-    var tM = Math.floor(tD % 3600 / 60);
-    var tS = Math.floor(tD % 3600 % 60);
-  
-    if (tH   < 10) {tH   = "0"+tH;}
-    if (tM < 10) {tM = "0"+tM;}
-    if (tS < 10) {tS = "0"+tS;}
-  
-    let timeTotal = tH + ':' + tM + ':' + tS
-  
-    desktop_notification = garbage.desktop_notification
-    // send desktop notification
-    if(desktop_notification['material'] == true){
-      webpush.setVapidDetails(
-        'mailto:support@crmgrow.com',
-        config.VAPID.PUBLIC_VAPID_KEY,
-        config.VAPID.PRIVATE_VAPID_KEY
-      )
-      
-      const subscription = JSON.parse(currentUser.desktop_notification_subscription)
-      const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
-      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
-      const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
-      const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
-      webpush.sendNotification(subscription, playload).catch(err => console.error(err))
-    }
-  
-    text_notification = garbage.text_notification
-    // send text notification
-    if(text_notification['material'] == true && currentUser.cell_phone){
-      const e164Phone = phone(currentUser.cell_phone)[0]
-      
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number'
-        }
-        throw error // Invalid phone number
-      } else {
-        let fromNumber = currentUser['proxy_number'];
-        if(!fromNumber) {
-          fromNumber = config.TWILIO.TWILIO_NUMBER 
-        }
+      if (h   < 10) {h   = "0"+h;}
+      if (m < 10) {m = "0"+m;}
+      if (s < 10) {s = "0"+s;}
+      let timeWatched = h + ':' + m + ':' + s
+    
+      const tD = Math.floor(video.duration/1000);
+      var tH = Math.floor(tD / 3600);
+      var tM = Math.floor(tD % 3600 / 60);
+      var tS = Math.floor(tD % 3600 % 60);
+    
+      if (tH   < 10) {tH   = "0"+tH;}
+      if (tM < 10) {tM = "0"+tM;}
+      if (tS < 10) {tS = "0"+tS;}
+    
+      let timeTotal = tH + ':' + tM + ':' + tS
+    
+      desktop_notification = garbage.desktop_notification
+      // send desktop notification
+      if(desktop_notification['material'] == true){
+        webpush.setVapidDetails(
+          'mailto:support@crmgrow.com',
+          config.VAPID.PUBLIC_VAPID_KEY,
+          config.VAPID.PRIVATE_VAPID_KEY
+        )
         
-        const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
-        const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+        const subscription = JSON.parse(currentUser.desktop_notification_subscription)
+        const title = contact.first_name + ' ' + contact.last_name +  ' - ' + contact.email + ' watched video -' + video.title 
+        const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
         const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id 
-  
-        twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
+        const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+        webpush.sendNotification(subscription, playload).catch(err => console.error(err))
       }
-    }
-
-    email_notification = garbage.email_notification
-    // send email notification
     
-    if(email_notification['material']){
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm: a')
+      text_notification = garbage.text_notification
+      // send text notification
+      if(text_notification['material'] == true && currentUser.cell_phone){
+        const e164Phone = phone(currentUser.cell_phone)[0]
+        
+        if (!e164Phone) {
+          const error = {
+            error: 'Invalid Phone Number'
+          }
+          throw error // Invalid phone number
+        } else {
+          let fromNumber = currentUser['proxy_number'];
+          if(!fromNumber) {
+            fromNumber = config.TWILIO.TWILIO_NUMBER 
+          }
+          
+          const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n' +'\n'+ ' Watched video:' + video.title + '\n'
+          const created_at =moment(query['created_at']).utcOffset(currentUser.time_zone).format('MM/DD/YYYY') + ' at ' + moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm a')
+          const body = 'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at
+          const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+    
+          twilio.messages.create({from: fromNumber, body: title+'\n'+body + '\n' + contact_link,  to: e164Phone}).catch(err => console.error(err))
+        }
+      }
   
-      const msg = {
-        to: currentUser.email,
-        from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
-        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
-          first_name: contact.first_name,
-          last_name: contact.last_name,
-          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-          activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
-          duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + created_at,
-          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
-        },
-      };
+      email_notification = garbage.email_notification
+      // send email notification
+      
+      if(email_notification['material']){
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        const created_at = moment(query['created_at']).utcOffset(currentUser.time_zone).format('h:mm: a')
     
-      sgMail.send(msg).catch(err => console.error(err))   
+        const msg = {
+          to: currentUser.email,
+          from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
+          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          dynamic_template_data: {
+            subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+            email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+            activity: contact.first_name + ' watched video - <b>' + video.title + '</b>',
+            duration: 'Watched <b>' + timeWatched + ' of ' + timeTotal + ' </b>at ' + created_at,
+            detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+          },
+        };
+      
+        sgMail.send(msg).catch(err => console.error(err))   
+      }
     }
   }
   
