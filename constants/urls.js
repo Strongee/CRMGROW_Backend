@@ -27,7 +27,8 @@
       RESET_PASSWORD_URL: 'https://app.crmgrow.com/reset-password/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
       CONTACT_CSV_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
-      INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
+      // INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
+      INTRO_VIDEO_URL: 'https://www.loom.com/share/7ac336c756d14f48990b61c06f18dadf',
       GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
     }
   } else if(process.env.NODE_ENV === 'staging'){
@@ -58,7 +59,7 @@
         RESET_PASSWORD_URL: 'https://stg.crmgrow.com/reset-password/',
         AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
         CONTACT_CSV_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
-        INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
+        INTRO_VIDEO_URL: 'https://www.loom.com/share/7ac336c756d14f48990b61c06f18dadf',
         GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
       }
   }else {
@@ -89,7 +90,7 @@
       RESET_PASSWORD_URL: 'http://localhost:4200/reset-password/',
       AVATAR_URL: 'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
       CONTACT_CSV_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
-      INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
+      INTRO_VIDEO_URL: 'https://www.loom.com/share/7ac336c756d14f48990b61c06f18dadf',
       GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?'
     }
   }

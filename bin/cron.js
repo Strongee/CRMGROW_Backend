@@ -2,10 +2,14 @@ const mongoose = require('mongoose')
 const sgMail = require('@sendgrid/mail')
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
-const fs = require('fs');
+const fs = require('fs')
+const uuidv1 = require('uuid/v1')
 const AWS = require('aws-sdk')
 const { ENV_PATH } = require('../config/path')
 require('dotenv').config({ path: ENV_PATH })
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const child_process = require('child_process');
 
 const User = require('../models/user')
 const Contact = require('../models/contact')
@@ -737,6 +741,37 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
     console.log('Notification Check Job finished.');
   }, false, 'US/Central')
   
+
+const video_convert = new CronJob('0 1 * * *', async() =>{
+    const videos = await Video.find({recording: true, converted: false, del: false})
+    for(let i=0; i<videos.length; i++){
+      const video = videos[i]
+      let file_path = video.path
+      if(file_path){
+        if (fs.existsSync(file_path)) {
+            const new_file = uuidv1() + '.mov'
+            const new_path = TEMP_PATH + new_file
+            let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
+            const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
+            ffmpegConvert.on('end', function(){
+              console.log('converted end', file_path)
+              const new_url = urls.VIDEO_URL+new_file
+              video['url'] = new_url
+              video['recording'] = false
+              video['path'] = new_path
+              video.save().then(()=>{
+              }).catch(err=>{
+                console.log('err', err)
+                fs.unlinkSync(file_path)
+              })
+            })
+        }
+      }
+    }
+  }, function () {
+    console.log('Video Convert Job Finished.');
+  }, false, 'US/Central')
+  
   
 const timesheet_check = new CronJob('* * * * *', async() =>{
 
@@ -1083,6 +1118,7 @@ signup_job.start()
 reminder_job.start()
 weekly_report.start()
 video_job.start()
+video_convert.start()
 payment_check.start()
 // logger_check.start()
 notification_check.start()
