@@ -119,12 +119,12 @@ const play1 = async(req, res) => {
     const video = activity['videos']
     
     let pattern = /^((http|https|ftp):\/\/)/;
-    let social_link
+    let social_link = {}
     if(!pattern.test(user.learn_more)) {
       user.learn_more = "http://" + user.learn_more;  
     }
     if(user.social_link){
-      social_link = user.social_link || {}
+      social_link = user.social_link
       if(social_link.facebook && !pattern.test(social_link.facebook)){
         social_link.facebook = "http://" + social_link.facebook; 
       }
