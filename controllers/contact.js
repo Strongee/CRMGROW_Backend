@@ -10,6 +10,7 @@ const User = require('../models/user')
 const Video = require('../models/video')
 const PDF = require('../models/pdf')
 const TimeLine = require('../models/time_line')
+const Automation = require('../models/automation')
 const EmailTracker = require('../models/email_tracker')
 const Reminder = require('../models/reminder')
 const Garbage = require('../models/garbage')
@@ -65,13 +66,22 @@ const getAllByLastActivity = async (req, res) => {
 
 const getByLastActivity = async (req, res) => {
   const { currentUser } = req
+  let { field, dir } = req.body;
+
+  if(field == 'updated_at') {
+    field = 'last_activity';
+  }
+  else {
+    field = 'first_name';
+  }
+  dir = dir ? -1 : 1;
   let contacts
   if (typeof req.params.id == 'undefined') {
-    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).limit(50)
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ [field]: dir }).limit(50)
   } else {
     const id = parseInt(req.params.id)
-    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ first_name: 1 }).skip(id).limit(50)
-  }
+    contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ [field]: dir }).skip(id).limit(50)
+  }  
 
   if (!contacts) {
     return res.status(400).json({
@@ -116,6 +126,12 @@ const get = async (req, res) => {
   const _timelines = await TimeLine.find({ user: currentUser.id, contact: req.params.id}).sort({due_date: 1}).catch(err=>{
     console.log('err', err)
   })
+  let automation = {};
+  if(_timelines.length) {
+    automation = await Automation.findOne({_id: _timelines[0]['automation']}).select({'title': 1}).catch(err => {
+      console.log("err", err);
+    })
+  }
   const _activity_list = await Activity.find({ user: currentUser.id, contacts: req.params.id }).sort({ updated_at: 1 })
   let _activity_detail_list = [];
 
@@ -145,7 +161,8 @@ const get = async (req, res) => {
       { "activity": _activity_detail_list }, 
       { "next": next},
       { "prev": prev},
-      { "time_lines": _timelines}
+      { "time_lines": _timelines},
+      { "automation": automation}
     );
 
   return res.send({
@@ -1963,9 +1980,16 @@ const loadTimelines = async (req, res) => {
   const {contact} = req.body;
 
   const _timelines = await TimeLine.find({ user: currentUser.id, contact: contact})
+  let automation = {};
+  if(_timelines.length) {
+    automation = await Automation.findOne({_id: _timelines[0]['automation']}).select({'title': 1}).catch(err => {
+      console.log("err", err);
+    })
+  }
   return res.send({
     status: true,
-    timelines: _timelines
+    timelines: _timelines,
+    automation: automation
   })
 }
 
