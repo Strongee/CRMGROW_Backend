@@ -940,8 +940,7 @@ const bulkGmail = async(req, res) => {
                 return res.status(406).send({
                   status: false,
                   error: 'not connnected'
-                }) 
-                break
+                })
               }
               // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
