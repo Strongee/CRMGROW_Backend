@@ -131,7 +131,7 @@ const play1 = async(req, res) => {
       if(social_link.twitter && !pattern.test(social_link.twitter)){
         social_link.twitter = "http://" + social_link.twitter
       }
-      if(social_link.likedin && !pattern.test(social_link.likedin)){
+      if(social_link.linkedin && !pattern.test(social_link.linkedin)){
         social_link.linkedin = "http://" + social_link.linkedin
       }
     }
@@ -940,8 +940,7 @@ const bulkGmail = async(req, res) => {
                 return res.status(406).send({
                   status: false,
                   error: 'not connnected'
-                }) 
-                break
+                })
               }
               // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
