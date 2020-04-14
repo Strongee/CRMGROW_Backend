@@ -410,7 +410,7 @@ const video_job = new CronJob('0 3 * * *', async() =>{
                     });  
                   })
                 }).catch(function(err) {
-                 console.log(err);
+                 console.log('File read by stream error', err);
                 })
               } else {
                 console.log('File read was successful', data)

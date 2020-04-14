@@ -122,8 +122,13 @@ router.post('/search-email', catchError(UserCtrl.searchUserEmail))
 // Search nickname
 router.post('/search-nickname', catchError(UserCtrl.searchNickName))
 
+// Search Phonenumber
+router.post('/search-phone', catchError(UserCtrl.searchPhone));
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser))
+
+
 
 
 module.exports = router
