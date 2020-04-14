@@ -785,7 +785,7 @@ const bulkGmail = async(req, res) => {
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     await oauth2Client.getAccessToken().catch(err=>{
       console.log('get access err', err)
-      return res.status(402).send({
+      return res.status(406).send({
         status: false,
         error: 'not connnected'
       })
@@ -936,6 +936,13 @@ const bulkGmail = async(req, res) => {
               })
               resolve();
             }).catch(err=>{
+              if(err.statusCode == 403) {
+                return res.status(406).send({
+                  status: false,
+                  error: 'not connnected'
+                }) 
+                break
+              }
               // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
@@ -1245,7 +1252,7 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })
