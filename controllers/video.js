@@ -124,15 +124,15 @@ const play1 = async(req, res) => {
       user.learn_more = "http://" + user.learn_more;  
     }
     if(user.social_link){
-      social_link = user.social_link
+      social_link = user.social_link || {}
       if(social_link.facebook && !pattern.test(social_link.facebook)){
         social_link.facebook = "http://" + social_link.facebook; 
       }
       if(social_link.twitter && !pattern.test(social_link.twitter)){
         social_link.twitter = "http://" + social_link.twitter
       }
-      if(social_link.lik && !pattern.test(social_link.twitter)){
-        social_link.twitter = "http://" + social_link.twitter
+      if(social_link.likedin && !pattern.test(social_link.likedin)){
+        social_link.linkedin = "http://" + social_link.linkedin
       }
     }
     
