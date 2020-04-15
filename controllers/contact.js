@@ -754,12 +754,42 @@ const importCSV = async (req, res) => {
             //   let intlCode = (match[1] ? '+1 ' : '')
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
+            if(data['email']){
+              const email_contact = await Contact.findOne({email: data['email']}).catch(err=>{
+                console.log('err', err)
+              })
+              if(email_contact){
+                const field = {
+                  id: i,
+                  email: data['email'],
+                  err: 'Duplicated Email'
+                }
+                failure.push(field)
+                resolve()
+                return
+              }
+            }
+            if(data['contact']){
+              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone']}).catch(err=>{
+                console.log('err', err)
+              })
+              if(phone_contact){
+                const field = {
+                  id: i,
+                  cell_phone: data['cell_phone'],
+                  err: 'Duplicated Phone'
+                }
+                failure.push(field)
+                resolve()
+                return
+              }
+            }
             count = count + 1;
             if (max_count < count) {
               const field = {
                 id: i,
                 email: data['email'],
-                phone: data['phone'],
+                cell_phone: data['phone'],
                 err: 'Exceed upload max contacts'
               }
               failure.push(field)
