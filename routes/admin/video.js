@@ -39,15 +39,15 @@ router.post('/', UserCtrl.checkAuth, upload.single('video'), catchError(VideoCtr
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
 
 // Upload a thumbnail and detail info
-router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail))
+router.get('/thumbnail/:name', UserCtrl.checkAuth, catchError(VideoCtrl.getThumbnail))
 
 // Get all video
-router.get('/list/:page', catchError(VideoCtrl.getVideos))
+router.get('/list/:page', UserCtrl.checkAuth, catchError(VideoCtrl.getVideos))
 // // Get a video
 // router.get('/:id', catchError(VideoCtrl.get))
 
 // Get all video by user
-router.post('/user/:id', catchError(VideoCtrl.getVideosByUser))
+router.post('/user/:id', UserCtrl.checkAuth, catchError(VideoCtrl.getVideosByUser))
 // // Get a video
 // router.get('/:id', catchError(VideoCtrl.get))
 
