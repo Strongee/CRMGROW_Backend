@@ -44,25 +44,25 @@ router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe))
 
 
 // Get the Specific User Profile
-router.get('/profile/:id', catchError(UserCtrl.getProfile))
+router.get('/profile/:id', Auth.checkAuth, catchError(UserCtrl.getProfile))
 
 // Set the Specific User Profile
-router.get('/disable/:id', catchError(UserCtrl.disableUser))
+router.get('/disable/:id', Auth.checkAuth, catchError(UserCtrl.disableUser))
 
 // Set the Specific User Profile
-router.get('/suspend/:id', catchError(UserCtrl.suspendUser))
+router.get('/suspend/:id', Auth.checkAuth, catchError(UserCtrl.suspendUser))
 
 // Set the Specific User Profile
-router.get('/activate/:id', catchError(UserCtrl.activateUser))
+router.get('/activate/:id', Auth.checkAuth, catchError(UserCtrl.activateUser))
 
 // Get the Specific User Profile
 router.delete('/:id', UserCtrl.checkAuth, catchError(UserCtrl.closeAccount))
 
 // Get the disabled Users Profile
-router.post('/disabled/:page', catchError(UserCtrl.disableUsers))
+router.post('/disabled/:page', Auth.checkAuth, catchError(UserCtrl.disableUsers))
 
 // Get Page users
-router.post('/list/:page', catchError(UserCtrl.getAll))
+router.post('/list/:page', Auth.checkAuth, catchError(UserCtrl.getAll))
 
 
 // New Password by old one

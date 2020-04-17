@@ -47,10 +47,10 @@ router.post('/', UserCtrl.checkAuth, upload.single('pdf'), catchError(PDFCtrl.cr
 router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail))
 
 // Upload a preview and detail info
-router.get('/preview/:name', catchError(PDFCtrl.getPreview))
+router.get('/preview/:name', UserCtrl.checkAuth, catchError(PDFCtrl.getPreview))
 
 // Get a pdf
-router.get('/:id', catchError(PDFCtrl.get))
+router.get('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.get))
 
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll))
@@ -61,9 +61,9 @@ router.post('/send', UserCtrl.checkAuth, catchError(PDFCtrl.sendPDF))
 // Delete a pdf
 router.delete('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.remove))
 
-router.get('/list/:page', catchError(PDFCtrl.getPdfs))
+router.get('/list/:page', UserCtrl.checkAuth, catchError(PDFCtrl.getPdfs))
 
 // Get all pdfs by user
-router.post('/user/:id', catchError(PDFCtrl.getPdfsByUser))
+router.post('/user/:id', UserCtrl.checkAuth, catchError(PDFCtrl.getPdfsByUser))
 
 module.exports = router

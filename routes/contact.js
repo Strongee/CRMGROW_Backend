@@ -89,4 +89,9 @@ router.post('/bulk-update', UserCtrl.checkAuth, catchError(ContactCtrl.bulkUpdat
 // Get the Nth Contact
 router.get('/nth-get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getNthContact))
 
+// Check the Email
+router.post('/check-email', UserCtrl.checkAuth, catchError(ContactCtrl.checkEmail));
+// Check the Phone
+router.post('/check-phone', UserCtrl.checkAuth, catchError(ContactCtrl.checkPhone));
+
 module.exports = router

@@ -2033,6 +2033,28 @@ const selectAllContacts = async (req, res) => {
   })
 }
 
+const checkEmail = async (req, res) => {
+  const {currentUser} = req;
+  const { email } = req.body;
+
+  const contacts = await Contact.find({user: currentUser.id, email: {$regex: new RegExp('^' + email + '$', 'i')}});
+  return res.send({
+    status: true,
+    data: contacts
+  })
+}
+
+const checkPhone = async (req, res) => {
+  const {currentUser} = req;
+  const {cell_phone} = req.body;
+
+  const contacts = await Contact.find({user: currentUser.id, cell_phone: cell_phone});
+  return res.send({
+    status: true,
+    data: contacts
+  })
+}
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -2058,5 +2080,7 @@ module.exports = {
   leadContact,
   loadFollows,
   loadTimelines,
-  selectAllContacts
+  selectAllContacts,
+  checkEmail,
+  checkPhone
 }
