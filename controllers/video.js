@@ -62,8 +62,8 @@ const play = async(req, res) => {
     console.log('err', err)
   })
 
-  let capture_dialog = false;
-  let capture_delay = 1;
+  let capture_dialog = true;
+  let capture_delay = 0;
   let capture_field = {};
   
   if(user){
@@ -72,18 +72,16 @@ const play = async(req, res) => {
     })
     
     if(garbage) {
-      capture_dialog = garbage['capture_dialog'];
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       capture_videos = garbage['capture_videos'];
-      if(capture_videos.length) {
-        if(capture_dialog) {
-          if(capture_videos.indexOf(video_id) === -1)  {
-            capture_dialog = false;
-          }
-        }
+      if(capture_videos.indexOf(video_id) === -1)  {
+        capture_dialog = false;
       }
     }  
+    else {
+      capture_dialog = false;
+    }
     
     let pattern = /^((http|https|ftp):\/\/)/;
     
