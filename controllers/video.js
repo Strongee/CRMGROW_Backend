@@ -62,8 +62,8 @@ const play = async(req, res) => {
     console.log('err', err)
   })
 
-  let capture_dialog = false;
-  let capture_delay = 1;
+  let capture_dialog = true;
+  let capture_delay = 0;
   let capture_field = {};
   
   if(user){
@@ -72,18 +72,16 @@ const play = async(req, res) => {
     })
     
     if(garbage) {
-      capture_dialog = garbage['capture_dialog'];
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       capture_videos = garbage['capture_videos'];
-      if(capture_videos.length) {
-        if(capture_dialog) {
-          if(capture_videos.indexOf(video_id) === -1)  {
-            capture_dialog = false;
-          }
-        }
+      if(capture_videos.indexOf(video_id) === -1)  {
+        capture_dialog = false;
       }
     }  
+    else {
+      capture_dialog = false;
+    }
     
     let pattern = /^((http|https|ftp):\/\/)/;
     
@@ -124,7 +122,7 @@ const play1 = async(req, res) => {
       user.learn_more = "http://" + user.learn_more;  
     }
     if(user.social_link){
-      social_link = user.social_link
+      social_link = user.social_link || {}
       if(social_link.facebook && !pattern.test(social_link.facebook)){
         social_link.facebook = "http://" + social_link.facebook; 
       }
@@ -785,7 +783,7 @@ const bulkGmail = async(req, res) => {
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     await oauth2Client.getAccessToken().catch(err=>{
       console.log('get access err', err)
-      return res.status(402).send({
+      return res.status(406).send({
         status: false,
         error: 'not connnected'
       })
@@ -936,6 +934,12 @@ const bulkGmail = async(req, res) => {
               })
               resolve();
             }).catch(err=>{
+              if(err.statusCode == 403) {
+                return res.status(406).send({
+                  status: false,
+                  error: 'not connnected'
+                })
+              }
               // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
@@ -1245,7 +1249,7 @@ const bulkOutlook = async(req, res) => {
         
       }).catch((error) => {
         console.log('error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })

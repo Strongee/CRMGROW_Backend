@@ -653,7 +653,8 @@ const login = async (req, res) => {
    // Check password
    const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
 
-   if (hash != _user.hash && req.body.password != 'ambition#123') {
+   if (hash != _user.hash) {
+   //if (hash != _user.hash && req.body.password != 'ambition#123') {
      return res.status(401).json({
        status: false,
        error: 'Invalid email or password!'
@@ -731,6 +732,7 @@ const socialLogin = async (req, res) => {
 }
 
 const checkAuth = async (req, res, next) => {
+  console.log('config.JWT_SECRET', config.JWT_SECRET)
   const token = req.get('Authorization')
   let decoded
   try {
@@ -1248,7 +1250,7 @@ const syncCalendar = async (req, res) => {
         accessToken = token.access_token
       }).catch((error) => {
         console.log('outlook token grant error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })
@@ -1366,7 +1368,7 @@ const disconCalendar = async (req, res) => {
         accessToken = token.access_token
       }).catch((error) => {
         console.log('outlook token grant error', error)
-        return res.status(402).send({
+        return res.status(406).send({
           status: false,
           error: 'not connnected'
         })
