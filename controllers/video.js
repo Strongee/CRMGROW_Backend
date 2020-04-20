@@ -211,11 +211,6 @@ const updateDetail = async (req, res) => {
   const editData = req.body
   let thumbnail;
   let { currentUser } = req
-  const file_name = uuidv1()
-  if (req.body.thumbnail) { // base 64 image    
-    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
-  }
   
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
     console.log('err', err)
@@ -227,60 +222,65 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
-  console.log('file_path', thumbnail)
   
-  if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
-    console.log('file_sync path', THUMBNAILS_PATH+file_name)
-    fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
-      if (err){
-        console.log('file read err', err)
-      }else {
-        console.log('File read was successful', data)
-        const today = new Date()
-        const year = today.getYear()
-        const month = today.getMonth()
-        const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-            Body: data,
-            ACL: 'public-read'
-        };
-        s3.upload(params, async (s3Err, upload)=>{
-          if (s3Err){
-            console.log('upload s3 error', s3Err)
-          } else {
-            console.log(`File uploaded successfully at ${upload.Location}`)
-          
-            video['thumbnail'] = upload.Location
-            video.save().catch(err=>{
-              console.log('video save error', err.message)
+  const file_name = uuidv1()
+  if (req.body.thumbnail) { // base 64 image    
+    const file_path = base64Img.img(req.body.thumbnail, THUMBNAILS_PATH, file_name, function(){
+      if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
+        console.log('file_sync path', THUMBNAILS_PATH+file_name)
+        fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
+          if (err){
+            console.log('file read err', err)
+          }else {
+            console.log('File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err){
+                console.log('upload s3 error', s3Err)
+              } else {
+                console.log(`File uploaded successfully at ${upload.Location}`)
+              
+                video['thumbnail'] = upload.Location
+                video.save().catch(err=>{
+                  console.log('video save error', err.message)
+                })
+              }
             })
           }
-        })
+         });
+        sharp(THUMBNAILS_PATH+file_name)
+        .resize(250, 140)
+        .toBuffer()
+        .then(data => {
+           const today = new Date()
+           const year = today.getYear()
+           const month = today.getMonth()
+           const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+              Body: data,
+              ACL: 'public-read'
+            };
+            
+            s3.upload(params, async (s3Err, upload)=>{
+             if (s3Err){
+               console.log('upload s3 error', s3Err)
+             } else {
+               console.log(`File uploaded successfully at ${upload.Location}`)
+             }
+           })
+        });
       }
-     });
-    sharp(THUMBNAILS_PATH+file_name)
-    .resize(250, 140)
-    .toBuffer()
-    .then(data => {
-       const today = new Date()
-       const year = today.getYear()
-       const month = today.getMonth()
-       const params = {
-          Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-          Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
-          Body: data,
-          ACL: 'public-read'
-        };
-        
-        s3.upload(params, async (s3Err, upload)=>{
-         if (s3Err){
-           console.log('upload s3 error', s3Err)
-         } else {
-           console.log(`File uploaded successfully at ${upload.Location}`)
-         }
-       })
-    });
+    })
+    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
 
   for (let key in editData) {
