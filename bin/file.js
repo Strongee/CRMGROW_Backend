@@ -25,7 +25,7 @@ const thumbnail_job = async() => {
     console.log('videos err', err.message)
   })
   for(let i = 2; i <videos.length; i++){
-    const video = videos[1]
+    const video = videos[i]
     if (video['thumbnail'] ) {
       const file_name = video['thumbnail'].slice(44)
       console.log('path', file_name)
