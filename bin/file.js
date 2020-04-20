@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const AWS = require('aws-sdk')
+const fs = require('fs')
 const { THUMBNAILS_PATH, ENV_PATH } = require('../config/path')
 const Video = require('../models/video')
 require('dotenv').config({ path: ENV_PATH })
