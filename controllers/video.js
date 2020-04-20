@@ -280,14 +280,10 @@ const updateDetail = async (req, res) => {
         });
       }
     })
-    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
 
   for (let key in editData) {
     video[key] = editData[key]
-  }
-  if( thumbnail ){
-    video['thumbnail'] = thumbnail
   }
   
   if(video['path'] && !video['preview']){
