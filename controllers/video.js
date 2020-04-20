@@ -211,8 +211,8 @@ const updateDetail = async (req, res) => {
   const editData = req.body
   let thumbnail;
   let { currentUser } = req
+  const file_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
-    const file_name = uuidv1()
     const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
   }
