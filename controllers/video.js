@@ -251,7 +251,7 @@ const updateDetail = async (req, res) => {
           } else {
             console.log(`File uploaded successfully at ${upload.Location}`)
           
-            video['url'] = upload.Location
+            video['thumbnail'] = upload.Location
             video.save().catch(err=>{
               console.log('video save error', err.message)
             })
