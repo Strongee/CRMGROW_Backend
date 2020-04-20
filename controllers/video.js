@@ -227,8 +227,10 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
+  console.log('file_path', thumbnail)
   
   if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
+    console.log('file_sync path', THUMBNAILS_PATH+file_name)
     fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
       if (err){
         console.log('file read err', err)
