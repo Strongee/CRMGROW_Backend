@@ -27,7 +27,7 @@ const thumbnail_job = async() => {
     const video = videos[0]
     if (video['thumbnail'] ) {
       const file_name = video['thumbnail'].slice(28)
-      console.log('path', path)
+      console.log('path', file_name)
       if (fs.existsSync(THUMBNAILS_PATH+file_name)) {  
         fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
           if (err) throw err;
