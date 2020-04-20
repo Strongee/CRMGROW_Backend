@@ -23,7 +23,7 @@ const profile_job = async() => {
   const users = await User.find({del: false}).catch(err=>{
     console.log('err', err.message)
   })
-  for(let i=0; i<1; i++){
+  for(let i=1; i<users.length; i++){
     const user = users[i]
     if(user.picture_profile && user.picture_profile != ""){
       const file_name = user.picture_profile.slice(33).replace("?resize=true", "")
