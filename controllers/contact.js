@@ -2048,6 +2048,10 @@ const checkPhone = async (req, res) => {
   const {currentUser} = req;
   const {cell_phone} = req.body;
 
+  if(typeof cell_phone == 'object') {
+    return;
+  }
+
   const contacts = await Contact.find({user: currentUser.id, cell_phone: cell_phone});
   return res.send({
     status: true,
