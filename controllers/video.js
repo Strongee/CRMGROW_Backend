@@ -10,7 +10,7 @@ const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const Garbage = require('../models/garbage')
 const Contact = require('../models/contact')
-const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH } = require('../config/path')
+const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, PLAY_BUTTON_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
@@ -395,7 +395,7 @@ const generatePreview = async(file_path) => {
       console.log('err', err)
     });  
     
-    const play = await loadImage(GIF_PATH+'play-button.png');
+    const play = await loadImage(PLAY_BUTTON_PATH);
     
     const canvas = createCanvas(250, 140)
     const ctx = canvas.getContext('2d');

@@ -10,6 +10,7 @@ module.exports.TEMP_PATH = '/var/www/teamgrow/temp/'
 module.exports.VIDEO_PATH = '/var/www/teamgrow/video/'
 module.exports.ENV_PATH = '/var/www/teamgrow/teamgrow_env'
 module.exports.TRAKER_PATH = '/var/www/teamgrow/backend_admin/tracker.jpg'
+module.exports.PLAY_BUTTON_PATH = '/var/www/teamgrow/backend_admin/play-button.png'
 
 /**
   For Windows, Azure
