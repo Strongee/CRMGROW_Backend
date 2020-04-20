@@ -27,7 +27,7 @@ const thumbnail_job = async() => {
   // for(let i = 0; i <videos.length; i++){
     const video = videos[0]
     if (video['thumbnail'] ) {
-      const file_name = video['thumbnail'].slice(34)
+      const file_name = video['thumbnail'].slice(44)
       console.log('path', file_name)
       if (fs.existsSync(THUMBNAILS_PATH+file_name)) {  
         fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
