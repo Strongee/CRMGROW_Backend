@@ -209,7 +209,6 @@ const createVideo = async (req, res) => {
 
 const updateDetail = async (req, res) => {
   const editData = req.body
-  let thumbnail;
   let { currentUser } = req
   
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
@@ -225,7 +224,11 @@ const updateDetail = async (req, res) => {
   
   const file_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
-    const file_path = base64Img.img(req.body.thumbnail, THUMBNAILS_PATH, file_name, function(){
+    base64Img.img(req.body.thumbnail, THUMBNAILS_PATH, file_name, function(err, filepath){
+      if(err){
+        console.log('image sync err', err)
+      }
+      console.log('filepath', filepath)
       if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
         console.log('file_sync path', THUMBNAILS_PATH+file_name)
         fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
