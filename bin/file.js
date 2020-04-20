@@ -24,7 +24,7 @@ const thumbnail_job = async() => {
   const videos = await Video.find({del: false, type: {$nin: ['youtube', 'vimeo']}}).catch(err=>{
     console.log('videos err', err.message)
   })
-  // for(let i = 0; i <videos.length; i++){
+  for(let i = 2; i <videos.length; i++){
     const video = videos[1]
     if (video['thumbnail'] ) {
       const file_name = video['thumbnail'].slice(44)
@@ -81,7 +81,7 @@ const thumbnail_job = async() => {
        });
       } 
     }
-  // }
+  }
 }
 
 thumbnail_job()
