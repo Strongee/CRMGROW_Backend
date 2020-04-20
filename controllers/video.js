@@ -227,6 +227,59 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
+  
+  if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
+    fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
+      if (err){
+        console.log('file read err', err)
+      }else {
+        console.log('File read was successful', data)
+        const today = new Date()
+        const year = today.getYear()
+        const month = today.getMonth()
+        const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+            Body: data,
+            ACL: 'public-read'
+        };
+        s3.upload(params, async (s3Err, upload)=>{
+          if (s3Err){
+            console.log('upload s3 error', s3Err)
+          } else {
+            console.log(`File uploaded successfully at ${upload.Location}`)
+          
+            video['url'] = upload.Location
+            video.save().catch(err=>{
+              console.log('video save error', err.message)
+            })
+          }
+        })
+      }
+     });
+    sharp(THUMBNAILS_PATH+file_name)
+    .resize(250, 140)
+    .toBuffer()
+    .then(data => {
+       const today = new Date()
+       const year = today.getYear()
+       const month = today.getMonth()
+       const params = {
+          Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+          Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+          Body: data,
+          ACL: 'public-read'
+        };
+        
+        s3.upload(params, async (s3Err, upload)=>{
+         if (s3Err){
+           console.log('upload s3 error', s3Err)
+         } else {
+           console.log(`File uploaded successfully at ${upload.Location}`)
+         }
+       })
+    });
+  }
 
   for (let key in editData) {
     video[key] = editData[key]

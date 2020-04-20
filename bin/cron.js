@@ -10,6 +10,7 @@ require('dotenv').config({ path: ENV_PATH })
 
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
+const sharp = require('sharp')
 
 const User = require('../models/user')
 const Contact = require('../models/contact')
