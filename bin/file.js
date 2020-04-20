@@ -25,7 +25,7 @@ const thumbnail_job = async() => {
     console.log('videos err', err.message)
   })
   // for(let i = 0; i <videos.length; i++){
-    const video = videos[0]
+    const video = videos[1]
     if (video['thumbnail'] ) {
       const file_name = video['thumbnail'].slice(44)
       console.log('path', file_name)
@@ -61,7 +61,10 @@ const thumbnail_job = async() => {
        .toBuffer()
        .then(data => {
           console.log('data', data)
-           const params = {
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
              Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
              Body: data,
