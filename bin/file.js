@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const AWS = require('aws-sdk')
 const fs = require('fs')
-const { THUMBNAILS_PATH, ENV_PATH } = require('../config/path')
+const { TEMP_PATH, ENV_PATH } = require('../config/path')
 const Video = require('../models/video')
 require('dotenv').config({ path: ENV_PATH })
 const config = require('../config/config')
@@ -20,69 +20,73 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 .catch(err => console.error('Could not connect to mongo DB', err))
 
 
-const thumbnail_job = async() => {
-  const videos = await Video.find({del: false, type: {$nin: ['youtube', 'vimeo']}}).catch(err=>{
+const url_job = async() => {
+  const videos = await Video.find({del: false, converted: false, type: {$nin: ['application/octet-stream', 'youtube', 'vimeo']}}).catch(err=>{
     console.log('videos err', err.message)
   })
-  for(let i = 2; i <videos.length; i++){
+  for(let i = 0; i <videos.length; i++){
     const video = videos[i]
-    if (video['thumbnail'] ) {
-      const file_name = video['thumbnail'].slice(44)
+    if (video['url']) {
+      const file_name = video['url'].slice(39)
       console.log('path', file_name)
-      if (fs.existsSync(THUMBNAILS_PATH+file_name)) {  
-        fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
-          if (err) throw err;
-          console.log('File read was successful', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-              Body: data,
-              ACL: 'public-read'
-          };
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            
-              video['thumbnail'] = upload.Location
-              video.save().catch(err=>{
-                console.log('video save error', err.message)
-              })
-            }
-          })
+      if (fs.existsSync(TEMP_PATH+file_name)) {  
+        fs.readFile(TEMP_PATH+file_name, (err, data) => {
+          if (err){
+            console.log('file read err', err)
+          }else {
+            console.log('File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'video' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err){
+                console.log('upload s3 error', s3Err)
+              } else {
+                console.log(`File uploaded successfully at ${upload.Location}`)
+              
+                video['url'] = upload.Location
+                video['converted'] = true
+                video.save().catch(err=>{
+                  console.log('video save error', err.message)
+                })
+              }
+            })
+          }
        });
        
-       sharp(THUMBNAILS_PATH+file_name)
-       .resize(250, 140)
-       .toBuffer()
-       .then(data => {
-          console.log('data', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-             Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-             Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
-             Body: data,
-             ACL: 'public-read'
-           };
+      //  sharp(THUMBNAILS_PATH+file_name)
+      //  .resize(250, 140)
+      //  .toBuffer()
+      //  .then(data => {
+      //     console.log('data', data)
+      //     const today = new Date()
+      //     const year = today.getYear()
+      //     const month = today.getMonth()
+      //     const params = {
+      //        Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+      //        Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+      //        Body: data,
+      //        ACL: 'public-read'
+      //      };
            
-           s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            }
-          })
-       });
+      //      s3.upload(params, async (s3Err, upload)=>{
+      //       if (s3Err){
+      //         console.log('upload s3 error', s3Err)
+      //       } else {
+      //         console.log(`File uploaded successfully at ${upload.Location}`)
+      //       }
+      //     })
+      //  });
       } 
     }
   }
 }
 
-thumbnail_job()
+url_job()
 
