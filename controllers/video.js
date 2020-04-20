@@ -229,9 +229,8 @@ const updateDetail = async (req, res) => {
         console.log('image sync err', err)
       }
       console.log('filepath', filepath)
-      if(fs.existsSync(THUMBNAILS_PATH+file_name)) {  
-        console.log('file_sync path', THUMBNAILS_PATH+file_name)
-        fs.readFile(THUMBNAILS_PATH+file_name, (err, data) => {
+      if(fs.existsSync(filepath)) {  
+        fs.readFile(filepath, (err, data) => {
           if (err){
             console.log('file read err', err)
           }else {
@@ -259,7 +258,7 @@ const updateDetail = async (req, res) => {
             })
           }
          });
-        sharp(THUMBNAILS_PATH+file_name)
+        sharp(filepath)
         .resize(250, 140)
         .toBuffer()
         .then(data => {
