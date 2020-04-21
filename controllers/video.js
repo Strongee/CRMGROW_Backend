@@ -10,7 +10,7 @@ const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const Garbage = require('../models/garbage')
 const Contact = require('../models/contact')
-const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, PLAY_BUTTON_PATH } = require('../config/path')
+const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
@@ -51,6 +51,9 @@ const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
 const request = require('request-promise')
 const createBody = require('gmail-api-create-message-body')
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const child_process = require('child_process');
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -293,6 +296,10 @@ const updateDetail = async (req, res) => {
     video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
     })
+  }
+  
+  if(video['type'] === 'video/webm'){
+    videoConvert(video.id)
   }
   
   video['updated_at'] = new Date()
@@ -1479,6 +1486,30 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 }
 
+const videoConvert = async(id) => {
+  const video = await Video.findOne({_id: id}).catch(err=>{
+    console.log('video convert find video error', err.message)
+  })
+  const file_path = video['path']
+  const new_file = uuidv1() + '.mov'
+  const new_path = TEMP_PATH + new_file
+  let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
+  console.log('args', args)
+  const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.on('end', function(){
+    console.log('converted end', file_path)
+    const new_url = urls.VIDEO_URL+new_file
+    video['url'] = new_url
+    video['recording'] = false
+    video['path'] = new_path
+    video.save().then(()=>{
+    }).catch(err=>{
+      console.log('err', err)
+      fs.unlinkSync(file_path)
+    })
+  })
+}
+
 module.exports = {
   play,
   play1,
@@ -1487,6 +1518,7 @@ module.exports = {
   create,
   updateDetail,
   updateDefault,
+  videoConvert,
   get,
   getThumbnail,
   getAll,
