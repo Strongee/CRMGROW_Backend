@@ -213,7 +213,7 @@ const createVideo = async (req, res) => {
 const updateDetail = async (req, res) => {
   const editData = req.body
   let { currentUser } = req
-  
+  let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
     console.log('err', err)
   })
@@ -227,64 +227,89 @@ const updateDetail = async (req, res) => {
   
   const file_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
-    base64Img.img(req.body.thumbnail, THUMBNAILS_PATH, file_name, function(err, filepath){
-      if(err){
-        console.log('image sync err', err)
-      }
-      console.log('filepath', filepath)
-      if(fs.existsSync(filepath)) {  
-        fs.readFile(filepath, (err, data) => {
-          if (err){
-            console.log('file read err', err)
-          }else {
-            console.log('File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-            s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err){
-                console.log('upload s3 error', s3Err)
-              } else {
-                console.log(`File uploaded successfully at ${upload.Location}`)
-              
-                video['thumbnail'] = upload.Location
-                video.save().catch(err=>{
-                  console.log('video save error', err.message)
-                })
-              }
-            })
-          }
-         });
-        sharp(filepath)
-        .resize(250, 140)
-        .toBuffer()
-        .then(data => {
-           const today = new Date()
-           const year = today.getYear()
-           const month = today.getMonth()
-           const params = {
+    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
+    if(fs.existsSync(thumbnail_path)) {  
+      fs.readFile(thumbnail_path, (err, data) => {
+        if (err){
+          console.log('file read err', err)
+        }else {
+          console.log('File read was successful', data)
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
               Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
               Body: data,
               ACL: 'public-read'
-            };
+          };
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
             
-            s3.upload(params, async (s3Err, upload)=>{
-             if (s3Err){
-               console.log('upload s3 error', s3Err)
-             } else {
-               console.log(`File uploaded successfully at ${upload.Location}`)
-             }
-           })
+              video['thumbnail'] = upload.Location
+              video.save().catch(err=>{
+                console.log('video save error', err.message)
+              })
+            }
+          })
+        }
         });
+        
+      // Thumbnail
+      let image = await loadImage(thumbnail_path);
+        
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
       }
-    })
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      fs.writeFileSync(GIF_PATH+`frame-0.png`, buf)
+    
+      sharp(thumbnail_path)
+      .resize(250, 140)
+      .toBuffer()
+      .then(data => {
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+            Body: data,
+            ACL: 'public-read'
+          };
+          
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+            }
+          })
+      });
+    }
   }
 
   for (let key in editData) {
@@ -362,7 +387,7 @@ const updateDefault = async (req, res) => {
   
   if(!defaultVideo['preview']){
     const file_path = defaultVideo['path']
-    defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
+    defaultVideo['preview'] = await generatePreview(thumbnail_path, file_path).catch(err=>{
       console.log('err', err)
     })
   }
@@ -386,7 +411,7 @@ const updateDefault = async (req, res) => {
   })
 }
 
-const generatePreview = async(file_path) => {
+const generatePreview = async(thumbnail_path, file_path) => {
 
   return new Promise(async(resolve, reject) => {    
     let offsets = []
@@ -437,6 +462,7 @@ const generatePreview = async(file_path) => {
       let buf = canvas.toBuffer();
       fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
     }
+    
     const file_name = uuidv1()
     const stream = pngFileStream(GIF_PATH+'frame-??.png')
       .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
@@ -561,7 +587,7 @@ const getAll = async (req, res) => {
     _video_detail_list.push(video_detail)
   }
 
-  res.send({
+  return res.send({
     status: true,
     data: _video_detail_list
   })
