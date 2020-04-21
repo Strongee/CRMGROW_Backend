@@ -289,7 +289,7 @@ const updateDetail = async (req, res) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-0.png`, buf)
+      fs.writeFileSync(GIF_PATH+`frame-1.png`, buf)
     
       sharp(thumbnail_path)
       .resize(250, 140)
@@ -415,7 +415,7 @@ const updateDefault = async (req, res) => {
   })
 }
 
-const generatePreview = async(thumbnail_path, file_path) => {
+const generatePreview = async(file_path) => {
 
   return new Promise(async(resolve, reject) => {    
     let offsets = []
@@ -464,7 +464,7 @@ const generatePreview = async(thumbnail_path, file_path) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+      fs.writeFileSync(GIF_PATH+`frame-${i+1}.png`, buf)
     }
     
     const file_name = uuidv1()
