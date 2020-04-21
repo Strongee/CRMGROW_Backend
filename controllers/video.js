@@ -289,7 +289,10 @@ const updateDetail = async (req, res) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-1.png`, buf)
+      
+      for(let i=0; i<10; i++){
+        fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+      }
     
       sharp(thumbnail_path)
       .resize(250, 140)
@@ -464,7 +467,7 @@ const generatePreview = async(file_path) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-${i+1}.png`, buf)
+      fs.writeFileSync(GIF_PATH+`frame-${i+9}.png`, buf)
     }
     
     const file_name = uuidv1()
