@@ -1496,7 +1496,7 @@ const videoConvert = async(id) => {
   let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
   console.log('args', args)
   const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
-  ffmpegConvert.on('end', function(){
+  ffmpegConvert.on('close', function(){
     console.log('converted end', file_path)
     const new_url = urls.VIDEO_URL+new_file
     video['url'] = new_url
