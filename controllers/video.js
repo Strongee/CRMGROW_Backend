@@ -290,8 +290,13 @@ const updateDetail = async (req, res) => {
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
       
-      for(let i=0; i<10; i++){
-        fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+      for(let i=0; i<20; i++){
+        if(i<10){
+          fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+        } else {
+          fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+        }
+        
       }
     
       sharp(thumbnail_path)
@@ -394,7 +399,7 @@ const updateDefault = async (req, res) => {
   
   if(!defaultVideo['preview']){
     const file_path = defaultVideo['path']
-    defaultVideo['preview'] = await generatePreview(thumbnail_path, file_path).catch(err=>{
+    defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
     })
   }
@@ -467,7 +472,7 @@ const generatePreview = async(file_path) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-${i+9}.png`, buf)
+      fs.writeFileSync(GIF_PATH+`frame-${i+19}.png`, buf)
     }
     
     const file_name = uuidv1()
