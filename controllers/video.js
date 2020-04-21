@@ -704,7 +704,7 @@ const bulkEmail = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '?resize=true'
+            preview = video['thumbnail'] + '-resize'
           }
       
           
@@ -899,7 +899,7 @@ const bulkGmail = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '?resize=true'
+            preview = video['thumbnail'] + '-resize'
           }
                
           if(typeof video_content == 'undefined'){
@@ -1371,7 +1371,7 @@ const bulkOutlook = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '?resize=true'
+            preview = video['thumbnail'] + '-resize'
           }
       
           
