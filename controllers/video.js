@@ -323,7 +323,7 @@ const updateDetail = async (req, res) => {
     video[key] = editData[key]
   }
   
-  if(video['path'] && !video['preview']){
+  if(video['path'] && req.body.thumbnail){
     const file_path = video['path']
     video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
@@ -478,8 +478,10 @@ const generatePreview = async(file_path) => {
       stream.on('finish', () => {
         if (fs.existsSync(GIF_PATH+file_name)) {
           fs.readFile(GIF_PATH+file_name, (err, data) => {
-            if (err) throw err;
-            console.log('File read was successful', data)
+            if (err){
+              console.log('stream file error', err)
+            };
+            console.log('Gif File read was successful', data)
             const today = new Date()
             const year = today.getYear()
             const month = today.getMonth()
@@ -491,7 +493,7 @@ const generatePreview = async(file_path) => {
             };
             s3.upload(params, async (s3Err, upload)=>{
               if (s3Err) throw s3Err
-              console.log(`File uploaded successfully at ${upload.Location}`)
+              console.log(`Gif File uploaded successfully at ${upload.Location}`)
               
               fs.unlinkSync(GIF_PATH+file_name)
               resolve(upload.Location)
