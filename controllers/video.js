@@ -259,6 +259,10 @@ const updateDetail = async (req, res) => {
         });
         
       // Thumbnail
+      const play = await loadImage(PLAY_BUTTON_PATH);
+    
+      const canvas = createCanvas(250, 140)
+      const ctx = canvas.getContext('2d');
       let image = await loadImage(thumbnail_path);
         
       let height = image.height;
