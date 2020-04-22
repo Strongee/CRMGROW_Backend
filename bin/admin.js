@@ -24,7 +24,7 @@ const addContacts = async() => {
     for(let i=0; i<users.length; i++){
       const user = users[i]
       let contact
-      const old_user = await Contact.findOne({email: user.email}).catch(err=>{
+      const old_user = await Contact.findOne({email: user.email, user: admin.id}).catch(err=>{
         console.log('err', err)
       })
       if(!old_user){
