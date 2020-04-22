@@ -464,7 +464,6 @@ const getTwilioNumber = async(id) => {
   let countryCode
   let fromNumber
   const phone = user.phone
-  console.log('user', user)
   if (phone) {
     areaCode = phone.areaCode
     countryCode = phone.countryCode
@@ -476,6 +475,10 @@ const getTwilioNumber = async(id) => {
   .availablePhoneNumbers(countryCode)
   .local.list({
     areaCode: areaCode,
+  }).catch(err=>{
+    console.log('phone number get err', err)
+    fromNumber = config.TWILIO.TWILIO_NUMBER
+    return fromNumber
   })
 
   let number = data[0];
@@ -487,6 +490,10 @@ const getTwilioNumber = async(id) => {
     .availablePhoneNumbers(countryCode)
     .local.list({
       areaCode: areaCode1,
+    }).catch(err=>{
+      console.log('phone number get err', err)
+      fromNumber = config.TWILIO.TWILIO_NUMBER
+      return fromNumber
     })
     number = data1[0];
   }
