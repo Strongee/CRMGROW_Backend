@@ -37,6 +37,8 @@ router.post('/receive', catchError(ContactCtrl.receiveEmail))
 // Import contact list as file
 router.post('/import-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.importCSV))
 
+router.post('/overwrite-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.overwriteCSV))
+
 // Download contact list as csv file
 router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV))
 
@@ -68,6 +70,9 @@ router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources))
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
 
+// Load Duplicated Contacts
+router.get('/load-duplication', UserCtrl.checkAuth, catchError(ContactCtrl.loadDuplication));
+
 // Get a pull contact info for profile page
 router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 
@@ -93,5 +98,8 @@ router.get('/nth-get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getNthCont
 router.post('/check-email', UserCtrl.checkAuth, catchError(ContactCtrl.checkEmail));
 // Check the Phone
 router.post('/check-phone', UserCtrl.checkAuth, catchError(ContactCtrl.checkPhone));
+
+// Check the Merge
+router.post('/merge', UserCtrl.checkAuth, catchError(ContactCtrl.mergeContacts));
 
 module.exports = router
