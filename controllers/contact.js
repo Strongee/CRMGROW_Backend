@@ -14,6 +14,10 @@ const Automation = require('../models/automation')
 const EmailTracker = require('../models/email_tracker')
 const Reminder = require('../models/reminder')
 const Garbage = require('../models/garbage')
+const ImageTracker = require('../models/image_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const VideoTracker = require('../models/video_tracker');
+const PhoneLog = require('../models/phone_log');
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
 const fs = require('fs')
@@ -755,7 +759,7 @@ const importCSV = async (req, res) => {
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
             if(data['email']){
-              const email_contact = await Contact.findOne({email: data['email']}).catch(err=>{
+              const email_contact = await Contact.findOne({email: data['email'], user: currentUser.id}).catch(err=>{
                 console.log('err', err)
               })
               if(email_contact){
@@ -770,7 +774,7 @@ const importCSV = async (req, res) => {
               }
             }
             if(data['contact']){
-              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone']}).catch(err=>{
+              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone'], user: currentUser.id}).catch(err=>{
                 console.log('err', err)
               })
               if(phone_contact){
@@ -880,6 +884,42 @@ const importCSV = async (req, res) => {
         })
       });
     });
+}
+
+const overwriteCSV = async (req, res) => {
+  let file = req.file
+  const { currentUser } = req
+  let failure = []
+  
+  let contact_array = []
+  fs.createReadStream(file.path).pipe(csv())
+    .on('data', async(data) => {
+      contact_array.push(data)
+    }).on('end', async () => {
+      let promise_array = []
+      for(let i = 0 ; i < contact_array.length ; i++) {
+        let email = contact_array[i]['email'];
+        let data = contact_array[i];
+        let tags = [];
+        if (data['tags'] != '' && typeof data['tags'] != 'undefined') {
+          tags = data['tags'].split(/,\s|\s,|,|\s/);
+        }
+        delete data.tags
+        for(let key in data) {
+          if (data[key] == '' && typeof data[key] == 'undefined') {
+            delete data[key]
+          }
+        }        
+        if(email) {
+          await Contact.updateOne({email: email}, { $set: data ,  $push: {tags: {$each: tags}}}).catch(err => {
+            console.log('err', err)
+          })
+        }
+      }
+      return res.send({
+        status: true
+      })
+    })
 }
 
 const exportCSV = async (req, res) => {
@@ -2048,10 +2088,87 @@ const checkPhone = async (req, res) => {
   const {currentUser} = req;
   const {cell_phone} = req.body;
 
+  if(typeof cell_phone == 'object') {
+    return;
+  }
+
   const contacts = await Contact.find({user: currentUser.id, cell_phone: cell_phone});
   return res.send({
     status: true,
     data: contacts
+  })
+}
+
+const loadDuplication = async (req, res) => {
+  const {currentUser} = req;
+  const duplications = await Contact.aggregate([
+    {
+        $match: {
+            user: mongoose.Types.ObjectId(currentUser._id)
+        }
+    },
+    {
+        $group: {
+            _id: {email: "$email"},
+            count: { $sum: 1 },
+            contacts: {$push: "$$ROOT"}
+        }
+    },
+    {
+    $match: { "count": { $gte: 2 } }
+    }
+  ]).catch(err => {
+    console.log("err", err);
+    return res.status(500).send({
+      status: false,
+      error: err.error
+    })
+  });
+
+  return res.send({
+    status: true,
+    data: duplications
+  })
+}
+
+const mergeContacts = (req, res) => {
+  const {currentUser} = req;
+  const {
+    primary,
+    secondaries,
+    result
+  } = req.body;
+  delete result['_id']
+  Contact.updateOne({_id: mongoose.Types.ObjectId(primary)}, {$set: result}).then(data => {
+    Contact.deleteMany({_id: {$in: secondaries}}).then( async(data) => {
+      await Activity.deleteMany({contacts: {$in: secondaries}, type: 'contacts'});
+      await Activity.updateMany({contacts: {$in: secondaries}}, {$set: {contacts: mongoose.Types.ObjectId(primary)}});
+      await EmailTracker.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await Email.updateMany({contacts: {$in: secondaries}}, {$set: {contacts: mongoose.Types.ObjectId(primary)}});
+      await FollowUp.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await ImageTracker.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await Note.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await PDFTracker.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await PhoneLog.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await Reminder.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      await VideoTracker.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+      return res.send({
+        status: true
+      })
+    }).catch(e => {
+      console.log("error", e);
+      return res.status(500).send({
+        status: false,
+        error: e.error
+      })
+    })
+    // TimeLine.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+  }).catch(e => {
+    console.log("error", e);
+    return res.status(500).send({
+      status: false,
+      error: e.error
+    })
   })
 }
 
@@ -2073,6 +2190,7 @@ module.exports = {
   bulkUpdate,
   receiveEmail,
   importCSV,
+  overwriteCSV,
   exportCSV,
   getById,
   getByIds,
@@ -2082,5 +2200,7 @@ module.exports = {
   loadTimelines,
   selectAllContacts,
   checkEmail,
-  checkPhone
+  checkPhone,
+  loadDuplication,
+  mergeContacts
 }
