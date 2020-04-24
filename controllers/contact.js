@@ -759,7 +759,7 @@ const importCSV = async (req, res) => {
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
             if(data['email']){
-              const email_contact = await Contact.findOne({email: data['email']}).catch(err=>{
+              const email_contact = await Contact.findOne({email: data['email'], user: currentUser.id}).catch(err=>{
                 console.log('err', err)
               })
               if(email_contact){
@@ -774,7 +774,7 @@ const importCSV = async (req, res) => {
               }
             }
             if(data['contact']){
-              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone']}).catch(err=>{
+              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone'], user: currentUser.id}).catch(err=>{
                 console.log('err', err)
               })
               if(phone_contact){
