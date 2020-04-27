@@ -2,6 +2,7 @@ const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator/check')
 const User = require('../../models/user')
+const Payment = require('../../models/payment')
 const Contact = require('../../models/contact')
 const Tag = require('../../models/tag')
 const Appointment = require('../../models/appointment')
@@ -449,7 +450,15 @@ const closeAccount = async(req, res) =>{
 }
 
 const disableUser = async(req, res) => {
-  User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()} } ).then(()=>{
+  const user = await User.findOne({_id: req.params.id}).catch(err=>{
+    console.log('user found err', err.message)
+  })
+  if(user['payment']){
+    PaymentCtrl.cancelCustomer(user['payment']).catch(err=>{
+      console.log('err', err)
+    })
+  }
+  User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()}, $unset: {payment: true}} ).then(()=>{
     return res.send({
       status: true
     })
@@ -462,16 +471,45 @@ const disableUser = async(req, res) => {
 }
 
 const suspendUser = async(req, res) => {
-  User.update({_id: req.params.id}, {$set: {'subscription.suspended': true, updated_at: new Date()}}).then(()=>{
-    return res.send({
-      status: true
-    })
-  }).catch(err=>{
-    return res.status(500).send({
-      status: false,
-      error: err.message
-    })
+  const user = await User.findOne({_id: req.params.id}).catch(err=>{
+    console.log('supsend user found error', err)
   })
+  
+  if(user['payment']){
+    const payment = await Payment.findOne({_id: user.payment}).catch(err=>{
+      console.log('payment found err', err)
+    })
+    
+    PaymentCtrl.cancelSubscription(payment['subscription']).then(()=>{
+      User.update({_id: req.params.id}, {$set: {'subscription.suspended': true, updated_at: new Date()}}).then(()=>{
+        return res.send({
+          status: true
+        })
+      }).catch(err=>{
+        return res.status(500).send({
+          status: false,
+          error: err.message
+        })
+      })
+    }).catch(err=>{
+      console.log('cancel subscription err', err)
+      return res.status(400).send({
+        status: false,
+        error: err.message || 'cancel subscription err'
+      })
+    })
+  } else {
+    User.update({_id: req.params.id}, {$set: {'subscription.suspended': true, updated_at: new Date()}}).then(()=>{
+      return res.send({
+        status: true
+      })
+    }).catch(err=>{
+      return res.status(500).send({
+        status: false,
+        error: err.message
+      })
+    })
+  }
 }
 
 const activateUser = async(req, res) => {
