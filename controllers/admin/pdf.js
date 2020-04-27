@@ -250,7 +250,7 @@ const getPdfsByUser = async (req, res) => {
   const page = parseInt(req.body.page);
   const skip = (page - 1) * 12;
 
-  const pdfs = await Pdf.aggregate([
+  const pdfs = await PDF.aggregate([
     {$match: { "user": mongoose.Types.ObjectId(user), "del": false }},
     {$skip: skip},
     {$limit: 12}
@@ -261,7 +261,7 @@ const getPdfsByUser = async (req, res) => {
     })
   });
 
-  const pdfCounts = await Pdf.countDocuments({"del": false, "user": user });
+  const pdfCounts = await PDF.countDocuments({"del": false, "user": user });
 
   return res.send({
     status: true,
