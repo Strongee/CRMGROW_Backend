@@ -445,6 +445,7 @@ body.is_protected .view-container {
 body {
     min-height: 100vh;
     padding: 10px 0px 100px 0px;
+    position: relative;
 }
 .footer {
     padding: 15px;

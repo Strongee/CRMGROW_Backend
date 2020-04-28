@@ -432,6 +432,7 @@ a.dropdown-item{
 body {
   min-height: 100vh;
   padding: 10px 0px 100px 0px;
+  position: relative;
 }
 .footer {
   padding: 15px;
