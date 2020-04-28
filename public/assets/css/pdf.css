@@ -427,3 +427,21 @@ a.dropdown-item{
         margin-top: 100px;
     }
 }
+
+
+body {
+    min-height: 100vh;
+    padding: 10px 0px 100px 0px;
+}
+.footer {
+    padding: 15px;
+    background: #f8f8f8;
+    font-size: 12px;
+    color: gray;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+}
+.footer-desc {
+    margin-bottom: 0px;
+}

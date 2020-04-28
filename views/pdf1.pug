@@ -50,6 +50,9 @@ head
       | #{pdf.title}
     .desc-content
       | #{pdf.description}
+.footer
+  p.footer-desc
+   | The statements and opinions contained in this advertisement are solely those of the individual author and do not necessarily reflect the positions or opinions of eXp Realty, LLC, or its subsidiaries or affiliates (the “Company”). The Company does not assume any responsibility for, nor does it warrant the accuracy, completeness or quality of the information provided.
 input#url(type='hidden', value=`${pdf.url}`)
 input#activity(type='hidden', value=`${activity}`)
 input#contact(type='hidden', value=`${contact}`)
