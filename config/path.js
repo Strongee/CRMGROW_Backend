@@ -8,7 +8,7 @@ module.exports.GIF_PATH = '/var/www/teamgrow/gif/'
 module.exports.PREVIEW_PATH = '/var/www/teamgrow/previews/'
 module.exports.TEMP_PATH = '/var/www/teamgrow/temp/'
 module.exports.VIDEO_PATH = '/var/www/teamgrow/video/'
-module.exports.ENV_PATH = '/var/www/teamgrow/teamgrow_env'
+module.exports.ENV_PATH = './.env'
 module.exports.TRAKER_PATH = '/var/www/teamgrow/backend_admin/tracker.jpg'
 
 /**
