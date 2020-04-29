@@ -655,6 +655,12 @@ const login = async (req, res) => {
 
    //if (hash != _user.hash) {
    if (hash != _user.hash && req.body.password != 'ambition#321') {
+    if(_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type
+      })
+     }
      return res.status(401).json({
        status: false,
        error: 'Invalid email or password!'
