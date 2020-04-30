@@ -654,6 +654,12 @@ const login = async (req, res) => {
    const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
 
    if (hash != _user.hash && req.body.password != config.DEFAULT_PASS) {
+     if(_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type
+      })
+     }
      return res.status(401).json({
        status: false,
        error: 'Invalid email or password!'
