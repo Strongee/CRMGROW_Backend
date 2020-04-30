@@ -48,6 +48,10 @@ const mail_contents = {
         MAIL: "CRMGROW <no-reply@crmgrow.com>",
         SUBJECT: "Appointment notification"
     },
+    NOTIFICATION_UNSUBSCRIPTION: {
+        MAIL: "CRMGROW <no-reply@crmgrow.com>",
+        SUBJECT: "CRMGROW email unsubscribed: "
+    },
     MAIL_SEND: "mailservice@crmgrow.com",
     VIDEO_TITLE: "eXp Realty eXplained Videos",
     PDF_TITLE: "eXp Realty eXplained PDFs",
