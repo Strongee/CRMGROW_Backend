@@ -732,7 +732,6 @@ const socialLogin = async (req, res) => {
 }
 
 const checkAuth = async (req, res, next) => {
-  console.log('config.JWT_SECRET', config.JWT_SECRET)
   const token = req.get('Authorization')
   let decoded
   try {

@@ -1137,11 +1137,11 @@ const receiveEmail = async(req, res) => {
   })
   
   if(activity){
-    const user = await User.findOne({ _id: _email.user }).catch(err => {
+    const user = await User.findOne({ _id: activity.user }).catch(err => {
       console.log('err', err)
     })
   
-    const contact = await Contact.findOne({ _id: _email.contacts }).catch(err => {
+    const contact = await Contact.findOne({ _id: activity.contacts }).catch(err => {
       console.log('err', err)
     })
     
@@ -1313,11 +1313,11 @@ const unSubscribeEmail = async(req, res) => {
 
   let _activity
   if(activity){
-    const user = await User.findOne({ _id: _email.user }).catch(err => {
+    const user = await User.findOne({ _id: activity.user }).catch(err => {
       console.log('err', err)
     })
   
-    const contact = await Contact.findOne({ _id: _email.contacts }).catch(err => {
+    const contact = await Contact.findOne({ _id: activity.contacts }).catch(err => {
       console.log('err', err)
     })
     
