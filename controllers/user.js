@@ -767,7 +767,7 @@ const checkAuth = async (req, res, next) => {
     } else {
       res.status(402).send({
         status: false,
-        error: 'not connnected'
+        error: 'not connected'
       })
     }
 
@@ -1258,7 +1258,7 @@ const syncCalendar = async (req, res) => {
         console.log('outlook token grant error', error)
         return res.status(406).send({
           status: false,
-          error: 'not connnected'
+          error: 'not connected'
         })
       })
 
@@ -1376,7 +1376,7 @@ const disconCalendar = async (req, res) => {
         console.log('outlook token grant error', error)
         return res.status(406).send({
           status: false,
-          error: 'not connnected'
+          error: 'not connected'
         })
       })
 
