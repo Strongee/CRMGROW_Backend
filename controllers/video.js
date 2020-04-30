@@ -606,60 +606,60 @@ const bulkEmail = async(req, res) => {
       let video_content = content
       let activity
       for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
-          let preview
-          if(video['preview']){
-            preview = video['preview']
-          } else {
-            preview = video['thumbnail'] + '?resize=true'
-          }
-      
-          
-          if(typeof video_content == 'undefined'){
-            video_content = ''
-          }
-          
-          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: 'sent video using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: video._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: video_subject,
-            description: video_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          
-          if(videos.length>=2){
-            video_titles = mail_contents.VIDEO_TITLE
-          }else{
-            video_titles = `${video.title}`
-          }
-          
-          if(j < videos.length-1){  
-            video_descriptions = video_descriptions + `${video.description}, ` 
-          } else{
-            video_descriptions = video_descriptions + video.description
-          }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          video_objects = video_objects + video_object                      
+        const video = videos[j]         
+        let preview
+        if(video['preview']){
+          preview = video['preview']
+        } else {
+          preview = video['thumbnail'] + '?resize=true'
+        }
+    
+        
+        if(typeof video_content == 'undefined'){
+          video_content = ''
+        }
+        
+        video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+        
+        video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+        
+        const _activity = new Activity({
+          content: 'sent video using email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'videos',
+          videos: video._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          subject: video_subject,
+          description: video_content
+        })
+        
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+        
+        if(videos.length>=2){
+          video_titles = mail_contents.VIDEO_TITLE
+        }else{
+          video_titles = `${video.title}`
+        }
+        
+        if(j < videos.length-1){  
+          video_descriptions = video_descriptions + `${video.description}, ` 
+        } else{
+          video_descriptions = video_descriptions + video.description
+        }
+        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+        //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+        video_objects = video_objects + video_object                      
       }
       
       if(subject == '' ){
@@ -669,29 +669,29 @@ const bulkEmail = async(req, res) => {
         video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
     
-        if(video_content.search(/{video_object}/ig) != -1){
-          video_content = video_content.replace(/{video_object}/ig, video_objects)
-        }else{
-          video_content = video_content+'<br/>'+video_objects
-        }
+      if(video_content.search(/{video_object}/ig) != -1){
+        video_content = video_content.replace(/{video_object}/ig, video_objects)
+      }else{
+        video_content = video_content+'<br/>'+video_objects
+      }
+      
+      if(content.search(/{video_title}/ig) != -1){
+        video_content = video_content.replace(/{video_title}/ig, video_titles)
+      }
+      
+      if(content.search(/{video_description}/ig) != -1){
+        video_content = video_content.replace(/{video_description}/ig, video_descriptions)
+      }
         
-        if(content.search(/{video_title}/ig) != -1){
-          video_content = video_content.replace(/{video_title}/ig, video_titles)
-        }
-        
-        if(content.search(/{video_description}/ig) != -1){
-          video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-        }
-        
-        const msg = {
-          to: _contact.email,
-          from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-          replyTo: currentUser.email,
-          subject: video_subject,
-          html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
-          text: video_content
-        }
+      const msg = {
+        to: _contact.email,
+        from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+        replyTo: currentUser.email,
+        subject: video_subject,
+        html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>',
+        text: video_content
+      }
         
         let promise = new Promise((resolve, reject)=>{
           sgMail.send(msg).then(async(_res) => {

@@ -405,10 +405,29 @@ const bulkOutlook = async (req, res) => {
     });
     let email_content = content
     let email_subject = subject
+    let promise 
     
-    const _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+    let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
       console.log('contact found err', err.message)
     })
+
+    if(!_contact) {
+      _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      promise = new Promise(async(resolve, reject)=>{
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'contact email not found or unsubscribed'
+        })
+        resolve()
+      })
+      promise_array.push(promise)
+      continue;
+    }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
@@ -513,7 +532,7 @@ const bulkOutlook = async (req, res) => {
       saveToSentItems: "true"
     };
 
-    const promise = new Promise((resolve, reject) => {
+    promise = new Promise((resolve, reject) => {
       client.api('/me/sendMail')
       .post(sendMail).then(()=>{
         Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: activity.id } }).catch(err => {
@@ -741,16 +760,65 @@ const bulkEmail = async (req, res) => {
   for (let i = 0; i < contacts.length; i++) {
     let email_content = content
     let email_subject = subject
-    const _contact = await Contact.findOne({ _id: contacts[i] })
+    let promise 
+    
+    let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+      console.log('contact found err', err.message)
+    })
+
+    if(!_contact) {
+      _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      promise = new Promise(async(resolve, reject)=>{
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'contact email not found or unsubscribed'
+        })
+        resolve()
+      })
+      promise_array.push(promise)
+      continue;
+    }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+      
     email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+      
+    const email = new Email({
+      ...req.body,
+      content: email_content,
+      subject: email_subject,
+      contacts: contacts[i],
+      user: currentUser.id,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+
+    const _email = await email.save().then().catch(err => {
+      console.log('err', err)
+    })
+
+    const _activity = new Activity({
+      content: 'sent email',
+      contacts: contacts[i],
+      user: currentUser.id,
+      type: 'emails',
+      emails: _email.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+
+    const activity = await _activity.save().then()
 
     const msg = {
       from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
@@ -760,46 +828,27 @@ const bulkEmail = async (req, res) => {
       bcc: bcc,
       cc: cc,
       attachments: attachments,
-      html: email_content + '<br/><br/>' + currentUser.email_signature,
+      html: email_content + '<br/><br/>' + emailHelper.generateUnsubscribeLink(activity.id),
       text: email_content
     };
-
-    const promise = new Promise((resolve, reject) => {
+   
+    promise = new Promise((resolve, reject) => {
       sgMail.send(msg).then(async (_res) => {
         if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-          const email = new Email({
-            ...req.body,
-            content: email_content,
-            subject: email_subject,
-            contacts: contacts[i],
-            message_id: _res[0].headers['x-message-id'],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date(),
+          Email.updateMany({_id: _email.id}, { $set: { message_id: _res[0].headers['x-message-id']}}).catch(err => {
+            console.log('email update err', err)
           })
-
-          const _email = await email.save().then().catch(err => {
-            console.log('err', err)
-          })
-
-          const activity = new Activity({
-            content: 'sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-
-          const _activity = await activity.save().then()
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-            console.log('err', err)
+      
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: activity.id } }).catch(err => {
+            console.log('contact err', err)
           })
           resolve()
         }
         else {
           console.log('email sending err', msg.to + _res[0].statusCode)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
           error.push({
             contact: {
               first_name: _contact.first_name,
@@ -810,7 +859,10 @@ const bulkEmail = async (req, res) => {
           resolve()
         }
       }).catch(err => {
-        console.log('err', err)
+        console.log('email sending err', err.message)
+        Activity.deleteOne({_id: activity.id}).catch(err=>{
+          console.log('err', err)
+        })
         error.push({
           contact: {
             first_name: _contact.first_name,

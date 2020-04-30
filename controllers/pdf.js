@@ -605,7 +605,7 @@ const bulkEmail = async(req, res) => {
           subject: pdf_subject,
           replyTo: _contact.email,
           html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
+                +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>',
           text: pdf_content
         }
         
