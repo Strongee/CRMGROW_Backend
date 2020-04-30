@@ -596,9 +596,29 @@ const bulkEmail = async(req, res) => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let promise
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
@@ -693,43 +713,43 @@ const bulkEmail = async(req, res) => {
         text: video_content
       }
         
-        let promise = new Promise((resolve, reject)=>{
-          sgMail.send(msg).then(async(_res) => {
-          console.log('mailres.errorcode', _res[0].statusCode);
-          if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-            console.log('status', _res[0].statusCode)
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve()
-          }else {  
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
-            console.log('email sending err', msg.to+res[0].statusCode)
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email
-              },
-              err: _res[0].statusCode
-            })
-          }
-        }).catch(err => {
+      promise = new Promise((resolve, reject)=>{
+        sgMail.send(msg).then(async(_res) => {
+        console.log('mailres.errorcode', _res[0].statusCode);
+        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
+          console.log('status', _res[0].statusCode)
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          resolve()
+        }else {  
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
-          console.log('email sending err', msg.to)
-          console.error(err)
+          console.log('email sending err', msg.to+res[0].statusCode)
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email
             },
-            err: err
+            err: _res[0].statusCode
           })
-          resolve()
-        })
+        }
+        }).catch(err => {
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            console.log('email sending err', msg.to)
+            console.error(err)
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email
+              },
+              err: err
+            })
+            resolve()
+          })
       })
       promise_array.push(promise)
     }
@@ -791,9 +811,28 @@ const bulkGmail = async(req, res) => {
     });
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let promise
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
@@ -863,99 +902,80 @@ const bulkGmail = async(req, res) => {
         video_subject = video_subject.replace(/{material_title}/ig, video_titles)
       }
     
-        if(video_content.search(/{video_object}/ig) != -1){
-          video_content = video_content.replace(/{video_object}/ig, video_objects)
-        }else{
-          video_content = video_content+'<br/>'+video_objects
-        }
-        
-        if(content.search(/{video_title}/ig) != -1){
-          video_content = video_content.replace(/{video_title}/ig, video_titles)
-        }
-        
-        if(content.search(/{video_description}/ig) != -1){
-          video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-        }
+      if(video_content.search(/{video_object}/ig) != -1){
+        video_content = video_content.replace(/{video_object}/ig, video_objects)
+      }else{
+        video_content = video_content+'<br/>'+video_objects
+      }
+      
+      if(content.search(/{video_title}/ig) != -1){
+        video_content = video_content.replace(/{video_title}/ig, video_titles)
+      }
+      
+      if(content.search(/{video_description}/ig) != -1){
+        video_content = video_content.replace(/{video_description}/ig, video_descriptions)
+      }
 
-        const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-          +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) +  '</body></html>';
+      const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+        +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) +  '</body></html>';
+      
+      // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
+      
+      promise = new Promise((resolve, reject)=>{
+        // gmail.users.messages.send({
+        //   'auth': oauth2Client,
+        //   'userId': 'me',
+        //   'resource': {
+        //     raw: rawContent
+        //   }
+        // }, (err, response) => {
+        //   if(err) {
+        //     Activity.deleteOne({_id: activity.id}).catch(err=>{
+        //       console.log('err', err)
+        //     })
+        //     console.log('err', err.response['statusText'])
+        //     error.push({
+        //       contact: {
+        //         id: contacts[i],
+        //         first_name: _contact.first_name,
+        //         email: _contact.email,
+        //       },
+        //       err: err.response['statusText'] 
+        //     })
+        //     resolve();
+        //   } else {
+        //     Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+        //       console.log('err', err)
+        //     })
+        //     resolve()
+        //   }
+        // }); 
         
-        // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
-        
-        let promise = new Promise((resolve, reject)=>{
-          // gmail.users.messages.send({
-          //   'auth': oauth2Client,
-          //   'userId': 'me',
-          //   'resource': {
-          //     raw: rawContent
-          //   }
-          // }, (err, response) => {
-          //   if(err) {
-          //     Activity.deleteOne({_id: activity.id}).catch(err=>{
-          //       console.log('err', err)
-          //     })
-          //     console.log('err', err.response['statusText'])
-          //     error.push({
-          //       contact: {
-          //         id: contacts[i],
-          //         first_name: _contact.first_name,
-          //         email: _contact.email,
-          //       },
-          //       err: err.response['statusText'] 
-          //     })
-          //     resolve();
-          //   } else {
-          //     Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-          //       console.log('err', err)
-          //     })
-          //     resolve()
-          //   }
-          // }); 
-          try{
-            let body = createBody({
-              headers: {
-                To: _contact.email,
-                From: `${currentUser.user_name} <${currentUser.email}>`,
-                Subject: video_subject,
-              },
-              textHtml:  email_content,
-              textPlain: email_content,
-            });
-            request({
-              method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-              headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-                'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-              },
-              body: body
-            }).then(()=>{
-              Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-                console.log('err', err)
-              })
-              resolve();
-            }).catch(err=>{
-              // console.log('gmail send err', err)
-              Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err)
-              })
-              error.push({
-                contact: {
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err: err
-              })
-              if(err.statusCode == 403) {
-                return res.status(406).send({
-                  status: false,
-                  error: 'not connected'
-                })
-              }
-              resolve();
+        try{
+          let body = createBody({
+            headers: {
+              To: _contact.email,
+              From: `${currentUser.user_name} <${currentUser.email}>`,
+              Subject: video_subject,
+            },
+            textHtml:  email_content,
+            textPlain: email_content,
+          });
+          request({
+            method: 'POST',
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            headers: {
+              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+            },
+            body: body
+          }).then(()=>{
+            Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('err', err)
             })
-          }catch(err){
-            console.log('err', err)
+            resolve();
+          }).catch(err=>{
+            console.log('gmail video send err', err.message)
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
@@ -964,11 +984,31 @@ const bulkGmail = async(req, res) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: err
+              err: err.message
             })
+            if(err.statusCode == 403) {
+              return res.status(406).send({
+                status: false,
+                error: 'not connected'
+              })
+            }
             resolve();
-          }
-        })
+          })
+        }catch(err){
+          console.log('gmail video send err', err.message)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: err.message
+          })
+          resolve();
+        }
+      })
       promise_array.push(promise)
     }
       
@@ -1236,6 +1276,8 @@ const bulkOutlook = async(req, res) => {
     
     for(let i=0; i<contacts.length; i++){
       let accessToken
+      let promise
+      
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
           if (error) {
@@ -1263,9 +1305,29 @@ const bulkOutlook = async(req, res) => {
           done(null, accessToken);
         }
       });
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
       let video_titles = ''
       let video_descriptions = ''
       let video_objects = ''
@@ -1369,7 +1431,7 @@ const bulkOutlook = async(req, res) => {
           saveToSentItems: "true"
         };
       
-        let promise = new Promise((resolve, reject)=>{
+        promise = new Promise((resolve, reject)=>{
           client.api('/me/sendMail')
           .post(sendMail).then(()=>{
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
