@@ -28,8 +28,9 @@ const { createCanvas, loadImage } = require('canvas')
 const pngFileStream = require('png-file-stream')
 const sharp = require('sharp')
 
+const emailHelpers = require('../helpers/email.js')
 const garbageHelper = require('../helpers/garbage.js')
-const textHelper = require('../helpers/text')
+const textHelper = require('../helpers/text.js')
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -884,7 +885,7 @@ const bulkGmail = async(req, res) => {
       console.log('get access err', err)
       return res.status(406).send({
         status: false,
-        error: 'not connnected'
+        error: 'not connected'
       })
     });
     
@@ -976,7 +977,7 @@ const bulkGmail = async(req, res) => {
         }
 
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-          +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
+          +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) +  '</body></html>';
         
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
@@ -1033,12 +1034,6 @@ const bulkGmail = async(req, res) => {
               })
               resolve();
             }).catch(err=>{
-              if(err.statusCode == 403) {
-                return res.status(406).send({
-                  status: false,
-                  error: 'not connnected'
-                })
-              }
               // console.log('gmail send err', err)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
                 console.log('err', err)
@@ -1050,6 +1045,12 @@ const bulkGmail = async(req, res) => {
                 },
                 err: err
               })
+              if(err.statusCode == 403) {
+                return res.status(406).send({
+                  status: false,
+                  error: 'not connected'
+                })
+              }
               resolve();
             })
           }catch(err){
@@ -1350,7 +1351,7 @@ const bulkOutlook = async(req, res) => {
         console.log('error', error)
         return res.status(406).send({
           status: false,
-          error: 'not connnected'
+          error: 'not connected'
         })
       })
     
@@ -1454,7 +1455,7 @@ const bulkOutlook = async(req, res) => {
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {

@@ -5,6 +5,7 @@ const PDFTracker = mongoose.model('pdf_tracker',{
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     pdf: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
+    type: String,
     duration: Number,
     created_at: Date,
     updated_at: Date,
