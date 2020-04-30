@@ -152,10 +152,38 @@ const bulkGmail = async (req, res) => {
   for (let i = 0; i < contacts.length; i++) {
     let email_subject = subject
     let email_content = content
-  
-    const _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-      console.log('err', err)
+    let promise 
+    
+    const _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+      console.log('contact found err', err.message)
+      promise = new Promise(async(resolve, reject)=>{
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: err.message
+        })
+        resolve()
+      })
+      promise_array.push(promise)
+      continue;
     })
+    
+    if(!_contact) {
+      promise = new Promise(async(resolve, reject)=>{
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'contact email not found or unsubscribed'
+        })
+        resolve()
+      })
+      promise_array.push(promise)
+      continue;
+    }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
       .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
@@ -216,7 +244,7 @@ const bulkGmail = async (req, res) => {
       }
     }
 
-    let promise = new Promise(async(resolve, reject)=>{
+    promise = new Promise(async(resolve, reject)=>{
       try{
         let body = createBody({
           headers: {
@@ -242,10 +270,10 @@ const bulkGmail = async (req, res) => {
           Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: activity.id } }).then(() => {
             resolve()
           }).catch(err => {
-            console.log('err', err)
+            console.log('contact updata err', err)
           })
         }).catch(err=>{
-          console.log('err', err)
+          console.log('gmail send err', err.message)
           Activity.deleteOne({_id: activity.id}).catch(err=>{
             console.log('err', err)
           })
@@ -254,12 +282,12 @@ const bulkGmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: err
+            err: err.message
           })
           resolve()
         })  
       }catch(err){
-        console.log('err', err)
+        console.log('gmail send catch err', err.message)
         Activity.deleteOne({_id: activity.id}).catch(err=>{
           console.log('err', err)
         })
@@ -268,12 +296,12 @@ const bulkGmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: err
+          err: err.messagae
         })
         resolve()
       }
     }).catch(err=>{
-      console.log('err', err)
+      console.log('promise err', err)
     })
     promise_array.push(promise)
   }
