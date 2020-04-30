@@ -156,18 +156,6 @@ const bulkGmail = async (req, res) => {
     
     const _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
       console.log('contact found err', err.message)
-      promise = new Promise(async(resolve, reject)=>{
-        error.push({
-          contact: {
-            first_name: _contact.first_name,
-            email: _contact.email,
-          },
-          err: err.message
-        })
-        resolve()
-      })
-      promise_array.push(promise)
-      continue;
     })
     
     if(!_contact) {
