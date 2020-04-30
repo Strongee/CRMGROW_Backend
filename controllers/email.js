@@ -154,11 +154,14 @@ const bulkGmail = async (req, res) => {
     let email_content = content
     let promise 
     
-    const _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+    let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
       console.log('contact found err', err.message)
     })
-    
+
     if(!_contact) {
+      _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
       promise = new Promise(async(resolve, reject)=>{
         error.push({
           contact: {
@@ -1546,8 +1549,9 @@ const unSubscribeEmail = async(req, res) => {
           })
         } 
       } 
-  
   }
+  res.send('You successfully unsubscribed email')
+  return 
 }
 
 module.exports = {
