@@ -1853,5 +1853,6 @@ module.exports = {
   bulkVideo,
   bulkPdf,
   bulkImage,
-  generateUnsubscribeLink
+  generateUnsubscribeLink,
+  generateOpenTrackLink
 }
