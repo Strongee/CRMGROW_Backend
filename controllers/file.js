@@ -137,7 +137,7 @@ const remove = async (req, res) => {
 
 const upload = async (req, res) => {
   if (req.file) {
-    if(req.query.resize){
+   
       const file_name = req.file.filename
       if (fs.existsSync(FILES_PATH+file_name)) { 
         sharp(FILES_PATH+file_name)
@@ -163,11 +163,7 @@ const upload = async (req, res) => {
                           error: 'file upload s3 error'
                         })
              } else {
-               console.log(`File uploaded successfully at ${upload.Location}`)
-               return res.send({
-                        status: true,
-                        url: upload.Location
-                      })
+               console.log(`File uploaded successfully at ${upload.Location}`)  
              }
            })
         }).catch(err=>{
@@ -178,7 +174,6 @@ const upload = async (req, res) => {
           })
         });
       }
-      }else{
         const file_name = req.file.filename
         if (fs.existsSync(FILES_PATH+file_name)) { 
         fs.readFile(FILES_PATH+req.file.filename, (err, data) => {
@@ -217,7 +212,6 @@ const upload = async (req, res) => {
         })
       }  
     }
-  }
 }
 
 
