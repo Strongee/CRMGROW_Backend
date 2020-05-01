@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { ENV_PATH } = require('./config/path');
-require('dotenv').config()
+require('dotenv').config({ path: ENV_PATH })
 
 let indexRouter = require('./routes/index.js');
 const VideoCtrl = require('./controllers/video');
