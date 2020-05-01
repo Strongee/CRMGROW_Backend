@@ -27,6 +27,7 @@ const { DB_PORT } = require('../config/database');
 
 
 mongoose.set('useCreateIndex', true)
+
 mongoose.connect(DB_PORT, {
   useNewUrlParser: true,
 })
