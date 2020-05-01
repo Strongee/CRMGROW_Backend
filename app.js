@@ -12,6 +12,7 @@ const VideoCtrl = require('./controllers/video');
 const PDFCtrl = require('./controllers/pdf');
 const ImageCtrl = require('./controllers/image');
 const PageCtrl = require('./controllers/page');
+const EmailCtrl = require('./controllers/email');
 const { catchError } = require('./controllers/error');
 let app = express();
 
@@ -34,6 +35,7 @@ app.get('/pdf1/:id', catchError(PDFCtrl.play1))
 app.get('/image', catchError(ImageCtrl.play))
 app.get('/image/:id', catchError(ImageCtrl.play1))
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay))
+app.get('/unsubscribe/:id', catchError(EmailCtrl.unSubscribeEmail))
 
 app.get('/auth', (req, res) => {
     res.render('auth')
