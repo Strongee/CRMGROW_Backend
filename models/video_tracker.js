@@ -5,7 +5,7 @@ const VideoTracker = mongoose.model('video_tracker',{
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
-    type: String,
+    type: {type: String, default: 'watch'},
     duration: Number,
     created_at: Date,
     updated_at: Date,
