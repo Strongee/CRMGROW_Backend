@@ -240,7 +240,7 @@ const signUp = async (req, res) => {
       });
   }).catch(err => {
     console.log('err', err)
-    res.status(500).send({
+    res.status(400).send({
       status: false,
       error: err
     })
@@ -441,7 +441,7 @@ const socialSignUp = async (req, res) => {
       });
   }).catch(err => {
     console.log('err', err)
-    res.status(500).send({
+    res.status(400).send({
       status: false,
       error: err
     })
