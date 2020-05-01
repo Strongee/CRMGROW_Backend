@@ -492,6 +492,7 @@ const getTwilioNumber = async(id) => {
   }
   
   if(typeof number != 'undefined'){
+    console.log('number', number)
     const proxy_number = await twilio.incomingPhoneNumbers.create({
       phoneNumber: number.phoneNumber,
       smsUrl:  urls.SMS_RECEIVE_URL

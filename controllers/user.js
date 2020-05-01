@@ -1071,6 +1071,7 @@ const syncGmail = async (req, res) => {
       error: 'Client doesn`t exist'
     })
   }
+  
   return res.send({
     status: true,
     data: authorizationUri

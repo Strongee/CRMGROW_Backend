@@ -316,15 +316,36 @@ const bulkEmail = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let promise 
       let image_titles = ''
       let image_descriptions = ''
       let image_objects = ''
       let image_subject = subject
       let image_content = content
       let activity
+      
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
       for(let j=0; j<images.length; j++){
         const image = images[j]        
         
@@ -403,13 +424,13 @@ const bulkEmail = async(req, res) => {
           replyTo: currentUser.email,
           subject: image_subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>',
+                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>',
           text: image_content
         }
         
         sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
       
-        let promise = new Promise((resolve, reject) => {
+        promise = new Promise((resolve, reject) => {
           sgMail.send(msg).then((_res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
@@ -723,15 +744,35 @@ const bulkGmail = async(req, res) => {
     }
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
       let image_titles = ''
       let image_descriptions = ''
       let image_objects = ''
       let image_subject = subject
       let image_content = content
       let activity
+      let promise
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
       for(let j=0; j<images.length; j++){
         const image = images[j]        
         
@@ -808,7 +849,7 @@ const bulkGmail = async(req, res) => {
         +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>';
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
         
-      let promise = new Promise((resolve, reject)=>{
+      promise = new Promise((resolve, reject)=>{
           // gmail.users.messages.send({
           //   'userId': currentUser.email,
           //   'resource': {
@@ -933,6 +974,8 @@ const bulkOutlook = async(req, res) => {
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     for(let i=0; i<contacts.length; i++){    
       let accessToken
+      let promise
+      
       await new Promise((resolve, reject) => {
         token.refresh(function(error, result) {
           if (error) {
@@ -960,9 +1003,28 @@ const bulkOutlook = async(req, res) => {
           done(null, accessToken);
         }
       });
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
       let image_titles = ''
       let image_descriptions = ''
       let image_objects = ''
@@ -1060,7 +1122,7 @@ const bulkOutlook = async(req, res) => {
         saveToSentItems: "true"
       };
       
-      let promise = new Promise((resolve, reject)=>{
+      promise = new Promise((resolve, reject)=>{
         client.api('/me/sendMail')
         .post(sendMail).then(()=>{
           Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
