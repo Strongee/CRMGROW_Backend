@@ -300,6 +300,7 @@ const updateDetail = async (req, res) => {
         
       }
     
+      /**
       sharp(thumbnail_path)
       .resize(250, 140)
       .toBuffer()
@@ -309,7 +310,7 @@ const updateDetail = async (req, res) => {
           const month = today.getMonth()
           const params = {
             Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-            Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
             Body: data,
             ACL: 'public-read'
           };
@@ -322,6 +323,7 @@ const updateDetail = async (req, res) => {
             }
           })
       });
+      */
     }
   }
 
@@ -944,7 +946,7 @@ const bulkGmail = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '-resize'
+            preview = video['thumbnail']
           }
                
           if(typeof video_content == 'undefined'){
@@ -1439,7 +1441,7 @@ const bulkOutlook = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '-resize'
+            preview = video['thumbnail']
           }
       
           
