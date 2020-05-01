@@ -19,9 +19,9 @@
         "user" : "ubuntu",
         "key"  : "~/.ssh/id_rsa",
         // Multi host is possible, just by passing IPs/hostname as an array
-        "host" : "3.14.245.2",
+        "host" : "3.13.154.83",
         // Branch
-        "ref"  : "origin/stage",
+        "ref"  : "origin/master",
         // Git repository to clone
         "repo" : "git@github.com:teamgrow/backend_admin.git",
         // Path of the application on target servers
@@ -31,10 +31,10 @@
         // is no separate command-line flag, see 'man ssh' 
         // can be either a single string or an array of strings
         "ssh_options": "StrictHostKeyChecking=yes",
-        "post-deploy" : "npm install && pm2 start npm -- run staging",
+        "post-deploy" : "npm install && pm2 restart 0",
         // Environment variables that must be injected in all applications on this env
         "env"  : {
-          "NODE_ENV": "staging"
+          "NODE_ENV": "master"
         }
       }
     }

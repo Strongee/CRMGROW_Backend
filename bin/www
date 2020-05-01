@@ -25,10 +25,12 @@ const { DB_PORT } = require('../config/database');
  * Connect Monogo Database.
  */
 
- 
+
 mongoose.set('useCreateIndex', true)
-mongoose.connect(DB_PORT, 
-  {useNewUrlParser: true, useUnifiedTopology: true })
+
+mongoose.connect(DB_PORT, {
+  useNewUrlParser: true,
+})
 .then(() => console.log('Connecting to database successful'))
 .catch(err => console.error('Could not connect to mongo DB', err))
 

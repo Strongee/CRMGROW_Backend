@@ -63,9 +63,6 @@ router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail))
 
-// Get a video
-router.get('/:id', catchError(VideoCtrl.get))
-
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll))
 

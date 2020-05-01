@@ -10,7 +10,7 @@ const Video = require('../models/video')
 const VideoTracker = require('../models/video_tracker')
 const Garbage = require('../models/garbage')
 const Contact = require('../models/contact')
-const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH } = require('../config/path')
+const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents')
@@ -52,6 +52,9 @@ const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
 const request = require('request-promise')
 const createBody = require('gmail-api-create-message-body')
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const child_process = require('child_process');
 
 const play = async(req, res) => {  
   const video_id = req.query.video
@@ -210,14 +213,8 @@ const createVideo = async (req, res) => {
 
 const updateDetail = async (req, res) => {
   const editData = req.body
-  let thumbnail;
   let { currentUser } = req
-  if (req.body.thumbnail) { // base 64 image    
-    const file_name = uuidv1()
-    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
-  }
-  
+  let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
     console.log('err', err)
   })
@@ -228,19 +225,119 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
+  
+  const file_name = uuidv1()
+  if (req.body.thumbnail) { // base 64 image    
+    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
+    if(fs.existsSync(thumbnail_path)) {  
+      fs.readFile(thumbnail_path, (err, data) => {
+        if (err){
+          console.log('file read err', err)
+        }else {
+          console.log('File read was successful', data)
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+              Body: data,
+              ACL: 'public-read'
+          };
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+            
+              video['thumbnail'] = upload.Location
+              video.save().catch(err=>{
+                console.log('video save error', err.message)
+              })
+            }
+          })
+        }
+        });
+        
+      // Thumbnail
+      const play = await loadImage(PLAY_BUTTON_PATH);
+    
+      const canvas = createCanvas(250, 140)
+      const ctx = canvas.getContext('2d');
+      let image = await loadImage(thumbnail_path);
+        
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      
+      for(let i=0; i<30; i++){
+        if(i<10){
+          fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+        } else {
+          fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+        }
+        
+      }
+    
+      sharp(thumbnail_path)
+      .resize(250, 140)
+      .toBuffer()
+      .then(data => {
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'thumbnail' +  year + '/' + month + '/' + file_name + '-resize', 
+            Body: data,
+            ACL: 'public-read'
+          };
+          
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+            }
+          })
+      });
+    }
+  }
 
   for (let key in editData) {
     video[key] = editData[key]
   }
-  if( thumbnail ){
-    video['thumbnail'] = thumbnail
-  }
   
-  if(video['path'] && !video['preview']){
+  if(video['path'] && req.body.thumbnail){
     const file_path = video['path']
     video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
     })
+  }
+  
+  if(video['type'] === 'video/webm'){
+    videoConvert(video.id)
   }
   
   video['updated_at'] = new Date()
@@ -343,7 +440,7 @@ const generatePreview = async(file_path) => {
       console.log('err', err)
     });  
     
-    const play = await loadImage(GIF_PATH+'play-button.png');
+    const play = await loadImage(PLAY_BUTTON_PATH);
     
     const canvas = createCanvas(250, 140)
     const ctx = canvas.getContext('2d');
@@ -376,8 +473,9 @@ const generatePreview = async(file_path) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+      fs.writeFileSync(GIF_PATH+`frame-${i+29}.png`, buf)
     }
+    
     const file_name = uuidv1()
     const stream = pngFileStream(GIF_PATH+'frame-??.png')
       .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
@@ -386,8 +484,10 @@ const generatePreview = async(file_path) => {
       stream.on('finish', () => {
         if (fs.existsSync(GIF_PATH+file_name)) {
           fs.readFile(GIF_PATH+file_name, (err, data) => {
-            if (err) throw err;
-            console.log('File read was successful', data)
+            if (err){
+              console.log('stream file error', err)
+            };
+            console.log('Gif File read was successful', data)
             const today = new Date()
             const year = today.getYear()
             const month = today.getMonth()
@@ -399,7 +499,7 @@ const generatePreview = async(file_path) => {
             };
             s3.upload(params, async (s3Err, upload)=>{
               if (s3Err) throw s3Err
-              console.log(`File uploaded successfully at ${upload.Location}`)
+              console.log(`Gif File uploaded successfully at ${upload.Location}`)
               
               fs.unlinkSync(GIF_PATH+file_name)
               resolve(upload.Location)
@@ -465,7 +565,6 @@ const getAll = async (req, res) => {
   }
 
   const company = currentUser.company || 'eXp Realty'
-  console.log('company', company)
   let _video_list = await Video.find({user: currentUser.id, del: false}).sort({priority: 1}).sort({created_at : 1 })
   let _video_admin = await Video.find({role: "admin", del: false, _id: {$nin: editedVideos}, company: company}).sort({priority: 1}).sort({created_at : 1 })
   Array.prototype.push.apply(_video_list, _video_admin)
@@ -503,7 +602,7 @@ const getAll = async (req, res) => {
     _video_detail_list.push(video_detail)
   }
 
-  res.send({
+  return res.send({
     status: true,
     data: _video_detail_list
   })
@@ -845,7 +944,7 @@ const bulkGmail = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '?resize=true'
+            preview = video['thumbnail'] + '-resize'
           }
                
           if(typeof video_content == 'undefined'){
@@ -1340,7 +1439,7 @@ const bulkOutlook = async(req, res) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '?resize=true'
+            preview = video['thumbnail'] + '-resize'
           }
       
           
@@ -1490,6 +1589,30 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 }
 
+const videoConvert = async(id) => {
+  const video = await Video.findOne({_id: id}).catch(err=>{
+    console.log('video convert find video error', err.message)
+  })
+  const file_path = video['path']
+  const new_file = uuidv1() + '.mov'
+  const new_path = TEMP_PATH + new_file
+  let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
+  console.log('args', args)
+  const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.on('close', function(){
+    console.log('converted end', file_path)
+    const new_url = urls.VIDEO_URL+new_file
+    video['url'] = new_url
+    video['recording'] = false
+    video['path'] = new_path
+    video.save().then(()=>{
+    }).catch(err=>{
+      console.log('err', err)
+      fs.unlinkSync(file_path)
+    })
+  })
+}
+
 module.exports = {
   play,
   play1,
@@ -1498,6 +1621,7 @@ module.exports = {
   create,
   updateDetail,
   updateDefault,
+  videoConvert,
   get,
   getThumbnail,
   getAll,

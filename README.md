@@ -12,7 +12,6 @@ Files, docs, db, test db are stored in the following paths defined in `config/pa
 
 ```
   module.exports.FILES_PATH = '/var/www/teamgrow/files/'
-  module.exports.ENV_PATH = '/var/www/teamgrow/teamgrow_env'
 ```
 
 #### PORT=3000
