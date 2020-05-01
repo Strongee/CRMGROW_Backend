@@ -5,7 +5,7 @@ const EmailTracker = mongoose.model('email_tracker',{
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     email: { type: mongoose.Schema.Types.ObjectId, ref: 'email' },
     activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
-    type: String,
+    type: {type: String, default: 'open'},
     created_at: Date,
     updated_at: Date,
  });

@@ -10,6 +10,7 @@ require('dotenv').config({ path: ENV_PATH })
 
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
+const sharp = require('sharp')
 
 const User = require('../models/user')
 const Contact = require('../models/contact')
@@ -376,7 +377,7 @@ const reminder_job = new CronJob('*/10 * * * 0-6', async() =>{
 )
 
 const video_job = new CronJob('0 3 * * *', async() =>{
-  const videos = await Video.find({converted: false, del: false}).catch(err=>{
+  const videos = await Video.find({converted: false, del: false, type: {$nin: ['youtube', 'vimeo']} }).catch(err=>{
     console.log('err', err)
   })
   

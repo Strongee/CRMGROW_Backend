@@ -6,7 +6,7 @@ const mime = require('mime-types')
 
 const Video = require('../../models/video')
 const VideoTracker = require('../../models/video_tracker')
-const { GIF_PATH, THUMBNAILS_PATH } = require('../../config/path')
+const { GIF_PATH, THUMBNAILS_PATH, PLAY_BUTTON_PATH } = require('../../config/path')
 const config = require('../../config/config')
 const urls = require('../../constants/urls')
 const uuidv1 = require('uuid/v1')
@@ -89,7 +89,7 @@ const generatePreview = async(file_path) => {
       console.log('err', err)
     });  
     
-    const play = await loadImage(GIF_PATH+'play-button.png');
+    const play = await loadImage(PLAY_BUTTON_PATH);
     
     const canvas = createCanvas(250, 140)
     const ctx = canvas.getContext('2d');
