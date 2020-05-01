@@ -927,7 +927,7 @@ const bulkGmail = async(req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'contact email not found or unsubscribed'
+            err: 'Contact email is unsubscribed'
           })
           resolve()
         })
@@ -1080,13 +1080,23 @@ const bulkGmail = async(req, res) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              err: err.message
-            })
+            if(err.statusCode == 400){
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err.message
+              })
+            } else {
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: 'Recipient address required'
+              })
+            }
             if(err.statusCode == 403) {
               return res.status(406).send({
                 status: false,

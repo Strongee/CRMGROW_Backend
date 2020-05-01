@@ -174,7 +174,7 @@ const upload = async (req, res) => {
           })
         });
       }
-        const file_name = req.file.filename
+
         if (fs.existsSync(FILES_PATH+file_name)) { 
         fs.readFile(FILES_PATH+req.file.filename, (err, data) => {
           if (err){
