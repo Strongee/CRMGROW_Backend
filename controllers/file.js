@@ -209,9 +209,7 @@ const upload = async (req, res) => {
               } else {             
                 return res.send({
                     status: true,
-                    data: {
-                      url: upload.Location
-                    }
+                    url: upload.Location
                 })
               }
             })
