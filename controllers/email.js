@@ -829,7 +829,10 @@ const bulkEmail = async (req, res) => {
       cc: cc,
       attachments: attachments,
       html: email_content + '<br/><br/>' + emailHelper.generateUnsubscribeLink(activity.id),
-      text: email_content
+      text: email_content,
+      headers: {
+        "List-Unsubscribe": `<${urls.UNSUBSCRIPTION_URL}${activity.id}>`
+      }
     };
    
     promise = new Promise((resolve, reject) => {
@@ -1602,7 +1605,7 @@ const unSubscribeEmail = async(req, res) => {
         } 
       } 
   }
-  res.send('You successfully unsubscribed email')
+  res.send('You successfully unsubscribed CRMGrow email')
   return 
 }
 
