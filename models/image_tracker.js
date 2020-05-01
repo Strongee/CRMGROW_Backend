@@ -5,7 +5,7 @@ const ImageTracker = mongoose.model('image_tracker',{
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     image: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
     activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
-    type: String,
+    type: {type: String, default: 'review'},
     duration: Number,
     created_at: Date,
     updated_at: Date,
