@@ -734,6 +734,13 @@ const bulkGmail = async(req, res) => {
   )
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  await oauth2Client.getAccessToken().catch(err=>{
+    console.log('get access err', err)
+    return res.status(406).send({
+      status: false,
+      error: 'not connected'
+    })
+  });
   
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
