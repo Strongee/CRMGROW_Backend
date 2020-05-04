@@ -304,6 +304,9 @@ a.dropdown-item{
     .view-container .description .desc-content{
         font-size: 1.4rem;
     }
+    .name-wrapper {
+        display: flex;
+    }
     .contact-info-wrapper{
         display: none;
     }
@@ -446,11 +449,7 @@ body.is_protected .view-container {
 
 @media screen and (max-width: 1200px) {
     .name-wrapper {
-        display: block!important;
-    }
-    .profile-bar {        
-        margin-left: auto;
-        margin-right: auto;
+        display: block;
     }
 }
 
