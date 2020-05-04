@@ -355,13 +355,9 @@ const updateDetail = async (req, res) => {
 
 const updateDefault = async (req, res) => {
   const {video, id} = req.body
-  let thumbnail;
+  let thumbnail_path;
   let { currentUser } = req
-  if (video.thumbnail) { // base 64 image    
-    const file_name = uuidv1()
-    const file_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    thumbnail = urls.VIDEO_THUMBNAIL_URL + path.basename(file_path)
-  }  
+  
   const defaultVideo = await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
     console.log('err', err)
   })
@@ -374,11 +370,12 @@ const updateDefault = async (req, res) => {
   // Update Garbage
   const garbage = await garbageHelper.get(currentUser);
   if(!garbage) {
-    return res.status(500).send({
+    return res.status(400).send({
       status: false,
       error: `Couldn't get the Garbage`
     })
   }
+  
   if(garbage['edited_video']) {
     garbage['edited_video'].push(id);
   }
@@ -396,34 +393,131 @@ const updateDefault = async (req, res) => {
   for (let key in video) {
     defaultVideo[key] = video[key]
   }
-  if( thumbnail ){
-    defaultVideo['thumbnail'] = thumbnail
+  
+  if (video.thumbnail) { // base 64 image    
+    const file_name = uuidv1()
+    
+    thumbnail_path = base64Img.imgSync(video.thumbnail, THUMBNAILS_PATH, file_name,)
+    if(fs.existsSync(thumbnail_path)) {  
+      fs.readFile(thumbnail_path, (err, data) => {
+        if (err){
+          console.log('file read err', err)
+        }else {
+          console.log('File read was successful', data)
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+              Body: data,
+              ACL: 'public-read'
+          };
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+              
+              thumbnail_path = upload.Location
+              if( thumbnail_path ){
+                defaultVideo['thumbnail'] = thumbnail_path
+              }
+              
+              defaultVideo['updated_at'] = new Date()
+              const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
+              delete defaultVideoJSON['_id'];
+              delete defaultVideoJSON['role'];
+             
+              let newVideo = new Video({
+                ...defaultVideoJSON,
+                user: currentUser._id,
+                default_edited: true
+              })
+              
+              const _video = await newVideo.save().then().catch(err=>{
+                console.log('err', err)
+              })  
+              
+              return res.send({
+                status: true,
+                data: _video
+              })
+            }
+          })
+        }
+      });
+        
+      // Thumbnail
+      /**
+      const play = await loadImage(PLAY_BUTTON_PATH);
+    
+      const canvas = createCanvas(250, 140)
+      const ctx = canvas.getContext('2d');
+      let image = await loadImage(thumbnail_path);
+        
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      
+      for(let i=0; i<30; i++){
+        if(i<10){
+          fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+        } else {
+          fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+        }
+      }
+       */
+    } else {
+      defaultVideo['updated_at'] = new Date()
+      const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
+      delete defaultVideoJSON['_id'];
+      delete defaultVideoJSON['role'];
+     
+      let newVideo = new Video({
+        ...defaultVideoJSON,
+        user: currentUser._id,
+        default_edited: true
+      })
+      
+      const _video = await newVideo.save().then().catch(err=>{
+        console.log('err', err)
+      })  
+      
+      return res.send({
+        status: true,
+        data: _video
+      })
+    }
   }
+  // if(!defaultVideo['preview']){
+  //   const file_path = defaultVideo['path']
+  //   defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
+  //     console.log('err', err)
+  //   })
+  // }
   
-  if(!defaultVideo['preview']){
-    const file_path = defaultVideo['path']
-    defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
-      console.log('err', err)
-    })
-  }
-  
-  defaultVideo['updated_at'] = new Date()
-  const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
-  delete defaultVideoJSON['_id'];
-  delete defaultVideoJSON['role'];
-  let newVideo = new Video({
-    ...defaultVideoJSON,
-    user: currentUser._id,
-    default_edited: true
-  })
-  const _video = await newVideo.save().then().catch(err=>{
-    console.log('err', err)
-  })  
-  
-  res.send({
-    status: true,
-    data: _video
-  })
 }
 
 const generatePreview = async(file_path) => {
@@ -562,8 +656,8 @@ const getAll = async (req, res) => {
   const {currentUser} = req
   const garbage = await garbageHelper.get(currentUser);
   let editedVideos = [];
-  if(garbage) {
-    editedVideos = garbage['edited_video']
+  if(garbage && garbage['edited_video']) {
+    editedVideos = garbage['edited_video'] 
   }
 
   const company = currentUser.company || 'eXp Realty'
