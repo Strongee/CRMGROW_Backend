@@ -465,7 +465,7 @@ const updateDefault = async (req, res) => {
     defaultVideo[key] = video[key]
   }
   if( thumbnail_path ){
-    defaultVideo['thumbnail'] = thumbnail
+    defaultVideo['thumbnail'] = thumbnail_path
   }
   
   if(!defaultVideo['preview']){
@@ -636,7 +636,6 @@ const getAll = async (req, res) => {
     editedVideos = garbage['edited_video'] 
   }
 
-  console.log('editedVideos', editedVideos)
   const company = currentUser.company || 'eXp Realty'
   let _video_list = await Video.find({user: currentUser.id, del: false}).sort({priority: 1}).sort({created_at : 1 })
   let _video_admin = await Video.find({role: "admin", del: false, _id: {$nin: editedVideos}, company: company}).sort({priority: 1}).sort({created_at : 1 })
