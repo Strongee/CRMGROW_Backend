@@ -253,8 +253,16 @@ a.dropdown-item{
     .stick-bar .cell_phone{
         font-size: 15px;
     }
+    
     .stick-bar .name{
         font-size: 20px;
+    }
+    
+    .stick-bar .dropdown-toggle{
+        position: relative;
+        padding: 5px 20px;
+        border-radius: 44px;
+        background-color: #fff;
     }
 }
 
@@ -402,8 +410,7 @@ body.is_protected .view-container {
 }
 
 .profile-bar {
-    width: 102px;
-    height: 30px;
+    max-width: 102px;
     display: flex;
     margin-left: 3px;
     margin-bottom: 2px;
