@@ -382,13 +382,15 @@ const updateDefault = async (req, res) => {
               console.log('upload s3 error', s3Err)
             } else {
               console.log(`File uploaded successfully at ${upload.Location}`)
-              defaultVideo['thumbnail'] = upload.Location
+              thumbnail_path = upload.Location
+              
             }
           })
         }
       });
         
       // Thumbnail
+      /**
       const play = await loadImage(PLAY_BUTTON_PATH);
     
       const canvas = createCanvas(250, 140)
@@ -427,6 +429,7 @@ const updateDefault = async (req, res) => {
           fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
         }
       }
+       */
     }  
   }
 
@@ -468,12 +471,12 @@ const updateDefault = async (req, res) => {
     defaultVideo['thumbnail'] = thumbnail_path
   }
   
-  if(!defaultVideo['preview']){
-    const file_path = defaultVideo['path']
-    defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
-      console.log('err', err)
-    })
-  }
+  // if(!defaultVideo['preview']){
+  //   const file_path = defaultVideo['path']
+  //   defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
+  //     console.log('err', err)
+  //   })
+  // }
   
   defaultVideo['updated_at'] = new Date()
   const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
