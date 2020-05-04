@@ -358,6 +358,42 @@ const updateDefault = async (req, res) => {
   let thumbnail_path;
   let { currentUser } = req
   
+  const defaultVideo = await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
+    console.log('err', err)
+  })
+  if (!defaultVideo) {
+    return res.status(400).json({
+      status: false,
+      error: 'This Default video not exists'
+    })
+  }
+  // Update Garbage
+  const garbage = await garbageHelper.get(currentUser);
+  if(!garbage) {
+    return res.status(400).send({
+      status: false,
+      error: `Couldn't get the Garbage`
+    })
+  }
+  
+  if(garbage['edited_video']) {
+    garbage['edited_video'].push(id);
+  }
+  else {
+    garbage['edited_video'] = [id]
+  }
+  
+  await garbage.save().catch(err => {
+    return res.status.json({
+      status: false,
+      error: 'Update Garbage Error.'
+    })
+  })
+
+  for (let key in video) {
+    defaultVideo[key] = video[key]
+  }
+  
   if (video.thumbnail) { // base 64 image    
     const file_name = uuidv1()
     
@@ -382,8 +418,31 @@ const updateDefault = async (req, res) => {
               console.log('upload s3 error', s3Err)
             } else {
               console.log(`File uploaded successfully at ${upload.Location}`)
-              thumbnail_path = upload.Location
               
+              thumbnail_path = upload.Location
+              if( thumbnail_path ){
+                defaultVideo['thumbnail'] = thumbnail_path
+              }
+              
+              defaultVideo['updated_at'] = new Date()
+              const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
+              delete defaultVideoJSON['_id'];
+              delete defaultVideoJSON['role'];
+             
+              let newVideo = new Video({
+                ...defaultVideoJSON,
+                user: currentUser._id,
+                default_edited: true
+              })
+              
+              const _video = await newVideo.save().then().catch(err=>{
+                console.log('err', err)
+              })  
+              
+              return res.send({
+                status: true,
+                data: _video
+              })
             }
           })
         }
@@ -430,47 +489,28 @@ const updateDefault = async (req, res) => {
         }
       }
        */
-    }  
+    } else {
+      defaultVideo['updated_at'] = new Date()
+      const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
+      delete defaultVideoJSON['_id'];
+      delete defaultVideoJSON['role'];
+     
+      let newVideo = new Video({
+        ...defaultVideoJSON,
+        user: currentUser._id,
+        default_edited: true
+      })
+      
+      const _video = await newVideo.save().then().catch(err=>{
+        console.log('err', err)
+      })  
+      
+      return res.send({
+        status: true,
+        data: _video
+      })
+    }
   }
-
-  const defaultVideo = await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
-    console.log('err', err)
-  })
-  if (!defaultVideo) {
-    return res.status(400).json({
-      status: false,
-      error: 'This Default video not exists'
-    })
-  }
-  // Update Garbage
-  const garbage = await garbageHelper.get(currentUser);
-  if(!garbage) {
-    return res.status(400).send({
-      status: false,
-      error: `Couldn't get the Garbage`
-    })
-  }
-  if(garbage['edited_video']) {
-    garbage['edited_video'].push(id);
-  }
-  else {
-    garbage['edited_video'] = [id]
-  }
-  
-  await garbage.save().catch(err => {
-    return res.status.json({
-      status: false,
-      error: 'Update Garbage Error.'
-    })
-  })
-
-  for (let key in video) {
-    defaultVideo[key] = video[key]
-  }
-  if( thumbnail_path ){
-    defaultVideo['thumbnail'] = thumbnail_path
-  }
-  
   // if(!defaultVideo['preview']){
   //   const file_path = defaultVideo['path']
   //   defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
@@ -478,25 +518,6 @@ const updateDefault = async (req, res) => {
   //   })
   // }
   
-  defaultVideo['updated_at'] = new Date()
-  const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
-  delete defaultVideoJSON['_id'];
-  delete defaultVideoJSON['role'];
- 
-  let newVideo = new Video({
-    ...defaultVideoJSON,
-    user: currentUser._id,
-    default_edited: true
-  })
-  
-  const _video = await newVideo.save().then().catch(err=>{
-    console.log('err', err)
-  })  
-  
-  res.send({
-    status: true,
-    data: _video
-  })
 }
 
 const generatePreview = async(file_path) => {
