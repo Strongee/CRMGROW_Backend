@@ -424,7 +424,7 @@ const bulkEmail = async(req, res) => {
           replyTo: currentUser.email,
           subject: image_subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>',
+                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
           text: image_content
         }
         
