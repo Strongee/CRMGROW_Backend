@@ -28,7 +28,7 @@ const { createCanvas, loadImage } = require('canvas')
 const pngFileStream = require('png-file-stream')
 const sharp = require('sharp')
 
-const emailHelpers = require('../helpers/email.js')
+const emailHelper = require('../helpers/email.js')
 const garbageHelper = require('../helpers/garbage.js')
 const textHelper = require('../helpers/text.js')
 
@@ -904,7 +904,7 @@ const bulkEmail = async(req, res) => {
         replyTo: currentUser.email,
         subject: video_subject,
         html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>',
+              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
         text: video_content
       }
         
@@ -1112,7 +1112,7 @@ const bulkGmail = async(req, res) => {
       }
 
       const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-        +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) +  '</body></html>';
+        +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) +  '</body></html>';
       
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
       
@@ -1623,7 +1623,7 @@ const bulkOutlook = async(req, res) => {
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelpers.generateUnsubscribeLink(activity.id) + '</body></html>'
+              +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
