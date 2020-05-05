@@ -116,9 +116,10 @@ const receive = async(req, res) => {
       const phoneNumber = req.body['From']
   
       const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
-        console.log('err', err)
+        console.log('contact found err sms reply', err)
       })
       console.log('phoneNumber', phoneNumber)
+      console.log('contact', contact)
       // let phoneNumberString
       // if(currentUser.phone) {
       //   const userPhone = currentUser.phone
@@ -139,7 +140,7 @@ const receive = async(req, res) => {
       if(contact){
         const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
         await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
-          console.log('err', err)
+          console.log('sms reply err', err)
         })
       }
       
