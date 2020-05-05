@@ -1649,12 +1649,15 @@ const advanceSearch = async (req, res) => {
     materialCondition,
     sourceCondition,
     includeLabel,
-    includeFollowUps,
     includeStage,
     includeSource,
     includeLastActivity,
     includeBrokerage,
   } = req.body;
+  let { includeFollowUps } = req.body;
+  if (includeFollowUps === null || includeFollowUps === "undifined") {
+    includeFollowUps = true;
+  }
 
   // Material Check
   let watchedVideoContacts = [];
