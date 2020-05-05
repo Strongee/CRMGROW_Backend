@@ -458,7 +458,9 @@ const disableUser = async(req, res) => {
       console.log('err', err)
     })
   }
+  
   User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()}, $unset: {payment: true}} ).then(()=>{
+    
     return res.send({
       status: true
     })
