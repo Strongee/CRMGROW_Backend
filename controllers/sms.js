@@ -111,13 +111,14 @@ const receive = async(req, res) => {
     let currentUser = await User.findOne({proxy_number: to}).catch(err =>{
       console.log('err', err)
     })
+    console.log('currentUser', currentUser)
     if(currentUser != null){
       const phoneNumber = req.body['From']
   
       const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
         console.log('err', err)
       })
-      
+      console.log('phoneNumber', phoneNumber)
       // let phoneNumberString
       // if(currentUser.phone) {
       //   const userPhone = currentUser.phone
