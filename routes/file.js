@@ -36,5 +36,8 @@ router.get('/:name', catchError(FileCtrl.get))
 // Delete a file
 router.delete('/:id', UserCtrl.checkAuth, catchError(FileCtrl.remove))
 
+router.post('/upload_base64',  UserCtrl.checkAuth,  catchError(FileCtrl.uploadBase64))
+
+
 
 module.exports = router

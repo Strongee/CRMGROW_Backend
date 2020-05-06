@@ -7,6 +7,8 @@ const AWS = require('aws-sdk')
 const { FILES_PATH } = require('../config/path')
 const config = require('../config/config')
 
+const {uploadBase64Image, removeFile} = require('../helpers/fileUpload');
+
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
@@ -14,6 +16,7 @@ const s3 = new AWS.S3({
 })
 
 const File = require('../models/file')
+const Garbage = require('../models/garbage')
 const urls = require('../constants/urls')
 
 const create = async (req, res) => {
@@ -153,10 +156,49 @@ const upload = async (req, res) => {
   }
 }
 
+const uploadBase64 = async(req, res) => {
+  const {currentUser} = req;
+  const {data} = req.body;
+
+  const garbage = await Garbage.findOne({user: currentUser._id}).catch(err => {
+    console.log("Error", err);
+  })
+
+  if(garbage) {
+    if(garbage['logo']) {
+      await removeFile(garbage['logo'])
+    }
+    let logo = await uploadBase64Image(data)
+    garbage['logo'] = logo
+    
+    garbage.save().then(data => {
+      return res.send({
+        status: true,
+        data: logo
+      })
+    })
+  }
+  else {
+    let logo = await uploadBase64Image(data)
+
+    let newGarbage = new Garbage({
+      user: currentUser._id,
+      logo: logo
+    })
+    newGarbage.save().then(data => {
+      return res.send({
+        status: true,
+        data: logo
+      })
+    })
+  }
+}
+
 
 module.exports = {
     create,
     get,
     upload,
-    remove
+    remove,
+    uploadBase64
 }
