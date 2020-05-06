@@ -31,9 +31,6 @@ router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
 
-// Receive email notification
-router.post('/receive', catchError(ContactCtrl.receiveEmail))
-
 // Import contact list as file
 router.post('/import-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.importCSV))
 

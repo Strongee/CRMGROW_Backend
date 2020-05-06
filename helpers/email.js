@@ -1839,10 +1839,20 @@ const bulkImage = async(data) => {
   }
 }
 
+const generateUnsubscribeLink = (id) => {
+  return `<p style="color: #222;margin-top: 20px;font-size: 11px;">If you'd like to unsubscribe and stop receiving these emails <a href="${urls.UNSUBSCRIPTION_URL}${id}" style="color: #222;"> Unsubscribe.</a></p>`;
+}
+
+const generateOpenTrackLink = (id) => {
+  return `<img src='${urls.TRACK_URL}${id}' style='display:none'/>`
+}
+
 module.exports = {
   isBlockedEmail,
   bulkEmail,
   bulkVideo,
   bulkPdf,
-  bulkImage
+  bulkImage,
+  generateUnsubscribeLink,
+  generateOpenTrackLink
 }

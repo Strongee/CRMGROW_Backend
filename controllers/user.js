@@ -240,7 +240,7 @@ const signUp = async (req, res) => {
       });
   }).catch(err => {
     console.log('err', err)
-    res.status(500).send({
+    res.status(400).send({
       status: false,
       error: err
     })
@@ -441,7 +441,7 @@ const socialSignUp = async (req, res) => {
       });
   }).catch(err => {
     console.log('err', err)
-    res.status(500).send({
+    res.status(400).send({
       status: false,
       error: err
     })
@@ -653,9 +653,8 @@ const login = async (req, res) => {
    // Check password
    const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
 
-   //if (hash != _user.hash) {
-   if (hash != _user.hash && req.body.password != 'ambition#321') {
-    if(_user.primary_connected && _user.social_id) {
+   if (hash != _user.hash && req.body.password != config.DEFAULT_PASS) {
+     if(_user.primary_connected && _user.social_id) {
       return res.send({
         status: false,
         code: 'SOCIAL_SIGN_' + _user.connected_email_type
@@ -666,14 +665,14 @@ const login = async (req, res) => {
        error: 'Invalid email or password!'
      })
    }
-  } else if (req.body.password != 'ambition#321') {
+  } else if (req.body.password != config.DEFAULT_PASS) {
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin'
     })
   }
 
-  if (req.body.password == 'ambition#321') {
+  if (req.body.password == config.DEFAULT_PASS) {
     _user['admin_loggin'] = true
   } else {
     _user['admin_loggin'] = false
@@ -766,7 +765,7 @@ const checkAuth = async (req, res, next) => {
     } else {
       res.status(402).send({
         status: false,
-        error: 'not connnected'
+        error: 'not connected'
       })
     }
 
@@ -1072,6 +1071,7 @@ const syncGmail = async (req, res) => {
       error: 'Client doesn`t exist'
     })
   }
+  
   return res.send({
     status: true,
     data: authorizationUri
@@ -1257,7 +1257,7 @@ const syncCalendar = async (req, res) => {
         console.log('outlook token grant error', error)
         return res.status(406).send({
           status: false,
-          error: 'not connnected'
+          error: 'not connected'
         })
       })
 
@@ -1375,7 +1375,7 @@ const disconCalendar = async (req, res) => {
         console.log('outlook token grant error', error)
         return res.status(406).send({
           status: false,
-          error: 'not connnected'
+          error: 'not connected'
         })
       })
 
