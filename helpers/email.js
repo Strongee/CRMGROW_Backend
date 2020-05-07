@@ -520,15 +520,45 @@ const bulkVideo = async(data) => {
     console.log('err', err)
   })
   let promise_array = []
+  let promise
   
   if(!currentUser.primary_connected){
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
   
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
       })
       
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+
       if(_contact){
         let video_titles = ''
         let video_descriptions = ''
@@ -619,15 +649,16 @@ const bulkVideo = async(data) => {
           replyTo: currentUser.email,
           subject: video_subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>',
+          text: video_content
         }
         
-        let promise = new Promise((resolve, reject)=>{
+        promise = new Promise((resolve, reject)=>{
           sgMail.send(msg).then(async(_res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
           if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
             console.log('status', _res[0].statusCode)
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err)
             })
             resolve({
@@ -641,7 +672,7 @@ const bulkVideo = async(data) => {
             console.log('email sending err', msg.to+res[0].statusCode)
             resolve({
               status: false,
-                  err: err,
+                  err: err.messaeg || err.msg,
                   contact: contacts[i]
                 })
               }
@@ -685,9 +716,39 @@ const bulkVideo = async(data) => {
     });
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+
       if(_contact){
         let video_titles = ''
         let video_descriptions = ''
@@ -773,7 +834,7 @@ const bulkVideo = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
+            +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
@@ -786,7 +847,7 @@ const bulkVideo = async(data) => {
                   Subject: video_subject,
                 },
                 textHtml:  email_content,
-                textPlain: email_content,
+                textPlain: video_content,
               });
               request({
                 method: 'POST',
@@ -840,7 +901,8 @@ const bulkVideo = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){ 
     let promise_array = []
-    
+    let promise
+
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     let accessToken
     await new Promise((resolve, reject) => {
@@ -874,9 +936,39 @@ const bulkVideo = async(data) => {
     });
   
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+
       if(_contact){
         let video_titles = ''
         let video_descriptions = ''
@@ -967,7 +1059,7 @@ const bulkVideo = async(data) => {
               body: {
                 contentType: "HTML",
                 content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+                  +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
               },
               toRecipients: [
                 {
@@ -980,17 +1072,17 @@ const bulkVideo = async(data) => {
             saveToSentItems: "true"
           };
         
-          let promise = new Promise((resolve, reject)=>{
+          promise = new Promise((resolve, reject)=>{
             client.api('/me/sendMail')
             .post(sendMail).then(()=>{
               Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-                console.log('err', err)
+                console.log('err', err.message)
               })
             }).catch(err=>{
               Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err)
+                console.log('err', err.message)
               })
-              console.log('err', err)
+              console.log('err', err.message)
               resolve({
                 status: false,
                 contact: contacts[i]
@@ -1008,7 +1100,7 @@ const bulkVideo = async(data) => {
   }
 }
 
-const bulkPdf = async(data) => {
+const bulkPDF = async(data) => {
   let {user, content, subject, pdfs, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('err', err)
@@ -1016,16 +1108,48 @@ const bulkPdf = async(data) => {
   
   if(!currentUser.primary_connected){
     let promise_array = []
+    let promise
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+
       let pdf_titles = ''
       let pdf_descriptions = ''
       let pdf_objects = ''
       let pdf_subject = subject
       let pdf_content = content
       let activity
+
       for(let j=0; j<pdfs.length; j++){
         const pdf = pdfs[j]        
             
@@ -1106,17 +1230,17 @@ const bulkPdf = async(data) => {
         subject: pdf_subject,
         replyTo: _contact.email,
         html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
       
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
         
-      let promise = new Promise((resolve, reject)=>{
+      promise = new Promise((resolve, reject)=>{
         sgMail.send(msg).then((_res) => {
         console.log('mailres.errorcode', _res[0].statusCode);
         if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
           console.log('status', _res[0].statusCode)
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          Contact.updateMany({_id: contacts[i]} ,{ $set: {last_activity: activity.id} }).catch(err=>{
             console.log('err', err)
           })
           resolve({
@@ -1124,19 +1248,19 @@ const bulkPdf = async(data) => {
           })
         }else {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
+            console.log('err', err.message)
           })
           
           console.log('email sending err', msg.to+res[0].statusCode)
           resolve({
             status: false,
-            err: err,
+            err: err.message,
             contact: contacts[i]
           })
         }
         }).catch ((err) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
+            console.log('err', err.message)
           })
           console.log('email sending err', msg.to)
           console.log('err', err)
@@ -1171,94 +1295,124 @@ const bulkPdf = async(data) => {
     });
       
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
-      if(_contact){
-      let pdf_titles = ''
-      let pdf_descriptions = ''
-      let pdf_objects = ''
-      let pdf_subject = subject
-      let pdf_content = content
-      let activity
-      for(let j=0; j<pdfs.length; j++){
-        const pdf = pdfs[j]        
-        
-        if(typeof pdf_content == 'undefined'){
-          pdf_content = ''
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
         }
-        
-        pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
+      }
+
+      if(_contact){
+        let pdf_titles = ''
+        let pdf_descriptions = ''
+        let pdf_objects = ''
+        let pdf_subject = subject
+        let pdf_content = content
+        let activity
+        for(let j=0; j<pdfs.length; j++){
+          const pdf = pdfs[j]        
+          
+          if(typeof pdf_content == 'undefined'){
+            pdf_content = ''
+          }
+          
+          pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-            
-        const _activity = new Activity({
-          content: 'sent pdf using email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'pdfs',
-          pdfs: pdf._id,
-          created_at: new Date(),
-          updated_at: new Date(),
-          subject: pdf_subject,
-          description: pdf_content
-        })
-        
-        activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-        
-        if(pdfs.length>=2){
-          pdf_titles = mail_contents.PDF_TITLE
-        }else{
-          pdf_titles = `${pdf.title}`
-        }
-        
-        if(j < pdfs.length-1){
-          pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
-        } else{
-          pdf_descriptions = pdf_descriptions + pdf.description
-        }
-        
-        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        pdf_objects = pdf_objects + pdf_object                      
-      }
-      
-      if(pdf_subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_titles
-      } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
-        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
-      }
-      
-      if(pdf_content.search(/{pdf_object}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
-      }else{
-        pdf_content = pdf_content+'<br/>'+pdf_objects
-      }
-      
-      if(pdf_content.search(/{pdf_title}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
-      }
-      
-      if(pdf_content.search(/{pdf_description}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
-      }
-      
-      const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
-      // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
           
-      promise = new Promise((resolve, reject)=>{
+          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
+            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+            .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+              
+          const _activity = new Activity({
+            content: 'sent pdf using email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'pdfs',
+            pdfs: pdf._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: pdf_subject,
+            description: pdf_content
+          })
+          
+          activity = await _activity.save().then().catch(err=>{
+            console.log('err', err)
+          })
+          
+          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
+          
+          if(pdfs.length>=2){
+            pdf_titles = mail_contents.PDF_TITLE
+          }else{
+            pdf_titles = `${pdf.title}`
+          }
+          
+          if(j < pdfs.length-1){
+            pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
+          } else{
+            pdf_descriptions = pdf_descriptions + pdf.description
+          }
+          
+          //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
+          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
+          pdf_objects = pdf_objects + pdf_object                      
+        }
+        
+        if(pdf_subject == '' ){
+          pdf_subject = 'PDF: ' + pdf_titles
+        } else {
+          pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
+          pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
+        }
+        
+        if(pdf_content.search(/{pdf_object}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
+        }else{
+          pdf_content = pdf_content+'<br/>'+pdf_objects
+        }
+        
+        if(pdf_content.search(/{pdf_title}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
+        }
+        
+        if(pdf_content.search(/{pdf_description}/ig) != -1){
+          pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
+        }
+        
+        const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature +  generateUnsubscribeLink(activity.id) + '</body></html>';
+        // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
+          
+        promise = new Promise((resolve, reject)=>{
         try{
           let body = createBody({
             headers: {
@@ -1267,7 +1421,7 @@ const bulkPdf = async(data) => {
               Subject: pdf_subject,
             },
             textHtml:  email_content,
-            textPlain: email_content,
+            textPlain: pdf_content,
           });
           request({
             method: 'POST',
@@ -1278,7 +1432,7 @@ const bulkPdf = async(data) => {
             },
             body: body
           }).then(()=>{
-            Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+            Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err)
             })
             resolve({
@@ -1322,7 +1476,8 @@ const bulkPdf = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){
     let promise_array = []
-    
+    let promise
+
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
 
     for(let i=0; i<contacts.length; i++){
@@ -1357,9 +1512,38 @@ const bulkPdf = async(data) => {
         }
       });
       
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
       
       let pdf_titles = ''
       let pdf_descriptions = ''
@@ -1446,7 +1630,7 @@ const bulkPdf = async(data) => {
           body: {
             contentType: "HTML",
             content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -1459,7 +1643,7 @@ const bulkPdf = async(data) => {
         saveToSentItems: "true"
       };
       
-      let promise = new Promise((resolve, reject)=>{
+      promise = new Promise((resolve, reject)=>{
         client.api('/me/sendMail')
           .post(sendMail).then(()=>{
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
@@ -1495,11 +1679,40 @@ const bulkImage = async(data) => {
   
   if(!currentUser.primary_connected){
     let promise_array = []
-  
+    let promise
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
       })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
       
       let image_titles = ''
       let image_descriptions = ''
@@ -1585,12 +1798,12 @@ const bulkImage = async(data) => {
         replyTo: currentUser.email,
         subject: image_subject,
         html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
         
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
         
-      let promise = new Promise((resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         sgMail.send(msg).then((_res) => {
           console.log('mailres.errorcode', _res[0].statusCode);
           if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){
@@ -1631,7 +1844,7 @@ const bulkImage = async(data) => {
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){
     let promise_array = []
-    
+    let promise
     let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
     let accessToken
     await new Promise((resolve, reject) => {
@@ -1665,9 +1878,38 @@ const bulkImage = async(data) => {
     });
     
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
       let image_titles = ''
       let image_descriptions = ''
       let image_objects = ''
@@ -1753,7 +1995,7 @@ const bulkImage = async(data) => {
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>'
+              +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -1766,7 +2008,7 @@ const bulkImage = async(data) => {
           saveToSentItems: "true"
         };
       
-        let promise = new Promise((resolve, reject)=>{
+        promise = new Promise((resolve, reject)=>{
           client.api('/me/sendMail')
           .post(sendMail).then(()=>{
             Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
@@ -1813,9 +2055,39 @@ const bulkImage = async(data) => {
     });
    
     for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
+      let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      } 
+
       if(_contact){
         let image_titles = ''
         let image_descriptions = ''
@@ -1896,7 +2168,7 @@ const bulkImage = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + '</body></html>';
+            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
           
           promise = new Promise((resolve, reject)=>{
@@ -1908,7 +2180,7 @@ const bulkImage = async(data) => {
                   Subject: image_subject,
                 },
                 textHtml:  email_content,
-                textPlain: email_content,
+                textPlain: image_content,
               });
               request({
                 method: 'POST',
@@ -1919,7 +2191,7 @@ const bulkImage = async(data) => {
                 },
                 body: body
               }).then(()=>{
-                Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+                Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
                   console.log('err', err)
                 })
                 resolve({
@@ -1976,7 +2248,7 @@ module.exports = {
   isBlockedEmail,
   bulkEmail,
   bulkVideo,
-  bulkPdf,
+  bulkPDF,
   bulkImage,
   generateUnsubscribeLink,
   generateOpenTrackLink

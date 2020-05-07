@@ -157,7 +157,7 @@ const bulkVideo = async(data) => {
   return Promise.all(promise_array)
 }
 
-const bulkPdf  = async(data) => {
+const bulkPDF  = async(data) => {
   let {user, content, pdfs, contacts} = data 
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('err', err)
@@ -531,7 +531,7 @@ const matchUSPhoneNumber = (phoneNumberString) => {
 
 module.exports = {
   bulkVideo,
-  bulkPdf,
+  bulkPDF,
   bulkImage,
   getTwilioNumber,
   matchUSPhoneNumber
