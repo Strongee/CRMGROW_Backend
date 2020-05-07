@@ -47,7 +47,7 @@ const sgMail = require('@sendgrid/mail')
 const bulkEmail = async(data) => {
   let {user, subject, content, bcc, cc, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
-    console.log('err', err)
+    console.log('user find err', err.message)
   })
   if(!currentUser.primary_connected) {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
@@ -114,7 +114,7 @@ const bulkEmail = async(data) => {
         console.log('err', err)
       })
       
-      const activity = new Activity({
+      const _activity = new Activity({
         content: 'sent email',
         contacts: contacts[i],
         user: currentUser.id,
@@ -124,7 +124,7 @@ const bulkEmail = async(data) => {
         updated_at: new Date(),
       })
 
-      const activity = await activity.save().then()
+      const activity = await _activity.save().then()
     
       const msg = {
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
@@ -483,7 +483,7 @@ const bulkEmail = async(data) => {
       promise = new Promise((resolve, reject) => {
         client.api('/me/sendMail')
         .post(sendMail).then( async ()=>{         
-          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: activity.id } }).catch(err => {
             console.log('err', err)
           })
           resolve({
