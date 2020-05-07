@@ -32,7 +32,7 @@ section.material-section
           if video.type === 'youtube' || video.type === 'vimeo'
             div#player(data-plyr-provider=`${video.type}` data-plyr-embed-id=`${video.url}`)
           else 
-            video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
+            video#player(poster=`${video.thumbnail}`, autoplay, controls, playsinline, name="media")
               source(src=`${video.url}`, type=`video/mp4`)
       .sm-header
         h3.text-center
