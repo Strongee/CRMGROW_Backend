@@ -270,13 +270,8 @@ const bulkEmail = async(data) => {
         })
     
         let html_content
-        if(cc.length > 0 || bcc.length>0){
-          html_content = '<html><head><title>Email</title></head><body><p>' + email_content + 
+        html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
                         '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-        } else {
-          html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
-                        '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-        }
         
         promise = new Promise(async(resolve, reject)=>{
           try{
@@ -447,13 +442,8 @@ const bulkEmail = async(data) => {
       })
   
       let html_content
-      if(cc.length > 0 || bcc.length>0){
-        html_content = '<html><head><title>Email</title></head><body><p>' + email_content + 
+      html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
                       '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-      } else {
-        html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
-                      '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-      }
       
       const sendMail = {
         message: {
