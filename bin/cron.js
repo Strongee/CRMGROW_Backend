@@ -1006,7 +1006,7 @@ const timesheet_check = new CronJob('* * * * *', async() =>{
             pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
-          TextHelper.bulkPdf(data).then(res=>{
+          TextHelper.bulkPDF(data).then(res=>{
             if(res[0] && res[0].status == true){
               timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
@@ -1033,7 +1033,7 @@ const timesheet_check = new CronJob('* * * * *', async() =>{
             pdfs: [action.pdf],
             contacts: [timeline.contact]
           }
-          EmailHelper.bulkPdf(data).then(res=>{
+          EmailHelper.bulkPDF(data).then(res=>{
             if(res[0] && res[0].status == true){
               timeline['status'] = 'completed'
               timeline['updated_at'] = new Date()
