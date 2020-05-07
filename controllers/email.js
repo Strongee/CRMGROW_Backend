@@ -370,7 +370,7 @@ const bulkOutlook = async (req, res) => {
   let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0 })
   let accessToken
   
-  if(contacts.length>config.MAX_EMAIL){
+  if(contacts.length > config.MAX_EMAIL){
     return res.status(400).json({
       status: false,
       error: `You can send max ${config.MAX_EMAIL} contacts at a time`
@@ -828,7 +828,7 @@ const bulkEmail = async (req, res) => {
       bcc: bcc,
       cc: cc,
       attachments: attachments,
-      html: email_content + '<br/><br/>' + emailHelper.generateUnsubscribeLink(activity.id),
+      html: email_content + '<br/><br/>' + currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id),
       text: email_content,
       headers: {
         "List-Unsubscribe": `<${urls.UNSUBSCRIPTION_URL}${activity.id}>`

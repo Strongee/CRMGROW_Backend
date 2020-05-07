@@ -53,20 +53,79 @@ const bulkEmail = async(data) => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
 
     let promise_array = [];
-    
+    let promise
     for(let i = 0; i < contacts.length; i++) {
       let email_content = content
       let email_subject = subject
-      const _contact = await Contact.findOne({ _id: contacts[i] })
+      const _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err')
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact){
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email not found'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+      
       email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
         .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+        
       email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
         .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
   
+      const email = new Email({
+        content: email_content,
+        subject: email_subject,
+        contacts: contacts[i],
+        message_id: _res[0].headers['x-message-id'],
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date(),
+      })
+      
+      const _email = await email.save().then().catch(err => {
+        console.log('err', err)
+      })
+      
+      const activity = new Activity({
+        content: 'sent email',
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'emails',
+        emails: _email.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+
+      const activity = await activity.save().then()
+    
       const msg = {
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
         to: _contact.email,
@@ -74,48 +133,25 @@ const bulkEmail = async(data) => {
         subject: email_subject,
         bcc: bcc,
         cc: cc,
-        html: email_content + '<br/><br/>' + currentUser.email_signature
+        html: email_content + '<br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id),
+        text: email_content,
       };
   
-      const promise = new Promise((resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         sgMail.send(msg).then(async (_res) => {
           if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-            bcc = []
-            cc = []
-            const email = new Email({
-              content: email_content,
-              subject: email_subject,
-              contacts: contacts[i],
-              message_id: _res[0].headers['x-message-id'],
-              user: currentUser.id,
-              updated_at: new Date(),
-              created_at: new Date(),
+            Email.updateMany({_id: _email.id}, { $set: { message_id: _res[0].headers['x-message-id']}}).catch(err => {
+              console.log('email update err', err.message)
             })
-  
-            const _email = await email.save().then().catch(err => {
-              console.log('err', err)
-            })
-  
-            const activity = new Activity({
-              content: 'sent email',
-              contacts: contacts[i],
-              user: currentUser.id,
-              type: 'emails',
-              emails: _email.id,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-  
-            const _activity = await activity.save().then()
-            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-              console.log('err', err)
+
+            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: activity.id } }).catch(err => {
+              console.log('err', err.message)
             })
             
             resolve({
               status: true,
             })
-          }
-          else {
+          } else {
             console.log('email sending err', msg.to + _res[0].statusCode)
             resolve({
               status: false,
@@ -124,7 +160,7 @@ const bulkEmail = async(data) => {
             })
           }
         }).catch(err => {
-          console.log('err', err)
+          console.log('err', err.message)
           resolve({
             status: false,
             contact: contacts[i],
@@ -138,15 +174,18 @@ const bulkEmail = async(data) => {
   } else if(currentUser.connected_email_type === 'gmail'){
     let promise_array = []
     let promise
+    
     const oauth2Client = new google.auth.OAuth2(
       config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     )
+    
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({ refresh_token: token.refresh_token })
+    
     await oauth2Client.getAccessToken().catch(err=>{
-      console.log('get access err', err)
+      console.log('get access err', err.message)
       return new Promise((resolve, reject)=>{
         resolve({
           status: false,
@@ -159,9 +198,39 @@ const bulkEmail = async(data) => {
       let email_subject = subject
       let email_content = content
     
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-        console.log('err', err)
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
       })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email not found'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+      
       if(_contact){
         email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
           .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
@@ -173,8 +242,42 @@ const bulkEmail = async(data) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
-        const message_id = uuidv1()
+        const email = new Email({
+          content: email_content,
+          subject: email_subject,
+          contacts: contacts[i],
+          user: currentUser.id,
+          updated_at: new Date(),
+          created_at: new Date()
+        })
+        
+        const _email = await email.save().then().catch(err => {
+          console.log('err', err)
+        })
+        
+        const _activity = new Activity({
+          content: 'sent email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'emails',
+          emails: _email.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
     
+        const activity = await _activity.save().then().catch(err => {
+          console.log('err', err)
+        })
+    
+        let html_content
+        if(cc.length > 0 || bcc.length>0){
+          html_content = '<html><head><title>Email</title></head><body><p>' + email_content + 
+                        '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+        } else {
+          html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
+                        '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+        }
+        
         promise = new Promise(async(resolve, reject)=>{
           try{
             let body = createBody({
@@ -183,7 +286,7 @@ const bulkEmail = async(data) => {
                 From: `${currentUser.user_name} <${currentUser.email}>`,
                 Subject: email_subject,
               },
-              textHtml: '<html><head><title>Email</title></head><body><p>' + email_content +  `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+              textHtml: html_content,
               textPlain: email_content,
             });
             request({
@@ -195,56 +298,29 @@ const bulkEmail = async(data) => {
               },
               body: body
             }).then(async()=>{
-              const email = new Email({
-                content: email_content,
-                subject: email_subject,
-                message_id: message_id,
-                contacts: contacts[i],
-                user: currentUser.id,
-                updated_at: new Date(),
-                created_at: new Date()
-              })
-      
-              const _email = await email.save().then().catch(err => {
-                console.log('err', err)
-              })
-      
-              const activity = new Activity({
-                content: 'sent email',
-                contacts: contacts[i],
-                user: currentUser.id,
-                type: 'emails',
-                emails: _email.id,
-                created_at: new Date(),
-                updated_at: new Date(),
-              })
-      
-              const _activity = await activity.save().then().catch(err => {
-                console.log('err', err)
-              })
-              Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).then(() => {
+              Contact.updateMany({_id: contacts[i]}, { $set: { last_activity: activity.id } }).then(() => {
                 resolve({
                   status: true
                 })
               }).catch(err => {
-                console.log('err', err)
+                console.log('contact update err gmail helper 306', err.message)
               })
             }).catch(err=>{
-              console.log('err', err)
+              console.log('gmail send err helper 309', err.message)
               resolve({
                 contact: contacts[i],
-                err: err,
+                err: err.message,
               })
             })  
           }catch(err){
-            console.log('err', err)
+            console.log('gmail send err helper 316', err.message)
             resolve({
             contact: contacts[i],
-            err: err,
+            err: err.message || err.mgs,
             })
           }
         }).catch(err=>{
-          console.log('err', err)
+          console.log('gmail promise err helper 323', err.message)
         })
       } else {
         promise = new Promise((resolve, reject)=>{
@@ -279,7 +355,7 @@ const bulkEmail = async(data) => {
         accessToken = token.access_token
     
       }).catch((err) => {
-        console.log('outlook token grant error', err)
+        console.log('outlook token grant error', err.message)
         return new Promise((resolve, reject)=>{
           resolve({
             status: false,
@@ -295,9 +371,44 @@ const bulkEmail = async(data) => {
           done(null, accessToken);
         }
       });
+      
       let email_content = content
       let email_subject = subject
-      const _contact = await Contact.findOne({ _id: contacts[i] })
+      let promise 
+      
+      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(err => {
+        console.log('contact found err', err.message)
+      })
+      
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        if(_contact) {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email unsubscribed'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        } else {
+          promise = new Promise(async(resolve, reject)=>{
+            error.push({
+              err: 'contact email not found'
+            })
+            resolve()
+          })
+          promise_array.push(promise)
+          continue;
+        }
+      }
+      
       email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
         .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
@@ -307,8 +418,43 @@ const bulkEmail = async(data) => {
         .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+ 
+      const email = new Email({
+        content: email_content,
+        subject: email_subject,
+        contacts: contacts[i],
+        user: currentUser.id,
+        updated_at: new Date(),
+        created_at: new Date()
+      })
+      
+      const _email = await email.save().then().catch(err => {
+        console.log('err', err.message)
+      })
+      
+      const _activity = new Activity({
+        content: 'sent email',
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'emails',
+        emails: _email.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
   
-      const message_id = uuidv1() 
+      const activity = await _activity.save().then().catch(err => {
+        console.log('err', err.message)
+      })
+  
+      let html_content
+      if(cc.length > 0 || bcc.length>0){
+        html_content = '<html><head><title>Email</title></head><body><p>' + email_content + 
+                      '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+      } else {
+        html_content = '<html><head><title>Email</title></head><body><p>' + email_content + generateOpenTrackLink(activity.id) + 
+                      '</p><br/><br/>' + currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+      }
+      
       const sendMail = {
         message: {
           subject: email_subject,
@@ -320,7 +466,7 @@ const bulkEmail = async(data) => {
           },
           body: {
             contentType: "HTML",
-            content: '<html><head><title>Email</title></head><body><p>' + email_content + `<img src='${urls.TRACK_URL}${message_id}' style='display:none'/>` + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
+            content: html_content,
           },
   
           toRecipients: [
@@ -334,44 +480,23 @@ const bulkEmail = async(data) => {
         saveToSentItems: "true"
       };
   
-      const promise = new Promise((resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         client.api('/me/sendMail')
-        .post(sendMail).then( async ()=>{
-          const email = new Email({
-            content: email_content,
-            subject: email_subject,
-            message_id: message_id,
-            contacts: contacts[i],
-            user: currentUser.id,
-            updated_at: new Date(),
-            created_at: new Date()
-          })
-          
-          const _email = await email.save().then().catch(err => {
+        .post(sendMail).then( async ()=>{         
+          Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
             console.log('err', err)
           })
-          
-          const activity = new Activity({
-            content: 'sent email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'emails',
-            emails: _email.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          })
-          
-          const _activity = await activity.save().then()
-            Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-              console.log('err', err)
-            })
           resolve({
             status: true
           })
-          }).catch(err => {
-            console.log('err', err)
+        }).catch(err => {
+            console.log('bulk outlook err helper 493', err.message)
             if (err.code == 'ErrorMessageSubmissionBlocked') {
-              reject(err.message || 'Please go to the login into your Email box and follow instruction')
+              resolve({
+                status: false,
+                contact: contacts[i],
+                err: err.message || 'Please go to the login into your Email box and follow instruction'
+              })
             } else {
               resolve({
                 status: false,
