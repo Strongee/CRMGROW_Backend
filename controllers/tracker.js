@@ -224,7 +224,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
       })
   
       activity.save().then(_activity => {
-        Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        Contact.updateMany({_id: query.contact} ,{ $set: {last_activity: _activity.id} }).catch(err=>{
           console.log('err', err)
         })
       }).catch(err=>{
