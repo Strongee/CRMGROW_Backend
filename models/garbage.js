@@ -41,6 +41,8 @@ const Garbage = mongoose.model('garbage',{
       first_name: {type: Boolean, default: true}
     },
     index_page: {type: mongoose.Schema.Types.ObjectId, ref: 'page'},
+    logo: {type: String},
+    material_theme: {type: String},
     created_at: Date,
     updated_at: Date,
  });

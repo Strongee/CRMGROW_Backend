@@ -13,6 +13,7 @@ const Contact = require('../models/contact')
 const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path')
 const urls = require('../constants/urls')
 const config = require('../config/config')
+const variables = require('../constants/variables');
 const mail_contents = require('../constants/mail_contents')
 
 const uuidv1 = require('uuid/v1')
@@ -75,6 +76,8 @@ const play = async(req, res) => {
       console.log('err', err)
     })
     
+    let theme = 'default';
+    let logo = variables.DEFAULT_LOGO
     if(garbage) {
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
@@ -82,6 +85,8 @@ const play = async(req, res) => {
       if(capture_videos.indexOf(video_id) === -1)  {
         capture_dialog = false;
       }
+      theme = garbage['material_theme'] || theme
+      logo = garbage['logo'] || logo
     }  
     else {
       capture_dialog = false;
@@ -92,13 +97,16 @@ const play = async(req, res) => {
     if(!pattern.test(user.learn_more)) {
         user.learn_more = "http://" + user.learn_more;
     }
-    return res.render('video', {
+    return res.render('lead_video_' + theme, {
       video: video,
       user: user,
       capture_dialog: capture_dialog,
       capture_delay: capture_delay,
       capture_field: capture_field || {},
       social_link: user.social_link || {},
+      setting: {
+        logo
+      }
     })
   } else {
     res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
@@ -137,13 +145,27 @@ const play1 = async(req, res) => {
         social_link.linkedin = "http://" + social_link.linkedin
       }
     }
+
+    const garbage = await Garbage.findOne({user: data._id}).catch(err => {
+      console.log('err', err)
+    })
     
-    return res.render('video1', {
+    let theme = 'default';
+    let logo = variables.DEFAULT_LOGO
+    if(garbage) {
+      theme = garbage['material_theme'] || theme
+      logo = garbage['logo'] || logo
+    }
+    
+    return res.render('video_' + theme, {
         video: video,
         user: user,
         contact: activity['contacts'],
         activity: activity.id,
-        social_link: social_link
+        social_link: social_link,
+        setting: {
+          logo
+        }
     })
   }else{
     return res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')

@@ -232,7 +232,7 @@ const uploadBase64 = async(req, res) => {
     let logo = await uploadBase64Image(data)
     garbage['logo'] = logo
     
-    garbage.save().then(data => {
+    Garbage.updateOne({user: currentUser._id}, {$set: {logo}}).then(data => {
       return res.send({
         status: true,
         data: logo
@@ -260,5 +260,6 @@ module.exports = {
     create,
     get,
     upload,
-    remove
+    remove,
+    uploadBase64
 }
