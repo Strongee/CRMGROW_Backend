@@ -480,10 +480,14 @@ const getTwilioNumber = async(id) => {
     fromNumber = config.TWILIO.TWILIO_NUMBER
     return fromNumber
   })
-
+  
+  if(fromNumber){
+    return fromNumber
+  }
+  
   let number = data[0];
 
-  if(typeof number == 'undefined'){
+  if(typeof number == 'undefined' || number == '+'){
     const areaCode1 = areaCode.slice(1)
 
     const data1 = await twilio
@@ -498,7 +502,11 @@ const getTwilioNumber = async(id) => {
     number = data1[0];
   }
   
-  if(typeof number != 'undefined'){
+  if(fromNumber){
+    return fromNumber
+  }
+  
+  if(typeof number != 'undefined' && number != '+'){
     console.log('number', number)
     const proxy_number = await twilio.incomingPhoneNumbers.create({
       phoneNumber: number.phoneNumber,
