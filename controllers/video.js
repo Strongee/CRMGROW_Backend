@@ -987,11 +987,6 @@ const remove = async (req, res) => {
           }, function (err,data){
             console.log('err', err)
           })
-  
-          video['del'] = true
-          video.save().catch(err=>{
-            console.log('err', err.message)
-          })
         } else {
           try{
             let file_path = video.path
@@ -1001,6 +996,10 @@ const remove = async (req, res) => {
           }
         }
         
+        video['del'] = true
+        video.save().catch(err=>{
+          console.log('err', err.message)
+        })
         return res.send({
           status: true,
         })
