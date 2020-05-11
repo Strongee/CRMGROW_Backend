@@ -247,11 +247,9 @@ const update = async(req, res) => {
       error: 'Invalid_permission'
     })
   }
-  
-  const file_name = uuidv1()
-  let custom_thumbnail = false
+  let file_name = video.path.slice(23)
   if (req.body.thumbnail) { // base 64 image    
-    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
+    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     if(fs.existsSync(thumbnail_path)) {  
       fs.readFile(thumbnail_path, (err, data) => {
         if (err){
@@ -283,8 +281,7 @@ const update = async(req, res) => {
         });
         
       // Thumbnail
-      if(req.body.custom_thumbnail){
-        custom_thumbnail = true
+      if(req.body.thumbnail){
         const play = await loadImage(PLAY_BUTTON_PATH);
       
         const canvas = createCanvas(250, 140)
@@ -361,7 +358,6 @@ const update = async(req, res) => {
     const data = {
       file_name: file_name,
       file_path: file_path,
-      custom_thumbnail: custom_thumbnail
     }
     
     video['preview'] = await regeneratePreview(data).catch(err=>{
@@ -508,11 +504,8 @@ const updateDetail = async (req, res) => {
   }
   
   if(video['path'] && req.body.thumbnail){
-    const file_path = video['path']
     const data = {
       file_name: file_name,
-      file_path: file_path,
-      custom_thumbnail: custom_thumbnail
     }
     
     video['preview'] = await generatePreview(data).catch(err=>{
