@@ -363,10 +363,6 @@ const update = async(req, res) => {
     })
   }
   
-  if(video['type'] === 'video/webm'){
-    videoConvert(video.id)
-  }
-  
   video['updated_at'] = new Date()
   video.save().then((_video)=>{
     res.send({
@@ -501,7 +497,10 @@ const updateDetail = async (req, res) => {
     video[key] = editData[key]
   }
   
+  console.log('path', video['path'])
+  console.log('custom_thumbnail', custom_thumbnail)
   if(video['path'] && req.body.thumbnail){
+    console.log('here')
     const data = {
       file_name: file_name,
       file_path: file_path,
@@ -513,13 +512,14 @@ const updateDetail = async (req, res) => {
     })
   }
   
+  console.log('preview', video['preview'])
   if(video['type'] === 'video/webm'){
     videoConvert(video.id)
   }
   
   video['updated_at'] = new Date()
   video.save().then((_video)=>{
-    res.send({
+    return res.send({
       status: true,
       data: _video
     })
@@ -1987,9 +1987,9 @@ const videoConvert = async(id) => {
     video['recording'] = false
     video['path'] = new_path
     video.save().then(()=>{
-    }).catch(err=>{
-      console.log('err', err)
       fs.unlinkSync(file_path)
+    }).catch(err=>{
+      console.log('vide update err', err.message || err.msg)
     })
   })
 }
