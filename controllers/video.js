@@ -353,7 +353,7 @@ const update = async(req, res) => {
     video[key] = editData[key]
   }
   
-  if(video['path'] && req.body.thumbnail && fs.existsSync(GIF_PATH+`screenshot-${file_name}-1.jpg`)){
+  if(video['path'] && req.body.thumbnail){
     const data = {
       file_name: file_name,
     }
@@ -379,7 +379,7 @@ const updateDetail = async (req, res) => {
   let { currentUser } = req
   let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
 
   if (!video) {
@@ -389,7 +389,7 @@ const updateDetail = async (req, res) => {
     })
   }
   
-  const file_name = uuidv1()
+  let file_name = video.path.slice(23)
   let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
@@ -755,7 +755,7 @@ const generatePreview = async(data) => {
       }
     }
     
-    const stream = pngFileStream(GIF_PATH+'frame-??.png')
+    const stream = pngFileStream(GIF_PATH+`${file_name}-??.png`)
       .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
       .pipe(fs.createWriteStream(GIF_PATH+file_name));
 
@@ -802,45 +802,47 @@ const regeneratePreview = async(data) => {
     const ctx = canvas.getContext('2d');
     const encoder = new GIFEncoder(250, 140);
     
-    for(let i=1; i<40; i++){
-      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
-      
-      let height = image.height;
-      let width = image.width;
-      if(height > width) {
-        ctx.rect(0, 0, 250, 140);
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-        width = 140*width/height;
-        height = 140;
-        ctx.drawImage(image, (250-width)/2, 0, width, height);
-      } else {
-        height = 140;
-        width = 250;
-        ctx.drawImage(image, 0, 0, width, height);
-      }
-      ctx.rect(60, 100, 150, 30);
-      ctx.globalAlpha  = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '20px Impact'
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 70, 120)
-      ctx.drawImage(play, 10, 95, 40, 40)
-      let buf = canvas.toBuffer();
-      if(custom_thumbnail) {
-        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
-      } else {
-        if(i<10) {
-          fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
+    if(fs.existsSync(GIF_PATH+`screenshot-${file_name}-1.jpg`)) {
+      for(let i=1; i<40; i++){
+        image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
+        
+        let height = image.height;
+        let width = image.width;
+        if(height > width) {
+          ctx.rect(0, 0, 250, 140);
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          width = 140*width/height;
+          height = 140;
+          ctx.drawImage(image, (250-width)/2, 0, width, height);
         } else {
-          fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
-        }  
+          height = 140;
+          width = 250;
+          ctx.drawImage(image, 0, 0, width, height);
+        }
+        ctx.rect(60, 100, 150, 30);
+        ctx.globalAlpha  = 0.7;
+        ctx.fillStyle = '#333';
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.font = '20px Impact'
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Play video', 70, 120)
+        ctx.drawImage(play, 10, 95, 40, 40)
+        let buf = canvas.toBuffer();
+        if(custom_thumbnail) {
+          fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
+        } else {
+          if(i<10) {
+            fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
+          } else {
+            fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
+          }  
+        }
       }
     }
-    
-    const stream = pngFileStream(GIF_PATH+'frame-??.png')
+
+    const stream = pngFileStream(GIF_PATH+`${file_name}-??.png`)
       .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
       .pipe(fs.createWriteStream(GIF_PATH+file_name));
 
