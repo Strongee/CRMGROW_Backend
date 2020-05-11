@@ -1002,7 +1002,9 @@ const remove = async (req, res) => {
           })
         } else {
           let file_path = video.path
-          fs.unlinkSync(file_path)
+          fs.unlinkSync(file_path).catch(err=>{
+            console.log('video file remove error', err)
+          })
         }
         
         return res.send({
