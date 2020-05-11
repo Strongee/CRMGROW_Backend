@@ -793,7 +793,7 @@ const generatePreview = async(data) => {
 }
 
 const regeneratePreview = async(data) => {
-  const {file_name, custom_thumbnail} = data
+  const {file_name} = data
   
   return new Promise(async(resolve, reject) => {    
     const play = await loadImage(PLAY_BUTTON_PATH);
@@ -830,15 +830,7 @@ const regeneratePreview = async(data) => {
         ctx.fillText('Play video', 70, 120)
         ctx.drawImage(play, 10, 95, 40, 40)
         let buf = canvas.toBuffer();
-        if(custom_thumbnail) {
-          fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
-        } else {
-          if(i<10) {
-            fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
-          } else {
-            fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
-          }  
-        }
+        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
       }
     }
 
@@ -1001,10 +993,12 @@ const remove = async (req, res) => {
             console.log('err', err.message)
           })
         } else {
-          let file_path = video.path
-          fs.unlinkSync(file_path).catch(err=>{
-            console.log('video file remove error', err)
-          })
+          try{
+            let file_path = video.path
+            fs.unlinkSync(file_path)
+          }catch(err){
+            console.log('err', err)
+          }
         }
         
         return res.send({
