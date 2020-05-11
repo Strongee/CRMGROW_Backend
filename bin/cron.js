@@ -743,11 +743,11 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   
 
 const video_convert = new CronJob('0 1 * * *', async() =>{
-    const videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
-      console.log('err', err)
+    const record_videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
+      console.log('err', err.message)
     })
     for(let i=0; i<videos.length; i++){
-      const video = videos[i]
+      const video = record_videos[i]
       let file_path = video.path
       if(file_path){
         if (fs.existsSync(file_path)) {
@@ -771,6 +771,11 @@ const video_convert = new CronJob('0 1 * * *', async() =>{
         }
       }
     }
+    
+    const uploaded_videos = await Video.find({type: 'video/mp4', converted: false, del: false}).catch(err=>{
+      console.log('err', err.message)
+    })
+    
   }, function () {
     console.log('Video Convert Job Finished.');
   }, false, 'US/Central')

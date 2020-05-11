@@ -310,7 +310,6 @@ const update = async(req, res) =>{
                       function(err, confirmation) {
                         if(err){
                           console.log('delete source err', err)
-                          throw err
                         }
                       })
                        // Save card information to DB.
