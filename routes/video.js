@@ -57,8 +57,11 @@ router.post('/create', UserCtrl.checkAuth, catchError(VideoCtrl.createVideo));
 // Upload a video
 router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('video'), catchError(VideoCtrl.create))
 
+// Upload a thumbnail and detail info when upload a video at first
+router.put('/detail/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
+
 // Upload a thumbnail and detail info
-router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
+router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update))
 
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail))

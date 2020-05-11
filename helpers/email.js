@@ -562,7 +562,7 @@ const bulkVideo = async(data) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '-resize'
+            preview = video['thumbnail']
           }
           
           if(typeof video_content == 'undefined'){

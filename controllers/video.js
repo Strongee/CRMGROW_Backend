@@ -233,12 +233,12 @@ const createVideo = async (req, res) => {
   })
 }
 
-const updateDetail = async (req, res) => {
+const update = async(req, res) => {
   const editData = req.body
   let { currentUser } = req
   let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
 
   if (!video) {
@@ -249,12 +249,13 @@ const updateDetail = async (req, res) => {
   }
   
   const file_name = uuidv1()
+  let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
     if(fs.existsSync(thumbnail_path)) {  
       fs.readFile(thumbnail_path, (err, data) => {
         if (err){
-          console.log('file read err', err)
+          console.log('file read err', err.message || err.msg)
         }else {
           console.log('File read was successful', data)
           const today = new Date()
@@ -282,44 +283,197 @@ const updateDetail = async (req, res) => {
         });
         
       // Thumbnail
-      const play = await loadImage(PLAY_BUTTON_PATH);
-    
-      const canvas = createCanvas(250, 140)
-      const ctx = canvas.getContext('2d');
-      let image = await loadImage(thumbnail_path);
-        
-      let height = image.height;
-      let width = image.width;
-      if(height > width) {
-        ctx.rect(0, 0, 250, 140);
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-        width = 140*width/height;
-        height = 140;
-        ctx.drawImage(image, (250-width)/2, 0, width, height);
-      } else {
-        height = 140;
-        width = 250;
-        ctx.drawImage(image, 0, 0, width, height);
-      }
-      ctx.rect(60, 100, 150, 30);
-      ctx.globalAlpha  = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '20px Impact'
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 70, 120)
-      ctx.drawImage(play, 10, 95, 40, 40)
-      let buf = canvas.toBuffer();
+      if(req.body.custom_thumbnail){
+        custom_thumbnail = true
+        const play = await loadImage(PLAY_BUTTON_PATH);
       
-      for(let i=0; i<30; i++){
-        if(i<10){
-          fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
+        const canvas = createCanvas(250, 140)
+        const ctx = canvas.getContext('2d');
+        let image = await loadImage(thumbnail_path);
+          
+        let height = image.height;
+        let width = image.width;
+        if(height > width) {
+          ctx.rect(0, 0, 250, 140);
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          width = 140*width/height;
+          height = 140;
+          ctx.drawImage(image, (250-width)/2, 0, width, height);
         } else {
-          fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
+          height = 140;
+          width = 250;
+          ctx.drawImage(image, 0, 0, width, height);
         }
+        ctx.rect(60, 100, 150, 30);
+        ctx.globalAlpha  = 0.7;
+        ctx.fillStyle = '#333';
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.font = '20px Impact'
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Play video', 70, 120)
+        ctx.drawImage(play, 10, 95, 40, 40)
+        let buf = canvas.toBuffer();
         
+        for(let i=0; i<20; i++){
+          if(i<10){
+            fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
+          } else {
+            fs.writeFileSync(GIF_PATH+file_name+`-${i}.png`, buf)
+          }
+        }
+      }
+    
+      /**
+      sharp(thumbnail_path)
+      .resize(250, 140)
+      .toBuffer()
+      .then(data => {
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+            Body: data,
+            ACL: 'public-read'
+          };
+          
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+            }
+          })
+      });
+      */
+    }
+  }
+
+  for (let key in editData) {
+    video[key] = editData[key]
+  }
+  
+  if(video['path'] && req.body.thumbnail && fs.existsSync(GIF_PATH+`screenshot-${file_name}-1.jpg`)){
+    const file_path = video['path']
+    const data = {
+      file_name: file_name,
+      file_path: file_path,
+      custom_thumbnail: custom_thumbnail
+    }
+    
+    video['preview'] = await regeneratePreview(data).catch(err=>{
+      console.log('err', err.message)
+    })
+  }
+  
+  if(video['type'] === 'video/webm'){
+    videoConvert(video.id)
+  }
+  
+  video['updated_at'] = new Date()
+  video.save().then((_video)=>{
+    res.send({
+      status: true,
+      data: _video
+    })
+  }).catch(err=>{
+    console.log('err', err.message)
+  })
+}
+
+const updateDetail = async (req, res) => {
+  const editData = req.body
+  let { currentUser } = req
+  let thumbnail_path = ''
+  const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
+    console.log('err', err)
+  })
+
+  if (!video) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid_permission'
+    })
+  }
+  
+  const file_name = uuidv1()
+  let custom_thumbnail = false
+  if (req.body.thumbnail) { // base 64 image    
+    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
+    if(fs.existsSync(thumbnail_path)) {  
+      fs.readFile(thumbnail_path, (err, data) => {
+        if (err){
+          console.log('file read err', err.message || err.msg)
+        }else {
+          console.log('File read was successful', data)
+          const today = new Date()
+          const year = today.getYear()
+          const month = today.getMonth()
+          const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+              Body: data,
+              ACL: 'public-read'
+          };
+          s3.upload(params, async (s3Err, upload)=>{
+            if (s3Err){
+              console.log('upload s3 error', s3Err)
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`)
+            
+              video['thumbnail'] = upload.Location
+              video.save().catch(err=>{
+                console.log('video save error', err.message)
+              })
+            }
+          })
+        }
+        });
+        
+      // Thumbnail
+      if(req.body.custom_thumbnail){
+        custom_thumbnail = true
+        const play = await loadImage(PLAY_BUTTON_PATH);
+      
+        const canvas = createCanvas(250, 140)
+        const ctx = canvas.getContext('2d');
+        let image = await loadImage(thumbnail_path);
+          
+        let height = image.height;
+        let width = image.width;
+        if(height > width) {
+          ctx.rect(0, 0, 250, 140);
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          width = 140*width/height;
+          height = 140;
+          ctx.drawImage(image, (250-width)/2, 0, width, height);
+        } else {
+          height = 140;
+          width = 250;
+          ctx.drawImage(image, 0, 0, width, height);
+        }
+        ctx.rect(60, 100, 150, 30);
+        ctx.globalAlpha  = 0.7;
+        ctx.fillStyle = '#333';
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.font = '20px Impact'
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Play video', 70, 120)
+        ctx.drawImage(play, 10, 95, 40, 40)
+        let buf = canvas.toBuffer();
+        
+        for(let i=0; i<20; i++){
+          if(i<10){
+            fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
+          } else {
+            fs.writeFileSync(GIF_PATH+file_name+`-${i}.png`, buf)
+          }
+        }
       }
     
       /**
@@ -355,8 +509,14 @@ const updateDetail = async (req, res) => {
   
   if(video['path'] && req.body.thumbnail){
     const file_path = video['path']
-    video['preview'] = await generatePreview(file_path).catch(err=>{
-      console.log('err', err)
+    const data = {
+      file_name: file_name,
+      file_path: file_path,
+      custom_thumbnail: custom_thumbnail
+    }
+    
+    video['preview'] = await generatePreview(data).catch(err=>{
+      console.log('err', err.message)
     })
   }
   
@@ -371,7 +531,7 @@ const updateDetail = async (req, res) => {
       data: _video
     })
   }).catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
 }
 
@@ -400,8 +560,7 @@ const updateDefault = async (req, res) => {
   
   if(garbage['edited_video']) {
     garbage['edited_video'].push(id);
-  }
-  else {
+  } else {
     garbage['edited_video'] = [id]
   }
   
@@ -423,7 +582,7 @@ const updateDefault = async (req, res) => {
     if(fs.existsSync(thumbnail_path)) {  
       fs.readFile(thumbnail_path, (err, data) => {
         if (err){
-          console.log('file read err', err)
+          console.log('file read err', err.message || err.msg)
         }else {
           console.log('File read was successful', data)
           const today = new Date()
@@ -542,8 +701,9 @@ const updateDefault = async (req, res) => {
   
 }
 
-const generatePreview = async(file_path) => {
-
+const generatePreview = async(data) => {
+  const {file_name, file_path, custom_thumbnail} = data
+  
   return new Promise(async(resolve, reject) => {    
     let offsets = []
     for(let i=0; i<4000; i+=100){
@@ -552,7 +712,7 @@ const generatePreview = async(file_path) => {
     
     await extractFrames({
       input: file_path,
-      output: GIF_PATH+'screenshot-%i.jpg',
+      output: GIF_PATH+`screenshot-${file_name}-%i.jpg`,
       offsets: offsets
     }).catch(err=>{
       console.log('err', err)
@@ -565,7 +725,7 @@ const generatePreview = async(file_path) => {
     const encoder = new GIFEncoder(250, 140);
     
     for(let i=1; i<40; i++){
-      image = await loadImage(GIF_PATH+`screenshot-${i}.jpg`);
+      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
       
       let height = image.height;
       let width = image.width;
@@ -591,10 +751,17 @@ const generatePreview = async(file_path) => {
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
-      fs.writeFileSync(GIF_PATH+`frame-${i+29}.png`, buf)
+      if(custom_thumbnail) {
+        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
+      } else {
+        if(i<10) {
+          fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
+        } else {
+          fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
+        }  
+      }
     }
     
-    const file_name = uuidv1()
     const stream = pngFileStream(GIF_PATH+'frame-??.png')
       .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
       .pipe(fs.createWriteStream(GIF_PATH+file_name));
@@ -622,7 +789,93 @@ const generatePreview = async(file_path) => {
               fs.unlinkSync(GIF_PATH+file_name)
               resolve(upload.Location)
             })
-         });}   
+         });
+        }   
+      });
+      stream.on('error', err=>{
+        console.log('err', err)
+        reject(err)
+      });
+    });
+}
+
+const regeneratePreview = async(data) => {
+  const {file_name, custom_thumbnail} = data
+  
+  return new Promise(async(resolve, reject) => {    
+    const play = await loadImage(PLAY_BUTTON_PATH);
+    
+    const canvas = createCanvas(250, 140)
+    const ctx = canvas.getContext('2d');
+    const encoder = new GIFEncoder(250, 140);
+    
+    for(let i=1; i<40; i++){
+      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
+      
+      let height = image.height;
+      let width = image.width;
+      if(height > width) {
+        ctx.rect(0, 0, 250, 140);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        width = 140*width/height;
+        height = 140;
+        ctx.drawImage(image, (250-width)/2, 0, width, height);
+      } else {
+        height = 140;
+        width = 250;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
+      ctx.rect(60, 100, 150, 30);
+      ctx.globalAlpha  = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '20px Impact'
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play video', 70, 120)
+      ctx.drawImage(play, 10, 95, 40, 40)
+      let buf = canvas.toBuffer();
+      if(custom_thumbnail) {
+        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
+      } else {
+        if(i<10) {
+          fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
+        } else {
+          fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
+        }  
+      }
+    }
+    
+    const stream = pngFileStream(GIF_PATH+'frame-??.png')
+      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
+      .pipe(fs.createWriteStream(GIF_PATH+file_name));
+
+      stream.on('finish', () => {
+        if (fs.existsSync(GIF_PATH+file_name)) {
+          fs.readFile(GIF_PATH+file_name, (err, data) => {
+            if (err){
+              console.log('stream file error', err)
+            };
+            console.log('Gif File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'gif' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err) throw s3Err
+              console.log(`Gif File uploaded successfully at ${upload.Location}`)
+              
+              fs.unlinkSync(GIF_PATH+file_name)
+              resolve(upload.Location)
+            })
+         });
+        }   
       });
       stream.on('error', err=>{
         console.log('err', err)
@@ -740,16 +993,23 @@ const remove = async (req, res) => {
         }
 
         let url =  video.url
-        s3.deleteObject({
-          Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-          Key: url.slice(44)
-        }, function (err,data){
-          console.log('err', err)
-        })
-
-        video['del'] = true
-        video.save()
-
+        if(url.indexOf('teamgrow.s3')>0) {
+          s3.deleteObject({
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+            Key: url.slice(44)
+          }, function (err,data){
+            console.log('err', err)
+          })
+  
+          video['del'] = true
+          video.save().catch(err=>{
+            console.log('err', err.message)
+          })
+        } else {
+          let file_path = video.path
+          fs.unlinkSync(file_path)
+        }
+        
         return res.send({
           status: true,
         })
@@ -1747,6 +2007,7 @@ module.exports = {
   embedPlay,
   pipe,
   create,
+  update,
   updateDetail,
   updateDefault,
   videoConvert,

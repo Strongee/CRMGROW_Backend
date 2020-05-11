@@ -437,10 +437,9 @@ const video_job = new CronJob('0 3 * * *', async() =>{
                   video.save().then(()=>{
                     fs.unlinkSync(file_path)
                   }).catch(err=>{
-                    console.log('err', err)
+                    console.log('err', err.message)
                   });  
                 })
-             
               }
             });
           }catch(err){
@@ -764,9 +763,9 @@ const video_convert = new CronJob('0 1 * * *', async() =>{
               video['recording'] = false
               video['path'] = new_path
               video.save().then(()=>{
-              }).catch(err=>{
-                console.log('err', err)
                 fs.unlinkSync(file_path)
+              }).catch(err=>{
+                console.log('err', err.message)
               })
             })
         }

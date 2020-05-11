@@ -518,7 +518,7 @@ const getTwilioNumber = async(id) => {
     user['proxy_number'] = proxy_number.phoneNumber;
     fromNumber = proxy_number.phoneNumber;
     user.save().catch(err=>{
-      console.log('err', err)
+      console.log('err', err.message)
     })
   } else {
     fromNumber = config.TWILIO.TWILIO_NUMBER
