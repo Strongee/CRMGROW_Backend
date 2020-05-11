@@ -354,10 +354,8 @@ const update = async(req, res) => {
   }
   
   if(video['path'] && req.body.thumbnail && fs.existsSync(GIF_PATH+`screenshot-${file_name}-1.jpg`)){
-    const file_path = video['path']
     const data = {
       file_name: file_name,
-      file_path: file_path,
     }
     
     video['preview'] = await regeneratePreview(data).catch(err=>{
@@ -506,6 +504,8 @@ const updateDetail = async (req, res) => {
   if(video['path'] && req.body.thumbnail){
     const data = {
       file_name: file_name,
+      file_path: file_path,
+      custom_thumbnail: custom_thumbnail
     }
     
     video['preview'] = await generatePreview(data).catch(err=>{
