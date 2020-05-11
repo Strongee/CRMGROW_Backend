@@ -503,7 +503,7 @@ const updateDetail = async (req, res) => {
     console.log('here')
     const data = {
       file_name: file_name,
-      file_path: file_path,
+      file_path: video['path'],
       custom_thumbnail: custom_thumbnail
     }
     
