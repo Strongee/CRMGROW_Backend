@@ -500,7 +500,6 @@ const updateDetail = async (req, res) => {
   console.log('path', video['path'])
   console.log('custom_thumbnail', custom_thumbnail)
   if(video['path'] && req.body.thumbnail){
-    console.log('here')
     const data = {
       file_name: file_name,
       file_path: video['path'],
@@ -512,7 +511,6 @@ const updateDetail = async (req, res) => {
     })
   }
   
-  console.log('preview', video['preview'])
   if(video['type'] === 'video/webm'){
     videoConvert(video.id)
   }
@@ -525,6 +523,10 @@ const updateDetail = async (req, res) => {
     })
   }).catch(err=>{
     console.log('err', err.message)
+    return res.status(400).json({
+      status: false,
+      error: err.message
+    })
   })
 }
 
@@ -1315,6 +1317,7 @@ const bulkGmail = async(req, res) => {
             preview = video['thumbnail']
           }
                
+          console.log('preview', preview)
           if(typeof video_content == 'undefined'){
             video_content = ''
           }
@@ -1358,7 +1361,7 @@ const bulkGmail = async(req, res) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
           //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a><br/></p>`
           video_objects = video_objects + video_object                      
       }
       
@@ -1700,7 +1703,7 @@ const createSmsContent = async (req, res) => {
     })
     
     activity = await _activity.save().then().catch(err=>{
-      console.log('err', err)
+      console.log('err', err.message)
     })
     
     const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
