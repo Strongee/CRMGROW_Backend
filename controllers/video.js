@@ -509,9 +509,10 @@ const updateDetail = async (req, res) => {
     video['preview'] = await generatePreview(data).catch(err=>{
       console.log('err', err.message)
     })
+    console.log('preview generate data',  await generatePreview(data))
   }
   
-  console.log('preview', video['preview'])
+  console.log('preview', video)
   
   if(video['type'] === 'video/webm'){
     videoConvert(video.id)
