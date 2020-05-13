@@ -511,6 +511,8 @@ const updateDetail = async (req, res) => {
     })
   }
   
+  console.log('preview', video['preview'])
+  
   if(video['type'] === 'video/webm'){
     videoConvert(video.id)
   }
