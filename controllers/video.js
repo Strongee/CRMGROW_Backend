@@ -726,9 +726,12 @@ const generatePreview = async(data) => {
     for(let i=1; i<40; i++){
       image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`).catch(err=>{
         console.log('screenshot generating error', err)
-        continue;
+        return
       });
-      
+      console.log('image', image)
+      if(!image){
+        break;
+      }
       let height = image.height;
       let width = image.width;
       if(height > width) {
