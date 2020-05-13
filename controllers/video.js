@@ -520,6 +520,7 @@ const updateDetail = async (req, res) => {
   
   video['updated_at'] = new Date()
   video.save().then((_video)=>{
+    console.log('_video', _video)
     return res.send({
       status: true,
       data: _video
@@ -723,7 +724,10 @@ const generatePreview = async(data) => {
     const encoder = new GIFEncoder(250, 140);
     
     for(let i=1; i<40; i++){
-      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
+      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`).catch(err=>{
+        console.log('screenshot generating error', err)
+        continue;
+      });
       
       let height = image.height;
       let width = image.width;
@@ -1319,7 +1323,7 @@ const bulkGmail = async(req, res) => {
           } else {
             preview = video['thumbnail']
           }
-               
+          console.log('video send', video)     
           console.log('preview', preview)
           if(typeof video_content == 'undefined'){
             video_content = ''
