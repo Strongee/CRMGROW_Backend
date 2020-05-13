@@ -496,9 +496,7 @@ const updateDetail = async (req, res) => {
   for (let key in editData) {
     video[key] = editData[key]
   }
-  
-  console.log('path', video['path'])
-  console.log('custom_thumbnail', custom_thumbnail)
+
   if(video['path'] && req.body.thumbnail){
     const data = {
       file_name: file_name,
@@ -509,7 +507,6 @@ const updateDetail = async (req, res) => {
     video['preview'] = await generatePreview(data).catch(err=>{
       console.log('err', err.message)
     })
-    console.log('preview generate data',  await generatePreview(data))
   }
   
   console.log('preview', video)
@@ -1326,8 +1323,6 @@ const bulkGmail = async(req, res) => {
           } else {
             preview = video['thumbnail']
           }
-          console.log('video send', video)     
-          console.log('preview', preview)
           if(typeof video_content == 'undefined'){
             video_content = ''
           }
