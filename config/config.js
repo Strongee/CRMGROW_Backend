@@ -55,7 +55,8 @@ const config = {
         LIMIT: process.env.LIMIT || 100
     },
     MAX_CONTACT: process.env.MAX_CONTACT || 3000,
-    DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123'
+    DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123',
+    ADMIN_DEFAULT_PASS: process.env.ADMIN_DEFAULT_PASS || 'admin123'
 }
 
 module.exports = config;
