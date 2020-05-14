@@ -671,7 +671,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
   }, false, 'US/Central')
   
 
-const upload_video_job = new CronJob('00 19 * * *', async() =>{
+const upload_video_job = new CronJob('* * * * *', async() =>{
   const videos = await Video.find({uploaded: false, del: false, type: {$nin: ['youtube', 'vimeo']} }).catch(err=>{
     console.log('err', err.message)
   })
@@ -745,67 +745,6 @@ const upload_video_job = new CronJob('00 19 * * *', async() =>{
             }
           }
         }
-        // } else {
-        //   const file_name = video.url.slice(39)
-        //   file_path = TEMP_PATH + file_name
-        //   if (fs.existsSync(file_path)) {
-        //     try{
-        //     fs.readFile(file_path, (err, data) => {
-        //         if (err) throw err;
-        //         console.log('File read was successful', data)
-        //         const today = new Date()
-        //         const year = today.getYear()
-        //         const month = today.getMonth()
-        //         const params = {
-        //             Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //             Key: 'video' +  year + '/' + month + '/' + file_name, 
-        //             Body: data,
-        //             ACL: 'public-read'
-        //         };
-        //         s3.upload(params, async (s3Err, upload)=>{
-        //           if (s3Err) throw s3Err
-        //           console.log(`File uploaded successfully at ${upload.Location}`)
-        //           video['url'] = upload.Location
-        //           video['converted'] = true
-        //           video.save().then(()=>{
-        //             fs.unlinkSync(file_path)
-        //           }).catch(err=>{
-        //             console.log('err', err)
-        //           });  
-        //         })
-        //      });
-        //     }catch(err){
-        //       console.log('file_path', file_path)
-        //       console.log('err', err)
-        //       // read file
-        //       FileHelper.readFile(file_path).then(function(data) {
-        //           console.log('File read was successful by stream', data)
-        //           const today = new Date()
-        //           const year = today.getYear()
-        //           const month = today.getMonth()
-        //           const params = {
-        //               Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //               Key: 'video' +  year + '/' + month + '/' + file_name, 
-        //               Body: data,
-        //               ACL: 'public-read'
-        //           };
-        //           s3.upload(params, async (s3Err, upload)=>{
-        //             if (s3Err) throw s3Err
-        //             console.log(`File uploaded successfully at ${upload.Location}`)
-        //             video['url'] = upload.Location
-        //             video['converted'] = true
-        //             video.save().then(()=>{
-        //               fs.unlinkSync(file_path)
-        //             }).catch(err=>{
-        //               console.log('err', err)
-        //             });  
-        //           })
-        //       }).catch(function(err) {
-        //        console.log(err);
-        //       })
-        //     }
-        //   }
-        // }
       }
     }
   }, function () {
