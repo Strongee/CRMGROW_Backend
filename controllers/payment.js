@@ -581,12 +581,22 @@ const paymentFailed = async(req, res) => {
   const invoice = req.body.data
   const customer_id = invoice['object']['customer']
   const attempt_count = invoice['object']['attempt_count']
-  const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
-    console.log('err', err)
-  })
-  const user = await User.findOne({payment: payment, del: false}).catch(err=>{
-    console.log('err', err)
-  })
+  
+  const payment = await Payment
+    .findOne({
+      customer_id: customer_id
+    }).catch(err=>{
+      console.log('payment find err', err.message)
+    })
+  
+  const user = await User
+    .findOne({
+      payment: payment, 
+      del: false
+    })
+    .catch(err=>{
+        console.log('user find err', err.message)
+    })
   
   user['subscription']['is_failed'] = true
   user['subscription']['updated_at'] = new Date()
@@ -597,8 +607,9 @@ const paymentFailed = async(req, res) => {
     user['subscription']['is_suspended'] = true
     user['subscription']['suspended_at'] = new Date()
   }
+  
   user.save().catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
   
   return res.send({
