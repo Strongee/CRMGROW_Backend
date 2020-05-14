@@ -12,11 +12,13 @@
 (function($){
   $(document).ready(() => {
     if($('.gallery img').length > 1) {
-        $('.gallery').tjGallery({
-          row_min_height: 180,
-          margin: 10,
-          selector: 'a'
-        })
+        setTimeout(() => {
+          $('.gallery').tjGallery({
+            row_min_height: 180,
+            margin: 10,
+            selector: 'a'
+          })
+        }, 3000)
       }
       else {
         $('.gallery img').addClass('single');
