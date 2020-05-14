@@ -33,7 +33,8 @@ const config = {
         SENDGRID_SIGNUP_FLOW_REACH: process.env.SENDGRID_SIGNUP_FLOW_REACH || 'd-5216f3be8efb41dcaef4ca69d0b6f6ca',
         SENDGRID_SIGNUP_FLOW_THIRD: process.env.SENDGRID_SIGNUP_FLOW_THIRD || 'd-ada9743225184690b6a14ca92df76cf7',
         SENDGRID_SIGNUP_FLOW_FORTH: process.env.SENDGRID_SIGNUP_FLOW_FORTH || 'd-12bb4db57b5b4107b7c9380825cb82ae',
-        SENDGRID_SYSTEM_NOTIFICATION: process.env.SENDGRID_SYSTEM_NOTIFICATION || 'd-a829cc5764184be695de903030681eb5'
+        SENDGRID_SYSTEM_NOTIFICATION: process.env.SENDGRID_SYSTEM_NOTIFICATION || 'd-a829cc5764184be695de903030681eb5',
+        SENDGRID_INVITE_GUEST: process.env.SENDGRID_INVITE_GUEST || 'd-5c8deb9857ec46a08b65ac484bbd9c92'
     },
     TWILIO: {
         TWILIO_SID: process.env.TWILIO_SID || 'AC7e8d97c21a930d9d40e44356b452a263',
@@ -55,7 +56,8 @@ const config = {
         LIMIT: process.env.LIMIT || 100
     },
     MAX_CONTACT: process.env.MAX_CONTACT || 3000,
-    DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123'
+    DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123',
+    ADMIN_DEFAULT_PASS: process.env.ADMIN_DEFAULT_PASS || 'admin123'
 }
 
 module.exports = config;

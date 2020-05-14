@@ -71,6 +71,7 @@ const User = mongoose.model('user',{
      last_logged: Date,
      del: {type: Boolean, default: false},
      admin_loggin: {type: Boolean, default: false},
+     guest_loggin: {type: Boolean, default: false},
      sub_domain: String,
      social_link: {
       facebook: String,

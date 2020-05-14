@@ -127,7 +127,7 @@ const update = async (req, res) => {
     const data = req.body;
     let automation = await Automation.findOne({_id: id});
     automation = JSON.parse(JSON.stringify(automation));
-    console.log(automation, automation.role)
+    
     if(automation) {
         if(automation.user != currentUser.id) {
             if(automation.role == 'admin') {

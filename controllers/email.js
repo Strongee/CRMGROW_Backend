@@ -13,7 +13,7 @@ const VideoTracker = require('../models/video_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const User = require('../models/user');
-const Garbage = require('../models/garbage')
+const Garbage = require('../models/garbage');
 
 const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
@@ -42,78 +42,6 @@ const phone = require('phone')
 const twilio = require('twilio')(accountSid, authToken)
 const emailHelper = require('../helpers/email');
 
-const send = async (req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-
-  const { currentUser } = req
-  const { cc, bcc, to, subject, content, contacts } = req.body
-
-  if (typeof subject == 'undefined' || subject == "") {
-    return res.status(400).send({
-      status: false,
-      error: 'Subject email must be specified'
-    })
-  }
-
-  const msg = {
-    from: `${currentUser.user_name} <${currentUser.email}>`,
-    subject: subject,
-    to: to,
-    cc: cc,
-    bcc: bcc,
-    text: content,
-    html: '<html><head><title>Email</title></head><body><p>' + content + '</p><br/><br/>' + currentUser.email_signature + '</body></html>',
-  };
-
-  sgMail.send(msg).then(async (res) => {
-    console.log('mailres.errorcode', res[0].statusCode);
-    if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-      console.log('Successful send to ' + msg.to)
-      console.log('res', res)
-      const email = new Email({
-        ...req.body,
-        user: currentUser.id,
-        updated_at: new Date(),
-        created_at: new Date()
-      })
-
-      const _email = await email.save().then().catch(err => {
-        console.log('err', err)
-      })
-      let data_list = []
-      for (let i = 0; i < contacts.length; i++) {
-        const activity = new Activity({
-          content: 'sent email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'emails',
-          emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-
-        const _activity = await activity.save().then()
-        Contact.findByIdAndUpdate(contacts[i], { $set: { last_activity: _activity.id } }).catch(err => {
-          console.log('err', err)
-        })
-        myJSON = JSON.stringify(_email)
-        const data = JSON.parse(myJSON);
-        data.activity = _activity
-        data_list.push(data)
-      }
-
-      return res.send({
-        status: true,
-        data: data_list
-      })
-    } else {
-      console.log('email sending err', msg.to + res[0].statusCode)
-    }
-  }).catch(err => {
-    console.log('err', err)
-  })
-}
-
 const bulkGmail = async (req, res) => {
   const { currentUser } = req
   let { cc, bcc, to, subject, content, contacts, attachments } = req.body
@@ -128,7 +56,7 @@ const bulkGmail = async (req, res) => {
   const token = JSON.parse(currentUser.google_refresh_token)
   oauth2Client.setCredentials({ refresh_token: token.refresh_token })
   await oauth2Client.getAccessToken().catch(err=>{
-    console.log('get access err', err)
+    console.log('get access err', err.message || err.msg)
     return res.status(406).send({
       status: false,
       error: 'not connected'
@@ -154,7 +82,11 @@ const bulkGmail = async (req, res) => {
     let email_content = content
     let promise 
     
-    let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+    let _contact = await Contact
+                        .findOne({ 
+                          _id: contacts[i], 
+                          tags: { $nin: ['unsubscribed'] } 
+                        }).catch(err=>{
       console.log('contact found err', err.message)
     })
 
@@ -177,12 +109,12 @@ const bulkGmail = async (req, res) => {
     }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
@@ -240,7 +172,7 @@ const bulkGmail = async (req, res) => {
         let body = createBody({
           headers: {
             To: _contact.email,
-            From: `${currentUser.user_name} <${currentUser.email}>`,
+            From: `${currentUser.user_name} <${currentUser.connected_email}>`,
             Subject: email_subject,
             Cc: cc,
             Bcc: bcc
@@ -430,12 +362,12 @@ const bulkOutlook = async (req, res) => {
     }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
     email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
 
@@ -449,9 +381,11 @@ const bulkOutlook = async (req, res) => {
       created_at: new Date()
     })
       
-    const _email = await email.save().then().catch(err => {
-      console.log('err', err)
-    })
+    const _email = await email.save()
+      .then()
+      .catch(err => {
+          console.log('err', err)
+      })
       
     const _activity = new Activity({
       content: 'sent email',
@@ -511,7 +445,7 @@ const bulkOutlook = async (req, res) => {
         from: {
           emailAddress: {
             name: currentUser.user_name,
-            address: currentUser.email
+            address: currentUser.connected_email
           }
         },
         body: {
@@ -785,12 +719,12 @@ const bulkEmail = async (req, res) => {
     }
     
     email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
       
     email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-      .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+      .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
       .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
       .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
       
@@ -823,7 +757,7 @@ const bulkEmail = async (req, res) => {
     const msg = {
       from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
       to: _contact.email,
-      replyTo: currentUser.email,
+      replyTo: currentUser.connected_email,
       subject: email_subject,
       bcc: bcc,
       cc: cc,
@@ -960,9 +894,14 @@ const receiveEmailSendGrid = async(req, res) => {
         })
         
         let reopened = new Date(time_stamp*1000-60*60*1000)
-        const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
-          console.log('err', err)
-        })
+        const old_activity = await EmailTracker.findOne(
+          {
+            activity: email_activity.id, 
+            type: 'open', 
+            created_at: {$gte: reopened}
+          }).catch(err=>{
+              console.log('err', err.message)
+          })
         
         if(!old_activity){
           const email_tracker = new EmailTracker({
@@ -1610,7 +1549,6 @@ const unSubscribeEmail = async(req, res) => {
 }
 
 module.exports = {
-  send,
   openTrack,
   getGmail,
   bulkGmail,

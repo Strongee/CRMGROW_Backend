@@ -91,12 +91,12 @@ const bulkEmail = async(data) => {
       }
       
       email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         
       email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
   
@@ -129,7 +129,7 @@ const bulkEmail = async(data) => {
       const msg = {
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
         to: _contact.email,
-        replyTo: currentUser.email,
+        replyTo: currentUser.connected_email,
         subject: email_subject,
         bcc: bcc,
         cc: cc,
@@ -233,12 +233,12 @@ const bulkEmail = async(data) => {
       
       if(_contact){
         email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
         email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
     
@@ -278,7 +278,7 @@ const bulkEmail = async(data) => {
             let body = createBody({
               headers: {
                 To: _contact.email,
-                From: `${currentUser.user_name} <${currentUser.email}>`,
+                From: `${currentUser.user_name} <${currentUser.connected_email}>`,
                 Subject: email_subject,
               },
               textHtml: html_content,
@@ -405,12 +405,12 @@ const bulkEmail = async(data) => {
       }
       
       email_subject = email_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
   
       email_content = email_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
  
@@ -451,7 +451,7 @@ const bulkEmail = async(data) => {
           from: {
             emailAddress: {
               name: currentUser.user_name,
-              address: currentUser.email
+              address: currentUser.connected_email
             }
           },
           body: {
@@ -562,7 +562,7 @@ const bulkVideo = async(data) => {
           if(video['preview']){
             preview = video['preview']
           } else {
-            preview = video['thumbnail'] + '-resize'
+            preview = video['thumbnail']
           }
           
           if(typeof video_content == 'undefined'){
@@ -570,12 +570,12 @@ const bulkVideo = async(data) => {
           }
               
           video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-              .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+              .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
               .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
               .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
               
           video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-              .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+              .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
               .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
               .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
               
@@ -636,10 +636,10 @@ const bulkVideo = async(data) => {
         const msg = {
           to: _contact.email,
           from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-          replyTo: currentUser.email,
+          replyTo: currentUser.connected_email,
           subject: video_subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>',
+                +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>',
           text: video_content
         }
         
@@ -760,12 +760,12 @@ const bulkVideo = async(data) => {
             }
             
             video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
             video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -824,7 +824,7 @@ const bulkVideo = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
+            +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
@@ -833,7 +833,7 @@ const bulkVideo = async(data) => {
               let body = createBody({
                 headers: {
                   To: _contact.email,
-                  From: `${currentUser.user_name} <${currentUser.email}>`,
+                  From: `${currentUser.user_name} <${currentUser.connected_email}>`,
                   Subject: video_subject,
                 },
                 textHtml:  email_content,
@@ -981,12 +981,12 @@ const bulkVideo = async(data) => {
             }
             
             video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
             video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -1049,7 +1049,7 @@ const bulkVideo = async(data) => {
               body: {
                 contentType: "HTML",
                 content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                  +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+                  +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
               },
               toRecipients: [
                 {
@@ -1148,12 +1148,12 @@ const bulkPDF = async(data) => {
         }
             
         pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         
         pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -1216,11 +1216,11 @@ const bulkPDF = async(data) => {
       const msg = {
         to: _contact.email,
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.email,
+        replyTo: currentUser.connected_email,
         subject: pdf_subject,
         replyTo: _contact.email,
         html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
       
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1333,12 +1333,12 @@ const bulkPDF = async(data) => {
           }
           
           pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
               
@@ -1399,7 +1399,7 @@ const bulkPDF = async(data) => {
         }
         
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature +  generateUnsubscribeLink(activity.id) + '</body></html>';
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature +  generateUnsubscribeLink(activity.id) + '</body></html>';
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
           
         promise = new Promise((resolve, reject)=>{
@@ -1407,7 +1407,7 @@ const bulkPDF = async(data) => {
           let body = createBody({
             headers: {
               To: _contact.email,
-              From: `${currentUser.user_name} <${currentUser.email}>`,
+              From: `${currentUser.user_name} <${currentUser.connected_email}>`,
               Subject: pdf_subject,
             },
             textHtml:  email_content,
@@ -1549,12 +1549,12 @@ const bulkPDF = async(data) => {
         }
         
         pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         
         pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -1620,7 +1620,7 @@ const bulkPDF = async(data) => {
           body: {
             contentType: "HTML",
             content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -1718,12 +1718,12 @@ const bulkImage = async(data) => {
         }
         
         image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         
         image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -1785,10 +1785,10 @@ const bulkImage = async(data) => {
       const msg = {
         to: _contact.email,
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.email,
+        replyTo: currentUser.connected_email,
         subject: image_subject,
         html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+                +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
         
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1914,12 +1914,12 @@ const bulkImage = async(data) => {
         }
         
         image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
         .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
         .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
         
         image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
@@ -1985,7 +1985,7 @@ const bulkImage = async(data) => {
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -2093,12 +2093,12 @@ const bulkImage = async(data) => {
           }
             
           image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
           image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.email).replace(/{user_phone}/ig, currentUser.cell_phone)
+            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
             .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
             .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
             
@@ -2158,7 +2158,7 @@ const bulkImage = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
+            +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
           
           promise = new Promise((resolve, reject)=>{
@@ -2166,7 +2166,7 @@ const bulkImage = async(data) => {
               let body = createBody({
                 headers: {
                   To: _contact.email,
-                  From: `${currentUser.user_name} <${currentUser.email}>`,
+                  From: `${currentUser.user_name} <${currentUser.connected_email}>`,
                   Subject: image_subject,
                 },
                 textHtml:  email_content,

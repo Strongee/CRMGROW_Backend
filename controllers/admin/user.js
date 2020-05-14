@@ -331,7 +331,10 @@ const create = async (req, res) => {
       error: errors.array()
     })
   }
-  let _user = await User.findOne({ email: req.body.email })
+  let _user = await User.findOne({ 
+    email: req.body.email 
+  })
+  
   if(_user != null){
     res.status(400).send({
       status: false,
