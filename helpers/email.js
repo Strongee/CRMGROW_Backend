@@ -639,7 +639,7 @@ const bulkVideo = async(data) => {
           replyTo: currentUser.connected_email,
           subject: video_subject,
           html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>',
+                +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>',
           text: video_content
         }
         
@@ -824,7 +824,7 @@ const bulkVideo = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
+            +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
         
@@ -1049,7 +1049,7 @@ const bulkVideo = async(data) => {
               body: {
                 contentType: "HTML",
                 content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                  +video_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+                  +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
               },
               toRecipients: [
                 {
@@ -1220,7 +1220,7 @@ const bulkPDF = async(data) => {
         subject: pdf_subject,
         replyTo: _contact.email,
         html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
       
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1399,7 +1399,7 @@ const bulkPDF = async(data) => {
         }
         
         const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature +  generateUnsubscribeLink(activity.id) + '</body></html>';
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature +  generateUnsubscribeLink(activity.id) + '</body></html>';
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
           
         promise = new Promise((resolve, reject)=>{
@@ -1620,7 +1620,7 @@ const bulkPDF = async(data) => {
           body: {
             contentType: "HTML",
             content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +pdf_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -1788,7 +1788,7 @@ const bulkImage = async(data) => {
         replyTo: currentUser.connected_email,
         subject: image_subject,
         html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+                +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
       }
         
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1985,7 +1985,7 @@ const bulkImage = async(data) => {
             body: {
               contentType: "HTML",
               content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+              +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
             },
             toRecipients: [
               {
@@ -2158,7 +2158,7 @@ const bulkImage = async(data) => {
           }
   
           const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
+            +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>';
           // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
           
           promise = new Promise((resolve, reject)=>{

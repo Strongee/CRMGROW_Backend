@@ -5,5 +5,5 @@ const UserLog = mongoose.model('user_log',{
      created_at: Date,
      updated_at: Date,
  });
-
+    
  module.exports = UserLog

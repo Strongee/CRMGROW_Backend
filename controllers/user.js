@@ -9,6 +9,7 @@ const Appointment = require('../models/appointment')
 const Contact = require('../models/contact')
 const PaymentCtrl = require('../controllers/payment')
 const UserLog = require('../models/user_log')
+const Guest = require('../models/guest')
 const sgMail = require('@sendgrid/mail')
 const { google } = require('googleapis')
 const outlook = require('node-outlook')
@@ -636,20 +637,60 @@ const login = async (req, res) => {
   }
 
   let _user = await User.findOne({ email: new RegExp(email, "i"), del: false })
-
+  let guest
+  
   if (!_user) {
-    _user = await User.findOne({ user_name: email })
+    _user = await User.findOne({ user_name: new RegExp(email,"i"), del: false })
       .exec();
   }
+  
+  if(!_user) {
+    guest = await Guest.findOne({ email: new RegExp(email, "i"), disabled: false }) 
+  }
 
-  if (!_user) {
+
+  if (!_user || guest) {
     return res.status(401).json({
       status: false,
       error: 'User Email doesn`t exist'
     })
+    
   }
 
-
+  if(guest) {
+    if(guest.salt ){
+      // Check password
+      const hash = crypto.pbkdf2Sync(password, guest.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
+   
+      if (hash != guest.hash) {
+        return res.status(401).json({
+          status: false,
+          error: 'Invalid email or password!'
+        })
+      }
+     } 
+     
+    _user.save().catch(err => {
+      console.log('err', err.message)
+    })
+    // TODO: Include only email for now
+    const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
+    myJSON = JSON.stringify(_user)
+    const user = JSON.parse(myJSON);
+    
+    delete user.hash
+    delete user.salt
+  
+    return res.send({
+      status: true,
+      data: {
+        token,
+        user,
+        guest_loggin: true
+      }
+    })
+  }
+  
   if(_user.salt ){
    // Check password
    const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
@@ -679,7 +720,7 @@ const login = async (req, res) => {
     _user['admin_loggin'] = false
   }
   _user.save().catch(err => {
-    console.log('err', err)
+    console.log('err', err.message)
   })
   // TODO: Include only email for now
   const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
@@ -1773,6 +1814,7 @@ const searchNickName = async (req, res) => {
     })
   }
 }
+
 const searchPhone = async (req, res) => {
   let {cell_phone} = req.body;
   let _user = await User.findOne({cell_phone: cell_phone, del: false});

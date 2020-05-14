@@ -424,7 +424,7 @@ const bulkEmail = async(req, res) => {
           replyTo: currentUser.connected_email,
           subject: image_subject,
           html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
+                +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
           text: image_content
         }
         
@@ -853,7 +853,7 @@ const bulkGmail = async(req, res) => {
       }
 
       const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-        +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>';
+        +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>';
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
         
       promise = new Promise((resolve, reject)=>{
@@ -1116,7 +1116,7 @@ const bulkOutlook = async(req, res) => {
           body: {
             contentType: "HTML",
             content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +image_content+'<br/>Thank you,<br/><br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
+            +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
           },
           toRecipients: [
             {

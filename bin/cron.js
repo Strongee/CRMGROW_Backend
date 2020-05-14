@@ -606,7 +606,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
     const record_videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
       console.log('record videos convert err', err.message)
     })
-    for(let i=0; i<videos.length; i++){
+    for(let i=0; i<record_videos.length; i++){
       const video = record_videos[i]
       let file_path = video.path
       if(file_path){

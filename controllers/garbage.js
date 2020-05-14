@@ -30,7 +30,7 @@ const create = async(req, res) => {
     })
   }).catch(err=>{
     console.log('err', err)
-    return res.status(500).json({
+    return res.status(400).json({
       status: false,
       error: err.message || 'Internal server error'
     })

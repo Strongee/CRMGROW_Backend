@@ -13,7 +13,7 @@ const VideoTracker = require('../models/video_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const User = require('../models/user');
-const Garbage = require('../models/garbage')
+const Garbage = require('../models/garbage');
 
 const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
@@ -894,9 +894,14 @@ const receiveEmailSendGrid = async(req, res) => {
         })
         
         let reopened = new Date(time_stamp*1000-60*60*1000)
-        const old_activity = await EmailTracker.findOne({activity: email_activity.id, type: 'open', created_at: {$gte: reopened}}).catch(err=>{
-          console.log('err', err)
-        })
+        const old_activity = await EmailTracker.findOne(
+          {
+            activity: email_activity.id, 
+            type: 'open', 
+            created_at: {$gte: reopened}
+          }).catch(err=>{
+              console.log('err', err.message)
+          })
         
         if(!old_activity){
           const email_tracker = new EmailTracker({
