@@ -155,6 +155,7 @@ const signUp = async (req, res) => {
 
     const user = new User({
       ...req.body,
+      connected_email: email,
       payment: payment.id,
       salt: salt,
       hash: hash,
@@ -361,6 +362,7 @@ const socialSignUp = async (req, res) => {
   PaymentCtrl.create(payment_data).then(async (payment) => {
     const user = new User({
       ...req.body,
+      connected_email: email,
       payment: payment.id,
       updated_at: new Date(),
       created_at: new Date(),
@@ -600,7 +602,6 @@ const socialOutlook = async (req, res) => {
       let decoded_token = encoded_token.toString();
 
       let jwt = JSON.parse(decoded_token);
-      console.log(jwt);
 
       let data = {
         email: jwt.preferred_username,
