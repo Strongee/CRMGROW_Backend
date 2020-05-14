@@ -471,3 +471,10 @@ body {
   object-fit: contain;
   background: gainsboro;
 }
+
+.gallery img:not(.single) {
+  width: 240px;
+  height: 180px;
+  margin: 5px;
+  object-fit: cover;
+}
