@@ -44,7 +44,7 @@ header .profile .avatar-social .name-socials .name {
   font: Bold 22px/29px Manrope;
 }
 header .profile .avatar-social .name-socials .socials i{
-  font-size: 17px;
+  font-size: 24px;
   color: var(--gray-color);
   margin: 0px 4px;
 }
@@ -58,7 +58,13 @@ header .profile .contact-info > div {
   display: flex;
 }
 header .profile .contact-info .phone-info {
-  margin-right: 8px;
+  margin-right: 24px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+header .profile .contact-info .email-info {
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 header .profile .contact-info .icon {
   width: 20px;
@@ -277,7 +283,7 @@ header .profile .contact-info span {
   header .profile .contact-info{
     flex-wrap: wrap;
     max-width: 100%;
-    margin-top: 10px;
+    margin-top: 5px;
     padding-left: 75px;
   }
   header .profile {
@@ -320,7 +326,7 @@ header .profile .contact-info span {
     font: Bold 22px/29px Manrope;
   }
   .avatar-social.sm-profile .name-socials .socials i{
-    font-size: 17px;
+    font-size: 24px;
     color: var(--gray-color);
     margin: 0px 4px;
   }
@@ -346,4 +352,28 @@ footer {
   font-size: 10px;
   color: #b2b2b2;
   padding: 15px 0px;
+}
+
+.slick-next::before {
+  content: ''!important;
+  border-top: 2px solid black;
+  border-right: 2px solid black;
+  width: 16px;
+  height: 16px;
+  display: block;
+  transform: rotate(45deg);
+}
+
+.slick-prev::before {
+  content: ''!important;
+  border-top: 2px solid black;
+  border-left: 2px solid black;
+  width: 16px;
+  height: 16px;
+  display: block;
+  transform: rotate(-45deg);
+}
+
+.slick-prev::before, .slick-next::before {
+  font-family: 'aria';
 }

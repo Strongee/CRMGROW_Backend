@@ -5,17 +5,6 @@ setInterval(() => {
     reportTime();
 }, 1000);
 
-$(function() {
-    $(".regular").slick({
-      dots: true,
-      infinite: true,
-      speed: 500,
-      adaptiveHeight: true,
-      slidesToShow: 3,
-      cssEase: 'linear'
-    });
-  });  
-
 const image = document.querySelector("#image").value
 const user = document.querySelector("#user").value
 const contact = document.querySelector("#contact").value
@@ -59,3 +48,19 @@ const activity =document.querySelector("#activity").value
   }
 
 });
+
+
+(function($){
+    if($('.gallery img').length > 1) {
+      $('.gallery').tjGallery({
+        row_min_height: 180,
+        margin: 10,
+        selector: 'a'
+      })
+    }
+    else {
+      $('.gallery img').addClass('single');
+    }
+    
+    var lightbox = new SimpleLightbox('.gallery a', { /* options */ });
+  })(jQuery)
