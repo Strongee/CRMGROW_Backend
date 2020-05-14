@@ -489,7 +489,7 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
+    // 'https://graph.microsoft.com/calendars.readwrite',
     'https://graph.microsoft.com/mail.send'
   ];
 
@@ -989,7 +989,7 @@ const authorizeOutlook = async (req, res) => {
 
       let jwt = JSON.parse(decoded_token);
       // Email is in the preferred_username field
-      user.email = jwt.preferred_username
+      user.connected_email = jwt.preferred_username
       user.social_id = jwt.oid
       user.connected_email_type = 'outlook'
       user.primary_connected = true
@@ -1000,17 +1000,10 @@ const authorizeOutlook = async (req, res) => {
             data: user.email
           })
         })
-        .catch(e => {
-          let errors
-          if (e.errors) {
-            errors = e.errors.map(err => {
-              delete err.instance
-              return err
-            })
-          }
-          return res.status(500).send({
+        .catch(err => {
+          return res.status(400).send({
             status: false,
-            error: errors || e
+            error: err.message
           })
         });
     }
@@ -1168,7 +1161,7 @@ const authorizeGmail = async (req, res) => {
 
   oauth2.userinfo.v2.me.get(function (err, _res) {
     // Email is in the preferred_username field
-    user.email = _res.data.email
+    user.connected_email = _res.data.email
     user.connected_email_type = 'gmail'
     user.primary_connected = true
     user.social_id = _res.data.id
@@ -1180,19 +1173,13 @@ const authorizeGmail = async (req, res) => {
           data: user.email
         })
       })
-      .catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
-          })
-        }
-        return res.status(500).send({
+      .catch(err => {
+        console.log('user save err', err.message)
+        return res.status(400).json({
           status: false,
-          error: errors || e
+          error: err.message
         })
-      });
+      })
   })
 }
 
