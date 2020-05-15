@@ -18,7 +18,7 @@ const mail_contents = require('../constants/mail_contents');
 
 const uuidv1 = require('uuid/v1');
 const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIOTWILIO_AUTH_TOKEN;
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
 const phone = require('phone');
 const twilio = require('twilio')(accountSid, authToken);
 const AWS = require('aws-sdk');
