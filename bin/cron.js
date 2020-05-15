@@ -603,7 +603,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   
 
 const convert_video_job = new CronJob('0 1 * * *', async() =>{
-    const record_videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
+    const record_videos = await Video.find({recording: true, converted: 'none', del: false}).catch(err=>{
       console.log('record videos convert err', err.message)
     })
     for(let i=0; i<record_videos.length; i++){
@@ -621,7 +621,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
             video['url'] = new_url
             video['recording'] = false
             video['path'] = new_path
-            video['converted'] = true
+            video['converted'] = 'completed'
             video.save().then(()=>{
               fs.unlinkSync(file_path)
             }).catch(err=>{
@@ -634,7 +634,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
     
     const uploaded_videos = await Video.find({
       recording: false, 
-      converted: false, 
+      converted: 'none', 
       del: false,
       type: {$nin: ['youtube', 'vimeo']}
     }).catch(err=>{
@@ -654,7 +654,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
             if (fs.existsSync(new_path)) {
               const new_url = urls.VIDEO_URL+new_file
               video['url'] = new_url
-              video['converted'] = true
+              video['converted'] = 'completed'
               video['path'] = new_path
               video.save().then(()=>{
                 fs.unlinkSync(file_path)

@@ -5,7 +5,7 @@ const Video = mongoose.model('video',{
     title: String,
     company: {type: String},
     description: String,
-    converted: { type: Boolean, default: false},
+    converted: { type: String, default: 'none'},
     uploaded: {type: Boolean, default: false},
     thumbnail: String,
     thumbnail_path: String,
