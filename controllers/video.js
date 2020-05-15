@@ -1976,34 +1976,6 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 }
 
-// const videoConvert = async(id) => {
-//   const video = await Video.findOne({_id: id}).catch(err=>{
-//     console.log('video convert find video error', err.message)
-//   })
-//   const file_path = video['path']
-//   const new_file = uuidv1() + '.mov'
-//   const new_path = TEMP_PATH + new_file
-//   let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
- 
-//   const ffmpegConvert = child_process.spawn(ffmpegPath, args); 
-  
-//   ffmpegConvert.on('close', function(){
-//     console.log('converted end', file_path)
-//     if (fs.existsSync(new_path)) {
-//       const new_url = urls.VIDEO_URL+new_file
-//       video['url'] = new_url
-//       video['converted'] = 'completed'
-//       video['path'] = new_path
-//       video.save().then(()=>{
-//         console.log('record video completed')
-//         fs.unlinkSync(file_path)
-//       }).catch(err=>{
-//         console.log('video update err', err.message || err.msg)
-//       })
-//     }
-//   })
-// }
-
 const getConvertStatus = async(req, res) => {
   const video = await Video.findOne({_id: req.params.id}).catch(err=>{
     console.log('video convert found video error', err.message)

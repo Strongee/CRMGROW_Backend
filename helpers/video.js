@@ -1,6 +1,8 @@
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
 const Video = require('../models/video');
+const uuidv1 = require('uuid/v1');
+const { TEMP_PATH } = require('../config/path');
 
 const convertRecordVideo = async(id) =>{
   const video = await Video.findOne({_id: id}).catch(err=>{
@@ -36,6 +38,7 @@ const convertRecordVideo = async(id) =>{
       // Successfully wrote binary contents to the file!
     });
   });
+  return;
 }
 
 const getConvertStatus = (video_path) => {
@@ -98,9 +101,11 @@ const getConvertStatus = (video_path) => {
     if( matches && matches.length>0 ){
         let rawTime = matches.pop();
         // needed if there is more than one match
-      
-        rawTime = rawTime.replace('time=','').replace(' bitrate','');
-
+        if (Array.isArray(rawTime)){ 
+          rawTime = rawTime.pop().replace('time=','').replace(' bitrate',''); 
+        } else {
+          rawTime = rawTime.replace('time=','').replace(' bitrate','');
+        }
         // convert rawTime from 00:00:00.00 to seconds.
         ar = rawTime.split(":").reverse();
         time = parseFloat(ar[0]);
