@@ -671,12 +671,11 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
   }, false, 'US/Central')
   
 
-const upload_video_job = new CronJob('* * * * *', async() =>{
+const upload_video_job = new CronJob('0 4 * * *', async() =>{
   const videos = await Video.find({uploaded: false, del: false, type: {$nin: ['youtube', 'vimeo']} }).catch(err=>{
     console.log('err', err.message)
   })
     
-    console.log('videos', videos)
     if(videos){
       for(let i = 0; i <videos.length; i++){
         const video = videos[i]
