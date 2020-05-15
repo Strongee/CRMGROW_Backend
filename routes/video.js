@@ -90,6 +90,9 @@ router.post('/update-admin', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchE
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe))
 
+// Get Conver progress of a video
+router.get('/convert-status/:id', UserCtrl.checkAuth, catchError(VideoCtrl.getConvertStatus))
+
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove))
 

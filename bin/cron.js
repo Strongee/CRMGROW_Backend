@@ -603,7 +603,7 @@ const notification_check = new CronJob('0 21 * * *', async() =>{
   
 
 const convert_video_job = new CronJob('0 1 * * *', async() =>{
-    const record_videos = await Video.find({recording: true, converted: false, del: false}).catch(err=>{
+    const record_videos = await Video.find({recording: true, converted: 'none', del: false}).catch(err=>{
       console.log('record videos convert err', err.message)
     })
     for(let i=0; i<record_videos.length; i++){
@@ -621,7 +621,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
             video['url'] = new_url
             video['recording'] = false
             video['path'] = new_path
-            video['converted'] = true
+            video['converted'] = 'completed'
             video.save().then(()=>{
               fs.unlinkSync(file_path)
             }).catch(err=>{
@@ -634,7 +634,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
     
     const uploaded_videos = await Video.find({
       recording: false, 
-      converted: false, 
+      converted: 'none', 
       del: false,
       type: {$nin: ['youtube', 'vimeo']}
     }).catch(err=>{
@@ -654,7 +654,7 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
             if (fs.existsSync(new_path)) {
               const new_url = urls.VIDEO_URL+new_file
               video['url'] = new_url
-              video['converted'] = true
+              video['converted'] = 'completed'
               video['path'] = new_path
               video.save().then(()=>{
                 fs.unlinkSync(file_path)
@@ -671,12 +671,11 @@ const convert_video_job = new CronJob('0 1 * * *', async() =>{
   }, false, 'US/Central')
   
 
-const upload_video_job = new CronJob('00 19 * * *', async() =>{
+const upload_video_job = new CronJob('0 4 * * *', async() =>{
   const videos = await Video.find({uploaded: false, del: false, type: {$nin: ['youtube', 'vimeo']} }).catch(err=>{
     console.log('err', err.message)
   })
     
-    console.log('videos', videos)
     if(videos){
       for(let i = 0; i <videos.length; i++){
         const video = videos[i]
@@ -745,67 +744,6 @@ const upload_video_job = new CronJob('00 19 * * *', async() =>{
             }
           }
         }
-        // } else {
-        //   const file_name = video.url.slice(39)
-        //   file_path = TEMP_PATH + file_name
-        //   if (fs.existsSync(file_path)) {
-        //     try{
-        //     fs.readFile(file_path, (err, data) => {
-        //         if (err) throw err;
-        //         console.log('File read was successful', data)
-        //         const today = new Date()
-        //         const year = today.getYear()
-        //         const month = today.getMonth()
-        //         const params = {
-        //             Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //             Key: 'video' +  year + '/' + month + '/' + file_name, 
-        //             Body: data,
-        //             ACL: 'public-read'
-        //         };
-        //         s3.upload(params, async (s3Err, upload)=>{
-        //           if (s3Err) throw s3Err
-        //           console.log(`File uploaded successfully at ${upload.Location}`)
-        //           video['url'] = upload.Location
-        //           video['converted'] = true
-        //           video.save().then(()=>{
-        //             fs.unlinkSync(file_path)
-        //           }).catch(err=>{
-        //             console.log('err', err)
-        //           });  
-        //         })
-        //      });
-        //     }catch(err){
-        //       console.log('file_path', file_path)
-        //       console.log('err', err)
-        //       // read file
-        //       FileHelper.readFile(file_path).then(function(data) {
-        //           console.log('File read was successful by stream', data)
-        //           const today = new Date()
-        //           const year = today.getYear()
-        //           const month = today.getMonth()
-        //           const params = {
-        //               Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //               Key: 'video' +  year + '/' + month + '/' + file_name, 
-        //               Body: data,
-        //               ACL: 'public-read'
-        //           };
-        //           s3.upload(params, async (s3Err, upload)=>{
-        //             if (s3Err) throw s3Err
-        //             console.log(`File uploaded successfully at ${upload.Location}`)
-        //             video['url'] = upload.Location
-        //             video['converted'] = true
-        //             video.save().then(()=>{
-        //               fs.unlinkSync(file_path)
-        //             }).catch(err=>{
-        //               console.log('err', err)
-        //             });  
-        //           })
-        //       }).catch(function(err) {
-        //        console.log(err);
-        //       })
-        //     }
-        //   }
-        // }
       }
     }
   }, function () {

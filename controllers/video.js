@@ -1,43 +1,44 @@
-const path = require('path')
-const fs = require('fs')
-const sgMail = require('@sendgrid/mail')
+const path = require('path');
+const fs = require('fs');
+const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
-const mime = require('mime-types')
+const mime = require('mime-types');
 
-const User = require('../models/user')
-const Activity = require('../models/activity')
-const Video = require('../models/video')
-const VideoTracker = require('../models/video_tracker')
-const Garbage = require('../models/garbage')
-const Contact = require('../models/contact')
-const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path')
-const urls = require('../constants/urls')
-const config = require('../config/config')
+const User = require('../models/user');
+const Activity = require('../models/activity');
+const Video = require('../models/video');
+const VideoTracker = require('../models/video_tracker');
+const Garbage = require('../models/garbage');
+const Contact = require('../models/contact');
+const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path');
+const urls = require('../constants/urls');
+const config = require('../config/config');
 const variables = require('../constants/variables');
-const mail_contents = require('../constants/mail_contents')
+const mail_contents = require('../constants/mail_contents');
 
-const uuidv1 = require('uuid/v1')
-const accountSid = config.TWILIO.TWILIO_SID
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN
-const phone = require('phone')
-const twilio = require('twilio')(accountSid, authToken)
-const AWS = require('aws-sdk')
+const uuidv1 = require('uuid/v1');
+const accountSid = config.TWILIO.TWILIO_SID;
+const authToken = config.TWILIOTWILIO_AUTH_TOKEN;
+const phone = require('phone');
+const twilio = require('twilio')(accountSid, authToken);
+const AWS = require('aws-sdk');
 const GIFEncoder = require('gifencoder');
 
-const extractFrames = require('ffmpeg-extract-frames')
-const { createCanvas, loadImage } = require('canvas')
-const pngFileStream = require('png-file-stream')
-const sharp = require('sharp')
+const extractFrames = require('ffmpeg-extract-frames');
+const { createCanvas, loadImage } = require('canvas');
+const pngFileStream = require('png-file-stream');
+const sharp = require('sharp');
 
-const emailHelper = require('../helpers/email.js')
-const garbageHelper = require('../helpers/garbage.js')
-const textHelper = require('../helpers/text.js')
+const emailHelper = require('../helpers/email.js');
+const garbageHelper = require('../helpers/garbage.js');
+const textHelper = require('../helpers/text.js');
+const videoHelper = require('../helpers/video');
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
   secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
   region: config.AWS.AWS_S3_REGION
-})
+});
 
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -45,14 +46,14 @@ const credentials = {
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token'
-}
-const oauth2 = require('simple-oauth2')(credentials)
+};
+const oauth2 = require('simple-oauth2')(credentials);
 const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
 const request = require('request-promise')
-const createBody = require('gmail-api-create-message-body')
+const createBody = require('gmail-api-create-message-body');
 
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
@@ -61,10 +62,10 @@ const play = async(req, res) => {
   const video_id = req.query.video
   const sender_id = req.query.user
   const video = await Video.findOne({_id: video_id}).catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
   const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
-    console.log('err', err)
+    console.log('err', err.message)
   })
 
   let capture_dialog = true;
@@ -509,10 +510,10 @@ const updateDetail = async (req, res) => {
     })
   }
   
-  console.log('preview', video)
   
   if(video['type'] === 'video/webm'){
-    videoConvert(video.id)
+    video['conveted'] = 'progress'
+    videoHelper.convertRecordVideo(video.id)
   }
   
   video['updated_at'] = new Date()
@@ -1925,15 +1926,15 @@ const bulkOutlook = async(req, res) => {
             resolve()
           }).catch(err=>{
             Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
+              console.log('err', err.message)
             })
-            console.log('err', err)
+            console.log('err', err.message)
             error.push({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email
               },
-              err: err
+              err: err.message || err.msg
             })
             resolve()
           });    
@@ -1975,28 +1976,45 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 }
 
-const videoConvert = async(id) => {
-  const video = await Video.findOne({_id: id}).catch(err=>{
-    console.log('video convert find video error', err.message)
+// const videoConvert = async(id) => {
+//   const video = await Video.findOne({_id: id}).catch(err=>{
+//     console.log('video convert find video error', err.message)
+//   })
+//   const file_path = video['path']
+//   const new_file = uuidv1() + '.mov'
+//   const new_path = TEMP_PATH + new_file
+//   let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
+ 
+//   const ffmpegConvert = child_process.spawn(ffmpegPath, args); 
+  
+//   ffmpegConvert.on('close', function(){
+//     console.log('converted end', file_path)
+//     if (fs.existsSync(new_path)) {
+//       const new_url = urls.VIDEO_URL+new_file
+//       video['url'] = new_url
+//       video['converted'] = 'completed'
+//       video['path'] = new_path
+//       video.save().then(()=>{
+//         console.log('record video completed')
+//         fs.unlinkSync(file_path)
+//       }).catch(err=>{
+//         console.log('video update err', err.message || err.msg)
+//       })
+//     }
+//   })
+// }
+
+const getConvertStatus = async(req, res) => {
+  const video = await Video.findOne({_id: req.params.id}).catch(err=>{
+    console.log('video convert found video error', err.message)
   })
   const file_path = video['path']
-  const new_file = uuidv1() + '.mov'
-  const new_path = TEMP_PATH + new_file
-  let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
-  console.log('args', args)
-  const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
-  ffmpegConvert.on('close', function(){
-    console.log('converted end', file_path)
-    const new_url = urls.VIDEO_URL+new_file
-    video['url'] = new_url
-    video['recording'] = false
-    video['path'] = new_path
-    video.save().then(()=>{
-      fs.unlinkSync(file_path)
-    }).catch(err=>{
-      console.log('vide update err', err.message || err.msg)
-    })
-  })
+  const result = videoHelper.getConvertStatus(file_path)
+  if(result.status){
+    return res.send(result)
+  }else {
+    return res.status(400).json(result)
+  }
 }
 
 module.exports = {
@@ -2008,10 +2026,10 @@ module.exports = {
   update,
   updateDetail,
   updateDefault,
-  videoConvert,
   get,
   getThumbnail,
   getAll,
+  getConvertStatus,
   bulkEmail,
   bulkText,
   remove,
