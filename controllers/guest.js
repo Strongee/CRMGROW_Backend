@@ -3,6 +3,21 @@ const sgMail = require('@sendgrid/mail')
 const config = require('../config/config')
 const mail_contents = require('../constants/mail_contents');
 const urls = require('../constants/urls')
+const crypto = require('crypto');
+
+const load = async(req, res) => {
+  const {currentUser} = req;
+  const guests = await Guest.find({user: currentUser._id}).catch(err => {
+    return res.status(500).send({
+      status: false,
+      error: error
+    })
+  });
+  return res.send({
+    status: true,
+    data: guests
+  })
+}
 
 const get = async(req, res) => {
   const data = await Guest
@@ -37,7 +52,7 @@ const create = async(req, res) => {
     created_at: new Date(),
   })
   
-  guest.save().then(()=>{
+  guest.save().then((_res)=>{
     
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
     
@@ -46,7 +61,7 @@ const create = async(req, res) => {
       from: mail_contents.INVITE_GUEST.MAIL,
       templateId: config.SENDGRID.INVITE_GUEST,
       dynamic_template_data: {
-        subject:  `${mail_contents.INVITE_GUEST.SUBJECT}- ${user.user_name} has invited you to join CRMGrow`,
+        subject:  `${mail_contents.INVITE_GUEST.SUBJECT}- ${currentUser.user_name} has invited you to join CRMGrow`,
         user_name: currentUser.user_name,
         password: req.body.password,
         LOGIN_URL: urls.LOGIN_URL,
@@ -108,11 +123,23 @@ const edit = async(req, res) => {
         error: err.message || 'Internal server error'
       })
     })
-  
+}
+
+const remove = async(req, res) => {
+  const {currentUser} = req
+  const _id = req.params.id;
+  await Guest.deleteOne({_id: _id}).catch(err => {
+    console.log('err', err.message);
+  })
+  return res.send({
+    status: true
+  })
 }
 
 module.exports = {
+    load,
     get,
     create,
-    edit
+    edit,
+    remove
 }

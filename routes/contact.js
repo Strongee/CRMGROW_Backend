@@ -99,4 +99,6 @@ router.post('/check-phone', UserCtrl.checkAuth, catchError(ContactCtrl.checkPhon
 // Check the Merge
 router.post('/merge', UserCtrl.checkAuth, catchError(ContactCtrl.mergeContacts));
 
+router.post('/bulk-create', UserCtrl.checkAuth, catchError(ContactCtrl.bulkCreate));
+
 module.exports = router

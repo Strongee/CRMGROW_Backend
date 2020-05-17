@@ -517,7 +517,7 @@ const importCSV = async (req, res) => {
                 return
               }
             }
-            if(data['contact']){
+            if(data['cell_phone']){
               const phone_contact = await Contact.findOne({cell_phone: data['cell_phone'], user: currentUser.id}).catch(err=>{
                 console.log('err', err)
               })
@@ -1916,6 +1916,87 @@ const mergeContacts = (req, res) => {
   })
 }
 
+const bulkCreate = async (req, res) =>  {
+  const {contacts} = req.body;
+  const {currentUser} = req;
+  let count = 0;
+  let max_count = 0;
+  if(!currentUser.contact) {
+    count = await Contact.countDocuments({user: currentUser.id});
+    max_count = config.MAX_CONTACT
+  } else {
+    count = currentUser.contact.count;
+    max_count = currentUser.contact.max_count;
+  }
+
+  let failure = [];
+  let succeed = [];  
+  let promise_array = [];
+  for(let i = 0 ; i < contacts.length ; i++) {
+    let promise = new Promise(async(resolve, reject) => {
+      let data = contacts[i];
+      count = count + 1;
+      if(max_count < count) {
+        const field = {
+          id: i,
+          email: data['email'],
+          cell_phone: data['cell_phone'],
+          err: 'Exceed upload max contacts'
+        }
+        failure.push(field)
+        resolve()
+        return;
+      }
+      const contact = new Contact({
+        ...data,
+        user: currentUser.id,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      contact.save().then(_contact => {
+        succeed.push(_contact);
+        const activity = new Activity({
+          content: 'added contact',
+          contacts: _contact.id,
+          user: currentUser.id,
+          type: 'contacts',
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        activity.save().then((_activity) => {
+          Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
+            console.log('err', err)
+          })
+        }).catch(err => {
+          console.log('err', err)
+        })
+        resolve();
+        return;
+      }).catch(err => {
+        console.log("err", err)
+      })
+    })
+
+    promise_array.push(promise)
+  }
+
+  Promise.all(promise_array).then(function () {
+    const contact_info = {
+      count: count,
+      max_count: max_count
+    }
+    currentUser.contact = contact_info
+    currentUser.save().catch(err => {
+      console.log('err', err)
+    })
+    return res.send({
+      status: true,
+      failure,
+      succeed
+    })
+  });
+}
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -1945,5 +2026,6 @@ module.exports = {
   checkEmail,
   checkPhone,
   loadDuplication,
-  mergeContacts
+  mergeContacts,
+  bulkCreate
 }
