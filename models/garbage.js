@@ -43,6 +43,10 @@ const Garbage = mongoose.model('garbage',{
     index_page: {type: mongoose.Schema.Types.ObjectId, ref: 'page'},
     logo: {type: String},
     material_theme: {type: String},
+    auto_follow_up: {
+      enabled: {type: Boolean, default: false},
+      period: Number
+    },
     created_at: Date,
     updated_at: Date,
  });
