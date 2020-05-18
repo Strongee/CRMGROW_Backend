@@ -59,9 +59,9 @@ const create = async(req, res) => {
     let msg = {
       to: _res.email,
       from: mail_contents.INVITE_GUEST.MAIL,
-      templateId: config.SENDGRID.INVITE_GUEST,
+      templateId: config.SENDGRID.SENDGRID_INVITE_GUEST,
       dynamic_template_data: {
-        subject:  `${mail_contents.INVITE_GUEST.SUBJECT}- ${currentUser.user_name} has invited you to join CRMGrow`,
+        subject:  `${mail_contents.INVITE_GUEST.SUBJECT}${currentUser.user_name} has invited you to join CRMGrow`,
         user_name: currentUser.user_name,
         password: req.body.password,
         LOGIN_URL: urls.LOGIN_URL,
