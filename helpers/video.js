@@ -3,7 +3,8 @@ const child_process = require('child_process');
 const Video = require('../models/video');
 const uuidv1 = require('uuid/v1');
 const fs = require('fs');
-const { TEMP_PATH } = require('../config/path');
+const { VIDEO_CONVERT_LOG_PATH, TEMP_PATH } = require('../config/path');
+const urls = require('../constants/urls');
 
 const convertRecordVideo = async(id) =>{
   const video = await Video.findOne({_id: id}).catch(err=>{
@@ -33,7 +34,7 @@ const convertRecordVideo = async(id) =>{
   
   ffmpegConvert.stderr.on('data', function(data) {
     let content = new Buffer(data).toString()
-    fs.appendFile(video.id+'.txt', content, function(err) {
+    fs.appendFile(VIDEO_CONVERT_LOG_PATH+video.id+'.txt', content, function(err) {
       // If an error occurred, show it and return
       if(err) return console.error(err);
       // Successfully wrote binary contents to the file!
@@ -43,7 +44,7 @@ const convertRecordVideo = async(id) =>{
 }
 
 const getConvertStatus = (video_path) => {
-  let content = fs.readFileSync(video_path+'.txt', 'utf8');
+  let content = fs.readFileSync(VIDEO_CONVERT_LOG_PATH+video_path+'.txt', 'utf8');
   let duration = 0, time = 0, progress = 0;
   let result
   
