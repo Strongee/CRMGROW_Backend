@@ -17,7 +17,43 @@ const convertRecordVideo = async(id) =>{
   let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
  
   // const video_path = 'video.mov'
-  // let args = ['-i', video_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', convert_path]
+  let args = ['-i', video_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', convert_path]
+
+  const ffmpegConvert = child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.on('close', function(){
+    const new_url = urls.VIDEO_URL+new_file
+    video['url'] = new_url
+    video['converted'] = 'completed'
+    video['path'] = new_path
+    video.save().then(()=>{
+      fs.unlinkSync(file_path)
+    }).catch(err=>{
+      console.log('vide update err', err.message || err.msg)
+    })
+  })
+  
+  ffmpegConvert.stderr.on('data', function(data) {
+    let content = new Buffer(data).toString()
+    fs.appendFile(VIDEO_CONVERT_LOG_PATH+video.id+'.txt', content, function(err) {
+      // If an error occurred, show it and return
+      if(err) return console.error(err);
+      // Successfully wrote binary contents to the file!
+    });
+  });
+  return;
+}
+
+
+const convertUploadVideo = async(id) =>{
+  const video = await Video.findOne({_id: id}).catch(err=>{
+    console.log('video convert find video error', err.message)
+  })
+  
+  const file_path = video['path']
+  const new_file = uuidv1() + '.mov'
+  const new_path = TEMP_PATH + new_file
+  
+  let args = ['-i', file_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', '-movflags', 'faststart', new_path]
 
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function(){
@@ -126,7 +162,7 @@ const getConvertStatus = (video_path) => {
         }
     } else {
       result = {
-        status: false,
+        status: true,
         progress: progress
       }
     }
@@ -141,5 +177,6 @@ const getConvertStatus = (video_path) => {
 
 module.exports = {
   convertRecordVideo,
-  getConvertStatus
+  convertUploadVideo,
+  getConvertStatus,
 }

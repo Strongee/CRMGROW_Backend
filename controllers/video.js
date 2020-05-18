@@ -359,9 +359,17 @@ const update = async(req, res) => {
       file_name: file_name,
     }
     
-    video['preview'] = await regeneratePreview(data).catch(err=>{
-      console.log('err', err.message)
-    })
+    regeneratePreview(data)
+      .then((res)=>{
+        video.updateMany(
+          {_id: req.params.id}, 
+          {$set: {preview: res}}
+        ).catch(err=>{
+          console.log('update preview err', err.message)
+        })
+      }).catch(err=>{
+        console.log('err', err.message)
+      })
   }
   
   video['updated_at'] = new Date()
@@ -505,8 +513,15 @@ const updateDetail = async (req, res) => {
       custom_thumbnail: custom_thumbnail
     }
     
-    video['preview'] = await generatePreview(data).catch(err=>{
-      console.log('err', err.message)
+    generatePreview(data).then((res)=>{
+      video.updateMany(
+        {_id: req.params.id}, 
+        {$set: {preview: res}}
+      ).catch(err=>{
+        console.log('update preview err', err.message)
+      })
+    }).catch(err=>{
+      console.log('generate preview err', err.message)
     })
   }
   
@@ -514,6 +529,9 @@ const updateDetail = async (req, res) => {
   if(video['type'] === 'video/webm'){
     video['conveted'] = 'progress'
     videoHelper.convertRecordVideo(video.id)
+  } else if(video['type'] == 'video/mp4' || video['type'] == 'video/quicktime') {
+    video['conveted'] = 'progress'
+    videoHelper.convertUploadVideo(video.id)
   }
   
   video['updated_at'] = new Date()
