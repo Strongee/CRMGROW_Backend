@@ -274,11 +274,11 @@ const sourceUpdate = async() => {
   }
 }
 
-const update_contact = new CronJob('* 1 * * *', updateContacts,   function () {
+const update_contact = new CronJob('0 1 * * *', updateContacts,   function () {
   console.log('Reminder Job finished.');
 }, false, 'US/Central')
 
-const add_contact = new CronJob('* 2 * * *', addContacts,   function () {
+const add_contact = new CronJob('0 2 * * *', addContacts,   function () {
   console.log('Reminder Job finished.');
 }, false, 'US/Central')
 
