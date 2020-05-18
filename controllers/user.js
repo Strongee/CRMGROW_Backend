@@ -649,7 +649,7 @@ const login = async (req, res) => {
   }
 
 
-  if (!_user || guest) {
+  if (!_user && !guest) {
     return res.status(401).json({
       status: false,
       error: 'User Email doesn`t exist'
