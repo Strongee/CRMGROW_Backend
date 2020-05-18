@@ -179,10 +179,10 @@ const disconnectPDF = async(pdf_tracker_id) =>{
 
     activity.save().then(_activity => {
       Contact.findByIdAndUpdate(query.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-        console.log('err', err)
+        console.log('err', err.message)
       })
     }).catch(err=>{
-      console.log('err', err)
+      console.log('err', err.message)
     })
  
 }
@@ -225,10 +225,10 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
   
       activity.save().then(_activity => {
         Contact.updateMany({_id: query.contact} ,{ $set: {last_activity: _activity.id} }).catch(err=>{
-          console.log('err', err)
+          console.log('err', err.message)
         })
       }).catch(err=>{
-        console.log('err', err)
+        console.log('err', err.message)
       })
       
   
@@ -254,7 +254,7 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
             }
             TimeLineCtrl.activeNext(data)
           }catch(err){
-            console.log('err', err)
+            console.log('err', err.message)
           }
         }
       }

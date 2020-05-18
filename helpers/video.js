@@ -2,6 +2,7 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
 const Video = require('../models/video');
 const uuidv1 = require('uuid/v1');
+const fs = require('fs');
 const { TEMP_PATH } = require('../config/path');
 
 const convertRecordVideo = async(id) =>{

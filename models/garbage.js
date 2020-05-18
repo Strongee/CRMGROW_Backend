@@ -45,7 +45,8 @@ const Garbage = mongoose.model('garbage',{
     material_theme: {type: String},
     auto_follow_up: {
       enabled: {type: Boolean, default: false},
-      period: Number
+      period: Number,
+      note: String
     },
     created_at: Date,
     updated_at: Date,
