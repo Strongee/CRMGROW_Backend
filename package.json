@@ -75,6 +75,7 @@
     "phone": "^2.3.11",
     "png-file-stream": "^1.2.1",
     "prettier": "^2.0.5",
+    "pretty-quick": "^2.0.1",
     "pug": "^2.0.4",
     "pusher": "^2.2.0",
     "pxl-for-emails": "0.0.3",
@@ -115,7 +116,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "pretty-quick --staged"
     }
   }
 }
