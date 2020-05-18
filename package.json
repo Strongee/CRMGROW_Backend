@@ -7,7 +7,7 @@
     "start": "NODE_ENV=production node ./bin/www",
     "staging": "NODE_ENV=staging node ./bin/www",
     "dev": "nodemon ./bin/www",
-    "lint": "eslint 'backend_admin/**/*.js'",
+    "lint": "eslint 'backend_admin/**/*.js' --fix",
     "format": "prettier 'backend_admin/**/*.js' --write",
     "lint-fix": "bash fixTab.sh && eslint config controllers models routes --fix",
     "deploy": "pm2 deploy ecosystem.config.json staging --force"
