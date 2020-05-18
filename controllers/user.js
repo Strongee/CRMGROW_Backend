@@ -670,8 +670,8 @@ const login = async (req, res) => {
       }
      } 
      
-    _user = await User.findOne({user: guest.user, del: false}).catch(err=>{
-      console.log('err', err.message)
+    _user = await User.findOne({_id: guest.user, del: false}).catch(err=>{
+      console.log('user found err', err.message)
     })
     // TODO: Include only email for now
     if(_user){
