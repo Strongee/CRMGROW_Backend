@@ -76,6 +76,7 @@ const create = async(req, res) => {
 
     return res.send({
       status: true,
+      data: _res
     })
   }).catch(err=>{
     console.log('err', err.message)
