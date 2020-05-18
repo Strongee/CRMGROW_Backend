@@ -14,8 +14,6 @@ const convertRecordVideo = async(id) =>{
   const file_path = video['path']
   const new_file = uuidv1() + '.mov'
   const new_path = TEMP_PATH + new_file
-  let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
- 
   // const video_path = 'video.mov'
   let args = ['-i', video_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', convert_path]
 
