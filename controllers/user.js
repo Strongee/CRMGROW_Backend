@@ -670,25 +670,32 @@ const login = async (req, res) => {
       }
      } 
      
-    _user.save().catch(err => {
+    _user = await User.findOne({user: guest.user, del: false}).catch(err=>{
       console.log('err', err.message)
     })
     // TODO: Include only email for now
-    const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
-    myJSON = JSON.stringify(_user)
-    const user = JSON.parse(myJSON);
+    if(_user){
+      const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
+      myJSON = JSON.stringify(_user)
+      const user = JSON.parse(myJSON);
+      
+      delete user.hash
+      delete user.salt
     
-    delete user.hash
-    delete user.salt
-  
-    return res.send({
-      status: true,
-      data: {
-        token,
-        user,
-        guest_loggin: true
-      }
-    })
+      return res.send({
+        status: true,
+        data: {
+          token,
+          user,
+          guest_loggin: true
+        }
+      })
+    } else {
+      return res.status(401).json({
+        status: false,
+        error: 'User Email doesn`t exist'
+      })
+    }
   }
   
   if(_user.salt ){

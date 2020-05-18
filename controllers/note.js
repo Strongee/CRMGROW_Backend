@@ -53,7 +53,7 @@ const create = async(req, res) => {
     })
 
     activity.save().then(_activity => {
-      Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
+      Contact.updateMany({_id: _note.contact} ,{ $set: {last_activity: _activity.id} }).catch(err=>{
         console.log('err', err)
       })
       myJSON = JSON.stringify(_note)
@@ -65,17 +65,10 @@ const create = async(req, res) => {
       })
     })    
   })
-  .catch(e => {
-      let errors
-    if (e.errors) {
-      errors = e.errors.map(err => {      
-        delete err.instance
-        return err
-      })
-    }
-    return res.status(500).send({
+  .catch(err => {
+    return res.status(400).send({
       status: false,
-      error: errors || e
+      error: err.message
     })
   });
 }
