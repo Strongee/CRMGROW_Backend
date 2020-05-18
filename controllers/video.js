@@ -1977,11 +1977,11 @@ const makeBody = (to, from, subject, message) => {
 }
 
 const getConvertStatus = async(req, res) => {
-  const video = await Video.findOne({_id: req.params.id}).catch(err=>{
-    console.log('video convert found video error', err.message)
-  })
-  const file_path = video['path']
-  const result = videoHelper.getConvertStatus(file_path)
+  // const video = await Video.findOne({_id: req.params.id}).catch(err=>{
+  //   console.log('video convert found video error', err.message)
+  // })
+  // const file_path = video['path']
+  const result = videoHelper.getConvertStatus(req.params.id)
   if(result.status){
     return res.send(result)
   }else {

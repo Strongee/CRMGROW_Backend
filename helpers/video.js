@@ -33,7 +33,7 @@ const convertRecordVideo = async(id) =>{
   
   ffmpegConvert.stderr.on('data', function(data) {
     let content = new Buffer(data).toString()
-    fs.appendFile(file_path+'.txt', content, function(err) {
+    fs.appendFile(video.id+'.txt', content, function(err) {
       // If an error occurred, show it and return
       if(err) return console.error(err);
       // Successfully wrote binary contents to the file!
