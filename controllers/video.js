@@ -248,7 +248,7 @@ const update = async(req, res) => {
       error: 'Invalid_permission'
     })
   }
-  let file_name = video.path.slice(23)
+  let file_name = req.params.id
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     if(fs.existsSync(thumbnail_path)) {  
@@ -387,9 +387,13 @@ const updateDetail = async (req, res) => {
   const editData = req.body
   let { currentUser } = req
   let thumbnail_path = ''
-  const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
-    console.log('err', err.message)
-  })
+  const video = await Video
+                  .findOne({
+                    _id: req.params.id, 
+                    user: currentUser.id})
+                  .catch(err=>{
+                    console.log('err', err.message)
+                  })
 
   if (!video) {
     return res.status(400).json({
@@ -508,7 +512,7 @@ const updateDetail = async (req, res) => {
 
   if(video['path'] && req.body.thumbnail){
     const data = {
-      file_name: file_name,
+      file_name: req.params.id,
       file_path: video['path'],
       custom_thumbnail: custom_thumbnail
     }
