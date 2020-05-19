@@ -11,6 +11,8 @@ const Image = mongoose.model('image',{
     del: { type: Boolean, default: false},
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = Image

@@ -6,6 +6,8 @@ const File = mongoose.model('file',{
     type: String,
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = File

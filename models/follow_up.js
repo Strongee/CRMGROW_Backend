@@ -11,6 +11,8 @@ const FollowUp = mongoose.model('follow_up',{
     type: String,
     updated_at: Date,
     created_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = FollowUp

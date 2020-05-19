@@ -10,6 +10,9 @@ const Reminder = mongoose.model('reminder',{
     follow_up: [{ type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' }],
     created_at: Date,
     updated_at: Date,
+ },
+ { 
+   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
  });
 
  module.exports = Reminder

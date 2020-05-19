@@ -12,6 +12,8 @@ const Email = mongoose.model('email',{
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' }, 
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = Email

@@ -18,6 +18,8 @@ const Payment = mongoose.model('payment',{
     active: { type: Boolean, default: false},  
     updated_at: Date,
     created_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = Payment

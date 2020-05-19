@@ -16,6 +16,8 @@ const Page = mongoose.model('page', {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     home: { type: Boolean, default: false},  
     status: { type: Boolean, default: false}
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = Page

@@ -11,6 +11,9 @@ const PDF = mongoose.model('pdf',{
     del: { type: Boolean, default: false},
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+}
+);
 
  module.exports = PDF

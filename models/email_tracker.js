@@ -8,6 +8,8 @@ const EmailTracker = mongoose.model('email_tracker',{
     type: {type: String, default: 'open'},
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = EmailTracker

@@ -107,9 +107,29 @@ const getByLastActivity = async (req, res) => {
 
 const get = async (req, res) => {
   const { currentUser } = req
-  const _contact = await Contact.findOne({ user: currentUser.id, _id: req.params.id })
-  const next_contact = await Contact.find({_id: {$gt: req.params.id}, user: currentUser.id}).sort({ first_name: 1, _id: 1 }).limit(1)
-  const prev_contact = await Contact.find({_id: {$lt: req.params.id}, user: currentUser.id}).sort({ first_name: -1, _id: -1 }).limit(1)
+  let {key, dir} = req.body
+  
+  if(key == 'last_activity') {
+    dir = dir * -1
+  }
+  let next_contact, prev_contact
+  const _contact = await Contact
+                      .findOne(
+                        { 
+                        _id: req.params.id,
+                        user: currentUser.id, 
+                        }).catch(err=>{
+                          console.log('contact found err', err.message)
+                        });
+  
+  if(dir == 1){
+    next_contact = await Contact.find({[key]: {$gte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: 1 }).limit(1)
+    prev_contact = await Contact.find({[key]: {$lte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: -1 }).limit(1)
+  } else {
+    next_contact = await Contact.find({[key]: {$lte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: -1 }).limit(1)
+    prev_contact = await Contact.find({[key]: {$gte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: 1 }).limit(1)
+  }
+  
   let next = null
   let prev = null
   if(next_contact[0]){

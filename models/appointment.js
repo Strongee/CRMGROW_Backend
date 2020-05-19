@@ -14,6 +14,8 @@ const Appointment = mongoose.model('appointment',{
     event_id: String,
     created_at: Date,
     updated_at: Date,
- });
+ },{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
  module.exports = Appointment

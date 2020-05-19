@@ -22,7 +22,9 @@ const ContactSchema = mongoose.Schema({
     recruiting_stage: String,
     created_at: Date,
     updated_at: Date,
-})
+},{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
 
 ContactSchema.pre('save', function(next) {
     var contact = this;

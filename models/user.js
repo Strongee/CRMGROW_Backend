@@ -79,6 +79,10 @@ const User = mongoose.model('user',{
       linkedin: String
      },
      company: {type: String, default: 'eXp Realty'}
+ },
+ { 
+   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
  });
+
 
  module.exports = User
