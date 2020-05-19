@@ -749,12 +749,14 @@ const generatePreview = async(data) => {
         console.log('screenshot generating error', err)
         return
       });
-      console.log('image', image)
+      
       if(!image){
         break;
       }
+      
       let height = image.height;
       let width = image.width;
+      
       if(height > width) {
         ctx.rect(0, 0, 250, 140);
         ctx.fillStyle = '#000000';
@@ -767,6 +769,7 @@ const generatePreview = async(data) => {
         width = 250;
         ctx.drawImage(image, 0, 0, width, height);
       }
+      
       ctx.rect(60, 100, 150, 30);
       ctx.globalAlpha  = 0.7;
       ctx.fillStyle = '#333';
@@ -776,7 +779,9 @@ const generatePreview = async(data) => {
       ctx.fillStyle = '#ffffff';
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
+      
       let buf = canvas.toBuffer();
+      
       if(custom_thumbnail) {
         fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
       } else {
