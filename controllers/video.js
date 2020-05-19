@@ -402,7 +402,7 @@ const updateDetail = async (req, res) => {
     })
   }
   
-  let file_name = video.path.slice(23)
+  let file_name = req.params.id
   let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
