@@ -108,10 +108,12 @@ const receive = async(req, res) => {
     const from = req.body['From']
     const to = req.body['To']
 
-    let currentUser = await User.findOne({proxy_number: to}).catch(err =>{
-      console.log('current user found err sms', err)
-    })
-    console.log('currentUser', currentUser)
+    let currentUser = await User
+      .findOne({proxy_number: to})
+      .catch(err =>{
+        console.log('current user found err sms', err.message)
+      })
+    
     if(currentUser != null){
       const phoneNumber = req.body['From']
   
