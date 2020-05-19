@@ -836,20 +836,23 @@ const timesheet_check = new CronJob('* * * * *', async() =>{
               timeline.save().catch(err=>{
                 console.log('err', err)
               })
-              Contact.findByIdAndUpdate( _followup.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-                console.log('err', err)
-              })
+                Contact.updateMany(
+                  {_id: _followup.contact},
+                  { $set: {last_activity: _activity.id} }
+                ).catch(err=>{
+                  console.log('contact update err', err.message)
+                })
             }).catch(err => {
-              console.log('follow error', err)
+              console.log('follow error', err.message)
             });
           })
           .catch(err => {
               timeline['status'] = 'error'
               timeline['updated_at'] = new Date()
               timeline.save().catch(err=>{
-                console.log('err', err)
+                console.log('err', err.message)
               })
-            console.log('follow error', err)
+            console.log('follow error', err.message)
           });
           break;
         case 'note':

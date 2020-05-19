@@ -143,7 +143,7 @@ const bulkGmail = async (req, res) => {
     })
 
     const activity = await _activity.save().then().catch(err => {
-      console.log('err', err)
+      console.log('err', err.message)
     })
       
     let html_content
