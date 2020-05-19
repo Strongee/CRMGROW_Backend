@@ -249,6 +249,7 @@ const update = async(req, res) => {
     })
   }
   let file_name = req.params.id
+  let thumbnail_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     if(fs.existsSync(thumbnail_path)) {  
@@ -262,7 +263,7 @@ const update = async(req, res) => {
           const month = today.getMonth()
           const params = {
               Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
+              Key: 'thumbnail' +  year + '/' + month + '/' + thumbnail_name, 
               Body: data,
               ACL: 'public-read'
           };
