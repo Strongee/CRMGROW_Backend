@@ -27,7 +27,6 @@ const create = async (req, res) => {
 
 const get = (req, res) => {
     const filePath = FILES_PATH + req.params.name
-    console.info('File Path:', filePath)
     if (fs.existsSync(filePath)) {
       const contentType = mime.contentType(path.extname(filePath))
       res.set('Content-Type', contentType)

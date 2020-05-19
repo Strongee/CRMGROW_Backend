@@ -181,7 +181,6 @@ const get = async (req, res) => {
 const getThumbnail = (req, res) => {
   const filePath = THUMBNAILS_PATH + req.params.name
   
-  console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
     if(req.query.resize){
       const readStream = fs.createReadStream(filePath)

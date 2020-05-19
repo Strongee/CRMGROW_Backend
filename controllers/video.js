@@ -182,7 +182,7 @@ const embedPlay = async(req, res) => {
 
 const pipe = async(req, res) =>{
   const filePath = TEMP_PATH + req.params.name
-  console.info('File Path:', filePath)
+
   if (fs.existsSync(filePath)) {
     const contentType = mime.contentType(path.extname(req.params.name))
     res.set('Content-Type', contentType)
@@ -361,7 +361,7 @@ const update = async(req, res) => {
     
     regeneratePreview(data)
       .then((res)=>{
-        video.updateMany(
+        Video.updateMany(
           {_id: req.params.id}, 
           {$set: {preview: res}}
         ).catch(err=>{
@@ -514,7 +514,7 @@ const updateDetail = async (req, res) => {
     }
     
     generatePreview(data).then((res)=>{
-      video.updateMany(
+      Video.updateMany(
         {_id: req.params.id}, 
         {$set: {preview: res}}
       ).catch(err=>{
@@ -922,7 +922,6 @@ const get = async (req, res) => {
 const getThumbnail = (req, res) => {
   const filePath = THUMBNAILS_PATH + req.params.name
   
-  console.info('File Path:', filePath)
   if (fs.existsSync(filePath)) {
     if(req.query.resize){
       const readStream = fs.createReadStream(filePath)

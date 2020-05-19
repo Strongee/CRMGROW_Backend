@@ -89,7 +89,7 @@ const create = async (req, res) => {
 
 const get = (req, res) => {
     const filePath = FILES_PATH + req.params.name
-    console.info('File Path:', filePath)
+
     if (fs.existsSync(filePath)) {
       if(req.query.resize){
         const readStream = fs.createReadStream(filePath)
