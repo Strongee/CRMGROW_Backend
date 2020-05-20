@@ -2008,11 +2008,15 @@ const getConvertStatus = async(req, res) => {
   //   console.log('video convert found video error', err.message)
   // })
   // const file_path = video['path']
-  const result = videoHelper.getConvertStatus(req.params.id)
+  const { videos } = req.body
+  let result_array = []
+  for(let i =0; i < videos.length; i++){
+    const video = videos[i]
+    const result = videoHelper.getConvertStatus(video)
+    result_array.push(result)
+  }
   if(result.status){
-    return res.send(result)
-  }else {
-    return res.status(400).json(result)
+    return res.send(result_array)
   }
 }
 

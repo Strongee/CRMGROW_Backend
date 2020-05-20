@@ -70,8 +70,6 @@ router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
 // Load Duplicated Contacts
 router.get('/load-duplication', UserCtrl.checkAuth, catchError(ContactCtrl.loadDuplication));
 
-// Get a pull contact info for profile page
-router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 
 // Get Contacts data with ID array
 router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
@@ -100,5 +98,8 @@ router.post('/check-phone', UserCtrl.checkAuth, catchError(ContactCtrl.checkPhon
 router.post('/merge', UserCtrl.checkAuth, catchError(ContactCtrl.mergeContacts));
 
 router.post('/bulk-create', UserCtrl.checkAuth, catchError(ContactCtrl.bulkCreate));
+
+// Get a pull contact info for profile page
+router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
 
 module.exports = router

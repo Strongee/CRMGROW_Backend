@@ -156,16 +156,19 @@ const getConvertStatus = (video_path) => {
         // TODO err - giving up after 8 sec. no progress - handle progress errors here
         
         result = {
+          id: video_path,
           status: false,
         }
     } else {
       result = {
+        id: video_path,
         status: true,
         progress: progress
       }
     }
   } else if( content.indexOf('Permission denied') > -1) {
     result = {
+      id: video_path,
       status: false,
       error: "ffmpeg : Permission denied, either for ffmpeg or upload location ..."
     }
