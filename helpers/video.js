@@ -78,12 +78,19 @@ const convertUploadVideo = async(id) =>{
 }
 
 const getConvertStatus = (video_path) => {
+  if(!(fs.existsSync(VIDEO_CONVERT_LOG_PATH+video_path+'.txt'))) {
+    return  {
+      id: video_path,
+      status: false,
+      error: "Converting Status File doesn't exist."
+    }
+  }
   let content = fs.readFileSync(VIDEO_CONVERT_LOG_PATH+video_path+'.txt', 'utf8');
   let duration = 0, time = 0, progress = 0;
   let result
-  
-  // get duration of source
   let matches = (content) ? content.match(/Duration: (.*?), start:/) : [];
+  
+  // get duration of source  
   // if( matches && matches.length>0){
   //   let rawDuration = matches[1];
   //   // convert rawDuration from 00:00:00.00 to seconds.

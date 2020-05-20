@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const FollowUp = mongoose.model('follow_up',{
+const FollowUpSchema = new Schema({
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     due_date: Date,
     content: { type: String, default: ""},
@@ -13,6 +14,8 @@ const FollowUp = mongoose.model('follow_up',{
     created_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const FollowUp = mongoose.model('follow_up', FollowUpSchema);
 
  module.exports = FollowUp

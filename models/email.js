@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Email = mongoose.model('email',{
+const EmailSchema = new Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     event: String,
     subject: String,
@@ -14,6 +15,8 @@ const Email = mongoose.model('email',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Email = mongoose.model('email', EmailSchema);
 
  module.exports = Email

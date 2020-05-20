@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Image = mongoose.model('image',{
+const ImageSchema = new Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     description: String,
@@ -13,6 +14,8 @@ const Image = mongoose.model('image',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Image = mongoose.model('image', ImageSchema);
 
  module.exports = Image

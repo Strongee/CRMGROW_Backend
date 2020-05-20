@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const EmailTracker = mongoose.model('email_tracker',{
+const TrackerSchema = new Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     email: { type: mongoose.Schema.Types.ObjectId, ref: 'email' },
@@ -10,6 +11,8 @@ const EmailTracker = mongoose.model('email_tracker',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const EmailTracker = mongoose.model('email_tracker', TrackerSchema);
 
  module.exports = EmailTracker

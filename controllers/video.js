@@ -2009,15 +2009,13 @@ const getConvertStatus = async(req, res) => {
   // })
   // const file_path = video['path']
   const { videos } = req.body
-  let result_array = []
+  let result_array = {}
   for(let i =0; i < videos.length; i++){
     const video = videos[i]
-    const result = videoHelper.getConvertStatus(video)
-    result_array.push(result)
+    const result = videoHelper.getConvertStatus(video);
+    result_array[video] = result
   }
-  if(result.status){
-    return res.send(result_array)
-  }
+  return res.send(result_array)
 }
 
 module.exports = {

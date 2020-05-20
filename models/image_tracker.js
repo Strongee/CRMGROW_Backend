@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const ImageTracker = mongoose.model('image_tracker',{
+const TrackerSchema = new Schema({
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     image: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
@@ -11,6 +12,8 @@ const ImageTracker = mongoose.model('image_tracker',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const ImageTracker = mongoose.model('image_tracker', TrackerSchema);
 
  module.exports = ImageTracker

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Appointment = mongoose.model('appointment',{
+const AppointmentSchema = new Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     description: String,
@@ -16,6 +17,8 @@ const Appointment = mongoose.model('appointment',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Appointment = mongoose.model('appointment', AppointmentSchema);
 
  module.exports = Appointment

@@ -71,14 +71,15 @@ const getAllByLastActivity = async (req, res) => {
 const getByLastActivity = async (req, res) => {
   const { currentUser } = req
   let { field, dir } = req.body;
-
+  dir = dir ? 1 :- 1;
   if(field == 'updated_at') {
     field = 'last_activity';
+    dir *= -1;
   }
   else {
     field = 'first_name';
   }
-  dir = dir ? -1 : 1;
+  
   let contacts
   if (typeof req.params.id == 'undefined') {
     contacts = await Contact.find({ user: currentUser.id }).populate('last_activity').sort({ [field]: dir }).limit(50)

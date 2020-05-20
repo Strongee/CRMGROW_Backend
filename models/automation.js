@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Automation = mongoose.model('automation',{
+const AutomationSchema = new Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     automations: Array,
@@ -9,6 +10,8 @@ const Automation = mongoose.model('automation',{
     updated_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Automation = mongoose.model('automation', AutomationSchema);
 
  module.exports = Automation

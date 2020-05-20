@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Page = mongoose.model('page', {
+const PageSchema = new Schema({
     slug: String,
     title: String,
     html: String,
@@ -18,6 +19,8 @@ const Page = mongoose.model('page', {
     status: { type: Boolean, default: false}
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Page = mongoose.model('page', PageSchema);
 
  module.exports = Page

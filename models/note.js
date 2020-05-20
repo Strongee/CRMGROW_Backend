@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const Note = mongoose.model('note',{
+const NoteSchema = new Schema({
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     content: String,
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
@@ -8,6 +9,8 @@ const Note = mongoose.model('note',{
     created_at: Date,
  },{ 
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+})
+
+const Note = mongoose.model('note', NoteSchema);
 
  module.exports = Note
