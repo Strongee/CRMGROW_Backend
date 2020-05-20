@@ -345,7 +345,7 @@ const create = async (req, res) => {
 
   const {email} = req.body 
   
-  let password = req.body.password || config.DEFAULT_PASS
+  let password = req.body.password || config.ADMIN_DEFAULT_PASS
     
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
