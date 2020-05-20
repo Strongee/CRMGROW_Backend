@@ -33,6 +33,7 @@ const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -248,6 +249,24 @@ const update = async(req, res) => {
       error: 'Invalid_permission'
     })
   }
+  if(req.body.site_image) {
+    if(video.site_image) {
+      try {
+        await removeFile(video.site_image)
+      } catch(error) {
+        console.error("Remove Site Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
+      video['site_image'] = siteImage;
+    } catch(error) {
+      console.error("Upload Site Image", error)
+    }
+  }
   let file_name = req.params.id
   let thumbnail_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
@@ -314,7 +333,7 @@ const update = async(req, res) => {
         ctx.fillText('Play video', 70, 120)
         ctx.drawImage(play, 10, 95, 40, 40)
         let buf = canvas.toBuffer();
-        
+
         for(let i=0; i<20; i++){
           if(i<10){
             fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
@@ -402,7 +421,24 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
-  
+  if(req.body.site_image) {
+    if(video.site_image) {
+      try {
+        await removeFile(video.site_image)
+      } catch(error) {
+        console.error("Remove Site Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
+      video['site_image'] = siteImage;
+    } catch(error) {
+      console.error("Upload Site Image", error)
+    }
+  }
   let file_name = req.params.id
   let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
