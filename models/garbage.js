@@ -43,7 +43,7 @@ const GarbageSchema = new Schema({
   },
   index_page: {type: mongoose.Schema.Types.ObjectId, ref: 'page'},
   logo: {type: String},
-  material_theme: {type: String},
+  material_theme: {type: String, default: 'theme2'},
   auto_follow_up: {
     enabled: {type: Boolean, default: false},
     period: Number,

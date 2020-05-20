@@ -77,7 +77,7 @@ const play = async(req, res) => {
       console.log('err', err)
     })
     
-    let theme = 'default';
+    let theme = 'theme2';
     let logo = variables.DEFAULT_LOGO
     if(garbage) {
       capture_delay = garbage['capture_delay'];
@@ -151,7 +151,7 @@ const play1 = async(req, res) => {
       console.log('err', err)
     })
     
-    let theme = 'default';
+    let theme = 'theme2';
     let logo = variables.DEFAULT_LOGO
     if(garbage) {
       theme = garbage['material_theme'] || theme
