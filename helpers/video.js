@@ -10,12 +10,13 @@ const convertRecordVideo = async(id) =>{
   const video = await Video.findOne({_id: id}).catch(err=>{
     console.log('video convert find video error', err.message)
   })
+  console.log("video ID", id, video);
   
   const file_path = video['path']
   const new_file = uuidv1() + '.mov'
   const new_path = TEMP_PATH + new_file
   // const video_path = 'video.mov'
-  let args = ['-i', video_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', convert_path]
+  let args = ['-i', file_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', new_path]
 
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function(){

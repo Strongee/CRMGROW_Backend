@@ -532,10 +532,10 @@ const updateDetail = async (req, res) => {
   
   
   if(video['type'] === 'video/webm'){
-    video['conveted'] = 'progress'
+    video['converted'] = 'progress'
     videoHelper.convertRecordVideo(video.id)
   } else if(video['type'] == 'video/mp4' || video['type'] == 'video/quicktime') {
-    video['conveted'] = 'progress'
+    video['converted'] = 'progress'
     videoHelper.convertUploadVideo(video.id)
   }
   
