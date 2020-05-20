@@ -425,6 +425,7 @@ const updateDetail = async (req, res) => {
           s3.upload(params, async (s3Err, upload)=>{
             if (s3Err){
               console.log('upload s3 error', s3Err)
+              video['thumbnail'] = file_name
             } else {
               console.log(`File uploaded successfully at ${upload.Location}`)
             
@@ -1092,9 +1093,11 @@ const getHistory = async(req, res) => {
 
 const bulkEmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
   
   if(contacts){
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1287,7 +1290,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
   const oauth2Client = new google.auth.OAuth2(
@@ -1295,6 +1298,8 @@ const bulkGmail = async(req, res) => {
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
+
+  let videos = await Video.find({_id: {$in: videoIds}});
   
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
@@ -1554,9 +1559,12 @@ const bulkGmail = async(req, res) => {
 
 const bulkText = async(req, res) => {
   const { currentUser } = req
-  let {content, videos, contacts} = req.body 
+  let {content, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
+
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
@@ -1774,9 +1782,11 @@ const createSmsContent = async (req, res) => {
 
 const bulkOutlook = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
 
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
