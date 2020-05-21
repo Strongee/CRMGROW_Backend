@@ -1,21 +1,21 @@
-const { validationResult } = require("express-validator/check");
-const Activity = require("../models/activity");
-const Contact = require("../models/contact");
+const { validationResult } = require('express-validator/check');
+const Activity = require('../models/activity');
+const Contact = require('../models/contact');
 
 const get = async (req, res) => {
   const { currentUser } = req;
   const count = await Activity.countDocuments({ user: currentUser.id });
   let activity;
-  if (typeof req.params.id == "undefined") {
+  if (typeof req.params.id === 'undefined') {
     activity = await Activity.find({ user: currentUser.id })
       .sort({ updated_at: -1 })
-      .populate("contacts")
+      .populate('contacts')
       .limit(20);
   } else {
     const id = parseInt(req.params.id);
     activity = await Activity.find({ user: currentUser.id })
       .sort({ updated_at: -1 })
-      .populate("contacts")
+      .populate('contacts')
       .skip(id)
       .limit(20);
   }
@@ -24,7 +24,7 @@ const get = async (req, res) => {
     status: true,
     data: {
       activity,
-      count: count,
+      count,
     },
   });
 };
@@ -70,7 +70,7 @@ const contactActivity = async (req, res) => {
     user: currentUser.id,
     contacts: contact,
   }).sort({ updated_at: 1 });
-  let _activity_detail_list = [];
+  const _activity_detail_list = [];
 
   for (let i = 0; i < _activity_list.length; i++) {
     const _activity_detail = await Activity.aggregate([
@@ -78,8 +78,8 @@ const contactActivity = async (req, res) => {
         $lookup: {
           from: _activity_list[i].type,
           localField: _activity_list[i].type,
-          foreignField: "_id",
-          as: "activity_detail",
+          foreignField: '_id',
+          as: 'activity_detail',
         },
       },
       {
@@ -105,7 +105,7 @@ const removeBulk = async (req, res) => {
         {},
         { sort: { _id: -1 } }
       ).catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
       Contact.findByIdAndUpdate(contact, {
         $set: { last_activity: lastActivity.id },
@@ -117,26 +117,26 @@ const removeBulk = async (req, res) => {
           });
         })
         .catch((err) => {
-          console.log("err", err);
+          console.log('err', err);
         });
     })
     .catch((err) => {
       return res.status(500).send({
         status: false,
-        error: err.message || "Error in remove all activities",
+        error: err.message || 'Error in remove all activities',
       });
     });
 };
 
 const removeAll = async (req, res) => {
   const { contact, option } = req.body;
-  Activity.deleteMany({ contacts: contact, type: { $nin: ["contacts"] } })
+  Activity.deleteMany({ contacts: contact, type: { $nin: ['contacts'] } })
     .then(async () => {
       const contactActivity = await Activity.findOne({
         contacts: contact,
-        type: { $in: ["contacts"] },
+        type: { $in: ['contacts'] },
       }).catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
       Contact.findByIdAndUpdate(contact, {
         $set: { last_activity: contactActivity.id },
@@ -148,13 +148,13 @@ const removeAll = async (req, res) => {
           });
         })
         .catch((err) => {
-          console.log("err", err);
+          console.log('err', err);
         });
     })
     .catch((err) => {
       return res.status(500).send({
         status: false,
-        error: err.message || "Error in remove all activities",
+        error: err.message || 'Error in remove all activities',
       });
     });
 };

@@ -30,12 +30,12 @@ if (typeof PDFJS === 'undefined') {
   if (typeof Uint8Array !== 'undefined') {
     // Support: iOS<6.0
     if (typeof Uint8Array.prototype.subarray === 'undefined') {
-        Uint8Array.prototype.subarray = function subarray(start, end) {
-          return new Uint8Array(this.slice(start, end));
-        };
-        Float32Array.prototype.subarray = function subarray(start, end) {
-          return new Float32Array(this.slice(start, end));
-        };
+      Uint8Array.prototype.subarray = function subarray(start, end) {
+        return new Uint8Array(this.slice(start, end));
+      };
+      Float32Array.prototype.subarray = function subarray(start, end) {
+        return new Float32Array(this.slice(start, end));
+      };
     }
 
     // Support: Android<4.1
@@ -54,7 +54,7 @@ if (typeof PDFJS === 'undefined') {
       offset = 0;
     }
     for (var i = 0, n = array.length; i < n; ++i, ++offset) {
-      this[offset] = array[i] & 0xFF;
+      this[offset] = array[i] & 0xff;
     }
   }
 
@@ -116,9 +116,13 @@ if (typeof PDFJS === 'undefined') {
       Object.defineProperty(new Image(), 'id', { value: 'test' });
       // ... another test for android gb browser for non-DOM objects
       var Test = function Test() {};
-      Test.prototype = { get id() { } };
-      Object.defineProperty(new Test(), 'id',
-        { value: '', configurable: true, enumerable: true, writable: false });
+      Test.prototype = { get id() {} };
+      Object.defineProperty(new Test(), 'id', {
+        value: '',
+        configurable: true,
+        enumerable: true,
+        writable: false,
+      });
     } catch (e) {
       definePropertyPossible = false;
     }
@@ -147,7 +151,6 @@ if (typeof PDFJS === 'undefined') {
   };
 })();
 
-
 // No XMLHttpRequest#response?
 // Support: IE<11, Android <4.0
 (function checkXMLHttpRequestResponseCompatibility() {
@@ -157,7 +160,7 @@ if (typeof PDFJS === 'undefined') {
     // IE10 might have response, but not overrideMimeType
     // Support: IE10
     Object.defineProperty(xhrPrototype, 'overrideMimeType', {
-      value: function xmlHttpRequestOverrideMimeType(mimeType) {}
+      value: function xmlHttpRequestOverrideMimeType(mimeType) {},
     });
   }
   if ('responseType' in xhr) {
@@ -174,12 +177,14 @@ if (typeof PDFJS === 'undefined') {
     set: function xmlHttpRequestSetResponseType(value) {
       if (value === 'text' || value === 'arraybuffer') {
         this._responseType = value;
-        if (value === 'arraybuffer' &&
-            typeof this.overrideMimeType === 'function') {
+        if (
+          value === 'arraybuffer' &&
+          typeof this.overrideMimeType === 'function'
+        ) {
           this.overrideMimeType('text/plain; charset=x-user-defined');
         }
       }
-    }
+    },
   });
 
   // Support: IE9
@@ -191,7 +196,7 @@ if (typeof PDFJS === 'undefined') {
         } else {
           return this.responseText;
         }
-      }
+      },
     });
     return;
   }
@@ -202,13 +207,14 @@ if (typeof PDFJS === 'undefined') {
         return this.responseText;
       }
       var text = this.responseText;
-      var i, n = text.length;
+      var i,
+        n = text.length;
       var result = new Uint8Array(n);
       for (i = 0; i < n; ++i) {
-        result[i] = text.charCodeAt(i) & 0xFF;
+        result[i] = text.charCodeAt(i) & 0xff;
       }
       return result.buffer;
-    }
+    },
   });
 })();
 
@@ -226,14 +232,18 @@ if (typeof PDFJS === 'undefined') {
     var buffer = '';
     var i, n;
     for (i = 0, n = chars.length; i < n; i += 3) {
-      var b1 = chars.charCodeAt(i) & 0xFF;
-      var b2 = chars.charCodeAt(i + 1) & 0xFF;
-      var b3 = chars.charCodeAt(i + 2) & 0xFF;
-      var d1 = b1 >> 2, d2 = ((b1 & 3) << 4) | (b2 >> 4);
-      var d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
-      var d4 = i + 2 < n ? (b3 & 0x3F) : 64;
-      buffer += (digits.charAt(d1) + digits.charAt(d2) +
-                 digits.charAt(d3) + digits.charAt(d4));
+      var b1 = chars.charCodeAt(i) & 0xff;
+      var b2 = chars.charCodeAt(i + 1) & 0xff;
+      var b3 = chars.charCodeAt(i + 2) & 0xff;
+      var d1 = b1 >> 2,
+        d2 = ((b1 & 3) << 4) | (b2 >> 4);
+      var d3 = i + 1 < n ? ((b2 & 0xf) << 2) | (b3 >> 6) : 64;
+      var d4 = i + 2 < n ? b3 & 0x3f : 64;
+      buffer +=
+        digits.charAt(d1) +
+        digits.charAt(d2) +
+        digits.charAt(d3) +
+        digits.charAt(d4);
     }
     return buffer;
   };
@@ -258,13 +268,16 @@ if (typeof PDFJS === 'undefined') {
       // initialize result and counters
       var bc = 0, bs, buffer, idx = 0, output = '';
       // get next character
-      buffer = input.charAt(idx++);
+      (buffer = input.charAt(idx++));
       // character found in table?
       // initialize bit storage and add its ascii value
-      ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer,
-        // and if not first of each 4 characters,
-        // convert the first 8 bits to one ascii character
-        bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
+      ~buffer &&
+      ((bs = bc % 4 ? bs * 64 + buffer : buffer),
+      // and if not first of each 4 characters,
+      // convert the first 8 bits to one ascii character
+      bc++ % 4)
+        ? (output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6))))
+        : 0
     ) {
       // try to find character in table (0-63, not found => -1)
       buffer = digits.indexOf(buffer);
@@ -281,7 +294,8 @@ if (typeof PDFJS === 'undefined') {
   }
 
   Function.prototype.bind = function functionPrototypeBind(obj) {
-    var fn = this, headArgs = Array.prototype.slice.call(arguments, 1);
+    var fn = this,
+      headArgs = Array.prototype.slice.call(arguments, 1);
     var bound = function functionPrototypeBindBound() {
       var args = headArgs.concat(Array.prototype.slice.call(arguments));
       return fn.apply(obj, args);
@@ -299,7 +313,7 @@ if (typeof PDFJS === 'undefined') {
   }
 
   Object.defineProperty(HTMLElement.prototype, 'dataset', {
-    get: function() {
+    get: function () {
       if (this._dataset) {
         return this._dataset;
       }
@@ -310,8 +324,9 @@ if (typeof PDFJS === 'undefined') {
         if (attribute.name.substring(0, 5) !== 'data-') {
           continue;
         }
-        var key = attribute.name.substring(5).replace(/\-([a-z])/g,
-          function(all, ch) {
+        var key = attribute.name
+          .substring(5)
+          .replace(/\-([a-z])/g, function (all, ch) {
             return ch.toUpperCase();
           });
         dataset[key] = attribute.value;
@@ -320,11 +335,11 @@ if (typeof PDFJS === 'undefined') {
       Object.defineProperty(this, '_dataset', {
         value: dataset,
         writable: false,
-        enumerable: false
+        enumerable: false,
       });
       return dataset;
     },
-    enumerable: true
+    enumerable: true,
   });
 })();
 
@@ -350,26 +365,26 @@ if (typeof PDFJS === 'undefined') {
       list.splice(index, 1);
     }
     element.className = list.join(' ');
-    return (index >= 0);
+    return index >= 0;
   }
 
   var classListPrototype = {
-    add: function(name) {
+    add: function (name) {
       changeList(this.element, name, true, false);
     },
-    contains: function(name) {
+    contains: function (name) {
       return changeList(this.element, name, false, false);
     },
-    remove: function(name) {
+    remove: function (name) {
       changeList(this.element, name, false, true);
     },
-    toggle: function(name) {
+    toggle: function (name) {
       changeList(this.element, name, true, true);
-    }
+    },
   };
 
   Object.defineProperty(HTMLElement.prototype, 'classList', {
-    get: function() {
+    get: function () {
       if (this._classList) {
         return this._classList;
       }
@@ -378,17 +393,17 @@ if (typeof PDFJS === 'undefined') {
         element: {
           value: this,
           writable: false,
-          enumerable: true
-        }
+          enumerable: true,
+        },
       });
       Object.defineProperty(this, '_classList', {
         value: classList,
         writable: false,
-        enumerable: false
+        enumerable: false,
       });
       return classList;
     },
-    enumerable: true
+    enumerable: true,
   });
 })();
 
@@ -399,20 +414,26 @@ if (typeof PDFJS === 'undefined') {
 (function checkConsoleCompatibility() {
   if (!('console' in window)) {
     window.console = {
-      log: function() {},
-      error: function() {},
-      warn: function() {}
+      log: function () {},
+      error: function () {},
+      warn: function () {},
     };
   } else if (!('bind' in console.log)) {
     // native functions in IE9 might not have bind
-    console.log = (function(fn) {
-      return function(msg) { return fn(msg); };
+    console.log = (function (fn) {
+      return function (msg) {
+        return fn(msg);
+      };
     })(console.log);
-    console.error = (function(fn) {
-      return function(msg) { return fn(msg); };
+    console.error = (function (fn) {
+      return function (msg) {
+        return fn(msg);
+      };
     })(console.error);
-    console.warn = (function(fn) {
-      return function(msg) { return fn(msg); };
+    console.warn = (function (fn) {
+      return function (msg) {
+        return fn(msg);
+      };
     })(console.warn);
   }
 })();
@@ -458,8 +479,9 @@ if (typeof PDFJS === 'undefined') {
   // https://github.com/mozilla/pdf.js/issues/3260
   // Last tested with version 6.0.4.
   // Support: Safari 6.0+
-  var isSafari = Object.prototype.toString.call(
-                  window.HTMLElement).indexOf('Constructor') > 0;
+  var isSafari =
+    Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') >
+    0;
 
   // Older versions of Android (pre 3.0) has issues with range requests, see:
   // https://github.com/mozilla/pdf.js/issues/3381.
@@ -494,7 +516,7 @@ if (typeof PDFJS === 'undefined') {
   // IE < 11 will use window.CanvasPixelArray which lacks set function.
   if (window.CanvasPixelArray) {
     if (typeof window.CanvasPixelArray.prototype.set !== 'function') {
-      window.CanvasPixelArray.prototype.set = function(arr) {
+      window.CanvasPixelArray.prototype.set = function (arr) {
         for (var i = 0, ii = this.length; i < ii; i++) {
           this[i] = arr[i];
         }
@@ -503,7 +525,8 @@ if (typeof PDFJS === 'undefined') {
   } else {
     // Old Chrome and Android use an inaccessible CanvasPixelArray prototype.
     // Because we cannot feature detect it, we rely on user agent parsing.
-    var polyfill = false, versionMatch;
+    var polyfill = false,
+      versionMatch;
     if (navigator.userAgent.indexOf('Chrom') >= 0) {
       versionMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
       // Chrome < 21 lacks the set function.
@@ -514,8 +537,9 @@ if (typeof PDFJS === 'undefined') {
       // thus pass the Chrome check above and not reach this block.
       polyfill = /Android\s[0-4][^\d]/g.test(navigator.userAgent);
     } else if (navigator.userAgent.indexOf('Safari') >= 0) {
-      versionMatch = navigator.userAgent.
-        match(/Version\/([0-9]+)\.([0-9]+)\.([0-9]+) Safari\//);
+      versionMatch = navigator.userAgent.match(
+        /Version\/([0-9]+)\.([0-9]+)\.([0-9]+) Safari\//
+      );
       // Safari < 6 lacks the set function.
       polyfill = versionMatch && parseInt(versionMatch[1]) < 6;
     }
@@ -523,9 +547,9 @@ if (typeof PDFJS === 'undefined') {
     if (polyfill) {
       var contextPrototype = window.CanvasRenderingContext2D.prototype;
       contextPrototype._createImageData = contextPrototype.createImageData;
-      contextPrototype.createImageData = function(w, h) {
+      contextPrototype.createImageData = function (w, h) {
         var imageData = this._createImageData(w, h);
-        imageData.data.set = function(arr) {
+        imageData.data.set = function (arr) {
           for (var i = 0, ii = this.length; i < ii; i++) {
             this[i] = arr[i];
           }
@@ -569,8 +593,8 @@ if (typeof PDFJS === 'undefined') {
 // Disable fullscreen support for certain problematic configurations.
 // Support: IE11+ (when embedded).
 (function checkFullscreenSupport() {
-  var isEmbeddedIE = (navigator.userAgent.indexOf('Trident') >= 0 &&
-                      window.parent !== window);
+  var isEmbeddedIE =
+    navigator.userAgent.indexOf('Trident') >= 0 && window.parent !== window;
   if (isEmbeddedIE) {
     PDFJS.disableFullscreen = true;
   }

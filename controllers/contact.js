@@ -108,7 +108,7 @@ const getByLastActivity = async (req, res) => {
     status: true,
     data: {
       contacts,
-      count: count,
+      count,
     },
   });
 };
@@ -175,7 +175,7 @@ const get = async (req, res) => {
     user: currentUser.id,
     contacts: req.params.id,
   }).sort({ updated_at: 1 });
-  let _activity_detail_list = [];
+  const _activity_detail_list = [];
 
   for (let i = 0; i < _activity_list.length; i++) {
     const _activity_detail = await Activity.aggregate([
@@ -195,16 +195,16 @@ const get = async (req, res) => {
     _activity_detail_list.push(_activity_detail[0]);
   }
 
-  myJSON = JSON.stringify(_contact);
+  const myJSON = JSON.stringify(_contact);
   const contact = JSON.parse(myJSON);
   const data = await Object.assign(
     contact,
     { follow_up: _follow_up },
     { activity: _activity_detail_list },
-    { next: next },
-    { prev: prev },
+    { next },
+    { prev },
     { time_lines: _timelines },
-    { automation: automation }
+    { automation }
   );
 
   return res.send({
@@ -246,7 +246,7 @@ const create = async (req, res) => {
       user: currentUser.id,
       email: req.body['email'],
     });
-    if (contact_old != null) {
+    if (contact_old !== null) {
       return res.status(400).send({
         status: false,
         error: 'Email must be unique!',
@@ -259,7 +259,7 @@ const create = async (req, res) => {
       user: currentUser.id,
       cell_phone: req.body['cell_phone'],
     });
-    if (contact_old != null) {
+    if (contact_old !== null) {
       return res.status(400).send({
         status: false,
         error: 'Phone number must be unique!',
@@ -267,7 +267,7 @@ const create = async (req, res) => {
     }
   }
 
-  let cell_phone = req.body.cell_phone;
+  const { cell_phone } = req.body;
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -277,7 +277,7 @@ const create = async (req, res) => {
 
   const contact = new Contact({
     ...req.body,
-    cell_phone: cell_phone,
+    cell_phone,
     user: currentUser.id,
     created_at: new Date(),
     updated_at: new Date(),
@@ -288,8 +288,8 @@ const create = async (req, res) => {
     .then((_contact) => {
       count += 1;
       const contact_info = {
-        count: count,
-        max_count: max_count,
+        count,
+        max_count,
       };
       currentUser.contact_info = contact_info;
       currentUser.save();
@@ -307,7 +307,7 @@ const create = async (req, res) => {
         _contact.save().catch((err) => {
           console.log('err', err);
         });
-        myJSON = JSON.stringify(_contact);
+        const myJSON = JSON.stringify(_contact);
         const data = JSON.parse(myJSON);
         data.activity = _activity;
         res.send({
@@ -363,9 +363,9 @@ const remove = async (req, res) => {
 
 const removeContacts = async (req, res) => {
   const { currentUser } = req;
-  const ids = req.body.ids;
-  var deleted = 0;
-  var undeleted = 0;
+  const { ids } = req.body;
+  let deleted = 0;
+  let undeleted = 0;
   ids.forEach((id) => {
     if (removeContact(currentUser.id, id)) {
       deleted++;
@@ -377,8 +377,8 @@ const removeContacts = async (req, res) => {
   return res.send({
     status: true,
     data: {
-      deleted: deleted,
-      undeleted: undeleted,
+      deleted,
+      undeleted,
     },
   });
 };
@@ -413,10 +413,17 @@ const edit = async (req, res) => {
     }).catch((err) => {
       console.log('err', err);
     });
+  }
+  const contact = await Contact.findOne({
+    user: currentUser.id,
+    _id: req.params.id,
+  }).catch((err) => {
+    console.log('err', err);
+  });
 
-    for (let key in editData) {
-      contact[key] = editData[key];
-    }
+  for (const key in editData) {
+    contact[key] = editData[key];
+  }
 
     if (typeof req.body.cell_phone != 'undefined') {
       let cell_phone = req.body.cell_phone;
@@ -431,37 +438,36 @@ const edit = async (req, res) => {
 
     contact['updated_at'] = new Date();
 
-    contact
-      .save()
-      .then((_res) => {
-        myJSON = JSON.stringify(_res);
-        const data = JSON.parse(myJSON);
-        delete data.password;
-        res.send({
-          status: true,
-          data,
-        });
-      })
-      .catch((e) => {
-        let errors;
-        if (e.errors) {
-          errors = e.errors.map((err) => {
-            delete err.instance;
-            return err;
-          });
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e,
-        });
+  contact
+    .save()
+    .then((_res) => {
+      const myJSON = JSON.stringify(_res);
+      const data = JSON.parse(myJSON);
+      delete data.password;
+      res.send({
+        status: true,
+        data,
       });
-  }
+    })
+    .catch((e) => {
+      let errors;
+      if (e.errors) {
+        errors = e.errors.map((err) => {
+          delete err.instance;
+          return err;
+        });
+      }
+      return res.status(500).send({
+        status: false,
+        error: errors || e,
+      });
+    });
 };
 
 const bulkEditLabel = async (req, res) => {
   const { contacts, label } = req.body;
   Contact.find({ _id: { $in: contacts } })
-    .updateMany({ $set: { label: label } })
+    .updateMany({ $set: { label } })
     .then(() => {
       res.send({
         status: true,
@@ -540,7 +546,7 @@ const receiveEmail = async (req, res) => {
     }
 
     if (contact && user) {
-      let opened = new Date(time_stamp * 1000);
+      const opened = new Date(time_stamp * 1000);
       const created_at = moment(opened)
         .utcOffset(user.time_zone)
         .format('h:mm a');
@@ -554,7 +560,7 @@ const receiveEmail = async (req, res) => {
           console.log('err', err);
         });
 
-        let reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
+        const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
         const old_activity = await EmailTracker.findOne({
           activity: email_activity.id,
           type: 'open',
@@ -616,7 +622,7 @@ const receiveEmail = async (req, res) => {
         }).catch((err) => {
           console.log('err', err);
         });
-        let reclicked = new Date(time_stamp * 1000 - 60 * 60 * 1000);
+        const reclicked = new Date(time_stamp * 1000 - 60 * 60 * 1000);
         const old_activity = await EmailTracker.findOne({
           activity: email_activity.id,
           type: 'click',
@@ -891,9 +897,9 @@ const receiveEmail = async (req, res) => {
 };
 
 const importCSV = async (req, res) => {
-  let file = req.file;
+  const { file } = req;
   const { currentUser } = req;
-  let failure = [];
+  const failure = [];
   let count = 0;
   let max_count = 0;
   if (!currentUser.contact) {
@@ -904,7 +910,7 @@ const importCSV = async (req, res) => {
     max_count = currentUser.contact.max_count;
   }
 
-  let contact_array = [];
+  const contact_array = [];
   fs.createReadStream(file.path)
     .pipe(csv())
     .on('data', async (data) => {
@@ -970,7 +976,7 @@ const importCSV = async (req, res) => {
                 return;
               }
             }
-            count = count + 1;
+            count += 1;
             if (max_count < count) {
               const field = {
                 id: i,
@@ -989,8 +995,8 @@ const importCSV = async (req, res) => {
             delete data.tags;
             const contact = new Contact({
               ...data,
-              tags: tags,
-              cell_phone: cell_phone,
+              tags,
+              cell_phone,
               user: currentUser.id,
               created_at: new Date(),
               updated_at: new Date(),
@@ -1053,7 +1059,6 @@ const importCSV = async (req, res) => {
                   });
                 }
                 resolve();
-                return;
               })
               .catch((err) => {
                 console.log('err', err);
@@ -1067,8 +1072,8 @@ const importCSV = async (req, res) => {
 
       Promise.all(promise_array).then(function () {
         const contact_info = {
-          count: count,
-          max_count: max_count,
+          count,
+          max_count,
         };
         currentUser.contact_info = contact_info;
         currentUser.save().catch((err) => {
@@ -1127,9 +1132,9 @@ const exportCSV = async (req, res) => {
   const { currentUser } = req;
   const { contacts } = req.body;
 
-  let data = [];
+  const data = [];
   for (let i = 0; i < contacts.length; i++) {
-    let _data = {
+    const _data = {
       contact_id: contacts[i],
       note: [],
     };
@@ -1161,7 +1166,7 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  let search = req.body.search;
+  const { search } = req.body;
   let contacts = [];
   if (!search.split(' ')[1]) {
     contacts = await Contact.find({
@@ -1210,7 +1215,7 @@ const search = async (req, res) => {
     status: true,
     data: {
       contacts,
-      search: search,
+      search,
       total: count,
     },
   });
@@ -1365,7 +1370,19 @@ const leadContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
+        const { desktop_notification } = garbage;
+        if (desktop_notification.lead_capture) {
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            config.VAPID.PUBLIC_VAPID_KEY,
+            config.VAPID.PRIVATE_VAPID_KEY
+          );
+
+          const subscription = JSON.parse(
+            currentUser.desktop_notification_subscription
+          );
+          const title = `${contact.first_name} watched lead capture video`;
+          const created_at = `${moment()
             .utcOffset(currentUser.time_zone)
             .format('h:mm: a');
           const email_notification = garbage['email_notification'];
@@ -1480,7 +1497,30 @@ const leadContact = async (req, res) => {
                   console.log('send sms err: ', err);
                 });
             }
+
+            const title =
+              `${contact.first_name}\n${contact.email}\n${contact.cell_phone}\n` +
+              `\n` +
+              `watched lead capture video: ` +
+              `\n${_video.title}\n`;
+            const created_at = `${moment()
+              .utcOffset(currentUser.time_zone)
+              .format('MM/DD/YYYY')} at ${moment()
+              .utcOffset(currentUser.time_zone)
+              .format('h:mm a')}`;
+            const time = ` on ${created_at}\n `;
+            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+            twilio.messages
+              .create({
+                from: fromNumber,
+                body: `${title}\n${time}${contact_link}`,
+                to: e164Phone,
+              })
+              .catch((err) => {
+                console.log('send sms err: ', err);
+              });
           }
+        }
 
           Contact.update(
             { _id: contact.id },
@@ -1489,19 +1529,32 @@ const leadContact = async (req, res) => {
             console.log('err', err);
           });
 
-          return res.send({
-            status: true,
-            data: {
-              contact: contact.id,
-              activity: activity.id,
-            },
-          });
-        })
-        .catch((err) => {
-          return res.status(500).send({
-            status: false,
-            error: err.message,
-          });
+        return res.send({
+          status: true,
+          data: {
+            contact: contact.id,
+            activity: activity.id,
+          },
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else if (pdf) {
+    _contact
+      .save()
+      .then(async (contact) => {
+        const _pdf = await PDF.findOne({ _id: pdf }).catch((err) => {
+          console.log('err', err);
+        });
+        const currentUser = await User.findOne({ _id: user }).catch((err) => {
+          console.log('err', err);
+        });
+        const garbage = await Garbage.findOne({ user }).catch((err) => {
+          console.log('err', err);
         });
     } else if (pdf) {
       _contact
@@ -1534,7 +1587,19 @@ const leadContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
+        const { desktop_notification } = garbage;
+        if (desktop_notification.lead_capture) {
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            config.VAPID.PUBLIC_VAPID_KEY,
+            config.VAPID.PRIVATE_VAPID_KEY
+          );
+
+          const subscription = JSON.parse(
+            currentUser.desktop_notification_subscription
+          );
+          const title = `${contact.first_name} watched lead capture pdf`;
+          const created_at = `${moment()
             .utcOffset(currentUser.time_zone)
             .format('h:mm: a');
           const email_notification = garbage['email_notification'];
@@ -1649,7 +1714,30 @@ const leadContact = async (req, res) => {
                   console.log('send sms err: ', err);
                 });
             }
+
+            const title =
+              `${contact.first_name}\n${contact.email}\n${contact.cell_phone}\n` +
+              `\n` +
+              `watched lead capture video: ` +
+              `\n${_pdf.title}\n`;
+            const created_at = `${moment()
+              .utcOffset(currentUser.time_zone)
+              .format('MM/DD/YYYY')} at ${moment()
+              .utcOffset(currentUser.time_zone)
+              .format('h:mm a')}`;
+            const time = ` on ${created_at}\n `;
+            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+            twilio.messages
+              .create({
+                from: fromNumber,
+                body: `${title}\n${time}${contact_link}`,
+                to: e164Phone,
+              })
+              .catch((err) => {
+                console.log('send sms err: ', err);
+              });
           }
+        }
 
           Contact.update(
             { _id: contact.id },
@@ -1658,21 +1746,20 @@ const leadContact = async (req, res) => {
             console.log('err', err);
           });
 
-          return res.send({
-            status: true,
-            data: {
-              contact: contact.id,
-              activity: activity.id,
-            },
-          });
-        })
-        .catch((err) => {
-          return res.status(500).send({
-            status: false,
-            error: err.message,
-          });
+        return res.send({
+          status: true,
+          data: {
+            contact: contact.id,
+            activity: activity.id,
+          },
         });
-    }
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
   }
 };
 
@@ -2070,7 +2157,7 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentVideoContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
@@ -2115,7 +2202,7 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentPdfContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
@@ -2160,12 +2247,12 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentImageContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
   }
-  let materialContacts = [];
+  const materialContacts = [];
   watchedVideoContacts.forEach((e) => {
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   });
@@ -2227,6 +2314,8 @@ const advanceSearch = async (req, res) => {
         query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
       }
     }
+  } else if (excludeMaterialContacts) {
+    query.$and.push({ _id: { $nin: excludeMaterialContacts } });
   }
 
   if (searchStr) {
@@ -2302,7 +2391,7 @@ const advanceSearch = async (req, res) => {
     if (labelCondition.indexOf('') !== -1) {
       labelCondition.push(undefined);
     }
-    var labelQuery;
+    let labelQuery;
     if (includeLabel) {
       labelQuery = { label: { $in: labelCondition } };
     } else {
@@ -2374,7 +2463,7 @@ const advanceSearch = async (req, res) => {
     });
 
   let results = [];
-  let resultContactIds = [];
+  const resultContactIds = [];
   if (
     (activityCondition && activityCondition.length) ||
     activityStart ||
@@ -2387,7 +2476,7 @@ const advanceSearch = async (req, res) => {
     lastMaterial['watched_image']['flag']
   ) {
     contacts.forEach((e) => {
-      let activity = e.last_activity;
+      const activity = e.last_activity;
       if (!activity) {
         return;
       }
@@ -2530,7 +2619,6 @@ const advanceSearch = async (req, res) => {
         if (activityCondition.indexOf(activity.type) !== -1) {
           results.push(e);
           resultContactIds.push(e._id);
-          return;
         }
       }
     });
@@ -2620,7 +2708,7 @@ const loadFollows = async (req, res) => {
 
   const _follow_up = await FollowUp.find({
     user: currentUser.id,
-    contact: contact,
+    contact,
     status: { $ne: -1 },
   }).sort({ due_date: 1 });
   return res.send({
@@ -2635,7 +2723,7 @@ const loadTimelines = async (req, res) => {
 
   const _timelines = await TimeLine.find({
     user: currentUser.id,
-    contact: contact,
+    contact,
   });
   let automation = {};
   if (_timelines.length) {
@@ -2648,7 +2736,7 @@ const loadTimelines = async (req, res) => {
   return res.send({
     status: true,
     timelines: _timelines,
-    automation: automation,
+    automation,
   });
 };
 
@@ -2686,7 +2774,7 @@ const checkPhone = async (req, res) => {
 
   const contacts = await Contact.find({
     user: currentUser.id,
-    cell_phone: cell_phone,
+    cell_phone,
   });
   return res.send({
     status: true,

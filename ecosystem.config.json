@@ -1,42 +1,43 @@
 {
-    // Applications part
-    "apps" : [{
-      "name"      : "Teamgrow",
-      "script"    : "app.js",
+  // Applications part
+  "apps": [
+    {
+      "name": "Teamgrow",
+      "script": "app.js",
       "env": {
         "COMMON_VARIABLE": "true"
       },
       // Environment variables injected when starting with --env production
       // http://pm2.keymetrics.io/docs/usage/application-declaration/#switching-to-different-environments
-      "env_production" : {
+      "env_production": {
         "NODE_ENV": "production"
       }
-    }],
-    // Deployment part
-    // Here you describe each environment
-    "deploy" : {
-      "staging" : {
-        "user" : "ubuntu",
-        "key"  : "~/.ssh/id_rsa",
-        // Multi host is possible, just by passing IPs/hostname as an array
-        "host" : "3.13.154.83",
-        // Branch
-        "ref"  : "origin/master",
-        // Git repository to clone
-        "repo" : "git@github.com:teamgrow/backend_admin.git",
-        // Path of the application on target servers
-        "path" : "/var/www/teamgrow/backend_admin",
-        // Can be used to give options in the format used in the configura-
-        // tion file.  This is useful for specifying options for which there
-        // is no separate command-line flag, see 'man ssh' 
-        // can be either a single string or an array of strings
-        "ssh_options": "StrictHostKeyChecking=yes",
-        "post-deploy" : "npm install && pm2 restart 0",
-        // Environment variables that must be injected in all applications on this env
-        "env"  : {
-          "NODE_ENV": "master"
-        }
+    }
+  ],
+  // Deployment part
+  // Here you describe each environment
+  "deploy": {
+    "staging": {
+      "user": "ubuntu",
+      "key": "~/.ssh/id_rsa",
+      // Multi host is possible, just by passing IPs/hostname as an array
+      "host": "3.13.154.83",
+      // Branch
+      "ref": "origin/master",
+      // Git repository to clone
+      "repo": "git@github.com:teamgrow/backend_admin.git",
+      // Path of the application on target servers
+      "path": "/var/www/teamgrow/backend_admin",
+      // Can be used to give options in the format used in the configura-
+      // tion file.  This is useful for specifying options for which there
+      // is no separate command-line flag, see 'man ssh'
+      // can be either a single string or an array of strings
+      "ssh_options": "StrictHostKeyChecking=yes",
+      "post-deploy": "npm install && pm2 restart 0",
+      // Environment variables that must be injected in all applications on this env
+      "env": {
+        "NODE_ENV": "master"
       }
     }
   }
-  
+}

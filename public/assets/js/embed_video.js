@@ -1,1 +1,1 @@
-var vPlayer = new Plyr("#player");
+var vPlayer = new Plyr('#player');

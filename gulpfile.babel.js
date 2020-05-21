@@ -7,10 +7,9 @@ const plugins = loadPlugins();
 
 import adminWebpackConfig from './src/pages/admin/webpack.config';
 
-
 gulp.task('admin-js', ['clean'], (cb) => {
   webpack(adminWebpackConfig, (err, stats) => {
-    if(err) throw new plugins.util.PluginError('webpack', err);
+    if (err) throw new plugins.util.PluginError('webpack', err);
 
     plugins.util.log('[webpack]', stats.toString());
 
@@ -19,9 +18,10 @@ gulp.task('admin-js', ['clean'], (cb) => {
 });
 
 gulp.task('admin-html', ['clean'], () => {
-  return gulp.src('./src/pages/admin/src/index.html')
+  return gulp
+    .src('./src/pages/admin/src/index.html')
     .pipe(plugins.rename('admin.html'))
-    .pipe(gulp.dest('./views'))
+    .pipe(gulp.dest('./views'));
 });
 
 gulp.task('clean', (cb) => {

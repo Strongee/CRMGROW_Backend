@@ -1,13 +1,13 @@
-const EmailTemplate = require("../models/email_template");
+const EmailTemplate = require('../models/email_template');
 
 const get = async (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
 
   const data = await EmailTemplate.findOne({ _id: id });
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: "Note doesn`t exist",
+      error: 'Note doesn`t exist',
     });
   }
 
@@ -19,19 +19,19 @@ const get = async (req, res) => {
 
 const getTemplates = async (req, res) => {
   const { currentUser } = req;
-  const page = req.params.page;
+  const { page } = req.params;
   const templates = await EmailTemplate.find({
-    $or: [{ user: currentUser.id }, { role: "admin" }],
+    $or: [{ user: currentUser.id }, { role: 'admin' }],
   })
     .skip((page - 1) * 10)
     .limit(10);
   const total = await EmailTemplate.countDocuments({
-    $or: [{ user: currentUser.id }, { role: "admin" }],
+    $or: [{ user: currentUser.id }, { role: 'admin' }],
   });
   return res.json({
     status: true,
     data: templates,
-    total: total,
+    total,
   });
 };
 
@@ -60,7 +60,7 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   const { currentUser } = req;
-  const id = req.params.id;
+  const { id } = req.params;
   EmailTemplate.find({ _id: id, user: currentUser.id })
     .updateOne({ $set: { ...req.body } })
     .then(() => {
@@ -71,13 +71,13 @@ const update = async (req, res) => {
     .catch((err) => {
       res.status(500).send({
         status: false,
-        error: err.message || "Update Error",
+        error: err.message || 'Update Error',
       });
     });
 };
 
 const remove = async (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
   const { currentUser } = req;
   EmailTemplate.deleteOne({ _id: id, user: currentUser.id })
     .then(() => {
@@ -88,7 +88,7 @@ const remove = async (req, res) => {
     .catch((err) => {
       return res.status(500).send({
         status: false,
-        error: err.message || "Remove Template Error",
+        error: err.message || 'Remove Template Error',
       });
     });
 };
@@ -105,7 +105,7 @@ const bulkRemove = (req, res) => {
     .catch((err) => {
       res.status(500).send({
         status: false,
-        error: err.message || "Remove Template Error",
+        error: err.message || 'Remove Template Error',
       });
     });
 };
@@ -120,12 +120,12 @@ const search = async (req, res) => {
       option,
       {
         $or: [
-          { title: { $regex: ".*" + str + ".*", $options: "i" } },
-          { subject: { $regex: ".*" + str + ".*", $options: "i" } },
-          { content: { $regex: ".*" + str + ".*", $options: "i" } },
+          { title: { $regex: `.*${str}.*`, $options: 'i' } },
+          { subject: { $regex: `.*${str}.*`, $options: 'i' } },
+          { content: { $regex: `.*${str}.*`, $options: 'i' } },
         ],
       },
-      { $or: [{ user: currentUser.id }, { role: "admin" }] },
+      { $or: [{ user: currentUser.id }, { role: 'admin' }] },
     ],
   });
 
