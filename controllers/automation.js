@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Automation = require('../models/automation');
 const TimeLine = require('../models/time_line');
 const Contact = require('../models/contact');
+const Video = require('../models/video');
 const garbageHelper = require('../helpers/garbage');
 
 const get = (req, res) => {
@@ -68,7 +69,7 @@ const getPage = async (req, res) => {
   const automation_array = [];
   for (let i = 0; i < automations.length; i++) {
     const automation = automations[i];
-    contacts = await TimeLine.aggregate([
+    const contacts = await TimeLine.aggregate([
       {
         $match: {
           $and: [

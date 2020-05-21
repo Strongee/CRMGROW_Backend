@@ -9,6 +9,11 @@ const uuidv1 = require('uuid/v1');
 const oauth2 = require('simple-oauth2')(credentials);
 const graph = require('@microsoft/microsoft-graph-client');
 const sgMail = require('@sendgrid/mail');
+const request = require('request-promise');
+const createBody = require('gmail-api-create-message-body');
+const webpush = require('web-push');
+const phone = require('phone');
+const twilio = require('twilio')(accountSid, authToken);
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
@@ -29,14 +34,8 @@ const credentials = {
 };
 require('isomorphic-fetch');
 
-const request = require('request-promise');
-const createBody = require('gmail-api-create-message-body');
-const webpush = require('web-push');
-
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
-const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 
 const receive = async (req, res) => {
   console.log(req.body);
@@ -207,7 +206,7 @@ const bulkGmail = async (req, res) => {
       }
     }
 
-    const promise = new Promise(async (resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       try {
         const body = createBody({
           headers: {

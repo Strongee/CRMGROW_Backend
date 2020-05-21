@@ -12,6 +12,7 @@ const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
 const Reminder = require('../models/reminder');
 const User = require('../models/user');
+const Contact = require('../models/contact');
 
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -79,7 +80,7 @@ const get = async (req, res) => {
         });
 
       // Calendar sync works on the CalendarView endpoint
-      requestUrl = `${outlook.base.apiEndpoint()}/Me/calendars`;
+      let requestUrl = `${outlook.base.apiEndpoint()}/Me/calendars`;
 
       let apiOptions = {
         url: requestUrl,
@@ -569,7 +570,7 @@ const create = async (req, res) => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
     for (let i = 0; i < _appointment.guests.length; i++) {
-      new Promise((resolve, reject) => {
+      Promise((resolve, reject) => {
         const msg = {
           to: _appointment.guests[i],
           from: currentUser.email,
@@ -961,7 +962,7 @@ const remove = async (req, res) => {
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
       await removeGoogleCalendarById(oauth2Client, event_id);
     }
-    appointment = await Appointment.findOne({
+    const appointment = await Appointment.findOne({
       user: currentUser.id,
       event_id: req.params.id,
     });
@@ -1017,7 +1018,7 @@ const remove = async (req, res) => {
       });
     }
   } else {
-    appointment = await Appointment.findOne({
+    const appointment = await Appointment.findOne({
       user: currentUser.id,
       _id: req.params.id,
     });

@@ -1,27 +1,15 @@
 const express = require('express');
 
-<<<<<<< Updated upstream
 const multer = require('multer');
-=======
->>>>>>> Stashed changes
 const UserCtrl = require('../controllers/user');
 const ContactCtrl = require('../controllers/contact');
 const { catchError } = require('../controllers/error');
 const { FILES_PATH } = require('../config/path');
 
-<<<<<<< Updated upstream
 const router = express.Router();
 
 const fileStorage = multer.diskStorage({
   destination(req, file, cb) {
-=======
-const multer = require('multer');
-
-const router = express.Router();
-
-const fileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
->>>>>>> Stashed changes
     cb(null, FILES_PATH);
   },
 });
@@ -62,7 +50,6 @@ router.post(
   upload.single('csv'),
   catchError(ContactCtrl.importCSV)
 );
-<<<<<<< Updated upstream
 
 router.post(
   '/overwrite-csv',
@@ -71,8 +58,6 @@ router.post(
   upload.single('csv'),
   catchError(ContactCtrl.overwriteCSV)
 );
-=======
->>>>>>> Stashed changes
 
 // Download contact list as csv file
 router.post(
@@ -137,7 +122,6 @@ router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources));
 
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById));
-<<<<<<< Updated upstream
 
 // Load Duplicated Contacts
 router.get(
@@ -145,8 +129,6 @@ router.get(
   UserCtrl.checkAuth,
   catchError(ContactCtrl.loadDuplication)
 );
-=======
->>>>>>> Stashed changes
 
 // Get a pull contact info for profile page
 router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
@@ -202,7 +184,6 @@ router.post(
   catchError(ContactCtrl.checkPhone)
 );
 
-<<<<<<< Updated upstream
 // Check the Merge
 router.post(
   '/merge',
@@ -210,6 +191,4 @@ router.post(
   catchError(ContactCtrl.mergeContacts)
 );
 
-=======
->>>>>>> Stashed changes
 module.exports = router;

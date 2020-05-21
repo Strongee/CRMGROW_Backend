@@ -1,16 +1,16 @@
 const phone = require('phone');
+const twilio = require('twilio')(accountSid, authToken);
 const User = require('../models/user');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const SMS = require('../models/sms');
+const Note = require('../models/note');
 const urls = require('../constants/urls');
 const config = require('../config/config');
 const TextHelper = require('../helpers/text');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
-
-const twilio = require('twilio')(accountSid, authToken);
 
 const send = async (req, res) => {
   const { currentUser } = req;

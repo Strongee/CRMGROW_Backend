@@ -179,7 +179,7 @@ const read = (req, res) => {
         data,
       });
     })
-    .catch((er) => {
+    .catch((err) => {
       res.status(500).send({
         status: false,
         error: err.message || 'Page reading is failed.',
@@ -221,7 +221,6 @@ const load = async (req, res) => {
     .limit(10)
     .catch((err) => {
       throw err;
-      return;
     });
   const total = await Page.countDocuments({
     user: currentUser.id,

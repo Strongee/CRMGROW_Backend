@@ -34,10 +34,10 @@ const create = async (req, res) => {
           // let tens = parseInt(now.minutes() / 10)
           // now.set({ minute: tens*10, second: 0, millisecond: 0 })
           now.set({ second: 0, millisecond: 0 });
-          due_date = now.add(period, 'hours');
+          const due_date = now.add(period, 'hours');
           due_date.set({ second: 0, millisecond: 0 });
 
-          _time_line = new TimeLine({
+          const _time_line = new TimeLine({
             ...automation,
             ref: automation.id,
             parent_ref: automation.parent,
@@ -133,7 +133,7 @@ const runTimeline = async (id) => {
       continue;
     }
     switch (action.type) {
-      case 'follow_up':
+      case 'follow_up': {
         let follow_due_date;
         if (action.due_date) {
           follow_due_date = action.due_date;
@@ -213,7 +213,8 @@ const runTimeline = async (id) => {
             console.log('follow error', err);
           });
         break;
-      case 'note':
+      }
+      case 'note': {
         const note = new Note({
           content: action.content,
           contact: timeline.contact,
@@ -257,6 +258,7 @@ const runTimeline = async (id) => {
             });
           });
         break;
+      }
       case 'email':
         data = {
           user: timeline.user,
@@ -510,7 +512,7 @@ const recreate = async (req, res) => {
         const now = moment();
         const due_date = now.add(period, 'hours');
         due_date.set({ second: 0, millisecond: 0 });
-        _time_line = new TimeLine({
+        const _time_line = new TimeLine({
           ...automation,
           ref: automation.id,
           parent_ref: automation.parent,

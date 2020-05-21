@@ -61,9 +61,6 @@ const create = async (req, res) => {
         error: e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 const getByLastActivity = async (req, res) => {

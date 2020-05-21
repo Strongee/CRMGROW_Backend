@@ -182,9 +182,6 @@ const get = async (req, res) => {
     status: true,
     data,
   });
-  return res.send({
-    status: true,
-  });
 };
 
 const getThumbnail = (req, res) => {
@@ -249,9 +246,6 @@ const getAll = async (req, res) => {
   res.send({
     status: true,
     data: _video_detail_list,
-  });
-  return res.send({
-    status: true,
   });
 };
 
@@ -342,10 +336,6 @@ const remove = async (req, res) => {
 
     video.del = true;
     video.save();
-
-    return res.send({
-      status: true,
-    });
   } catch (e) {
     console.error(e);
     res.status(500).send({
@@ -353,9 +343,6 @@ const remove = async (req, res) => {
       error: 'internal_server_error',
     });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 const getVideosByUser = async (req, res) => {

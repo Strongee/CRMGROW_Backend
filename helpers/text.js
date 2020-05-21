@@ -185,7 +185,6 @@ const bulkPdf = async (data) => {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
         console.log('err', err);
-<<<<<<< Updated upstream
       }
     );
     let pdf_titles = '';
@@ -200,22 +199,6 @@ const bulkPdf = async (data) => {
       if (!pdf_content) {
         pdf_content = '';
       }
-=======
-      }
-    );
-    let pdf_titles = '';
-    let pdf_descriptions = '';
-    let pdf_objects = '';
-    let pdf_content = content;
-    let activity;
-
-    for (let j = 0; j < pdfs.length; j++) {
-      const pdf = pdfs[j];
-
-      if (!pdf_content) {
-        pdf_content = '';
-      }
->>>>>>> Stashed changes
 
       pdf_content = pdf_content
         .replace(/{user_name}/gi, currentUser.user_name)
@@ -368,7 +351,6 @@ const bulkImage = async (data) => {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
         console.log('err', err);
-<<<<<<< Updated upstream
       }
     );
     let image_titles = '';
@@ -382,21 +364,6 @@ const bulkImage = async (data) => {
       if (!image_content) {
         image_content = '';
       }
-=======
-      }
-    );
-    let image_titles = '';
-    let image_descriptions = '';
-    let image_objects = '';
-    let image_content = content;
-    let activity;
-    for (let j = 0; j < images.length; j++) {
-      const image = images[j];
-
-      if (!image_content) {
-        image_content = '';
-      }
->>>>>>> Stashed changes
 
       image_content = image_content
         .replace(/{user_name}/gi, currentUser.user_name)
@@ -544,10 +511,6 @@ const getTwilioNumber = async (id) => {
   let countryCode;
   let fromNumber;
   const phone = user.phone;
-<<<<<<< Updated upstream
-=======
-  console.log('user', user);
->>>>>>> Stashed changes
   if (phone) {
     areaCode = phone.areaCode;
     countryCode = phone.countryCode;
@@ -555,7 +518,6 @@ const getTwilioNumber = async (id) => {
     areaCode = user.cell_phone.substring(1, 4);
     countryCode = 'US';
   }
-<<<<<<< Updated upstream
   const data = await twilio
     .availablePhoneNumbers(countryCode)
     .local.list({
@@ -566,18 +528,12 @@ const getTwilioNumber = async (id) => {
       fromNumber = config.TWILIO.TWILIO_NUMBER;
       return fromNumber;
     });
-=======
-  const data = await twilio.availablePhoneNumbers(countryCode).local.list({
-    areaCode,
-  });
->>>>>>> Stashed changes
 
   let number = data[0];
 
   if (typeof number === 'undefined') {
     const areaCode1 = areaCode.slice(1);
 
-<<<<<<< Updated upstream
     const data1 = await twilio
       .availablePhoneNumbers(countryCode)
       .local.list({
@@ -588,11 +544,6 @@ const getTwilioNumber = async (id) => {
         fromNumber = config.TWILIO.TWILIO_NUMBER;
         return fromNumber;
       });
-=======
-    const data1 = await twilio.availablePhoneNumbers(countryCode).local.list({
-      areaCode: areaCode1,
-    });
->>>>>>> Stashed changes
     number = data1[0];
   }
 

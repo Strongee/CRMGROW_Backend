@@ -37,8 +37,8 @@ const create = async (data) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-
-  return await video_tracker.save();
+  const video = await video_tracker.save();
+  return video;
 };
 
 const createbyDesktop = async (req, res) => {

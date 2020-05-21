@@ -89,9 +89,6 @@ const create = async (req, res) => {
         error: e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 const getByDate = async (req, res) => {
@@ -351,9 +348,6 @@ const getByDate = async (req, res) => {
     }
     default:
   }
-  return res.send({
-    status: true,
-  });
 };
 const updateChecked = async (req, res) => {
   const { currentUser } = req;
@@ -398,9 +392,6 @@ const updateChecked = async (req, res) => {
         error: e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 module.exports = {

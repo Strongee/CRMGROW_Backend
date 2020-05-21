@@ -75,9 +75,6 @@ const create = async (req, res) => {
         error: errors || e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 module.exports = {

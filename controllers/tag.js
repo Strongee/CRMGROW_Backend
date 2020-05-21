@@ -65,7 +65,7 @@ const search = async (req, res) => {
   const { search } = req.body;
   const limit = search ? 10 : 10000;
   // data = await Tag.find({content: {'$regex': search+'.*', '$options': 'i'}, user: currentUser.id}).sort({content: 1})
-  data = await Tag.aggregate([
+  const data = await Tag.aggregate([
     {
       $match: {
         content: { $regex: `${search}.*`, $options: 'i' },

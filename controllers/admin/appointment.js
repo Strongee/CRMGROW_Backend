@@ -14,12 +14,9 @@ const get = async (req, res) => {
     });
   }
 
-  res.send({
-    status: true,
-    data,
-  });
   return res.send({
     status: true,
+    data,
   });
 };
 
@@ -82,9 +79,6 @@ const create = async (req, res) => {
         error: errors || e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 const edit = async (req, res) => {
@@ -113,9 +107,6 @@ const edit = async (req, res) => {
       status: true,
       data: _appointment,
     });
-  });
-  return res.send({
-    status: true,
   });
 };
 

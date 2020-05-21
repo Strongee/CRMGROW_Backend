@@ -37,8 +37,8 @@ const create = async (data) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-
-  return await pdf_tracker.save();
+  const pdf = await pdf_tracker.save();
+  return pdf;
 };
 
 const createbyDesktop = async (req, res) => {

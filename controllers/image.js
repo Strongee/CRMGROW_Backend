@@ -76,8 +76,8 @@ const play = async (req, res) => {
   if (sender) {
     const pattern = /^((http|https|ftp):\/\/)/;
 
-    if (!pattern.test(user.learn_more)) {
-      sender.learn_more = `http://${user.learn_more}`;
+    if (!pattern.test(sender.learn_more)) {
+      sender.learn_more = `http://${sender.learn_more}`;
     }
 
     res.render('image', {

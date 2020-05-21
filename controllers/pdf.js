@@ -657,9 +657,9 @@ const bulkEmail = async (req, res) => {
       const msg = {
         to: _contact.email,
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.email,
+        replyTo: currentUser.email + _contact.email,
         subject: pdf_subject,
-        replyTo: _contact.email,
+        // replyTo: _contact.email,
         html: `<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">${pdf_content}<br/>Thank you,<br/><br/>${currentUser.email_signature}</body></html>`,
         text: pdf_content,
       };
@@ -850,7 +850,6 @@ const bulkText = async (req, res) => {
               first_name: _contact.first_name,
               cell_phone: _contact.cell_phone,
             },
-            err,
           });
           resolve(); // Invalid phone number
         }

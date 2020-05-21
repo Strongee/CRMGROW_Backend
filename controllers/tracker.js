@@ -28,8 +28,8 @@ const createPDF = async (data) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-
-  return await pdf_tracker.save();
+  const pdf = await pdf_tracker.save();
+  return pdf;
 };
 
 const disconnectPDF = async (pdf_tracker_id) => {
@@ -55,7 +55,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
   }
   const timeWatched = `${h}:${m}:${s}`;
 
-  desktop_notification = garbage.desktop_notification;
+  const desktop_notification = garbage.desktop_notification;
   // send desktop notification
   if (desktop_notification.material === true) {
     webpush.setVapidDetails(
@@ -87,7 +87,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
       .catch((err) => console.error(err));
   }
 
-  text_notification = garbage.text_notification;
+  const text_notification = garbage.text_notification;
 
   // send text notification
   if (text_notification.material === true) {
@@ -128,7 +128,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
     }
   }
 
-  email_notification = garbage.email_notification;
+  const email_notification = garbage.email_notification;
 
   if (email_notification.material) {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -243,8 +243,8 @@ const createVideo = async (data) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-
-  return await video_tracker.save();
+  const video = await video_tracker.save();
+  return video;
 };
 
 const disconnectVideo = async (video_tracker_id) => {
@@ -354,7 +354,7 @@ const disconnectVideo = async (video_tracker_id) => {
 
     const timeTotal = `${tH}:${tM}:${tS}`;
 
-    desktop_notification = garbage.desktop_notification;
+    const desktop_notification = garbage.desktop_notification;
     // send desktop notification
     if (desktop_notification.material === true) {
       webpush.setVapidDetails(
@@ -386,7 +386,7 @@ const disconnectVideo = async (video_tracker_id) => {
         .catch((err) => console.error(err));
     }
 
-    text_notification = garbage.text_notification;
+    const text_notification = garbage.text_notification;
     // send text notification
     if (text_notification.material === true && currentUser.cell_phone) {
       const e164Phone = phone(currentUser.cell_phone)[0];
@@ -424,7 +424,7 @@ const disconnectVideo = async (video_tracker_id) => {
       }
     }
 
-    email_notification = garbage.email_notification;
+    const email_notification = garbage.email_notification;
     // send email notification
 
     if (email_notification.material) {
@@ -467,8 +467,8 @@ const createImage = async (data) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-
-  return await image_tracker.save();
+  const image = await image_tracker.save();
+  return image;
 };
 
 const disconnectImage = async (image_tracker_id) => {

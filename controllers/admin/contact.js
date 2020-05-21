@@ -133,9 +133,6 @@ const create = async (req, res) => {
         error: errors || e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 const remove = async (req, res) => {
@@ -156,10 +153,6 @@ const remove = async (req, res) => {
   await Activity.deleteMany({ contacts: req.params.id });
   await FollowUp.deleteMany({ contact: req.params.id });
   await Appointment.deleteMany({ contact: req.params.id });
-
-  return res.send({
-    status: true,
-  });
 };
 
 const edit = async (req, res) => {
@@ -207,9 +200,6 @@ const edit = async (req, res) => {
         error: errors || e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 const sendBatch = async (req, res) => {

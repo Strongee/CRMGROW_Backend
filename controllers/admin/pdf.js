@@ -3,18 +3,11 @@ const fs = require('fs');
 const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
-<<<<<<< Updated upstream
 
 const AWS = require('aws-sdk');
 const uuidv1 = require('uuid/v1');
 const mongoose = require('mongoose');
-=======
-const mongoose = require('mongoose');
-
-const uuidv1 = require('uuid/v1');
-const AWS = require('aws-sdk');
 const urls = require('../../constants/urls');
->>>>>>> Stashed changes
 const User = require('../../models/user');
 const Activity = require('../../models/activity');
 const PDF = require('../../models/pdf');
@@ -81,9 +74,6 @@ const updateDetail = async (req, res) => {
       error: 'Not_found_preview',
     });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 const get = async (req, res) => {
@@ -103,9 +93,6 @@ const get = async (req, res) => {
   res.send({
     status: true,
     data,
-  });
-  return res.send({
-    status: true,
   });
 };
 
@@ -162,9 +149,6 @@ const getAll = async (req, res) => {
   res.send({
     status: true,
     data: _pdf_detail_list,
-  });
-  return res.send({
-    status: true,
   });
 };
 

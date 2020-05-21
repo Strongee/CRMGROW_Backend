@@ -13,6 +13,8 @@ const Garbage = require('../models/garbage');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
+const Activity = require('../models/activity');
+const FollowUp = require('../models/follow_up');
 const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 
@@ -846,8 +848,8 @@ const getMe = async (req, res) => {
       console.log('err', err);
     }
   );
-  const const myJSON = JSON.stringify(_user);
-  user = JSON.parse(myJSON);
+  const myJSON = JSON.stringify(_user);
+  const user = JSON.parse(myJSON);
   user.garbage = _garbage;
   delete user.hash;
   delete user.salt;

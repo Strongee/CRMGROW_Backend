@@ -23,9 +23,6 @@ const get = async (req, res) => {
     status: true,
     data,
   });
-  return res.send({
-    status: true,
-  });
 };
 
 const create = async (req, res) => {
@@ -77,9 +74,6 @@ const create = async (req, res) => {
         error: e,
       });
     });
-  return res.send({
-    status: true,
-  });
 };
 
 module.exports = {

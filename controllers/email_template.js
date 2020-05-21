@@ -95,7 +95,7 @@ const remove = async (req, res) => {
 
 const bulkRemove = (req, res) => {
   const { ids } = req.body;
-
+  const { currentUser } = req;
   EmailTemplate.deleteMany({ _id: { $in: ids }, user: currentUser.id })
     .then(() => {
       res.send({

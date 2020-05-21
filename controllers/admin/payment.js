@@ -228,10 +228,6 @@ const refundCharge = async (req, res) => {
           error: err,
         });
       }
-
-      return res.send({
-        status: true,
-      });
     }
   );
 };
@@ -351,9 +347,6 @@ const updateCustomerEmail = async (req, res) => {
         error: err,
       });
     }
-    return res.send({
-      status: true,
-    });
   });
 };
 

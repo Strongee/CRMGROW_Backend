@@ -1,9 +1,9 @@
+const stripe = require('stripe')(stripeKey);
 const config = require('../config/config');
 const Payment = require('../models/payment');
 const User = require('../models/user');
 
 const stripeKey = config.STRIPE.SECRET_KEY;
-const stripe = require('stripe')(stripeKey);
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -58,9 +58,8 @@ const create = async (payment_data) => {
             return;
           }
 
-          let pricingPlan;
-          bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
-          pricingPlan = config.STRIPE.PRIOR_PLAN;
+          const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+          const pricingPlan = config.STRIPE.PRIOR_PLAN;
           createSubscription(customer.id, pricingPlan, card.id)
             .then(async (subscripition) => {
               // Save card information to DB.

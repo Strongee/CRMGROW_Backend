@@ -682,10 +682,6 @@ const bulkCreate = async (req, res) => {
         });
       });
   }
-  return res.send({
-    status: true,
-    data,
-  });
 };
 
 module.exports = {
