@@ -26,6 +26,7 @@ const create = async (req, res) => {
 };
 
 const get = (req, res) => {
+<<<<<<< HEAD
   const filePath = FILES_PATH + req.params.name;
   console.info('File Path:', filePath);
   if (fs.existsSync(filePath)) {
@@ -37,6 +38,19 @@ const get = (req, res) => {
       status: false,
       error: 'File does not exist',
     });
+=======
+    const filePath = FILES_PATH + req.params.name
+    if (fs.existsSync(filePath)) {
+      const contentType = mime.contentType(path.extname(filePath))
+      res.set('Content-Type', contentType)
+      res.sendFile(filePath)
+    } else {
+      res.status(404).send({
+        status: false,
+        error: 'File does not exist'
+      })
+    }
+>>>>>>> master
   }
 };
 

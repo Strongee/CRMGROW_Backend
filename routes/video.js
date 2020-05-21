@@ -61,8 +61,15 @@ router.post(
   catchError(VideoCtrl.create)
 );
 
+// Upload a thumbnail and detail info when upload a video at first
+router.put('/detail/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
+
 // Upload a thumbnail and detail info
+<<<<<<< HEAD
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail));
+=======
+router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update))
+>>>>>>> master
 
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail));
@@ -120,6 +127,9 @@ router.post(
 
 // Streaming video
 router.get('/pipe/:name', catchError(VideoCtrl.pipe));
+
+// Get Conver progress of a video
+router.post('/convert-status', UserCtrl.checkAuth, catchError(VideoCtrl.getConvertStatus))
 
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));

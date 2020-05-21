@@ -52,6 +52,7 @@ const create = async (req, res) => {
         updated_at: new Date(),
       });
 
+<<<<<<< HEAD
       activity.save().then((_activity) => {
         Contact.findByIdAndUpdate(_note.contact, {
           $set: { last_activity: _activity.id },
@@ -66,6 +67,25 @@ const create = async (req, res) => {
           data,
         });
       });
+=======
+    activity.save().then(_activity => {
+      Contact.updateMany({_id: _note.contact} ,{ $set: {last_activity: _activity.id} }).catch(err=>{
+        console.log('err', err)
+      })
+      myJSON = JSON.stringify(_note)
+      const data = JSON.parse(myJSON);
+      data.activity = _activity
+      res.send({
+        status: true,
+        data
+      })
+    })    
+  })
+  .catch(err => {
+    return res.status(400).send({
+      status: false,
+      error: err.message
+>>>>>>> master
     })
     .catch((e) => {
       let errors;

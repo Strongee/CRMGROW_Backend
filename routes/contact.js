@@ -39,9 +39,12 @@ router.post(
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
 
+<<<<<<< HEAD
 // Receive email notification
 router.post('/receive', catchError(ContactCtrl.receiveEmail));
 
+=======
+>>>>>>> master
 // Import contact list as file
 router.post(
   '/import-csv',
@@ -130,8 +133,11 @@ router.get(
   catchError(ContactCtrl.loadDuplication)
 );
 
+<<<<<<< HEAD
 // Get a pull contact info for profile page
 router.get('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
+=======
+>>>>>>> master
 
 // Get Contacts data with ID array
 router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds));
@@ -191,4 +197,13 @@ router.post(
   catchError(ContactCtrl.mergeContacts)
 );
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+router.post('/bulk-create', UserCtrl.checkAuth, catchError(ContactCtrl.bulkCreate));
+
+// Get a pull contact info for profile page
+router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
+
+module.exports = router
+>>>>>>> master

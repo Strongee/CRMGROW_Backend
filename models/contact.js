@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const ContactSchema = mongoose.Schema({
+<<<<<<< HEAD
   first_name: String,
   last_name: { type: String, default: '' },
   email: { type: String, default: '' },
@@ -22,6 +23,31 @@ const ContactSchema = mongoose.Schema({
   recruiting_stage: String,
   created_at: Date,
   updated_at: Date,
+=======
+    first_name: String,
+    last_name: { type: String, default: '' },
+    email: { type: String, default: '' },
+    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
+    address: String,
+    city: String,
+    state: String,
+    zip: String,
+    label: { 
+        type: String
+    },
+    cell_phone: { type: String, default: '' },
+    country: { type: String, default: '' },
+    source: String,
+    brokerage: String,
+    tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],
+    tags: Array,
+    recruiting_stage: String,
+    created_at: Date,
+    updated_at: Date,
+},{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+>>>>>>> master
 });
 
 ContactSchema.pre('save', function (next) {

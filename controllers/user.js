@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator/check');
@@ -22,6 +23,27 @@ const config = require('../config/config');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 
+=======
+const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
+const { validationResult } = require('express-validator/check')
+const randomstring = require('randomstring')
+const User = require('../models/user')
+const Garbage = require('../models/garbage')
+const Payment = require('../models/payment')
+const Appointment = require('../models/appointment')
+const Contact = require('../models/contact')
+const PaymentCtrl = require('../controllers/payment')
+const UserLog = require('../models/user_log')
+const Guest = require('../models/guest')
+const sgMail = require('@sendgrid/mail')
+const { google } = require('googleapis')
+const outlook = require('node-outlook')
+
+const config = require('../config/config')
+const urls = require('../constants/urls')
+const mail_contents = require('../constants/mail_contents')
+>>>>>>> master
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
   clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
@@ -156,6 +178,7 @@ const signUp = async (req, res) => {
   //       })
   //     });
   // }
+<<<<<<< HEAD
   PaymentCtrl.create(payment_data)
     .then(async (payment) => {
       const { password } = req.body;
@@ -172,6 +195,48 @@ const signUp = async (req, res) => {
         updated_at: new Date(),
         created_at: new Date(),
       });
+=======
+  PaymentCtrl.create(payment_data).then(async (payment) => {
+    const password = req.body.password
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
+
+    const user = new User({
+      ...req.body,
+      connected_email: email,
+      payment: payment.id,
+      salt: salt,
+      hash: hash,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+    
+    const garbage = new Garbage({
+      user: user.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    })
+    
+    garbage.save().catch(err=>{
+      console.log('err', err)
+    })
+    
+    user.save()
+      .then(_res => {
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+        let msg = {
+          to: _res.email,
+          from: mail_contents.WELCOME_SIGNUP.MAIL,
+          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+          dynamic_template_data: {
+            first_name: _res.user_name,
+            login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+            user_email: _res.email,
+            user_password: req.body.password,
+            contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
+          },
+        };
+>>>>>>> master
 
       const garbage = new Garbage({
         user: user.id,
@@ -247,11 +312,34 @@ const signUp = async (req, res) => {
               return err;
             });
           }
+<<<<<<< HEAD
           return res.status(500).send({
             status: false,
             error: errors || e,
           });
         });
+=======
+        })
+      })
+      .catch(e => {
+        let errors
+        if (e.errors) {
+          errors = e.errors.map(err => {
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+  }).catch(err => {
+    console.log('err', err)
+    res.status(400).send({
+      status: false,
+      error: err
+>>>>>>> master
     })
     .catch((err) => {
       console.log('err', err);
@@ -371,6 +459,7 @@ const socialSignUp = async (req, res) => {
   // }
 
   const payment_data = {
+<<<<<<< HEAD
     email,
     token,
     bill_amount,
@@ -384,6 +473,21 @@ const socialSignUp = async (req, res) => {
         updated_at: new Date(),
         created_at: new Date(),
       });
+=======
+    email: email,
+    token: token,
+    bill_amount: bill_amount
+  }
+
+  PaymentCtrl.create(payment_data).then(async (payment) => {
+    const user = new User({
+      ...req.body,
+      connected_email: email,
+      payment: payment.id,
+      updated_at: new Date(),
+      created_at: new Date(),
+    })
+>>>>>>> master
 
       const garbage = new Garbage({
         user: user.id,
@@ -456,11 +560,34 @@ const socialSignUp = async (req, res) => {
               return err;
             });
           }
+<<<<<<< HEAD
           return res.status(500).send({
             status: false,
             error: errors || e,
           });
         });
+=======
+        })
+      })
+      .catch(e => {
+        let errors
+        if (e.errors) {
+          errors = e.errors.map(err => {
+            delete err.instance
+            return err
+          })
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e
+        })
+      });
+  }).catch(err => {
+    console.log('err', err)
+    res.status(400).send({
+      status: false,
+      error: err
+>>>>>>> master
     })
     .catch((err) => {
       console.log('err', err);
@@ -511,8 +638,13 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
+<<<<<<< HEAD
     // 'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
+=======
+    // 'https://graph.microsoft.com/calendars.readwrite',
+    'https://graph.microsoft.com/mail.send'
+>>>>>>> master
   ];
 
   // Authorization uri definition
@@ -624,8 +756,12 @@ const socialOutlook = async (req, res) => {
 
       const decoded_token = encoded_token.toString();
 
+<<<<<<< HEAD
       const jwt = JSON.parse(decoded_token);
       console.log(jwt);
+=======
+      let jwt = JSON.parse(decoded_token);
+>>>>>>> master
 
       const data = {
         email: jwt.preferred_username,
@@ -659,15 +795,30 @@ const login = async (req, res) => {
     });
   }
 
+<<<<<<< HEAD
   let _user = await User.findOne({ email: new RegExp(email, 'i'), del: false });
 
   if (!_user) {
     _user = await User.findOne({ user_name: email }).exec();
+=======
+  let _user = await User.findOne({ email: new RegExp(email, "i"), del: false })
+  let guest
+  
+  if (!_user) {
+    _user = await User.findOne({ user_name: new RegExp(email,"i"), del: false })
+      .exec();
+>>>>>>> master
+  }
+  
+  if(!_user) {
+    guest = await Guest.findOne({ email: new RegExp(email, "i"), disabled: false }) 
   }
 
-  if (!_user) {
+
+  if (!_user && !guest) {
     return res.status(401).json({
       status: false,
+<<<<<<< HEAD
       error: 'User Email doesn`t exist',
     });
   }
@@ -686,20 +837,96 @@ const login = async (req, res) => {
       });
     }
   } else if (req.body.password !== 'ambition#321') {
+=======
+      error: 'User Email doesn`t exist'
+    })
+    
+  }
+
+  if(guest) {
+    if(guest.salt ){
+      // Check password
+      const hash = crypto.pbkdf2Sync(password, guest.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
+   
+      if (hash != guest.hash) {
+        return res.status(401).json({
+          status: false,
+          error: 'Invalid email or password!'
+        })
+      }
+     } 
+     
+    _user = await User.findOne({_id: guest.user, del: false}).catch(err=>{
+      console.log('user found err', err.message)
+    })
+    // TODO: Include only email for now
+    if(_user){
+      const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
+      myJSON = JSON.stringify(_user)
+      const user = JSON.parse(myJSON);
+      
+      delete user.hash
+      delete user.salt
+    
+      return res.send({
+        status: true,
+        data: {
+          token,
+          user,
+          guest_loggin: true
+        }
+      })
+    } else {
+      return res.status(401).json({
+        status: false,
+        error: 'User Email doesn`t exist'
+      })
+    }
+  }
+  
+  if(_user.salt ){
+   // Check password
+   const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
+
+   if (hash != _user.hash && req.body.password != config.DEFAULT_PASS) {
+     if(_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type
+      })
+     }
+     return res.status(401).json({
+       status: false,
+       error: 'Invalid email or password!'
+     })
+   }
+  } else if (req.body.password != config.DEFAULT_PASS) {
+>>>>>>> master
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
     });
   }
 
+<<<<<<< HEAD
   if (req.body.password === 'ambition#321') {
     _user.admin_loggin = true;
+=======
+  if (req.body.password == config.DEFAULT_PASS) {
+    _user['admin_loggin'] = true
+>>>>>>> master
   } else {
     _user.admin_loggin = false;
   }
+<<<<<<< HEAD
   _user.save().catch((err) => {
     console.log('err', err);
   });
+=======
+  _user.save().catch(err => {
+    console.log('err', err.message)
+  })
+>>>>>>> master
   // TODO: Include only email for now
   const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
     expiresIn: '30d',
@@ -794,8 +1021,13 @@ const checkAuth = async (req, res, next) => {
     } else {
       res.status(402).send({
         status: false,
+<<<<<<< HEAD
         error: 'not connnected',
       });
+=======
+        error: 'not connected'
+      })
+>>>>>>> master
     }
   } else {
     console.error('Valid JWT but no user:', decoded);
@@ -1026,6 +1258,7 @@ const authorizeOutlook = async (req, res) => {
 
       const jwt = JSON.parse(decoded_token);
       // Email is in the preferred_username field
+<<<<<<< HEAD
       user.email = jwt.preferred_username;
       user.social_id = jwt.oid;
       user.connected_email_type = 'outlook';
@@ -1033,11 +1266,20 @@ const authorizeOutlook = async (req, res) => {
       user
         .save()
         .then((_res) => {
+=======
+      user.connected_email = jwt.preferred_username
+      user.social_id = jwt.oid
+      user.connected_email_type = 'outlook'
+      user.primary_connected = true
+      user.save()
+        .then(_res => {
+>>>>>>> master
           res.send({
             status: true,
             data: user.email,
           });
         })
+<<<<<<< HEAD
         .catch((e) => {
           let errors;
           if (e.errors) {
@@ -1050,6 +1292,13 @@ const authorizeOutlook = async (req, res) => {
             status: false,
             error: errors || e,
           });
+=======
+        .catch(err => {
+          return res.status(400).send({
+            status: false,
+            error: err.message
+          })
+>>>>>>> master
         });
     }
   );
@@ -1104,6 +1353,7 @@ const syncGmail = async (req, res) => {
       error: 'Client doesn`t exist',
     });
   }
+  
   return res.send({
     status: true,
     data: authorizationUri,
@@ -1205,6 +1455,7 @@ const authorizeGmail = async (req, res) => {
 
   oauth2.userinfo.v2.me.get(function (err, _res) {
     // Email is in the preferred_username field
+<<<<<<< HEAD
     user.email = _res.data.email;
     user.connected_email_type = 'gmail';
     user.primary_connected = true;
@@ -1213,11 +1464,21 @@ const authorizeGmail = async (req, res) => {
     user
       .save()
       .then((_res) => {
+=======
+    user.connected_email = _res.data.email
+    user.connected_email_type = 'gmail'
+    user.primary_connected = true
+    user.social_id = _res.data.id
+    user.google_refresh_token = JSON.stringify(tokens)
+    user.save()
+      .then(_res => {
+>>>>>>> master
         res.send({
           status: true,
           data: user.email,
         });
       })
+<<<<<<< HEAD
       .catch((e) => {
         let errors;
         if (e.errors) {
@@ -1233,6 +1494,17 @@ const authorizeGmail = async (req, res) => {
       });
   });
 };
+=======
+      .catch(err => {
+        console.log('user save err', err.message)
+        return res.status(400).json({
+          status: false,
+          error: err.message
+        })
+      })
+  })
+}
+>>>>>>> master
 
 const syncCalendar = async (req, res) => {
   const user = req.currentUser;
@@ -1290,7 +1562,19 @@ const syncCalendar = async (req, res) => {
           } else {
             resolve(result.token);
           }
+<<<<<<< HEAD
         });
+=======
+        })
+      }).then((token) => {
+        accessToken = token.access_token
+      }).catch((error) => {
+        console.log('outlook token grant error', error)
+        return res.status(406).send({
+          status: false,
+          error: 'not connected'
+        })
+>>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1421,7 +1705,19 @@ const disconCalendar = async (req, res) => {
           } else {
             resolve(result.token);
           }
+<<<<<<< HEAD
         });
+=======
+        })
+      }).then((token) => {
+        accessToken = token.access_token
+      }).catch((error) => {
+        console.log('outlook token grant error', error)
+        return res.status(406).send({
+          status: false,
+          error: 'not connected'
+        })
+>>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1839,10 +2135,15 @@ const searchNickName = async (req, res) => {
       status: false,
     });
   }
+<<<<<<< HEAD
   return res.send({
     status: true,
   });
 };
+=======
+}
+
+>>>>>>> master
 const searchPhone = async (req, res) => {
   const { cell_phone } = req.body;
   const _user = await User.findOne({ cell_phone, del: false });

@@ -351,6 +351,7 @@ const runTimeline = async (id) => {
           user: timeline.user,
           content: action.content,
           pdfs: [action.pdf],
+<<<<<<< HEAD
           contacts: [timeline.contact],
         };
         TextHelper.bulkPdf(data)
@@ -373,6 +374,28 @@ const runTimeline = async (id) => {
           .catch((err) => {
             console.log('err', err);
           });
+=======
+          contacts: [timeline.contact]
+        }
+        TextHelper.bulkPDF(data).then(res => {
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
+            timeline['updated_at'] = new Date()
+            timeline.save().catch(err => {
+              console.log('err', err)
+            })
+          } else {
+            timeline['status'] = 'error'
+            timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
+            timeline.save().catch(err => {
+              console.log('err', err)
+            })
+          }
+        }).catch(err => {
+          console.log('err', err)
+        })
+>>>>>>> master
         break;
       case 'send_email_pdf':
         data = {
@@ -380,6 +403,7 @@ const runTimeline = async (id) => {
           content: action.content,
           subject: action.subject,
           pdfs: [action.pdf],
+<<<<<<< HEAD
           contacts: [timeline.contact],
         };
         EmailHelper.bulkPdf(data)
@@ -402,6 +426,28 @@ const runTimeline = async (id) => {
           .catch((err) => {
             console.log('err', err);
           });
+=======
+          contacts: [timeline.contact]
+        }
+        EmailHelper.bulkPDF(data).then(res => {
+          if (res[0] && res[0].status == true) {
+            timeline['status'] = 'completed'
+            timeline['updated_at'] = new Date()
+            timeline.save().catch(err => {
+              console.log('err', err)
+            })
+          } else {
+            timeline['status'] = 'error'
+            timeline['updated_at'] = new Date()
+            console.log('err', res[0].err)
+            timeline.save().catch(err => {
+              console.log('err', err)
+            })
+          }
+        }).catch(err => {
+          console.log('err', err)
+        })
+>>>>>>> master
         break;
       case 'send_text_image':
         data = {

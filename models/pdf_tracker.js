@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
+<<<<<<< HEAD
 const PDFTracker = mongoose.model('pdf_tracker', {
   user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
   contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
@@ -9,5 +11,22 @@ const PDFTracker = mongoose.model('pdf_tracker', {
   created_at: Date,
   updated_at: Date,
 });
+=======
+const TrackerSchema = new Schema({
+    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    pdf: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
+    activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
+    type: {type: String, default: 'review'},
+    duration: Number,
+    created_at: Date,
+    updated_at: Date,
+}, 
+{ 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
+});
+
+const PDFTracker = mongoose.model('pdf_tracker', TrackerSchema);
+>>>>>>> master
 
 module.exports = PDFTracker;

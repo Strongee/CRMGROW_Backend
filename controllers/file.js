@@ -13,8 +13,15 @@ const s3 = new AWS.S3({
   region: config.AWS.AWS_S3_REGION,
 });
 
+<<<<<<< HEAD
 const File = require('../models/file');
 const urls = require('../constants/urls');
+=======
+const File = require('../models/file')
+const Garbage = require('../models/garbage')
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const urls = require('../constants/urls')
+>>>>>>> master
 
 const create = async (req, res) => {
   if (req.file) {
@@ -83,6 +90,7 @@ const create = async (req, res) => {
 };
 
 const get = (req, res) => {
+<<<<<<< HEAD
   const filePath = FILES_PATH + req.params.name;
   console.info('File Path:', filePath);
   if (fs.existsSync(filePath)) {
@@ -91,6 +99,26 @@ const get = (req, res) => {
       let transform = sharp();
       transform = transform.resize(100, 100);
       return readStream.pipe(transform).pipe(res);
+=======
+    const filePath = FILES_PATH + req.params.name
+
+    if (fs.existsSync(filePath)) {
+      if(req.query.resize){
+        const readStream = fs.createReadStream(filePath)
+        let transform = sharp()
+        transform = transform.resize(100, 100)
+        return readStream.pipe(transform).pipe(res)
+      }else{
+        const contentType = mime.contentType(path.extname(req.params.name))
+        res.set('Content-Type', contentType)
+        return res.sendFile(filePath)
+      }
+    } else {
+      res.status(404).send({
+        status: false,
+        error: 'File does not exist'
+      })
+>>>>>>> master
     }
     const contentType = mime.contentType(path.extname(req.params.name));
     res.set('Content-Type', contentType);
@@ -132,6 +160,7 @@ const remove = async (req, res) => {
 
 const upload = async (req, res) => {
   if (req.file) {
+<<<<<<< HEAD
     if (req.query.resize) {
       const url = urls.FILE_URL + req.file.filename + '-resize';
       res.send({
@@ -145,12 +174,136 @@ const upload = async (req, res) => {
         url,
       });
     }
+=======
+   
+      const file_name = req.file.filename
+      if (fs.existsSync(FILES_PATH+file_name)) { 
+        sharp(FILES_PATH+file_name)
+        .resize(100, 100)
+        .toBuffer()
+        .then(data => {
+           console.log('data', data)
+           const today = new Date()
+           const year = today.getYear()
+           const month = today.getMonth()
+           const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: 'profile' +  year + '/' + month + '/' + file_name + '-resize', 
+              Body: data,
+              ACL: 'public-read'
+            };
+            
+            s3.upload(params, async (s3Err, upload)=>{
+             if (s3Err){
+               console.log('upload s3 error', s3Err)
+               return res.status(400).json({
+                          status: false,
+                          error: 'file upload s3 error'
+                        })
+             } else {
+               console.log(`File uploaded successfully at ${upload.Location}`)  
+             }
+           })
+        }).catch(err=>{
+          console.log('resize file generate error', err)
+          return res.status(400).send({
+            status: false,
+            error: 'resize file error'
+          })
+        });
+      }
+
+        if (fs.existsSync(FILES_PATH+file_name)) { 
+        fs.readFile(FILES_PATH+req.file.filename, (err, data) => {
+          if (err){
+            console.log('file read err', err)
+            return res.status(400).send({
+              status: false,
+              error: 'file read error'
+            })
+          }else {
+            console.log('File read was successful', data)
+            const today = new Date()
+            const year = today.getYear()
+            const month = today.getMonth()
+            const params = {
+                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                Key: 'profile' +  year + '/' + month + '/' + file_name, 
+                Body: data,
+                ACL: 'public-read'
+            };
+            s3.upload(params, async (s3Err, upload)=>{
+              if (s3Err){
+                console.log('upload s3 error', s3Err)
+                return res.status(400).send({
+                  status: false,
+                  error: 'file upload s3 error'
+                })
+              } else {             
+                return res.send({
+                    status: true,
+                    url: upload.Location
+                })
+              }
+            })
+          }
+        })
+      }  
+    }
+}
+
+
+const uploadBase64 = async(req, res) => {
+  const {currentUser} = req;
+  const {data} = req.body;
+
+  const garbage = await Garbage.findOne({user: currentUser._id}).catch(err => {
+    console.log("Error", err);
+  })
+
+  if(garbage) {
+    if(garbage['logo']) {
+      await removeFile(garbage['logo'])
+    }
+    let logo = await uploadBase64Image(data)
+    garbage['logo'] = logo
+    
+    Garbage.updateOne({user: currentUser._id}, {$set: {logo}}).then(data => {
+      return res.send({
+        status: true,
+        data: logo
+      })
+    })
+  }
+  else {
+    let logo = await uploadBase64Image(data)
+
+    let newGarbage = new Garbage({
+      user: currentUser._id,
+      logo: logo
+    })
+    newGarbage.save().then(data => {
+      return res.send({
+        status: true,
+        data: logo
+      })
+    })
+>>>>>>> master
   }
 };
 
 module.exports = {
+<<<<<<< HEAD
   create,
   get,
   upload,
   remove,
 };
+=======
+    create,
+    get,
+    upload,
+    remove,
+    uploadBase64
+}
+>>>>>>> master

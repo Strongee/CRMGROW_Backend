@@ -77,6 +77,7 @@ const send = async (req, res) => {
         updated_at: new Date(),
       });
 
+<<<<<<< HEAD
       activity.save().then((_activity) => {
         const myJSON = JSON.stringify(_sms);
         const data = JSON.parse(myJSON);
@@ -94,6 +95,48 @@ const send = async (req, res) => {
           delete err.instance;
           return err;
         });
+=======
+const receive = async(req, res) => {
+    const text = req.body['Body']
+    const from = req.body['From']
+    const to = req.body['To']
+
+    let currentUser = await User
+      .findOne({proxy_number: to})
+      .catch(err =>{
+        console.log('current user found err sms', err.message)
+      })
+    
+    if(currentUser != null){
+      const phoneNumber = req.body['From']
+  
+      const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
+        console.log('contact found err sms reply', err)
+      })
+
+      // let phoneNumberString
+      // if(currentUser.phone) {
+      //   const userPhone = currentUser.phone
+      //   phoneNumberString = userPhone.internationalNumber
+      // } else {
+      //   phoneNumberString = TextHelper.matchUSPhoneNumber(currentUser.cell_phone)
+      // }
+     
+        
+      // if (!e164Phone) {
+      //   const error = {
+      //     error: 'Invalid Phone Number'
+      //   }
+      
+      //   throw error // Invalid phone number
+      // }
+        
+      if(contact){
+        const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
+        await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
+          console.log('sms reply err', err)
+        })
+>>>>>>> master
       }
       return res.status(500).send({
         status: false,

@@ -52,6 +52,7 @@ const makeBody = (to, from, subject, message) => {
   ].join('');
   const encodedMail = Base64.encodeURI(str);
   return encodedMail;
+<<<<<<< HEAD
 };
 
 const request = require('request-promise');
@@ -78,6 +79,27 @@ const play = async (req, res) => {
 
     if (!pattern.test(sender.learn_more)) {
       sender.learn_more = `http://${sender.learn_more}`;
+=======
+}
+
+const request = require('request-promise')
+const createBody = require('gmail-api-create-message-body')
+
+const textHelper = require('../helpers/text')
+const emailHelper = require('../helpers/email')
+
+const play = async(req, res) => {  
+  const image_id = req.query.image
+  const sender_id = req.query.user
+  const image = await Image.findOne({_id: image_id})
+  const sender = await User.findOne({_id: sender_id, del: false})
+ 
+  if(sender){
+    let pattern = /^((http|https|ftp):\/\/)/;
+    
+    if(!pattern.test(sender.learn_more)) {
+      sender.learn_more = "http://" + sender.learn_more;
+>>>>>>> master
     }
 
     res.render('image', {
@@ -218,8 +240,13 @@ const get = async (req, res) => {
 };
 
 const getPreview = (req, res) => {
+<<<<<<< HEAD
   const filePath = PREVIEW_PATH + req.params.name;
   console.info('File Path:', filePath);
+=======
+  const filePath = PREVIEW_PATH + req.params.name
+
+>>>>>>> master
   if (fs.existsSync(filePath)) {
     if (req.query.resize) {
       const readStream = fs.createReadStream(filePath);
@@ -350,6 +377,7 @@ const bulkEmail = async (req, res) => {
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
+<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
@@ -388,6 +416,57 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_email}/gi, _contact.email)
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
+=======
+    
+    for(let i=0; i<contacts.length; i++){
+      let promise 
+      let image_titles = ''
+      let image_descriptions = ''
+      let image_objects = ''
+      let image_subject = subject
+      let image_content = content
+      let activity
+      
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
+      for(let j=0; j<images.length; j++){
+        const image = images[j]        
+        
+        if(!image_content){
+          image_content = ''
+        }
+        
+        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+>>>>>>> master
         const _activity = new Activity({
           content: 'sent image using email',
           contacts: contacts[i],
@@ -434,6 +513,7 @@ const bulkEmail = async (req, res) => {
           image_titles
         );
       }
+<<<<<<< HEAD
 
       if (image_content.search(/{image_object}/gi) !== -1) {
         image_content = image_content.replace(
@@ -470,6 +550,37 @@ const bulkEmail = async (req, res) => {
         sgMail
           .send(msg)
           .then((_res) => {
+=======
+    
+        if(image_content.search(/{image_object}/ig) != -1){
+          image_content = image_content.replace(/{image_object}/ig, image_objects)
+        }else{
+          image_content = image_content+'<br/>'+image_objects
+        }
+        
+        if(content.search(/{image_title}/ig) != -1){
+          image_content = image_content.replace(/{image_title}/ig, image_titles)
+        }
+        
+        if(content.search(/{image_description}/ig) != -1){
+          image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+        }
+        
+        const msg = {
+          to: _contact.email,
+          from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+          replyTo: currentUser.connected_email,
+          subject: image_subject,
+          html: '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
+                +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
+          text: image_content
+        }
+        
+        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      
+        promise = new Promise((resolve, reject) => {
+          sgMail.send(msg).then((_res) => {
+>>>>>>> master
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
@@ -573,6 +684,7 @@ const bulkText = async (req, res) => {
         if (!image_content) {
           image_content = '';
         }
+<<<<<<< HEAD
 
         image_content = image_content
           .replace(/{user_name}/gi, currentUser.user_name)
@@ -583,6 +695,14 @@ const bulkText = async (req, res) => {
           .replace(/{contact_email}/gi, _contact.email)
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
+=======
+        
+        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+>>>>>>> master
         const _activity = new Activity({
           content: 'sent image using sms',
           contacts: contacts[i],
@@ -735,6 +855,7 @@ const createSmsContent = async (req, res) => {
     if (!image_content) {
       image_content = '';
     }
+<<<<<<< HEAD
 
     image_content = image_content
       .replace(/{user_name}/gi, currentUser.user_name)
@@ -745,6 +866,14 @@ const createSmsContent = async (req, res) => {
       .replace(/{contact_email}/gi, _contact.email)
       .replace(/{contact_phone}/gi, _contact.cell_phone);
 
+=======
+    
+    image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+    .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+    
+>>>>>>> master
     const _activity = new Activity({
       content: 'sent image using sms',
       contacts: contacts[0],
@@ -810,17 +939,34 @@ const bulkGmail = async (req, res) => {
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
+<<<<<<< HEAD
   );
   const token = JSON.parse(currentUser.google_refresh_token);
   oauth2Client.setCredentials({ refresh_token: token.refresh_token });
 
   if (contacts) {
     if (contacts.length > config.MAX_EMAIL) {
+=======
+  )
+  const token = JSON.parse(currentUser.google_refresh_token)
+  oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
+  await oauth2Client.getAccessToken().catch(err=>{
+    console.log('get access err', err)
+    return res.status(406).send({
+      status: false,
+      error: 'not connected'
+    })
+  });
+  
+  if(contacts){
+    if(contacts.length>config.MAX_EMAIL){
+>>>>>>> master
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
+<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
@@ -964,10 +1110,156 @@ const bulkGmail = async (req, res) => {
               Subject: image_subject,
             },
             textHtml: email_content,
+=======
+    
+    for(let i=0; i<contacts.length; i++){
+      let image_titles = ''
+      let image_descriptions = ''
+      let image_objects = ''
+      let image_subject = subject
+      let image_content = content
+      let activity
+      let promise
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      
+      for(let j=0; j<images.length; j++){
+        const image = images[j]        
+        
+        if(!image_content){
+          image_content = ''
+        }
+        
+        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+        
+        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+        const _activity = new Activity({
+          content: 'sent image using email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'images',
+          images: image._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          subject: image_subject,
+          description: image_content
+        })
+          
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+
+        const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
+        
+        if(images.length>=2){
+          image_titles = mail_contents.IMAGE_TITLE
+        }else{
+          image_titles = `${image.title}`
+        }
+        
+        if(j < images.length-1){ 
+          image_descriptions = image_descriptions + `${image.description}, ` 
+        } else{
+          image_descriptions = image_descriptions + image.description
+        }
+        //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        image_objects = image_objects + image_object                      
+      }
+      
+      if(image_titles == '' ){
+        image_subject = 'Image: ' + image_subject
+      } else {
+        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
+      }
+    
+      if(image_content.search(/{image_object}/ig) != -1){
+        image_content = image_content.replace(/{image_object}/ig, image_objects)
+      }else{
+        image_content = image_content+'<br/>'+image_objects
+      }
+        
+      if(content.search(/{image_title}/ig) != -1){
+        image_content = image_content.replace(/{image_title}/ig, image_titles)
+      }
+      
+      if(content.search(/{image_description}/ig) != -1){
+        image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+      }
+
+      const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+        +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>';
+      // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, image_subject, email_content );
+        
+      promise = new Promise((resolve, reject)=>{
+          // gmail.users.messages.send({
+          //   'userId': currentUser.email,
+          //   'resource': {
+          //     raw: rawContent
+          //   }
+          // }, (err, response) => {
+          //   if(err) {
+          //     Activity.deleteOne({_id: activity.id}).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     console.log('err', err)
+          //     error.push({
+          //       contact: {
+          //         first_name: _contact.first_name,
+          //         email: _contact.email
+          //       },
+          //       err: err
+          //     })
+          //     resolve();
+          //   }
+          //   else {
+          //     Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+          //       console.log('err', err)
+          //     })
+          //     resolve();
+          //   } 
+          // })
+        try {
+          let body = createBody({
+            headers: {
+              To: _contact.email,
+              From: `${currentUser.user_name} <${currentUser.connected_email}>`,
+              Subject: image_subject,
+            },
+            textHtml:  email_content,
+>>>>>>> master
             textPlain: email_content,
           });
           request({
             method: 'POST',
+<<<<<<< HEAD
             uri:
               'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
@@ -1004,11 +1296,44 @@ const bulkGmail = async (req, res) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
           });
+=======
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            headers: {
+              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+            },
+            body: body
+          }).then(()=>{
+            Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('err', err)
+            })
+            resolve();
+          }).catch(err=>{
+            console.log('gmail send err', err)
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('err', err)
+            })
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: err
+            })
+            resolve()
+          })
+        }catch(err){
+          console.log('err', err)
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+>>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
+<<<<<<< HEAD
             err,
           });
           resolve();
@@ -1054,17 +1379,69 @@ const bulkOutlook = async (req, res) => {
 
   if (contacts) {
     if (contacts.length > config.MAX_EMAIL) {
+=======
+            err: err
+          })
+          resolve()
+        }
+      })
+      
+      promise_array.push(promise)
+    }
+      
+    Promise.all(promise_array).then(()=>{
+      if(error.length>0){
+        return res.status(405).json({
+          status: false,
+          error: error
+        })
+      }
+      return res.send({
+        status: true,
+      })
+    }).catch((err)=>{
+      console.log('err', err)
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    })
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
+  }  
+}
+
+const bulkOutlook = async(req, res) => {
+  const { currentUser } = req
+  let {content, subject, images, contacts} = req.body 
+  let promise_array = []
+  let error = []
+  
+  if(contacts){
+    if(contacts.length>config.MAX_EMAIL){
+>>>>>>> master
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
+<<<<<<< HEAD
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
     });
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
+=======
+    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
+    for(let i=0; i<contacts.length; i++){    
+      let accessToken
+      let promise
+      
+>>>>>>> master
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
@@ -1072,7 +1449,20 @@ const bulkOutlook = async (req, res) => {
           } else {
             resolve(result.token);
           }
+<<<<<<< HEAD
         });
+=======
+        })
+      }).then((token)=>{
+        accessToken = token.access_token
+        
+      }).catch((error) => {
+        console.log('outlook token grant error', error)
+        return res.status(406).send({
+          status: false,
+          error: 'not connected'
+        })
+>>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1092,6 +1482,7 @@ const bulkOutlook = async (req, res) => {
           done(null, accessToken);
         },
       });
+<<<<<<< HEAD
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
           console.log('err', err);
@@ -1194,17 +1585,126 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+=======
+      
+      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
+        console.log('contact found err', err.message)
+      })
+  
+      if(!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
+          console.log('contact found err', err.message)
+        })
+        promise = new Promise(async(resolve, reject)=>{
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed'
+          })
+          resolve()
+        })
+        promise_array.push(promise)
+        continue;
+      }
+      let image_titles = ''
+      let image_descriptions = ''
+      let image_objects = ''
+      let image_subject = subject
+      let image_content = content
+      let activity
+      for(let j=0; j<images.length; j++){
+        const image = images[j]        
+        
+        if(!image_content){
+          image_content = ''
+        }
+        
+        image_subject = image_subject.replace(/{user_name}/ig, currentUser.user_name)
+        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+        
+        image_content = image_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+        const _activity = new Activity({
+          content: 'sent image using email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'images',
+          images: image._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          subject: subject,
+          description: image_content
+        })
+        
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
+
+        const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
+        
+        if(images.length>=2){
+          image_titles = mail_contents.IMAGE_TITLE
+        }else{
+          image_titles = `${image.title}`
+        }
+        
+        if(j < images.length-1){ 
+          image_descriptions = image_descriptions + `${image.description}, ` 
+        } else{
+          image_descriptions = image_descriptions + image.description
+        }
+        //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
+        image_objects = image_objects + image_object                      
+      }
+      
+      if(image_subject == '' ){
+        image_subject = 'Image: ' + image_titles
+      } else {
+        image_subject = image_subject.replace(/{image_title}/ig, image_titles)
+        image_subject = image_subject.replace(/{material_title}/ig, image_titles)
+      }
+    
+      if(image_content.search(/{image_object}/ig) != -1){
+        image_content = image_content.replace(/{image_object}/ig, image_objects)
+      }else{
+        image_content = image_content+'<br/>'+image_objects
+      }
+      
+      if(content.search(/{image_title}/ig) != -1){
+        image_content = image_content.replace(/{image_title}/ig, image_titles)
+      }
+      
+      if(content.search(/{image_description}/ig) != -1){
+        image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+      }
+         
+>>>>>>> master
       const sendMail = {
         message: {
           subject: image_subject,
           body: {
+<<<<<<< HEAD
             contentType: 'HTML',
             content: `<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">${image_content}<br/>Thank you,<br/><br/>${currentUser.email_signature}</body></html>`,
+=======
+            contentType: "HTML",
+            content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+            +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
+>>>>>>> master
           },
           toRecipients: [
             {
               emailAddress: {
                 address: _contact.email,
+<<<<<<< HEAD
               },
             },
           ],
@@ -1269,6 +1769,64 @@ const bulkOutlook = async (req, res) => {
   }
   return false;
 };
+=======
+              }
+            }
+          ]
+        },
+        saveToSentItems: "true"
+      };
+      
+      promise = new Promise((resolve, reject)=>{
+        client.api('/me/sendMail')
+        .post(sendMail).then(()=>{
+          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('err', err)
+          })
+          resolve()
+        }).catch(err=>{
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('err', err)
+          })
+          console.log('err', err)
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email
+            },
+            err: err
+          })
+          resolve()
+        });
+      })
+      promise_array.push(promise)
+    }
+      
+    Promise.all(promise_array).then(()=>{
+      if(error.length>0){
+        return res.status(405).json({
+          status: false,
+          error: error
+        })
+      }
+      return res.send({
+        status: true,
+      })
+    }).catch((err)=>{
+      console.log('err', err)
+      return res.status(400).json({
+        status: false,
+        error: err
+      })
+    })
+  }else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found'
+    })
+  }  
+}
+>>>>>>> master
 
 module.exports = {
   play,

@@ -137,6 +137,7 @@ const create = (req, res) => {
 };
 
 const update = async (req, res) => {
+<<<<<<< HEAD
   const { currentUser } = req;
   const { id } = req.params;
   const data = req.body;
@@ -146,6 +147,29 @@ const update = async (req, res) => {
   if (automation) {
     if (automation.user !== currentUser.id) {
       if (automation.role === 'admin') {
+=======
+    const {currentUser} = req;
+    const id = req.params.id;
+    const data = req.body;
+    let automation = await Automation.findOne({_id: id});
+    automation = JSON.parse(JSON.stringify(automation));
+    
+    if(automation) {
+        if(automation.user != currentUser.id) {
+            if(automation.role == 'admin') {
+                return res.status(400).send({
+                    status: false,
+                    error: `couldn't update admin automation`
+                })
+            }
+            return res.status(400).send({
+                status: false,
+                error: `This is not your automation so couldn't update.`
+            })
+        }
+    }
+    else {
+>>>>>>> master
         return res.status(400).send({
           status: false,
           error: `couldn't update admin automation`,
