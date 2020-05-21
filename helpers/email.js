@@ -104,7 +104,6 @@ const bulkEmail = async(data) => {
         content: email_content,
         subject: email_subject,
         contacts: contacts[i],
-        message_id: _res[0].headers['x-message-id'],
         user: currentUser.id,
         updated_at: new Date(),
         created_at: new Date(),
