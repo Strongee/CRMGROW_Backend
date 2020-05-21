@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-const User = require('../models/user')
+const User = require('../models/user');
+const { ENV_PATH } = require('../config/path')
+require('dotenv').config({ path: ENV_PATH })
 const { DB_PORT } = require('../config/database');
 
 mongoose.set('useCreateIndex', true)
@@ -30,7 +32,7 @@ const migrate = async() => {
       user.save().then(()=>{
         console.log(number)
       }).catch(err=>{
-        console.err('err', err)
+        console.err('err', err.message)
       })
     }
   }
