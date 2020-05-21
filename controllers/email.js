@@ -1680,7 +1680,7 @@ const reSubscribeEmail = async(req, res) => {
     const last_activity = await _activity.save().then().catch(err=>{
       console.log('err', err.message)
     })
-    Contact.update({_id: contact.id}, { $set: { last_activity: last_activity.id } ,  $pull: {tags: {$each: ['unsubscribed']}}}).catch(err => {
+    Contact.update({_id: contact.id}, { $set: { last_activity: last_activity.id } ,  $pull: {tags: {$in: ['unsubscribed']}}}).catch(err => {
       console.log('err', err.message)
     })
     
