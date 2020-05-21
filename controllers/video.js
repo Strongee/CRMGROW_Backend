@@ -236,7 +236,9 @@ const createVideo = async (req, res) => {
 }
 
 const update = async(req, res) => {
-  const editData = req.body
+  const editData = {...req.body}
+  delete editData.site_image;
+  delete editData.thumbnail;
   let { currentUser } = req
   let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
@@ -267,39 +269,29 @@ const update = async(req, res) => {
       console.error("Upload Site Image", error)
     }
   }
+  if(req.body.thumbnail) {
+    if(video.thumbnail) {
+      try {
+        await removeFile(video.thumbnail)
+      } catch(error) {
+        console.error("Remove Video Thumbnail Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let thumbnail_image = await uploadBase64Image(req.body.thumbnail, 'thumbnail' + year + '/' + month)
+      video['thumbnail'] = thumbnail_image;
+    } catch(error) {
+      console.error("Upload Video Thumbnail Image", error)
+    }
+  }
   let file_name = req.params.id
   let thumbnail_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
     if(fs.existsSync(thumbnail_path)) {  
-      fs.readFile(thumbnail_path, (err, data) => {
-        if (err){
-          console.log('file read err', err.message || err.msg)
-        }else {
-          console.log('File read was successful', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + thumbnail_name, 
-              Body: data,
-              ACL: 'public-read'
-          };
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            
-              video['thumbnail'] = upload.Location
-              video.save().catch(err=>{
-                console.log('video save error', err.message)
-              })
-            }
-          })
-        }
-        });
         
       // Thumbnail
       if(req.body.thumbnail){
@@ -404,7 +396,9 @@ const update = async(req, res) => {
 }
 
 const updateDetail = async (req, res) => {
-  const editData = req.body
+  const editData = {...req.body}
+  delete editData.site_image;
+  delete editData.thumbnail;
   let { currentUser } = req
   let thumbnail_path = ''
   const video = await Video
@@ -439,41 +433,29 @@ const updateDetail = async (req, res) => {
       console.error("Upload Site Image", error)
     }
   }
+  if(req.body.thumbnail) {
+    if(video.thumbnail) {
+      try {
+        await removeFile(video.thumbnail)
+      } catch(error) {
+        console.error("Remove Video Thumbnail Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let thumbnail_image = await uploadBase64Image(req.body.thumbnail, 'thumbnail' + year + '/' + month)
+      video['thumbnail'] = thumbnail_image;
+    } catch(error) {
+      console.error("Upload Video Thumbnail Image", error)
+    }
+  }
   let file_name = req.params.id
   let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
     thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
-    if(fs.existsSync(thumbnail_path)) {  
-      fs.readFile(thumbnail_path, (err, data) => {
-        if (err){
-          console.log('file read err', err.message || err.msg)
-        }else {
-          console.log('File read was successful', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-              Body: data,
-              ACL: 'public-read'
-          };
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-              video['thumbnail'] = file_name
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            
-              video['thumbnail'] = upload.Location
-              video.save().catch(err=>{
-                console.log('video save error', err.message)
-              })
-            }
-          })
-        }
-        });
-        
+    if(fs.existsSync(thumbnail_path)) {    
       // Thumbnail
       if(req.body.custom_thumbnail){
         custom_thumbnail = true

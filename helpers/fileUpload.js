@@ -24,6 +24,7 @@ exports.uploadBase64Image = async (base64, dest='') => {
   };
   try {
     const { Location, Key } = await s3.upload(fileParam).promise();
+    console.log(Location, Key);
     return Location;
   } catch (error) {
     throw(error)
