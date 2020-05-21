@@ -226,12 +226,24 @@ const createVideo = async (req, res) => {
 };
 
 const updateDetail = async (req, res) => {
+<<<<<<< Updated upstream
   const editData = req.body
   let { currentUser } = req
   let thumbnail_path = ''
   const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
     console.log('err', err)
   })
+=======
+  const editData = req.body;
+  const { currentUser } = req;
+
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('err', err);
+  });
+>>>>>>> Stashed changes
 
   if (!video) {
     return res.status(400).json({
@@ -239,6 +251,7 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission',
     });
   }
+<<<<<<< Updated upstream
   
   const file_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
@@ -337,17 +350,93 @@ const updateDetail = async (req, res) => {
           })
       });
     }
+=======
+
+  const file_name = uuidv1();
+  if (req.body.thumbnail) {
+    // base 64 image
+    base64Img.img(req.body.thumbnail, THUMBNAILS_PATH, file_name, function (
+      err,
+      filepath
+    ) {
+      if (err) {
+        console.log('image sync err', err);
+      }
+      console.log('filepath', filepath);
+      if (fs.existsSync(filepath)) {
+        fs.readFile(filepath, (err, data) => {
+          if (err) {
+            console.log('file read err', err);
+          } else {
+            console.log('File read was successful', data);
+            const today = new Date();
+            const year = today.getYear();
+            const month = today.getMonth();
+            const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: `thumbnail${year}/${month}/${file_name}`,
+              Body: data,
+              ACL: 'public-read',
+            };
+            s3.upload(params, async (s3Err, upload) => {
+              if (s3Err) {
+                console.log('upload s3 error', s3Err);
+              } else {
+                console.log(`File uploaded successfully at ${upload.Location}`);
+
+                video.thumbnail = upload.Location;
+                video.save().catch((err) => {
+                  console.log('video save error', err.message);
+                });
+              }
+            });
+          }
+        });
+        sharp(filepath)
+          .resize(250, 140)
+          .toBuffer()
+          .then((data) => {
+            const today = new Date();
+            const year = today.getYear();
+            const month = today.getMonth();
+            const params = {
+              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+              Key: `thumbnail${year}/${month}/${file_name}-resize`,
+              Body: data,
+              ACL: 'public-read',
+            };
+
+            s3.upload(params, async (s3Err, upload) => {
+              if (s3Err) {
+                console.log('upload s3 error', s3Err);
+              } else {
+                console.log(`File uploaded successfully at ${upload.Location}`);
+              }
+            });
+          });
+      }
+    });
+>>>>>>> Stashed changes
   }
 
   for (const key in editData) {
     video[key] = editData[key];
   }
+<<<<<<< Updated upstream
   
   if(video['path'] && req.body.thumbnail){
     const file_path = video['path']
     video['preview'] = await generatePreview(file_path).catch(err=>{
       console.log('err', err)
     })
+=======
+
+  if (video.path && !video.preview) {
+    const file_path = video.path;
+    video.preview = await generatePreview(file_path).catch((err) => {
+      console.log('err', err);
+    });
+>>>>>>> Stashed changes
   }
 
   if (video.type === 'video/webm') {
@@ -498,6 +587,7 @@ const generatePreview = async (file_path) => {
       ctx.globalAlpha = 1.0;
       ctx.font = '20px Impact';
       ctx.fillStyle = '#ffffff';
+<<<<<<< Updated upstream
       ctx.fillText('Play video', 70, 120)
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
@@ -538,6 +628,41 @@ const generatePreview = async (file_path) => {
         console.log('err', err)
         reject(err)
       });
+=======
+      ctx.fillText('Play video', 70, 120);
+      ctx.drawImage(play, 10, 95, 40, 40);
+      const buf = canvas.toBuffer();
+      fs.writeFileSync(`${GIF_PATH}frame-${i}.png`, buf);
+    }
+    const file_name = uuidv1();
+    const stream = pngFileStream(`${GIF_PATH}frame-??.png`)
+      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
+      .pipe(fs.createWriteStream(GIF_PATH + file_name));
+
+    stream.on('finish', () => {
+      if (fs.existsSync(GIF_PATH + file_name)) {
+        fs.readFile(GIF_PATH + file_name, (err, data) => {
+          if (err) throw err;
+          console.log('File read was successful', data);
+          const today = new Date();
+          const year = today.getYear();
+          const month = today.getMonth();
+          const params = {
+            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: `gif${year}/${month}/${file_name}`,
+            Body: data,
+            ACL: 'public-read',
+          };
+          s3.upload(params, async (s3Err, upload) => {
+            if (s3Err) throw s3Err;
+            console.log(`File uploaded successfully at ${upload.Location}`);
+
+            fs.unlinkSync(GIF_PATH + file_name);
+            resolve(upload.Location);
+          });
+        });
+      }
+>>>>>>> Stashed changes
     });
     stream.on('error', (err) => {
       console.log('err', err);
@@ -655,6 +780,7 @@ const remove = async (req, res) => {
       _id: req.params.id,
       user: currentUser.id,
     });
+<<<<<<< Updated upstream
 
     if (video) {
       if (video.default_edited) {
@@ -678,6 +804,31 @@ const remove = async (req, res) => {
       video.del = true;
       video.save();
 
+=======
+
+    if (video) {
+      if (video.default_edited) {
+        return res.status(400).send({
+          status: false,
+          error: 'invalid permission',
+        });
+      }
+
+      const { url } = video;
+      s3.deleteObject(
+        {
+          Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+          Key: url.slice(44),
+        },
+        function (err, data) {
+          console.log('err', err);
+        }
+      );
+
+      video.del = true;
+      video.save();
+
+>>>>>>> Stashed changes
       return res.send({
         status: true,
       });
@@ -744,6 +895,7 @@ const bulkEmail = async (req, res) => {
 
   if (contacts) {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+<<<<<<< Updated upstream
     
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
@@ -823,6 +975,13 @@ const bulkEmail = async (req, res) => {
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
           video_content = video_content+'<br/>'+video_objects
+=======
+
+    for (let i = 0; i < contacts.length; i++) {
+      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+        (err) => {
+          console.log('err', err);
+>>>>>>> Stashed changes
         }
       );
       let video_titles = '';
@@ -1043,6 +1202,7 @@ const bulkGmail = async (req, res) => {
         error: 'not connnected',
       });
     });
+<<<<<<< Updated upstream
     
     for(let i=0; i<contacts.length; i++){
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
@@ -1121,6 +1281,13 @@ const bulkGmail = async (req, res) => {
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
           video_content = video_content+'<br/>'+video_objects
+=======
+
+    for (let i = 0; i < contacts.length; i++) {
+      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+        (err) => {
+          console.log('err', err);
+>>>>>>> Stashed changes
         }
       );
       let video_titles = '';
@@ -1663,6 +1830,7 @@ const bulkOutlook = async (req, res) => {
           done(null, accessToken);
         },
       });
+<<<<<<< Updated upstream
       const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
         console.log('err', err)
       }) 
@@ -1740,6 +1908,11 @@ const bulkOutlook = async (req, res) => {
           video_content = video_content.replace(/{video_object}/ig, video_objects)
         }else{
           video_content = video_content+'<br/>'+video_objects
+=======
+      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+        (err) => {
+          console.log('err', err);
+>>>>>>> Stashed changes
         }
       );
       let video_titles = '';
@@ -1963,6 +2136,7 @@ const videoConvert = async (id) => {
   ];
   console.log('args', args);
   const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
+<<<<<<< Updated upstream
   ffmpegConvert.on('close', function(){
     console.log('converted end', file_path)
     const new_url = urls.VIDEO_URL+new_file
@@ -1976,6 +2150,23 @@ const videoConvert = async (id) => {
     })
   })
 }
+=======
+  ffmpegConvert.on('end', function () {
+    console.log('converted end', file_path);
+    const new_url = urls.VIDEO_URL + new_file;
+    video.url = new_url;
+    video.recording = false;
+    video.path = new_path;
+    video
+      .save()
+      .then(() => {})
+      .catch((err) => {
+        console.log('err', err);
+        fs.unlinkSync(file_path);
+      });
+  });
+};
+>>>>>>> Stashed changes
 
 module.exports = {
   play,

@@ -3,10 +3,18 @@ const fs = require('fs');
 const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
+<<<<<<< Updated upstream
 
 const AWS = require('aws-sdk');
 const uuidv1 = require('uuid/v1');
 const mongoose = require('mongoose');
+=======
+const mongoose = require('mongoose');
+
+const uuidv1 = require('uuid/v1');
+const AWS = require('aws-sdk');
+const urls = require('../../constants/urls');
+>>>>>>> Stashed changes
 const User = require('../../models/user');
 const Activity = require('../../models/activity');
 const PDF = require('../../models/pdf');

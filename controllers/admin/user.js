@@ -3,7 +3,10 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator/check');
 const sgMail = require('@sendgrid/mail');
 const User = require('../../models/user');
+<<<<<<< Updated upstream
 const Payment = require('../../models/payment');
+=======
+>>>>>>> Stashed changes
 const Contact = require('../../models/contact');
 const Tag = require('../../models/tag');
 const Appointment = require('../../models/appointment');
@@ -369,9 +372,15 @@ const create = async (req, res) => {
   }
 
   const { email } = req.body;
+<<<<<<< Updated upstream
 
   const password = req.body.password || config.DEFAULT_PASS;
 
+=======
+
+  const password = req.body.password || config.DEFAULT_PASS;
+
+>>>>>>> Stashed changes
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto
     .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
@@ -483,6 +492,7 @@ const closeAccount = async (req, res) => {
 };
 
 const disableUser = async (req, res) => {
+<<<<<<< Updated upstream
   const user = await User.findOne({ _id: req.params.id }).catch((err) => {
     console.log('user found err', err.message);
   });
@@ -494,6 +504,11 @@ const disableUser = async (req, res) => {
   User.update(
     { _id: req.params.id },
     { $set: { del: true, updated_at: new Date() }, $unset: { payment: true } }
+=======
+  User.update(
+    { _id: req.params.id },
+    { $set: { del: true, updated_at: new Date() } }
+>>>>>>> Stashed changes
   )
     .then(() => {
       return res.send({
@@ -509,6 +524,7 @@ const disableUser = async (req, res) => {
 };
 
 const suspendUser = async (req, res) => {
+<<<<<<< Updated upstream
   const user = await User.findOne({ _id: req.params.id }).catch((err) => {
     console.log('supsend user found error', err);
   });
@@ -562,6 +578,23 @@ const suspendUser = async (req, res) => {
         });
       });
   }
+=======
+  User.update(
+    { _id: req.params.id },
+    { $set: { 'subscription.suspended': true, updated_at: new Date() } }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+>>>>>>> Stashed changes
 };
 
 const activateUser = async (req, res) => {

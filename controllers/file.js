@@ -133,7 +133,11 @@ const remove = async (req, res) => {
 const upload = async (req, res) => {
   if (req.file) {
     if (req.query.resize) {
+<<<<<<< Updated upstream
       const url = urls.FILE_URL + req.file.filename + '-resize';
+=======
+      const url = `${urls.FILE_URL + req.file.filename}?resize=true`;
+>>>>>>> Stashed changes
       res.send({
         status: true,
         url,
