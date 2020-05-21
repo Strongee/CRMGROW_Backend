@@ -10,6 +10,7 @@ const VideoSchema = new Schema({
     uploaded: {type: Boolean, default: false},
     thumbnail: String,
     thumbnail_path: String,
+    site_image: String,
     custom_thumbnail: { type: Boolean, default: false},
     preview: String,
     recording: {type: Boolean, default: false},

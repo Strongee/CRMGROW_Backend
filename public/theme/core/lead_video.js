@@ -36,7 +36,7 @@ var duration = document.querySelector("#video-duration").value;
             }
         }
 
-        var cleave = new Cleave('.phone-info', {
+        var cleave = new Cleave('input.phone-info', {
             numericOnly: true,
             blocks: [0, 3, 3, 4],
             delimiters: ["(", ") ", "-"]

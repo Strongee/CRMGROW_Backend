@@ -33,6 +33,7 @@ const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: config.AWS.AWS_ACCESS_KEY,
@@ -77,7 +78,7 @@ const play = async(req, res) => {
       console.log('err', err)
     })
     
-    let theme = 'default';
+    let theme = 'theme2';
     let logo = variables.DEFAULT_LOGO
     if(garbage) {
       capture_delay = garbage['capture_delay'];
@@ -151,7 +152,7 @@ const play1 = async(req, res) => {
       console.log('err', err)
     })
     
-    let theme = 'default';
+    let theme = 'theme2';
     let logo = variables.DEFAULT_LOGO
     if(garbage) {
       theme = garbage['material_theme'] || theme
@@ -248,6 +249,24 @@ const update = async(req, res) => {
       error: 'Invalid_permission'
     })
   }
+  if(req.body.site_image) {
+    if(video.site_image) {
+      try {
+        await removeFile(video.site_image)
+      } catch(error) {
+        console.error("Remove Site Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
+      video['site_image'] = siteImage;
+    } catch(error) {
+      console.error("Upload Site Image", error)
+    }
+  }
   let file_name = req.params.id
   let thumbnail_name = uuidv1()
   if (req.body.thumbnail) { // base 64 image    
@@ -314,7 +333,7 @@ const update = async(req, res) => {
         ctx.fillText('Play video', 70, 120)
         ctx.drawImage(play, 10, 95, 40, 40)
         let buf = canvas.toBuffer();
-        
+
         for(let i=0; i<20; i++){
           if(i<10){
             fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
@@ -402,7 +421,24 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission'
     })
   }
-  
+  if(req.body.site_image) {
+    if(video.site_image) {
+      try {
+        await removeFile(video.site_image)
+      } catch(error) {
+        console.error("Remove Site Image", error)
+      }
+    }
+    try {
+      const today = new Date()
+      const year = today.getYear()
+      const month = today.getMonth()
+      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
+      video['site_image'] = siteImage;
+    } catch(error) {
+      console.error("Upload Site Image", error)
+    }
+  }
   let file_name = req.params.id
   let custom_thumbnail = false
   if (req.body.thumbnail) { // base 64 image    
@@ -425,6 +461,7 @@ const updateDetail = async (req, res) => {
           s3.upload(params, async (s3Err, upload)=>{
             if (s3Err){
               console.log('upload s3 error', s3Err)
+              video['thumbnail'] = file_name
             } else {
               console.log(`File uploaded successfully at ${upload.Location}`)
             
@@ -532,10 +569,10 @@ const updateDetail = async (req, res) => {
   
   
   if(video['type'] === 'video/webm'){
-    video['conveted'] = 'progress'
+    video['converted'] = 'progress'
     videoHelper.convertRecordVideo(video.id)
   } else if(video['type'] == 'video/mp4' || video['type'] == 'video/quicktime') {
-    video['conveted'] = 'progress'
+    video['converted'] = 'progress'
     videoHelper.convertUploadVideo(video.id)
   }
   
@@ -1092,9 +1129,11 @@ const getHistory = async(req, res) => {
 
 const bulkEmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
   
   if(contacts){
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
@@ -1287,7 +1326,7 @@ const bulkEmail = async(req, res) => {
 
 const bulkGmail = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
   const oauth2Client = new google.auth.OAuth2(
@@ -1295,6 +1334,8 @@ const bulkGmail = async(req, res) => {
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   )
+
+  let videos = await Video.find({_id: {$in: videoIds}});
   
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
@@ -1554,9 +1595,12 @@ const bulkGmail = async(req, res) => {
 
 const bulkText = async(req, res) => {
   const { currentUser } = req
-  let {content, videos, contacts} = req.body 
+  let {content, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
+
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
       return res.status(400).json({
@@ -1774,9 +1818,11 @@ const createSmsContent = async (req, res) => {
 
 const bulkOutlook = async(req, res) => {
   const { currentUser } = req
-  let {content, subject, videos, contacts} = req.body 
+  let {content, subject, videos: videoIds, contacts} = req.body 
   let promise_array = []
   let error = []
+
+  let videos = await Video.find({_id: {$in: videoIds}});
 
   if(contacts){
     if(contacts.length>config.MAX_EMAIL){
