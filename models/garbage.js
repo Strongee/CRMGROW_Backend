@@ -50,7 +50,7 @@ const GarbageSchema = new Schema({
   auto_follow_up: {
     enabled: {type: Boolean, default: false},
     period: Number,
-    note: String
+    content: String
   },
   created_at: Date,
   updated_at: Date,

@@ -9,6 +9,7 @@ const ImageTracker = require('../models/image_tracker');
 const Activity = require('../models/activity');
 const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
+const FollowUp = require('../models/follow_up');
 const TimeLineCtrl = require('./time_line');
 const sgMail = require('@sendgrid/mail')
 const urls = require('../constants/urls')
@@ -362,6 +363,59 @@ const updatePDF = async(duration, pdf_tracker_id) =>{
         };
       
         sgMail.send(msg).catch(err => console.error(err))   
+      }
+      
+      auto_follow_up = garbage.auto_follow_up
+      if(auto_follow_up['enabled']){
+        
+        let now = moment()
+        now.set({ second: 0, millisecond: 0 })
+        follow_due_date = now.add(action.due_duration, 'hours')
+        
+        const follow_up = new FollowUp({
+          user: currentUser.id,
+          contact: contact.id,
+          content: auto_follow_up['content'],
+          due_date: follow_due_date
+        })
+        
+        follow_up.save()
+          .then(async(_followup) => {
+            
+            let reminder_before = 30;
+            if(garbage) {
+              reminder_before = garbage.reminder_before
+            }
+            
+            let startdate = moment(_followup.due_date)
+            const reminder_due_date = startdate.subtract(reminder_before, "mins");
+            
+            const reminder = new Reminder({
+              contact: contact.id,
+              due_date: reminder_due_date,
+              type: 'follow_up',
+              user: currentUser.id,
+              follow_up: _followup.id,
+            })
+            
+            reminder.save().catch(err=>{
+              console.log('reminder save error', err.message)
+            })
+        
+            const activity = new Activity({
+              content: 'added follow up',
+              contacts: contact.id,
+              user: currentUser.id,
+              type: 'follow_ups',
+              follow_ups: _followup.id,
+            })
+            activity.save().catch(err => {
+              console.log('follow error', err.message)
+            });
+          })
+          .catch(err => {
+            console.log('follow error', err.message)
+          });
       }
     }
   }

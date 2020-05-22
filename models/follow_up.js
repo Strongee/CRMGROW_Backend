@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const FollowUpSchema = new Schema({
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     due_date: Date,
-    content: { type: String, default: ""},
+    content: { type: String, default: "Contact has reviewed material"},
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     status: { type: Number, default: 0},
     reminder: Number,
