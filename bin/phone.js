@@ -21,7 +21,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 //   }
 // }
 const migrate = async() => {
-  const users = await User.find({del: true}).catch(err=>{
+  const users = await User.find({del: true, 'proxy_phone.is_released': false}).catch(err=>{
     console.log('err', err)
   })
   for(let i=0; i<users.length; i++){
