@@ -28,7 +28,6 @@ const Contact = require('../models/contact');
 const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path');
 const urls = require('../constants/urls');
 const config = require('../config/config');
-const variables = require('../constants/variables');
 const mail_contents = require('../constants/mail_contents');
 
 const uuidv1 = require('uuid/v1');
@@ -154,7 +153,6 @@ const play = async(req, res) => {
     })
     
     let theme = 'theme2';
-    let logo = variables.DEFAULT_LOGO
     if(garbage) {
 >>>>>>> master
       capture_delay = garbage['capture_delay'];
@@ -169,7 +167,7 @@ const play = async(req, res) => {
     } else {
 =======
       theme = garbage['material_theme'] || theme
-      logo = garbage['logo'] || logo
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO
     }  
     else {
 >>>>>>> master
@@ -279,10 +277,9 @@ const play1 = async (req, res) => {
     })
     
     let theme = 'theme2';
-    let logo = variables.DEFAULT_LOGO
     if(garbage) {
       theme = garbage['material_theme'] || theme
-      logo = garbage['logo'] || logo
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO
     }
     
     return res.render('video_' + theme, {

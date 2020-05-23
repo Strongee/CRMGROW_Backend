@@ -61,21 +61,24 @@ const GarbageSchema = new Schema({
     email: {type: Boolean, default: false},
     follow_up: {type: Boolean, default: false},
     lead_capture: {type: Boolean, default: false},
-    unsubscription: {type: Boolean, default: false}
+    unsubscription: {type: Boolean, default: false},
+    resubscription: {type: Boolean, default: false}
   },
   email_notification: {
     material: {type: Boolean, default: true},
     email: {type: Boolean, default: true},
     follow_up: {type: Boolean, default: true},
     lead_capture: {type: Boolean, default: false},
-    unsubscription: {type: Boolean, default: true}
+    unsubscription: {type: Boolean, default: true},
+    resubscription: {type: Boolean, default: true}
   },
   text_notification: {
     material: {type: Boolean, default: true},
     email: {type: Boolean, default: true},
     follow_up: {type: Boolean, default: false},
     lead_capture: {type: Boolean, default: false},
-    unsubscription: {type: Boolean, default: false}
+    unsubscription: {type: Boolean, default: false},
+    resubscription: {type: Boolean, default: false}
   },
   reminder_before: {type: Number, default: 30},
   capture_dialog: {type: Boolean, default: false},
@@ -92,7 +95,7 @@ const GarbageSchema = new Schema({
   auto_follow_up: {
     enabled: {type: Boolean, default: false},
     period: Number,
-    note: String
+    content: String
   },
   created_at: Date,
   updated_at: Date,
