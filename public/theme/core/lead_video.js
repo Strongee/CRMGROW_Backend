@@ -15,7 +15,6 @@ var duration = document.querySelector("#video-duration").value;
 
 (function($) {
     $(document).ready(function() {
-
         let delayTime = parseInt($("#delay").val());
         let showable = $('#showable').val();
         if(showable == 'true') {
@@ -59,12 +58,10 @@ var duration = document.querySelector("#video-duration").value;
                 },
                 data: JSON.stringify(data),
                 success: function(data) {
-                    console.log('data', data)
                     const response = data.data
                     if(response){
                         $("#contact").val(response.contact)
                         $("#activity").val(response.activity)
-                        // socket = io.connect('http://localhost:3000')
                         var siteAddr = location.protocol + '//' + location.hostname;
                         socket = io.connect(siteAddr);
                         vPlayer.play();

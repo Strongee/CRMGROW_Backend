@@ -16,11 +16,10 @@ function updateStartTime() {
     const contact = document.querySelector("#contact").value
     const activity =document.querySelector("#activity").value
     if( contact && activity ){
-        var siteAddr = location.protocol + '//' + location.hostname;
-        socket = io.connect(siteAddr);
-        console.log("Site Address", siteAddr);
-        // socket = io.connect('https://app.crmgrow.com')
-        // socket = io.connect('http://localhost:3000')
+        if(!socket) {
+            var siteAddr = location.protocol + '//' + location.hostname;
+            socket = io.connect(siteAddr);
+        }
     }
     let currentTime = vPlayer.currentTime
     for( let i = 0; i < trackingTimes.length; i++ ){
@@ -109,7 +108,7 @@ function reportTime() {
                     duration: 0
                 }
                 registered_flag = true;
-                socket.emit('init_video', report)
+                socket.emit('init_video', report);
             }
             else {
                 socket.emit('update_video', total * 1000)
@@ -121,7 +120,14 @@ function reportTime() {
                 socket.emit('close')
                 reported = true;
             }            
-        }                
+        }       
+    }
+    let watched_sec = Math.floor(watched_time % 60);
+    let watched_min = Math.floor(watched_time / 60);
+    let watched_min_s = watched_min < 10 ? '0'+watched_min : watched_min;
+    let watched_sec_s = watched_sec < 10 ? '0'+watched_sec : watched_sec;
+    if(document.querySelector(".watched-time")) {
+        document.querySelector(".watched-time").innerText = `${watched_min_s}:${watched_sec_s}` 
     }
 }
 
@@ -146,3 +152,16 @@ vPlayer.on("timeupdate", function() {
 vPlayer.on("seeking", () => {
     seek_flag = true;
 })
+
+setInterval(() => {
+    if(socket && socket.connected) {
+        if(document.querySelector(".watched-time")) {
+            document.querySelector(".watched-time").classList.add('connected'); 
+        }
+    }
+    else {
+        if(document.querySelector(".watched-time")) {
+            document.querySelector(".watched-time").classList.remove('connected'); 
+        }
+    }
+}, 1000);

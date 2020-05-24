@@ -34,6 +34,8 @@ section.material-section
           else 
             video#player(poster=`${video.thumbnail}`, autoplay, controls, playsinline, name="media")
               source(src=`${video.url}`, type=`video/mp4`)
+          .watched-time
+            | 00:00
       .sm-header
         h3.text-center
           | #{video.title}

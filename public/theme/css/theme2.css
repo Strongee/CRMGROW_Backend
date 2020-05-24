@@ -377,3 +377,21 @@ footer {
 .slick-prev::before, .slick-next::before {
   font-family: 'aria';
 }
+
+.watched-time {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background: #fff8;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 50px;
+  text-align: center;
+}
+
+
+.watched-time.connected {
+  background-color: #ff000082;
+  display: block;
+  color: white;
+}
