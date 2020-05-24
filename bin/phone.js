@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-const User = require('../models/user')
+const User = require('../models/user');
+const { ENV_PATH } = require('../config/path')
+require('dotenv').config({ path: ENV_PATH })
 const { DB_PORT } = require('../config/database');
 
 mongoose.set('useCreateIndex', true)
@@ -19,7 +21,7 @@ mongoose.connect(DB_PORT, {useNewUrlParser: true})
 //   }
 // }
 const migrate = async() => {
-  const users = await User.find({del: true}).catch(err=>{
+  const users = await User.find({del: true, 'proxy_phone.is_released': false}).catch(err=>{
     console.log('err', err)
   })
   for(let i=0; i<users.length; i++){
@@ -30,7 +32,7 @@ const migrate = async() => {
       user.save().then(()=>{
         console.log(number)
       }).catch(err=>{
-        console.err('err', err)
+        console.err('err', err.message)
       })
     }
   }

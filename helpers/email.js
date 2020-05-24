@@ -104,7 +104,6 @@ const bulkEmail = async(data) => {
         content: email_content,
         subject: email_subject,
         contacts: contacts[i],
-        message_id: _res[0].headers['x-message-id'],
         user: currentUser.id,
         updated_at: new Date(),
         created_at: new Date(),
@@ -2227,7 +2226,7 @@ const bulkImage = async(data) => {
 }
 
 const generateUnsubscribeLink = (id) => {
-  return `<p style="color: #222;margin-top: 20px;font-size: 11px;">If you'd like to unsubscribe and stop receiving these emails <a href="${urls.UNSUBSCRIPTION_URL}${id}" style="color: #222;"> Unsubscribe.</a></p>`;
+  return `<p style="color: #222;margin-top: 20px;font-size: 11px;">If you'd like to unsubscribe and stop receiving these emails <a href="${urls.UNSUBSCRIPTION_URL}${id}" style="color: #222;"> Unsubscribe.</a></p><p style="color: #222;margin-top: 20px;font-size: 11px;">Or If you'd like to resubscribe receiving these emails <a href="${urls.RESUBSCRIPTION_URL}${id}" style="color: #222;"> Resubscribe.</a></p>`;
 }
 
 const generateOpenTrackLink = (id) => {

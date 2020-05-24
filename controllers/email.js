@@ -1535,7 +1535,7 @@ const unSubscribeEmail = async(req, res) => {
           }
         
           const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email:' +'\n'
-          const created_at =moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a')
+          const created_at = moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a')
           const time = ' on ' + created_at + '\n '
           const contact_link = urls.CONTACT_PAGE_URL + contact.id 
           twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
@@ -1545,6 +1545,251 @@ const unSubscribeEmail = async(req, res) => {
       } 
   }
   res.send('You successfully unsubscribed CRMGrow email')
+  return 
+}
+
+const reSubscribeEmail = async(req, res) => {
+  const activity = await Activity.findOne({_id: req.params.id}).catch(err=>{
+    console.log('activity finding err', err.message)
+  })
+
+  let _activity
+  if(activity){
+    const user = await User.findOne({ _id: activity.user }).catch(err => {
+      console.log('err', err.message)
+    })
+  
+    const contact = await Contact.findOne({ _id: activity.contacts }).catch(err => {
+      console.log('err', err.message)
+    })
+    
+    let action = 'resubscribed'
+    
+    if(user && contact){
+      const activity_type = activity.type
+      switch (activity_type) {
+        case 'emails':
+          const email_tracker = new EmailTracker({
+            user: user.id,
+            contact: contact.id,
+            email: activity.emails,
+            type: 'resubscribe',
+            activity: activity.id,
+            updated_at: new Date(),
+            created_at: new Date(),
+          })
+          
+          const _email_tracker = await email_tracker.save().then().catch(err=>{
+            console.log('email tracker save error', err.message)
+          })
+          
+          _activity = new Activity({
+            content: 'resubscribed email',
+            contacts: contact.id,
+            user: user.id,
+            type: 'email_trackers',
+            emails: activity.emails,
+            email_trackers: _email_tracker.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          break;
+        case 'videos':
+          const video_tracker = new VideoTracker({
+            user: user.id,
+            contact: contact.id,
+            video: activity.videos,
+            type: 'resubscribe',
+            activity: activity.id,
+            updated_at: new Date(),
+            created_at: new Date(),
+          })
+          
+          const _video_tracker = await video_tracker.save().then().catch(err=>{
+            console.log('video track save error', err.message)
+          })
+          
+          _activity = new Activity({
+            content: 'resubscribed video email',
+            contacts: contact.id,
+            user: user.id,
+            type: 'video_trackers',
+            videos: activity.videos,
+            video_trackers: _video_tracker.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          break;
+        case 'pdfs':
+          const pdf_tracker = new PDFTracker({
+            user: user.id,
+            contact: contact.id,
+            pdf: activity.pdfs,
+            type: 'resubscribe',
+            activity: activity.id,
+            updated_at: new Date(),
+            created_at: new Date(),
+          })
+          
+          const _pdf_tracker = await pdf_tracker.save().then().catch(err=>{
+            console.log('pdf track save error', err.message)
+          })
+          
+          _activity = new Activity({
+            content: 'resubscribed pdf email',
+            contacts: contact.id,
+            user: user.id,
+            type: 'pdf_trackers',
+            pdfs: activity.pdfs,
+            pdf_trackers: _pdf_tracker.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          break;
+        case 'images':
+          const image_tracker = new ImageTracker({
+            user: user.id,
+            contact: contact.id,
+            image: activity.images,
+            type: 'resubscribe',
+            activity: activity.id,
+            updated_at: new Date(),
+            created_at: new Date(),
+          })
+          
+          const _image_tracker = await image_tracker.save().then().catch(err=>{
+            console.log('image track save error', err.message)
+          })
+          
+          _activity = new Activity({
+            content: 'resubscribed image email',
+            contacts: contact.id,
+            user: user.id,
+            type: 'image_trackers',
+            images: activity.images,
+            image_trackers: _image_tracker.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          break;
+        default:
+          break;
+      }
+    }
+    
+    const last_activity = await _activity.save().then().catch(err=>{
+      console.log('err', err.message)
+    })
+    Contact.update({_id: contact.id}, { $set: { last_activity: last_activity.id } ,  $pull: {tags: {$in: ['unsubscribed']}}}).catch(err => {
+      console.log('err', err.message)
+    })
+    
+    let resubscribed = new Date();
+    const created_at = moment(resubscribed).utcOffset(user.time_zone).format('h:mm a') 
+    
+    const garbage = await Garbage.findOne({user: user.id}).catch(err=>{
+      console.log('err', err)
+    }) 
+    
+    const email_notification = garbage['email_notification']
+      
+    if(email_notification['resubscription']){
+      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY); 
+      const msg = {
+        to: user.email,
+        from: mail_contents.NOTIFICATION_UNSUBSCRIPTION.MAIL,
+        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          subject: `${mail_contents.NOTIFICATION_UNSUBSCRIPTION.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          activity: contact.first_name + ' '+action+' email' + ' at ' + created_at,
+          detailed_activity: "<a href='" + urls.CONTACT_PAGE_URL + contact.id + "'><img src='"+urls.DOMAIN_URL+"assets/images/contact.png'/></a>"
+        },
+      };
+      sgMail.send(msg).catch(err => console.error(err))
+    }
+      
+      const desktop_notification = garbage['desktop_notification']
+      
+      if(desktop_notification['resubscription']){
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            config.VAPID.PUBLIC_VAPID_KEY,
+            config.VAPID.PRIVATE_VAPID_KEY
+          )
+          
+          const subscription = JSON.parse(user.desktop_notification_subscription)
+          const title = contact.first_name + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email' 
+          const created_at =moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(resubscribed).utcOffset(user.time_zone).format('h:mm a')
+          const body =contact.first_name  + ' ' + contact.last_name + ' - ' + contact.email + ' ' + action + ' email: '+' on ' + created_at
+          const playload = JSON.stringify({notification: {"title":title, "body":body, "icon": "/fav.ico","badge": '/fav.ico'}})
+          webpush.sendNotification(subscription, playload).catch(err => console.error(err))
+      }
+      const text_notification = garbage['text_notification']
+      if(text_notification['resubscription']){
+        const e164Phone = phone(user.cell_phone)[0]
+      
+        if (!e164Phone) {
+          const error = {
+            error: 'Invalid Phone Number'
+          }
+      
+          throw error // Invalid phone number
+        } else {
+          let fromNumber = user['proxy_number'];
+          if(!fromNumber) {
+            const areaCode = user.cell_phone.substring(1, 4)
+        
+            const data = await twilio
+            .availablePhoneNumbers('US')
+            .local.list({
+              areaCode: areaCode,
+            })
+          
+            let number = data[0];
+        
+            if(typeof number == 'undefined'){
+              const areaCode1 = user.cell_phone.substring(1, 3)
+        
+              const data1 = await twilio
+              .availablePhoneNumbers('US')
+              .local.list({
+                areaCode: areaCode1,
+              })
+              number = data1[0];
+            }
+            
+            if(typeof number != 'undefined'){
+              const proxy_number = await twilio.incomingPhoneNumbers.create({
+                phoneNumber: number.phoneNumber,
+                smsUrl:  urls.SMS_RECEIVE_URL
+              })
+              
+              console.log('proxy_number', proxy_number)
+              user['proxy_number'] = proxy_number.phoneNumber;
+              fromNumber = user['proxy_number'];
+              user.save().catch(err=>{
+                console.log('err', err)
+              })
+            } else {
+              fromNumber = config.TWILIO.TWILIO_NUMBER
+            } 
+          }
+        
+          const title = contact.first_name + ' ' + contact.last_name +  '\n' + contact.email +  '\n' + contact.cell_phone + '\n'+'\n'+ action + ' email:' +'\n'
+          const created_at = moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') + ' at ' + moment(resubscribed).utcOffset(user.time_zone).format('h:mm a')
+          const time = ' on ' + created_at + '\n '
+          const contact_link = urls.CONTACT_PAGE_URL + contact.id 
+          twilio.messages.create({from: fromNumber, body: title+'\n'+time +contact_link,  to: e164Phone}).catch(err=>{
+            console.log('send sms err: ', err)
+          })
+        } 
+      } 
+  }
+  res.send('You successfully resubscribed CRMGrow email')
   return 
 }
 
@@ -1559,4 +1804,5 @@ module.exports = {
   receiveEmailSendGrid,
   receiveEmail,
   unSubscribeEmail,
+  reSubscribeEmail
 }

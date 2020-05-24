@@ -392,7 +392,7 @@ const create = async (req, res) => {
       }
 
       sgMail.send(msg).catch(err=>{
-        console.log('err', err)
+        console.log('err', err.message)
       })
 
       myJSON = JSON.stringify(_res)
