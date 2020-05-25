@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const GuestSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    name: String,
     email: String,
     hash: String,
     salt: String,

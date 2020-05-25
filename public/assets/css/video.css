@@ -471,3 +471,12 @@ body {
 .footer-desc {
     margin-bottom: 0px;
 }
+
+.watched-time {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: #fff8;
+    padding: 4px 8px;
+    font-size: 12px;
+}

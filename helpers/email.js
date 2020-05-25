@@ -3,15 +3,14 @@ const { google } = require('googleapis');
 const moment = require('moment');
 const path = require('path');
 const mime = require('mime-types');
-const uuidv1 = require('uuid/v1');
 
 const OAuth2 = google.auth.OAuth2;
-const Base64 = require('js-base64').Base64;
+const uuidv1 = require('uuid/v1');
 const oauth2 = require('simple-oauth2')(credentials);
 var graph = require('@microsoft/microsoft-graph-client');
+const Base64 = require('js-base64').Base64;
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
-
 const sgMail = require('@sendgrid/mail');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
@@ -43,7 +42,6 @@ const isBlockedEmail = (email) => {
     yahoo.test(String(email).toLowerCase())
   );
 };
-
 const makeBody = (to, from, subject, message) => {
   var str = [
     'Content-Type: text/html; charset="UTF-8"\n',
@@ -66,7 +64,7 @@ const makeBody = (to, from, subject, message) => {
 
 const bulkEmail = async (data) => {
   const { user, subject, content, bcc, cc, contacts } = data;
-  const error = [];
+
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
     console.log('user find err', err.message);
   });
@@ -90,24 +88,22 @@ const bulkEmail = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise((resolve, reject) => {
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
+          promise = new Promise(async (resolve, reject) => {
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise((resolve, reject) => {
-            error.push({
+          promise = new Promise(async (resolve, reject) => {
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -145,7 +141,7 @@ const bulkEmail = async (data) => {
         .save()
         .then()
         .catch((err) => {
-          console.log('err', err);
+          console.log('email found err', err.message);
         });
 
       const _activity = new Activity({
@@ -206,7 +202,7 @@ const bulkEmail = async (data) => {
             }
           })
           .catch((err) => {
-            console.log('err', err.message);
+            console.log('email sending err', err.message);
             resolve({
               status: false,
               contact: contacts[i],
@@ -232,13 +228,19 @@ const bulkEmail = async (data) => {
 
     await oauth2Client.getAccessToken().catch((err) => {
       console.log('get access err', err.message);
-      return new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          err,
-        });
-      });
+      promise_array.push(
+        new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            err: err.message,
+          });
+        })
+      );
     });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let email_subject = subject;
@@ -257,23 +259,21 @@ const bulkEmail = async (data) => {
         });
         if (_contact) {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -312,7 +312,7 @@ const bulkEmail = async (data) => {
           .save()
           .then()
           .catch((err) => {
-            console.log('err', err);
+            console.log('email found err', err.message);
           });
 
         const _activity = new Activity({
@@ -387,14 +387,14 @@ const bulkEmail = async (data) => {
                 });
               });
           } catch (err) {
-            console.log('gmail send err helper 316', err.message);
+            console.log('gmail send err helper', err.message);
             resolve({
               contact: contacts[i],
               err: err.message || err.mgs,
             });
           }
         }).catch((err) => {
-          console.log('gmail promise err helper 323', err.message);
+          console.log('gmail promise err helper', err.message);
         });
       } else {
         promise = new Promise((resolve, reject) => {
@@ -433,13 +433,19 @@ const bulkEmail = async (data) => {
         })
         .catch((err) => {
           console.log('outlook token grant error', err.message);
-          return new Promise((resolve, reject) => {
-            resolve({
-              status: false,
-              err,
-            });
-          });
+          promise_array.push(
+            new Promise((resolve, reject) => {
+              resolve({
+                status: false,
+                err: err.message,
+              });
+            })
+          );
         });
+
+      if (promise_array.length > 0) {
+        return Promise.all(promise_array);
+      }
 
       const client = graph.Client.init({
         // Use the provided access token to authenticate
@@ -464,24 +470,26 @@ const bulkEmail = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
               err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -616,7 +624,6 @@ const bulkEmail = async (data) => {
 
 const bulkVideo = async (data) => {
   const { user, content, subject, videos, contacts } = data;
-  const error = [];
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
     console.log('err', err);
   });
@@ -640,23 +647,27 @@ const bulkVideo = async (data) => {
         });
         if (_contact) {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
+            resolve({
               contact: {
+                id: contacts[i],
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+            resolve({
+              contact: {
+                id: contacts[i],
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email removed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -849,14 +860,20 @@ const bulkVideo = async (data) => {
     const token = JSON.parse(currentUser.google_refresh_token);
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
-      console.log('get access err', err);
-      return new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          err,
-        });
-      });
+      console.log('get access err', err.message || err.msg);
+      promise_array.push(
+        new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            err,
+          });
+        })
+      );
     });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -871,24 +888,28 @@ const bulkVideo = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
+                id: contacts[i],
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                id: contacts[i],
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -949,7 +970,7 @@ const bulkVideo = async (data) => {
             .save()
             .then()
             .catch((err) => {
-              console.log('err', err);
+              console.log('err', err.message);
             });
 
           if (videos.length >= 2) {
@@ -1041,7 +1062,7 @@ const bulkVideo = async (data) => {
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {
-                  console.log('err', err);
+                  console.log('contact find err', err.message);
                 });
                 resolve({
                   status: true,
@@ -1059,13 +1080,13 @@ const bulkVideo = async (data) => {
                 });
               });
           } catch (err) {
-            console.log('err', err);
+            console.log('err', err.message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+              console.log('activity delete err', err.message);
             });
             resolve({
               status: false,
-              err,
+              err: err.message,
               contact: contacts[i],
             });
           }
@@ -1104,14 +1125,20 @@ const bulkVideo = async (data) => {
         accessToken = token.access_token;
       })
       .catch((err) => {
-        console.log('outlook token grant error', err);
-        return new Promise((resolve, reject) => {
-          resolve({
-            status: false,
-            err,
-          });
-        });
+        console.log('outlook token grant error', err.message || err.msg);
+        promise_array.push(
+          new Promise((resolve, reject) => {
+            resolve({
+              status: false,
+              err: err.message || err.msg,
+            });
+          })
+        );
       });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     const client = graph.Client.init({
       // Use the provided access token to authenticate
@@ -1135,23 +1162,25 @@ const bulkVideo = async (data) => {
         });
         if (_contact) {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -1212,7 +1241,7 @@ const bulkVideo = async (data) => {
             .save()
             .then()
             .catch((err) => {
-              console.log('err', err);
+              console.log('activity found err', err.message);
             });
 
           if (videos.length >= 2) {
@@ -1298,20 +1327,21 @@ const bulkVideo = async (data) => {
               }).catch((err) => {
                 console.log('err', err.message);
               });
+              resolve({
+                status: true,
+              });
             })
             .catch((err) => {
               Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err.message);
+                console.log('activity delete err', err.message);
               });
-              console.log('err', err.message);
+              console.log('outlook send err', err.message);
               resolve({
                 status: false,
                 contact: contacts[i],
+                err: err.message,
               });
             });
-          resolve({
-            status: true,
-          });
         });
         promise_array.push(promise);
       }
@@ -1323,9 +1353,8 @@ const bulkVideo = async (data) => {
 
 const bulkPDF = async (data) => {
   const { user, content, subject, pdfs, contacts } = data;
-  const error = [];
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('err', err);
+    console.log('user found err', err.message);
   });
 
   if (!currentUser.primary_connected) {
@@ -1343,25 +1372,28 @@ const bulkPDF = async (data) => {
         _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
           console.log('contact found err', err.message);
         });
+
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found err',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -1416,12 +1448,11 @@ const bulkPDF = async (data) => {
           .save()
           .then()
           .catch((err) => {
-            console.log('err', err);
+            console.log('activity found err', err.message);
           });
 
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
 
-        console.log('pdf_link', pdf_link);
         if (pdfs.length >= 2) {
           pdf_titles = mail_contents.PDF_TITLE;
         } else {
@@ -1490,7 +1521,7 @@ const bulkPDF = async (data) => {
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
-                console.log('err', err);
+                console.log('contact found err', err.message);
               });
               resolve({
                 status: true,
@@ -1498,7 +1529,7 @@ const bulkPDF = async (data) => {
             } else {
               try {
                 Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                  console.log('err', err.message);
+                  console.log('activity delete err', err.message);
                 });
               } catch (err) {
                 console.log('email sending err', msg.to + _res[0].statusCode);
@@ -1512,13 +1543,12 @@ const bulkPDF = async (data) => {
           })
           .catch((err) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err.message);
+              console.log('activity delete err', err.message);
             });
-            console.log('email sending err', msg.to);
-            console.log('err', err);
+            console.log('email sending err', err.message);
             resolve({
               status: false,
-              err,
+              err: err.message,
               contact: contacts[i],
             });
           });
@@ -1537,14 +1567,20 @@ const bulkPDF = async (data) => {
     const token = JSON.parse(currentUser.google_refresh_token);
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
-      console.log('get access err', err);
-      return new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          err,
-        });
-      });
+      console.log('get access err', err.message);
+      promise_array.push(
+        new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            err,
+          });
+        })
+      );
     });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -1559,24 +1595,26 @@ const bulkPDF = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact found err',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -1730,7 +1768,7 @@ const bulkPDF = async (data) => {
                 });
               });
           } catch (err) {
-            console.log('err', err);
+            console.log('email send err', err.message || err.msg);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });
@@ -1777,14 +1815,20 @@ const bulkPDF = async (data) => {
           accessToken = token.access_token;
         })
         .catch((err) => {
-          console.log('outlook token grant error', err);
-          return new Promise((resolve, reject) => {
-            resolve({
-              status: false,
-              err,
-            });
-          });
+          console.log('outlook token grant error', err.message);
+          promise_array.push(
+            new Promise((resolve, reject) => {
+              resolve({
+                status: false,
+                err: err.message || err.msg,
+              });
+            })
+          );
         });
+
+      if (promise_array.length > 0) {
+        return Promise.all(promise_array);
+      }
 
       const client = graph.Client.init({
         // Use the provided access token to authenticate
@@ -1807,23 +1851,25 @@ const bulkPDF = async (data) => {
         });
         if (_contact) {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -1877,7 +1923,7 @@ const bulkPDF = async (data) => {
           .save()
           .then()
           .catch((err) => {
-            console.log('err', err);
+            console.log('activity save err', err.message);
           });
 
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
@@ -1952,10 +1998,11 @@ const bulkPDF = async (data) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
-              console.log('err', err);
+            Contact.updateMany(
+              { _id: contacts[i] },
+              { $set: { last_activity: activity.id } }
+            ).catch((err) => {
+              console.log('contact update err', err.message);
             });
             resolve({
               status: true,
@@ -1963,9 +2010,9 @@ const bulkPDF = async (data) => {
           })
           .catch((err) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+              console.log('activity delete err', err.message);
             });
-            console.log('err', err);
+            console.log('email send err', err.message || err.msg);
             resolve({
               status: false,
               contact: contacts[i],
@@ -1981,9 +2028,8 @@ const bulkPDF = async (data) => {
 
 const bulkImage = async (data) => {
   const { user, content, subject, images, contacts } = data;
-  const error = [];
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('err', err);
+    console.log('current user found err', err.message);
   });
 
   if (!currentUser.primary_connected) {
@@ -2002,24 +2048,26 @@ const bulkImage = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found email',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -2158,7 +2206,7 @@ const bulkImage = async (data) => {
             } else {
               try {
                 Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                  console.log('err', err);
+                  console.log('activity found err', err.message);
                 });
               } catch (err) {
                 console.log('email sending err', msg.to + _res[0].statusCode);
@@ -2172,13 +2220,12 @@ const bulkImage = async (data) => {
           })
           .catch((err) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+              console.log('activity found err', err.message);
             });
-            console.log('email sending err', msg.to);
-            console.error(err);
+            console.error('email sending err', err.message);
             resolve({
               status: false,
-              err,
+              err: err.message,
               contact: contacts[i],
             });
           });
@@ -2208,14 +2255,20 @@ const bulkImage = async (data) => {
         accessToken = token.access_token;
       })
       .catch((err) => {
-        console.log('outlook token grant error', err);
-        return new Promise((resolve, reject) => {
-          resolve({
-            status: false,
-            err,
-          });
-        });
+        console.log('outlook token grant error', err.message);
+        promise_array.push(
+          new Promise((resolve, reject) => {
+            resolve({
+              status: false,
+              err: err.message,
+            });
+          })
+        );
       });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     const client = graph.Client.init({
       // Use the provided access token to authenticate
@@ -2238,24 +2291,26 @@ const bulkImage = async (data) => {
           console.log('contact found err', err.message);
         });
         if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
+          promise = new Promise((resolve, reject) => {
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
-          promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+          promise = new Promise((resolve, reject) => {
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
@@ -2388,10 +2443,11 @@ const bulkImage = async (data) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
-              console.log('err', err);
+            Contact.updateMany(
+              { _id: contacts[i] },
+              { $set: { last_activity: activity.id } }
+            ).catch((err) => {
+              console.log('contact update err', err.message);
               resolve({
                 status: true,
               });
@@ -2399,12 +2455,12 @@ const bulkImage = async (data) => {
           })
           .catch((err) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+              console.log('activity not found err', err.message);
             });
-            console.log('err', err);
+            console.log('activity found err', err.message);
             resolve({
               status: false,
-              err,
+              err: err.message,
               contact: contacts[i],
             });
           });
@@ -2425,14 +2481,20 @@ const bulkImage = async (data) => {
     const token = JSON.parse(currentUser.google_refresh_token);
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
-      console.log('get access err', err);
-      return new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          err,
-        });
-      });
+      console.log('get access err', err.message);
+      promise_array.push(
+        new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            err,
+          });
+        })
+      );
     });
+
+    if (promise_array.length > 0) {
+      return Promise.all(promise_array);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -2448,23 +2510,25 @@ const bulkImage = async (data) => {
         });
         if (_contact) {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;
         } else {
           promise = new Promise(async (resolve, reject) => {
-            error.push({
-              err: 'contact email unsubscribed',
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found',
             });
-            resolve();
           });
           promise_array.push(promise);
           continue;

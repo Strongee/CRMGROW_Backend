@@ -264,3 +264,21 @@ footer {
     color: #b2b2b2;
     padding: 15px 0px;
 }
+
+.watched-time {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background: #fff8;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 50px;
+  text-align: center;
+}
+
+
+.watched-time.connected {
+  background-color: #ff000082;
+  display: block;
+  color: white;
+}

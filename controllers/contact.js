@@ -1375,6 +1375,7 @@ const leadContact = async (req, res) => {
 const isArray = function (a) {
   return !!a && a.constructor === Array;
 };
+
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
   const {
