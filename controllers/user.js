@@ -24,7 +24,7 @@ const credentials = {
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
-const oauth21 = require('simple-oauth2')(credentials);
+const oauth2 = require('simple-oauth2')(credentials);
 
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
