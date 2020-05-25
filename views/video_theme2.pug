@@ -68,6 +68,8 @@ section.material-section
           else 
             video#player(poster=`${video.thumbnail}`, autoplay, controls, name="media")
               source(src=`${video.url}`, type=`video/mp4`)
+          .watched-time
+            | 00:00
 .highlights-section
   h3.text-center Company Hightlights
   .container.cs-container.hightlights-slider
