@@ -140,7 +140,7 @@ const play1 = async (req, res) => {
   const activity = await Activity.findOne({ _id: req.params.id })
     .populate([{ path: 'user' }, { path: 'videos' }])
     .catch((err) => {
-      console.log('err', error1);
+      console.log('err', err);
     });
 
   if (activity) {

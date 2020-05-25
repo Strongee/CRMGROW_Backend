@@ -5,9 +5,27 @@ const randomstring = require('randomstring');
 const sgMail = require('@sendgrid/mail');
 const { google } = require('googleapis');
 const outlook = require('node-outlook');
-const oauth2 = require('simple-oauth2')(credentials);
+
+const config = require('../config/config');
+
+const yahooCredentials = {
+  clientID: config.YAHOO_CLIENT.YAHOO_CLIENT_ID1,
+  clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
+  site: 'https://api.login.yahoo.com',
+  authorizationPath: '/oauth2/request_auth',
+  tokenPath: '/oauth2/get_token',
+};
 const yahooOauth2 = require('simple-oauth2')(yahooCredentials);
-const client = require('twilio')(accountSid, authToken);
+
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token',
+};
+const oauth21 = require('simple-oauth2')(credentials);
+
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
 const Activity = require('../models/activity');
@@ -19,26 +37,8 @@ const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 
-const config = require('../config/config');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-
-const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
-  site: 'https://login.microsoftonline.com/common',
-  authorizationPath: '/oauth2/v2.0/authorize',
-  tokenPath: '/oauth2/v2.0/token',
-};
-const yahooCredentials = {
-  clientID: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
-  clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
-  site: 'https://api.login.yahoo.com',
-  authorizationPath: '/oauth2/request_auth',
-  tokenPath: '/oauth2/get_token',
-};
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
