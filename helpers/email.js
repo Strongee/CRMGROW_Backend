@@ -46,6 +46,7 @@ const sgMail = require('@sendgrid/mail')
 
 const bulkEmail = async(data) => {
   let {user, subject, content, bcc, cc, contacts} = data
+  
   const currentUser = await User.findOne({_id: user}).catch(err=>{
     console.log('user find err', err.message)
   })
@@ -67,23 +68,21 @@ const bulkEmail = async(data) => {
         })
         if(_contact){
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -109,8 +108,8 @@ const bulkEmail = async(data) => {
         created_at: new Date(),
       })
       
-      const _email = await email.save().then().catch(err => {
-        console.log('err', err)
+      const _email = await email.save().then().catch(err =>{
+        console.log('email found err', err.message)
       })
       
       const _activity = new Activity({
@@ -159,7 +158,7 @@ const bulkEmail = async(data) => {
             })
           }
         }).catch(err => {
-          console.log('err', err.message)
+          console.log('email sending err', err.message)
           resolve({
             status: false,
             contact: contacts[i],
@@ -185,13 +184,17 @@ const bulkEmail = async(data) => {
     
     await oauth2Client.getAccessToken().catch(err=>{
       console.log('get access err', err.message)
-      return new Promise((resolve, reject)=>{
+      promise_array.push(new Promise((resolve, reject)=>{
         resolve({
           status: false,
-          err: err,
+          err: err.message,
         })
-      })
+      }))
     });
+    
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
     
     for (let i = 0; i < contacts.length; i++) {
       let email_subject = subject
@@ -207,23 +210,21 @@ const bulkEmail = async(data) => {
         })
         if(_contact) {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
+              status: false,
+              contact: contacts[i],
               err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -251,7 +252,7 @@ const bulkEmail = async(data) => {
         })
         
         const _email = await email.save().then().catch(err => {
-          console.log('err', err)
+          console.log('email found err', err.message)
         })
         
         const _activity = new Activity({
@@ -307,14 +308,14 @@ const bulkEmail = async(data) => {
               })
             })  
           }catch(err){
-            console.log('gmail send err helper 316', err.message)
+            console.log('gmail send err helper', err.message)
             resolve({
-            contact: contacts[i],
-            err: err.message || err.mgs,
+              contact: contacts[i],
+              err: err.message || err.mgs,
             })
           }
         }).catch(err=>{
-          console.log('gmail promise err helper 323', err.message)
+          console.log('gmail promise err helper', err.message)
         })
       } else {
         promise = new Promise((resolve, reject)=>{
@@ -347,17 +348,20 @@ const bulkEmail = async(data) => {
         })
       }).then((token) => {
         accessToken = token.access_token
-    
       }).catch((err) => {
         console.log('outlook token grant error', err.message)
-        return new Promise((resolve, reject)=>{
+        promise_array.push(new Promise((resolve, reject)=>{
           resolve({
             status: false,
-            err: err,
+            err: err.message,
           })
-        })
+        }))
       })
     
+      if(promise_array.length>0){
+        return Promise.all(promise_array)
+      }
+      
       const client = graph.Client.init({
         // Use the provided access token to authenticate
         // requests
@@ -379,24 +383,26 @@ const bulkEmail = async(data) => {
           console.log('contact found err', err.message)
         })
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
               err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -525,23 +531,27 @@ const bulkVideo = async(data) => {
         })
         if(_contact) {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
               contact: {
+                id: contacts[i],
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+            resolve({
+              contact: {
+                id: contacts[i],
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email removed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -625,12 +635,12 @@ const bulkVideo = async(data) => {
         }
             
         if(video_content.search(/{video_title}/ig) != -1){
-            video_content = video_content.replace(/{video_title}/ig, video_titles)
+          video_content = video_content.replace(/{video_title}/ig, video_titles)
         }
             
         if(video_content.search(/{video_description}/ig) != -1){
-              video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-            }
+          video_content = video_content.replace(/{video_description}/ig, video_descriptions)
+        }
             
         const msg = {
           to: _contact.email,
@@ -695,14 +705,20 @@ const bulkVideo = async(data) => {
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({ refresh_token: token.refresh_token })
     await oauth2Client.getAccessToken().catch(err=>{
-      console.log('get access err', err)
-      return new Promise((resolve, reject)=>{
-        resolve({
-          status: false,
-          err: err,
+      console.log('get access err', err.message || err.msg)
+      promise_array.push(
+        new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
         })
-      })
+      ) 
     });
+    
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
     
     for(let i=0; i<contacts.length; i++){
       let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
@@ -714,24 +730,28 @@ const bulkVideo = async(data) => {
           console.log('contact found err', err.message)
         })
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
+                id: contacts[i],
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                id: contacts[i],
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -781,7 +801,7 @@ const bulkVideo = async(data) => {
             })
             
             activity = await _activity.save().then().catch(err=>{
-              console.log('err', err)
+              console.log('err', err.message)
             })
             
             if(videos.length>=2){
@@ -848,7 +868,7 @@ const bulkVideo = async(data) => {
                 body: body
               }).then(()=>{
                 Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-                  console.log('err', err)
+                  console.log('contact find err', err.message)
                 })
                 resolve({
                   status: true
@@ -865,13 +885,13 @@ const bulkVideo = async(data) => {
                 })
               })
             }catch(err){
-              console.log('err', err)
+              console.log('err', err.message)
               Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err)
+                console.log('activity delete err', err.message)
               })
               resolve({
                 status: false,
-                err: err,
+                err: err.message,
                 contact: contacts[i]
               })
             }     
@@ -905,17 +925,20 @@ const bulkVideo = async(data) => {
       })
     }).then((token)=>{
       accessToken = token.access_token
-      
     }).catch((err) => {
-      console.log('outlook token grant error', err)
-        return new Promise((resolve, reject)=>{
-          resolve({
-            status: false,
-            err: err,
-          })
+      console.log('outlook token grant error', err.message || err.msg)
+      promise_array.push(new Promise((resolve, reject)=>{
+        resolve({
+          status: false,
+          err: err.message || err.msg,
         })
+      })) 
     })
   
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
+    
     const client = graph.Client.init({
       // Use the provided access token to authenticate
       // requests
@@ -935,23 +958,25 @@ const bulkVideo = async(data) => {
         })
         if(_contact) {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -966,60 +991,60 @@ const bulkVideo = async(data) => {
         let video_content = content
         let activity
         for(let j=0; j<videos.length; j++){
-            const video = videos[j]         
-            let preview
-            if(video['preview']){
-              preview = video['preview']
-            } else {
-              preview = video['thumbnail'] + '-resize'
-            }
-        
-            
-            if(typeof video_content == 'undefined'){
-              video_content = ''
-            }
-            
-            video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-            .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-            .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-            
-            video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-            .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-            .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-            .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-            
-            const _activity = new Activity({
-              content: 'sent video using email',
-              contacts: contacts[i],
-              user: currentUser.id,
-              type: 'videos',
-              videos: video._id,
-              created_at: new Date(),
-              updated_at: new Date(),
-              subject: video_subject,
-              description: video_content
-            })
-            
-            activity = await _activity.save().then().catch(err=>{
-              console.log('err', err)
-            })
-            
-            if(videos.length>=2){
-              video_titles = mail_contents.VIDEO_TITLE
-            }else{
-              video_titles = `${video.title}`
-            }
-            
-            if(j < videos.length-1){  
-              video_descriptions = video_descriptions + `${video.description}, ` 
-            } else{
-              video_descriptions = video_descriptions + video.description
-            }
-            const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-            //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-            const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-            video_objects = video_objects + video_object                      
+          const video = videos[j]         
+          let preview
+          if(video['preview']){
+            preview = video['preview']
+          } else {
+            preview = video['thumbnail'] + '-resize'
+          }
+      
+          
+          if(typeof video_content == 'undefined'){
+            video_content = ''
+          }
+          
+          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
+          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
+          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
+          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
+          
+          const _activity = new Activity({
+            content: 'sent video using email',
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: video._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            subject: video_subject,
+            description: video_content
+          })
+          
+          activity = await _activity.save().then().catch(err=>{
+            console.log('activity found err', err.message)
+          })
+          
+          if(videos.length>=2){
+            video_titles = mail_contents.VIDEO_TITLE
+          }else{
+            video_titles = `${video.title}`
+          }
+          
+          if(j < videos.length-1){  
+            video_descriptions = video_descriptions + `${video.description}, ` 
+          } else{
+            video_descriptions = video_descriptions + video.description
+          }
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
+          //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
+          video_objects = video_objects + video_object                      
         }
         
         if(video_subject == '' ){
@@ -1028,59 +1053,60 @@ const bulkVideo = async(data) => {
           video_subject = video_subject.replace(/{video_title}/ig, video_titles)
         }
       
-          if(video_content.search(/{video_object}/ig) != -1){
-            video_content = video_content.replace(/{video_object}/ig, video_objects)
-          }else{
-            video_content = video_content+'<br/>'+video_objects
-          }
+        if(video_content.search(/{video_object}/ig) != -1){
+          video_content = video_content.replace(/{video_object}/ig, video_objects)
+        }else{
+          video_content = video_content+'<br/>'+video_objects
+        }
           
-          if(video_content.search(/{video_title}/ig) != -1){
-            video_content = video_content.replace(/{video_title}/ig, video_titles)
-          }
-          
-          if(video_content.search(/{video_description}/ig) != -1){
-            video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-          }
-          
-          const sendMail = {
-            message: {
-              subject: video_subject,
-              body: {
-                contentType: "HTML",
-                content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-                  +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-              },
-              toRecipients: [
-                {
-                  emailAddress: {
-                    address: _contact.email,
-                  }
-                }
-              ],
-            },
-            saveToSentItems: "true"
-          };
+        if(video_content.search(/{video_title}/ig) != -1){
+          video_content = video_content.replace(/{video_title}/ig, video_titles)
+        }
         
-          promise = new Promise((resolve, reject)=>{
-            client.api('/me/sendMail')
-            .post(sendMail).then(()=>{
-              Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-                console.log('err', err.message)
-              })
-            }).catch(err=>{
-              Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err.message)
-              })
+        if(video_content.search(/{video_description}/ig) != -1){
+          video_content = video_content.replace(/{video_description}/ig, video_descriptions)
+        }
+          
+        const sendMail = {
+          message: {
+            subject: video_subject,
+            body: {
+              contentType: "HTML",
+              content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+                +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+            },
+            toRecipients: [
+              {
+                emailAddress: {
+                  address: _contact.email,
+                }
+              }
+            ],
+          },
+          saveToSentItems: "true"
+        };
+        
+        promise = new Promise((resolve, reject)=>{
+          client.api('/me/sendMail')
+          .post(sendMail).then(()=>{
+            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
               console.log('err', err.message)
-              resolve({
-                status: false,
-                contact: contacts[i]
-              })
-            });
+            })
             resolve({
               status: true
             })
-          })
+          }).catch(err=>{
+            Activity.deleteOne({_id: activity.id}).catch(err=>{
+              console.log('activity delete err', err.message)
+            })
+            console.log('outlook send err', err.message)
+            resolve({
+              status: false,
+              contact: contacts[i],
+              err: err.message
+            })
+          });
+        })
         promise_array.push(promise)
       }
     }
@@ -1092,7 +1118,7 @@ const bulkVideo = async(data) => {
 const bulkPDF = async(data) => {
   let {user, content, subject, pdfs, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
-    console.log('err', err)
+    console.log('user found err', err.message)
   })
   
   if(!currentUser.primary_connected){
@@ -1107,25 +1133,28 @@ const bulkPDF = async(data) => {
         _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
           console.log('contact found err', err.message)
         })
+        
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found err'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -1169,12 +1198,11 @@ const bulkPDF = async(data) => {
         })
             
         activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
+          console.log('activity found err', err.message)
         })
             
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
         
-        console.log('pdf_link', pdf_link)
         if(pdfs.length>=2){
           pdf_titles = mail_contents.PDF_TITLE
         }else{
@@ -1230,14 +1258,14 @@ const bulkPDF = async(data) => {
         if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
           console.log('status', _res[0].statusCode)
           Contact.updateMany({_id: contacts[i]} ,{ $set: {last_activity: activity.id} }).catch(err=>{
-            console.log('err', err)
+            console.log('contact found err', err.message)
           })
           resolve({
             status: true
           })
         }else {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err.message)
+            console.log('activity delete err', err.message)
           })
           
           console.log('email sending err', msg.to+res[0].statusCode)
@@ -1249,13 +1277,12 @@ const bulkPDF = async(data) => {
         }
         }).catch ((err) => {
           Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err.message)
+            console.log('activity delete err', err.message)
           })
-          console.log('email sending err', msg.to)
-          console.log('err', err)
+          console.log('email sending err', err.message)
           resolve({
             status: false,
-            err: err,
+            err: err.message,
             contact: contacts[i]
           })
         })
@@ -1274,15 +1301,19 @@ const bulkPDF = async(data) => {
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     await oauth2Client.getAccessToken().catch(err=>{
-      console.log('get access err', err)
-      return new Promise((resolve, reject)=>{
+      console.log('get access err', err.message)
+      promise_array.push(new Promise((resolve, reject)=>{
         resolve({
           status: false,
           err: err,
         })
-      })
+      })) 
     });
       
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
+    
     for(let i=0; i<contacts.length; i++){
       let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
         console.log('contact found err', err.message)
@@ -1293,24 +1324,26 @@ const bulkPDF = async(data) => {
           console.log('contact found err', err.message)
         })
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact found err'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -1402,33 +1435,44 @@ const bulkPDF = async(data) => {
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
           
         promise = new Promise((resolve, reject)=>{
-        try{
-          let body = createBody({
-            headers: {
-              To: _contact.email,
-              From: `${currentUser.user_name} <${currentUser.connected_email}>`,
-              Subject: pdf_subject,
-            },
-            textHtml:  email_content,
-            textPlain: pdf_content,
-          });
-          request({
-            method: 'POST',
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-            headers: {
-              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-            },
-            body: body
-          }).then(()=>{
-            Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve({
-              status: true
+          try{
+            let body = createBody({
+              headers: {
+                To: _contact.email,
+                From: `${currentUser.user_name} <${currentUser.connected_email}>`,
+                Subject: pdf_subject,
+              },
+              textHtml:  email_content,
+              textPlain: pdf_content,
             });
-          }).catch(err=>{
-            console.log('err', err)
+            request({
+              method: 'POST',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              headers: {
+                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+                'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
+              },
+              body: body
+            }).then(()=>{
+              Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+                console.log('err', err)
+              })
+              resolve({
+                status: true
+              });
+            }).catch(err=>{
+              console.log('err', err)
+              Activity.deleteOne({_id: activity.id}).catch(err=>{
+                console.log('err', err)
+              })
+              resolve({
+                status: false,
+                err: err,
+                contact: contacts[i]
+              })
+            })
+          }catch(err){
+            console.log('email send err', err.message || err.msg)
             Activity.deleteOne({_id: activity.id}).catch(err=>{
               console.log('err', err)
             })
@@ -1437,30 +1481,18 @@ const bulkPDF = async(data) => {
               err: err,
               contact: contacts[i]
             })
-          })
-        }catch(err){
-          console.log('err', err)
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
-          })
+          } 
+        })
+      } else {
+        promise = new Promise((resolve, reject)=>{
           resolve({
             status: false,
-            err: err,
+            err: 'no contact found',
             contact: contacts[i]
           })
-        } 
-      })
-      
-    } else {
-      promise = new Promise((resolve, reject)=>{
-        resolve({
-          status: false,
-          err: 'no contact found',
-          contact: contacts[i]
         })
-      })
-    }
-    promise_array.push(promise)
+      }
+      promise_array.push(promise)
     }
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'outlook'){
@@ -1482,17 +1514,22 @@ const bulkPDF = async(data) => {
         })
       }).then((token)=>{
         accessToken = token.access_token
-        
       }).catch((err) => {
-        console.log('outlook token grant error', err)
-        return new Promise((resolve, reject)=>{
-          resolve({
-            status: false,
-            err: err,
+        console.log('outlook token grant error', err.message)
+        promise_array.push( 
+          new Promise((resolve, reject)=>{
+            resolve({
+              status: false,
+              err: err.message || err.msg,
+            })
           })
-        })
+        )
       })
     
+      if(promise_array.length>0){
+        return Promise.all(promise_array)
+      }
+      
       const client = graph.Client.init({
         // Use the provided access token to authenticate
         // requests
@@ -1511,23 +1548,25 @@ const bulkPDF = async(data) => {
         })
         if(_contact) {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact email not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -1570,7 +1609,7 @@ const bulkPDF = async(data) => {
         })
         
         activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
+          console.log('activity save err', err.message)
         })
         
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
@@ -1635,17 +1674,17 @@ const bulkPDF = async(data) => {
       promise = new Promise((resolve, reject)=>{
         client.api('/me/sendMail')
           .post(sendMail).then(()=>{
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
+            Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+              console.log('contact update err', err.message)
             })
             resolve({
               status: true
             })
           }).catch(err=>{
             Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
+              console.log('activity delete err', err.message)
             })
-            console.log('err', err)
+            console.log('email send err', err.message || err.msg)
             resolve({
               status: false,
               contact: contacts[i],
@@ -1663,7 +1702,7 @@ const bulkImage = async(data) => {
  
   let {user, content, subject, images, contacts} = data
   const currentUser = await User.findOne({_id: user}).catch(err=>{
-    console.log('err', err)
+    console.log('current user found err', err.message)
   })
   
   if(!currentUser.primary_connected){
@@ -1679,24 +1718,26 @@ const bulkImage = async(data) => {
           console.log('contact found err', err.message)
         })
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found email'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -1805,7 +1846,7 @@ const bulkImage = async(data) => {
             })  
           }else {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
-                console.log('err', err)
+                console.log('activity found err', err.message)
               })
               console.log('email sending err', msg.to+res[0].statusCode)
               resolve({
@@ -1814,15 +1855,14 @@ const bulkImage = async(data) => {
                 contact: contacts[i]
               })
             }
-          }).catch ((err) => {
+          }).catch((err) => {
             Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
+              console.log('activity found err', err.message)
             })
-            console.log('email sending err', msg.to)
-            console.error(err)
+            console.error('email sending err', err.message)
             resolve({
               status: false,
-              err: err,
+              err: err.message,
               contact: contacts[i]
             })
           })
@@ -1847,16 +1887,21 @@ const bulkImage = async(data) => {
       })
     }).then((token)=>{
       accessToken = token.access_token
-      
     }).catch((err) => {
-      console.log('outlook token grant error', err)
-        return new Promise((resolve, reject)=>{
+      console.log('outlook token grant error', err.message)
+      promise_array.push(
+        new Promise((resolve, reject)=>{
           resolve({
             status: false,
-            err: err,
+            err: err.message,
           })
         })
+      ) 
     })
+    
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
   
     const client = graph.Client.init({
       // Use the provided access token to authenticate
@@ -1876,24 +1921,26 @@ const bulkImage = async(data) => {
           console.log('contact found err', err.message)
         })
         if(_contact) {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
+          promise = new Promise((resolve, reject)=>{
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
-          promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+          promise = new Promise((resolve, reject)=>{
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
@@ -1922,38 +1969,38 @@ const bulkImage = async(data) => {
           .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
           .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
           
-          const _activity = new Activity({
-            content: 'sent image using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'images',
-            images: image._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: image_subject,
-            description: image_content
-          })
+        const _activity = new Activity({
+          content: 'sent image using email',
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'images',
+          images: image._id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          subject: image_subject,
+          description: image_content
+        })
           
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
+        activity = await _activity.save().then().catch(err=>{
+          console.log('err', err)
+        })
 
-          const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
-          
-          if(images.length>=2){
-            image_titles = mail_contents.IMAGE_TITLE
-          }else{
-            image_titles = `${image.title}`
-          }
-          
-          if(j < images.length-1){
-            image_descriptions = image_descriptions + `${image.description}, ` 
-          } else{
-            image_descriptions = image_descriptions + image.description
-          }
-          //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-          image_objects = image_objects + image_object                      
+        const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id
+        
+        if(images.length>=2){
+          image_titles = mail_contents.IMAGE_TITLE
+        }else{
+          image_titles = `${image.title}`
+        }
+        
+        if(j < images.length-1){
+          image_descriptions = image_descriptions + `${image.description}, ` 
+        } else{
+          image_descriptions = image_descriptions + image.description
+        }
+        //const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
+        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
+        image_objects = image_objects + image_object                      
       }
       
       if(image_subject == '' ){
@@ -1963,64 +2010,63 @@ const bulkImage = async(data) => {
         image_subject = image_subject.replace(/{material_title}/ig, image_titles)
       }
     
-        if(image_content.search(/{image_object}/ig) != -1){
-          image_content = image_content.replace(/{image_object}/ig, image_objects)
-        }else{
-          image_content = image_content+'<br/>'+image_objects
-        }
-        
-        if(image_content.search(/{image_title}/ig) != -1){
-          image_content = image_content.replace(/{image_title}/ig, image_titles)
-        }
-        
-        if(image_content.search(/{image_description}/ig) != -1){
-          image_content = image_content.replace(/{image_description}/ig, image_descriptions)
-        }
-        
-        
-        const sendMail = {
-          message: {
-            subject: image_subject,
-            body: {
-              contentType: "HTML",
-              content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
-            },
-            toRecipients: [
-              {
-                emailAddress: {
-                  address: _contact.email,
-                }
-              }
-            ]
-          },
-          saveToSentItems: "true"
-        };
-      
-        promise = new Promise((resolve, reject)=>{
-          client.api('/me/sendMail')
-          .post(sendMail).then(()=>{
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-              resolve({
-                status: true
-              })
-            })
-          }).catch(err=>{
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
-            console.log('err', err)
-            resolve({
-              status: false,
-              err: err,
-              contact: contacts[i]
-            })
-          });
-        })
-        
-        promise_array.push(promise)
+      if(image_content.search(/{image_object}/ig) != -1){
+        image_content = image_content.replace(/{image_object}/ig, image_objects)
+      }else{
+        image_content = image_content+'<br/>'+image_objects
       }
+      
+      if(image_content.search(/{image_title}/ig) != -1){
+        image_content = image_content.replace(/{image_title}/ig, image_titles)
+      }
+      
+      if(image_content.search(/{image_description}/ig) != -1){
+        image_content = image_content.replace(/{image_description}/ig, image_descriptions)
+      }
+                
+      const sendMail = {
+        message: {
+          subject: image_subject,
+          body: {
+            contentType: "HTML",
+            content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
+            +image_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + generateUnsubscribeLink(activity.id) + '</body></html>'
+          },
+          toRecipients: [
+            {
+              emailAddress: {
+                address: _contact.email,
+              }
+            }
+          ]
+        },
+        saveToSentItems: "true"
+      };
+      
+      promise = new Promise((resolve, reject)=>{
+        client.api('/me/sendMail')
+        .post(sendMail).then(()=>{
+          Contact.updateMany({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
+            console.log('contact update err', err.message)
+            resolve({
+              status: true
+            })
+          })
+        }).catch(err=>{
+          Activity.deleteOne({_id: activity.id}).catch(err=>{
+            console.log('activity not found err', err.message)
+          })
+          console.log('activity found err', err.message)
+          resolve({
+            status: false,
+            err: err.message,
+            contact: contacts[i]
+          })
+        });
+      })
+        
+      promise_array.push(promise)
+    }
       
     return Promise.all(promise_array)
   } else if(currentUser.connected_email_type == 'gmail'){
@@ -2034,15 +2080,21 @@ const bulkImage = async(data) => {
     const token = JSON.parse(currentUser.google_refresh_token)
     oauth2Client.setCredentials({refresh_token: token.refresh_token}) 
     await oauth2Client.getAccessToken().catch(err=>{
-      console.log('get access err', err)
-      return new Promise((resolve, reject)=>{
-        resolve({
-          status: false,
-          err: err,
+      console.log('get access err', err.message)
+      promise_array.push(
+        new Promise((resolve, reject)=>{
+          resolve({
+            status: false,
+            err: err,
+          })
         })
-      })
+      ) 
     });
    
+    if(promise_array.length>0){
+      return Promise.all(promise_array)
+    }
+    
     for(let i=0; i<contacts.length; i++){
       let _contact = await Contact.findOne({_id: contacts[i], tags: { $nin: ['unsubscribed'] }}).catch(err=>{
         console.log('contact found err', err.message)
@@ -2054,23 +2106,25 @@ const bulkImage = async(data) => {
         })
         if(_contact) {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
+            resolve({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
               err: 'contact email unsubscribed'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
         } else {
           promise = new Promise(async(resolve, reject)=>{
-            error.push({
-              err: 'contact email unsubscribed'
+            resolve({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'contact not found'
             })
-            resolve()
           })
           promise_array.push(promise)
           continue;
