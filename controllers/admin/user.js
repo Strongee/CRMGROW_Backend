@@ -354,26 +354,20 @@ const create = async (req, res) => {
       error: errors.array(),
     });
   }
-<<<<<<< HEAD
-  const _user = await User.findOne({ email: req.body.email });
-  if (_user !== null) {
-=======
-  let _user = await User.findOne({ 
-    email: req.body.email 
-  })
-  
-  if(_user != null){
->>>>>>> master
+  const _user = await User.findOne({
+    email: req.body.email,
+  });
+
+  if (_user != null) {
     res.status(400).send({
       status: false,
       error: 'User already exists',
     });
   }
 
-<<<<<<< HEAD
   const { email } = req.body;
 
-  const password = req.body.password || config.DEFAULT_PASS;
+  const password = req.body.password || config.ADMIN_DEFAULT_PASS;
 
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto
@@ -387,22 +381,6 @@ const create = async (req, res) => {
     updated_at: new Date(),
     created_at: new Date(),
   });
-=======
-  const {email} = req.body 
-  
-  let password = req.body.password || config.ADMIN_DEFAULT_PASS
-    
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')  
-    
-    const user = new User({
-      ...req.body,
-      salt: salt,
-      hash: hash,
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
->>>>>>> master
 
   user
     .save()
@@ -438,15 +416,9 @@ const create = async (req, res) => {
         },
       };
 
-<<<<<<< HEAD
       sgMail.send(msg).catch((err) => {
-        console.log('err', err);
+        console.log('err', err.message);
       });
-=======
-      sgMail.send(msg).catch(err=>{
-        console.log('err', err.message)
-      })
->>>>>>> master
 
       const myJSON = JSON.stringify(_res);
       const user = JSON.parse(myJSON);
@@ -513,7 +485,7 @@ const disableUser = async (req, res) => {
       console.log('err', err);
     });
   }
-<<<<<<< HEAD
+
   User.update(
     { _id: req.params.id },
     { $set: { del: true, updated_at: new Date() }, $unset: { payment: true } }
@@ -522,24 +494,20 @@ const disableUser = async (req, res) => {
       return res.send({
         status: true,
       });
-=======
-  
-  User.update({_id: req.params.id}, {$set: {del: true, updated_at: new Date()}, $unset: {payment: true}} ).then(()=>{
-    
-    return res.send({
-      status: true
-    })
-  }).catch(err=>{
-    return res.status(500).send({
-      status: false,
-      error: err
->>>>>>> master
     })
     .catch((err) => {
-      return res.status(500).send({
-        status: false,
-        error: err,
-      });
+      return res
+        .status(500)
+        .send({
+          status: false,
+          error: err,
+        })
+        .catch((err) => {
+          return res.status(500).send({
+            status: false,
+            error: err,
+          });
+        });
     });
 };
 

@@ -19,7 +19,7 @@ const send = async (req, res) => {
     console.log('err', err);
   });
   const e164Phone = phone(contact.cell_phone)[0];
-  let fromNumber = currentUser.proxy_number;
+  let fromNumber = currentUser['proxy_number'];
 
   if (!fromNumber) {
     const areaCode = currentUser.cell_phone.substring(1, 4);
@@ -32,8 +32,8 @@ const send = async (req, res) => {
       phoneNumber: number.phoneNumber,
       smsUrl: urls.SMS_RECEIVE_URL,
     });
-    currentUser.proxy_number = proxy_number.phoneNumber;
-    fromNumber = currentUser.proxy_number;
+    currentUser['proxy_number'] = proxy_number.phoneNumber;
+    fromNumber = currentUser['proxy_number'];
     currentUser.save().catch((err) => {
       console.log('err', err);
     });
@@ -68,7 +68,7 @@ const send = async (req, res) => {
     .save()
     .then((_sms) => {
       const activity = new Activity({
-        content: `${currentUser.user_name} sent text`,
+        content: currentUser.user_name + ' sent text',
         contacts: _sms.contact,
         user: currentUser.id,
         type: 'sms',
@@ -77,7 +77,6 @@ const send = async (req, res) => {
         updated_at: new Date(),
       });
 
-<<<<<<< HEAD
       activity.save().then((_activity) => {
         const myJSON = JSON.stringify(_sms);
         const data = JSON.parse(myJSON);
@@ -95,48 +94,6 @@ const send = async (req, res) => {
           delete err.instance;
           return err;
         });
-=======
-const receive = async(req, res) => {
-    const text = req.body['Body']
-    const from = req.body['From']
-    const to = req.body['To']
-
-    let currentUser = await User
-      .findOne({proxy_number: to})
-      .catch(err =>{
-        console.log('current user found err sms', err.message)
-      })
-    
-    if(currentUser != null){
-      const phoneNumber = req.body['From']
-  
-      const contact = await Contact.findOne({cell_phone: phoneNumber, user: currentUser.id}).catch(err=>{
-        console.log('contact found err sms reply', err)
-      })
-
-      // let phoneNumberString
-      // if(currentUser.phone) {
-      //   const userPhone = currentUser.phone
-      //   phoneNumberString = userPhone.internationalNumber
-      // } else {
-      //   phoneNumberString = TextHelper.matchUSPhoneNumber(currentUser.cell_phone)
-      // }
-     
-        
-      // if (!e164Phone) {
-      //   const error = {
-      //     error: 'Invalid Phone Number'
-      //   }
-      
-      //   throw error // Invalid phone number
-      // }
-        
-      if(contact){
-        const content =  contact.first_name  + ', please call/text ' + currentUser.user_name + ' back at: ' + currentUser.cell_phone
-        await twilio.messages.create({from: to, body: content, to: from}).catch(err=>{
-          console.log('sms reply err', err)
-        })
->>>>>>> master
       }
       return res.status(500).send({
         status: false,
@@ -146,21 +103,22 @@ const receive = async(req, res) => {
 };
 
 const receive = async (req, res) => {
-  const text = req.body.Body;
-  const from = req.body.From;
-  const to = req.body.To;
+  const text = req.body['Body'];
+  const from = req.body['From'];
+  const to = req.body['To'];
 
   const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
-    console.log('err', err);
+    console.log('current user found err sms', err.message);
   });
-  if (currentUser !== null) {
-    const phoneNumber = req.body.From;
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
 
     const contact = await Contact.findOne({
       cell_phone: phoneNumber,
       user: currentUser.id,
     }).catch((err) => {
-      console.log('err', err);
+      console.log('contact found err sms reply', err);
     });
 
     // let phoneNumberString
@@ -180,11 +138,16 @@ const receive = async (req, res) => {
     // }
 
     if (contact) {
-      const content = `${contact.first_name}, please call/text ${currentUser.user_name} back at: ${currentUser.cell_phone}`;
+      const content =
+        contact.first_name +
+        ', please call/text ' +
+        currentUser.user_name +
+        ' back at: ' +
+        currentUser.cell_phone;
       await twilio.messages
         .create({ from: to, body: content, to: from })
         .catch((err) => {
-          console.log('err', err);
+          console.log('sms reply err', err);
         });
     }
 
@@ -220,7 +183,7 @@ const receive = async (req, res) => {
 const get = async (req, res) => {
   const { currentUser } = req;
   const query = { ...req.query };
-  const { contact } = query;
+  const contact = query['contact'];
   const data = await Note.find({ user: currentUser.id, contact });
 
   if (!data) {

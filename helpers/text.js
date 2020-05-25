@@ -170,12 +170,11 @@ const bulkVideo = async (data) => {
     });
     promise_array.push(promise);
   }
-<<<<<<< HEAD
 
   return Promise.all(promise_array);
 };
 
-const bulkPdf = async (data) => {
+const bulkPDF = async (data) => {
   const { user, content, pdfs, contacts } = data;
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
     console.log('err', err);
@@ -199,34 +198,6 @@ const bulkPdf = async (data) => {
 
       if (!pdf_content) {
         pdf_content = '';
-=======
-    
-  return Promise.all(promise_array)
-}
-
-const bulkPDF  = async(data) => {
-  let {user, content, pdfs, contacts} = data 
-  const currentUser = await User.findOne({_id: user}).catch(err=>{
-    console.log('err', err)
-  })
-  let promise_array = []
-    
-  for(let i=0; i<contacts.length; i++){
-    const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-      console.log('err', err)
-    }) 
-    let pdf_titles = ''
-    let pdf_descriptions = ''
-    let pdf_objects = ''
-    let pdf_content = content
-    let activity
-      
-    for(let j=0; j<pdfs.length; j++){
-      const pdf = pdfs[j]        
-          
-      if(!pdf_content){
-        pdf_content = ''
->>>>>>> master
       }
 
       pdf_content = pdf_content
@@ -548,7 +519,6 @@ const getTwilioNumber = async (id) => {
     countryCode = 'US';
   }
   const data = await twilio
-<<<<<<< HEAD
     .availablePhoneNumbers(countryCode)
     .local.list({
       areaCode,
@@ -559,29 +529,14 @@ const getTwilioNumber = async (id) => {
       return fromNumber;
     });
 
-  let number = data[0];
-
-  if (typeof number === 'undefined') {
-    const areaCode1 = areaCode.slice(1);
-=======
-  .availablePhoneNumbers(countryCode)
-  .local.list({
-    areaCode: areaCode,
-  }).catch(err=>{
-    console.log('phone number get err', err)
-    fromNumber = config.TWILIO.TWILIO_NUMBER
-    return fromNumber
-  })
-  
-  if(fromNumber){
-    return fromNumber
+  if (fromNumber) {
+    return fromNumber;
   }
-  
+
   let number = data[0];
 
-  if(typeof number == 'undefined' || number == '+'){
-    const areaCode1 = areaCode.slice(1)
->>>>>>> master
+  if (typeof number === 'undefined' || number === '+') {
+    const areaCode1 = areaCode.slice(1);
 
     const data1 = await twilio
       .availablePhoneNumbers(countryCode)
@@ -595,9 +550,13 @@ const getTwilioNumber = async (id) => {
       });
     number = data1[0];
   }
-<<<<<<< HEAD
 
-  if (typeof number !== 'undefined') {
+  if (fromNumber) {
+    return fromNumber;
+  }
+
+  if (typeof number !== 'undefined' && number !== '+') {
+    console.log('number', number);
     const proxy_number = await twilio.incomingPhoneNumbers
       .create({
         phoneNumber: number.phoneNumber,
@@ -611,29 +570,8 @@ const getTwilioNumber = async (id) => {
     user['proxy_number'] = proxy_number.phoneNumber;
     fromNumber = proxy_number.phoneNumber;
     user.save().catch((err) => {
-      console.log('err', err);
+      console.log('err', err.message);
     });
-=======
-  
-  if(fromNumber){
-    return fromNumber
-  }
-  
-  if(typeof number != 'undefined' && number != '+'){
-    console.log('number', number)
-    const proxy_number = await twilio.incomingPhoneNumbers.create({
-      phoneNumber: number.phoneNumber,
-      smsUrl:  urls.SMS_RECEIVE_URL
-    }).then().catch(err=>{
-      console.log('proxy number error', err)
-    })
-    
-    user['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = proxy_number.phoneNumber;
-    user.save().catch(err=>{
-      console.log('err', err.message)
-    })
->>>>>>> master
   } else {
     fromNumber = config.TWILIO.TWILIO_NUMBER;
   }

@@ -13,7 +13,7 @@ const get = async (req, res) => {
       error: 'Payment doesn`t exist',
     });
   }
-  //   if (!req.params.id || req.params.id==='undefined') {
+  //   if (!req.params.id || req.params.id == 'undefined') {
   //     return res.status(400).json({
   //         status: false,
   //         error: 'Payment doesn`t exist'
@@ -29,7 +29,7 @@ const get = async (req, res) => {
       error: 'Payment doesn`t exist',
     });
   }
-  data.bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+  data['bill_amount'] = config.STRIPE.PRIOR_PLAN_AMOUNT;
 
   data.save().catch((err) => {
     console.log('err', err);
@@ -49,11 +49,11 @@ const create = async (payment_data) => {
         customer.id,
         { source: token.id },
         function (err, card) {
-          if (card === null || typeof card === 'undefined') {
+          if (card == null || typeof card === 'undefined') {
             reject('Card is null');
             return;
           }
-          if (card.cvc_check === 'unchecked') {
+          if (card['cvc_check'] === 'unchecked') {
             reject('CVC is unchecked');
             return;
           }
@@ -109,7 +109,7 @@ const update = async (req, res) => {
           customer.id,
           { source: token.id },
           function (err, card) {
-            if (card === null || typeof card === 'undefined') {
+            if (card == null || typeof card === 'undefined') {
               return res.status(400).send({
                 status: false,
                 error: 'Card is not valid',
@@ -142,7 +142,7 @@ const update = async (req, res) => {
                 });
 
                 payment.save().then((_payment) => {
-                  currentUser.payment = _payment.id;
+                  currentUser['payment'] = _payment.id;
                   currentUser
                     .save()
                     .then(() => {
@@ -217,7 +217,7 @@ const update = async (req, res) => {
                   });
 
                   payment.save().then((_payment) => {
-                    currentUser.payment = _payment.id;
+                    currentUser['payment'] = _payment.id;
                     currentUser
                       .save()
                       .then(() => {
@@ -245,8 +245,11 @@ const update = async (req, res) => {
           console.log('err', err);
         });
     } else {
-      stripe.customers.retrieve(payment.customer_id, function (err, customer) {
-        if (err || customer.deleted) {
+      stripe.customers.retrieve(payment['customer_id'], function (
+        err,
+        customer
+      ) {
+        if (err || customer['deleted']) {
           console.log('customer retrieve error', err);
           createCustomer(currentUser.email)
             .then(async (customer) => {
@@ -286,7 +289,7 @@ const update = async (req, res) => {
                       });
 
                       payment.save().then((_payment) => {
-                        currentUser.payment = _payment.id;
+                        currentUser['payment'] = _payment.id;
                         currentUser
                           .save()
                           .then(() => {
@@ -323,67 +326,13 @@ const update = async (req, res) => {
                 error: 'Card is not valid',
               });
             }
-<<<<<<< HEAD
-            if (payment.fingerprint !== _token.card.fingerprint) {
+            if (payment['fingerprint'] !== _token.card.fingerprint) {
               stripe.customers.createSource(
-                payment.customer_id,
+                payment['customer_id'],
                 { source: token.id },
                 function (err, card) {
                   console.log('_card', card);
                   if (!card) {
-=======
-            if(payment['fingerprint'] != _token.card.fingerprint){
-              stripe.customers.createSource(payment['customer_id'], {source: token.id}, function(err, card) {
-                console.log('_card', card)
-                if(!card){
-                  return res.status(400).send({
-                    status: false,
-                    error: "Card is not valid"
-                  });
-                }
-                const pricingPlan = config.STRIPE.PRIOR_PLAN;
-                const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
-                
-                updateSubscription(payment['customer_id'], pricingPlan, card.id).then(subscription => {
-                  console.log('update Subscription', subscription)
-                  cancelSubscription(payment['subscription']).catch(err=>{
-                    console.log('cancel subscription err', err)
-                  })
-                  try{
-                    stripe.customers.deleteSource(
-                      payment['customer_id'],
-                      payment['card_id'],
-                      function(err, confirmation) {
-                        if(err){
-                          console.log('delete source err', err)
-                        }
-                      })
-                       // Save card information to DB.
-                       payment['plan_id'] = pricingPlan
-                       payment['bill_amount'] = bill_amount
-                       payment['token'] = token.id
-                       payment['card_id'] = card.id
-                       payment['card_name'] = token.card_name
-                       payment['card_brand'] = token.card.brand
-                       payment['exp_month'] = token.card.exp_month
-                       payment['exp_year'] = token.card.exp_year
-                       payment['last4'] = token.card.last4
-                       payment['subscription'] = subscription.id
-                       payment['fingerprint'] = card.fingerprint
-                       payment['updated_at'] = new Date()
-                       payment.save().catch(err=>{
-                         console.log('err', err)
-                       })
-                      return res.send({
-                        status: true,
-                        data: currentUser.payment
-                      });    
-                  }catch(err){
-                    console.log('delete card err', err)
-                  }
-                }).catch((err)=>{
-                    console.log('creating subscripition error', err)
->>>>>>> master
                     return res.status(400).send({
                       status: false,
                       error: 'Card is not valid',
@@ -392,36 +341,41 @@ const update = async (req, res) => {
                   const pricingPlan = config.STRIPE.PRIOR_PLAN;
                   const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
 
-                  updateSubscription(payment.customer_id, pricingPlan, card.id)
+                  updateSubscription(
+                    payment['customer_id'],
+                    pricingPlan,
+                    card.id
+                  )
                     .then((subscription) => {
                       console.log('update Subscription', subscription);
-                      cancelSubscription(payment.subscription).catch((err) => {
-                        console.log('cancel subscription err', err);
-                      });
+                      cancelSubscription(payment['subscription']).catch(
+                        (err) => {
+                          console.log('cancel subscription err', err);
+                        }
+                      );
                       try {
                         stripe.customers.deleteSource(
-                          payment.customer_id,
-                          payment.card_id,
+                          payment['customer_id'],
+                          payment['card_id'],
                           function (err, confirmation) {
                             if (err) {
                               console.log('delete source err', err);
-                              throw err;
                             }
                           }
                         );
                         // Save card information to DB.
-                        payment.plan_id = pricingPlan;
-                        payment.bill_amount = bill_amount;
-                        payment.token = token.id;
-                        payment.card_id = card.id;
-                        payment.card_name = token.card_name;
-                        payment.card_brand = token.card.brand;
-                        payment.exp_month = token.card.exp_month;
-                        payment.exp_year = token.card.exp_year;
-                        payment.last4 = token.card.last4;
-                        payment.subscription = subscription.id;
-                        payment.fingerprint = card.fingerprint;
-                        payment.updated_at = new Date();
+                        payment['plan_id'] = pricingPlan;
+                        payment['bill_amount'] = bill_amount;
+                        payment['token'] = token.id;
+                        payment['card_id'] = card.id;
+                        payment['card_name'] = token.card_name;
+                        payment['card_brand'] = token.card.brand;
+                        payment['exp_month'] = token.card.exp_month;
+                        payment['exp_year'] = token.card.exp_year;
+                        payment['last4'] = token.card.last4;
+                        payment['subscription'] = subscription.id;
+                        payment['fingerprint'] = card.fingerprint;
+                        payment['updated_at'] = new Date();
                         payment.save().catch((err) => {
                           console.log('err', err);
                         });
@@ -443,15 +397,15 @@ const update = async (req, res) => {
                 }
               );
             } else {
-              const { customer_id } = payment;
-              const { card_id } = payment;
+              const customer_id = payment['customer_id'];
+              const card_id = payment['card_id'];
               stripe.customers.retrieveSource(customer_id, card_id, function (
                 err,
                 card
               ) {
                 if (err) {
                   stripe.customers.createSource(
-                    payment.customer_id,
+                    payment['customer_id'],
                     { source: token.id },
                     function (err, card) {
                       console.log('_card', card);
@@ -465,31 +419,31 @@ const update = async (req, res) => {
                       const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
 
                       updateSubscription(
-                        payment.customer_id,
+                        payment['customer_id'],
                         pricingPlan,
                         card.id
                       )
                         .then((subscription) => {
                           console.log('update Subscription', subscription);
-                          cancelSubscription(payment.subscription).catch(
+                          cancelSubscription(payment['subscription']).catch(
                             (err) => {
                               console.log('cancel subscription err', err);
                             }
                           );
                           try {
                             // Save card information to DB.
-                            payment.plan_id = pricingPlan;
-                            payment.bill_amount = bill_amount;
-                            payment.token = token.id;
-                            payment.card_id = card.id;
-                            payment.card_name = token.card_name;
-                            payment.card_brand = token.card.brand;
-                            payment.exp_month = token.card.exp_month;
-                            payment.exp_year = token.card.exp_year;
-                            payment.last4 = token.card.last4;
-                            payment.subscription = subscription.id;
-                            payment.fingerprint = card.fingerprint;
-                            payment.updated_at = new Date();
+                            payment['plan_id'] = pricingPlan;
+                            payment['bill_amount'] = bill_amount;
+                            payment['token'] = token.id;
+                            payment['card_id'] = card.id;
+                            payment['card_name'] = token.card_name;
+                            payment['card_brand'] = token.card.brand;
+                            payment['exp_month'] = token.card.exp_month;
+                            payment['exp_year'] = token.card.exp_year;
+                            payment['last4'] = token.card.last4;
+                            payment['subscription'] = subscription.id;
+                            payment['fingerprint'] = card.fingerprint;
+                            payment['updated_at'] = new Date();
                             payment.save().catch((err) => {
                               console.log('err', err);
                             });
@@ -522,12 +476,12 @@ const update = async (req, res) => {
                   updateCard(customer_id, card_id, card)
                     .then((_card) => {
                       // Save card information to DB.
-                      payment.card_name = token.card_name;
-                      payment.card_brand = token.card.brand;
-                      payment.exp_month = token.card.exp_month;
-                      payment.exp_year = token.card.exp_year;
-                      payment.last4 = token.card.last4;
-                      payment.updated_at = new Date();
+                      payment['card_name'] = token.card_name;
+                      payment['card_brand'] = token.card.brand;
+                      payment['exp_month'] = token.card.exp_month;
+                      payment['exp_year'] = token.card.exp_year;
+                      payment['last4'] = token.card.last4;
+                      payment['updated_at'] = new Date();
                       payment.save().catch((err) => {
                         console.log('err', err);
                       });
@@ -600,7 +554,7 @@ const createSubscription = async (customerId, planId, cardId) => {
       },
       function (err, subscription) {
         console.log('creating subscription err', err);
-        if (err !== null) {
+        if (err != null) {
           return reject(err);
         }
         resolve(subscription);
@@ -619,7 +573,7 @@ const updateSubscription = async (customerId, planId, cardId) => {
       },
       function (err, subscription) {
         console.log('creating subscription err', err);
-        if (err !== null) {
+        if (err != null) {
           return reject(err);
         }
         resolve(subscription);
@@ -631,7 +585,7 @@ const updateSubscription = async (customerId, planId, cardId) => {
 const cancelSubscription = async (subscription_id) => {
   return new Promise(function (resolve, reject) {
     stripe.subscriptions.del(subscription_id, function (err, confirmation) {
-      if (err !== null) {
+      if (err != null) {
         return reject(err);
       }
       resolve();
@@ -690,7 +644,6 @@ const cancelCustomer = async (id) => {
             reject();
           });
       })
-<<<<<<< HEAD
       .catch((err) => {
         console.log('err', err);
         reject();
@@ -700,26 +653,34 @@ const cancelCustomer = async (id) => {
 
 const paymentFailed = async (req, res) => {
   const invoice = req.body.data;
-  const customer_id = invoice.object.customer;
-  const { attempt_count } = invoice.object;
-  const payment = await Payment.findOne({ customer_id }).catch((err) => {
-    console.log('err', err);
-  });
-  const user = await User.findOne({ payment, del: false }).catch((err) => {
-    console.log('err', err);
+  const customer_id = invoice['object']['customer'];
+  const attempt_count = invoice['object']['attempt_count'];
+
+  const payment = await Payment.findOne({
+    customer_id,
+  }).catch((err) => {
+    console.log('payment find err', err.message);
   });
 
-  user.subscription.is_failed = true;
-  user.subscription.updated_at = new Date();
-  user.subscription.attempt_count = attempt_count;
-  user.updated_at = new Date();
+  const user = await User.findOne({
+    payment,
+    del: false,
+  }).catch((err) => {
+    console.log('user find err', err.message);
+  });
+
+  user['subscription']['is_failed'] = true;
+  user['subscription']['updated_at'] = new Date();
+  user['subscription']['attempt_count'] = attempt_count;
+  user['updated_at'] = new Date();
 
   if (attempt_count === 4) {
-    user.subscription.is_suspended = true;
-    user.subscription.suspended_at = new Date();
+    user['subscription']['is_suspended'] = true;
+    user['subscription']['suspended_at'] = new Date();
   }
+
   user.save().catch((err) => {
-    console.log('err', err);
+    console.log('err', err.message);
   });
 
   return res.send({
@@ -729,7 +690,7 @@ const paymentFailed = async (req, res) => {
 
 const paymentSucceed = async (req, res) => {
   const invoice = req.body.data;
-  const customer_id = invoice.object.customer;
+  const customer_id = invoice['object']['customer'];
   const payment = await Payment.findOne({ customer_id }).catch((err) => {
     console.log('err', err);
   });
@@ -740,94 +701,26 @@ const paymentSucceed = async (req, res) => {
   );
 
   if (user) {
-    user.subscription.is_failed = false;
-    user.subscription.is_suspended = false;
-    user.subscription.updated_at = new Date();
+    user['subscription']['is_failed'] = false;
+    user['subscription']['attempt_count'] = 0;
+    user['subscription']['is_suspended'] = false;
+    user['subscription']['updated_at'] = new Date();
 
-    user.updated_at = new Date();
+    user['updated_at'] = new Date();
 
     user.save().catch((err) => {
       console.log('err', err);
     });
-=======
-    }).catch(err=>{
-      console.log('err', err)
-      reject()
-    })
-  })
-}
-
-const paymentFailed = async(req, res) => {
-  const invoice = req.body.data
-  const customer_id = invoice['object']['customer']
-  const attempt_count = invoice['object']['attempt_count']
-  
-  const payment = await Payment
-    .findOne({
-      customer_id: customer_id
-    }).catch(err=>{
-      console.log('payment find err', err.message)
-    })
-  
-  const user = await User
-    .findOne({
-      payment: payment, 
-      del: false
-    })
-    .catch(err=>{
-        console.log('user find err', err.message)
-    })
-  
-  user['subscription']['is_failed'] = true
-  user['subscription']['updated_at'] = new Date()
-  user['subscription']['attempt_count'] = attempt_count
-  user['updated_at'] = new Date()
-  
-  if(attempt_count === 4){
-    user['subscription']['is_suspended'] = true
-    user['subscription']['suspended_at'] = new Date()
-  }
-  
-  user.save().catch(err=>{
-    console.log('err', err.message)
-  })
-  
-  return res.send({
-    status: true
-  })
-}
-  
-const paymentSucceed = async(req, res) => {
-  const invoice = req.body.data
-  const customer_id = invoice['object']['customer']
-  const payment = await Payment.findOne({customer_id: customer_id}).catch(err=>{
-    console.log('err', err)
-  })
-  const user = await User.findOne({payment: payment.id, del: false}).catch(err=>{
-    console.log('err', err)
-  })
-  
-  if(user){
-    user['subscription']['is_failed'] = false
-    user['subscription']['attempt_count'] = 0
-    user['subscription']['is_suspended'] = false
-    user['subscription']['updated_at'] = new Date()
-  
-    user['updated_at'] = new Date()
-  
-    user.save().catch(err=>{
-      console.log('err', err)
-    })
->>>>>>> master
     return res.send({
       status: true,
     });
+  } else {
+    console.log('Payment not found for user: ', customer_id);
+    return res.status(400).json({
+      status: false,
+      error: `Couldn't find user ${customer_id}`,
+    });
   }
-  console.log('Payment not found for user: ', customer_id);
-  return res.status(400).json({
-    status: false,
-    error: `Couldn't find user ${customer_id}`,
-  });
 };
 
 module.exports = {

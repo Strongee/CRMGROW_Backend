@@ -40,7 +40,7 @@ const router = express.Router();
 //   })
 
 const fileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function fn(req, file, cb) {
     cb(null, TEMP_PATH);
   },
   filename: (req, file, cb) => {
@@ -62,14 +62,14 @@ router.post(
 );
 
 // Upload a thumbnail and detail info when upload a video at first
-router.put('/detail/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail))
+router.put(
+  '/detail/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.updateDetail)
+);
 
 // Upload a thumbnail and detail info
-<<<<<<< HEAD
-router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.updateDetail));
-=======
-router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update))
->>>>>>> master
+router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update));
 
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail));
@@ -129,7 +129,11 @@ router.post(
 router.get('/pipe/:name', catchError(VideoCtrl.pipe));
 
 // Get Conver progress of a video
-router.post('/convert-status', UserCtrl.checkAuth, catchError(VideoCtrl.getConvertStatus))
+router.post(
+  '/convert-status',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.getConvertStatus)
+);
 
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));

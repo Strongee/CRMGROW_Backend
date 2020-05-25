@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator/check');
@@ -11,39 +10,19 @@ const yahooOauth2 = require('simple-oauth2')(yahooCredentials);
 const client = require('twilio')(accountSid, authToken);
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
+const Activity = require('../models/activity');
+const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
-const Activity = require('../models/activity');
-const FollowUp = require('../models/follow_up');
 const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
+const Guest = require('../models/guest');
 
 const config = require('../config/config');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 
-=======
-const crypto = require('crypto')
-const jwt = require('jsonwebtoken')
-const { validationResult } = require('express-validator/check')
-const randomstring = require('randomstring')
-const User = require('../models/user')
-const Garbage = require('../models/garbage')
-const Payment = require('../models/payment')
-const Appointment = require('../models/appointment')
-const Contact = require('../models/contact')
-const PaymentCtrl = require('../controllers/payment')
-const UserLog = require('../models/user_log')
-const Guest = require('../models/guest')
-const sgMail = require('@sendgrid/mail')
-const { google } = require('googleapis')
-const outlook = require('node-outlook')
-
-const config = require('../config/config')
-const urls = require('../constants/urls')
-const mail_contents = require('../constants/mail_contents')
->>>>>>> master
 const credentials = {
   clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
   clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
@@ -51,7 +30,6 @@ const credentials = {
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
-
 const yahooCredentials = {
   clientID: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
   clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
@@ -59,7 +37,6 @@ const yahooCredentials = {
   authorizationPath: '/oauth2/request_auth',
   tokenPath: '/oauth2/get_token',
 };
-
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
 
@@ -178,10 +155,9 @@ const signUp = async (req, res) => {
   //       })
   //     });
   // }
-<<<<<<< HEAD
   PaymentCtrl.create(payment_data)
     .then(async (payment) => {
-      const { password } = req.body;
+      const password = req.body.password;
       const salt = crypto.randomBytes(16).toString('hex');
       const hash = crypto
         .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
@@ -189,54 +165,13 @@ const signUp = async (req, res) => {
 
       const user = new User({
         ...req.body,
+        connected_email: email,
         payment: payment.id,
         salt,
         hash,
         updated_at: new Date(),
         created_at: new Date(),
       });
-=======
-  PaymentCtrl.create(payment_data).then(async (payment) => {
-    const password = req.body.password
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
-
-    const user = new User({
-      ...req.body,
-      connected_email: email,
-      payment: payment.id,
-      salt: salt,
-      hash: hash,
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
-    
-    const garbage = new Garbage({
-      user: user.id,
-      created_at: new Date(),
-      updated_at: new Date()
-    })
-    
-    garbage.save().catch(err=>{
-      console.log('err', err)
-    })
-    
-    user.save()
-      .then(_res => {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
-        let msg = {
-          to: _res.email,
-          from: mail_contents.WELCOME_SIGNUP.MAIL,
-          templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-          dynamic_template_data: {
-            first_name: _res.user_name,
-            login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-            user_email: _res.email,
-            user_password: req.body.password,
-            contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-          },
-        };
->>>>>>> master
 
       const garbage = new Garbage({
         user: user.id,
@@ -294,7 +229,7 @@ const signUp = async (req, res) => {
           const user = JSON.parse(myJSON);
           delete user.hash;
           delete user.salt;
-          user.payment = payment.id;
+          user['payment'] = payment.id;
 
           return res.send({
             status: true,
@@ -312,38 +247,15 @@ const signUp = async (req, res) => {
               return err;
             });
           }
-<<<<<<< HEAD
           return res.status(500).send({
             status: false,
             error: errors || e,
           });
         });
-=======
-        })
-      })
-      .catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
-          })
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e
-        })
-      });
-  }).catch(err => {
-    console.log('err', err)
-    res.status(400).send({
-      status: false,
-      error: err
->>>>>>> master
     })
     .catch((err) => {
       console.log('err', err);
-      res.status(500).send({
+      res.status(400).send({
         status: false,
         error: err,
       });
@@ -353,17 +265,18 @@ const signUp = async (req, res) => {
 const checkUser = async (req, res) => {
   const { email } = req.body;
   const _user = await User.findOne({
-    email: { $regex: new RegExp(`^${email}$`, 'i') },
+    email: { $regex: new RegExp('^' + email + '$', 'i') },
     del: false,
   });
   if (_user) {
     return res.send({
       status: false,
     });
+  } else {
+    return res.send({
+      status: true,
+    });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 const socialSignUp = async (req, res) => {
@@ -459,7 +372,6 @@ const socialSignUp = async (req, res) => {
   // }
 
   const payment_data = {
-<<<<<<< HEAD
     email,
     token,
     bill_amount,
@@ -469,25 +381,11 @@ const socialSignUp = async (req, res) => {
     .then(async (payment) => {
       const user = new User({
         ...req.body,
+        connected_email: email,
         payment: payment.id,
         updated_at: new Date(),
         created_at: new Date(),
       });
-=======
-    email: email,
-    token: token,
-    bill_amount: bill_amount
-  }
-
-  PaymentCtrl.create(payment_data).then(async (payment) => {
-    const user = new User({
-      ...req.body,
-      connected_email: email,
-      payment: payment.id,
-      updated_at: new Date(),
-      created_at: new Date(),
-    })
->>>>>>> master
 
       const garbage = new Garbage({
         user: user.id,
@@ -542,7 +440,7 @@ const socialSignUp = async (req, res) => {
 
           const myJSON = JSON.stringify(_res);
           const user = JSON.parse(myJSON);
-          user.payment = payment.id;
+          user['payment'] = payment.id;
 
           res.send({
             status: true,
@@ -560,38 +458,15 @@ const socialSignUp = async (req, res) => {
               return err;
             });
           }
-<<<<<<< HEAD
           return res.status(500).send({
             status: false,
             error: errors || e,
           });
         });
-=======
-        })
-      })
-      .catch(e => {
-        let errors
-        if (e.errors) {
-          errors = e.errors.map(err => {
-            delete err.instance
-            return err
-          })
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e
-        })
-      });
-  }).catch(err => {
-    console.log('err', err)
-    res.status(400).send({
-      status: false,
-      error: err
->>>>>>> master
     })
     .catch((err) => {
       console.log('err', err);
-      res.status(500).send({
+      res.status(400).send({
         status: false,
         error: err,
       });
@@ -602,7 +477,7 @@ const signUpGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    `${urls.SOCIAL_SIGNUP_URL}gmail`
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
   );
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
@@ -638,18 +513,13 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-<<<<<<< HEAD
-    // 'https://graph.microsoft.com/calendars.readwrite ',
-    'https://graph.microsoft.com/mail.send',
-=======
     // 'https://graph.microsoft.com/calendars.readwrite',
-    'https://graph.microsoft.com/mail.send'
->>>>>>> master
+    'https://graph.microsoft.com/mail.send',
   ];
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
-    redirect_uri: `${urls.SOCIAL_SIGNUP_URL}outlook`,
+    redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
     scope: scopes.join(' '),
   });
 
@@ -666,11 +536,11 @@ const signUpOutlook = async (req, res) => {
 };
 
 const socialGmail = async (req, res) => {
-  const { code } = req.query;
+  const code = req.query.code;
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    `${urls.SOCIAL_SIGNUP_URL}gmail`
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
   );
 
   const { tokens } = await oauth2Client.getToken(code);
@@ -720,7 +590,7 @@ const socialGmail = async (req, res) => {
 };
 
 const socialOutlook = async (req, res) => {
-  const { code } = req.query;
+  const code = req.query.code;
   const scopes = [
     'openid',
     'profile',
@@ -733,7 +603,7 @@ const socialOutlook = async (req, res) => {
   oauth2.authCode.getToken(
     {
       code,
-      redirect_uri: `${urls.SOCIAL_SIGNUP_URL}outlook`,
+      redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
       scope: scopes.join(' '),
     },
     function (error, result) {
@@ -743,37 +613,33 @@ const socialOutlook = async (req, res) => {
           status: false,
           error,
         });
+      } else {
+        const outlook_token = oauth2.accessToken.create(result);
+        const outlook_refresh_token = outlook_token.token.refresh_token;
+        const token_parts = outlook_token.token.id_token.split('.');
+
+        // Token content is in the second part, in urlsafe base64
+        const encoded_token = new Buffer(
+          token_parts[1].replace('-', '+').replace('_', '/'),
+          'base64'
+        );
+
+        const decoded_token = encoded_token.toString();
+
+        const jwt = JSON.parse(decoded_token);
+
+        const data = {
+          email: jwt.preferred_username,
+          social_id: jwt.oid,
+          connected_email_type: 'outlook',
+          primary_connected: true,
+          outlook_refresh_token,
+        };
+        return res.send({
+          status: true,
+          data,
+        });
       }
-      const outlook_token = oauth2.accessToken.create(result);
-      const outlook_refresh_token = outlook_token.token.refresh_token;
-      const token_parts = outlook_token.token.id_token.split('.');
-
-      // Token content is in the second part, in urlsafe base64
-      const encoded_token = new Buffer(
-        token_parts[1].replace('-', '+').replace('_', '/'),
-        'base64'
-      );
-
-      const decoded_token = encoded_token.toString();
-
-<<<<<<< HEAD
-      const jwt = JSON.parse(decoded_token);
-      console.log(jwt);
-=======
-      let jwt = JSON.parse(decoded_token);
->>>>>>> master
-
-      const data = {
-        email: jwt.preferred_username,
-        social_id: jwt.oid,
-        connected_email_type: 'outlook',
-        primary_connected: true,
-        outlook_refresh_token,
-      };
-      return res.send({
-        status: true,
-        data,
-      });
     }
   );
 };
@@ -795,32 +661,73 @@ const login = async (req, res) => {
     });
   }
 
-<<<<<<< HEAD
   let _user = await User.findOne({ email: new RegExp(email, 'i'), del: false });
+  let guest;
 
   if (!_user) {
-    _user = await User.findOne({ user_name: email }).exec();
-=======
-  let _user = await User.findOne({ email: new RegExp(email, "i"), del: false })
-  let guest
-  
-  if (!_user) {
-    _user = await User.findOne({ user_name: new RegExp(email,"i"), del: false })
-      .exec();
->>>>>>> master
-  }
-  
-  if(!_user) {
-    guest = await Guest.findOne({ email: new RegExp(email, "i"), disabled: false }) 
+    _user = await User.findOne({
+      user_name: new RegExp(email, 'i'),
+      del: false,
+    }).exec();
   }
 
+  if (!_user) {
+    guest = await Guest.findOne({
+      email: new RegExp(email, 'i'),
+      disabled: false,
+    });
+  }
 
   if (!_user && !guest) {
     return res.status(401).json({
       status: false,
-<<<<<<< HEAD
       error: 'User Email doesn`t exist',
     });
+  }
+
+  if (guest) {
+    if (guest.salt) {
+      // Check password
+      const hash = crypto
+        .pbkdf2Sync(password, guest.salt.split(' ')[0], 10000, 512, 'sha512')
+        .toString('hex');
+
+      if (hash !== guest.hash) {
+        return res.status(401).json({
+          status: false,
+          error: 'Invalid email or password!',
+        });
+      }
+    }
+
+    _user = await User.findOne({ _id: guest.user, del: false }).catch((err) => {
+      console.log('user found err', err.message);
+    });
+    // TODO: Include only email for now
+    if (_user) {
+      const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
+        expiresIn: '30d',
+      });
+      const myJSON = JSON.stringify(_user);
+      const user = JSON.parse(myJSON);
+
+      delete user.hash;
+      delete user.salt;
+
+      return res.send({
+        status: true,
+        data: {
+          token,
+          user,
+          guest_loggin: true,
+        },
+      });
+    } else {
+      return res.status(401).json({
+        status: false,
+        error: 'User Email doesn`t exist',
+      });
+    }
   }
 
   if (_user.salt) {
@@ -829,104 +736,33 @@ const login = async (req, res) => {
       .pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512')
       .toString('hex');
 
-    // if (hash !==_user.hash) {
-    if (hash !== _user.hash && req.body.password !== 'ambition#321') {
+    if (hash !== _user.hash && req.body.password !== config.DEFAULT_PASS) {
+      if (_user.primary_connected && _user.social_id) {
+        return res.send({
+          status: false,
+          code: 'SOCIAL_SIGN_' + _user.connected_email_type,
+        });
+      }
       return res.status(401).json({
         status: false,
         error: 'Invalid email or password!',
       });
     }
-  } else if (req.body.password !== 'ambition#321') {
-=======
-      error: 'User Email doesn`t exist'
-    })
-    
-  }
-
-  if(guest) {
-    if(guest.salt ){
-      // Check password
-      const hash = crypto.pbkdf2Sync(password, guest.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
-   
-      if (hash != guest.hash) {
-        return res.status(401).json({
-          status: false,
-          error: 'Invalid email or password!'
-        })
-      }
-     } 
-     
-    _user = await User.findOne({_id: guest.user, del: false}).catch(err=>{
-      console.log('user found err', err.message)
-    })
-    // TODO: Include only email for now
-    if(_user){
-      const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, { expiresIn: '30d' })
-      myJSON = JSON.stringify(_user)
-      const user = JSON.parse(myJSON);
-      
-      delete user.hash
-      delete user.salt
-    
-      return res.send({
-        status: true,
-        data: {
-          token,
-          user,
-          guest_loggin: true
-        }
-      })
-    } else {
-      return res.status(401).json({
-        status: false,
-        error: 'User Email doesn`t exist'
-      })
-    }
-  }
-  
-  if(_user.salt ){
-   // Check password
-   const hash = crypto.pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512').toString('hex');
-
-   if (hash != _user.hash && req.body.password != config.DEFAULT_PASS) {
-     if(_user.primary_connected && _user.social_id) {
-      return res.send({
-        status: false,
-        code: 'SOCIAL_SIGN_' + _user.connected_email_type
-      })
-     }
-     return res.status(401).json({
-       status: false,
-       error: 'Invalid email or password!'
-     })
-   }
-  } else if (req.body.password != config.DEFAULT_PASS) {
->>>>>>> master
+  } else if (req.body.password !== config.DEFAULT_PASS) {
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
     });
   }
 
-<<<<<<< HEAD
-  if (req.body.password === 'ambition#321') {
-    _user.admin_loggin = true;
-=======
-  if (req.body.password == config.DEFAULT_PASS) {
-    _user['admin_loggin'] = true
->>>>>>> master
+  if (req.body.password === config.DEFAULT_PASS) {
+    _user['admin_loggin'] = true;
   } else {
-    _user.admin_loggin = false;
+    _user['admin_loggin'] = false;
   }
-<<<<<<< HEAD
   _user.save().catch((err) => {
-    console.log('err', err);
+    console.log('err', err.message);
   });
-=======
-  _user.save().catch(err => {
-    console.log('err', err.message)
-  })
->>>>>>> master
   // TODO: Include only email for now
   const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
     expiresIn: '30d',
@@ -1021,13 +857,8 @@ const checkAuth = async (req, res, next) => {
     } else {
       res.status(402).send({
         status: false,
-<<<<<<< HEAD
-        error: 'not connnected',
+        error: 'not connected',
       });
-=======
-        error: 'not connected'
-      })
->>>>>>> master
     }
   } else {
     console.error('Valid JWT but no user:', decoded);
@@ -1100,10 +931,10 @@ const getUser = async (req, res) => {
   res.send({
     status: true,
     data: {
-      name: user.user_name,
-      cell_phone: user.cell_phone,
-      email: user.email,
-      picture_profile: user.picture_profile,
+      name: user['user_name'],
+      cell_phone: user['cell_phone'],
+      email: user['email'],
+      picture_profile: user['picture_profile'],
     },
   });
 };
@@ -1220,7 +1051,7 @@ const syncOutlook = async (req, res) => {
 
 const authorizeOutlook = async (req, res) => {
   const user = req.currentUser;
-  const { code } = req.query;
+  const code = req.query.code;
   const scopes = [
     'openid',
     'profile',
@@ -1243,63 +1074,40 @@ const authorizeOutlook = async (req, res) => {
           status: false,
           error,
         });
-      }
-      const outlook_token = oauth2.accessToken.create(result);
-      user.outlook_refresh_token = outlook_token.token.refresh_token;
-      const token_parts = outlook_token.token.id_token.split('.');
+      } else {
+        const outlook_token = oauth2.accessToken.create(result);
+        user.outlook_refresh_token = outlook_token.token.refresh_token;
+        const token_parts = outlook_token.token.id_token.split('.');
 
-      // Token content is in the second part, in urlsafe base64
-      const encoded_token = new Buffer(
-        token_parts[1].replace('-', '+').replace('_', '/'),
-        'base64'
-      );
+        // Token content is in the second part, in urlsafe base64
+        const encoded_token = new Buffer(
+          token_parts[1].replace('-', '+').replace('_', '/'),
+          'base64'
+        );
 
-      const decoded_token = encoded_token.toString();
+        const decoded_token = encoded_token.toString();
 
-      const jwt = JSON.parse(decoded_token);
-      // Email is in the preferred_username field
-<<<<<<< HEAD
-      user.email = jwt.preferred_username;
-      user.social_id = jwt.oid;
-      user.connected_email_type = 'outlook';
-      user.primary_connected = true;
-      user
-        .save()
-        .then((_res) => {
-=======
-      user.connected_email = jwt.preferred_username
-      user.social_id = jwt.oid
-      user.connected_email_type = 'outlook'
-      user.primary_connected = true
-      user.save()
-        .then(_res => {
->>>>>>> master
-          res.send({
-            status: true,
-            data: user.email,
-          });
-        })
-<<<<<<< HEAD
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
+        const jwt = JSON.parse(decoded_token);
+        // Email is in the preferred_username field
+        user.connected_email = jwt.preferred_username;
+        user.social_id = jwt.oid;
+        user.connected_email_type = 'outlook';
+        user.primary_connected = true;
+        user
+          .save()
+          .then((_res) => {
+            res.send({
+              status: true,
+              data: user.email,
             });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
-          });
-=======
-        .catch(err => {
-          return res.status(400).send({
-            status: false,
-            error: err.message
           })
->>>>>>> master
-        });
+          .catch((err) => {
+            return res.status(400).send({
+              status: false,
+              error: err.message,
+            });
+          });
+      }
     }
   );
 };
@@ -1353,7 +1161,7 @@ const syncGmail = async (req, res) => {
       error: 'Client doesn`t exist',
     });
   }
-  
+
   return res.send({
     status: true,
     data: authorizationUri,
@@ -1361,7 +1169,7 @@ const syncGmail = async (req, res) => {
 };
 
 const authorizeYahoo = async (req, res) => {
-  const { code } = req.query;
+  const code = req.query.code;
   const user = req.currentUser;
 
   yahooOauth2.authCode.getToken(
@@ -1377,55 +1185,56 @@ const authorizeYahoo = async (req, res) => {
           status: false,
           error,
         });
-      }
-      console.log('result', result);
-      const yahoo_token = yahooOauth2.accessToken.create(result);
-      user.yahoo_refresh_token = yahoo_token.token.refresh_token;
-      const token_parts = yahoo_token.token.id_token.split('.');
+      } else {
+        console.log('result', result);
+        const yahoo_token = yahooOauth2.accessToken.create(result);
+        user.yahoo_refresh_token = yahoo_token.token.refresh_token;
+        const token_parts = yahoo_token.token.id_token.split('.');
 
-      // Token content is in the second part, in urlsafe base64
-      const encoded_token = new Buffer(
-        token_parts[1].replace('-', '+').replace('_', '/'),
-        'base64'
-      );
+        // Token content is in the second part, in urlsafe base64
+        const encoded_token = new Buffer(
+          token_parts[1].replace('-', '+').replace('_', '/'),
+          'base64'
+        );
 
-      const decoded_token = encoded_token.toString();
+        const decoded_token = encoded_token.toString();
 
-      const jwt = JSON.parse(decoded_token);
-      // Email is in the preferred_username field
-      console.log('jwt******', jwt);
-      user.email = jwt.preferred_username;
-      user.social_id = jwt.oid;
-      user.connected_email_type = 'yahoo';
-      user.primary_connected = true;
-      user
-        .save()
-        .then((_res) => {
-          res.send({
-            status: true,
-            data: user.email,
-          });
-        })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
+        const jwt = JSON.parse(decoded_token);
+        // Email is in the preferred_username field
+        console.log('jwt******', jwt);
+        user.email = jwt.preferred_username;
+        user.social_id = jwt.oid;
+        user.connected_email_type = 'yahoo';
+        user.primary_connected = true;
+        user
+          .save()
+          .then((_res) => {
+            res.send({
+              status: true,
+              data: user.email,
             });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
+          })
+          .catch((e) => {
+            let errors;
+            if (e.errors) {
+              errors = e.errors.map((err) => {
+                delete err.instance;
+                return err;
+              });
+            }
+            return res.status(500).send({
+              status: false,
+              error: errors || e,
+            });
           });
-        });
+      }
     }
   );
 };
 
 const authorizeGmail = async (req, res) => {
   const user = req.currentUser;
-  const { code } = req.query;
+  const code = req.query.code;
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -1455,8 +1264,7 @@ const authorizeGmail = async (req, res) => {
 
   oauth2.userinfo.v2.me.get(function (err, _res) {
     // Email is in the preferred_username field
-<<<<<<< HEAD
-    user.email = _res.data.email;
+    user.connected_email = _res.data.email;
     user.connected_email_type = 'gmail';
     user.primary_connected = true;
     user.social_id = _res.data.id;
@@ -1464,47 +1272,20 @@ const authorizeGmail = async (req, res) => {
     user
       .save()
       .then((_res) => {
-=======
-    user.connected_email = _res.data.email
-    user.connected_email_type = 'gmail'
-    user.primary_connected = true
-    user.social_id = _res.data.id
-    user.google_refresh_token = JSON.stringify(tokens)
-    user.save()
-      .then(_res => {
->>>>>>> master
         res.send({
           status: true,
           data: user.email,
         });
       })
-<<<<<<< HEAD
-      .catch((e) => {
-        let errors;
-        if (e.errors) {
-          errors = e.errors.map((err) => {
-            delete err.instance;
-            return err;
-          });
-        }
-        return res.status(500).send({
+      .catch((err) => {
+        console.log('user save err', err.message);
+        return res.status(400).json({
           status: false,
-          error: errors || e,
+          error: err.message,
         });
       });
   });
 };
-=======
-      .catch(err => {
-        console.log('user save err', err.message)
-        return res.status(400).json({
-          status: false,
-          error: err.message
-        })
-      })
-  })
-}
->>>>>>> master
 
 const syncCalendar = async (req, res) => {
   const user = req.currentUser;
@@ -1541,11 +1322,11 @@ const syncCalendar = async (req, res) => {
         },
         Start: {
           DateTime: _appointments[i].due_start,
-          TimeZone: `UTC${user.time_zone}`,
+          TimeZone: 'UTC' + user.time_zone,
         },
         End: {
           DateTime: _appointments[i].due_end,
-          TimeZone: `UTC${user.time_zone}`,
+          TimeZone: 'UTC' + user.time_zone,
         },
         Attendees: attendees,
       };
@@ -1562,19 +1343,7 @@ const syncCalendar = async (req, res) => {
           } else {
             resolve(result.token);
           }
-<<<<<<< HEAD
         });
-=======
-        })
-      }).then((token) => {
-        accessToken = token.access_token
-      }).catch((error) => {
-        console.log('outlook token grant error', error)
-        return res.status(406).send({
-          status: false,
-          error: 'not connected'
-        })
->>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1583,7 +1352,7 @@ const syncCalendar = async (req, res) => {
           console.log('outlook token grant error', error);
           return res.status(406).send({
             status: false,
-            error: 'not connnected',
+            error: 'not connected',
           });
         });
 
@@ -1599,7 +1368,7 @@ const syncCalendar = async (req, res) => {
       ) {
         if (error) {
           console.log(
-            `There was an error contacting the Calendar service: ${error}`
+            'There was an error contacting the Calendar service: ' + error
           );
           return;
         }
@@ -1614,15 +1383,16 @@ const syncCalendar = async (req, res) => {
     return res.send({
       status: true,
     });
+  } else {
+    const oauth2Client = new google.auth.OAuth2(
+      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.GMAIL_AUTHORIZE_URL
+    );
+    const token = JSON.parse(user.google_refresh_token);
+    oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+    addGoogleCalendar(oauth2Client, user, res);
   }
-  const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.GMAIL_AUTHORIZE_URL
-  );
-  const token = JSON.parse(user.google_refresh_token);
-  oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-  addGoogleCalendar(oauth2Client, user, res);
 };
 
 const addGoogleCalendar = async (auth, user, res) => {
@@ -1644,11 +1414,11 @@ const addGoogleCalendar = async (auth, user, res) => {
       description: _appointments[i].description,
       start: {
         dateTime: _appointments[i].due_start,
-        timeZone: `UTC${user.time_zone}`,
+        timeZone: 'UTC' + user.time_zone,
       },
       end: {
         dateTime: _appointments[i].due_end,
-        timeZone: `UTC${user.time_zone}`,
+        timeZone: 'UTC' + user.time_zone,
       },
       attendees,
     };
@@ -1662,7 +1432,7 @@ const addGoogleCalendar = async (auth, user, res) => {
       function (err, event) {
         if (err) {
           console.log(
-            `There was an error contacting the Calendar service: ${err}`
+            'There was an error contacting the Calendar service: ' + err
           );
           return;
         }
@@ -1705,19 +1475,7 @@ const disconCalendar = async (req, res) => {
           } else {
             resolve(result.token);
           }
-<<<<<<< HEAD
         });
-=======
-        })
-      }).then((token) => {
-        accessToken = token.access_token
-      }).catch((error) => {
-        console.log('outlook token grant error', error)
-        return res.status(406).send({
-          status: false,
-          error: 'not connected'
-        })
->>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1726,7 +1484,7 @@ const disconCalendar = async (req, res) => {
           console.log('outlook token grant error', error);
           return res.status(406).send({
             status: false,
-            error: 'not connnected',
+            error: 'not connected',
           });
         });
 
@@ -1747,14 +1505,15 @@ const disconCalendar = async (req, res) => {
     return res.send({
       status: true,
     });
+  } else {
+    const oauth2Client = new google.auth.OAuth2(
+      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.GMAIL_AUTHORIZE_URL
+    );
+    oauth2Client.setCredentials(JSON.parse(user.google_refresh_token));
+    removeGoogleCalendar(oauth2Client, user, res);
   }
-  const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.GMAIL_AUTHORIZE_URL
-  );
-  oauth2Client.setCredentials(JSON.parse(user.google_refresh_token));
-  removeGoogleCalendar(oauth2Client, user, res);
 };
 
 const removeGoogleCalendar = async (auth, user, res) => {
@@ -1768,7 +1527,7 @@ const removeGoogleCalendar = async (auth, user, res) => {
     calendar.events.delete(params, function (err) {
       if (err) {
         console.log(
-          `There was an error contacting the Calendar service: ${err}`
+          'There was an error contacting the Calendar service: ' + err
         );
       }
     });
@@ -1784,7 +1543,7 @@ const removeGoogleCalendar = async (auth, user, res) => {
 const dailyReport = async (req, res) => {
   const user = req.currentUser;
 
-  user.daily_report = true;
+  user['daily_report'] = true;
 
   user.save();
   return res.send({
@@ -1795,7 +1554,7 @@ const dailyReport = async (req, res) => {
 const weeklyReport = async (req, res) => {
   const user = req.currentUser;
 
-  user.weekly_report = true;
+  user['weekly_report'] = true;
   user.save();
 
   return res.send({
@@ -1806,7 +1565,7 @@ const weeklyReport = async (req, res) => {
 const disconDaily = async (req, res) => {
   const user = req.currentUser;
 
-  user.daily_report = false;
+  user['daily_report'] = false;
   user.save();
 
   return res.send({
@@ -1817,7 +1576,7 @@ const disconDaily = async (req, res) => {
 const disconWeekly = async (req, res) => {
   const user = req.currentUser;
 
-  user.weekly_report = false;
+  user['weekly_report'] = false;
   user.save();
 
   return res.send({
@@ -1828,8 +1587,8 @@ const disconWeekly = async (req, res) => {
 const desktopNotification = async (req, res) => {
   const user = req.currentUser;
   const { subscription, option } = req.body;
-  user.desktop_notification = true;
-  user.desktop_notification_subscription = JSON.stringify(subscription);
+  user['desktop_notification'] = true;
+  user['desktop_notification_subscription'] = JSON.stringify(subscription);
   const garbage = await Garbage.findOne({ user: user._id });
   if (!garbage) {
     const newGarbage = new Garbage({
@@ -1852,7 +1611,7 @@ const desktopNotification = async (req, res) => {
         });
       });
   } else {
-    garbage.desktop_notification = option;
+    garbage['desktop_notification'] = option;
     garbage
       .save()
       .then(() => {
@@ -1873,7 +1632,7 @@ const desktopNotification = async (req, res) => {
 
 const disconDesktop = async (req, res) => {
   const user = req.currentUser;
-  user.desktop_notification = false;
+  user['desktop_notification'] = false;
 
   user.save();
   return res.send({
@@ -1883,7 +1642,7 @@ const disconDesktop = async (req, res) => {
 
 const textNotification = async (req, res) => {
   const user = req.currentUser;
-  user.text_notification = true;
+  user['text_notification'] = true;
 
   user.save();
   return res.send({
@@ -1893,7 +1652,7 @@ const textNotification = async (req, res) => {
 
 const disconText = async (req, res) => {
   const user = req.currentUser;
-  user.text_notification = false;
+  user['text_notification'] = false;
 
   user.save();
   return res.send({
@@ -1930,7 +1689,7 @@ const resetPasswordByCode = async (req, res) => {
     });
   }
   // Expire check
-  const delay = new Date().getTime() - user.updated_at.getTime();
+  const delay = new Date().getTime() - user['updated_at'].getTime();
 
   if (delay > 1000 * 60 * 15) {
     // More than 15 minutes passed
@@ -1945,8 +1704,8 @@ const resetPasswordByCode = async (req, res) => {
     .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
     .toString('hex');
 
-  user.salt = salt;
-  user.hash = hash;
+  user['salt'] = salt;
+  user['hash'] = hash;
 
   await user.save();
 
@@ -1971,15 +1730,15 @@ const forgotPassword = async (req, res) => {
       error: 'no_user',
     });
   }
-  if (_user.salt) {
+  if (_user['salt']) {
     const code = randomstring.generate({
       length: 5,
       charset: '1234567890ABCDEFHJKMNPQSTUVWXYZ',
     });
 
-    const oldSalt = _user.salt.split(' ')[0];
-    _user.salt = `${oldSalt} ${code}`;
-    _user.updated_at = new Date();
+    const oldSalt = _user['salt'].split(' ')[0];
+    _user['salt'] = oldSalt + ' ' + code;
+    _user['updated_at'] = new Date();
     _user.save();
 
     const html = `<html>
@@ -1996,7 +1755,7 @@ const forgotPassword = async (req, res) => {
     sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
     const msg = {
-      to: _user.email,
+      to: _user['email'],
       from: `CRMGROW <support@crmgrow.com>`,
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html,
@@ -2037,8 +1796,8 @@ const closeAccount = async (req, res) => {
 const checkSuspended = async (req, res, next) => {
   const { currentUser } = req;
 
-  const { subscription } = currentUser;
-  if (subscription.is_suspended) {
+  const subscription = currentUser['subscription'];
+  if (subscription['is_suspended']) {
     res.status(400).send({
       status: false,
       error: 'Account is Suspended',
@@ -2050,8 +1809,8 @@ const checkSuspended = async (req, res, next) => {
 
 const checkLastLogin = async (req, res, next) => {
   const { currentUser } = req;
-  if (!currentUser.admin_loggin) {
-    currentUser.last_logged = new Date();
+  if (!currentUser['admin_loggin']) {
+    currentUser['last_logged'] = new Date();
     currentUser.save().catch((err) => {
       console.log('err', err);
     });
@@ -2071,7 +1830,7 @@ const checkLastLogin = async (req, res, next) => {
 
 const logout = async (req, res) => {
   const { currentUser } = req;
-  currentUser.admin_loggin = false;
+  currentUser['admin_loggin'] = false;
   currentUser.save().catch((err) => {
     console.log('err', err);
   });
@@ -2082,8 +1841,8 @@ const logout = async (req, res) => {
 
 const connectAnotherEmail = async (req, res) => {
   const { currentUser } = req;
-  currentUser.primary_connected = false;
-  currentUser.connected_email_type = 'email';
+  currentUser['primary_connected'] = false;
+  currentUser['connected_email_type'] = 'email';
   currentUser.save().catch((err) => {
     console.log('err', err);
   });
@@ -2108,7 +1867,7 @@ const searchUserEmail = (req, res) => {
   const condition = req.body;
 
   User.find({
-    email: { $regex: `.*${condition.search}.*`, $options: 'i' },
+    email: { $regex: '.*' + condition.search + '.*', $options: 'i' },
   })
     .then((data) => {
       return res.send({
@@ -2127,23 +1886,20 @@ const searchUserEmail = (req, res) => {
 const searchNickName = async (req, res) => {
   const { nick_name } = req.body;
   const _user = await User.findOne({
-    nick_name: { $regex: new RegExp(`^${nick_name}$`, 'i') },
+    nick_name: { $regex: new RegExp('^' + nick_name + '$', 'i') },
     del: false,
   });
   if (_user) {
     return res.send({
       status: false,
     });
+  } else {
+    return res.send({
+      status: true,
+    });
   }
-<<<<<<< HEAD
-  return res.send({
-    status: true,
-  });
 };
-=======
-}
 
->>>>>>> master
 const searchPhone = async (req, res) => {
   const { cell_phone } = req.body;
   const _user = await User.findOne({ cell_phone, del: false });
@@ -2151,10 +1907,11 @@ const searchPhone = async (req, res) => {
     return res.send({
       status: false,
     });
+  } else {
+    return res.send({
+      status: true,
+    });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 module.exports = {

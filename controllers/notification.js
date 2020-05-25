@@ -10,7 +10,7 @@ const get = async (req, res) => {
     });
     data.push({
       type: 'urgent',
-      content: payment_notification.content,
+      content: payment_notification['content'],
     });
   }
 
@@ -21,7 +21,7 @@ const get = async (req, res) => {
       const notification = notifications[i];
       data.push({
         type: 'static',
-        content: notification.content,
+        content: notification['content'],
       });
     }
   }

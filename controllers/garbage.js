@@ -23,7 +23,6 @@ const create = async (req, res) => {
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
-<<<<<<< HEAD
   });
   garbage
     .save()
@@ -31,22 +30,10 @@ const create = async (req, res) => {
       return res.send({
         status: true,
       });
-=======
-  })
-  garbage.save().then(()=>{
-    return res.send({
-      status: true,
-    })
-  }).catch(err=>{
-    console.log('err', err)
-    return res.status(400).json({
-      status: false,
-      error: err.message || 'Internal server error'
->>>>>>> master
     })
     .catch((err) => {
       console.log('err', err);
-      return res.status(500).json({
+      return res.status(400).json({
         status: false,
         error: err.message || 'Internal server error',
       });

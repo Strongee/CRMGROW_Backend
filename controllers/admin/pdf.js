@@ -97,13 +97,8 @@ const get = async (req, res) => {
 };
 
 const getPreview = (req, res) => {
-<<<<<<< HEAD
   const filePath = PREVIEW_PATH + req.params.name;
-  console.info('File Path:', filePath);
-=======
-  const filePath = PREVIEW_PATH + req.params.name
 
->>>>>>> master
   if (fs.existsSync(filePath)) {
     const contentType = mime.contentType(path.extname(filePath));
     res.set('Content-Type', contentType);

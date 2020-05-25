@@ -1,9 +1,9 @@
 $(function () {
-  let pdf_url = document.querySelector('#url').value;
+  const pdf_url = document.querySelector('#url').value;
   var total_pages;
   let total = 0;
   const displayControls = (e) => {
-    let totalPages = $('#viewer').pdf('getTotalPages');
+    const totalPages = $('#viewer').pdf('getTotalPages');
     total_pages = totalPages;
     $('#viewer').addClass('enable');
     $('.pdf-controls').addClass('enable');
@@ -20,15 +20,15 @@ $(function () {
   };
 
   const changeControls = (e) => {
-    let currentPage = $('#viewer').pdf('getPageNumber');
+    const currentPage = $('#viewer').pdf('getPageNumber');
     $('.page-status .current-page').text(currentPage);
   };
 
   const resetHeight = () => {
     if ($('#viewer').hasClass('enable')) {
-      let pdfDOM = document.querySelector('.pdf-outerdiv');
-      let realHeight = window.getComputedStyle(pdfDOM).height;
-      let transform = window.getComputedStyle(pdfDOM).transform;
+      const pdfDOM = document.querySelector('.pdf-outerdiv');
+      const realHeight = window.getComputedStyle(pdfDOM).height;
+      const transform = window.getComputedStyle(pdfDOM).transform;
       let scale = transform
         .replace('matrix(', '')
         .replace(')', '')

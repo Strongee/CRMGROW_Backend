@@ -26,25 +26,17 @@ const credentials = {
   clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
-<<<<<<< HEAD
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
-const graph = require('@microsoft/microsoft-graph-client');
-=======
-  tokenPath: '/oauth2/v2.0/token'
-}
-const oauth2 = require('simple-oauth2')(credentials);
 var graph = require('@microsoft/microsoft-graph-client');
->>>>>>> master
 require('isomorphic-fetch');
 
 const { google } = require('googleapis');
-const { Base64 } = require('js-base64');
+const Base64 = require('js-base64').Base64;
 
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
-<<<<<<< HEAD
 const mail_contents = require('../constants/mail_contents');
 const config = require('../config/config');
 const urls = require('../constants/urls');
@@ -54,11 +46,9 @@ const PDF = require('../models/pdf');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
-=======
->>>>>>> master
 
 const makeBody = (to, from, subject, message) => {
-  const str = [
+  var str = [
     'Content-Type: text/html; charset="UTF-8"\n',
     'MIME-Version:1.0\n',
     'Content-Transfer-Encoding: 7bit\n',
@@ -73,11 +63,11 @@ const makeBody = (to, from, subject, message) => {
     '\n\n',
     message,
   ].join('');
-  const encodedMail = Base64.encodeURI(str);
+  var encodedMail = Base64.encodeURI(str);
   return encodedMail;
-<<<<<<< HEAD
 };
 const textHelper = require('../helpers/text');
+const emailHelper = require('../helpers/email');
 
 const play = async (req, res) => {
   const pdf_id = req.query.pdf;
@@ -89,25 +79,7 @@ const play = async (req, res) => {
     const pattern = /^((http|https|ftp):\/\/)/;
 
     if (!pattern.test(sender.learn_more)) {
-      sender.learn_more = `http://${sender.learn_more}`;
-=======
-}
-const textHelper = require('../helpers/text');
-const emailHelper = require('../helpers/email');
-
-const play = async(req, res) => {  
-  const pdf_id = req.query.pdf
-  const sender_id = req.query.user
-  const pdf = await PDF.findOne({_id: pdf_id})
-  const sender = await User.findOne({_id: sender_id, del: false})
- 
-   
-  if(sender){
-    let pattern = /^((http|https|ftp):\/\/)/;
-    
-    if(!pattern.test(sender.learn_more)) {
-      sender.learn_more = "http://" + sender.learn_more;
->>>>>>> master
+      sender.learn_more = 'http://' + sender.learn_more;
     }
     res.render('pdf', {
       pdf,
@@ -128,7 +100,7 @@ const play1 = async (req, res) => {
     });
 
   if (activity) {
-    const data = activity.user;
+    const data = activity['user'];
     const myJSON = JSON.stringify(data);
     const user = JSON.parse(myJSON);
     delete user.hash;
@@ -138,15 +110,15 @@ const play1 = async (req, res) => {
     const pattern = /^((http|https|ftp):\/\/)/;
 
     if (!pattern.test(user.learn_more)) {
-      user.learn_more = `http://${user.learn_more}`;
+      user.learn_more = 'http://' + user.learn_more;
     }
 
-    const pdf = activity.pdfs;
+    const pdf = activity['pdfs'];
 
     res.render('pdf1', {
       pdf,
       user,
-      contact: activity.contacts,
+      contact: activity['contacts'],
       activity: activity.id,
     });
   }
@@ -196,9 +168,9 @@ const updateDetail = async (req, res) => {
       pdf[key] = editData[key];
     }
 
-    pdf.preview = urls.PDF_PREVIEW_URL + path.basename(file_path);
+    pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path);
 
-    pdf.updated_at = new Date();
+    pdf['updated_at'] = new Date();
 
     pdf.save().then((_pdf) => {
       return res.send({
@@ -234,28 +206,25 @@ const get = async (req, res) => {
 };
 
 const getPreview = (req, res) => {
-<<<<<<< HEAD
   const filePath = PREVIEW_PATH + req.params.name;
-  console.info('File Path:', filePath);
-=======
-  const filePath = PREVIEW_PATH + req.params.name
 
->>>>>>> master
   if (fs.existsSync(filePath)) {
     if (req.query.resize) {
       const readStream = fs.createReadStream(filePath);
       let transform = sharp();
       transform = transform.resize(250, 140);
       return readStream.pipe(transform).pipe(res);
+    } else {
+      const contentType = mime.contentType(path.extname(req.params.name));
+      res.set('Content-Type', contentType);
+      return res.sendFile(filePath);
     }
-    const contentType = mime.contentType(path.extname(req.params.name));
-    res.set('Content-Type', contentType);
-    return res.sendFile(filePath);
+  } else {
+    res.status(404).send({
+      status: false,
+      error: 'Preview does not exist',
+    });
   }
-  res.status(404).send({
-    status: false,
-    error: 'Preview does not exist',
-  });
 };
 
 const getAll = async (req, res) => {
@@ -360,9 +329,17 @@ const sendPDF = async (req, res) => {
         from: `${currentUser.user_name} <${currentUser.connected_email}>`,
         subject: subject || pdf_title,
         html:
-          `<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">${sendContent}</p><a href="${pdf_link}">` +
-          `<img src=${pdf_prview}?resize=true"></img>` +
-          `</a><br/><br/>Thank you<br/><br/>${currentUser.email_signature}</body></html>`,
+          '<html><head><title>PDF Invitation</title></head><body><p style="white-space: pre-wrap; max-width: 800px;">' +
+          sendContent +
+          '</p><a href="' +
+          pdf_link +
+          '">' +
+          '<img src=' +
+          pdf_prview +
+          '?resize=true"></img>' +
+          '</a><br/><br/>Thank you<br/><br/>' +
+          currentUser.email_signature +
+          '</body></html>',
       };
 
       sgMail
@@ -382,11 +359,12 @@ const sendPDF = async (req, res) => {
     return res.send({
       status: true,
     });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found',
+    });
   }
-  return res.status(400).json({
-    status: false,
-    error: 'Contacts not found',
-  });
 };
 
 const sendText = async (req, res) => {
@@ -407,7 +385,7 @@ const sendText = async (req, res) => {
         /{first_name}/gi,
         _contact.first_name
       );
-      const { cell_phone } = _contact;
+      const cell_phone = _contact.cell_phone;
       const _activity = new Activity({
         content: 'sent pdf using sms',
         contacts: contacts[i],
@@ -441,7 +419,7 @@ const sendText = async (req, res) => {
         throw error; // Invalid phone number
       }
 
-      let fromNumber = currentUser.proxy_number;
+      let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
         const areaCode = currentUser.cell_phone.substring(1, 4);
@@ -468,8 +446,8 @@ const sendText = async (req, res) => {
           });
 
           console.log('proxy_number', proxy_number);
-          currentUser.proxy_number = proxy_number.phoneNumber;
-          fromNumber = currentUser.proxy_number;
+          currentUser['proxy_number'] = proxy_number.phoneNumber;
+          fromNumber = currentUser['proxy_number'];
           currentUser.save().catch((err) => {
             console.log('err', err);
           });
@@ -479,7 +457,7 @@ const sendText = async (req, res) => {
       }
       console.info(`Send SMS: ${fromNumber} -> ${cell_phone} :`, content);
 
-      const body = `${sendContent}\n` + `\n${pdf_title}\n` + `\n${pdf_link}`;
+      const body = sendContent + '\n\n' + pdf_title + '\n\n' + pdf_link;
 
       twilio.messages
         .create({ from: fromNumber, body, to: e164Phone })
@@ -493,11 +471,12 @@ const sendText = async (req, res) => {
     return res.send({
       status: true,
     });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found',
+    });
   }
-  return res.status(400).json({
-    status: false,
-    error: 'Contacts not found',
-  });
 };
 
 const remove = async (req, res) => {
@@ -506,7 +485,7 @@ const remove = async (req, res) => {
     const pdf = await PDF.findOne({ _id: req.params.id, user: currentUser.id });
 
     if (pdf) {
-      const { url } = pdf;
+      const url = pdf.url;
       s3.deleteObject(
         {
           Bucket: config.AWS.AWS_S3_BUCKET_NAME,
@@ -517,7 +496,7 @@ const remove = async (req, res) => {
         }
       );
 
-      pdf.del = true;
+      pdf['del'] = true;
       pdf.save();
 
       res.send({
@@ -589,114 +568,34 @@ const bulkEmail = async (req, res) => {
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('err', err);
-=======
-    
-    for(let i=0; i<contacts.length; i++){
-      let promise
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
+      let promise;
+      let _contact = await Contact.findOne({
+        _id: contacts[i],
+        tags: { $nin: ['unsubscribed'] },
+      }).catch((err) => {
+        console.log('contact found err', err.message);
+      });
+
+      if (!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        promise = new Promise(async (resolve, reject) => {
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'contact email not found or unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
+            err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
         continue;
       }
-      
-      let pdf_titles = ''
-      let pdf_descriptions = ''
-      let pdf_objects = ''
-      let pdf_subject = subject
-      let pdf_content = content
-      let activity
-      for(let j=0; j<pdfs.length; j++){
-        const pdf = pdfs[j]        
-        
-        if(typeof pdf_content == 'undefined'){
-          pdf_content = ''
-        }
-        
-        pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-        const _activity = new Activity({
-          content: 'sent pdf using email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'pdfs',
-          pdfs: pdf._id,
-          created_at: new Date(),
-          updated_at: new Date(),
-          subject: pdf_subject,
-          description: pdf_content
-        })
-        
-        activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-        
-        if(pdfs.length>=2){
-          pdf_titles = mail_contents.PDF_TITLE
-        }else{
-          pdf_titles = `${pdf.title}`
-        }
-        
-        if(j < pdfs.length-1){
-          pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
-        } else{
-          
-          pdf_descriptions = pdf_descriptions + pdf.description
-        }
-        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        pdf_objects = pdf_objects + pdf_object                      
-      }
-      
-      if(pdf_subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_titles
-      } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
-        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
-      }
-    
-        if(pdf_content.search(/{pdf_object}/ig) != -1){
-          pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
-        }else{
-          pdf_content = pdf_content+'<br/>'+pdf_objects
-        }
-        
-        if(pdf_content.search(/{pdf_title}/ig) != -1){
-          pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
->>>>>>> master
-        }
-      );
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
@@ -709,11 +608,10 @@ const bulkEmail = async (req, res) => {
         if (typeof pdf_content === 'undefined') {
           pdf_content = '';
         }
-<<<<<<< HEAD
 
         pdf_subject = pdf_subject
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
@@ -722,7 +620,7 @@ const bulkEmail = async (req, res) => {
 
         pdf_content = pdf_content
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
@@ -767,7 +665,7 @@ const bulkEmail = async (req, res) => {
       }
 
       if (pdf_subject === '') {
-        pdf_subject = `PDF: ${pdf_titles}`;
+        pdf_subject = 'PDF: ' + pdf_titles;
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/gi, pdf_titles);
         pdf_subject = pdf_subject.replace(/{material_title}/gi, pdf_titles);
@@ -776,7 +674,7 @@ const bulkEmail = async (req, res) => {
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
         pdf_content = pdf_content.replace(/{pdf_object}/gi, pdf_objects);
       } else {
-        pdf_content = `${pdf_content}<br/>${pdf_objects}`;
+        pdf_content = pdf_content + '<br/>' + pdf_objects;
       }
 
       if (pdf_content.search(/{pdf_title}/gi) !== -1) {
@@ -793,37 +691,25 @@ const bulkEmail = async (req, res) => {
       const msg = {
         to: _contact.email,
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.email + _contact.email,
+        replyTo: currentUser.connected_email + _contact.email,
         subject: pdf_subject,
         // replyTo: _contact.email,
-        html: `<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">${pdf_content}<br/>Thank you,<br/><br/>${currentUser.email_signature}</body></html>`,
+        html:
+          '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          pdf_content +
+          '<br/>Thank you,<br/>' +
+          currentUser.email_signature +
+          emailHelper.generateUnsubscribeLink(activity.id) +
+          '</body></html>',
         text: pdf_content,
       };
 
       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
 
-      const promise = new Promise((resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         sgMail
           .send(msg)
           .then((_res) => {
-=======
-        
-        const msg = {
-          to: _contact.email,
-          from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-          replyTo: currentUser.connected_email,
-          subject: pdf_subject,
-          replyTo: _contact.email,
-          html: '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">'
-                +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
-          text: pdf_content
-        }
-        
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-      
-        promise = new Promise((resolve, reject)=>{
-          sgMail.send(msg).then((_res) => {
->>>>>>> master
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
@@ -909,7 +795,6 @@ const bulkText = async (req, res) => {
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
@@ -932,7 +817,7 @@ const bulkText = async (req, res) => {
 
         pdf_content = pdf_content
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
@@ -960,7 +845,7 @@ const bulkText = async (req, res) => {
         const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
 
         if (j < pdfs.length - 1) {
-          pdf_titles = `${pdf_titles + pdf.title}, `;
+          pdf_titles = pdf_titles + pdf.title + ', ';
           pdf_descriptions += `${pdf.description}, `;
         } else {
           pdf_titles += pdf.title;
@@ -968,63 +853,12 @@ const bulkText = async (req, res) => {
         }
         const pdf_object = `\n${pdf.title}:\n\n${pdf_link}\n`;
         pdf_objects += pdf_object;
-=======
-    
-    for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
-      let pdf_titles = ''
-      let pdf_descriptions = ''
-      let pdf_objects = ''
-      let pdf_content = content
-      let activity
-      
-      for(let j=0; j<pdfs.length; j++){
-          const pdf = pdfs[j]        
-          
-          if(typeof pdf_content == 'undefined'){
-            pdf_content = ''
-          }
-          
-          pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: 'sent pdf using sms',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'pdfs',
-            pdfs: pdf._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            description: pdf_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          
-          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-        
-          if(j < pdfs.length-1){
-            pdf_titles = pdf_titles + pdf.title + ', '  
-            pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
-          } else{
-            pdf_titles = pdf_titles + pdf.title
-            pdf_descriptions = pdf_descriptions + pdf.description
-          }
-          const pdf_object = `\n${pdf.title}:\n\n${pdf_link}\n`
-          pdf_objects = pdf_objects + pdf_object                      
->>>>>>> master
       }
 
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
         pdf_content = pdf_content.replace(/{pdf_object}/gi, pdf_objects);
       } else {
-        pdf_content = `${pdf_content}\n${pdf_objects}`;
+        pdf_content = pdf_content + '\n' + pdf_objects;
       }
 
       if (pdf_content.search(/{pdf_title}/gi) !== -1) {
@@ -1038,7 +872,7 @@ const bulkText = async (req, res) => {
         );
       }
 
-      let fromNumber = currentUser.proxy_number;
+      let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
         fromNumber = await textHelper.getTwilioNumber(currentUser.id);
@@ -1050,12 +884,13 @@ const bulkText = async (req, res) => {
         if (!e164Phone) {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
-          });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              cell_phone: _contact.cell_phone,
-            },
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err,
+            });
           });
           resolve(); // Invalid phone number
         }
@@ -1137,25 +972,16 @@ const createSmsContent = async (req, res) => {
     if (typeof pdf_content === 'undefined') {
       pdf_content = '';
     }
-<<<<<<< HEAD
 
     pdf_content = pdf_content
       .replace(/{user_name}/gi, currentUser.user_name)
-      .replace(/{user_email}/gi, currentUser.email)
+      .replace(/{user_email}/gi, currentUser.connected_email)
       .replace(/{user_phone}/gi, currentUser.cell_phone)
       .replace(/{contact_first_name}/gi, _contact.first_name)
       .replace(/{contact_last_name}/gi, _contact.last_name)
       .replace(/{contact_email}/gi, _contact.email)
       .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-=======
-    
-    pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-    .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    
->>>>>>> master
     const _activity = new Activity({
       content: 'sent pdf using sms',
       contacts: contacts[0],
@@ -1177,7 +1003,7 @@ const createSmsContent = async (req, res) => {
     const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
 
     if (j < pdfs.length - 1) {
-      pdf_titles = `${pdf_titles + pdf.title}, `;
+      pdf_titles = pdf_titles + pdf.title + ', ';
       pdf_descriptions += `${pdf.description}, `;
     } else {
       pdf_titles += pdf.title;
@@ -1220,7 +1046,6 @@ const bulkOutlook = async (req, res) => {
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
 
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
@@ -1229,15 +1054,8 @@ const bulkOutlook = async (req, res) => {
 
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
-=======
-    
-    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
-    
-    for(let i=0; i<contacts.length; i++){
-      let accessToken
-      let promise
-      
->>>>>>> master
+      let promise;
+
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
@@ -1245,20 +1063,7 @@ const bulkOutlook = async (req, res) => {
           } else {
             resolve(result.token);
           }
-<<<<<<< HEAD
         });
-=======
-        })
-      }).then((token)=>{
-        accessToken = token.access_token
-        
-      }).catch((error) => {
-        console.log('outlook token grant error', error)
-        return res.status(406).send({
-          status: false,
-          error: 'not connected'
-        })
->>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -1267,7 +1072,7 @@ const bulkOutlook = async (req, res) => {
           console.log('outlook token grant error', error);
           return res.status(406).send({
             status: false,
-            error: 'not connnected',
+            error: 'not connected',
           });
         });
 
@@ -1278,13 +1083,32 @@ const bulkOutlook = async (req, res) => {
           done(null, accessToken);
         },
       });
-<<<<<<< HEAD
 
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
+      let _contact = await Contact.findOne({
+        _id: contacts[i],
+        tags: { $nin: ['unsubscribed'] },
+      }).catch((err) => {
+        console.log('contact found err', err.message);
+      });
+
+      if (!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
@@ -1300,7 +1124,7 @@ const bulkOutlook = async (req, res) => {
 
         pdf_subject = pdf_subject
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
@@ -1309,61 +1133,13 @@ const bulkOutlook = async (req, res) => {
 
         pdf_content = pdf_content
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
           .replace(/{contact_email}/gi, _contact.email)
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-=======
-  
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'contact email not found or unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
-        continue;
-      }
-      
-      let pdf_titles = ''
-      let pdf_descriptions = ''
-      let pdf_objects = ''
-      let pdf_subject = subject
-      let pdf_content = content
-      let activity
-      for(let j=0; j<pdfs.length; j++){
-        const pdf = pdfs[j]        
-        
-        if(typeof pdf_content == 'undefined'){
-          pdf_content = ''
-        }
-        
-        pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
->>>>>>> master
         const _activity = new Activity({
           content: 'sent pdf using email',
           contacts: contacts[i],
@@ -1373,7 +1149,6 @@ const bulkOutlook = async (req, res) => {
           created_at: new Date(),
           updated_at: new Date(),
           subject: pdf_subject,
-<<<<<<< HEAD
           description: pdf_content,
         });
 
@@ -1403,7 +1178,7 @@ const bulkOutlook = async (req, res) => {
       }
 
       if (subject === '') {
-        pdf_subject = `PDF: ${pdf_titles}`;
+        pdf_subject = 'PDF: ' + pdf_titles;
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/gi, pdf_titles);
         pdf_subject = pdf_subject.replace(/{material_title}/gi, pdf_titles);
@@ -1412,7 +1187,7 @@ const bulkOutlook = async (req, res) => {
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
         pdf_content = pdf_content.replace(/{pdf_object}/gi, pdf_objects);
       } else {
-        pdf_content = `${pdf_content}<br/>${pdf_objects}`;
+        pdf_content = pdf_content + '<br/>' + pdf_objects;
       }
 
       if (content.search(/{pdf_title}/gi) !== -1) {
@@ -1426,72 +1201,23 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
-=======
-          description: pdf_content
-        })
-        
-        activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-        
-        if(pdfs.length>=2){
-          pdf_titles = mail_contents.PDF_TITLE
-        }else{
-          pdf_titles = `${pdf.title}`
-        }
-        
-        if(j < pdfs.length-1){
-          pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
-        } else{
-          pdf_descriptions = pdf_descriptions + pdf.description
-        }
-        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        pdf_objects = pdf_objects + pdf_object                      
-      }
-      
-      if(subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_titles
-      } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
-        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
-      }
-    
-      if(pdf_content.search(/{pdf_object}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
-      }else{
-        pdf_content = pdf_content+'<br/>'+pdf_objects
-      }
-      
-      if(content.search(/{pdf_title}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
-      }
-      
-      if(content.search(/{pdf_description}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
-      }
-      
->>>>>>> master
       const sendMail = {
         message: {
           subject: pdf_subject,
           body: {
-<<<<<<< HEAD
             contentType: 'HTML',
-            content: `<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">${pdf_content}<br/>Thank you,<br/><br/>${currentUser.email_signature}</body></html>`,
-=======
-            contentType: "HTML",
-            content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-            +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
->>>>>>> master
+            content:
+              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+              pdf_content +
+              '<br/>Thank you,<br/>' +
+              currentUser.email_signature +
+              emailHelper.generateUnsubscribeLink(activity.id) +
+              '</body></html>',
           },
           toRecipients: [
             {
               emailAddress: {
                 address: _contact.email,
-<<<<<<< HEAD
               },
             },
           ],
@@ -1499,7 +1225,7 @@ const bulkOutlook = async (req, res) => {
         saveToSentItems: 'true',
       };
 
-      const promise = new Promise((resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         client
           .api('/me/sendMail')
           .post(sendMail)
@@ -1540,49 +1266,6 @@ const bulkOutlook = async (req, res) => {
         return res.send({
           status: true,
         });
-=======
-              }
-            }
-          ],
-        },
-        saveToSentItems: "true"
-      };
-      
-      promise = new Promise((resolve, reject)=>{
-        client.api('/me/sendMail')
-        .post(sendMail).then(()=>{
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-            console.log('err', err)
-          })
-          resolve()
-        }).catch(err=>{
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
-          })
-          console.log('err', err)
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email
-            },
-            err: err
-          })
-          resolve()
-        });
-      })
-    promise_array.push(promise)
-  }
-      
-    Promise.all(promise_array).then(()=>{
-      if(error.length>0){
-        return res.status(405).json({
-          status: false,
-          error: error
-        })
-      }
-      return res.send({
-        status: true
->>>>>>> master
       })
       .catch((err) => {
         console.log('err', err);
@@ -1618,13 +1301,8 @@ const bulkGmail = async (req, res) => {
     console.log('get access err', err);
     return res.status(406).send({
       status: false,
-<<<<<<< HEAD
-      error: 'not connnected',
+      error: 'not connected',
     });
-=======
-      error: 'not connected'
-    })
->>>>>>> master
   });
 
   if (contacts) {
@@ -1634,14 +1312,34 @@ const bulkGmail = async (req, res) => {
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
+      let promise;
+      let _contact = await Contact.findOne({
+        _id: contacts[i],
+        tags: { $nin: ['unsubscribed'] },
+      }).catch((err) => {
+        console.log('contact found err', err.message);
+      });
+
+      if (!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
@@ -1657,7 +1355,7 @@ const bulkGmail = async (req, res) => {
 
         pdf_subject = pdf_subject
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
@@ -1666,63 +1364,13 @@ const bulkGmail = async (req, res) => {
 
         pdf_content = pdf_content
           .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.email)
+          .replace(/{user_email}/gi, currentUser.connected_email)
           .replace(/{user_phone}/gi, currentUser.cell_phone)
           .replace(/{contact_first_name}/gi, _contact.first_name)
           .replace(/{contact_last_name}/gi, _contact.last_name)
           .replace(/{contact_email}/gi, _contact.email)
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-=======
-    
-    for(let i=0; i<contacts.length; i++){
-      let promise
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'contact email not found or unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
-        continue;
-      }
-      
-      let pdf_titles = ''
-      let pdf_descriptions = ''
-      let pdf_objects = ''
-      let pdf_subject = subject
-      let pdf_content = content
-      let activity
-      for(let j=0; j<pdfs.length; j++){
-        const pdf = pdfs[j]        
-        
-        if(typeof pdf_content == 'undefined'){
-          pdf_content = ''
-        }
-        
-        pdf_subject = pdf_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        pdf_content = pdf_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
->>>>>>> master
         const _activity = new Activity({
           content: 'sent pdf using email',
           contacts: contacts[i],
@@ -1731,7 +1379,6 @@ const bulkGmail = async (req, res) => {
           pdfs: pdf._id,
           created_at: new Date(),
           updated_at: new Date(),
-<<<<<<< HEAD
           subject,
           description: pdf_content,
         });
@@ -1762,7 +1409,7 @@ const bulkGmail = async (req, res) => {
       }
 
       if (pdf_subject === '') {
-        pdf_subject = `PDF: ${pdf_titles}`;
+        pdf_subject = 'PDF: ' + pdf_titles;
       } else {
         pdf_subject = pdf_subject.replace(/{pdf_title}/gi, pdf_titles);
         pdf_subject = pdf_subject.replace(/{material_title}/gi, pdf_titles);
@@ -1771,7 +1418,7 @@ const bulkGmail = async (req, res) => {
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
         pdf_content = pdf_content.replace(/{pdf_object}/gi, pdf_objects);
       } else {
-        pdf_content = `${pdf_content}<br/>${pdf_objects}`;
+        pdf_content = pdf_content + '<br/>' + pdf_objects;
       }
 
       if (content.search(/{pdf_title}/gi) !== -1) {
@@ -1785,64 +1432,16 @@ const bulkGmail = async (req, res) => {
         );
       }
 
-      const email_content = `<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">${pdf_content}<br/>Thank you,<br/><br/>${currentUser.email_signature}</body></html>`;
+      const email_content =
+        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        pdf_content +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
 
-      const promise = new Promise((resolve, reject) => {
-=======
-          subject: subject,
-          description: pdf_content
-        })
-        
-        activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id
-        
-        if(pdfs.length>=2){
-          pdf_titles = mail_contents.PDF_TITLE
-        }else{
-          pdf_titles = `${pdf.title}`
-        }
-        
-        if(j < pdfs.length-1){
-          pdf_descriptions = pdf_descriptions + `${pdf.description}, ` 
-        } else{
-          pdf_descriptions = pdf_descriptions + pdf.description
-        }
-        //const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        pdf_objects = pdf_objects + pdf_object                      
-      }
-      
-      if(pdf_subject == '' ){
-        pdf_subject = 'PDF: ' + pdf_titles
-      } else {
-        pdf_subject = pdf_subject.replace(/{pdf_title}/ig, pdf_titles)
-        pdf_subject = pdf_subject.replace(/{material_title}/ig, pdf_titles)
-      }
-    
-      if(pdf_content.search(/{pdf_object}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_object}/ig, pdf_objects)
-      }else{
-        pdf_content = pdf_content+'<br/>'+pdf_objects
-      }
-      
-      if(content.search(/{pdf_title}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_title}/ig, pdf_titles)
-      }
-      
-      if(content.search(/{pdf_description}/ig) != -1){
-        pdf_content = pdf_content.replace(/{pdf_description}/ig, pdf_descriptions)
-      }
-
-      const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-        +pdf_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>';
-      // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, pdf_subject, email_content );
-      
-      promise = new Promise((resolve, reject)=>{
->>>>>>> master
+      promise = new Promise((resolve, reject) => {
         // gmail.users.messages.send({
         //   'userId': currentUser.email,
         //   'resource': {
@@ -1871,28 +1470,17 @@ const bulkGmail = async (req, res) => {
         //   }
         // })
         try {
-<<<<<<< HEAD
           const body = createBody({
-            headers: {
-              To: _contact.email,
-              From: `${currentUser.user_name} <${currentUser.email}>`,
-              Subject: pdf_subject,
-            },
-            textHtml: email_content,
-=======
-          let body = createBody({
             headers: {
               To: _contact.email,
               From: `${currentUser.user_name} <${currentUser.connected_email}>`,
               Subject: pdf_subject,
             },
-            textHtml:  email_content,
->>>>>>> master
+            textHtml: email_content,
             textPlain: email_content,
           });
           request({
             method: 'POST',
-<<<<<<< HEAD
             uri:
               'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
@@ -1911,7 +1499,7 @@ const bulkGmail = async (req, res) => {
               resolve();
             })
             .catch((err) => {
-              console.log('gmail send err', err);
+              console.log('gmail pdf send err', err);
               Activity.deleteOne({ _id: activity.id }).catch((err) => {
                 console.log('err', err);
               });
@@ -1929,44 +1517,11 @@ const bulkGmail = async (req, res) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
           });
-=======
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-            headers: {
-              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-            },
-            body: body
-          }).then(()=>{
-            Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve();
-          }).catch(err=>{
-            console.log('gmail pdf send err', err)
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              err: err
-            })
-            resolve()
-          })
-        }catch(err){
-          console.log('err', err)
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
-          })
->>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-<<<<<<< HEAD
             err,
           });
           resolve();
@@ -2003,43 +1558,6 @@ const bulkGmail = async (req, res) => {
     });
   }
 };
-=======
-            err: err
-          })
-          resolve()
-        }
-      })
-      promise_array.push(promise)
-    }
-    
-    Promise.all(promise_array).then(()=>{
-      if(error.length>0){
-        return res.status(405).json({
-          status: false,
-          error: error
-        })
-      }
-      return res.send({
-        status: true
-      })
-    }).catch(err=>{
-      console.log('err', err)
-      if(err){
-        return res.status(400).json({
-          status: false,
-          error: err
-        })
-      }
-    });
-  }else {
-    return res.status(400).json({
-      status: false,
-      error: 'Contacts not found'
-    })
-  }  
-}
-
->>>>>>> master
 
 module.exports = {
   play,
@@ -2058,8 +1576,4 @@ module.exports = {
   getHistory,
   bulkOutlook,
   bulkGmail,
-<<<<<<< HEAD
 };
-=======
-}
->>>>>>> master

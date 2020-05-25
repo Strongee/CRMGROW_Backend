@@ -136,10 +136,10 @@ const edit = async (req, res) => {
     Reminder.findOne({ follow_up: req.params.id })
       .then((_reminder) => {
         if (req.body.due_date) {
-          _reminder.due_date = req.body.due_date;
+          _reminder['due_date'] = req.body.due_date;
         }
         if (req.body.contact) {
-          _reminder.contact = req.body.contact;
+          _reminder['contact'] = req.body.contact;
         }
         _reminder.save().catch((err) => {
           console.log('err', err);
@@ -160,7 +160,7 @@ const edit = async (req, res) => {
     follow_up[key] = editData[key];
   }
 
-  follow_up.updated_at = new Date();
+  follow_up['updated_at'] = new Date();
   follow_up
     .save()
     .then((_follow_up) => {
@@ -196,8 +196,8 @@ const getByDate = async (req, res) => {
   ];
   const query = { ...req.query };
   const cquery = { ...query };
-  const { due_date } = query;
-  const { time_zone } = currentUser;
+  const due_date = query['due_date'];
+  const time_zone = currentUser.time_zone;
 
   // Check valid queries
   if (!allowed_queries.includes(due_date)) {
@@ -450,7 +450,7 @@ const updateArchived = async (req, res) => {
           follow_up: follow_up.id,
         });
         if (reminder) {
-          reminder.del = true;
+          reminder['del'] = true;
           reminder.save().catch((err) => {
             console.log('err', err);
           });
@@ -499,7 +499,7 @@ const updateChecked = async (req, res) => {
           console.log('err', err);
         });
         if (reminder) {
-          reminder.del = true;
+          reminder['del'] = true;
           reminder.save().catch((err) => {
             console.log('err', err);
           });
@@ -557,10 +557,10 @@ const bulkUpdate = async (req, res) => {
     try {
       const query = {};
       if (content) {
-        query.content = content;
+        query['content'] = content;
       }
       if (due_date) {
-        query.due_date = due_date;
+        query['due_date'] = due_date;
       }
       FollowUp.find({ _id: { $in: ids } })
         .updateMany({ $set: query })
@@ -682,6 +682,9 @@ const bulkCreate = async (req, res) => {
         });
       });
   }
+  return res.send({
+    status: true,
+  });
 };
 
 module.exports = {

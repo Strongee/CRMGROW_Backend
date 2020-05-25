@@ -17,13 +17,13 @@ const s3 = new AWS.S3({
 const router = express.Router();
 
 const storage = multerS3({
-  s3: s3,
+  s3,
   bucket: config.AWS.AWS_S3_BUCKET_NAME,
   acl: 'public-read',
-  metadata: function (req, file, cb) {
+  metadata(req, file, cb) {
     cb(null, { fieldName: file.fieldname });
   },
-  key: function (req, file, cb) {
+  key(req, file, cb) {
     const today = new Date();
     const year = today.getYear();
     const month = today.getMonth();
@@ -32,7 +32,7 @@ const storage = multerS3({
 });
 
 const upload = multer({
-  storage: storage,
+  storage,
 });
 
 // Upload a pdf

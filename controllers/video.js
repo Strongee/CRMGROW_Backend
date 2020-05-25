@@ -3,12 +3,9 @@ const fs = require('fs');
 const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
-<<<<<<< HEAD
 const uuidv1 = require('uuid/v1');
-
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
 const phone = require('phone');
 const twilio = require('twilio')(accountSid, authToken);
 const AWS = require('aws-sdk');
@@ -18,82 +15,18 @@ const extractFrames = require('ffmpeg-extract-frames');
 const { createCanvas, loadImage } = require('canvas');
 const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
-=======
-const User = require('../models/user');
-const Activity = require('../models/activity');
-const Video = require('../models/video');
-const VideoTracker = require('../models/video_tracker');
-const Garbage = require('../models/garbage');
-const Contact = require('../models/contact');
-const { THUMBNAILS_PATH, TEMP_PATH, GIF_PATH, VIDEO_PATH, PLAY_BUTTON_PATH } = require('../config/path');
-const urls = require('../constants/urls');
-const config = require('../config/config');
-const mail_contents = require('../constants/mail_contents');
-
-const uuidv1 = require('uuid/v1');
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
-const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
-const AWS = require('aws-sdk');
-const GIFEncoder = require('gifencoder');
-
-const extractFrames = require('ffmpeg-extract-frames');
-const { createCanvas, loadImage } = require('canvas');
-const pngFileStream = require('png-file-stream');
-const sharp = require('sharp');
-
-const emailHelper = require('../helpers/email.js');
-const garbageHelper = require('../helpers/garbage.js');
-const textHelper = require('../helpers/text.js');
-const videoHelper = require('../helpers/video');
-const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
->>>>>>> master
-
-const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-<<<<<<< HEAD
-  region: config.AWS.AWS_S3_REGION,
-=======
-  region: config.AWS.AWS_S3_REGION
->>>>>>> master
-});
-
-const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
-  site: 'https://login.microsoftonline.com/common',
-  authorizationPath: '/oauth2/v2.0/authorize',
-<<<<<<< HEAD
-  tokenPath: '/oauth2/v2.0/token',
-=======
-  tokenPath: '/oauth2/v2.0/token'
->>>>>>> master
-};
 const oauth2 = require('simple-oauth2')(credentials);
 const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
-<<<<<<< HEAD
 const request = require('request-promise');
-=======
-const request = require('request-promise')
->>>>>>> master
 const createBody = require('gmail-api-create-message-body');
-
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const child_process = require('child_process');
-const emailHelper = require('../helpers/email.js');
-const garbageHelper = require('../helpers/garbage.js');
-const textHelper = require('../helpers/text.js');
-const videoHelper = require('../helpers/video');
-const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
-const mail_contents = require('../constants/mail_contents');
-const variables = require('../constants/variables');
-const config = require('../config/config');
-const urls = require('../constants/urls');
+const Activity = require('../models/activity');
+const Video = require('../models/video');
+const VideoTracker = require('../models/video_tracker');
+const Garbage = require('../models/garbage');
+const Contact = require('../models/contact');
 const {
   THUMBNAILS_PATH,
   TEMP_PATH,
@@ -101,14 +34,34 @@ const {
   VIDEO_PATH,
   PLAY_BUTTON_PATH,
 } = require('../config/path');
-const Contact = require('../models/contact');
-const Garbage = require('../models/garbage');
-const VideoTracker = require('../models/video_tracker');
-const Video = require('../models/video');
-const Activity = require('../models/activity');
-const User = require('../models/user');
+const urls = require('../constants/urls');
+const config = require('../config/config');
+const mail_contents = require('../constants/mail_contents');
 
-<<<<<<< HEAD
+const accountSid = config.TWILIO.TWILIO_SID;
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+
+const User = require('../models/user');
+const emailHelper = require('../helpers/email.js');
+const garbageHelper = require('../helpers/garbage.js');
+const textHelper = require('../helpers/text.js');
+const videoHelper = require('../helpers/video');
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION,
+});
+
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token',
+};
+
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
@@ -120,22 +73,10 @@ const play = async (req, res) => {
       console.log('err', err.message);
     }
   );
-=======
-const play = async(req, res) => {  
-  const video_id = req.query.video
-  const sender_id = req.query.user
-  const video = await Video.findOne({_id: video_id}).catch(err=>{
-    console.log('err', err.message)
-  })
-  const user = await User.findOne({_id: sender_id, del: false}).catch(err=>{
-    console.log('err', err.message)
-  })
->>>>>>> master
 
   let capture_dialog = true;
   let capture_delay = 0;
   let capture_field = {};
-<<<<<<< HEAD
 
   if (user) {
     const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
@@ -143,34 +84,17 @@ const play = async(req, res) => {
     });
 
     let theme = 'theme2';
-    let logo = variables.DEFAULT_LOGO;
+    let logo;
     if (garbage) {
-=======
-  
-  if(user){
-    const garbage = await Garbage.findOne({user: user._id}).catch(err => {
-      console.log('err', err)
-    })
-    
-    let theme = 'theme2';
-    if(garbage) {
->>>>>>> master
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
-      capture_videos = garbage['capture_videos'];
+      const capture_videos = garbage['capture_videos'];
       if (capture_videos.indexOf(video_id) === -1) {
         capture_dialog = false;
       }
-<<<<<<< HEAD
       theme = garbage['material_theme'] || theme;
-      logo = garbage['logo'] || logo;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
     } else {
-=======
-      theme = garbage['material_theme'] || theme
-      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO
-    }  
-    else {
->>>>>>> master
       capture_dialog = false;
     }
 
@@ -180,7 +104,6 @@ const play = async(req, res) => {
       user.learn_more = 'http://' + user.learn_more;
     }
     return res.render('lead_video_' + theme, {
-<<<<<<< HEAD
       video,
       user,
       capture_dialog,
@@ -191,18 +114,6 @@ const play = async(req, res) => {
         logo,
       },
     });
-=======
-      video: video,
-      user: user,
-      capture_dialog: capture_dialog,
-      capture_delay: capture_delay,
-      capture_field: capture_field || {},
-      social_link: user.social_link || {},
-      setting: {
-        logo
-      }
-    })
->>>>>>> master
   } else {
     res.send(
       'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
@@ -219,7 +130,7 @@ const play1 = async (req, res) => {
 
   if (activity) {
     const data = activity['user'];
-    myJSON = JSON.stringify(data);
+    const myJSON = JSON.stringify(data);
     const user = JSON.parse(myJSON);
     delete user.hash;
     delete user.salt;
@@ -245,16 +156,15 @@ const play1 = async (req, res) => {
       }
     }
 
-<<<<<<< HEAD
     const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
       console.log('err', err);
     });
 
     let theme = 'theme2';
-    let logo = variables.DEFAULT_LOGO;
+    let logo;
     if (garbage) {
       theme = garbage['material_theme'] || theme;
-      logo = garbage['logo'] || logo;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
     }
 
     return res.render('video_' + theme, {
@@ -271,30 +181,6 @@ const play1 = async (req, res) => {
     return res.send(
       'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
     );
-=======
-    const garbage = await Garbage.findOne({user: data._id}).catch(err => {
-      console.log('err', err)
-    })
-    
-    let theme = 'theme2';
-    if(garbage) {
-      theme = garbage['material_theme'] || theme
-      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO
-    }
-    
-    return res.render('video_' + theme, {
-        video: video,
-        user: user,
-        contact: activity['contacts'],
-        activity: activity.id,
-        social_link: social_link,
-        setting: {
-          logo
-        }
-    })
-  }else{
-    return res.send('Sorry! This video link is expired for some reason. Please try ask to sender to send again.')
->>>>>>> master
   }
 };
 
@@ -308,12 +194,6 @@ const embedPlay = async (req, res) => {
 const pipe = async (req, res) => {
   const filePath = TEMP_PATH + req.params.name;
 
-<<<<<<< HEAD
-=======
-const pipe = async(req, res) =>{
-  const filePath = TEMP_PATH + req.params.name
-
->>>>>>> master
   if (fs.existsSync(filePath)) {
     const contentType = mime.contentType(path.extname(req.params.name));
     res.set('Content-Type', contentType);
@@ -371,7 +251,6 @@ const createVideo = async (req, res) => {
   });
 };
 
-<<<<<<< HEAD
 const update = async (req, res) => {
   const editData = { ...req.body };
   delete editData.site_image;
@@ -384,17 +263,6 @@ const update = async (req, res) => {
   }).catch((err) => {
     console.log('err', err.message);
   });
-=======
-const update = async(req, res) => {
-  const editData = {...req.body}
-  delete editData.site_image;
-  delete editData.thumbnail;
-  let { currentUser } = req
-  let thumbnail_path = ''
-  const video = await Video.findOne({_id: req.params.id, user: currentUser.id}).catch(err=>{
-    console.log('err', err.message)
-  })
->>>>>>> master
 
   if (!video) {
     return res.status(400).json({
@@ -402,7 +270,6 @@ const update = async(req, res) => {
       error: 'Invalid_permission',
     });
   }
-<<<<<<< HEAD
   if (req.body.site_image) {
     if (video.site_image) {
       try {
@@ -472,74 +339,12 @@ const update = async(req, res) => {
           width = (140 * width) / height;
           height = 140;
           ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-=======
-  if(req.body.site_image) {
-    if(video.site_image) {
-      try {
-        await removeFile(video.site_image)
-      } catch(error) {
-        console.error("Remove Site Image", error)
-      }
-    }
-    try {
-      const today = new Date()
-      const year = today.getYear()
-      const month = today.getMonth()
-      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
-      video['site_image'] = siteImage;
-    } catch(error) {
-      console.error("Upload Site Image", error)
-    }
-  }
-  if(req.body.thumbnail) {
-    if(video.thumbnail) {
-      try {
-        await removeFile(video.thumbnail)
-      } catch(error) {
-        console.error("Remove Video Thumbnail Image", error)
-      }
-    }
-    try {
-      const today = new Date()
-      const year = today.getYear()
-      const month = today.getMonth()
-      let thumbnail_image = await uploadBase64Image(req.body.thumbnail, 'thumbnail' + year + '/' + month)
-      video['thumbnail'] = thumbnail_image;
-    } catch(error) {
-      console.error("Upload Video Thumbnail Image", error)
-    }
-  }
-  let file_name = req.params.id
-  let thumbnail_name = uuidv1()
-  if (req.body.thumbnail) { // base 64 image    
-    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name)
-    if(fs.existsSync(thumbnail_path)) {  
-        
-      // Thumbnail
-      if(req.body.thumbnail){
-        const play = await loadImage(PLAY_BUTTON_PATH);
-      
-        const canvas = createCanvas(250, 140)
-        const ctx = canvas.getContext('2d');
-        let image = await loadImage(thumbnail_path);
-          
-        let height = image.height;
-        let width = image.width;
-        if(height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = 140*width/height;
-          height = 140;
-          ctx.drawImage(image, (250-width)/2, 0, width, height);
->>>>>>> master
         } else {
           height = 140;
           width = 250;
           ctx.drawImage(image, 0, 0, width, height);
         }
         ctx.rect(60, 100, 150, 30);
-<<<<<<< HEAD
         ctx.globalAlpha = 0.7;
         ctx.fillStyle = '#333';
         ctx.fill();
@@ -559,27 +364,6 @@ const update = async(req, res) => {
         }
       }
 
-=======
-        ctx.globalAlpha  = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact'
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120)
-        ctx.drawImage(play, 10, 95, 40, 40)
-        let buf = canvas.toBuffer();
-
-        for(let i=0; i<20; i++){
-          if(i<10){
-            fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
-          } else {
-            fs.writeFileSync(GIF_PATH+file_name+`-${i}.png`, buf)
-          }
-        }
-      }
-    
->>>>>>> master
       /**
       sharp(thumbnail_path)
       .resize(250, 140)
@@ -607,7 +391,6 @@ const update = async(req, res) => {
     }
   }
 
-<<<<<<< HEAD
   for (const key in editData) {
     video[key] = editData[key];
   }
@@ -657,59 +440,10 @@ const updateDetail = async (req, res) => {
   }).catch((err) => {
     console.log('err', err.message);
   });
-=======
-  for (let key in editData) {
-    video[key] = editData[key]
-  }
-  
-  if(video['path'] && req.body.thumbnail){
-    const data = {
-      file_name: file_name,
-    }
-    
-    regeneratePreview(data)
-      .then((res)=>{
-        Video.updateMany(
-          {_id: req.params.id}, 
-          {$set: {preview: res}}
-        ).catch(err=>{
-          console.log('update preview err', err.message)
-        })
-      }).catch(err=>{
-        console.log('err', err.message)
-      })
-  }
-  
-  video['updated_at'] = new Date()
-  video.save().then((_video)=>{
-    res.send({
-      status: true,
-      data: _video
-    })
-  }).catch(err=>{
-    console.log('err', err.message)
-  })
-}
-
-const updateDetail = async (req, res) => {
-  const editData = {...req.body}
-  delete editData.site_image;
-  delete editData.thumbnail;
-  let { currentUser } = req
-  let thumbnail_path = ''
-  const video = await Video
-                  .findOne({
-                    _id: req.params.id, 
-                    user: currentUser.id})
-                  .catch(err=>{
-                    console.log('err', err.message)
-                  })
->>>>>>> master
 
   if (!video) {
     return res.status(400).json({
       status: false,
-<<<<<<< HEAD
       error: 'Invalid_permission',
     });
   }
@@ -783,75 +517,10 @@ const updateDetail = async (req, res) => {
           width = (140 * width) / height;
           height = 140;
           ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-=======
-      error: 'Invalid_permission'
-    })
-  }
-  if(req.body.site_image) {
-    if(video.site_image) {
-      try {
-        await removeFile(video.site_image)
-      } catch(error) {
-        console.error("Remove Site Image", error)
-      }
-    }
-    try {
-      const today = new Date()
-      const year = today.getYear()
-      const month = today.getMonth()
-      let siteImage = await uploadBase64Image(req.body.site_image, 'site_image' + year + '/' + month)
-      video['site_image'] = siteImage;
-    } catch(error) {
-      console.error("Upload Site Image", error)
-    }
-  }
-  if(req.body.thumbnail) {
-    if(video.thumbnail) {
-      try {
-        await removeFile(video.thumbnail)
-      } catch(error) {
-        console.error("Remove Video Thumbnail Image", error)
-      }
-    }
-    try {
-      const today = new Date()
-      const year = today.getYear()
-      const month = today.getMonth()
-      let thumbnail_image = await uploadBase64Image(req.body.thumbnail, 'thumbnail' + year + '/' + month)
-      video['thumbnail'] = thumbnail_image;
-    } catch(error) {
-      console.error("Upload Video Thumbnail Image", error)
-    }
-  }
-  let file_name = req.params.id
-  let custom_thumbnail = false
-  if (req.body.thumbnail) { // base 64 image    
-    thumbnail_path = base64Img.imgSync(req.body.thumbnail, THUMBNAILS_PATH, file_name,)
-    if(fs.existsSync(thumbnail_path)) {    
-      // Thumbnail
-      if(req.body.custom_thumbnail){
-        custom_thumbnail = true
-        const play = await loadImage(PLAY_BUTTON_PATH);
-      
-        const canvas = createCanvas(250, 140)
-        const ctx = canvas.getContext('2d');
-        let image = await loadImage(thumbnail_path);
-          
-        let height = image.height;
-        let width = image.width;
-        if(height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = 140*width/height;
-          height = 140;
-          ctx.drawImage(image, (250-width)/2, 0, width, height);
->>>>>>> master
         } else {
           height = 140;
           width = 250;
           ctx.drawImage(image, 0, 0, width, height);
-<<<<<<< HEAD
         }
         ctx.rect(60, 100, 150, 30);
         ctx.globalAlpha = 0.7;
@@ -873,29 +542,6 @@ const updateDetail = async (req, res) => {
         }
       }
 
-=======
-        }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha  = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact'
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120)
-        ctx.drawImage(play, 10, 95, 40, 40)
-        let buf = canvas.toBuffer();
-        
-        for(let i=0; i<20; i++){
-          if(i<10){
-            fs.writeFileSync(GIF_PATH+file_name+`-0${i}.png`, buf)
-          } else {
-            fs.writeFileSync(GIF_PATH+file_name+`-${i}.png`, buf)
-          }
-        }
-      }
-    
->>>>>>> master
       /**
       sharp(thumbnail_path)
       .resize(250, 140)
@@ -927,7 +573,6 @@ const updateDetail = async (req, res) => {
     video[key] = editData[key];
   }
 
-<<<<<<< HEAD
   if (video['path'] && req.body.thumbnail) {
     const data = {
       file_name: req.params.id,
@@ -953,8 +598,8 @@ const updateDetail = async (req, res) => {
     video['converted'] = 'progress';
     videoHelper.convertRecordVideo(video.id);
   } else if (
-    video['type'] == 'video/mp4' ||
-    video['type'] == 'video/quicktime'
+    video['type'] === 'video/mp4' ||
+    video['type'] === 'video/quicktime'
   ) {
     video['converted'] = 'progress';
     videoHelper.convertUploadVideo(video.id);
@@ -989,60 +634,6 @@ const updateDefault = async (req, res) => {
       console.log('err', err);
     }
   );
-=======
-  if(video['path'] && req.body.thumbnail){
-    const data = {
-      file_name: req.params.id,
-      file_path: video['path'],
-      custom_thumbnail: custom_thumbnail
-    }
-    
-    generatePreview(data).then((res)=>{
-      Video.updateMany(
-        {_id: req.params.id}, 
-        {$set: {preview: res}}
-      ).catch(err=>{
-        console.log('update preview err', err.message)
-      })
-    }).catch(err=>{
-      console.log('generate preview err', err.message)
-    })
-  }
-  
-  
-  if(video['type'] === 'video/webm'){
-    video['converted'] = 'progress'
-    videoHelper.convertRecordVideo(video.id)
-  } else if(video['type'] == 'video/mp4' || video['type'] == 'video/quicktime') {
-    video['converted'] = 'progress'
-    videoHelper.convertUploadVideo(video.id)
-  }
-  
-  video['updated_at'] = new Date()
-  video.save().then((_video)=>{
-    console.log('_video', _video)
-    return res.send({
-      status: true,
-      data: _video
-    })
-  }).catch(err=>{
-    console.log('err', err.message)
-    return res.status(400).json({
-      status: false,
-      error: err.message
-    })
-  })
-}
-
-const updateDefault = async (req, res) => {
-  const {video, id} = req.body
-  let thumbnail_path;
-  let { currentUser } = req
-  
-  const defaultVideo = await Video.findOne({_id: id, role: 'admin'}).catch(err=>{
-    console.log('err', err)
-  })
->>>>>>> master
   if (!defaultVideo) {
     return res.status(400).json({
       status: false,
@@ -1051,17 +642,12 @@ const updateDefault = async (req, res) => {
   }
   // Update Garbage
   const garbage = await garbageHelper.get(currentUser);
-<<<<<<< HEAD
   if (!garbage) {
-=======
-  if(!garbage) {
->>>>>>> master
     return res.status(400).send({
       status: false,
       error: `Couldn't get the Garbage`,
     });
   }
-<<<<<<< HEAD
 
   if (garbage['edited_video']) {
     garbage['edited_video'].push(id);
@@ -1070,23 +656,12 @@ const updateDefault = async (req, res) => {
   }
 
   await garbage.save().catch((err) => {
-=======
-  
-  if(garbage['edited_video']) {
-    garbage['edited_video'].push(id);
-  } else {
-    garbage['edited_video'] = [id]
-  }
-  
-  await garbage.save().catch(err => {
->>>>>>> master
     return res.status.json({
       status: false,
       error: 'Update Garbage Error.',
     });
   });
 
-<<<<<<< HEAD
   for (const key in video) {
     defaultVideo[key] = video[key];
   }
@@ -1161,73 +736,6 @@ const updateDefault = async (req, res) => {
       const ctx = canvas.getContext('2d');
       let image = await loadImage(thumbnail_path);
         
-=======
-  for (let key in video) {
-    defaultVideo[key] = video[key]
-  }
-  
-  if (video.thumbnail) { // base 64 image    
-    const file_name = uuidv1()
-    
-    thumbnail_path = base64Img.imgSync(video.thumbnail, THUMBNAILS_PATH, file_name,)
-    if(fs.existsSync(thumbnail_path)) {  
-      fs.readFile(thumbnail_path, (err, data) => {
-        if (err){
-          console.log('file read err', err.message || err.msg)
-        }else {
-          console.log('File read was successful', data)
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-              Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-              Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-              Body: data,
-              ACL: 'public-read'
-          };
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-              
-              thumbnail_path = upload.Location
-              if( thumbnail_path ){
-                defaultVideo['thumbnail'] = thumbnail_path
-              }
-              
-              defaultVideo['updated_at'] = new Date()
-              const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
-              delete defaultVideoJSON['_id'];
-              delete defaultVideoJSON['role'];
-             
-              let newVideo = new Video({
-                ...defaultVideoJSON,
-                user: currentUser._id,
-                default_edited: true
-              })
-              
-              const _video = await newVideo.save().then().catch(err=>{
-                console.log('err', err)
-              })  
-              
-              return res.send({
-                status: true,
-                data: _video
-              })
-            }
-          })
-        }
-      });
-        
-      // Thumbnail
-      /**
-      const play = await loadImage(PLAY_BUTTON_PATH);
-    
-      const canvas = createCanvas(250, 140)
-      const ctx = canvas.getContext('2d');
-      let image = await loadImage(thumbnail_path);
-        
       let height = image.height;
       let width = image.width;
       if(height > width) {
@@ -1253,108 +761,6 @@ const updateDefault = async (req, res) => {
       ctx.drawImage(play, 10, 95, 40, 40)
       let buf = canvas.toBuffer();
       
-      for(let i=0; i<30; i++){
-        if(i<10){
-          fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
-        } else {
-          fs.writeFileSync(GIF_PATH+`frame-${i}.png`, buf)
-        }
-      }
-       */
-    } else {
-      defaultVideo['updated_at'] = new Date()
-      const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo))
-      delete defaultVideoJSON['_id'];
-      delete defaultVideoJSON['role'];
-     
-      let newVideo = new Video({
-        ...defaultVideoJSON,
-        user: currentUser._id,
-        default_edited: true
-      })
-      
-      const _video = await newVideo.save().then().catch(err=>{
-        console.log('err', err)
-      })  
-      
-      return res.send({
-        status: true,
-        data: _video
-      })
-    }
-  }
-  // if(!defaultVideo['preview']){
-  //   const file_path = defaultVideo['path']
-  //   defaultVideo['preview'] = await generatePreview(file_path).catch(err=>{
-  //     console.log('err', err)
-  //   })
-  // }
-  
-}
-
-const generatePreview = async(data) => {
-  const {file_name, file_path, custom_thumbnail} = data
-  
-  return new Promise(async(resolve, reject) => {    
-    let offsets = []
-    for(let i=0; i<4000; i+=100){
-      offsets.push(i);
-    }
-    
-    await extractFrames({
-      input: file_path,
-      output: GIF_PATH+`screenshot-${file_name}-%i.jpg`,
-      offsets: offsets
-    }).catch(err=>{
-      console.log('err', err)
-    });  
-    
-    const play = await loadImage(PLAY_BUTTON_PATH);
-    
-    const canvas = createCanvas(250, 140)
-    const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
-    
-    for(let i=1; i<40; i++){
-      image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`).catch(err=>{
-        console.log('screenshot generating error', err)
-        return
-      });
-      
-      if(!image){
-        break;
-      }
-      
->>>>>>> master
-      let height = image.height;
-      let width = image.width;
-      
-      if(height > width) {
-        ctx.rect(0, 0, 250, 140);
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-        width = 140*width/height;
-        height = 140;
-        ctx.drawImage(image, (250-width)/2, 0, width, height);
-      } else {
-        height = 140;
-        width = 250;
-        ctx.drawImage(image, 0, 0, width, height);
-      }
-      
-      ctx.rect(60, 100, 150, 30);
-      ctx.globalAlpha  = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '20px Impact'
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 70, 120)
-      ctx.drawImage(play, 10, 95, 40, 40)
-      
-      let buf = canvas.toBuffer();
-      
-<<<<<<< HEAD
       for(let i=0; i<30; i++){
         if(i<10){
           fs.writeFileSync(GIF_PATH+`frame-0${i}.png`, buf)
@@ -1403,143 +809,6 @@ const generatePreview = async (data) => {
     const offsets = [];
     for (let i = 0; i < 4000; i += 100) {
       offsets.push(i);
-=======
-      if(custom_thumbnail) {
-        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
-      } else {
-        if(i<10) {
-          fs.writeFileSync(GIF_PATH+`${file_name}-0${i}.png`, buf)
-        } else {
-          fs.writeFileSync(GIF_PATH+`${file_name}-${i}.png`, buf)
-        }  
-      }
-    }
-    
-    const stream = pngFileStream(GIF_PATH+`${file_name}-??.png`)
-      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
-      .pipe(fs.createWriteStream(GIF_PATH+file_name));
-
-      stream.on('finish', () => {
-        if (fs.existsSync(GIF_PATH+file_name)) {
-          fs.readFile(GIF_PATH+file_name, (err, data) => {
-            if (err){
-              console.log('stream file error', err)
-            };
-            console.log('Gif File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'gif' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-            s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err) throw s3Err
-              console.log(`Gif File uploaded successfully at ${upload.Location}`)
-              
-              fs.unlinkSync(GIF_PATH+file_name)
-              resolve(upload.Location)
-            })
-         });
-        }   
-      });
-      stream.on('error', err=>{
-        console.log('err', err)
-        reject(err)
-      });
-    });
-}
-
-const regeneratePreview = async(data) => {
-  const {file_name} = data
-  
-  return new Promise(async(resolve, reject) => {    
-    const play = await loadImage(PLAY_BUTTON_PATH);
-    
-    const canvas = createCanvas(250, 140)
-    const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
-    
-    if(fs.existsSync(GIF_PATH+`screenshot-${file_name}-1.jpg`)) {
-      for(let i=1; i<40; i++){
-        image = await loadImage(GIF_PATH+`screenshot-${file_name}-${i}.jpg`);
-        
-        let height = image.height;
-        let width = image.width;
-        if(height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = 140*width/height;
-          height = 140;
-          ctx.drawImage(image, (250-width)/2, 0, width, height);
-        } else {
-          height = 140;
-          width = 250;
-          ctx.drawImage(image, 0, 0, width, height);
-        }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha  = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact'
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120)
-        ctx.drawImage(play, 10, 95, 40, 40)
-        let buf = canvas.toBuffer();
-        fs.writeFileSync(GIF_PATH+`${file_name}-${i+19}.png`, buf)
-      }
-    }
-
-    const stream = pngFileStream(GIF_PATH+`${file_name}-??.png`)
-      .pipe(encoder.createWriteStream({ repeat: 0, delay: 100, quality: 10 }))
-      .pipe(fs.createWriteStream(GIF_PATH+file_name));
-
-      stream.on('finish', () => {
-        if (fs.existsSync(GIF_PATH+file_name)) {
-          fs.readFile(GIF_PATH+file_name, (err, data) => {
-            if (err){
-              console.log('stream file error', err)
-            };
-            console.log('Gif File read was successful', data)
-            const today = new Date()
-            const year = today.getYear()
-            const month = today.getMonth()
-            const params = {
-                Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                Key: 'gif' +  year + '/' + month + '/' + file_name, 
-                Body: data,
-                ACL: 'public-read'
-            };
-            s3.upload(params, async (s3Err, upload)=>{
-              if (s3Err) throw s3Err
-              console.log(`Gif File uploaded successfully at ${upload.Location}`)
-              
-              fs.unlinkSync(GIF_PATH+file_name)
-              resolve(upload.Location)
-            })
-         });
-        }   
-      });
-      stream.on('error', err=>{
-        console.log('err', err)
-        reject(err)
-      });
-    });
-}
-
-const get = async (req, res) => {
-  const video = await Video.findOne({_id: req.params.id, del: false})
-  const user = await User.findOne({_id: video.user})
-    if (!video) {
-      return res.status(400).json({
-        status: false,
-        error: 'Video doesn`t exist'
-      })
->>>>>>> master
     }
 
     await extractFrames({
@@ -1557,7 +826,7 @@ const get = async (req, res) => {
     const encoder = new GIFEncoder(250, 140);
 
     for (let i = 1; i < 40; i++) {
-      image = await loadImage(
+      const image = await loadImage(
         GIF_PATH + `screenshot-${file_name}-${i}.jpg`
       ).catch((err) => {
         console.log('screenshot generating error', err);
@@ -1655,7 +924,9 @@ const regeneratePreview = async (data) => {
 
     if (fs.existsSync(GIF_PATH + `screenshot-${file_name}-1.jpg`)) {
       for (let i = 1; i < 40; i++) {
-        image = await loadImage(GIF_PATH + `screenshot-${file_name}-${i}.jpg`);
+        const image = await loadImage(
+          GIF_PATH + `screenshot-${file_name}-${i}.jpg`
+        );
 
         let height = image.height;
         let width = image.width;
@@ -1731,7 +1002,7 @@ const get = async (req, res) => {
       error: 'Video doesn`t exist',
     });
   }
-  myJSON = JSON.stringify(video);
+  const myJSON = JSON.stringify(video);
   const data = JSON.parse(myJSON);
   Object.assign(data, { user });
 
@@ -1742,13 +1013,8 @@ const get = async (req, res) => {
 };
 
 const getThumbnail = (req, res) => {
-<<<<<<< HEAD
   const filePath = THUMBNAILS_PATH + req.params.name;
 
-=======
-  const filePath = THUMBNAILS_PATH + req.params.name
-  
->>>>>>> master
   if (fs.existsSync(filePath)) {
     if (req.query.resize) {
       const readStream = fs.createReadStream(filePath);
@@ -1772,13 +1038,8 @@ const getAll = async (req, res) => {
   const { currentUser } = req;
   const garbage = await garbageHelper.get(currentUser);
   let editedVideos = [];
-<<<<<<< HEAD
   if (garbage && garbage['edited_video']) {
     editedVideos = garbage['edited_video'];
-=======
-  if(garbage && garbage['edited_video']) {
-    editedVideos = garbage['edited_video'] 
->>>>>>> master
   }
 
   const company = currentUser.company || 'eXp Realty';
@@ -1821,7 +1082,7 @@ const getAll = async (req, res) => {
       },
     ]);
 
-    myJSON = JSON.stringify(_video_list[i]);
+    const myJSON = JSON.stringify(_video_list[i]);
     const _video = JSON.parse(myJSON);
     const video_detail = await Object.assign(_video, {
       views: _video_detail.length,
@@ -1836,7 +1097,6 @@ const getAll = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-<<<<<<< HEAD
   const { currentUser } = req;
   try {
     const video = await Video.findOne({
@@ -1863,44 +1123,6 @@ const remove = async (req, res) => {
             console.log('err', err);
           }
         );
-=======
-  const { currentUser } = req
-    try {
-      const video = await Video.findOne({ _id: req.params.id, user: currentUser.id})
- 
-      if (video) {
-        if(video['default_edited']) {
-          return res.status(400).send({
-            status: false,
-            error: 'invalid permission'
-          })
-        }
-
-        let url =  video.url
-        if(url.indexOf('teamgrow.s3')>0) {
-          s3.deleteObject({
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44)
-          }, function (err,data){
-            console.log('err', err)
-          })
-        } else {
-          try{
-            let file_path = video.path
-            fs.unlinkSync(file_path)
-          }catch(err){
-            console.log('err', err)
-          }
-        }
-        
-        video['del'] = true
-        video.save().catch(err=>{
-          console.log('err', err.message)
-        })
-        return res.send({
-          status: true,
-        })
->>>>>>> master
       } else {
         try {
           const file_path = video.path;
@@ -1968,7 +1190,6 @@ const getHistory = async (req, res) => {
       error: 'Activity not found',
     });
   }
-<<<<<<< HEAD
 };
 
 const bulkEmail = async (req, res) => {
@@ -1996,38 +1217,11 @@ const bulkEmail = async (req, res) => {
           console.log('contact found err', err.message);
         });
         promise = new Promise(async (resolve, reject) => {
-=======
-}
-
-const bulkEmail = async(req, res) => {
-  const { currentUser } = req
-  let {content, subject, videos: videoIds, contacts} = req.body 
-  let promise_array = []
-  let error = []
-
-  let videos = await Video.find({_id: {$in: videoIds}});
-  
-  if(contacts){
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-    
-    for(let i=0; i<contacts.length; i++){
-      let promise
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
->>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-<<<<<<< HEAD
             err: 'contact email not found or unsubscribed',
           });
           resolve();
@@ -2109,7 +1303,7 @@ const bulkEmail = async(req, res) => {
         video_objects += video_object;
       }
 
-      if (subject == '') {
+      if (subject === '') {
         video_subject = 'VIDEO: ' + video_titles;
       } else {
         video_subject = video_subject.replace(/{video_title}/gi, video_titles);
@@ -2119,7 +1313,7 @@ const bulkEmail = async(req, res) => {
         );
       }
 
-      if (video_content.search(/{video_object}/gi) != -1) {
+      if (video_content.search(/{video_object}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_object}/gi,
           video_objects
@@ -2128,11 +1322,11 @@ const bulkEmail = async(req, res) => {
         video_content = video_content + '<br/>' + video_objects;
       }
 
-      if (content.search(/{video_title}/gi) != -1) {
+      if (content.search(/{video_title}/gi) !== -1) {
         video_content = video_content.replace(/{video_title}/gi, video_titles);
       }
 
-      if (content.search(/{video_description}/gi) != -1) {
+      if (content.search(/{video_description}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_description}/gi,
           video_descriptions
@@ -2187,158 +1381,17 @@ const bulkEmail = async(req, res) => {
             });
             console.log('email sending err', msg.to);
             console.error(err);
-=======
-            err: 'contact email not found or unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
-        continue;
-      }
-      
-      let video_titles = ''
-      let video_descriptions = ''
-      let video_objects = ''
-      let video_subject = subject
-      let video_content = content
-      let activity
-      for(let j=0; j<videos.length; j++){
-        const video = videos[j]         
-        let preview
-        if(video['preview']){
-          preview = video['preview']
-        } else {
-          preview = video['thumbnail'] + '?resize=true'
-        }
-    
-        
-        if(typeof video_content == 'undefined'){
-          video_content = ''
-        }
-        
-        video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-        .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-        .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-        .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-        
-        const _activity = new Activity({
-          content: 'sent video using email',
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'videos',
-          videos: video._id,
-          created_at: new Date(),
-          updated_at: new Date(),
-          subject: video_subject,
-          description: video_content
-        })
-        
-        activity = await _activity.save().then().catch(err=>{
-          console.log('err', err)
-        })
-        
-        if(videos.length>=2){
-          video_titles = mail_contents.VIDEO_TITLE
-        }else{
-          video_titles = `${video.title}`
-        }
-        
-        if(j < videos.length-1){  
-          video_descriptions = video_descriptions + `${video.description}, ` 
-        } else{
-          video_descriptions = video_descriptions + video.description
-        }
-        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-        //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        video_objects = video_objects + video_object                      
-      }
-      
-      if(subject == '' ){
-        video_subject = 'VIDEO: ' + video_titles
-      } else {
-        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
-        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
-      }
-    
-      if(video_content.search(/{video_object}/ig) != -1){
-        video_content = video_content.replace(/{video_object}/ig, video_objects)
-      }else{
-        video_content = video_content+'<br/>'+video_objects
-      }
-      
-      if(content.search(/{video_title}/ig) != -1){
-        video_content = video_content.replace(/{video_title}/ig, video_titles)
-      }
-      
-      if(content.search(/{video_description}/ig) != -1){
-        video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-      }
-        
-      const msg = {
-        to: _contact.email,
-        from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.connected_email,
-        subject: video_subject,
-        html: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>',
-        text: video_content
-      }
-        
-      promise = new Promise((resolve, reject)=>{
-        sgMail.send(msg).then(async(_res) => {
-        console.log('mailres.errorcode', _res[0].statusCode);
-        if(_res[0].statusCode >= 200 && _res[0].statusCode < 400){ 
-          console.log('status', _res[0].statusCode)
-          Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-            console.log('err', err)
-          })
-          resolve()
-        }else {  
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
-          })
-          console.log('email sending err', msg.to+res[0].statusCode)
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email
-            },
-            err: _res[0].statusCode
-          })
-        }
-        }).catch(err => {
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
-            console.log('email sending err', msg.to)
-            console.error(err)
->>>>>>> master
             error.push({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-<<<<<<< HEAD
               err,
             });
             resolve();
           });
       });
       promise_array.push(promise);
-=======
-              err: err
-            })
-            resolve()
-          })
-      })
-      promise_array.push(promise)
->>>>>>> master
     }
 
     Promise.all(promise_array)
@@ -2367,7 +1420,6 @@ const bulkEmail = async(req, res) => {
       status: false,
       error: 'Contacts not found',
     });
-<<<<<<< HEAD
   }
 };
 
@@ -2376,40 +1428,16 @@ const bulkGmail = async (req, res) => {
   const { content, subject, videos: videoIds, contacts } = req.body;
   const promise_array = [];
   const error = [];
-=======
-  }else {
-      return res.status(400).json({
-        status: false,
-        error: 'Contacts not found'
-      })
-  }  
-}
-
-const bulkGmail = async(req, res) => {
-  const { currentUser } = req
-  let {content, subject, videos: videoIds, contacts} = req.body 
-  let promise_array = []
-  let error = []
->>>>>>> master
   const oauth2Client = new google.auth.OAuth2(
     config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
-<<<<<<< HEAD
   );
 
   const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
     if (contacts.length > config.MAX_EMAIL) {
-=======
-  )
-
-  let videos = await Video.find({_id: {$in: videoIds}});
-  
-  if(contacts){
-    if(contacts.length>config.MAX_EMAIL){
->>>>>>> master
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
@@ -2422,7 +1450,6 @@ const bulkGmail = async(req, res) => {
       console.log('get access err', err);
       return res.status(406).send({
         status: false,
-<<<<<<< HEAD
         error: 'not connected',
       });
     });
@@ -2441,29 +1468,11 @@ const bulkGmail = async(req, res) => {
           console.log('contact found err', err.message);
         });
         promise = new Promise(async (resolve, reject) => {
-=======
-        error: 'not connected'
-      })
-    });
-    
-    for(let i=0; i<contacts.length; i++){
-      let promise
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
->>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-<<<<<<< HEAD
             err: 'Contact email is unsubscribed',
           });
           resolve();
@@ -2543,7 +1552,7 @@ const bulkGmail = async(req, res) => {
         video_objects += video_object;
       }
 
-      if (video_subject == '') {
+      if (video_subject === '') {
         video_subject = 'VIDEO: ' + video_titles;
       } else {
         video_subject = video_subject.replace(/{video_title}/gi, video_titles);
@@ -2553,7 +1562,7 @@ const bulkGmail = async(req, res) => {
         );
       }
 
-      if (video_content.search(/{video_object}/gi) != -1) {
+      if (video_content.search(/{video_object}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_object}/gi,
           video_objects
@@ -2562,11 +1571,11 @@ const bulkGmail = async(req, res) => {
         video_content = video_content + '<br/>' + video_objects;
       }
 
-      if (content.search(/{video_title}/gi) != -1) {
+      if (content.search(/{video_title}/gi) !== -1) {
         video_content = video_content.replace(/{video_title}/gi, video_titles);
       }
 
-      if (content.search(/{video_description}/gi) != -1) {
+      if (content.search(/{video_description}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_description}/gi,
           video_descriptions
@@ -2584,103 +1593,6 @@ const bulkGmail = async(req, res) => {
       // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
 
       promise = new Promise((resolve, reject) => {
-=======
-            err: 'Contact email is unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
-        continue;
-      }
-      let video_titles = ''
-      let video_descriptions = ''
-      let video_objects = ''
-      let video_subject = subject
-      let video_content = content
-      let activity
-      for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
-          let preview
-          if(video['preview']){
-            preview = video['preview']
-          } else {
-            preview = video['thumbnail']
-          }
-          if(typeof video_content == 'undefined'){
-            video_content = ''
-          }
-          
-          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: 'sent video using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: video._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: video_subject,
-            description: video_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          
-          if(videos.length>=2){
-            video_titles = mail_contents.VIDEO_TITLE
-          }else{
-            video_titles = video.title
-          }
-          
-          if(j < videos.length-1){
-            video_descriptions = video_descriptions + `${video.description}, ` 
-          } else{
-            video_descriptions = video_descriptions + video.description
-          }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a><br/></p>`
-          video_objects = video_objects + video_object                      
-      }
-      
-      if(video_subject == '' ){
-        video_subject = 'VIDEO: ' + video_titles
-      } else {
-        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
-        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
-      }
-    
-      if(video_content.search(/{video_object}/ig) != -1){
-        video_content = video_content.replace(/{video_object}/ig, video_objects)
-      }else{
-        video_content = video_content+'<br/>'+video_objects
-      }
-      
-      if(content.search(/{video_title}/ig) != -1){
-        video_content = video_content.replace(/{video_title}/ig, video_titles)
-      }
-      
-      if(content.search(/{video_description}/ig) != -1){
-        video_content = video_content.replace(/{video_description}/ig, video_descriptions)
-      }
-
-      const email_content = '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-        +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) +  '</body></html>';
-      
-      // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
-      
-      promise = new Promise((resolve, reject)=>{
->>>>>>> master
         // gmail.users.messages.send({
         //   'auth': oauth2Client,
         //   'userId': 'me',
@@ -2699,11 +1611,7 @@ const bulkGmail = async(req, res) => {
         //         first_name: _contact.first_name,
         //         email: _contact.email,
         //       },
-<<<<<<< HEAD
         //       err: err.response['statusText']
-=======
-        //       err: err.response['statusText'] 
->>>>>>> master
         //     })
         //     resolve();
         //   } else {
@@ -2712,32 +1620,20 @@ const bulkGmail = async(req, res) => {
         //     })
         //     resolve()
         //   }
-<<<<<<< HEAD
         // });
 
         try {
           const body = createBody({
-=======
-        // }); 
-        
-        try{
-          let body = createBody({
->>>>>>> master
             headers: {
               To: _contact.email,
               From: `${currentUser.user_name} <${currentUser.connected_email}>`,
               Subject: video_subject,
             },
-<<<<<<< HEAD
             textHtml: email_content,
-=======
-            textHtml:  email_content,
->>>>>>> master
             textPlain: email_content,
           });
           request({
             method: 'POST',
-<<<<<<< HEAD
             uri:
               'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
@@ -2760,7 +1656,7 @@ const bulkGmail = async(req, res) => {
               Activity.deleteOne({ _id: activity.id }).catch((err) => {
                 console.log('err', err);
               });
-              if (err.statusCode == 400) {
+              if (err.statusCode === 400) {
                 error.push({
                   contact: {
                     first_name: _contact.first_name,
@@ -2777,7 +1673,7 @@ const bulkGmail = async(req, res) => {
                   err: 'Recipient address required',
                 });
               }
-              if (err.statusCode == 403) {
+              if (err.statusCode === 403) {
                 return res.status(406).send({
                   status: false,
                   error: 'not connected',
@@ -2790,74 +1686,17 @@ const bulkGmail = async(req, res) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
           });
-=======
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-            headers: {
-              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-              'Content-Type': 'multipart/related; boundary="foo_bar_baz"'
-            },
-            body: body
-          }).then(()=>{
-            Contact.update({_id: contacts[i]},{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve();
-          }).catch(err=>{
-            console.log('gmail video send err', err.message)
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err)
-            })
-            if(err.statusCode == 400){
-              error.push({
-                contact: {
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err: err.message
-              })
-            } else {
-              error.push({
-                contact: {
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err: 'Recipient address required'
-              })
-            }
-            if(err.statusCode == 403) {
-              return res.status(406).send({
-                status: false,
-                error: 'not connected'
-              })
-            }
-            resolve();
-          })
-        }catch(err){
-          console.log('gmail video send err', err.message)
-          Activity.deleteOne({_id: activity.id}).catch(err=>{
-            console.log('err', err)
-          })
->>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-<<<<<<< HEAD
             err: err.message,
           });
           resolve();
         }
       });
       promise_array.push(promise);
-=======
-            err: err.message
-          })
-          resolve();
-        }
-      })
-      promise_array.push(promise)
->>>>>>> master
     }
 
     Promise.all(promise_array)
@@ -2886,7 +1725,6 @@ const bulkGmail = async(req, res) => {
       status: false,
       error: 'Contacts not found',
     });
-<<<<<<< HEAD
   }
 };
 
@@ -2900,32 +1738,11 @@ const bulkText = async (req, res) => {
 
   if (contacts) {
     if (contacts.length > config.MAX_EMAIL) {
-=======
-  }else {
-      return res.status(400).json({
-        status: false,
-        error: 'Contacts not found'
-      })
-  }  
-}
-
-const bulkText = async(req, res) => {
-  const { currentUser } = req
-  let {content, videos: videoIds, contacts} = req.body 
-  let promise_array = []
-  let error = []
-
-  let videos = await Video.find({_id: {$in: videoIds}});
-
-  if(contacts){
-    if(contacts.length>config.MAX_EMAIL){
->>>>>>> master
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
 
     for (let i = 0; i < contacts.length; i++) {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
@@ -2983,59 +1800,9 @@ const bulkText = async(req, res) => {
         }
         const video_object = `\n${video.title}:\n\n${video_link}\n`;
         video_objects += video_object;
-=======
-    
-    for(let i=0; i<contacts.length; i++){
-      const _contact = await Contact.findOne({_id: contacts[i]}).catch(err=>{
-        console.log('err', err)
-      }) 
-      let video_titles = ''
-      let video_descriptions = ''
-      let video_objects = ''
-      let video_content = content
-      let activity
-      for(let j=0; j<videos.length; j++){
-          const video = videos[j]           
-          
-          if(typeof video_content == 'undefined'){
-            video_content = ''
-          }
-          
-          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: 'sent video using sms',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: video._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            description: video_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-        
-          if(j < videos.length-1){
-            video_titles = video_titles + video.title + ', '  
-            video_descriptions = video_descriptions + `${video.description}, ` 
-          } else{
-            video_titles = video_titles + video.title
-            video_descriptions = video_descriptions + video.description
-          }
-          const video_object = `\n${video.title}:\n\n${video_link}\n`
-          video_objects = video_objects + video_object                      
->>>>>>> master
       }
 
-      if (video_content.search(/{video_object}/gi) != -1) {
+      if (video_content.search(/{video_object}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_object}/gi,
           video_objects
@@ -3044,11 +1811,11 @@ const bulkText = async(req, res) => {
         video_content = video_content + '\n' + video_objects;
       }
 
-      if (video_content.search(/{video_title}/gi) != -1) {
+      if (video_content.search(/{video_title}/gi) !== -1) {
         video_content = video_content.replace(/{video_title}/gi, video_titles);
       }
 
-      if (video_content.search(/{video_description}/gi) != -1) {
+      if (video_content.search(/{video_description}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_description}/gi,
           video_descriptions
@@ -3155,7 +1922,6 @@ const createSmsContent = async (req, res) => {
     if (typeof video_content === 'undefined') {
       video_content = '';
     }
-<<<<<<< HEAD
 
     video_content = video_content
       .replace(/{user_name}/gi, currentUser.user_name)
@@ -3166,14 +1932,6 @@ const createSmsContent = async (req, res) => {
       .replace(/{contact_email}/gi, _contact.email)
       .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-=======
-    
-    video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-    .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-    .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-    .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-    
->>>>>>> master
     const _activity = new Activity({
       content: 'sent video using sms',
       contacts: contacts[0],
@@ -3182,7 +1940,6 @@ const createSmsContent = async (req, res) => {
       videos: video._id,
       created_at: new Date(),
       updated_at: new Date(),
-<<<<<<< HEAD
       description: video_content,
     });
 
@@ -3201,39 +1958,22 @@ const createSmsContent = async (req, res) => {
     } else {
       video_titles += video.title;
       video_descriptions += video.description;
-=======
-      description: video_content
-    })
-    
-    activity = await _activity.save().then().catch(err=>{
-      console.log('err', err.message)
-    })
-    
-    const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-  
-    if(j < videos.length-1){
-      video_titles = video_titles + video.title + ', '  
-      video_descriptions = video_descriptions + `${video.description}, ` 
-    } else{
-      video_titles = video_titles + video.title
-      video_descriptions = video_descriptions + video.description
->>>>>>> master
     }
     const video_object = `\n${video.title}:\n${video_link}\n`;
     video_objects += video_object;
   }
 
-  if (video_content.search(/{video_object}/gi) != -1) {
+  if (video_content.search(/{video_object}/gi) !== -1) {
     video_content = video_content.replace(/{video_object}/gi, video_objects);
   } else {
     video_content += video_objects;
   }
 
-  if (video_content.search(/{video_title}/gi) != -1) {
+  if (video_content.search(/{video_title}/gi) !== -1) {
     video_content = video_content.replace(/{video_title}/gi, video_titles);
   }
 
-  if (video_content.search(/{video_description}/gi) != -1) {
+  if (video_content.search(/{video_description}/gi) !== -1) {
     video_content = video_content.replace(
       /{video_description}/gi,
       video_descriptions
@@ -3252,29 +1992,15 @@ const bulkOutlook = async (req, res) => {
   const promise_array = [];
   const error = [];
 
-<<<<<<< HEAD
   const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
     if (contacts.length > config.MAX_EMAIL) {
-=======
-const bulkOutlook = async(req, res) => {
-  const { currentUser } = req
-  let {content, subject, videos: videoIds, contacts} = req.body 
-  let promise_array = []
-  let error = []
-
-  let videos = await Video.find({_id: {$in: videoIds}});
-
-  if(contacts){
-    if(contacts.length>config.MAX_EMAIL){
->>>>>>> master
       return res.status(400).json({
         status: false,
         error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
       });
     }
-<<<<<<< HEAD
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -3284,14 +2010,6 @@ const bulkOutlook = async(req, res) => {
       let accessToken;
       let promise;
 
-=======
-    let token = oauth2.accessToken.create({ refresh_token: currentUser.outlook_refresh_token, expires_in: 0})
-    
-    for(let i=0; i<contacts.length; i++){
-      let accessToken
-      let promise
-      
->>>>>>> master
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
@@ -3299,20 +2017,7 @@ const bulkOutlook = async(req, res) => {
           } else {
             resolve(result.token);
           }
-<<<<<<< HEAD
         });
-=======
-        })
-      }).then((token)=>{
-        accessToken = token.access_token
-        
-      }).catch((error) => {
-        console.log('error', error)
-        return res.status(406).send({
-          status: false,
-          error: 'not connected'
-        })
->>>>>>> master
       })
         .then((token) => {
           accessToken = token.access_token;
@@ -3332,7 +2037,6 @@ const bulkOutlook = async(req, res) => {
           done(null, accessToken);
         },
       });
-<<<<<<< HEAD
 
       let _contact = await Contact.findOne({
         _id: contacts[i],
@@ -3346,108 +2050,17 @@ const bulkOutlook = async(req, res) => {
           console.log('contact found err', err.message);
         });
         promise = new Promise(async (resolve, reject) => {
-=======
-      
-      let _contact = await Contact.findOne({ _id: contacts[i], tags: { $nin: ['unsubscribed'] } }).catch(err=>{
-        console.log('contact found err', err.message)
-      })
-  
-      if(!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch(err=>{
-          console.log('contact found err', err.message)
-        })
-        promise = new Promise(async(resolve, reject)=>{
->>>>>>> master
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-<<<<<<< HEAD
             err: 'contact email not found or unsubscribed',
           });
           resolve();
         });
         promise_array.push(promise);
         continue;
-=======
-            err: 'contact email not found or unsubscribed'
-          })
-          resolve()
-        })
-        promise_array.push(promise)
-        continue;
-      }
-      
-      let video_titles = ''
-      let video_descriptions = ''
-      let video_objects = ''
-      let video_subject = subject
-      let video_content = content
-      let activity
-      for(let j=0; j<videos.length; j++){
-          const video = videos[j]         
-          let preview
-          if(video['preview']){
-            preview = video['preview']
-          } else {
-            preview = video['thumbnail']
-          }
-      
-          
-          if(typeof video_content == 'undefined'){
-            video_content = ''
-          }
-          
-          video_subject = video_subject.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          video_content = video_content.replace(/{user_name}/ig, currentUser.user_name)
-          .replace(/{user_email}/ig, currentUser.connected_email).replace(/{user_phone}/ig, currentUser.cell_phone)
-          .replace(/{contact_first_name}/ig, _contact.first_name).replace(/{contact_last_name}/ig, _contact.last_name)
-          .replace(/{contact_email}/ig, _contact.email).replace(/{contact_phone}/ig, _contact.cell_phone)
-          
-          const _activity = new Activity({
-            content: 'sent video using email',
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: video._id,
-            created_at: new Date(),
-            updated_at: new Date(),
-            subject: video_subject,
-            description: video_content
-          })
-          
-          activity = await _activity.save().then().catch(err=>{
-            console.log('err', err)
-          })
-          
-          if(videos.length>=2){
-            video_titles = mail_contents.VIDEO_TITLE
-          }else{
-            video_titles = `${video.title}`
-          }
-          
-          if(j < videos.length-1){
-            video_descriptions = video_descriptions + `${video.description}, ` 
-          } else{
-            video_descriptions = video_descriptions + video.description
-          }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id
-          //const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          video_objects = video_objects + video_object                      
-      }
-      
-      if(video_subject == '' ){
-        video_subject = 'VIDEO: ' + video_titles
-      } else {
-        video_subject = video_subject.replace(/{video_title}/ig, video_titles)
-        video_subject = video_subject.replace(/{material_title}/ig, video_titles)
->>>>>>> master
       }
 
       let video_titles = '';
@@ -3511,7 +2124,6 @@ const bulkOutlook = async(req, res) => {
         } else {
           video_titles = `${video.title}`;
         }
-<<<<<<< HEAD
 
         if (j < videos.length - 1) {
           video_descriptions += `${video.description}, `;
@@ -3524,7 +2136,7 @@ const bulkOutlook = async(req, res) => {
         video_objects += video_object;
       }
 
-      if (video_subject == '') {
+      if (video_subject === '') {
         video_subject = 'VIDEO: ' + video_titles;
       } else {
         video_subject = video_subject.replace(/{video_title}/gi, video_titles);
@@ -3534,7 +2146,7 @@ const bulkOutlook = async(req, res) => {
         );
       }
 
-      if (video_content.search(/{video_object}/gi) != -1) {
+      if (video_content.search(/{video_object}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_object}/gi,
           video_objects
@@ -3543,11 +2155,11 @@ const bulkOutlook = async(req, res) => {
         video_content = video_content + '<br/>' + video_objects;
       }
 
-      if (content.search(/{video_title}/gi) != -1) {
+      if (content.search(/{video_title}/gi) !== -1) {
         video_content = video_content.replace(/{video_title}/gi, video_titles);
       }
 
-      if (content.search(/{video_description}/gi) != -1) {
+      if (content.search(/{video_description}/gi) !== -1) {
         video_content = video_content.replace(
           /{video_description}/gi,
           video_descriptions
@@ -3595,60 +2207,17 @@ const bulkOutlook = async(req, res) => {
               console.log('err', err.message);
             });
             console.log('err', err.message);
-=======
-        
-        const sendMail = {
-          message: {
-            subject: video_subject,
-            body: {
-              contentType: "HTML",
-              content: '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">'
-              +video_content+'<br/>Thank you,<br/>'+ currentUser.email_signature + emailHelper.generateUnsubscribeLink(activity.id) + '</body></html>'
-            },
-            toRecipients: [
-              {
-                emailAddress: {
-                  address: _contact.email,
-                }
-              }
-            ],
-          },
-          saveToSentItems: "true"
-        };
-      
-        promise = new Promise((resolve, reject)=>{
-          client.api('/me/sendMail')
-          .post(sendMail).then(()=>{
-            Contact.findByIdAndUpdate(contacts[i],{ $set: {last_activity: activity.id} }).catch(err=>{
-              console.log('err', err)
-            })
-            resolve()
-          }).catch(err=>{
-            Activity.deleteOne({_id: activity.id}).catch(err=>{
-              console.log('err', err.message)
-            })
-            console.log('err', err.message)
->>>>>>> master
             error.push({
               contact: {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-<<<<<<< HEAD
               err: err.message || err.msg,
             });
             resolve();
           });
       });
       promise_array.push(promise);
-=======
-              err: err.message || err.msg
-            })
-            resolve()
-          });    
-        })
-      promise_array.push(promise)
->>>>>>> master
     }
 
     Promise.all(promise_array)
@@ -3700,16 +2269,11 @@ const makeBody = (to, from, subject, message) => {
   return encodedMail;
 };
 
-<<<<<<< HEAD
 const getConvertStatus = async (req, res) => {
-=======
-const getConvertStatus = async(req, res) => {
->>>>>>> master
   // const video = await Video.findOne({_id: req.params.id}).catch(err=>{
   //   console.log('video convert found video error', err.message)
   // })
   // const file_path = video['path']
-<<<<<<< HEAD
   const { videos } = req.body;
   const result_array = {};
   for (let i = 0; i < videos.length; i++) {
@@ -3719,17 +2283,6 @@ const getConvertStatus = async(req, res) => {
   }
   return res.send(result_array);
 };
-=======
-  const { videos } = req.body
-  let result_array = {}
-  for(let i =0; i < videos.length; i++){
-    const video = videos[i]
-    const result = videoHelper.getConvertStatus(video);
-    result_array[video] = result
-  }
-  return res.send(result_array)
-}
->>>>>>> master
 
 module.exports = {
   play,

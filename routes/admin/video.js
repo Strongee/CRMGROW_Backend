@@ -21,7 +21,7 @@ const s3 = new AWS.S3({
 const router = express.Router();
 
 const fileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function fn(req, file, cb) {
     cb(null, TEMP_PATH);
   },
   filename: (req, file, cb) => {

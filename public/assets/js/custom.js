@@ -15,7 +15,7 @@
   $('.feature-tab').click(function () {
     $('.feature-tab').removeClass('active');
     $(this).addClass('active');
-    let target = $(this).attr('data-target');
+    const target = $(this).attr('data-target');
     $('.feature-screen').removeClass('show');
     $('#' + target).addClass('show');
   });

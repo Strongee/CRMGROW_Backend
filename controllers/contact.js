@@ -1,5 +1,12 @@
 const { validationResult } = require('express-validator/check');
 const mongoose = require('mongoose');
+const sgMail = require('@sendgrid/mail');
+const fs = require('fs');
+const csv = require('csv-parser');
+const webpush = require('web-push');
+const phone = require('phone');
+const twilio = require('twilio')(accountSid, authToken);
+const moment = require('moment');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const FollowUp = require('../models/follow_up');
@@ -18,18 +25,12 @@ const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
-const sgMail = require('@sendgrid/mail');
 const urls = require('../constants/urls');
-const fs = require('fs');
-const csv = require('csv-parser');
 const config = require('../config/config');
 const mail_contents = require('../constants/mail_contents');
-const webpush = require('web-push');
+
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
-const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
-const moment = require('moment');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -73,28 +74,16 @@ const getAllByLastActivity = async (req, res) => {
 const getByLastActivity = async (req, res) => {
   const { currentUser } = req;
   let { field, dir } = req.body;
-<<<<<<< HEAD
-
-  if (field == 'updated_at') {
+  dir = dir ? 1 : -1;
+  if (field === 'updated_at') {
     field = 'last_activity';
+    dir *= -1;
   } else {
     field = 'first_name';
   }
-  dir = dir ? -1 : 1;
+
   let contacts;
-=======
-  dir = dir ? 1 :- 1;
-  if(field == 'updated_at') {
-    field = 'last_activity';
-    dir *= -1;
-  }
-  else {
-    field = 'first_name';
-  }
-  
-  let contacts
->>>>>>> master
-  if (typeof req.params.id == 'undefined') {
+  if (typeof req.params.id === 'undefined') {
     contacts = await Contact.find({ user: currentUser.id })
       .populate('last_activity')
       .sort({ [field]: dir })
@@ -127,63 +116,63 @@ const getByLastActivity = async (req, res) => {
 };
 
 const get = async (req, res) => {
-<<<<<<< HEAD
   const { currentUser } = req;
+  let { dir } = req.body;
+  const { key } = req.body;
+
+  if (key === 'last_activity') {
+    dir *= -1;
+  }
+  let next_contact;
+  let prev_contact;
   const _contact = await Contact.findOne({
-    user: currentUser.id,
     _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('contact found err', err.message);
   });
-  const next_contact = await Contact.find({
-    _id: { $gt: req.params.id },
-    user: currentUser.id,
-  })
-    .sort({ first_name: 1, _id: 1 })
-    .limit(1);
-  const prev_contact = await Contact.find({
-    _id: { $lt: req.params.id },
-    user: currentUser.id,
-  })
-    .sort({ first_name: -1, _id: -1 })
-    .limit(1);
+
+  if (dir === 1) {
+    next_contact = await Contact.find({
+      [key]: { $gte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: 1 })
+      .limit(1);
+    prev_contact = await Contact.find({
+      [key]: { $lte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: -1 })
+      .limit(1);
+  } else {
+    next_contact = await Contact.find({
+      [key]: { $lte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: -1 })
+      .limit(1);
+    prev_contact = await Contact.find({
+      [key]: { $gte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: 1 })
+      .limit(1);
+  }
+
   let next = null;
   let prev = null;
   if (next_contact[0]) {
     next = next_contact[0].id;
-=======
-  const { currentUser } = req
-  let {key, dir} = req.body
-  
-  if(key == 'last_activity') {
-    dir = dir * -1
-  }
-  let next_contact, prev_contact
-  const _contact = await Contact
-                      .findOne(
-                        { 
-                        _id: req.params.id,
-                        user: currentUser.id, 
-                        }).catch(err=>{
-                          console.log('contact found err', err.message)
-                        });
-  
-  if(dir == 1){
-    next_contact = await Contact.find({[key]: {$gte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: 1 }).limit(1)
-    prev_contact = await Contact.find({[key]: {$lte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: -1 }).limit(1)
-  } else {
-    next_contact = await Contact.find({[key]: {$lte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: -1 }).limit(1)
-    prev_contact = await Contact.find({[key]: {$gte: _contact[key]}, user: currentUser.id, _id: {$ne: req.params.id}}).sort({ [key]: 1 }).limit(1)
-  }
-  
-  let next = null
-  let prev = null
-  if(next_contact[0]){
-    next = next_contact[0].id
->>>>>>> master
   }
   if (prev_contact[0]) {
     prev = prev_contact[0].id;
   }
-  contacts = await Contact.find({ user: currentUser.id })
+  const contacts = await Contact.find({ user: currentUser.id })
     .populate('last_activity')
     .sort({ first_name: 1 })
     .limit(15);
@@ -285,7 +274,7 @@ const create = async (req, res) => {
   }
 
   let contact_old;
-  if (typeof req.body['email'] != 'undefined') {
+  if (typeof req.body['email'] !== 'undefined') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       email: req.body['email'],
@@ -298,7 +287,7 @@ const create = async (req, res) => {
     }
   }
 
-  if (typeof req.body['cell_phone'] != 'undefined') {
+  if (typeof req.body['cell_phone'] !== 'undefined') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       cell_phone: req.body['cell_phone'],
@@ -311,7 +300,7 @@ const create = async (req, res) => {
     }
   }
 
-  const { cell_phone } = req.body;
+  const cell_phone = req.body.cell_phone;
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -369,7 +358,7 @@ const create = async (req, res) => {
           return err;
         });
       }
-      if ((e.code = 11000)) {
+      if (e.code === 11000) {
         errors = 'Email and Phone number must be unique!';
       }
       return res.status(500).send({
@@ -407,9 +396,9 @@ const remove = async (req, res) => {
 
 const removeContacts = async (req, res) => {
   const { currentUser } = req;
-  const { ids } = req.body;
-  let deleted = 0;
-  let undeleted = 0;
+  const ids = req.body.ids;
+  var deleted = 0;
+  var undeleted = 0;
   ids.forEach((id) => {
     if (removeContact(currentUser.id, id)) {
       deleted++;
@@ -457,20 +446,13 @@ const edit = async (req, res) => {
     }).catch((err) => {
       console.log('err', err);
     });
-  }
-  const contact = await Contact.findOne({
-    user: currentUser.id,
-    _id: req.params.id,
-  }).catch((err) => {
-    console.log('err', err);
-  });
 
-  for (const key in editData) {
-    contact[key] = editData[key];
-  }
+    for (const key in editData) {
+      contact[key] = editData[key];
+    }
 
-    if (typeof req.body.cell_phone != 'undefined') {
-      let cell_phone = req.body.cell_phone;
+    if (typeof req.body.cell_phone !== 'undefined') {
+      const cell_phone = req.body.cell_phone;
       // let cleaned = ('' + cell_phone).replace(/\D/g, '')
       // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       // if (match) {
@@ -482,30 +464,31 @@ const edit = async (req, res) => {
 
     contact['updated_at'] = new Date();
 
-  contact
-    .save()
-    .then((_res) => {
-      const myJSON = JSON.stringify(_res);
-      const data = JSON.parse(myJSON);
-      delete data.password;
-      res.send({
-        status: true,
-        data,
-      });
-    })
-    .catch((e) => {
-      let errors;
-      if (e.errors) {
-        errors = e.errors.map((err) => {
-          delete err.instance;
-          return err;
+    contact
+      .save()
+      .then((_res) => {
+        const myJSON = JSON.stringify(_res);
+        const data = JSON.parse(myJSON);
+        delete data.password;
+        res.send({
+          status: true,
+          data,
         });
-      }
-      return res.status(500).send({
-        status: false,
-        error: errors || e,
+      })
+      .catch((e) => {
+        let errors;
+        if (e.errors) {
+          errors = e.errors.map((err) => {
+            delete err.instance;
+            return err;
+          });
+        }
+        return res.status(500).send({
+          status: false,
+          error: errors || e,
+        });
       });
-    });
+  }
 };
 
 const bulkEditLabel = async (req, res) => {
@@ -548,7 +531,6 @@ const bulkUpdate = async (req, res) => {
   if (Object.keys(tagUpdateQuery).length) {
     updateQuery = { ...updateQuery, ...tagUpdateQuery };
   }
-<<<<<<< HEAD
 
   Contact.find({ _id: { $in: contacts } })
     .updateMany(updateQuery)
@@ -566,399 +548,8 @@ const bulkUpdate = async (req, res) => {
     });
 };
 
-const receiveEmail = async (req, res) => {
-  const message_id = req.body[0].sg_message_id.split('.')[0];
-  const event = req.body[0].event;
-  const email = req.body[0].email;
-  const time_stamp = req.body[0].timestamp;
-  const _email = await Email.findOne({ message_id: message_id }).catch(
-    (err) => {
-      console.log('err', err);
-    }
-  );
-  if (_email) {
-    const user = await User.findOne({ _id: _email.user }).catch((err) => {
-      console.log('err', err);
-    });
-
-    let contact;
-    if (user) {
-      contact = await Contact.findOne({ email: email, user: user.id }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
-    }
-
-    if (contact && user) {
-      const opened = new Date(time_stamp * 1000);
-      const created_at = moment(opened)
-        .utcOffset(user.time_zone)
-        .format('h:mm a');
-      let action = '';
-      if (event == 'open') {
-        action = 'opened';
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log('err', err);
-        });
-
-        const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: 'open',
-          created_at: { $gte: reopened },
-        }).catch((err) => {
-          console.log('err', err);
-        });
-
-        if (!old_activity) {
-          const email_tracker = new EmailTracker({
-            user: user.id,
-            contact: contact.id,
-            email: _email.id,
-            type: 'open',
-            activity: email_activity.id,
-            updated_at: opened,
-            created_at: opened,
-          });
-          const _email_tracker = await email_tracker
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('err', err);
-            });
-
-          const activity = new Activity({
-            content: 'opened email',
-            contacts: contact.id,
-            user: user.id,
-            type: 'email_trackers',
-            emails: _email.id,
-            email_trackers: _email_tracker.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
-
-          const _activity = await activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('err', err);
-            });
-
-          Contact.update(
-            { _id: contact.id },
-            { $set: { last_activity: _activity.id } }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-        } else {
-          return;
-        }
-      }
-      if (event == 'click') {
-        action = 'clicked the link on';
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log('err', err);
-        });
-        const reclicked = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: 'click',
-          created_at: { $gte: reclicked },
-        }).catch((err) => {
-          console.log('err', err);
-        });
-
-        if (old_activity) {
-          return;
-        }
-        const email_tracker = new EmailTracker({
-          user: user.id,
-          contact: contact.id,
-          email: _email.id,
-          type: 'click',
-          activity: email_activity.id,
-          updated_at: opened,
-          created_at: opened,
-        });
-        const _email_tracker = await email_tracker
-          .save()
-          .then()
-          .catch((err) => {
-            console.log('err', err);
-          });
-
-        const activity = new Activity({
-          content: 'clicked the link on email',
-          contacts: contact.id,
-          user: user.id,
-          type: 'email_trackers',
-          emails: _email.id,
-          email_trackers: _email_tracker.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-
-        const _activity = await activity
-          .save()
-          .then()
-          .catch((err) => {
-            console.log('err', err);
-          });
-
-        Contact.findByIdAndUpdate(contact.id, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
-          console.log('err', err);
-        });
-      }
-      if (event == 'unsubscribe') {
-        action = 'unsubscribed';
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log('err', err);
-        });
-        const email_tracker = new EmailTracker({
-          user: user.id,
-          contact: contact.id,
-          email: _email.id,
-          type: 'unsubscribe',
-          activity: email_activity.id,
-          updated_at: opened,
-          created_at: opened,
-        });
-        const _email_tracker = await email_tracker
-          .save()
-          .then()
-          .catch((err) => {
-            console.log('err', err);
-          });
-
-        const activity = new Activity({
-          content: 'unsubscribed email',
-          contacts: contact.id,
-          user: user.id,
-          type: 'email_trackers',
-          emails: _email.id,
-          email_trackers: _email_tracker.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-
-        const _activity = await activity
-          .save()
-          .then()
-          .catch((err) => {
-            console.log('err', err);
-          });
-
-        Contact.update(
-          { _id: contact.id },
-          {
-            $set: { last_activity: _activity.id },
-            $push: { tags: { $each: ['unsubscribed'] } },
-          }
-        ).catch((err) => {
-          console.log('err', err);
-        });
-      }
-      const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
-        console.log('err', err);
-      });
-      const email_notification = garbage['email_notification'];
-
-      if (email_notification['email']) {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-        const msg = {
-          to: user.email,
-          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-          dynamic_template_data: {
-            subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-            email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-            activity:
-              contact.first_name +
-              ' ' +
-              action +
-              ' email: ' +
-              _email.subject +
-              ' at ' +
-              created_at,
-            detailed_activity:
-              "<a href='" +
-              urls.CONTACT_PAGE_URL +
-              contact.id +
-              "'><img src='" +
-              urls.DOMAIN_URL +
-              "assets/images/contact.png'/></a>",
-          },
-        };
-        sgMail.send(msg).catch((err) => console.error(err));
-      }
-      const desktop_notification = garbage['desktop_notification'];
-      if (desktop_notification['email']) {
-        webpush.setVapidDetails(
-          'mailto:support@crmgrow.com',
-          config.VAPID.PUBLIC_VAPID_KEY,
-          config.VAPID.PRIVATE_VAPID_KEY
-        );
-
-        const subscription = JSON.parse(user.desktop_notification_subscription);
-        const title =
-          contact.first_name +
-          ' ' +
-          contact.last_name +
-          ' - ' +
-          contact.email +
-          ' ' +
-          action +
-          ' email';
-        const created_at =
-          moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-          ' at ' +
-          moment(opened).utcOffset(user.time_zone).format('h:mm a');
-        const body =
-          contact.first_name +
-          ' ' +
-          contact.last_name +
-          ' - ' +
-          contact.email +
-          ' ' +
-          action +
-          ' email: ' +
-          _email.subject +
-          ' on ' +
-          created_at;
-        const playload = JSON.stringify({
-          notification: {
-            title: title,
-            body: body,
-            icon: '/fav.ico',
-            badge: '/fav.ico',
-          },
-        });
-        webpush
-          .sendNotification(subscription, playload)
-          .catch((err) => console.error(err));
-      }
-      const text_notification = garbage['text_notification'];
-      if (text_notification['email']) {
-        const e164Phone = phone(user.cell_phone)[0];
-
-        if (!e164Phone) {
-          const error = {
-            error: 'Invalid Phone Number',
-          };
-
-          throw error; // Invalid phone number
-        } else {
-          let fromNumber = user['proxy_number'];
-          if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
-
-            const data = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode: areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number == 'undefined') {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers('US')
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number != 'undefined') {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log('proxy_number', proxy_number);
-              user['proxy_number'] = proxy_number.phoneNumber;
-              fromNumber = user['proxy_number'];
-              user.save().catch((err) => {
-                console.log('err', err);
-              });
-            } else {
-              fromNumber = config.TWILIO.TWILIO_NUMBER;
-            }
-          }
-
-          const title =
-            contact.first_name +
-            ' ' +
-            contact.last_name +
-            '\n' +
-            contact.email +
-            '\n' +
-            contact.cell_phone +
-            '\n' +
-            '\n' +
-            action +
-            ' email: ' +
-            '\n' +
-            _email.subject +
-            '\n';
-          const created_at =
-            moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-            ' at ' +
-            moment(opened).utcOffset(user.time_zone).format('h:mm a');
-          const time = ' on ' + created_at + '\n ';
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
-            .create({
-              from: fromNumber,
-              body: title + '\n' + time + contact_link,
-              to: e164Phone,
-            })
-            .catch((err) => {
-              console.log('send sms err: ', err);
-            });
-        }
-      }
-    }
-  }
-  return res.send({
-    status: true,
-  });
-};
-=======
-  
-  Contact.find({_id: {$in: contacts}}).updateMany(updateQuery).then(() => {
-    res.send({
-      status: true
-    })
-  }).catch(err => {
-    console.log("error", err);
-    res.status(500).send({
-      status: false,
-      error: err.message || 'Update Error'
-    })
-  })
-}
-
->>>>>>> master
-
 const importCSV = async (req, res) => {
-  const { file } = req;
+  const file = req.file;
   const { currentUser } = req;
   const failure = [];
   let count = 0;
@@ -978,28 +569,27 @@ const importCSV = async (req, res) => {
       contact_array.push(data);
     })
     .on('end', () => {
-      let promise_array = [];
+      const promise_array = [];
       for (let i = 0; i < contact_array.length; i++) {
-        let promise = new Promise(async (resolve, reject) => {
-          let data = contact_array[i];
-          if (data['first_name'] == '') {
+        const promise = new Promise(async (resolve, reject) => {
+          const data = contact_array[i];
+          if (data['first_name'] === '') {
             data['first_name'] = null;
           }
-          if (data['email'] == '') {
+          if (data['email'] === '') {
             data['email'] = null;
           }
-          if (data['phone'] == '') {
+          if (data['phone'] === '') {
             data['phone'] = null;
           }
           if (data['first_name'] || data['email'] || data['phone']) {
-            let cell_phone = data['phone'];
+            const cell_phone = data['phone'];
             // let cleaned = ('' + cell_phone).replace(/\D/g, '')
             // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
             // if (match) {
             //   let intlCode = (match[1] ? '+1 ' : '')
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
-
             if (data['email']) {
               const email_contact = await Contact.findOne({
                 email: data['email'],
@@ -1018,9 +608,7 @@ const importCSV = async (req, res) => {
                 return;
               }
             }
-<<<<<<< HEAD
-
-            if (data['contact']) {
+            if (data['cell_phone']) {
               const phone_contact = await Contact.findOne({
                 cell_phone: data['cell_phone'],
                 user: currentUser.id,
@@ -1028,13 +616,6 @@ const importCSV = async (req, res) => {
                 console.log('err', err);
               });
               if (phone_contact) {
-=======
-            if(data['cell_phone']){
-              const phone_contact = await Contact.findOne({cell_phone: data['cell_phone'], user: currentUser.id}).catch(err=>{
-                console.log('err', err)
-              })
-              if(phone_contact){
->>>>>>> master
                 const field = {
                   id: i,
                   cell_phone: data['cell_phone'],
@@ -1058,7 +639,7 @@ const importCSV = async (req, res) => {
               return;
             }
             let tags = [];
-            if (data['tags'] != '' && typeof data['tags'] != 'undefined') {
+            if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
               tags = data['tags'].split(/,\s|\s,|,|\s/);
             }
             delete data.tags;
@@ -1094,7 +675,7 @@ const importCSV = async (req, res) => {
                   .catch((err) => {
                     console.log('err', err);
                   });
-                if (data['note'] && data['note'] != '') {
+                if (data['note'] && data['note'] !== '') {
                   const note = new Note({
                     content: data['note'],
                     contact: _contact.id,
@@ -1157,34 +738,34 @@ const importCSV = async (req, res) => {
 };
 
 const overwriteCSV = async (req, res) => {
-  let file = req.file;
+  const file = req.file;
   const { currentUser } = req;
-  let failure = [];
+  const failure = [];
 
-  let contact_array = [];
+  const contact_array = [];
   fs.createReadStream(file.path)
     .pipe(csv())
     .on('data', async (data) => {
       contact_array.push(data);
     })
     .on('end', async () => {
-      let promise_array = [];
+      const promise_array = [];
       for (let i = 0; i < contact_array.length; i++) {
-        let email = contact_array[i]['email'];
-        let data = contact_array[i];
+        const email = contact_array[i]['email'];
+        const data = contact_array[i];
         let tags = [];
-        if (data['tags'] != '' && typeof data['tags'] != 'undefined') {
+        if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
           tags = data['tags'].split(/,\s|\s,|,|\s/);
         }
         delete data.tags;
-        for (let key in data) {
-          if (data[key] == '' && typeof data[key] == 'undefined') {
+        for (const key in data) {
+          if (data[key] === '' && typeof data[key] === 'undefined') {
             delete data[key];
           }
         }
         if (email) {
           await Contact.updateOne(
-            { email: email },
+            { email },
             { $set: data, $push: { tags: { $each: tags } } }
           ).catch((err) => {
             console.log('err', err);
@@ -1213,7 +794,7 @@ const exportCSV = async (req, res) => {
     });
     const _contact = await Contact.findOne({ _id: contacts[i] });
 
-    if (_note.length != 0) {
+    if (_note.length !== 0) {
       _data['note'] = _note;
     }
     _data['contact'] = _contact;
@@ -1235,7 +816,7 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  const { search } = req.body;
+  const search = req.body.search;
   let contacts = [];
   if (!search.split(' ')[1]) {
     contacts = await Contact.find({
@@ -1292,9 +873,9 @@ const search = async (req, res) => {
 
 const searchEasy = async (req, res) => {
   const { currentUser } = req;
-  let search = req.body.search;
+  const search = req.body.search;
   if (!search.split(' ')[1]) {
-    data = await Contact.find({
+    const data = await Contact.find({
       $or: [
         {
           first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
@@ -1323,7 +904,7 @@ const searchEasy = async (req, res) => {
         console.log('err', err);
       });
   } else {
-    data = await Contact.find({
+    const data = await Contact.find({
       $or: [
         {
           first_name: search.split(' ')[0],
@@ -1341,12 +922,11 @@ const searchEasy = async (req, res) => {
       .catch((err) => {
         console.log('err', err);
       });
+    return res.send({
+      status: true,
+      data,
+    });
   }
-
-  return res.send({
-    status: true,
-    data,
-  });
 };
 
 const getById = async (req, res) => {
@@ -1383,19 +963,61 @@ const getByIds = async (req, res) => {
 
 const leadContact = async (req, res) => {
   const { user, first_name, email, cell_phone, video, pdf } = req.body;
-  const _exists = await Contact.find({
+  let _exist = await Contact.findOne({
     email,
     user,
   }).catch((err) => {
-    return res.status(500).send({
+    return res.status(400).send({
       status: false,
       error: err.message,
     });
   });
 
-  if (_exists && _exists.length) {
+  if (!_exist) {
+    _exist = await Contact.findOne({
+      cell_phone,
+      user,
+    }).catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+  }
+
+  if (_exist) {
+    let _activity;
+    if (video) {
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - watched video',
+        contacts: _exist.id,
+        user,
+        type: 'videos',
+        videos: video,
+      });
+    } else {
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - reviewed pdf',
+        contacts: _exist.id,
+        user,
+        type: 'pdfs',
+        pdfs: pdf,
+      });
+    }
+
+    const activity = await _activity
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('err', err);
+      });
+
     return res.json({
       status: true,
+      data: {
+        contact: _exist.id,
+        activity: activity.id,
+      },
     });
   } else {
     const label = 'New';
@@ -1418,7 +1040,7 @@ const leadContact = async (req, res) => {
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
             console.log('err', err);
           });
-          const garbage = await Garbage.findOne({ user: user }).catch((err) => {
+          const garbage = await Garbage.findOne({ user }).catch((err) => {
             console.log('err', err);
           });
 
@@ -1432,26 +1054,14 @@ const leadContact = async (req, res) => {
             updated_at: new Date(),
           });
 
-          activity = await _activity
+          const activity = await _activity
             .save()
             .then()
             .catch((err) => {
               console.log('err', err);
             });
 
-        const { desktop_notification } = garbage;
-        if (desktop_notification.lead_capture) {
-          webpush.setVapidDetails(
-            'mailto:support@crmgrow.com',
-            config.VAPID.PUBLIC_VAPID_KEY,
-            config.VAPID.PRIVATE_VAPID_KEY
-          );
-
-          const subscription = JSON.parse(
-            currentUser.desktop_notification_subscription
-          );
-          const title = `${contact.first_name} watched lead capture video`;
-          const created_at = `${moment()
+          const created_at = moment()
             .utcOffset(currentUser.time_zone)
             .format('h:mm: a');
           const email_notification = garbage['email_notification'];
@@ -1464,7 +1074,7 @@ const leadContact = async (req, res) => {
               templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
-                first_name: first_name,
+                first_name,
                 phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
@@ -1511,8 +1121,8 @@ const leadContact = async (req, res) => {
               created_at;
             const playload = JSON.stringify({
               notification: {
-                title: title,
-                body: body,
+                title,
+                body,
                 icon: '/fav.ico',
                 badge: '/fav.ico',
               },
@@ -1566,64 +1176,28 @@ const leadContact = async (req, res) => {
                   console.log('send sms err: ', err);
                 });
             }
-
-            const title =
-              `${contact.first_name}\n${contact.email}\n${contact.cell_phone}\n` +
-              `\n` +
-              `watched lead capture video: ` +
-              `\n${_video.title}\n`;
-            const created_at = `${moment()
-              .utcOffset(currentUser.time_zone)
-              .format('MM/DD/YYYY')} at ${moment()
-              .utcOffset(currentUser.time_zone)
-              .format('h:mm a')}`;
-            const time = ` on ${created_at}\n `;
-            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
-              .create({
-                from: fromNumber,
-                body: `${title}\n${time}${contact_link}`,
-                to: e164Phone,
-              })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
           }
-        }
 
-          Contact.update(
+          Contact.updateMany(
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
             console.log('err', err);
           });
 
-        return res.send({
-          status: true,
-          data: {
-            contact: contact.id,
-            activity: activity.id,
-          },
-        });
-      })
-      .catch((err) => {
-        return res.status(500).send({
-          status: false,
-          error: err.message,
-        });
-      });
-  } else if (pdf) {
-    _contact
-      .save()
-      .then(async (contact) => {
-        const _pdf = await PDF.findOne({ _id: pdf }).catch((err) => {
-          console.log('err', err);
-        });
-        const currentUser = await User.findOne({ _id: user }).catch((err) => {
-          console.log('err', err);
-        });
-        const garbage = await Garbage.findOne({ user }).catch((err) => {
-          console.log('err', err);
+          return res.send({
+            status: true,
+            data: {
+              contact: contact.id,
+              activity: activity.id,
+            },
+          });
+        })
+        .catch((err) => {
+          return res.status(400).send({
+            status: false,
+            error: err.message,
+          });
         });
     } else if (pdf) {
       _contact
@@ -1635,12 +1209,12 @@ const leadContact = async (req, res) => {
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
             console.log('err', err);
           });
-          const garbage = await Garbage.findOne({ user: user }).catch((err) => {
+          const garbage = await Garbage.findOne({ user }).catch((err) => {
             console.log('err', err);
           });
 
           const _activity = new Activity({
-            content: 'LEAD CAPTURE - watched pdf',
+            content: 'LEAD CAPTURE - reviewed pdf',
             contacts: contact.id,
             user: currentUser.id,
             type: 'pdfs',
@@ -1649,26 +1223,14 @@ const leadContact = async (req, res) => {
             updated_at: new Date(),
           });
 
-          activity = await _activity
+          const activity = await _activity
             .save()
             .then()
             .catch((err) => {
               console.log('err', err);
             });
 
-        const { desktop_notification } = garbage;
-        if (desktop_notification.lead_capture) {
-          webpush.setVapidDetails(
-            'mailto:support@crmgrow.com',
-            config.VAPID.PUBLIC_VAPID_KEY,
-            config.VAPID.PRIVATE_VAPID_KEY
-          );
-
-          const subscription = JSON.parse(
-            currentUser.desktop_notification_subscription
-          );
-          const title = `${contact.first_name} watched lead capture pdf`;
-          const created_at = `${moment()
+          const created_at = moment()
             .utcOffset(currentUser.time_zone)
             .format('h:mm: a');
           const email_notification = garbage['email_notification'];
@@ -1681,7 +1243,7 @@ const leadContact = async (req, res) => {
               templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT,
-                first_name: first_name,
+                first_name,
                 phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
@@ -1728,8 +1290,8 @@ const leadContact = async (req, res) => {
               created_at;
             const playload = JSON.stringify({
               notification: {
-                title: title,
-                body: body,
+                title,
+                body,
                 icon: '/fav.ico',
                 badge: '/fav.ico',
               },
@@ -1783,30 +1345,7 @@ const leadContact = async (req, res) => {
                   console.log('send sms err: ', err);
                 });
             }
-
-            const title =
-              `${contact.first_name}\n${contact.email}\n${contact.cell_phone}\n` +
-              `\n` +
-              `watched lead capture video: ` +
-              `\n${_pdf.title}\n`;
-            const created_at = `${moment()
-              .utcOffset(currentUser.time_zone)
-              .format('MM/DD/YYYY')} at ${moment()
-              .utcOffset(currentUser.time_zone)
-              .format('h:mm a')}`;
-            const time = ` on ${created_at}\n `;
-            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
-              .create({
-                from: fromNumber,
-                body: `${title}\n${time}${contact_link}`,
-                to: e164Phone,
-              })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
           }
-        }
 
           Contact.update(
             { _id: contact.id },
@@ -1815,24 +1354,25 @@ const leadContact = async (req, res) => {
             console.log('err', err);
           });
 
-        return res.send({
-          status: true,
-          data: {
-            contact: contact.id,
-            activity: activity.id,
-          },
+          return res.send({
+            status: true,
+            data: {
+              contact: contact.id,
+              activity: activity.id,
+            },
+          });
+        })
+        .catch((err) => {
+          return res.status(500).send({
+            status: false,
+            error: err.message,
+          });
         });
-      })
-      .catch((err) => {
-        return res.status(500).send({
-          status: false,
-          error: err.message,
-        });
-      });
+    }
   }
 };
 
-isArray = function (a) {
+const isArray = function (a) {
   return !!a && a.constructor === Array;
 };
 const advanceSearch = async (req, res) => {
@@ -1871,7 +1411,7 @@ const advanceSearch = async (req, res) => {
   let notSentPdfContacts = [];
   let notSentImageContacts = [];
 
-  let excludeMaterialContacts = [];
+  const excludeMaterialContacts = [];
   if (materialCondition['watched_video']['flag']) {
     let query = [];
     if (materialCondition['watched_video']['material']) {
@@ -2342,14 +1882,14 @@ const advanceSearch = async (req, res) => {
   });
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
-  let includeMaterialCondition =
+  const includeMaterialCondition =
     materialCondition['not_watched_pdf']['flag'] ||
     materialCondition['not_watched_video']['flag'] ||
     materialCondition['watched_pdf']['flag'] ||
     materialCondition['watched_video']['flag'] ||
     materialCondition['watched_image']['flag'] ||
     materialCondition['not_watched_image']['flag'];
-  let excludeMaterialCondition =
+  const excludeMaterialCondition =
     materialCondition['not_sent_video']['flag'] ||
     materialCondition['not_sent_pdf']['flag'] ||
     materialCondition['not_sent_image']['flag'];
@@ -2383,8 +1923,6 @@ const advanceSearch = async (req, res) => {
         query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
       }
     }
-  } else if (excludeMaterialContacts) {
-    query.$and.push({ _id: { $nin: excludeMaterialContacts } });
   }
 
   if (searchStr) {
@@ -2399,8 +1937,8 @@ const advanceSearch = async (req, res) => {
         ],
       };
     } else {
-      let firstStr = searchStr.split(' ')[0];
-      let secondStr = searchStr.split(' ')[1];
+      const firstStr = searchStr.split(' ')[0];
+      const secondStr = searchStr.split(' ')[1];
       strQuery = {
         $or: [
           {
@@ -2427,7 +1965,7 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(stageQuery);
     } else {
-      var stageQuery = {};
+      let stageQuery = {};
       if (includeStage) {
         stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
       } else {
@@ -2438,7 +1976,7 @@ const advanceSearch = async (req, res) => {
   }
   if (sourceCondition && sourceCondition.length) {
     if (sourceCondition.indexOf(false) !== -1) {
-      var sourceQuery = {
+      const sourceQuery = {
         $or: [
           { source: { $in: sourceCondition } },
           { source: '' },
@@ -2460,7 +1998,7 @@ const advanceSearch = async (req, res) => {
     if (labelCondition.indexOf('') !== -1) {
       labelCondition.push(undefined);
     }
-    let labelQuery;
+    var labelQuery;
     if (includeLabel) {
       labelQuery = { label: { $in: labelCondition } };
     } else {
@@ -2472,7 +2010,7 @@ const advanceSearch = async (req, res) => {
   if (tagsCondition && tagsCondition.length) {
     if (tagsCondition.indexOf(false) !== -1) {
       tagsCondition.splice(tagsCondition.indexOf(false), 1);
-      var tagsQuery = {
+      const tagsQuery = {
         $or: [
           { tags: { $elemMatch: { $in: tagsCondition } } },
           { tags: [] },
@@ -2487,7 +2025,7 @@ const advanceSearch = async (req, res) => {
   }
   if (brokerageCondition && brokerageCondition.length) {
     if (brokerageCondition.indexOf(false) !== -1) {
-      var brokerageQuery = {
+      const brokerageQuery = {
         $or: [
           { brokerage: { $in: brokerageCondition } },
           { brokerage: '' },
@@ -2579,15 +2117,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['send_video']['flag']) {
         if (lastMaterial['send_video']['material']) {
           if (
-            activity.type == 'videos' &&
-            activity.videos == lastMaterial['send_video']['material']
+            activity.type === 'videos' &&
+            activity.videos === lastMaterial['send_video']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'videos') {
+          if (activity.type === 'videos') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2597,15 +2135,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['send_pdf']['flag']) {
         if (lastMaterial['send_pdf']['material']) {
           if (
-            activity.type == 'pdfs' &&
-            activity.pdfs == lastMaterial['send_pdf']['material']
+            activity.type === 'pdfs' &&
+            activity.pdfs === lastMaterial['send_pdf']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'pdfs') {
+          if (activity.type === 'pdfs') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2615,15 +2153,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['send_image']['flag']) {
         if (lastMaterial['send_image']['material']) {
           if (
-            activity.type == 'images' &&
-            activity.images == lastMaterial['send_image']['material']
+            activity.type === 'images' &&
+            activity.images === lastMaterial['send_image']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'images') {
+          if (activity.type === 'images') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2633,15 +2171,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['watched_video']['flag']) {
         if (lastMaterial['watched_video']['material']) {
           if (
-            activity.type == 'video_trackers' &&
-            activity.videos == lastMaterial['watched_video']['material']
+            activity.type === 'video_trackers' &&
+            activity.videos === lastMaterial['watched_video']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'video_trackers') {
+          if (activity.type === 'video_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2651,15 +2189,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['watched_pdf']['flag']) {
         if (lastMaterial['watched_pdf']['material']) {
           if (
-            activity.type == 'pdf_trackers' &&
-            activity.pdfs == lastMaterial['watched_pdf']['material']
+            activity.type === 'pdf_trackers' &&
+            activity.pdfs === lastMaterial['watched_pdf']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'pdf_trackers') {
+          if (activity.type === 'pdf_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2669,15 +2207,15 @@ const advanceSearch = async (req, res) => {
       if (lastMaterial['watched_image']['flag']) {
         if (lastMaterial['watched_image']['material']) {
           if (
-            activity.type == 'image_trackers' &&
-            activity.pdfs == lastMaterial['watched_image']['material']
+            activity.type === 'image_trackers' &&
+            activity.pdfs === lastMaterial['watched_image']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == 'image_trackers') {
+          if (activity.type === 'image_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2715,7 +2253,7 @@ const advanceSearch = async (req, res) => {
 const getBrokerages = async (req, res) => {
   const { currentUser } = req;
 
-  data = await Contact.aggregate([
+  const data = await Contact.aggregate([
     {
       $match: { user: mongoose.Types.ObjectId(currentUser.id) },
     },
@@ -2736,7 +2274,7 @@ const getBrokerages = async (req, res) => {
 const getSources = async (req, res) => {
   const { currentUser } = req;
 
-  data = await Contact.aggregate([
+  const data = await Contact.aggregate([
     {
       $match: { user: mongoose.Types.ObjectId(currentUser.id) },
     },
@@ -2758,7 +2296,7 @@ const getNthContact = async (req, res) => {
   const { currentUser } = req;
   const skip = req.params.id;
 
-  contact = await Contact.aggregate([
+  const contact = await Contact.aggregate([
     {
       $match: { user: currentUser.id },
     },
@@ -2837,7 +2375,7 @@ const checkPhone = async (req, res) => {
   const { currentUser } = req;
   const { cell_phone } = req.body;
 
-  if (typeof cell_phone == 'object') {
+  if (typeof cell_phone === 'object') {
     return;
   }
 
@@ -2957,86 +2495,93 @@ const mergeContacts = (req, res) => {
     });
 };
 
-const bulkCreate = async (req, res) =>  {
-  const {contacts} = req.body;
-  const {currentUser} = req;
+const bulkCreate = async (req, res) => {
+  const { contacts } = req.body;
+  const { currentUser } = req;
   let count = 0;
   let max_count = 0;
-  if(!currentUser.contact) {
-    count = await Contact.countDocuments({user: currentUser.id});
-    max_count = config.MAX_CONTACT
+  if (!currentUser.contact) {
+    count = await Contact.countDocuments({ user: currentUser.id });
+    max_count = config.MAX_CONTACT;
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
   }
 
-  let failure = [];
-  let succeed = [];  
-  let promise_array = [];
-  for(let i = 0 ; i < contacts.length ; i++) {
-    let promise = new Promise(async(resolve, reject) => {
-      let data = contacts[i];
-      count = count + 1;
-      if(max_count < count) {
+  const failure = [];
+  const succeed = [];
+  const promise_array = [];
+  for (let i = 0; i < contacts.length; i++) {
+    const promise = new Promise(async (resolve, reject) => {
+      const data = contacts[i];
+      count += 1;
+      if (max_count < count) {
         const field = {
           id: i,
           email: data['email'],
           cell_phone: data['cell_phone'],
-          err: 'Exceed upload max contacts'
-        }
-        failure.push(field)
-        resolve()
+          err: 'Exceed upload max contacts',
+        };
+        failure.push(field);
+        resolve();
         return;
       }
       const contact = new Contact({
         ...data,
         user: currentUser.id,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       });
-      contact.save().then(_contact => {
-        succeed.push(_contact);
-        const activity = new Activity({
-          content: 'added contact',
-          contacts: _contact.id,
-          user: currentUser.id,
-          type: 'contacts',
-          created_at: new Date(),
-          updated_at: new Date(),
+      contact
+        .save()
+        .then((_contact) => {
+          succeed.push(_contact);
+          const activity = new Activity({
+            content: 'added contact',
+            contacts: _contact.id,
+            user: currentUser.id,
+            type: 'contacts',
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+          activity
+            .save()
+            .then((_activity) => {
+              Contact.findByIdAndUpdate(_contact.id, {
+                $set: { last_activity: _activity.id },
+              }).catch((err) => {
+                console.log('err', err);
+              });
+            })
+            .catch((err) => {
+              console.log('err', err);
+            });
+          resolve();
         })
-        activity.save().then((_activity) => {
-          Contact.findByIdAndUpdate(_contact.id, { $set: { last_activity: _activity.id } }).catch(err => {
-            console.log('err', err)
-          })
-        }).catch(err => {
-          console.log('err', err)
-        })
-        resolve();
-        return;
-      }).catch(err => {
-        console.log("err", err)
-      })
-    })
+        .catch((err) => {
+          console.log('err', err);
+        });
+    });
 
-    promise_array.push(promise)
+    promise_array.push(promise);
   }
 
   Promise.all(promise_array).then(function () {
     const contact_info = {
-      count: count,
-      max_count: max_count
-    }
-    currentUser.contact = contact_info
-    currentUser.save().catch(err => {
-      console.log('err', err)
-    })
+      count,
+      max_count,
+    };
+    currentUser.contact = contact_info;
+    currentUser.save().catch((err) => {
+      console.log('err', err);
+    });
     return res.send({
       status: true,
       failure,
-      succeed
-    })
+      succeed,
+    });
   });
-}
+};
 
 module.exports = {
   getAll,
@@ -3068,9 +2613,5 @@ module.exports = {
   checkPhone,
   loadDuplication,
   mergeContacts,
-<<<<<<< HEAD
+  bulkCreate,
 };
-=======
-  bulkCreate
-}
->>>>>>> master

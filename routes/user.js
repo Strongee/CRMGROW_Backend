@@ -41,16 +41,10 @@ router.post(
 
 router.post('/check', catchError(UserCtrl.checkUser));
 
-<<<<<<< HEAD
 router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout));
-// Edit own profile
-router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe));
-=======
-router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout))
 
 // Edit own profile
-router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe))
->>>>>>> master
+router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe));
 
 // Edit own profile
 router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe));

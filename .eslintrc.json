@@ -44,6 +44,10 @@
     "prefer-promise-reject-errors": 0,
     "no-useless-escape": 0,
     "new-cap": 0,
-    "array-callback-return": 0
+    "array-callback-return": 0,
+    "no-return-assign": 0,
+    "no-async-promise-executor": 0,
+    "no-unused-expressions": 0, // "no-unused-expressions" used in /controllers/contact.js
+    "radix": 0
   }
 }

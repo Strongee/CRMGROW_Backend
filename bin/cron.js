@@ -5,12 +5,12 @@ const CronJob = require('cron').CronJob;
 const fs = require('fs');
 const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const sharp = require('sharp');
-const child_process = require('child_process');
 const phone = require('phone');
 const twilio = require('twilio')(accountSid, authToken);
 const webpush = require('web-push');
+const sharp = require('sharp');
+const child_process = require('child_process');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { ENV_PATH } = require('../config/path');
 require('dotenv').config({ path: ENV_PATH });
 
@@ -606,168 +606,6 @@ const reminder_job = new CronJob(
   'US/Central'
 );
 
-<<<<<<< HEAD
-const video_job = new CronJob(
-  '0 3 * * *',
-  async () => {
-    const videos = await Video.find({
-      converted: false,
-      del: false,
-      type: { $nin: ['youtube', 'vimeo'] },
-    }).catch((err) => {
-      console.log('err', err);
-    });
-
-    if (videos) {
-      for (let i = 0; i < videos.length; i++) {
-        const video = videos[i];
-        const file_path = video.path;
-        if (file_path) {
-          const file_name = video.path.slice(23);
-
-          if (fs.existsSync(file_path)) {
-            try {
-              fs.readFile(file_path, (err, data) => {
-                if (err) {
-                  FileHelper.readFile(file_path)
-                    .then(function (data1) {
-                      console.log('File read was successful by stream', data1);
-                      const today = new Date();
-                      const year = today.getYear();
-                      const month = today.getMonth();
-                      const params = {
-                        Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                        Key: 'video' + year + '/' + month + '/' + file_name,
-                        Body: data1,
-                        ACL: 'public-read',
-                      };
-                      s3.upload(params, async (s3Err, upload) => {
-                        if (s3Err) throw s3Err;
-                        console.log(
-                          `File uploaded successfully at ${upload.Location}`
-                        );
-                        video['url'] = upload.Location;
-                        video['converted'] = true;
-                        video
-                          .save()
-                          .then(() => {
-                            fs.unlinkSync(file_path);
-                          })
-                          .catch((err) => {
-                            console.log('err', err);
-                          });
-                      });
-                    })
-                    .catch(function (err) {
-                      console.log('File read by stream error', err);
-                    });
-                } else {
-                  console.log('File read was successful', data);
-                  console.log('file_path', file_path);
-                  const today = new Date();
-                  const year = today.getYear();
-                  const month = today.getMonth();
-                  const params = {
-                    Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                    Key: 'video' + year + '/' + month + '/' + file_name,
-                    Body: data,
-                    ACL: 'public-read',
-                  };
-                  s3.upload(params, async (s3Err, upload) => {
-                    if (s3Err) throw s3Err;
-                    console.log(
-                      `File uploaded successfully at ${upload.Location}`
-                    );
-                    video['url'] = upload.Location;
-                    video['converted'] = true;
-                    video
-                      .save()
-                      .then(() => {
-                        fs.unlinkSync(file_path);
-                      })
-                      .catch((err) => {
-                        console.log('err', err);
-                      });
-                  });
-                }
-              });
-            } catch (err) {
-              console.log('err', err);
-              // read file
-            }
-          }
-        }
-        // } else {
-        //   const file_name = video.url.slice(39)
-        //   file_path = TEMP_PATH + file_name
-        //   if (fs.existsSync(file_path)) {
-        //     try{
-        //     fs.readFile(file_path, (err, data) => {
-        //         if (err) throw err;
-        //         console.log('File read was successful', data)
-        //         const today = new Date()
-        //         const year = today.getYear()
-        //         const month = today.getMonth()
-        //         const params = {
-        //             Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //             Key: 'video' +  year + '/' + month + '/' + file_name,
-        //             Body: data,
-        //             ACL: 'public-read'
-        //         };
-        //         s3.upload(params, async (s3Err, upload)=>{
-        //           if (s3Err) throw s3Err
-        //           console.log(`File uploaded successfully at ${upload.Location}`)
-        //           video['url'] = upload.Location
-        //           video['converted'] = true
-        //           video.save().then(()=>{
-        //             fs.unlinkSync(file_path)
-        //           }).catch(err=>{
-        //             console.log('err', err)
-        //           });
-        //         })
-        //      });
-        //     }catch(err){
-        //       console.log('file_path', file_path)
-        //       console.log('err', err)
-        //       // read file
-        //       FileHelper.readFile(file_path).then(function(data) {
-        //           console.log('File read was successful by stream', data)
-        //           const today = new Date()
-        //           const year = today.getYear()
-        //           const month = today.getMonth()
-        //           const params = {
-        //               Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-        //               Key: 'video' +  year + '/' + month + '/' + file_name,
-        //               Body: data,
-        //               ACL: 'public-read'
-        //           };
-        //           s3.upload(params, async (s3Err, upload)=>{
-        //             if (s3Err) throw s3Err
-        //             console.log(`File uploaded successfully at ${upload.Location}`)
-        //             video['url'] = upload.Location
-        //             video['converted'] = true
-        //             video.save().then(()=>{
-        //               fs.unlinkSync(file_path)
-        //             }).catch(err=>{
-        //               console.log('err', err)
-        //             });
-        //           })
-        //       }).catch(function(err) {
-        //        console.log(err);
-        //       })
-        //     }
-        //   }
-        // }
-      }
-    }
-  },
-  function () {
-    console.log('Convert Job finished.');
-  },
-  false,
-  'US/Central'
-);
-
 const signup_job = new CronJob(
   '0,30 * * * 0-6',
   async () => {
@@ -787,23 +625,6 @@ const signup_job = new CronJob(
         const offset = now - created_at;
         if (offset >= 30 * 60 * 1000 && offset < 60 * 60 * 1000) {
           const msg = {
-=======
-const signup_job = new CronJob('0,30 * * * 0-6', async() =>{
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-  
-  const subscribers = await User.find({'welcome_email': false}).catch(err=>{
-    console.log('err', err)
-  })
-  
-  if(subscribers){
-    for(let i = 0; i <subscribers.length; i++){
-      const subscriber = subscribers[i]
-      const created_at = new Date(subscriber['created_at']).getTime()
-      const now = new Date().getTime()
-      const offset = now-created_at
-      if(offset>=(30*60*1000) && offset<60*60*1000){
-          msg = {
->>>>>>> master
             to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
             templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
@@ -1014,7 +835,7 @@ const notification_check = new CronJob(
         console.log('err', err);
       });
       for (let i = 0; i < notifications.length; i++) {
-        const notification = notifications[i];
+        const notification = notification[i];
 
         for (let j = 0; j < subscribers.length; j++) {
           const subscriber = subscribers[j];
@@ -1023,8 +844,8 @@ const notification_check = new CronJob(
             from: mail_contents.SUPPORT_CRMGROW.MAIL,
             templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
             dynamic_template_data: {
-              // content: subscriber.user_name,
-              content: notification.content,
+              content: subscriber.user_name + notification.content,
+              // content: notification.content,
             },
           };
           sgMail
@@ -1068,19 +889,18 @@ const notification_check = new CronJob(
   'US/Central'
 );
 
-<<<<<<< HEAD
-const video_convert = new CronJob(
+const convert_video_job = new CronJob(
   '0 1 * * *',
   async () => {
-    const videos = await Video.find({
+    const record_videos = await Video.find({
       recording: true,
-      converted: false,
+      converted: 'none',
       del: false,
     }).catch((err) => {
-      console.log('err', err);
+      console.log('record videos convert err', err.message);
     });
-    for (let i = 0; i < videos.length; i++) {
-      const video = videos[i];
+    for (let i = 0; i < record_videos.length; i++) {
+      const video = record_videos[i];
       const file_path = video.path;
       if (file_path) {
         if (fs.existsSync(file_path)) {
@@ -1095,182 +915,184 @@ const video_convert = new CronJob(
             'pad=ceil(iw/2)*2:ceil(ih/2)*2',
             new_path,
           ];
-          console.log('args', args);
           const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
-          ffmpegConvert.on('end', function () {
+          ffmpegConvert.on('close', function () {
             console.log('converted end', file_path);
             const new_url = urls.VIDEO_URL + new_file;
             video['url'] = new_url;
             video['recording'] = false;
             video['path'] = new_path;
+            video['converted'] = 'completed';
             video
               .save()
-              .then(() => {})
-              .catch((err) => {
-                console.log('err', err);
+              .then(() => {
                 fs.unlinkSync(file_path);
+              })
+              .catch((err) => {
+                console.log('err', err.message);
               });
           });
-=======
-const convert_video_job = new CronJob('0 1 * * *', async() =>{
-    const record_videos = await Video.find({recording: true, converted: 'none', del: false}).catch(err=>{
-      console.log('record videos convert err', err.message)
-    })
-    for(let i=0; i<record_videos.length; i++){
-      const video = record_videos[i]
-      let file_path = video.path
-      if(file_path){
-        if (fs.existsSync(file_path)) {
-          const new_file = uuidv1() + '.mov'
-          const new_path = TEMP_PATH + new_file
-          let args = ['-i', file_path, '-max_muxing_queue_size', '1024', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', new_path]
-          const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
-          ffmpegConvert.on('close', function(){
-            console.log('converted end', file_path)
-            const new_url = urls.VIDEO_URL+new_file
-            video['url'] = new_url
-            video['recording'] = false
-            video['path'] = new_path
-            video['converted'] = 'completed'
-            video.save().then(()=>{
-              fs.unlinkSync(file_path)
-            }).catch(err=>{
-              console.log('err', err.message)
-            })
-          })
         }
       }
     }
-    
+
     const uploaded_videos = await Video.find({
-      recording: false, 
-      converted: 'none', 
+      recording: false,
+      converted: 'none',
       del: false,
-      type: {$nin: ['youtube', 'vimeo']}
-    }).catch(err=>{
-      console.log('uploaded videos convert err', err.message)
-    })
-    for(let i=0; i<uploaded_videos.length; i++){
-      const video = uploaded_videos[i]
-      let file_path = video.path
-      if(file_path){
+      type: { $nin: ['youtube', 'vimeo'] },
+    }).catch((err) => {
+      console.log('uploaded videos convert err', err.message);
+    });
+    for (let i = 0; i < uploaded_videos.length; i++) {
+      const video = uploaded_videos[i];
+      const file_path = video.path;
+      if (file_path) {
         if (fs.existsSync(file_path)) {
-          const new_file = uuidv1() + '.mp4'
-          const new_path = TEMP_PATH + new_file
-          let args = ['-i', file_path, '-c:v', 'libx264', '-b:v', '1.5M', '-c:a', 'aac', '-b:a', '128k', new_path]
+          const new_file = uuidv1() + '.mp4';
+          const new_path = TEMP_PATH + new_file;
+          const args = [
+            '-i',
+            file_path,
+            '-c:v',
+            'libx264',
+            '-b:v',
+            '1.5M',
+            '-c:a',
+            'aac',
+            '-b:a',
+            '128k',
+            new_path,
+          ];
           const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
-          ffmpegConvert.on('close', function(){
-            console.log('converted end', file_path)
+          ffmpegConvert.on('close', function () {
+            console.log('converted end', file_path);
             if (fs.existsSync(new_path)) {
-              const new_url = urls.VIDEO_URL+new_file
-              video['url'] = new_url
-              video['converted'] = 'completed'
-              video['path'] = new_path
-              video.save().then(()=>{
-                fs.unlinkSync(file_path)
-              }).catch(err=>{
-                console.log('err', err.message)
-              })
+              const new_url = urls.VIDEO_URL + new_file;
+              video['url'] = new_url;
+              video['converted'] = 'completed';
+              video['path'] = new_path;
+              video
+                .save()
+                .then(() => {
+                  fs.unlinkSync(file_path);
+                })
+                .catch((err) => {
+                  console.log('err', err.message);
+                });
             }
-          })
->>>>>>> master
+          });
         }
       }
     }
   },
   function () {
     console.log('Video Convert Job Finished.');
-<<<<<<< HEAD
   },
   false,
   'US/Central'
 );
-=======
-  }, false, 'US/Central')
-  
 
-const upload_video_job = new CronJob('0 4 * * *', async() =>{
-  const videos = await Video.find({uploaded: false, del: false, type: {$nin: ['youtube', 'vimeo']} }).catch(err=>{
-    console.log('err', err.message)
-  })
-    
-    if(videos){
-      for(let i = 0; i <videos.length; i++){
-        const video = videos[i]
-        let file_path = video.path
-        console.log('file path')
-        if(file_path){
-          const file_name = video.path.slice(23)
-        
+const upload_video_job = new CronJob(
+  '0 4 * * *',
+  async () => {
+    const videos = await Video.find({
+      uploaded: false,
+      del: false,
+      type: { $nin: ['youtube', 'vimeo'] },
+    }).catch((err) => {
+      console.log('err', err.message);
+    });
+
+    if (videos) {
+      for (let i = 0; i < videos.length; i++) {
+        const video = videos[i];
+        const file_path = video.path;
+        console.log('file path');
+        if (file_path) {
+          const file_name = video.path.slice(23);
+
           if (fs.existsSync(file_path)) {
-            try{
-            fs.readFile(file_path, (err, data) => {
+            try {
+              fs.readFile(file_path, (err, data) => {
                 if (err) {
-                  FileHelper.readFile(file_path).then(function(data1) {
-                    console.log('File read was successful by stream', data1)
-                    const today = new Date()
-                    const year = today.getYear()
-                    const month = today.getMonth()
-                    const params = {
+                  FileHelper.readFile(file_path)
+                    .then(function (data1) {
+                      console.log('File read was successful by stream', data1);
+                      const today = new Date();
+                      const year = today.getYear();
+                      const month = today.getMonth();
+                      const params = {
                         Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                        Key: 'video' +  year + '/' + month + '/' + file_name, 
+                        Key: 'video' + year + '/' + month + '/' + file_name,
                         Body: data1,
-                        ACL: 'public-read'
-                    };
-                    s3.upload(params, async (s3Err, upload)=>{
-                      if (s3Err) throw s3Err
-                      console.log(`File uploaded successfully at ${upload.Location}`)
-                      video['url'] = upload.Location
-                      video['uploaded'] = true
-                      video.save().then(()=>{
-                        fs.unlinkSync(file_path)
-                      }).catch(err=>{
-                        console.log('err', err)
-                      });  
+                        ACL: 'public-read',
+                      };
+                      s3.upload(params, async (s3Err, upload) => {
+                        if (s3Err) throw s3Err;
+                        console.log(
+                          `File uploaded successfully at ${upload.Location}`
+                        );
+                        video['url'] = upload.Location;
+                        video['uploaded'] = true;
+                        video
+                          .save()
+                          .then(() => {
+                            fs.unlinkSync(file_path);
+                          })
+                          .catch((err) => {
+                            console.log('err', err);
+                          });
+                      });
                     })
-                  }).catch(function(err) {
-                   console.log('File read by stream error', err);
-                  })
+                    .catch(function (err) {
+                      console.log('File read by stream error', err);
+                    });
                 } else {
-                  console.log('File read was successful', data)
-                  console.log('file_path', file_path)
-                  const today = new Date()
-                  const year = today.getYear()
-                  const month = today.getMonth()
+                  console.log('File read was successful', data);
+                  console.log('file_path', file_path);
+                  const today = new Date();
+                  const year = today.getYear();
+                  const month = today.getMonth();
                   const params = {
-                      Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-                      Key: 'video' +  year + '/' + month + '/' + file_name, 
-                      Body: data,
-                      ACL: 'public-read'
+                    Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                    Key: 'video' + year + '/' + month + '/' + file_name,
+                    Body: data,
+                    ACL: 'public-read',
                   };
-                  s3.upload(params, async (s3Err, upload)=>{
-                    if (s3Err) throw s3Err
-                    console.log(`File uploaded successfully at ${upload.Location}`)
-                    video['url'] = upload.Location
-                    video['uploaded'] = true
-                    video.save().then(()=>{
-                      fs.unlinkSync(file_path)
-                    }).catch(err=>{
-                      console.log('err', err.message)
-                    });  
-                  })
+                  s3.upload(params, async (s3Err, upload) => {
+                    if (s3Err) throw s3Err;
+                    console.log(
+                      `File uploaded successfully at ${upload.Location}`
+                    );
+                    video['url'] = upload.Location;
+                    video['uploaded'] = true;
+                    video
+                      .save()
+                      .then(() => {
+                        fs.unlinkSync(file_path);
+                      })
+                      .catch((err) => {
+                        console.log('err', err.message);
+                      });
+                  });
                 }
               });
-            }catch(err){
-              console.log('err', err.message)
+            } catch (err) {
+              console.log('err', err.message);
               // read file
             }
           }
         }
       }
     }
-  }, function () {
+  },
+  function () {
     console.log('Convert Job finished.');
-  }, false, 'US/Central'
-)
-  
-const timesheet_check = new CronJob('* * * * *', async() =>{
->>>>>>> master
+  },
+  false,
+  'US/Central'
+);
 
 const timesheet_check = new CronJob(
   '* * * * *',
@@ -1289,539 +1111,358 @@ const timesheet_check = new CronJob(
         const timeline = timelines[i];
         const action = timeline['action'];
         let data;
+        if (!action) {
+          continue;
+        }
+        if (timeline.condition && timeline.condition.answer === true) {
+          TimeLineCtrl.disableNext(timeline.id);
+          continue;
+        }
+        switch (action.type) {
+          case 'follow_up': {
+            let follow_due_date;
+            if (action.due_date) {
+              follow_due_date = action.due_date;
+            } else {
+              const now = moment();
+              // let tens = parseInt(now.minutes() / 10)
+              // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+              now.set({ second: 0, millisecond: 0 });
+              follow_due_date = now.add(action.due_duration, 'hours');
+              follow_due_date.set({ second: 0, millisecond: 0 });
+            }
+            const followUp = new FollowUp({
+              content: action.content,
+              contact: timeline.contact,
+              user: timeline.user,
+              type: 'follow_up',
+              due_date: follow_due_date,
+              updated_at: new Date(),
+              created_at: new Date(),
+            });
 
-        if (
-          (!timeline.condition ||
-            (timeline.condition && !timeline.condition.answer)) &&
-          action
-        ) {
-          switch (action.type) {
-            case 'follow_up': {
-              let follow_due_date;
-              if (action.due_date) {
-                follow_due_date = action.due_date;
-              } else {
-                const now = moment();
-                // let tens = parseInt(now.minutes() / 10)
-                // now.set({ minute: tens*10, second: 0, millisecond: 0 })
-                now.set({ second: 0, millisecond: 0 });
-                follow_due_date = now.add(action.due_duration, 'hours');
-                follow_due_date.set({ second: 0, millisecond: 0 });
-              }
-              const followUp = new FollowUp({
-                content: action.content,
-                contact: timeline.contact,
-                user: timeline.user,
-                type: 'follow_up',
-                due_date: follow_due_date,
-                updated_at: new Date(),
-                created_at: new Date(),
+            followUp
+              .save()
+              .then(async (_followup) => {
+                const garbage = await Garbage.findOne({
+                  user: timeline.user,
+                }).catch((err) => {
+                  console.log('err', err);
+                });
+                let reminder_before = 30;
+                if (garbage) {
+                  reminder_before = garbage.reminder_before;
+                }
+                const startdate = moment(_followup.due_date);
+                const reminder_due_date = startdate.subtract(
+                  reminder_before,
+                  'mins'
+                );
+
+                const reminder = new Reminder({
+                  contact: timeline.contact,
+                  due_date: reminder_due_date,
+                  type: 'follow_up',
+                  user: timeline.user,
+                  follow_up: _followup.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                });
+
+                reminder.save().catch((err) => {
+                  console.log('error', err);
+                });
+
+                const activity = new Activity({
+                  content: 'added follow up',
+                  contacts: _followup.contact,
+                  user: timeline.user,
+                  type: 'follow_ups',
+                  follow_ups: _followup.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                });
+
+                activity
+                  .save()
+                  .then((_activity) => {
+                    timeline['status'] = 'completed';
+                    timeline['updated_at'] = new Date();
+                    timeline.save().catch((err) => {
+                      console.log('err', err);
+                    });
+                    Contact.updateMany(
+                      { _id: _followup.contact },
+                      { $set: { last_activity: _activity.id } }
+                    ).catch((err) => {
+                      console.log('contact update err', err.message);
+                    });
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err.message);
+                });
+                console.log('follow error', err.message);
               });
+            break;
+          }
+          case 'note': {
+            const note = new Note({
+              content: action.content,
+              contact: timeline.contact,
+              user: timeline.user,
+              updated_at: new Date(),
+              created_at: new Date(),
+            });
 
-              followUp
-                .save()
-                .then(async (_followup) => {
-                  const garbage = await Garbage.findOne({
-                    user: timeline.user,
+            note
+              .save()
+              .then((_note) => {
+                const activity = new Activity({
+                  content: 'added note',
+                  contacts: _note.contact,
+                  user: timeline.user,
+                  type: 'notes',
+                  notes: _note.id,
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                });
+
+                activity.save().then((_activity) => {
+                  Contact.findByIdAndUpdate(_note.contact, {
+                    $set: { last_activity: _activity.id },
                   }).catch((err) => {
                     console.log('err', err);
                   });
-                  let reminder_before = 30;
-                  if (garbage) {
-                    reminder_before = garbage.reminder_before;
-                  }
-                  const startdate = moment(_followup.due_date);
-                  const reminder_due_date = startdate.subtract(
-                    reminder_before,
-                    'mins'
-                  );
-
-                  const reminder = new Reminder({
-                    contact: timeline.contact,
-                    due_date: reminder_due_date,
-                    type: 'follow_up',
-                    user: timeline.user,
-                    follow_up: _followup.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  });
-
-                  reminder.save().catch((err) => {
-                    console.log('error', err);
-                  });
-
-                  const activity = new Activity({
-                    content: 'added follow up',
-                    contacts: _followup.contact,
-                    user: timeline.user,
-                    type: 'follow_ups',
-                    follow_ups: _followup.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  });
-
-                  activity
-                    .save()
-                    .then((_activity) => {
-                      timeline['status'] = 'completed';
-                      timeline['updated_at'] = new Date();
-                      timeline.save().catch((err) => {
-                        console.log('err', err);
-                      });
-                      Contact.findByIdAndUpdate(_followup.contact, {
-                        $set: { last_activity: _activity.id },
-                      }).catch((err) => {
-                        console.log('err', err);
-                      });
-                    })
-                    .catch((err) => {
-                      console.log('follow error', err);
-                    });
-                })
-                .catch((err) => {
-                  timeline['status'] = 'error';
+                  timeline['status'] = 'completed';
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
-                  console.log('follow error', err);
                 });
-              break;
-            }
-<<<<<<< HEAD
-            case 'note': {
-              const note = new Note({
-                content: action.content,
-                contact: timeline.contact,
-                user: timeline.user,
-                updated_at: new Date(),
-                created_at: new Date(),
+              })
+              .catch((err) => {
+                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
-
-              note
-                .save()
-                .then((_note) => {
-                  const activity = new Activity({
-                    content: 'added note',
-                    contacts: _note.contact,
-                    user: timeline.user,
-                    type: 'notes',
-                    notes: _note.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  });
-
-                  activity.save().then((_activity) => {
-                    Contact.findByIdAndUpdate(_note.contact, {
-                      $set: { last_activity: _activity.id },
-                    }).catch((err) => {
-                      console.log('err', err);
-                    });
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  });
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                  timeline['status'] = 'error';
+            break;
+          }
+          case 'email':
+            data = {
+              user: timeline.user,
+              video: action.video,
+              subject: action.subject,
+              content: action.content,
+              contacts: [timeline.contact],
+            };
+            EmailHelper.bulkEmail(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
-                });
-              break;
-=======
-            let startdate = moment(_followup.due_date)
-            const reminder_due_date = startdate.subtract(reminder_before, "mins");
-            
-            const reminder = new Reminder({
-              contact: timeline.contact,
-              due_date: reminder_due_date,
-              type: 'follow_up',
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  console.log('err', res[0].err);
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_text_video':
+            data = {
               user: timeline.user,
-              follow_up: _followup.id,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-            
-            reminder.save().catch(err=>{
-              console.log('error', err)
-            })
-        
-            const activity = new Activity({
-              content: 'added follow up',
-              contacts: _followup.contact,
+              videos: [action.video],
+              content: action.content,
+              contacts: [timeline.contact],
+            };
+            TextHelper.bulkVideo(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  console.log('err', res[0].err);
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_email_video':
+            data = {
               user: timeline.user,
-              type: 'follow_ups',
-              follow_ups: _followup.id,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-        
-            activity.save().then(_activity => {
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
+              content: action.content,
+              subject: action.subject,
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            EmailHelper.bulkVideo(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  console.log('err', res[0].err);
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
               })
-                Contact.updateMany(
-                  {_id: _followup.contact},
-                  { $set: {last_activity: _activity.id} }
-                ).catch(err=>{
-                  console.log('contact update err', err.message)
-                })
-            }).catch(err => {
-              console.log('follow error', err.message)
-            });
-          })
-          .catch(err => {
-              timeline['status'] = 'error'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err.message)
-              })
-            console.log('follow error', err.message)
-          });
-          break;
-        case 'note':
-          const note = new Note({
-            content: action.content,
-            contact: timeline.contact,
-            user: timeline.user,
-            updated_at: new Date(),
-            created_at: new Date(),
-          })
-          
-          note.save()
-          .then(_note => {
-            const activity = new Activity({
-              content: 'added note',
-              contacts: _note.contact,
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_text_pdf':
+            data = {
               user: timeline.user,
-              type: 'notes',
-              notes: _note.id,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-        
-            activity.save().then(_activity => {
-              Contact.findByIdAndUpdate( _note.contact,{ $set: {last_activity: _activity.id} }).catch(err=>{
-                console.log('err', err)
+              content: action.content,
+              pdfs: [action.pdf],
+              contacts: [timeline.contact],
+            };
+            TextHelper.bulkPDF(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  console.log('err', res[0].err);
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
               })
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_email_pdf':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              pdfs: [action.pdf],
+              contacts: [timeline.contact],
+            };
+            EmailHelper.bulkPDF(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  console.log('err', res[0].err);
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
               })
-            })    
-          })
-          .catch(err => {
-            console.log('err', err)
-            timeline['status'] = 'error'
-            timeline['updated_at'] = new Date()
-            timeline.save().catch(err=>{
-              console.log('err', err)
-            })
-          });
-          break;
-        case 'email':
-          data = {
-            user: timeline.user,
-            video: action.video,
-            subject: action.subject,
-            content: action.content,
-            contacts: [timeline.contact]
-          }
-          EmailHelper.bulkEmail(data).then(res=>{
-            if(res[0] && res[0].status == true){
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_text_image':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              images: [action.image],
+              contacts: [timeline.contact],
+            };
+            TextHelper.bulkImage(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  console.log('err', res[0].err);
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
               })
-            }else{
-              timeline['status'] = 'error'
-              timeline['updated_at'] = new Date()
-              console.log('err', res[0].err)
-              timeline.save().catch(err=>{
-               console.log('err', err)
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
+          case 'send_email_image':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              images: [action.image],
+              subject: action.subject,
+              contacts: [timeline.contact],
+            };
+            EmailHelper.bulkImage(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  console.log('err', res[0].err);
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
               })
->>>>>>> master
-            }
-            case 'email': {
-              data = {
-                user: timeline.user,
-                video: action.video,
-                subject: action.subject,
-                content: action.content,
-                contacts: [timeline.contact],
-              };
-              EmailHelper.bulkEmail(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    timeline['updated_at'] = new Date();
-                    console.log('err', res[0].err);
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-            case 'send_text_video': {
-              data = {
-                user: timeline.user,
-                videos: [action.video],
-                content: action.content,
-                contacts: [timeline.contact],
-              };
-              TextHelper.bulkVideo(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    timeline['updated_at'] = new Date();
-                    console.log('err', res[0].err);
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-<<<<<<< HEAD
-            case 'send_email_video': {
-              data = {
-                user: timeline.user,
-                content: action.content,
-                subject: action.subject,
-                videos: [action.video],
-                contacts: [timeline.contact],
-              };
-              EmailHelper.bulkVideo(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    console.log('err', res[0].err);
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-            case 'send_text_pdf': {
-              data = {
-                user: timeline.user,
-                content: action.content,
-                pdfs: [action.pdf],
-                contacts: [timeline.contact],
-              };
-              TextHelper.bulkPdf(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    console.log('err', res[0].err);
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-=======
-          }).catch(err=>{
-            console.log('err', err)
-          })
-          break;
-        case 'send_text_pdf':
-          data = {
-            user: timeline.user,
-            content: action.content,
-            pdfs: [action.pdf],
-            contacts: [timeline.contact]
-          }
-          TextHelper.bulkPDF(data).then(res=>{
-            if(res[0] && res[0].status == true){
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
-              })
-            }else{
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
-              })
-            }
-          }).catch(err=>{
-            console.log('err', err)
-          })
-          break;
-        case 'send_email_pdf':
-          data = {
-            user: timeline.user,
-            content: action.content,
-            subject: action.subject,
-            pdfs: [action.pdf],
-            contacts: [timeline.contact]
-          }
-          EmailHelper.bulkPDF(data).then(res=>{
-            if(res[0] && res[0].status == true){
-              timeline['status'] = 'completed'
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
-              })
-            }else{
-              timeline['status'] = 'error'
-              console.log('err', res[0].err)
-              timeline['updated_at'] = new Date()
-              timeline.save().catch(err=>{
-                console.log('err', err)
-              })
->>>>>>> master
-            }
-            case 'send_email_pdf': {
-              data = {
-                user: timeline.user,
-                content: action.content,
-                subject: action.subject,
-                pdfs: [action.pdf],
-                contacts: [timeline.contact],
-              };
-              EmailHelper.bulkPdf(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    console.log('err', res[0].err);
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-            case 'send_text_image': {
-              data = {
-                user: timeline.user,
-                content: action.content,
-                images: [action.image],
-                contacts: [timeline.contact],
-              };
-              TextHelper.bulkImage(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    console.log('err', res[0].err);
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-            case 'send_email_image': {
-              data = {
-                user: timeline.user,
-                content: action.content,
-                images: [action.image],
-                subject: action.subject,
-                contacts: [timeline.contact],
-              };
-              EmailHelper.bulkImage(data)
-                .then((res) => {
-                  if (res[0] && res[0].status === true) {
-                    timeline['status'] = 'completed';
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  } else {
-                    timeline['status'] = 'error';
-                    console.log('err', res[0].err);
-                    timeline['updated_at'] = new Date();
-                    timeline.save().catch((err) => {
-                      console.log('err', err);
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.log('err', err);
-                });
-              break;
-            }
-          }
-          const next_data = {
-            contact: timeline.contact,
-            ref: timeline.ref,
-          };
-          TimeLineCtrl.activeNext(next_data);
-        } else if (timeline.condition && timeline.condition.answer && action) {
-          TimeLineCtrl.disableNext(timeline.id);
+              .catch((err) => {
+                console.log('err', err);
+              });
+            break;
         }
+        const next_data = {
+          contact: timeline.contact,
+          ref: timeline.ref,
+        };
+        TimeLineCtrl.activeNext(next_data);
       }
     }
   },
@@ -1832,21 +1473,12 @@ const timesheet_check = new CronJob(
   'US/Central'
 );
 
-<<<<<<< HEAD
 signup_job.start();
 reminder_job.start();
 weekly_report.start();
-video_job.start();
-video_convert.start();
+upload_video_job.start();
+convert_video_job.start();
 payment_check.start();
-=======
-signup_job.start()
-reminder_job.start()
-weekly_report.start()
-upload_video_job.start()
-convert_video_job.start()
-payment_check.start()
->>>>>>> master
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();

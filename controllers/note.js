@@ -6,7 +6,7 @@ const Contact = require('../models/contact');
 const get = async (req, res) => {
   const { currentUser } = req;
   const query = { ...req.query };
-  const { contact } = query;
+  const contact = query['contact'];
 
   const data = await Note.find({ user: currentUser.id, contact });
   if (!data) {
@@ -52,11 +52,11 @@ const create = async (req, res) => {
         updated_at: new Date(),
       });
 
-<<<<<<< HEAD
       activity.save().then((_activity) => {
-        Contact.findByIdAndUpdate(_note.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateMany(
+          { _id: _note.contact },
+          { $set: { last_activity: _activity.id } }
+        ).catch((err) => {
           console.log('err', err);
         });
         const myJSON = JSON.stringify(_note);
@@ -67,37 +67,11 @@ const create = async (req, res) => {
           data,
         });
       });
-=======
-    activity.save().then(_activity => {
-      Contact.updateMany({_id: _note.contact} ,{ $set: {last_activity: _activity.id} }).catch(err=>{
-        console.log('err', err)
-      })
-      myJSON = JSON.stringify(_note)
-      const data = JSON.parse(myJSON);
-      data.activity = _activity
-      res.send({
-        status: true,
-        data
-      })
-    })    
-  })
-  .catch(err => {
-    return res.status(400).send({
-      status: false,
-      error: err.message
->>>>>>> master
     })
-    .catch((e) => {
-      let errors;
-      if (e.errors) {
-        errors = e.errors.map((err) => {
-          delete err.instance;
-          return err;
-        });
-      }
-      return res.status(500).send({
+    .catch((err) => {
+      return res.status(400).send({
         status: false,
-        error: errors || e,
+        error: err.message,
       });
     });
 };

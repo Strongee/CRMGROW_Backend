@@ -4,12 +4,12 @@
  * Module dependencies.
  */
 
-const mongoose = require('mongoose');
-const socketIO = require('socket.io');
-const http = require('http');
 const debug = require('debug')('myapp:server');
-const app = require('../app');
+const http = require('http');
+const socketIO = require('socket.io');
 
+const mongoose = require('mongoose');
+const app = require('../app');
 const tracker = require('../controllers/tracker');
 
 /**
@@ -24,26 +24,15 @@ const { DB_PORT } = require('../config/database');
  * Connect Monogo Database.
  */
 
-<<<<<<< HEAD
 mongoose.set('useCreateIndex', true);
+
 mongoose
   .connect(DB_PORT, {
     useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
   .then(() => console.log('Connecting to database successful'))
   .catch((err) => console.error('Could not connect to mongo DB', err));
-=======
-
-mongoose.set('useCreateIndex', true)
-
-mongoose.connect(DB_PORT, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true 
-})
-.then(() => console.log('Connecting to database successful'))
-.catch(err => console.error('Could not connect to mongo DB', err))
-
->>>>>>> master
 
 /**
  * Create HTTP server.

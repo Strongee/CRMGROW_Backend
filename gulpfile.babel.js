@@ -1,11 +1,12 @@
+/* eslint-disable import/no-unresolved */
 import gulp from 'gulp';
 import loadPlugins from 'gulp-load-plugins';
 import webpack from 'webpack';
 import rimraf from 'rimraf';
 
-const plugins = loadPlugins();
-
 import adminWebpackConfig from './src/pages/admin/webpack.config';
+
+const plugins = loadPlugins();
 
 gulp.task('admin-js', ['clean'], (cb) => {
   webpack(adminWebpackConfig, (err, stats) => {
