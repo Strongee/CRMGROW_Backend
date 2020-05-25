@@ -1496,9 +1496,8 @@ const bulkPDF = async (data) => {
       const msg = {
         to: _contact.email,
         from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-        replyTo: currentUser.connected_email + _contact.email,
+        replyTo: currentUser.connected_email,
         subject: pdf_subject,
-        // replyTo: _contact.email,
         html:
           '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
           pdf_content +

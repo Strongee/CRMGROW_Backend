@@ -108,5 +108,18 @@
     "eslint-plugin-import": "^2.20.2",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint",
+      "npm run format",
+      "git add",
+      "eslint --cache --fix"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }

@@ -525,7 +525,7 @@ const disconnectVideo = async (video_tracker_id) => {
     if (auto_follow_up['enabled']) {
       const now = moment();
       now.set({ second: 0, millisecond: 0 });
-      const follow_due_date = now.add(action.due_duration, 'hours');
+      const follow_due_date = now.add(auto_follow_up.period, 'hours');
 
       const follow_up = new FollowUp({
         user: currentUser.id,

@@ -844,8 +844,8 @@ const notification_check = new CronJob(
             from: mail_contents.SUPPORT_CRMGROW.MAIL,
             templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
             dynamic_template_data: {
-              content: subscriber.user_name + notification.content,
-              // content: notification.content,
+              first_name: subscriber.user_name,
+              content: notification.content,
             },
           };
           sgMail

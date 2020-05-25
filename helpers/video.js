@@ -52,8 +52,11 @@ const convertRecordVideo = async (id) => {
       content,
       function (err) {
         // If an error occurred, show it and return
-        if (err) return console.error(err);
-        // Successfully wrote binary contents to the file!
+        if (err) {
+          console.error(err);
+          // Successfully wrote binary contents to the file!
+          return err;
+        }
       }
     );
   });
@@ -107,7 +110,10 @@ const convertUploadVideo = async (id) => {
       content,
       function (err) {
         // If an error occurred, show it and return
-        if (err) return console.error(err);
+        if (err) {
+          console.error(err);
+          return err;
+        }
         // Successfully wrote binary contents to the file!
       }
     );
