@@ -124,7 +124,7 @@ const play = async (req, res) => {
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
-      social_link: social_link,
+      social_link,
       setting: {
         logo,
       },
@@ -140,7 +140,7 @@ const play1 = async (req, res) => {
   const activity = await Activity.findOne({ _id: req.params.id })
     .populate([{ path: 'user' }, { path: 'videos' }])
     .catch((err) => {
-      console.log('err', err);
+      console.log('err', err1);
     });
 
   if (activity) {
