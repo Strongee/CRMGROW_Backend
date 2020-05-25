@@ -12,6 +12,6 @@ const canned_message = [
   'video_object',
   'pdf_title',
   'pdf_description',
-  'pdf_object'
-]
+  'pdf_object',
+];
 module.exports = canned_message;

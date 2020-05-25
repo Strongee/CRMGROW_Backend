@@ -1,12 +1,17 @@
-const express = require('express')
+const express = require('express');
 
-const UserCtrl = require('../controllers/user')
-const NoteCtrl = require('../controllers/note')
-const { catchError } = require('../controllers/error')
+const UserCtrl = require('../controllers/user');
+const NoteCtrl = require('../controllers/note');
+const { catchError } = require('../controllers/error');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(NoteCtrl.create))
-router.get('/' , UserCtrl.checkAuth, catchError(NoteCtrl.get))
+router.post(
+  '/',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(NoteCtrl.create)
+);
+router.get('/', UserCtrl.checkAuth, catchError(NoteCtrl.get));
 
-module.exports = router
+module.exports = router;

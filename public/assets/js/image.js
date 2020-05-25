@@ -9,21 +9,22 @@
 //   });
 // });
 
-(function($){
+(function ($) {
   $(document).ready(() => {
-    if($('.gallery img').length > 1) {
-        setTimeout(() => {
-          $('.gallery').tjGallery({
-            row_min_height: 180,
-            margin: 10,
-            selector: 'a'
-          })
-        }, 3000)
-      }
-      else {
-        $('.gallery img').addClass('single');
-      }
-      
-      var lightbox = new SimpleLightbox('.gallery a', { /* options */ });
-})
-})(jQuery)
+    if ($('.gallery img').length > 1) {
+      setTimeout(() => {
+        $('.gallery').tjGallery({
+          row_min_height: 180,
+          margin: 10,
+          selector: 'a',
+        });
+      }, 3000);
+    } else {
+      $('.gallery img').addClass('single');
+    }
+
+    var lightbox = new SimpleLightbox('.gallery a', {
+      /* options */
+    });
+  });
+})(jQuery);

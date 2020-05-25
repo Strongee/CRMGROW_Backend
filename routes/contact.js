@@ -1,105 +1,197 @@
-const express = require('express')
+const express = require('express');
 
-const UserCtrl = require('../controllers/user')
-const ContactCtrl = require('../controllers/contact')
-const { catchError } = require('../controllers/error')
-const { FILES_PATH } = require('../config/path')
+const multer = require('multer');
+const UserCtrl = require('../controllers/user');
+const ContactCtrl = require('../controllers/contact');
+const { catchError } = require('../controllers/error');
+const { FILES_PATH } = require('../config/path');
 
-const multer = require('multer')
-
-const router = express.Router()
+const router = express.Router();
 
 const fileStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, FILES_PATH)
-    }
-  })
+  destination(req, file, cb) {
+    cb(null, FILES_PATH);
+  },
+});
 
-const upload = multer({ storage: fileStorage })
+const upload = multer({ storage: fileStorage });
 
-router.post('/', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(ContactCtrl.create))
-router.get('/' , UserCtrl.checkAuth, catchError(ContactCtrl.getAll))
+router.post(
+  '/',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(ContactCtrl.create)
+);
+router.get('/', UserCtrl.checkAuth, catchError(ContactCtrl.getAll));
 
 // Edit contact by id
-router.put('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.edit))
+router.put('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.edit));
 
 // Remove contact and its all related info (activity, followup) by id
-router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove))
+router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove));
 
 // Remove contacts and their relative info
-router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.removeContacts))
+router.post(
+  '/remove',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.removeContacts)
+);
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
 
 // Import contact list as file
-router.post('/import-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.importCSV))
+router.post(
+  '/import-csv',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  upload.single('csv'),
+  catchError(ContactCtrl.importCSV)
+);
 
-router.post('/overwrite-csv', UserCtrl.checkAuth, UserCtrl.checkSuspended, upload.single('csv'), catchError(ContactCtrl.overwriteCSV))
+router.post(
+  '/overwrite-csv',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  upload.single('csv'),
+  catchError(ContactCtrl.overwriteCSV)
+);
 
 // Download contact list as csv file
-router.post('/export-csv', UserCtrl.checkAuth, catchError(ContactCtrl.exportCSV))
+router.post(
+  '/export-csv',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.exportCSV)
+);
 
 // Get a search contact info for profile page
-router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search))
+router.post('/search', UserCtrl.checkAuth, catchError(ContactCtrl.search));
 
 // Get a easy search contact info for profile page
-router.post('/search-easy', UserCtrl.checkAuth, catchError(ContactCtrl.searchEasy))
+router.post(
+  '/search-easy',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.searchEasy)
+);
 
 // Advanced Search
-router.post('/advance-search', UserCtrl.checkAuth, catchError(ContactCtrl.advanceSearch));
+router.post(
+  '/advance-search',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.advanceSearch)
+);
 
 // Get contacts by All last activity
-router.get('/all', UserCtrl.checkAuth, catchError(ContactCtrl.getAllByLastActivity))
+router.get(
+  '/all',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getAllByLastActivity)
+);
 
 // Get contacts by last activity
-router.get('/last', UserCtrl.checkAuth, catchError(ContactCtrl.getByLastActivity))
+router.get(
+  '/last',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getByLastActivity)
+);
 
 // Get contacts by last activity
-router.post('/last/:id', UserCtrl.checkAuth, UserCtrl.checkLastLogin, catchError(ContactCtrl.getByLastActivity))
+router.post(
+  '/last/:id',
+  UserCtrl.checkAuth,
+  UserCtrl.checkLastLogin,
+  catchError(ContactCtrl.getByLastActivity)
+);
 
-router.get('/select-all', UserCtrl.checkAuth, catchError(ContactCtrl.selectAllContacts));
-// Get a Brokerage data 
-router.get('/brokerage', UserCtrl.checkAuth2, catchError(ContactCtrl.getBrokerages))
+router.get(
+  '/select-all',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.selectAllContacts)
+);
+// Get a Brokerage data
+router.get(
+  '/brokerage',
+  UserCtrl.checkAuth2,
+  catchError(ContactCtrl.getBrokerages)
+);
 
 // Get Source data
-router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources))
+router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources));
 
 // Get a Contact data with ID
-router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById))
+router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById));
 
 // Load Duplicated Contacts
-router.get('/load-duplication', UserCtrl.checkAuth, catchError(ContactCtrl.loadDuplication));
-
+router.get(
+  '/load-duplication',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.loadDuplication)
+);
 
 // Get Contacts data with ID array
-router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds))
+router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds));
 
 // Bulk Edit the contacts Label
-router.post('/bulk-label', UserCtrl.checkAuth, catchError(ContactCtrl.bulkEditLabel))
+router.post(
+  '/bulk-label',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.bulkEditLabel)
+);
 
 // Load Follows
-router.post('/follows', UserCtrl.checkAuth, catchError(ContactCtrl.loadFollows))
+router.post(
+  '/follows',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.loadFollows)
+);
 
 // Load Timelines
-router.post('/timelines', UserCtrl.checkAuth, catchError(ContactCtrl.loadTimelines))
+router.post(
+  '/timelines',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.loadTimelines)
+);
 
 // Bulk Edit(update) the contacts
-router.post('/bulk-update', UserCtrl.checkAuth, catchError(ContactCtrl.bulkUpdate))
+router.post(
+  '/bulk-update',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.bulkUpdate)
+);
 
 // Get the Nth Contact
-router.get('/nth-get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getNthContact))
+router.get(
+  '/nth-get/:id',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getNthContact)
+);
 
 // Check the Email
-router.post('/check-email', UserCtrl.checkAuth, catchError(ContactCtrl.checkEmail));
+router.post(
+  '/check-email',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.checkEmail)
+);
 // Check the Phone
-router.post('/check-phone', UserCtrl.checkAuth, catchError(ContactCtrl.checkPhone));
+router.post(
+  '/check-phone',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.checkPhone)
+);
 
 // Check the Merge
-router.post('/merge', UserCtrl.checkAuth, catchError(ContactCtrl.mergeContacts));
+router.post(
+  '/merge',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.mergeContacts)
+);
 
-router.post('/bulk-create', UserCtrl.checkAuth, catchError(ContactCtrl.bulkCreate));
+router.post(
+  '/bulk-create',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.bulkCreate)
+);
 
 // Get a pull contact info for profile page
-router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get))
+router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
-module.exports = router
+module.exports = router;

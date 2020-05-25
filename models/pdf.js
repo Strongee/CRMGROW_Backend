@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
+
 const Schema = mongoose.Schema;
 
-const PDFSchema = new Schema({
+const PDFSchema = new Schema(
+  {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     description: String,
@@ -9,13 +11,15 @@ const PDFSchema = new Schema({
     type: String,
     url: String,
     role: String,
-    del: { type: Boolean, default: false},
+    del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,
- },{ 
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } 
-});
+  },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  }
+);
 
 const PDF = mongoose.model('pdf', PDFSchema);
 
- module.exports = PDF
+module.exports = PDF;

@@ -1,12 +1,12 @@
-const express = require('express')
+const express = require('express');
 
-const UserCtrl = require('../controllers/user')
-const PDFTrackerCtrl = require('../controllers/pdf_tracker')
-const { catchError } = require('../controllers/error')
+const UserCtrl = require('../controllers/user');
+const PDFTrackerCtrl = require('../controllers/pdf_tracker');
+const { catchError } = require('../controllers/error');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/', catchError(PDFTrackerCtrl.create))
-router.get('/:contact' , UserCtrl.checkAuth, catchError(PDFTrackerCtrl.get))
+router.post('/', catchError(PDFTrackerCtrl.create));
+router.get('/:contact', UserCtrl.checkAuth, catchError(PDFTrackerCtrl.get));
 
-module.exports = router
+module.exports = router;
