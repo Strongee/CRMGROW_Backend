@@ -1,9 +1,9 @@
 const { validationResult } = require('express-validator/check');
 const outlook = require('node-outlook');
 const moment = require('moment-timezone');
-const oauth2 = require('simple-oauth2')(credentials);
 const { google } = require('googleapis');
 const sgMail = require('@sendgrid/mail');
+
 const config = require('../config/config');
 const urls = require('../constants/urls');
 const time_zone = require('../constants/time_zone');
@@ -21,6 +21,8 @@ const credentials = {
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
+
+const oauth2 = require('simple-oauth2')(credentials);
 
 const get = async (req, res) => {
   const { currentUser } = req;

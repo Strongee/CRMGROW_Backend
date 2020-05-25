@@ -6,8 +6,10 @@ const mime = require('mime-types');
 
 const OAuth2 = google.auth.OAuth2;
 const uuidv1 = require('uuid/v1');
-const oauth2 = require('simple-oauth2')(credentials);
+
 var graph = require('@microsoft/microsoft-graph-client');
+require('isomorphic-fetch');
+
 const Base64 = require('js-base64').Base64;
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
@@ -28,7 +30,7 @@ const credentials = {
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
-require('isomorphic-fetch');
+const oauth2 = require('simple-oauth2')(credentials);
 
 const isBlockedEmail = (email) => {
   const mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;

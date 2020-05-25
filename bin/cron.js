@@ -6,7 +6,6 @@ const fs = require('fs');
 const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
 const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 const webpush = require('web-push');
 const sharp = require('sharp');
 const child_process = require('child_process');
@@ -33,6 +32,8 @@ const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
+
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const FileHelper = require('../helpers/file');

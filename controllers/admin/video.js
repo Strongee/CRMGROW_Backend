@@ -8,12 +8,6 @@ const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
 const mongoose = require('mongoose');
 
-const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
-});
-
 const GIFEncoder = require('gifencoder');
 
 const extractFrames = require('ffmpeg-extract-frames');
@@ -22,6 +16,13 @@ const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
 const urls = require('../../constants/urls');
 const config = require('../../config/config');
+
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION,
+});
+
 const {
   GIF_PATH,
   THUMBNAILS_PATH,

@@ -7,7 +7,6 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 
 const uuidv1 = require('uuid/v1');
 const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 const AWS = require('aws-sdk');
 const GIFEncoder = require('gifencoder');
 
@@ -15,7 +14,6 @@ const extractFrames = require('ffmpeg-extract-frames');
 const { createCanvas, loadImage } = require('canvas');
 const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
-const oauth2 = require('simple-oauth2')(credentials);
 const graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 const { google } = require('googleapis');
@@ -40,6 +38,7 @@ const mail_contents = require('../constants/mail_contents');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
 
 const User = require('../models/user');
 const emailHelper = require('../helpers/email.js');
@@ -61,6 +60,7 @@ const credentials = {
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
+const oauth2 = require('simple-oauth2')(credentials);
 
 const play = async (req, res) => {
   const video_id = req.query.video;

@@ -1,7 +1,6 @@
 const sgMail = require('@sendgrid/mail');
 const webpush = require('web-push');
 const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 const moment = require('moment');
 const User = require('../models/user');
 const Contact = require('../models/contact');
@@ -23,6 +22,7 @@ const config = require('../config/config');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
 
 const createPDF = async (data) => {
   const pdf_tracker = new PDFTracker({

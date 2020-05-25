@@ -5,8 +5,8 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const webpush = require('web-push');
 const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 const moment = require('moment');
+
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const FollowUp = require('../models/follow_up');
@@ -31,6 +31,8 @@ const mail_contents = require('../constants/mail_contents');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+
+const twilio = require('twilio')(accountSid, authToken);
 
 const getAll = async (req, res) => {
   const { currentUser } = req;

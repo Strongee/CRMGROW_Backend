@@ -3,31 +3,11 @@ const fs = require('fs');
 const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
-
 const uuidv1 = require('uuid/v1');
-
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
 const phone = require('phone');
-const twilio = require('twilio')(accountSid, authToken);
 const AWS = require('aws-sdk');
-
-const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
-});
 const sharp = require('sharp');
-const nodemailer = require('nodemailer');
 
-const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
-  site: 'https://login.microsoftonline.com/common',
-  authorizationPath: '/oauth2/v2.0/authorize',
-  tokenPath: '/oauth2/v2.0/token',
-};
-const oauth2 = require('simple-oauth2')(credentials);
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
@@ -68,6 +48,25 @@ const User = require('../models/user');
 
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+
+const credentials = {
+  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  site: 'https://login.microsoftonline.com/common',
+  authorizationPath: '/oauth2/v2.0/authorize',
+  tokenPath: '/oauth2/v2.0/token',
+};
+const oauth2 = require('simple-oauth2')(credentials);
+
+const s3 = new AWS.S3({
+  accessKeyId: config.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
+  region: config.AWS.AWS_S3_REGION,
+});
+
+const accountSid = config.TWILIO.TWILIO_SID;
+const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
 
 const play = async (req, res) => {
   const image_id = req.query.image;
