@@ -99,17 +99,32 @@ const play = async (req, res) => {
     }
 
     const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
 
     if (!pattern.test(user.learn_more)) {
       user.learn_more = 'http://' + user.learn_more;
     }
+
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+
     return res.render('lead_video_' + theme, {
       video,
       user,
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
-      social_link: user.social_link || {},
+      social_link: social_link,
       setting: {
         logo,
       },
