@@ -817,19 +817,58 @@ const getByIds = async (req, res) => {
 
 const leadContact = async (req, res) => {
   const {user, first_name, email, cell_phone, video, pdf} = req.body
-  const _exists = await Contact.find({
+  let _exist = await Contact.findOne({
     email,
     user
   }).catch(err => {
-    return res.status(500).send({
+    return res.status(400).send({
       status: false,
       error: err.message
     })
   })
 
-  if(_exists && _exists.length) {
+  if(!_exist) {
+    _exist = await Contact.findOne({
+      cell_phone,
+      user
+    }).catch(err => {
+      return res.status(400).send({
+        status: false,
+        error: err.message
+      })
+    })
+  }
+  
+  if(_exist) {
+    let _activity
+    if(video){
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - watched video',
+        contacts: _exist.id,
+        user: user,
+        type: 'videos',
+        videos: video,
+      })
+    } else {
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - reviewed pdf',
+        contacts: _exist.id,
+        user: user,
+        type: 'pdfs',
+        pdfs: pdf,
+      })
+    }
+    
+    activity = await _activity.save().then().catch(err=>{
+      console.log('err', err)
+    })
+    
     return res.json({
       status: true,
+      data:  {
+        contact: _exist.id,
+        activity: activity.id
+      }
     })
   }
   else {
@@ -932,7 +971,7 @@ const leadContact = async (req, res) => {
           } 
         } 
         
-        Contact.update({_id: contact.id},{ $set: {last_activity: activity.id} }).catch(err=>{
+        Contact.updateMany({_id: contact.id},{ $set: {last_activity: activity.id} }).catch(err=>{
           console.log('err', err)
         })
         
@@ -944,7 +983,7 @@ const leadContact = async (req, res) => {
           }
         })
       }).catch(err => {
-        return res.status(500).send({
+        return res.status(400).send({
           status: false,
           error: err.message
         })
@@ -962,7 +1001,7 @@ const leadContact = async (req, res) => {
         })
         
         const _activity = new Activity({
-          content: 'LEAD CAPTURE - watched pdf',
+          content: 'LEAD CAPTURE - reviewed pdf',
           contacts: contact.id,
           user: currentUser.id,
           type: 'pdfs',
