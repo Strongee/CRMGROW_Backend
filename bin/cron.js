@@ -29,7 +29,7 @@ const Garbage = require('../models/garbage');
 const config = require('../config/config');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-const { VIDEO_PATH, TEMP_PATH1 } = require('../config/path');
+const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
 
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
