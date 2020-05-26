@@ -876,8 +876,9 @@ const search = async (req, res) => {
 const searchEasy = async (req, res) => {
   const { currentUser } = req;
   const search = req.body.search;
+  let data = [];
   if (!search.split(' ')[1]) {
-    const data = await Contact.find({
+    data = await Contact.find({
       $or: [
         {
           first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
@@ -906,7 +907,7 @@ const searchEasy = async (req, res) => {
         console.log('err', err);
       });
   } else {
-    const data = await Contact.find({
+    data = await Contact.find({
       $or: [
         {
           first_name: search.split(' ')[0],
@@ -924,11 +925,11 @@ const searchEasy = async (req, res) => {
       .catch((err) => {
         console.log('err', err);
       });
-    return res.send({
-      status: true,
-      data,
-    });
   }
+  return res.send({
+    status: true,
+    data,
+  });
 };
 
 const getById = async (req, res) => {
