@@ -204,7 +204,7 @@ const get = async (req, res) => {
 };
 
 const getPreview = (req, res) => {
-  const filePath = PREVIEW_PATH + req.params.name;
+  const filePath = PREVIEW_PATH + '/' + req.params.name;
 
   if (fs.existsSync(filePath)) {
     if (req.query.resize) {
