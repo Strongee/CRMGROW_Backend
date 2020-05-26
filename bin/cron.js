@@ -12,7 +12,6 @@ const child_process = require('child_process');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { ENV_PATH } = require('../config/path');
 
-console.log('ENV_PATH', ENV_PATH);
 require('dotenv').config({ path: ENV_PATH });
 
 const User = require('../models/user');
