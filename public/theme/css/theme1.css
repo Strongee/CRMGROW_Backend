@@ -274,6 +274,7 @@ footer {
   font-size: 12px;
   min-width: 50px;
   text-align: center;
+  display: none!important;
 }
 
 
