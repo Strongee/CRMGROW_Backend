@@ -6,6 +6,7 @@ const csv = require('csv-parser');
 const webpush = require('web-push');
 const phone = require('phone');
 const moment = require('moment');
+const Verifier = require('email-verifier');
 
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
@@ -2587,6 +2588,49 @@ const bulkCreate = async (req, res) => {
   });
 };
 
+const verifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const verifier = new Verifier(config.EMAIL_VERIFICATION_KEY, {
+    checkFree: false,
+    checkDisposable: false,
+    checkCatchAll: false,
+  });
+  verifier.verify(email, (err, data) => {
+    if (err) {
+      return res.status(400).json({
+        status: false,
+        error: err.message || err.msg,
+      });
+    }
+    if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
+      return res.send({
+        status: true,
+      });
+    } else {
+      return res.status(400).json({
+        status: false,
+        error: 'Email is not valid one',
+      });
+    }
+  });
+};
+
+const verifyPhone = async (req, res) => {
+  const { cell_phone } = req.body;
+  const e164Phone = phone(cell_phone)[0];
+
+  if (e164Phone) {
+    return res.send({
+      status: true,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Phone Number',
+    });
+  }
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -2618,4 +2662,6 @@ module.exports = {
   loadDuplication,
   mergeContacts,
   bulkCreate,
+  verifyEmail,
+  verifyPhone,
 };

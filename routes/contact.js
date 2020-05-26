@@ -80,6 +80,12 @@ router.post(
   catchError(ContactCtrl.advanceSearch)
 );
 
+// Verify Email
+router.post('/verify-email', catchError(ContactCtrl.verifyEmail));
+
+// Verify Phone number
+router.post('/verify-phone', catchError(ContactCtrl.verifyPhone));
+
 // Get contacts by All last activity
 router.get(
   '/all',

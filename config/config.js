@@ -104,6 +104,8 @@ const config = {
     PRIOR_PLAN_AMOUNT: process.env.PRIOR_PLAN_AMOUNT || '29',
     LIMIT: process.env.LIMIT || 100,
   },
+  EMAIL_VERIFICATION_KEY:
+    process.env.EMAIL_VERIFICATION_KEY || 'at_ZuDMTpUpebJ7xLwK8HxT9nA1p1qxn',
   MAX_CONTACT: process.env.MAX_CONTACT || 3000,
   DEFAULT_PASS: process.env.DEFAULT_PASS || 'admin123',
   ADMIN_DEFAULT_PASS: process.env.ADMIN_DEFAULT_PASS || 'admin123',

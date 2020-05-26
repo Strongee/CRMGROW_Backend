@@ -441,7 +441,7 @@ const bulkOutlook = async (req, res) => {
       .save()
       .then()
       .catch((err) => {
-        console.log('err', err);
+        console.log('err', err.message);
       });
 
     const _activity = new Activity({
@@ -547,7 +547,7 @@ const bulkOutlook = async (req, res) => {
           resolve();
         })
         .catch((err) => {
-          console.log('err', err);
+          console.log('outlook err', err.message);
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
           });
