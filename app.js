@@ -5,7 +5,7 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { ENV_PATH } = require('./config/path');
+const { ENV_PATH, FILES_PATH } = require('./config/path');
 require('dotenv').config();
 
 const indexRouter = require('./routes/index.js');
@@ -17,7 +17,6 @@ const EmailCtrl = require('./controllers/email');
 const { catchError } = require('./controllers/error');
 
 const app = express();
-
 const logPath = path.join(__dirname, 'log', 'logfile.log');
 if (!fs.existsSync(logPath)) {
   fs.mkdirSync(path.dirname(logPath));
