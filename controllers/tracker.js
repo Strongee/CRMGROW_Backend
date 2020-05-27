@@ -807,6 +807,7 @@ const disconnectImage = async (image_tracker_id) => {
           "assets/images/contact.png'/></a>",
       },
     };
+    console.log('msg', msg);
 
     sgMail
       .send(msg)

@@ -278,7 +278,6 @@ const display = async (req, res, next) => {
 
     if (user) {
       const slug = req.originalUrl;
-      console.log('slug', slug);
       const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
         console.log('err', err);
       });
