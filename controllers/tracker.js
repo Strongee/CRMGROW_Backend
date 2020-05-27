@@ -798,13 +798,9 @@ const disconnectImage = async (image_tracker_id) => {
         activity:
           contact.first_name + ' reviewed image - <b>' + image.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
-        detailed_activity:
-          "<a href='" +
-          urls.CONTACT_PAGE_URL +
-          contact.id +
-          "'><img src='" +
-          urls.DOMAIN_URL +
-          "assets/images/contact.png'/></a>",
+        detailed_activity: `<a href='${
+          urls.CONTACT_PAGE_URL + contact.id
+        }'><img src='${urls.DOMAIN_URL}assets/images/contact.png'/></a>`,
       },
     };
     console.log('msg', msg);
