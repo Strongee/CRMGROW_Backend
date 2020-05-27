@@ -437,7 +437,7 @@ const removeContact = async (user_id, id) => {
 const edit = async (req, res) => {
   const { currentUser } = req;
   const editData = req.body;
-  if (!req.params.id || req.params.id === 'undefined') {
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
     return res.status(400).json({
       status: false,
       error: 'Invalid Contact',

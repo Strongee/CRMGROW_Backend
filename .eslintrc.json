@@ -15,7 +15,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "prettier/prettier": 0,
+    "prettier/prettier": "error",
     "quotes": 0,
     "no-underscore-dangle": 0,
     "camelcase": 0,

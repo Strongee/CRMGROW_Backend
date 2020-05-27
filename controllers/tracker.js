@@ -793,16 +793,21 @@ const disconnectImage = async (image_tracker_id) => {
         subject: `${mail_contents.NOTIFICATION_REVIEWED_IMAGE.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
         first_name: contact.first_name,
         last_name: contact.last_name,
-        phone_number: `<a href='tel:${contact.cell_phone}'>${contact.cell_phone}</a>`,
-        email: `<a href='mailto:${contact.email}'>${contact.email}</a>`,
+        phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+        email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
         activity:
           contact.first_name + ' reviewed image - <b>' + image.title + '</b>',
         duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
-        detailed_activity: `<a href='${urls.CONTACT_PAGE_URL + contact.id}'><img src='${urls.DOMAIN_URL}assets/images/contact.png'/></a>`,
+        detailed_activity:
+          "<a href='" +
+          urls.CONTACT_PAGE_URL +
+          contact.id +
+          "'><img src='" +
+          urls.DOMAIN_URL +
+          "assets/images/contact.png'/></a>",
       },
     };
-    console.log('msg', msg);
-
+  
     sgMail
       .send(msg)
       .then()
