@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
-const Email = mongoose.model('email',{
+const Schema = mongoose.Schema;
+
+const EmailSchema = new Schema(
+  {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     event: String,
     subject: String,
@@ -9,9 +12,15 @@ const Email = mongoose.model('email',{
     cc: Array,
     bcc: Array,
     message_id: String,
-    contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' }, 
+    contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     created_at: Date,
     updated_at: Date,
- });
+  },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  }
+);
 
- module.exports = Email
+const Email = mongoose.model('email', EmailSchema);
+
+module.exports = Email;
