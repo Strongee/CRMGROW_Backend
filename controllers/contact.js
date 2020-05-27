@@ -1,31 +1,39 @@
-const { validationResult } = require("express-validator/check");
-const mongoose = require("mongoose");
-const Contact = require("../models/contact");
-const Activity = require("../models/activity");
-const FollowUp = require("../models/follow_up");
-const Appointment = require("../models/appointment");
-const Email = require("../models/email");
-const Note = require("../models/note");
-const User = require("../models/user");
-const Video = require("../models/video");
-const PDF = require("../models/pdf");
-const TimeLine = require("../models/time_line");
-const Automation = require("../models/automation");
-const EmailTracker = require("../models/email_tracker");
-const Reminder = require("../models/reminder");
-const Garbage = require("../models/garbage");
-const sgMail = require("@sendgrid/mail");
-const urls = require("../constants/urls");
-const fs = require("fs");
-const csv = require("csv-parser");
-const config = require("../config/config");
-const mail_contents = require("../constants/mail_contents");
-const webpush = require("web-push");
+const { validationResult } = require('express-validator/check');
+const mongoose = require('mongoose');
+const sgMail = require('@sendgrid/mail');
+const fs = require('fs');
+const csv = require('csv-parser');
+const webpush = require('web-push');
+const phone = require('phone');
+const moment = require('moment');
+const Verifier = require('email-verifier');
+
+const Contact = require('../models/contact');
+const Activity = require('../models/activity');
+const FollowUp = require('../models/follow_up');
+const Appointment = require('../models/appointment');
+const Email = require('../models/email');
+const Note = require('../models/note');
+const User = require('../models/user');
+const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const TimeLine = require('../models/time_line');
+const Automation = require('../models/automation');
+const EmailTracker = require('../models/email_tracker');
+const Reminder = require('../models/reminder');
+const Garbage = require('../models/garbage');
+const ImageTracker = require('../models/image_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const VideoTracker = require('../models/video_tracker');
+const PhoneLog = require('../models/phone_log');
+const urls = require('../constants/urls');
+const config = require('../config/config');
+const mail_contents = require('../constants/mail_contents');
+
 const accountSid = config.TWILIO.TWILIO_SID;
 const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
-const phone = require("phone");
-const twilio = require("twilio")(accountSid, authToken);
-const moment = require("moment");
+
+const twilio = require('twilio')(accountSid, authToken);
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -34,7 +42,7 @@ const getAll = async (req, res) => {
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: "Contact doesn`t exist",
+      error: 'Contact doesn`t exist',
     });
   }
 
@@ -47,16 +55,16 @@ const getAll = async (req, res) => {
 const getAllByLastActivity = async (req, res) => {
   const { currentUser } = req;
   const data = await Contact.find({ user: currentUser.id })
-    .populate("last_activity")
+    .populate('last_activity')
     .sort({ first_name: 1 })
     .catch((err) => {
-      console.log("err", err);
+      console.log('err', err);
     });
 
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: "Contact doesn`t exist",
+      error: 'Contact doesn`t exist',
     });
   }
 
@@ -69,23 +77,24 @@ const getAllByLastActivity = async (req, res) => {
 const getByLastActivity = async (req, res) => {
   const { currentUser } = req;
   let { field, dir } = req.body;
-
-  if (field == "updated_at") {
-    field = "last_activity";
+  dir = dir ? 1 : -1;
+  if (field === 'updated_at') {
+    field = 'last_activity';
+    dir *= -1;
   } else {
-    field = "first_name";
+    field = 'first_name';
   }
-  dir = dir ? -1 : 1;
+
   let contacts;
-  if (typeof req.params.id == "undefined") {
+  if (typeof req.params.id === 'undefined') {
     contacts = await Contact.find({ user: currentUser.id })
-      .populate("last_activity")
+      .populate('last_activity')
       .sort({ [field]: dir })
       .limit(50);
   } else {
     const id = parseInt(req.params.id);
     contacts = await Contact.find({ user: currentUser.id })
-      .populate("last_activity")
+      .populate('last_activity')
       .sort({ [field]: dir })
       .skip(id)
       .limit(50);
@@ -94,7 +103,7 @@ const getByLastActivity = async (req, res) => {
   if (!contacts) {
     return res.status(400).json({
       status: false,
-      error: "Contacts doesn`t exist",
+      error: 'Contacts doesn`t exist',
     });
   }
 
@@ -104,29 +113,60 @@ const getByLastActivity = async (req, res) => {
     status: true,
     data: {
       contacts,
-      count: count,
+      count,
     },
   });
 };
 
 const get = async (req, res) => {
   const { currentUser } = req;
+  let { dir } = req.body;
+  const { key } = req.body;
+
+  if (key === 'last_activity') {
+    dir *= -1;
+  }
+  let next_contact;
+  let prev_contact;
   const _contact = await Contact.findOne({
-    user: currentUser.id,
     _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('contact found err', err.message);
   });
-  const next_contact = await Contact.find({
-    _id: { $gt: req.params.id },
-    user: currentUser.id,
-  })
-    .sort({ first_name: 1, _id: 1 })
-    .limit(1);
-  const prev_contact = await Contact.find({
-    _id: { $lt: req.params.id },
-    user: currentUser.id,
-  })
-    .sort({ first_name: -1, _id: -1 })
-    .limit(1);
+
+  if (dir === 1) {
+    next_contact = await Contact.find({
+      [key]: { $gte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: 1 })
+      .limit(1);
+    prev_contact = await Contact.find({
+      [key]: { $lte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: -1 })
+      .limit(1);
+  } else {
+    next_contact = await Contact.find({
+      [key]: { $lte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: -1 })
+      .limit(1);
+    prev_contact = await Contact.find({
+      [key]: { $gte: _contact[key] },
+      user: currentUser.id,
+      _id: { $ne: req.params.id },
+    })
+      .sort({ [key]: 1 })
+      .limit(1);
+  }
+
   let next = null;
   let prev = null;
   if (next_contact[0]) {
@@ -135,14 +175,14 @@ const get = async (req, res) => {
   if (prev_contact[0]) {
     prev = prev_contact[0].id;
   }
-  contacts = await Contact.find({ user: currentUser.id })
-    .populate("last_activity")
+  const contacts = await Contact.find({ user: currentUser.id })
+    .populate('last_activity')
     .sort({ first_name: 1 })
     .limit(15);
   if (!_contact) {
     return res.status(400).json({
       status: false,
-      error: "Contact doesn`t exist",
+      error: 'Contact doesn`t exist',
     });
   }
 
@@ -157,21 +197,21 @@ const get = async (req, res) => {
   })
     .sort({ due_date: 1 })
     .catch((err) => {
-      console.log("err", err);
+      console.log('err', err);
     });
   let automation = {};
   if (_timelines.length) {
-    automation = await Automation.findOne({ _id: _timelines[0]["automation"] })
+    automation = await Automation.findOne({ _id: _timelines[0]['automation'] })
       .select({ title: 1 })
       .catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
   }
   const _activity_list = await Activity.find({
     user: currentUser.id,
     contacts: req.params.id,
   }).sort({ updated_at: 1 });
-  let _activity_detail_list = [];
+  const _activity_detail_list = [];
 
   for (let i = 0; i < _activity_list.length; i++) {
     const _activity_detail = await Activity.aggregate([
@@ -179,8 +219,8 @@ const get = async (req, res) => {
         $lookup: {
           from: _activity_list[i].type,
           localField: _activity_list[i].type,
-          foreignField: "_id",
-          as: "activity_detail",
+          foreignField: '_id',
+          as: 'activity_detail',
         },
       },
       {
@@ -191,16 +231,16 @@ const get = async (req, res) => {
     _activity_detail_list.push(_activity_detail[0]);
   }
 
-  myJSON = JSON.stringify(_contact);
+  const myJSON = JSON.stringify(_contact);
   const contact = JSON.parse(myJSON);
   const data = await Object.assign(
     contact,
     { follow_up: _follow_up },
     { activity: _activity_detail_list },
-    { next: next },
-    { prev: prev },
+    { next },
+    { prev },
     { time_lines: _timelines },
-    { automation: automation }
+    { automation }
   );
 
   return res.send({
@@ -232,38 +272,38 @@ const create = async (req, res) => {
   if (max_count < count) {
     return res.status(400).send({
       status: false,
-      error: "You are exceed for max contacts",
+      error: 'You are exceed for max contacts',
     });
   }
 
   let contact_old;
-  if (typeof req.body["email"] != "undefined") {
+  if (typeof req.body['email'] !== 'undefined') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
-      email: req.body["email"],
+      email: req.body['email'],
     });
-    if (contact_old != null) {
+    if (contact_old !== null) {
       return res.status(400).send({
         status: false,
-        error: "Email must be unique!",
+        error: 'Email must be unique!',
       });
     }
   }
 
-  if (typeof req.body["cell_phone"] != "undefined") {
+  if (typeof req.body['cell_phone'] !== 'undefined') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
-      cell_phone: req.body["cell_phone"],
+      cell_phone: req.body['cell_phone'],
     });
-    if (contact_old != null) {
+    if (contact_old !== null) {
       return res.status(400).send({
         status: false,
-        error: "Phone number must be unique!",
+        error: 'Phone number must be unique!',
       });
     }
   }
 
-  let cell_phone = req.body.cell_phone;
+  const cell_phone = req.body.cell_phone;
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -273,7 +313,7 @@ const create = async (req, res) => {
 
   const contact = new Contact({
     ...req.body,
-    cell_phone: cell_phone,
+    cell_phone,
     user: currentUser.id,
     created_at: new Date(),
     updated_at: new Date(),
@@ -284,26 +324,26 @@ const create = async (req, res) => {
     .then((_contact) => {
       count += 1;
       const contact_info = {
-        count: count,
-        max_count: max_count,
+        count,
+        max_count,
       };
       currentUser.contact_info = contact_info;
       currentUser.save();
       const activity = new Activity({
-        content: "added contact",
+        content: 'added contact',
         contacts: _contact.id,
         user: currentUser.id,
-        type: "contacts",
+        type: 'contacts',
         created_at: new Date(),
         updated_at: new Date(),
       });
 
       activity.save().then((_activity) => {
-        _contact["last_activity"] = _activity.id;
+        _contact['last_activity'] = _activity.id;
         _contact.save().catch((err) => {
-          console.log("err", err);
+          console.log('err', err);
         });
-        myJSON = JSON.stringify(_contact);
+        const myJSON = JSON.stringify(_contact);
         const data = JSON.parse(myJSON);
         data.activity = _activity;
         res.send({
@@ -321,8 +361,8 @@ const create = async (req, res) => {
           return err;
         });
       }
-      if ((e.code = 11000)) {
-        errors = "Email and Phone number must be unique!";
+      if (e.code === 11000) {
+        errors = 'Email and Phone number must be unique!';
       }
       return res.status(500).send({
         status: false,
@@ -341,7 +381,7 @@ const remove = async (req, res) => {
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: "Invalid_permission",
+      error: 'Invalid_permission',
     });
   }
 
@@ -373,8 +413,8 @@ const removeContacts = async (req, res) => {
   return res.send({
     status: true,
     data: {
-      deleted: deleted,
-      undeleted: undeleted,
+      deleted,
+      undeleted,
     },
   });
 };
@@ -397,40 +437,40 @@ const removeContact = async (user_id, id) => {
 const edit = async (req, res) => {
   const { currentUser } = req;
   const editData = req.body;
-  if (!req.params.id || req.params.id === "undefined") {
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
     return res.status(400).json({
       status: false,
-      error: "Invalid Contact",
+      error: 'Invalid Contact',
     });
   } else {
     const contact = await Contact.findOne({
       user: currentUser.id,
       _id: req.params.id,
     }).catch((err) => {
-      console.log("err", err);
+      console.log('err', err);
     });
 
-    for (let key in editData) {
+    for (const key in editData) {
       contact[key] = editData[key];
     }
 
-    if (typeof req.body.cell_phone != "undefined") {
-      let cell_phone = req.body.cell_phone;
+    if (typeof req.body.cell_phone !== 'undefined') {
+      const cell_phone = req.body.cell_phone;
       // let cleaned = ('' + cell_phone).replace(/\D/g, '')
       // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       // if (match) {
       //   let intlCode = (match[1] ? '+1 ' : '')
       //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
       // }
-      contact["cell_phone"] = cell_phone;
+      contact['cell_phone'] = cell_phone;
     }
 
-    contact["updated_at"] = new Date();
+    contact['updated_at'] = new Date();
 
     contact
       .save()
       .then((_res) => {
-        myJSON = JSON.stringify(_res);
+        const myJSON = JSON.stringify(_res);
         const data = JSON.parse(myJSON);
         delete data.password;
         res.send({
@@ -457,7 +497,7 @@ const edit = async (req, res) => {
 const bulkEditLabel = async (req, res) => {
   const { contacts, label } = req.body;
   Contact.find({ _id: { $in: contacts } })
-    .updateMany({ $set: { label: label } })
+    .updateMany({ $set: { label } })
     .then(() => {
       res.send({
         status: true,
@@ -466,7 +506,7 @@ const bulkEditLabel = async (req, res) => {
     .catch((err) => {
       res.status(500).send({
         status: false,
-        error: err.message || "Label Update Error",
+        error: err.message || 'Label Update Error',
       });
     });
 };
@@ -503,393 +543,18 @@ const bulkUpdate = async (req, res) => {
       });
     })
     .catch((err) => {
-      console.log("error", err);
+      console.log('error', err);
       res.status(500).send({
         status: false,
-        error: err.message || "Update Error",
+        error: err.message || 'Update Error',
       });
     });
-};
-
-const receiveEmail = async (req, res) => {
-  const message_id = req.body[0].sg_message_id.split(".")[0];
-  const event = req.body[0].event;
-  const email = req.body[0].email;
-  const time_stamp = req.body[0].timestamp;
-  const _email = await Email.findOne({ message_id: message_id }).catch(
-    (err) => {
-      console.log("err", err);
-    }
-  );
-  if (_email) {
-    const user = await User.findOne({ _id: _email.user }).catch((err) => {
-      console.log("err", err);
-    });
-
-    let contact;
-    if (user) {
-      contact = await Contact.findOne({ email: email, user: user.id }).catch(
-        (err) => {
-          console.log("err", err);
-        }
-      );
-    }
-
-    if (contact && user) {
-      let opened = new Date(time_stamp * 1000);
-      const created_at = moment(opened)
-        .utcOffset(user.time_zone)
-        .format("h:mm a");
-      let action = "";
-      if (event == "open") {
-        action = "opened";
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log("err", err);
-        });
-
-        let reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: "open",
-          created_at: { $gte: reopened },
-        }).catch((err) => {
-          console.log("err", err);
-        });
-
-        if (!old_activity) {
-          const email_tracker = new EmailTracker({
-            user: user.id,
-            contact: contact.id,
-            email: _email.id,
-            type: "open",
-            activity: email_activity.id,
-            updated_at: opened,
-            created_at: opened,
-          });
-          const _email_tracker = await email_tracker
-            .save()
-            .then()
-            .catch((err) => {
-              console.log("err", err);
-            });
-
-          const activity = new Activity({
-            content: "opened email",
-            contacts: contact.id,
-            user: user.id,
-            type: "email_trackers",
-            emails: _email.id,
-            email_trackers: _email_tracker.id,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
-
-          const _activity = await activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log("err", err);
-            });
-
-          Contact.update(
-            { _id: contact.id },
-            { $set: { last_activity: _activity.id } }
-          ).catch((err) => {
-            console.log("err", err);
-          });
-        } else {
-          return;
-        }
-      }
-      if (event == "click") {
-        action = "clicked the link on";
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log("err", err);
-        });
-        let reclicked = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: "click",
-          created_at: { $gte: reclicked },
-        }).catch((err) => {
-          console.log("err", err);
-        });
-
-        if (old_activity) {
-          return;
-        }
-        const email_tracker = new EmailTracker({
-          user: user.id,
-          contact: contact.id,
-          email: _email.id,
-          type: "click",
-          activity: email_activity.id,
-          updated_at: opened,
-          created_at: opened,
-        });
-        const _email_tracker = await email_tracker
-          .save()
-          .then()
-          .catch((err) => {
-            console.log("err", err);
-          });
-
-        const activity = new Activity({
-          content: "clicked the link on email",
-          contacts: contact.id,
-          user: user.id,
-          type: "email_trackers",
-          emails: _email.id,
-          email_trackers: _email_tracker.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-
-        const _activity = await activity
-          .save()
-          .then()
-          .catch((err) => {
-            console.log("err", err);
-          });
-
-        Contact.findByIdAndUpdate(contact.id, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
-          console.log("err", err);
-        });
-      }
-      if (event == "unsubscribe") {
-        action = "unsubscribed";
-        const email_activity = await Activity.findOne({
-          contacts: contact.id,
-          emails: _email.id,
-        }).catch((err) => {
-          console.log("err", err);
-        });
-        const email_tracker = new EmailTracker({
-          user: user.id,
-          contact: contact.id,
-          email: _email.id,
-          type: "unsubscribe",
-          activity: email_activity.id,
-          updated_at: opened,
-          created_at: opened,
-        });
-        const _email_tracker = await email_tracker
-          .save()
-          .then()
-          .catch((err) => {
-            console.log("err", err);
-          });
-
-        const activity = new Activity({
-          content: "unsubscribed email",
-          contacts: contact.id,
-          user: user.id,
-          type: "email_trackers",
-          emails: _email.id,
-          email_trackers: _email_tracker.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-
-        const _activity = await activity
-          .save()
-          .then()
-          .catch((err) => {
-            console.log("err", err);
-          });
-
-        Contact.update(
-          { _id: contact.id },
-          {
-            $set: { last_activity: _activity.id },
-            $push: { tags: { $each: ["unsubscribed"] } },
-          }
-        ).catch((err) => {
-          console.log("err", err);
-        });
-      }
-      const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
-        console.log("err", err);
-      });
-      const email_notification = garbage["email_notification"];
-
-      if (email_notification["email"]) {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
-        const msg = {
-          to: user.email,
-          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-          dynamic_template_data: {
-            subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-            email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-            activity:
-              contact.first_name +
-              " " +
-              action +
-              " email: " +
-              _email.subject +
-              " at " +
-              created_at,
-            detailed_activity:
-              "<a href='" +
-              urls.CONTACT_PAGE_URL +
-              contact.id +
-              "'><img src='" +
-              urls.DOMAIN_URL +
-              "assets/images/contact.png'/></a>",
-          },
-        };
-        sgMail.send(msg).catch((err) => console.error(err));
-      }
-      const desktop_notification = garbage["desktop_notification"];
-      if (desktop_notification["email"]) {
-        webpush.setVapidDetails(
-          "mailto:support@crmgrow.com",
-          config.VAPID.PUBLIC_VAPID_KEY,
-          config.VAPID.PRIVATE_VAPID_KEY
-        );
-
-        const subscription = JSON.parse(user.desktop_notification_subscription);
-        const title =
-          contact.first_name +
-          " " +
-          contact.last_name +
-          " - " +
-          contact.email +
-          " " +
-          action +
-          " email";
-        const created_at =
-          moment(opened).utcOffset(user.time_zone).format("MM/DD/YYYY") +
-          " at " +
-          moment(opened).utcOffset(user.time_zone).format("h:mm a");
-        const body =
-          contact.first_name +
-          " " +
-          contact.last_name +
-          " - " +
-          contact.email +
-          " " +
-          action +
-          " email: " +
-          _email.subject +
-          " on " +
-          created_at;
-        const playload = JSON.stringify({
-          notification: {
-            title: title,
-            body: body,
-            icon: "/fav.ico",
-            badge: "/fav.ico",
-          },
-        });
-        webpush
-          .sendNotification(subscription, playload)
-          .catch((err) => console.error(err));
-      }
-      const text_notification = garbage["text_notification"];
-      if (text_notification["email"]) {
-        const e164Phone = phone(user.cell_phone)[0];
-
-        if (!e164Phone) {
-          const error = {
-            error: "Invalid Phone Number",
-          };
-
-          throw error; // Invalid phone number
-        } else {
-          let fromNumber = user["proxy_number"];
-          if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
-
-            const data = await twilio.availablePhoneNumbers("US").local.list({
-              areaCode: areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number == "undefined") {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers("US")
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number != "undefined") {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log("proxy_number", proxy_number);
-              user["proxy_number"] = proxy_number.phoneNumber;
-              fromNumber = user["proxy_number"];
-              user.save().catch((err) => {
-                console.log("err", err);
-              });
-            } else {
-              fromNumber = config.TWILIO.TWILIO_NUMBER;
-            }
-          }
-
-          const title =
-            contact.first_name +
-            " " +
-            contact.last_name +
-            "\n" +
-            contact.email +
-            "\n" +
-            contact.cell_phone +
-            "\n" +
-            "\n" +
-            action +
-            " email: " +
-            "\n" +
-            _email.subject +
-            "\n";
-          const created_at =
-            moment(opened).utcOffset(user.time_zone).format("MM/DD/YYYY") +
-            " at " +
-            moment(opened).utcOffset(user.time_zone).format("h:mm a");
-          const time = " on " + created_at + "\n ";
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
-            .create({
-              from: fromNumber,
-              body: title + "\n" + time + contact_link,
-              to: e164Phone,
-            })
-            .catch((err) => {
-              console.log("send sms err: ", err);
-            });
-        }
-      }
-    }
-  }
-  return res.send({
-    status: true,
-  });
 };
 
 const importCSV = async (req, res) => {
-  let file = req.file;
+  const file = req.file;
   const { currentUser } = req;
-  let failure = [];
+  const failure = [];
   let count = 0;
   let max_count = 0;
   if (!currentUser.contact) {
@@ -900,89 +565,91 @@ const importCSV = async (req, res) => {
     max_count = currentUser.contact.max_count;
   }
 
-  let contact_array = [];
+  const contact_array = [];
   fs.createReadStream(file.path)
     .pipe(csv())
-    .on("data", async (data) => {
+    .on('data', async (data) => {
       contact_array.push(data);
     })
-    .on("end", () => {
-      let promise_array = [];
+    .on('end', () => {
+      const promise_array = [];
       for (let i = 0; i < contact_array.length; i++) {
-        let promise = new Promise(async (resolve, reject) => {
-          let data = contact_array[i];
-          if (data["first_name"] == "") {
-            data["first_name"] = null;
+        const promise = new Promise(async (resolve, reject) => {
+          const data = contact_array[i];
+          if (data['first_name'] === '') {
+            data['first_name'] = null;
           }
-          if (data["email"] == "") {
-            data["email"] = null;
+          if (data['email'] === '') {
+            data['email'] = null;
           }
-          if (data["phone"] == "") {
-            data["phone"] = null;
+          if (data['phone'] === '') {
+            data['phone'] = null;
           }
-          if (data["first_name"] || data["email"] || data["phone"]) {
-            let cell_phone = data["phone"];
+          if (data['first_name'] || data['email'] || data['phone']) {
+            const cell_phone = data['phone'];
             // let cleaned = ('' + cell_phone).replace(/\D/g, '')
             // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
             // if (match) {
             //   let intlCode = (match[1] ? '+1 ' : '')
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
-            if (data["email"]) {
+            if (data['email']) {
               const email_contact = await Contact.findOne({
-                email: data["email"],
+                email: data['email'],
+                user: currentUser.id,
               }).catch((err) => {
-                console.log("err", err);
+                console.log('err', err);
               });
               if (email_contact) {
                 const field = {
                   id: i,
-                  email: data["email"],
-                  err: "Duplicated Email",
+                  email: data['email'],
+                  err: 'Duplicated Email',
                 };
                 failure.push(field);
                 resolve();
                 return;
               }
             }
-            if (data["contact"]) {
+            if (data['cell_phone']) {
               const phone_contact = await Contact.findOne({
-                cell_phone: data["cell_phone"],
+                cell_phone: data['cell_phone'],
+                user: currentUser.id,
               }).catch((err) => {
-                console.log("err", err);
+                console.log('err', err);
               });
               if (phone_contact) {
                 const field = {
                   id: i,
-                  cell_phone: data["cell_phone"],
-                  err: "Duplicated Phone",
+                  cell_phone: data['cell_phone'],
+                  err: 'Duplicated Phone',
                 };
                 failure.push(field);
                 resolve();
                 return;
               }
             }
-            count = count + 1;
+            count += 1;
             if (max_count < count) {
               const field = {
                 id: i,
-                email: data["email"],
-                cell_phone: data["phone"],
-                err: "Exceed upload max contacts",
+                email: data['email'],
+                cell_phone: data['phone'],
+                err: 'Exceed upload max contacts',
               };
               failure.push(field);
               resolve();
               return;
             }
             let tags = [];
-            if (data["tags"] != "" && typeof data["tags"] != "undefined") {
-              tags = data["tags"].split(/,\s|\s,|,|\s/);
+            if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
+              tags = data['tags'].split(/,\s|\s,|,|\s/);
             }
             delete data.tags;
             const contact = new Contact({
               ...data,
-              tags: tags,
-              cell_phone: cell_phone,
+              tags,
+              cell_phone,
               user: currentUser.id,
               created_at: new Date(),
               updated_at: new Date(),
@@ -992,10 +659,10 @@ const importCSV = async (req, res) => {
               .save()
               .then((_contact) => {
                 const activity = new Activity({
-                  content: "added contact",
+                  content: 'added contact',
                   contacts: _contact.id,
                   user: currentUser.id,
-                  type: "contacts",
+                  type: 'contacts',
                   created_at: new Date(),
                   updated_at: new Date(),
                 });
@@ -1005,15 +672,15 @@ const importCSV = async (req, res) => {
                     Contact.findByIdAndUpdate(_contact.id, {
                       $set: { last_activity: _activity.id },
                     }).catch((err) => {
-                      console.log("err", err);
+                      console.log('err', err);
                     });
                   })
                   .catch((err) => {
-                    console.log("err", err);
+                    console.log('err', err);
                   });
-                if (data["note"] && data["note"] != "") {
+                if (data['note'] && data['note'] !== '') {
                   const note = new Note({
-                    content: data["note"],
+                    content: data['note'],
                     contact: _contact.id,
                     user: currentUser.id,
                     created_at: new Date(),
@@ -1021,10 +688,10 @@ const importCSV = async (req, res) => {
                   });
                   note.save().then((_note) => {
                     const _activity = new Activity({
-                      content: "added note",
+                      content: 'added note',
                       contacts: _contact.id,
                       user: currentUser.id,
-                      type: "notes",
+                      type: 'notes',
                       notes: _note.id,
                       created_at: new Date(),
                       updated_at: new Date(),
@@ -1036,19 +703,18 @@ const importCSV = async (req, res) => {
                           { _id: _contact.id },
                           { $set: { last_activity: __activity.id } }
                         ).catch((err) => {
-                          console.log("err", err);
+                          console.log('err', err);
                         });
                       })
                       .catch((err) => {
-                        console.log("error", err);
+                        console.log('error', err);
                       });
                   });
                 }
                 resolve();
-                return;
               })
               .catch((err) => {
-                console.log("err", err);
+                console.log('err', err);
               });
           } else {
             resolve();
@@ -1059,12 +725,12 @@ const importCSV = async (req, res) => {
 
       Promise.all(promise_array).then(function () {
         const contact_info = {
-          count: count,
-          max_count: max_count,
+          count,
+          max_count,
         };
         currentUser.contact_info = contact_info;
         currentUser.save().catch((err) => {
-          console.log("err", err);
+          console.log('err', err);
         });
         return res.send({
           status: true,
@@ -1074,13 +740,54 @@ const importCSV = async (req, res) => {
     });
 };
 
+const overwriteCSV = async (req, res) => {
+  const file = req.file;
+  const { currentUser } = req;
+  const failure = [];
+
+  const contact_array = [];
+  fs.createReadStream(file.path)
+    .pipe(csv())
+    .on('data', async (data) => {
+      contact_array.push(data);
+    })
+    .on('end', async () => {
+      const promise_array = [];
+      for (let i = 0; i < contact_array.length; i++) {
+        const email = contact_array[i]['email'];
+        const data = contact_array[i];
+        let tags = [];
+        if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
+          tags = data['tags'].split(/,\s|\s,|,|\s/);
+        }
+        delete data.tags;
+        for (const key in data) {
+          if (data[key] === '' && typeof data[key] === 'undefined') {
+            delete data[key];
+          }
+        }
+        if (email) {
+          await Contact.updateOne(
+            { email },
+            { $set: data, $push: { tags: { $each: tags } } }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+        }
+      }
+      return res.send({
+        status: true,
+      });
+    });
+};
+
 const exportCSV = async (req, res) => {
   const { currentUser } = req;
   const { contacts } = req.body;
 
-  let data = [];
+  const data = [];
   for (let i = 0; i < contacts.length; i++) {
-    let _data = {
+    const _data = {
       contact_id: contacts[i],
       note: [],
     };
@@ -1090,17 +797,17 @@ const exportCSV = async (req, res) => {
     });
     const _contact = await Contact.findOne({ _id: contacts[i] });
 
-    if (_note.length != 0) {
-      _data["note"] = _note;
+    if (_note.length !== 0) {
+      _data['note'] = _note;
     }
-    _data["contact"] = _contact;
+    _data['contact'] = _contact;
     data.push(_data);
   }
 
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: "Note doesn`t exist",
+      error: 'Note doesn`t exist',
     });
   }
 
@@ -1112,46 +819,46 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  let search = req.body.search;
+  const search = req.body.search;
   let contacts = [];
-  if (!search.split(" ")[1]) {
+  if (!search.split(' ')[1]) {
     contacts = await Contact.find({
       $or: [
         {
-          first_name: { $regex: search.split(" ")[0] + ".*", $options: "i" },
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
-          email: { $regex: ".*" + search.split(" ")[0] + ".*", $options: "i" },
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
-          last_name: { $regex: search.split(" ")[0] + ".*", $options: "i" },
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
           cell_phone: {
-            $regex: ".*" + search.split(" ")[0] + ".*",
-            $options: "i",
+            $regex: '.*' + search.split(' ')[0] + '.*',
+            $options: 'i',
           },
           user: currentUser.id,
         },
       ],
     })
-      .populate("last_activity")
+      .populate('last_activity')
       .sort({ first_name: 1 });
   } else {
     contacts = await Contact.find({
       $or: [
         {
-          first_name: { $regex: search.split(" ")[0], $options: "i" },
-          last_name: { $regex: search.split(" ")[1], $options: "i" },
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
           user: currentUser.id,
         },
         { cell_phone: search, user: currentUser.id },
       ],
     })
-      .populate("last_activity")
+      .populate('last_activity')
       .sort({ first_name: 1 });
   }
 
@@ -1161,7 +868,7 @@ const search = async (req, res) => {
     status: true,
     data: {
       contacts,
-      search: search,
+      search,
       total: count,
     },
   });
@@ -1169,26 +876,27 @@ const search = async (req, res) => {
 
 const searchEasy = async (req, res) => {
   const { currentUser } = req;
-  let search = req.body.search;
-  if (!search.split(" ")[1]) {
+  const search = req.body.search;
+  let data = [];
+  if (!search.split(' ')[1]) {
     data = await Contact.find({
       $or: [
         {
-          first_name: { $regex: search.split(" ")[0] + ".*", $options: "i" },
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
-          email: { $regex: ".*" + search.split(" ")[0] + ".*", $options: "i" },
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
-          last_name: { $regex: search.split(" ")[0] + ".*", $options: "i" },
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
           cell_phone: {
-            $regex: ".*" + search.split(" ")[0] + ".*",
-            $options: "i",
+            $regex: '.*' + search.split(' ')[0] + '.*',
+            $options: 'i',
           },
           user: currentUser.id,
         },
@@ -1197,18 +905,18 @@ const searchEasy = async (req, res) => {
       .sort({ first_name: 1 })
       .limit(8)
       .catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
   } else {
     data = await Contact.find({
       $or: [
         {
-          first_name: search.split(" ")[0],
-          last_name: search.split(" ")[1],
+          first_name: search.split(' ')[0],
+          last_name: search.split(' ')[1],
           user: currentUser.id,
         },
         {
-          cell_phone: { $regex: search + ".*", $options: "i" },
+          cell_phone: { $regex: search + '.*', $options: 'i' },
           user: currentUser.id,
         },
       ],
@@ -1216,10 +924,9 @@ const searchEasy = async (req, res) => {
       .sort({ first_name: 1 })
       .limit(8)
       .catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
   }
-
   return res.send({
     status: true,
     data,
@@ -1236,7 +943,7 @@ const getById = async (req, res) => {
   if (!_contact) {
     return res.status(400).json({
       status: false,
-      error: "Contact doesn`t exist",
+      error: 'Contact doesn`t exist',
     });
   }
 
@@ -1260,28 +967,70 @@ const getByIds = async (req, res) => {
 
 const leadContact = async (req, res) => {
   const { user, first_name, email, cell_phone, video, pdf } = req.body;
-  const _exists = await Contact.find({
+  let _exist = await Contact.findOne({
     email,
     user,
   }).catch((err) => {
-    return res.status(500).send({
+    return res.status(400).send({
       status: false,
       error: err.message,
     });
   });
 
-  if (_exists && _exists.length) {
+  if (!_exist) {
+    _exist = await Contact.findOne({
+      cell_phone,
+      user,
+    }).catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+  }
+
+  if (_exist) {
+    let _activity;
+    if (video) {
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - watched video',
+        contacts: _exist.id,
+        user,
+        type: 'videos',
+        videos: video,
+      });
+    } else {
+      _activity = new Activity({
+        content: 'LEAD CAPTURE - reviewed pdf',
+        contacts: _exist.id,
+        user,
+        type: 'pdfs',
+        pdfs: pdf,
+      });
+    }
+
+    const activity = await _activity
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('err', err);
+      });
+
     return res.json({
       status: true,
+      data: {
+        contact: _exist.id,
+        activity: activity.id,
+      },
     });
   } else {
-    const label = "New";
+    const label = 'New';
     const _contact = new Contact({
       first_name,
       email,
       cell_phone,
       label,
-      tags: ["leadcapture"],
+      tags: ['leadcapture'],
       user,
     });
 
@@ -1290,38 +1039,38 @@ const leadContact = async (req, res) => {
         .save()
         .then(async (contact) => {
           const _video = await Video.findOne({ _id: video }).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
-          const garbage = await Garbage.findOne({ user: user }).catch((err) => {
-            console.log("err", err);
+          const garbage = await Garbage.findOne({ user }).catch((err) => {
+            console.log('err', err);
           });
 
           const _activity = new Activity({
-            content: "LEAD CAPTURE - watched video",
+            content: 'LEAD CAPTURE - watched video',
             contacts: contact.id,
             user: currentUser.id,
-            type: "videos",
+            type: 'videos',
             videos: video,
             created_at: new Date(),
             updated_at: new Date(),
           });
 
-          activity = await _activity
+          const activity = await _activity
             .save()
             .then()
             .catch((err) => {
-              console.log("err", err);
+              console.log('err', err);
             });
 
           const created_at = moment()
             .utcOffset(currentUser.time_zone)
-            .format("h:mm: a");
-          const email_notification = garbage["email_notification"];
+            .format('h:mm: a');
+          const email_notification = garbage['email_notification'];
 
-          if (email_notification["lead_capture"]) {
+          if (email_notification['lead_capture']) {
             sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
@@ -1329,14 +1078,14 @@ const leadContact = async (req, res) => {
               templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
-                first_name: first_name,
+                first_name,
                 phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
                   first_name +
-                  " watched lead capture video - <b>" +
+                  ' watched lead capture video - <b>' +
                   _video.title +
-                  "</b> at " +
+                  '</b> at ' +
                   created_at,
                 detailed_activity:
                   "<a href='" +
@@ -1350,10 +1099,10 @@ const leadContact = async (req, res) => {
             sgMail.send(msg).catch((err) => console.error(err));
           }
 
-          const desktop_notification = garbage["desktop_notification"];
-          if (desktop_notification["lead_capture"]) {
+          const desktop_notification = garbage['desktop_notification'];
+          if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
-              "mailto:support@crmgrow.com",
+              'mailto:support@crmgrow.com',
               config.VAPID.PUBLIC_VAPID_KEY,
               config.VAPID.PRIVATE_VAPID_KEY
             );
@@ -1361,25 +1110,25 @@ const leadContact = async (req, res) => {
             const subscription = JSON.parse(
               currentUser.desktop_notification_subscription
             );
-            const title = contact.first_name + " watched lead capture video";
+            const title = contact.first_name + ' watched lead capture video';
             const created_at =
-              moment().utcOffset(currentUser.time_zone).format("MM/DD/YYYY") +
-              " at " +
-              moment().utcOffset(currentUser.time_zone).format("h:mm a");
+              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              ' at ' +
+              moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
-              " - " +
+              ' - ' +
               contact.email +
-              " watched lead capture video: " +
+              ' watched lead capture video: ' +
               _video.title +
-              " on " +
+              ' on ' +
               created_at;
             const playload = JSON.stringify({
               notification: {
-                title: title,
-                body: body,
-                icon: "/fav.ico",
-                badge: "/fav.ico",
+                title,
+                body,
+                icon: '/fav.ico',
+                badge: '/fav.ico',
               },
             });
             webpush
@@ -1387,57 +1136,57 @@ const leadContact = async (req, res) => {
               .catch((err) => console.error(err));
           }
 
-          const text_notification = garbage["text_notification"];
-          if (text_notification["lead_capture"]) {
+          const text_notification = garbage['text_notification'];
+          if (text_notification['lead_capture']) {
             const e164Phone = phone(currentUser.cell_phone)[0];
 
             if (!e164Phone) {
               const error = {
-                error: "Invalid Phone Number",
+                error: 'Invalid Phone Number',
               };
 
               throw error; // Invalid phone number
             } else {
-              let fromNumber = currentUser["proxy_number"];
+              let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
                 fromNumber = config.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
                 contact.first_name +
-                "\n" +
+                '\n' +
                 contact.email +
-                "\n" +
+                '\n' +
                 contact.cell_phone +
-                "\n" +
-                "\n" +
-                "watched lead capture video: " +
-                "\n" +
+                '\n' +
+                '\n' +
+                'watched lead capture video: ' +
+                '\n' +
                 _video.title +
-                "\n";
+                '\n';
               const created_at =
-                moment().utcOffset(currentUser.time_zone).format("MM/DD/YYYY") +
-                " at " +
-                moment().utcOffset(currentUser.time_zone).format("h:mm a");
-              const time = " on " + created_at + "\n ";
+                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+                ' at ' +
+                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
                 .create({
                   from: fromNumber,
-                  body: title + "\n" + time + contact_link,
+                  body: title + '\n' + time + contact_link,
                   to: e164Phone,
                 })
                 .catch((err) => {
-                  console.log("send sms err: ", err);
+                  console.log('send sms err: ', err);
                 });
             }
           }
 
-          Contact.update(
+          Contact.updateMany(
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
 
           return res.send({
@@ -1449,7 +1198,7 @@ const leadContact = async (req, res) => {
           });
         })
         .catch((err) => {
-          return res.status(500).send({
+          return res.status(400).send({
             status: false,
             error: err.message,
           });
@@ -1459,38 +1208,38 @@ const leadContact = async (req, res) => {
         .save()
         .then(async (contact) => {
           const _pdf = await PDF.findOne({ _id: pdf }).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
-          const garbage = await Garbage.findOne({ user: user }).catch((err) => {
-            console.log("err", err);
+          const garbage = await Garbage.findOne({ user }).catch((err) => {
+            console.log('err', err);
           });
 
           const _activity = new Activity({
-            content: "LEAD CAPTURE - watched pdf",
+            content: 'LEAD CAPTURE - reviewed pdf',
             contacts: contact.id,
             user: currentUser.id,
-            type: "pdfs",
+            type: 'pdfs',
             pdfs: pdf,
             created_at: new Date(),
             updated_at: new Date(),
           });
 
-          activity = await _activity
+          const activity = await _activity
             .save()
             .then()
             .catch((err) => {
-              console.log("err", err);
+              console.log('err', err);
             });
 
           const created_at = moment()
             .utcOffset(currentUser.time_zone)
-            .format("h:mm: a");
-          const email_notification = garbage["email_notification"];
+            .format('h:mm: a');
+          const email_notification = garbage['email_notification'];
 
-          if (email_notification["lead_capture"]) {
+          if (email_notification['lead_capture']) {
             sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
@@ -1498,14 +1247,14 @@ const leadContact = async (req, res) => {
               templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT,
-                first_name: first_name,
+                first_name,
                 phone_number: `<a href="tel:${cell_phone}">${cell_phone}</a>`,
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
                   first_name +
-                  " watched lead capture pdf - <b>" +
+                  ' watched lead capture pdf - <b>' +
                   _pdf.title +
-                  "</b>at " +
+                  '</b>at ' +
                   created_at,
                 detailed_activity:
                   "<a href='" +
@@ -1519,10 +1268,10 @@ const leadContact = async (req, res) => {
             sgMail.send(msg).catch((err) => console.error(err));
           }
 
-          const desktop_notification = garbage["desktop_notification"];
-          if (desktop_notification["lead_capture"]) {
+          const desktop_notification = garbage['desktop_notification'];
+          if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
-              "mailto:support@crmgrow.com",
+              'mailto:support@crmgrow.com',
               config.VAPID.PUBLIC_VAPID_KEY,
               config.VAPID.PRIVATE_VAPID_KEY
             );
@@ -1530,25 +1279,25 @@ const leadContact = async (req, res) => {
             const subscription = JSON.parse(
               currentUser.desktop_notification_subscription
             );
-            const title = contact.first_name + " watched lead capture pdf";
+            const title = contact.first_name + ' watched lead capture pdf';
             const created_at =
-              moment().utcOffset(currentUser.time_zone).format("MM/DD/YYYY") +
-              " at " +
-              moment().utcOffset(currentUser.time_zone).format("h:mm a");
+              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              ' at ' +
+              moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
-              " - " +
+              ' - ' +
               contact.email +
-              " watched lead capture pdf: " +
+              ' watched lead capture pdf: ' +
               _pdf.title +
-              " on " +
+              ' on ' +
               created_at;
             const playload = JSON.stringify({
               notification: {
-                title: title,
-                body: body,
-                icon: "/fav.ico",
-                badge: "/fav.ico",
+                title,
+                body,
+                icon: '/fav.ico',
+                badge: '/fav.ico',
               },
             });
             webpush
@@ -1556,48 +1305,48 @@ const leadContact = async (req, res) => {
               .catch((err) => console.error(err));
           }
 
-          const text_notification = garbage["text_notification"];
-          if (text_notification["lead_capture"]) {
+          const text_notification = garbage['text_notification'];
+          if (text_notification['lead_capture']) {
             const e164Phone = phone(currentUser.cell_phone)[0];
 
             if (!e164Phone) {
               const error = {
-                error: "Invalid Phone Number",
+                error: 'Invalid Phone Number',
               };
 
               throw error; // Invalid phone number
             } else {
-              let fromNumber = currentUser["proxy_number"];
+              let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
                 fromNumber = config.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
                 contact.first_name +
-                "\n" +
+                '\n' +
                 contact.email +
-                "\n" +
+                '\n' +
                 contact.cell_phone +
-                "\n" +
-                "\n" +
-                "watched lead capture video: " +
-                "\n" +
+                '\n' +
+                '\n' +
+                'watched lead capture video: ' +
+                '\n' +
                 _pdf.title +
-                "\n";
+                '\n';
               const created_at =
-                moment().utcOffset(currentUser.time_zone).format("MM/DD/YYYY") +
-                " at " +
-                moment().utcOffset(currentUser.time_zone).format("h:mm a");
-              const time = " on " + created_at + "\n ";
+                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+                ' at ' +
+                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
                 .create({
                   from: fromNumber,
-                  body: title + "\n" + time + contact_link,
+                  body: title + '\n' + time + contact_link,
                   to: e164Phone,
                 })
                 .catch((err) => {
-                  console.log("send sms err: ", err);
+                  console.log('send sms err: ', err);
                 });
             }
           }
@@ -1606,7 +1355,7 @@ const leadContact = async (req, res) => {
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
-            console.log("err", err);
+            console.log('err', err);
           });
 
           return res.send({
@@ -1627,9 +1376,10 @@ const leadContact = async (req, res) => {
   }
 };
 
-isArray = function (a) {
+const isArray = function (a) {
   return !!a && a.constructor === Array;
 };
+
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
   const {
@@ -1654,10 +1404,6 @@ const advanceSearch = async (req, res) => {
     includeLastActivity,
     includeBrokerage,
   } = req.body;
-  let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || includeFollowUps === "undifined") {
-    includeFollowUps = true;
-  }
 
   // Material Check
   let watchedVideoContacts = [];
@@ -1670,26 +1416,26 @@ const advanceSearch = async (req, res) => {
   let notSentPdfContacts = [];
   let notSentImageContacts = [];
 
-  let excludeMaterialContacts = [];
-  if (materialCondition["watched_video"]["flag"]) {
+  const excludeMaterialContacts = [];
+  if (materialCondition['watched_video']['flag']) {
     let query = [];
-    if (materialCondition["watched_video"]["material"]) {
+    if (materialCondition['watched_video']['material']) {
       query = [
         {
-          type: "videos",
+          type: 'videos',
           videos: mongoose.Types.ObjectId(
-            materialCondition["watched_video"]["material"]
+            materialCondition['watched_video']['material']
           ),
         },
         {
-          type: "video_trackers",
+          type: 'video_trackers',
           videos: mongoose.Types.ObjectId(
-            materialCondition["watched_video"]["material"]
+            materialCondition['watched_video']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "videos" }, { type: "video_trackers" }];
+      query = [{ type: 'videos' }, { type: 'video_trackers' }];
     }
     watchedVideoContacts = await Activity.aggregate([
       {
@@ -1700,22 +1446,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          types: { action: "video_trackers" },
+          types: { action: 'video_trackers' },
         },
       },
       {
@@ -1723,25 +1469,25 @@ const advanceSearch = async (req, res) => {
       },
     ]);
   }
-  if (materialCondition["watched_pdf"]["flag"]) {
+  if (materialCondition['watched_pdf']['flag']) {
     let query = [];
-    if (materialCondition["watched_pdf"]["material"]) {
+    if (materialCondition['watched_pdf']['material']) {
       query = [
         {
-          type: "pdfs",
+          type: 'pdfs',
           pdfs: mongoose.Types.ObjectId(
-            materialCondition["watched_pdf"]["material"]
+            materialCondition['watched_pdf']['material']
           ),
         },
         {
-          type: "pdf_trackers",
+          type: 'pdf_trackers',
           pdfs: mongoose.Types.ObjectId(
-            materialCondition["watched_pdf"]["material"]
+            materialCondition['watched_pdf']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "pdfs" }, { type: "pdf_trackers" }];
+      query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
     }
     watchedPdfContacts = await Activity.aggregate([
       {
@@ -1752,22 +1498,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          types: { action: "pdf_trackers" },
+          types: { action: 'pdf_trackers' },
         },
       },
       {
@@ -1775,25 +1521,25 @@ const advanceSearch = async (req, res) => {
       },
     ]);
   }
-  if (materialCondition["watched_image"]["flag"]) {
+  if (materialCondition['watched_image']['flag']) {
     let query = [];
-    if (materialCondition["watched_image"]["material"]) {
+    if (materialCondition['watched_image']['material']) {
       query = [
         {
-          type: "images",
+          type: 'images',
           images: mongoose.Types.ObjectId(
-            materialCondition["watched_image"]["material"]
+            materialCondition['watched_image']['material']
           ),
         },
         {
-          type: "image_trackers",
+          type: 'image_trackers',
           images: mongoose.Types.ObjectId(
-            materialCondition["watched_image"]["material"]
+            materialCondition['watched_image']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "images" }, { type: "image_trackers" }];
+      query = [{ type: 'images' }, { type: 'image_trackers' }];
     }
     watchedImageContacts = await Activity.aggregate([
       {
@@ -1804,22 +1550,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          types: { action: "image_trackers" },
+          types: { action: 'image_trackers' },
         },
       },
       {
@@ -1828,25 +1574,25 @@ const advanceSearch = async (req, res) => {
     ]);
   }
 
-  if (materialCondition["not_watched_video"]["flag"]) {
+  if (materialCondition['not_watched_video']['flag']) {
     let query = [];
-    if (materialCondition["not_watched_video"]["material"]) {
+    if (materialCondition['not_watched_video']['material']) {
       query = [
         {
-          type: "videos",
+          type: 'videos',
           videos: mongoose.Types.ObjectId(
-            materialCondition["not_watched_video"]["material"]
+            materialCondition['not_watched_video']['material']
           ),
         },
         {
-          type: "video_trackers",
+          type: 'video_trackers',
           videos: mongoose.Types.ObjectId(
-            materialCondition["not_watched_video"]["material"]
+            materialCondition['not_watched_video']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "videos" }, { type: "video_trackers" }];
+      query = [{ type: 'videos' }, { type: 'video_trackers' }];
     }
     notWatchedVideoContacts = await Activity.aggregate([
       {
@@ -1857,22 +1603,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          $nor: [{ types: { action: "video_trackers" } }],
+          $nor: [{ types: { action: 'video_trackers' } }],
         },
       },
       {
@@ -1880,25 +1626,25 @@ const advanceSearch = async (req, res) => {
       },
     ]);
   }
-  if (materialCondition["not_watched_pdf"]["flag"]) {
+  if (materialCondition['not_watched_pdf']['flag']) {
     let query = [];
-    if (materialCondition["not_watched_pdf"]["material"]) {
+    if (materialCondition['not_watched_pdf']['material']) {
       query = [
         {
-          type: "pdfs",
+          type: 'pdfs',
           pdfs: mongoose.Types.ObjectId(
-            materialCondition["not_watched_pdf"]["material"]
+            materialCondition['not_watched_pdf']['material']
           ),
         },
         {
-          type: "pdf_trackers",
+          type: 'pdf_trackers',
           pdfs: mongoose.Types.ObjectId(
-            materialCondition["not_watched_pdf"]["material"]
+            materialCondition['not_watched_pdf']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "pdfs" }, { type: "pdf_trackers" }];
+      query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
     }
     notWatchedPdfContacts = await Activity.aggregate([
       {
@@ -1909,22 +1655,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          $nor: [{ types: { action: "pdf_trackers" } }],
+          $nor: [{ types: { action: 'pdf_trackers' } }],
         },
       },
       {
@@ -1932,25 +1678,25 @@ const advanceSearch = async (req, res) => {
       },
     ]);
   }
-  if (materialCondition["not_watched_image"]["flag"]) {
+  if (materialCondition['not_watched_image']['flag']) {
     let query = [];
-    if (materialCondition["not_watched_image"]["material"]) {
+    if (materialCondition['not_watched_image']['material']) {
       query = [
         {
-          type: "images",
+          type: 'images',
           images: mongoose.Types.ObjectId(
-            materialCondition["not_watched_image"]["material"]
+            materialCondition['not_watched_image']['material']
           ),
         },
         {
-          type: "image_trackers",
+          type: 'image_trackers',
           images: mongoose.Types.ObjectId(
-            materialCondition["not_watched_image"]["material"]
+            materialCondition['not_watched_image']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "images" }, { type: "image_trackers" }];
+      query = [{ type: 'images' }, { type: 'image_trackers' }];
     }
     notWatchedImageContacts = await Activity.aggregate([
       {
@@ -1961,22 +1707,22 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts", type: "$type" },
+          _id: { contact: '$contacts', type: '$type' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
-          types: { $addToSet: { action: "$_id.type" } },
+          _id: '$_id.contact',
+          types: { $addToSet: { action: '$_id.type' } },
         },
       },
       {
         $match: {
-          $nor: [{ types: { action: "image_trackers" } }],
+          $nor: [{ types: { action: 'image_trackers' } }],
         },
       },
       {
@@ -1985,19 +1731,19 @@ const advanceSearch = async (req, res) => {
     ]);
   }
 
-  if (materialCondition["not_sent_video"]["flag"]) {
+  if (materialCondition['not_sent_video']['flag']) {
     let query = [];
-    if (materialCondition["not_sent_video"]["material"]) {
+    if (materialCondition['not_sent_video']['material']) {
       query = [
         {
-          type: "videos",
+          type: 'videos',
           videos: mongoose.Types.ObjectId(
-            materialCondition["not_sent_video"]["material"]
+            materialCondition['not_sent_video']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "videos" }];
+      query = [{ type: 'videos' }];
     }
     notSentVideoContacts = await Activity.aggregate([
       {
@@ -2008,16 +1754,16 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts" },
+          _id: { contact: '$contacts' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
+          _id: '$_id.contact',
         },
       },
       {
@@ -2025,24 +1771,24 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentVideoContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
   }
-  if (materialCondition["not_sent_pdf"]["flag"]) {
+  if (materialCondition['not_sent_pdf']['flag']) {
     let query = [];
-    if (materialCondition["not_sent_pdf"]["material"]) {
+    if (materialCondition['not_sent_pdf']['material']) {
       query = [
         {
-          type: "pdfs",
+          type: 'pdfs',
           pdfs: mongoose.Types.ObjectId(
-            materialCondition["not_sent_pdf"]["material"]
+            materialCondition['not_sent_pdf']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "pdfs" }];
+      query = [{ type: 'pdfs' }];
     }
     notSentPdfContacts = await Activity.aggregate([
       {
@@ -2053,16 +1799,16 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts" },
+          _id: { contact: '$contacts' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
+          _id: '$_id.contact',
         },
       },
       {
@@ -2070,24 +1816,24 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentPdfContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
   }
-  if (materialCondition["not_sent_image"]["flag"]) {
+  if (materialCondition['not_sent_image']['flag']) {
     let query = [];
-    if (materialCondition["not_sent_image"]["material"]) {
+    if (materialCondition['not_sent_image']['material']) {
       query = [
         {
-          type: "images",
+          type: 'images',
           images: mongoose.Types.ObjectId(
-            materialCondition["not_sent_image"]["material"]
+            materialCondition['not_sent_image']['material']
           ),
         },
       ];
     } else {
-      query = [{ type: "images" }];
+      query = [{ type: 'images' }];
     }
     notSentImageContacts = await Activity.aggregate([
       {
@@ -2098,16 +1844,16 @@ const advanceSearch = async (req, res) => {
           ],
         },
       },
-      { $unwind: "$contacts" },
+      { $unwind: '$contacts' },
       {
         $group: {
-          _id: { contact: "$contacts" },
+          _id: { contact: '$contacts' },
           count: { $sum: 1 },
         },
       },
       {
         $group: {
-          _id: "$_id.contact",
+          _id: '$_id.contact',
         },
       },
       {
@@ -2115,12 +1861,12 @@ const advanceSearch = async (req, res) => {
       },
     ]);
     notSentImageContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) == -1) {
+      if (excludeMaterialContacts.indexOf(e._id) === -1) {
         e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
       }
     });
   }
-  let materialContacts = [];
+  const materialContacts = [];
   watchedVideoContacts.forEach((e) => {
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   });
@@ -2141,17 +1887,17 @@ const advanceSearch = async (req, res) => {
   });
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
-  let includeMaterialCondition =
-    materialCondition["not_watched_pdf"]["flag"] ||
-    materialCondition["not_watched_video"]["flag"] ||
-    materialCondition["watched_pdf"]["flag"] ||
-    materialCondition["watched_video"]["flag"] ||
-    materialCondition["watched_image"]["flag"] ||
-    materialCondition["not_watched_image"]["flag"];
-  let excludeMaterialCondition =
-    materialCondition["not_sent_video"]["flag"] ||
-    materialCondition["not_sent_pdf"]["flag"] ||
-    materialCondition["not_sent_image"]["flag"];
+  const includeMaterialCondition =
+    materialCondition['not_watched_pdf']['flag'] ||
+    materialCondition['not_watched_video']['flag'] ||
+    materialCondition['watched_pdf']['flag'] ||
+    materialCondition['watched_video']['flag'] ||
+    materialCondition['watched_image']['flag'] ||
+    materialCondition['not_watched_image']['flag'];
+  const excludeMaterialCondition =
+    materialCondition['not_sent_video']['flag'] ||
+    materialCondition['not_sent_pdf']['flag'] ||
+    materialCondition['not_sent_image']['flag'];
 
   if (materialContacts.length) {
     // Exclude Contacts from material contacts
@@ -2166,11 +1912,11 @@ const advanceSearch = async (req, res) => {
         };
       }
     }
-    query["$and"].push(materialQuery);
+    query['$and'].push(materialQuery);
   } else {
     if (includeMaterialCondition) {
       if (excludeMaterialContacts.length) {
-        query["$and"].push({ _id: { $nin: excludeMaterialContacts } });
+        query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
       } else if (!excludeMaterialCondition) {
         return res.send({
           status: true,
@@ -2179,38 +1925,38 @@ const advanceSearch = async (req, res) => {
       }
     } else {
       if (excludeMaterialContacts) {
-        query["$and"].push({ _id: { $nin: excludeMaterialContacts } });
+        query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
       }
     }
   }
 
   if (searchStr) {
     var strQuery = {};
-    if (!searchStr.split(" ")[1]) {
+    if (!searchStr.split(' ')[1]) {
       strQuery = {
         $or: [
-          { first_name: { $regex: ".*" + searchStr + ".*", $options: "i" } },
-          { email: { $regex: ".*" + searchStr + ".*", $options: "i" } },
-          { last_name: { $regex: ".*" + searchStr + ".*", $options: "i" } },
-          { cell_phone: { $regex: ".*" + searchStr + ".*", $options: "i" } },
+          { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { email: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { cell_phone: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
         ],
       };
     } else {
-      let firstStr = searchStr.split(" ")[0];
-      let secondStr = searchStr.split(" ")[1];
+      const firstStr = searchStr.split(' ')[0];
+      const secondStr = searchStr.split(' ')[1];
       strQuery = {
         $or: [
           {
-            first_name: { $regex: ".*" + firstStr, $options: "i" },
-            last_name: { $regex: secondStr + ".*", $options: "i" },
+            first_name: { $regex: '.*' + firstStr, $options: 'i' },
+            last_name: { $regex: secondStr + '.*', $options: 'i' },
           },
-          { first_name: { $regex: ".*" + searchStr + ".*", $options: "i" } },
-          { last_name: { $regex: ".*" + searchStr + ".*", $options: "i" } },
-          { cell_phone: { $regex: ".*" + searchStr + ".*", $options: "i" } },
+          { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { cell_phone: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
         ],
       };
     }
-    query["$and"].push(strQuery);
+    query['$and'].push(strQuery);
   }
 
   if (recruitingStageCondition && recruitingStageCondition.length) {
@@ -2218,31 +1964,31 @@ const advanceSearch = async (req, res) => {
       var stageQuery = {
         $or: [
           { recruiting_stage: { $in: recruitingStageCondition } },
-          { recruiting_stage: "" },
+          { recruiting_stage: '' },
           { recruiting_stage: undefined },
         ],
       };
-      query["$and"].push(stageQuery);
+      query['$and'].push(stageQuery);
     } else {
-      var stageQuery = {};
+      let stageQuery = {};
       if (includeStage) {
         stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
       } else {
         stageQuery = { recruiting_stage: { $nin: recruitingStageCondition } };
       }
-      query["$and"].push(stageQuery);
+      query['$and'].push(stageQuery);
     }
   }
   if (sourceCondition && sourceCondition.length) {
     if (sourceCondition.indexOf(false) !== -1) {
-      var sourceQuery = {
+      const sourceQuery = {
         $or: [
           { source: { $in: sourceCondition } },
-          { source: "" },
+          { source: '' },
           { source: undefined },
         ],
       };
-      query["$and"].push(sourceQuery);
+      query['$and'].push(sourceQuery);
     } else {
       var sourceQuery = {};
       if (includeSource) {
@@ -2250,11 +1996,11 @@ const advanceSearch = async (req, res) => {
       } else {
         sourceQuery = { source: { $nin: sourceCondition } };
       }
-      query["$and"].push(sourceQuery);
+      query['$and'].push(sourceQuery);
     }
   }
   if (labelCondition && labelCondition.length) {
-    if (labelCondition.indexOf("") !== -1) {
+    if (labelCondition.indexOf('') !== -1) {
       labelCondition.push(undefined);
     }
     var labelQuery;
@@ -2264,34 +2010,34 @@ const advanceSearch = async (req, res) => {
       labelQuery = { label: { $nin: labelCondition } };
     }
 
-    labelQuery = query["$and"].push(labelQuery);
+    labelQuery = query['$and'].push(labelQuery);
   }
   if (tagsCondition && tagsCondition.length) {
     if (tagsCondition.indexOf(false) !== -1) {
       tagsCondition.splice(tagsCondition.indexOf(false), 1);
-      var tagsQuery = {
+      const tagsQuery = {
         $or: [
           { tags: { $elemMatch: { $in: tagsCondition } } },
           { tags: [] },
           { tags: undefined },
         ],
       };
-      query["$and"].push(tagsQuery);
+      query['$and'].push(tagsQuery);
     } else {
       var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
-      query["$and"].push(tagsQuery);
+      query['$and'].push(tagsQuery);
     }
   }
   if (brokerageCondition && brokerageCondition.length) {
     if (brokerageCondition.indexOf(false) !== -1) {
-      var brokerageQuery = {
+      const brokerageQuery = {
         $or: [
           { brokerage: { $in: brokerageCondition } },
-          { brokerage: "" },
+          { brokerage: '' },
           { brokerage: undefined },
         ],
       };
-      query["$and"].push(brokerageQuery);
+      query['$and'].push(brokerageQuery);
     } else {
       var brokerageQuery;
       if (includeBrokerage) {
@@ -2300,53 +2046,50 @@ const advanceSearch = async (req, res) => {
         brokerageQuery = { brokerage: { $nin: brokerageCondition } };
       }
 
-      query["$and"].push(brokerageQuery);
+      query['$and'].push(brokerageQuery);
     }
   }
   if (countryCondition) {
     var countryQuery = { country: countryCondition };
-    query["$and"].push(countryQuery);
+    query['$and'].push(countryQuery);
   }
   if (regionCondition && regionCondition.length) {
     var regionQuery = { state: { $in: regionCondition } };
-    query["$and"].push(regionQuery);
+    query['$and'].push(regionQuery);
   }
   if (cityCondition) {
-    var cityQuery = { city: { $regex: ".*" + cityCondition + ".*" } };
-    query["$and"].push(cityQuery);
+    var cityQuery = { city: { $regex: '.*' + cityCondition + '.*' } };
+    query['$and'].push(cityQuery);
   }
   if (zipcodeCondition) {
-    var zipQuery = { zip: { $regex: ".*" + zipcodeCondition + ".*" } };
-    query["$and"].push(zipQuery);
+    var zipQuery = { zip: { $regex: '.*' + zipcodeCondition + '.*' } };
+    query['$and'].push(zipQuery);
   }
 
   // Activity Time Query
   var contacts = await Contact.find(query)
-    .populate({ path: "last_activity" })
+    .populate({ path: 'last_activity' })
     .sort({ first_name: 1 })
     .catch((err) => {
-      console.log("err", err);
+      console.log('err', err);
     });
 
   let results = [];
-  let resultContactIds = [];
+  const resultContactIds = [];
   if (
     (activityCondition && activityCondition.length) ||
     activityStart ||
     activityEnd ||
-    lastMaterial["send_video"]["flag"] ||
-    lastMaterial["send_pdf"]["flag"] ||
-    lastMaterial["send_image"]["flag"] ||
-    lastMaterial["watched_video"]["flag"] ||
-    lastMaterial["watched_pdf"]["flag"] ||
-    lastMaterial["watched_image"]["flag"]
+    lastMaterial['send_video']['flag'] ||
+    lastMaterial['send_pdf']['flag'] ||
+    lastMaterial['send_image']['flag'] ||
+    lastMaterial['watched_video']['flag'] ||
+    lastMaterial['watched_pdf']['flag'] ||
+    lastMaterial['watched_image']['flag']
   ) {
-    await asyncForEach(contacts, async (e) => {
-      let activity = e.last_activity;
+    contacts.forEach((e) => {
+      const activity = e.last_activity;
       if (!activity) {
-        return;
-      }
-      if (await checkFollowUpCondition(includeFollowUps, e, currentUser)) {
         return;
       }
       if (activityStart || activityEnd) {
@@ -2362,12 +2105,12 @@ const advanceSearch = async (req, res) => {
         }
         if (
           !(
-            lastMaterial["send_video"]["flag"] ||
-            lastMaterial["send_pdf"]["flag"] ||
-            lastMaterial["send_image"]["flag"] ||
-            lastMaterial["watched_video"]["flag"] ||
-            lastMaterial["watched_pdf"]["flag"] ||
-            lastMaterial["watched_image"]["flag"]
+            lastMaterial['send_video']['flag'] ||
+            lastMaterial['send_pdf']['flag'] ||
+            lastMaterial['send_image']['flag'] ||
+            lastMaterial['watched_video']['flag'] ||
+            lastMaterial['watched_pdf']['flag'] ||
+            lastMaterial['watched_image']['flag']
           ) &&
           !activityCondition.length
         ) {
@@ -2376,108 +2119,108 @@ const advanceSearch = async (req, res) => {
           return;
         }
       }
-      if (lastMaterial["send_video"]["flag"]) {
-        if (lastMaterial["send_video"]["material"]) {
+      if (lastMaterial['send_video']['flag']) {
+        if (lastMaterial['send_video']['material']) {
           if (
-            activity.type == "videos" &&
-            activity.videos == lastMaterial["send_video"]["material"]
+            activity.type === 'videos' &&
+            activity.videos === lastMaterial['send_video']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "videos") {
+          if (activity.type === 'videos') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         }
       }
-      if (lastMaterial["send_pdf"]["flag"]) {
-        if (lastMaterial["send_pdf"]["material"]) {
+      if (lastMaterial['send_pdf']['flag']) {
+        if (lastMaterial['send_pdf']['material']) {
           if (
-            activity.type == "pdfs" &&
-            activity.pdfs == lastMaterial["send_pdf"]["material"]
+            activity.type === 'pdfs' &&
+            activity.pdfs === lastMaterial['send_pdf']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "pdfs") {
+          if (activity.type === 'pdfs') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         }
       }
-      if (lastMaterial["send_image"]["flag"]) {
-        if (lastMaterial["send_image"]["material"]) {
+      if (lastMaterial['send_image']['flag']) {
+        if (lastMaterial['send_image']['material']) {
           if (
-            activity.type == "images" &&
-            activity.images == lastMaterial["send_image"]["material"]
+            activity.type === 'images' &&
+            activity.images === lastMaterial['send_image']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "images") {
+          if (activity.type === 'images') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         }
       }
-      if (lastMaterial["watched_video"]["flag"]) {
-        if (lastMaterial["watched_video"]["material"]) {
+      if (lastMaterial['watched_video']['flag']) {
+        if (lastMaterial['watched_video']['material']) {
           if (
-            activity.type == "video_trackers" &&
-            activity.videos == lastMaterial["watched_video"]["material"]
+            activity.type === 'video_trackers' &&
+            activity.videos === lastMaterial['watched_video']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "video_trackers") {
+          if (activity.type === 'video_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         }
       }
-      if (lastMaterial["watched_pdf"]["flag"]) {
-        if (lastMaterial["watched_pdf"]["material"]) {
+      if (lastMaterial['watched_pdf']['flag']) {
+        if (lastMaterial['watched_pdf']['material']) {
           if (
-            activity.type == "pdf_trackers" &&
-            activity.pdfs == lastMaterial["watched_pdf"]["material"]
+            activity.type === 'pdf_trackers' &&
+            activity.pdfs === lastMaterial['watched_pdf']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "pdf_trackers") {
+          if (activity.type === 'pdf_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         }
       }
-      if (lastMaterial["watched_image"]["flag"]) {
-        if (lastMaterial["watched_image"]["material"]) {
+      if (lastMaterial['watched_image']['flag']) {
+        if (lastMaterial['watched_image']['material']) {
           if (
-            activity.type == "image_trackers" &&
-            activity.pdfs == lastMaterial["watched_image"]["material"]
+            activity.type === 'image_trackers' &&
+            activity.pdfs === lastMaterial['watched_image']['material']
           ) {
             results.push(e);
             resultContactIds.push(e._id);
             return;
           }
         } else {
-          if (activity.type == "image_trackers") {
+          if (activity.type === 'image_trackers') {
             results.push(e);
             resultContactIds.push(e._id);
             return;
@@ -2488,28 +2231,19 @@ const advanceSearch = async (req, res) => {
         if (activityCondition.indexOf(activity.type) !== -1) {
           results.push(e);
           resultContactIds.push(e._id);
-          return;
         }
       }
     });
-
     if (!includeLastActivity) {
       results = [];
-      await asyncForEach(contacts, async (e) => {
-        if (await checkFollowUpCondition(includeFollowUps, e, currentUser)) {
-          return;
-        }
+      contacts.forEach((e) => {
         if (resultContactIds.indexOf(e._id) === -1) {
           results.push(e);
         }
       });
     }
   } else {
-    await asyncForEach(contacts, async (e) => {
-      if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
-        results.push(e);
-      }
-    });
+    results = contacts;
   }
 
   const count = await Contact.countDocuments({ user: currentUser.id });
@@ -2521,43 +2255,19 @@ const advanceSearch = async (req, res) => {
   });
 };
 
-async function asyncForEach(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-}
-
-const checkFollowUpCondition = async (
-  includeFollowUps,
-  contact,
-  currentUser
-) => {
-  const contactFollowUps = await FollowUp.find({
-    user: currentUser.id,
-    contact: contact._id,
-    status: { $ne: -1 },
-  }).sort({ due_date: 1 });
-  if (
-    !includeFollowUps &&
-    contactFollowUps !== null &&
-    contactFollowUps.length > 0
-  ) {
-    return true;
-  }
-};
 const getBrokerages = async (req, res) => {
   const { currentUser } = req;
 
-  data = await Contact.aggregate([
+  const data = await Contact.aggregate([
     {
       $match: { user: mongoose.Types.ObjectId(currentUser.id) },
     },
-    { $group: { _id: "$brokerage" } },
+    { $group: { _id: '$brokerage' } },
     {
       $sort: { _id: 1 },
     },
   ]).catch((err) => {
-    console.log("err", err);
+    console.log('err', err);
   });
 
   return res.send({
@@ -2569,16 +2279,16 @@ const getBrokerages = async (req, res) => {
 const getSources = async (req, res) => {
   const { currentUser } = req;
 
-  data = await Contact.aggregate([
+  const data = await Contact.aggregate([
     {
       $match: { user: mongoose.Types.ObjectId(currentUser.id) },
     },
-    { $group: { _id: "$source" } },
+    { $group: { _id: '$source' } },
     {
       $sort: { _id: 1 },
     },
   ]).catch((err) => {
-    console.log("err", err);
+    console.log('err', err);
   });
 
   return res.send({
@@ -2591,7 +2301,7 @@ const getNthContact = async (req, res) => {
   const { currentUser } = req;
   const skip = req.params.id;
 
-  contact = await Contact.aggregate([
+  const contact = await Contact.aggregate([
     {
       $match: { user: currentUser.id },
     },
@@ -2610,7 +2320,7 @@ const loadFollows = async (req, res) => {
 
   const _follow_up = await FollowUp.find({
     user: currentUser.id,
-    contact: contact,
+    contact,
     status: { $ne: -1 },
   }).sort({ due_date: 1 });
   return res.send({
@@ -2618,33 +2328,34 @@ const loadFollows = async (req, res) => {
     follow_ups: _follow_up,
   });
 };
+
 const loadTimelines = async (req, res) => {
   const { currentUser } = req;
   const { contact } = req.body;
 
   const _timelines = await TimeLine.find({
     user: currentUser.id,
-    contact: contact,
+    contact,
   });
   let automation = {};
   if (_timelines.length) {
-    automation = await Automation.findOne({ _id: _timelines[0]["automation"] })
+    automation = await Automation.findOne({ _id: _timelines[0]['automation'] })
       .select({ title: 1 })
       .catch((err) => {
-        console.log("err", err);
+        console.log('err', err);
       });
   }
   return res.send({
     status: true,
     timelines: _timelines,
-    automation: automation,
+    automation,
   });
 };
 
 const selectAllContacts = async (req, res) => {
   const { currentUser } = req;
 
-  const contacts = await Contact.find({ user: currentUser.id }).select("_id");
+  const contacts = await Contact.find({ user: currentUser.id }).select('_id');
   return res.send({
     status: true,
     data: contacts,
@@ -2657,7 +2368,7 @@ const checkEmail = async (req, res) => {
 
   const contacts = await Contact.find({
     user: currentUser.id,
-    email: { $regex: new RegExp("^" + email + "$", "i") },
+    email: { $regex: new RegExp('^' + email + '$', 'i') },
   });
   return res.send({
     status: true,
@@ -2669,18 +2380,255 @@ const checkPhone = async (req, res) => {
   const { currentUser } = req;
   const { cell_phone } = req.body;
 
-  if (typeof cell_phone == "object") {
+  if (typeof cell_phone === 'object') {
     return;
   }
 
   const contacts = await Contact.find({
     user: currentUser.id,
-    cell_phone: cell_phone,
+    cell_phone,
   });
   return res.send({
     status: true,
     data: contacts,
   });
+};
+
+const loadDuplication = async (req, res) => {
+  const { currentUser } = req;
+  const duplications = await Contact.aggregate([
+    {
+      $match: {
+        user: mongoose.Types.ObjectId(currentUser._id),
+      },
+    },
+    {
+      $group: {
+        _id: { email: '$email' },
+        count: { $sum: 1 },
+        contacts: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $match: { count: { $gte: 2 } },
+    },
+  ]).catch((err) => {
+    console.log('err', err);
+    return res.status(500).send({
+      status: false,
+      error: err.error,
+    });
+  });
+
+  return res.send({
+    status: true,
+    data: duplications,
+  });
+};
+
+const mergeContacts = (req, res) => {
+  const { currentUser } = req;
+  const { primary, secondaries, result } = req.body;
+  delete result['_id'];
+  Contact.updateOne({ _id: mongoose.Types.ObjectId(primary) }, { $set: result })
+    .then((data) => {
+      Contact.deleteMany({ _id: { $in: secondaries } })
+        .then(async (data) => {
+          await Activity.deleteMany({
+            contacts: { $in: secondaries },
+            type: 'contacts',
+          });
+          await Activity.updateMany(
+            { contacts: { $in: secondaries } },
+            { $set: { contacts: mongoose.Types.ObjectId(primary) } }
+          );
+          await EmailTracker.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await Email.updateMany(
+            { contacts: { $in: secondaries } },
+            { $set: { contacts: mongoose.Types.ObjectId(primary) } }
+          );
+          await FollowUp.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await ImageTracker.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await Note.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await PDFTracker.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await PhoneLog.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await Reminder.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          await VideoTracker.updateMany(
+            { contact: { $in: secondaries } },
+            { $set: { contact: mongoose.Types.ObjectId(primary) } }
+          );
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((e) => {
+          console.log('error', e);
+          return res.status(500).send({
+            status: false,
+            error: e.error,
+          });
+        });
+      // TimeLine.updateMany({contact: {$in: secondaries}}, {$set: {contact: mongoose.Types.ObjectId(primary)}});
+    })
+    .catch((e) => {
+      console.log('error', e);
+      return res.status(500).send({
+        status: false,
+        error: e.error,
+      });
+    });
+};
+
+const bulkCreate = async (req, res) => {
+  const { contacts } = req.body;
+  const { currentUser } = req;
+  let count = 0;
+  let max_count = 0;
+  if (!currentUser.contact) {
+    count = await Contact.countDocuments({ user: currentUser.id });
+    max_count = config.MAX_CONTACT;
+  } else {
+    count = currentUser.contact.count;
+    max_count = currentUser.contact.max_count;
+  }
+
+  const failure = [];
+  const succeed = [];
+  const promise_array = [];
+  for (let i = 0; i < contacts.length; i++) {
+    const promise = new Promise(async (resolve, reject) => {
+      const data = contacts[i];
+      count += 1;
+      if (max_count < count) {
+        const field = {
+          id: i,
+          email: data['email'],
+          cell_phone: data['cell_phone'],
+          err: 'Exceed upload max contacts',
+        };
+        failure.push(field);
+        resolve();
+        return;
+      }
+      const contact = new Contact({
+        ...data,
+        user: currentUser.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      contact
+        .save()
+        .then((_contact) => {
+          succeed.push(_contact);
+          const activity = new Activity({
+            content: 'added contact',
+            contacts: _contact.id,
+            user: currentUser.id,
+            type: 'contacts',
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+          activity
+            .save()
+            .then((_activity) => {
+              Contact.findByIdAndUpdate(_contact.id, {
+                $set: { last_activity: _activity.id },
+              }).catch((err) => {
+                console.log('err', err);
+              });
+            })
+            .catch((err) => {
+              console.log('err', err);
+            });
+          resolve();
+        })
+        .catch((err) => {
+          console.log('err', err);
+        });
+    });
+
+    promise_array.push(promise);
+  }
+
+  Promise.all(promise_array).then(function () {
+    const contact_info = {
+      count,
+      max_count,
+    };
+    currentUser.contact = contact_info;
+    currentUser.save().catch((err) => {
+      console.log('err', err);
+    });
+    return res.send({
+      status: true,
+      failure,
+      succeed,
+    });
+  });
+};
+
+const verifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const verifier = new Verifier(config.EMAIL_VERIFICATION_KEY, {
+    checkFree: false,
+    checkDisposable: false,
+    checkCatchAll: false,
+  });
+  verifier.verify(email, (err, data) => {
+    if (err) {
+      return res.status(400).json({
+        status: false,
+        error: err.message || err.msg,
+      });
+    }
+    if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
+      return res.send({
+        status: true,
+      });
+    } else {
+      return res.status(400).json({
+        status: false,
+        error: 'Email is not valid one',
+      });
+    }
+  });
+};
+
+const verifyPhone = async (req, res) => {
+  const { cell_phone } = req.body;
+  const e164Phone = phone(cell_phone)[0];
+
+  if (e164Phone) {
+    return res.send({
+      status: true,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Phone Number',
+    });
+  }
 };
 
 module.exports = {
@@ -2699,8 +2647,8 @@ module.exports = {
   edit,
   bulkEditLabel,
   bulkUpdate,
-  receiveEmail,
   importCSV,
+  overwriteCSV,
   exportCSV,
   getById,
   getByIds,
@@ -2711,4 +2659,9 @@ module.exports = {
   selectAllContacts,
   checkEmail,
   checkPhone,
+  loadDuplication,
+  mergeContacts,
+  bulkCreate,
+  verifyEmail,
+  verifyPhone,
 };

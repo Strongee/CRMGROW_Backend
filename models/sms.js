@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
-const SMS = mongoose.model('sms',{
+const Schema = mongoose.Schema;
+
+const SMSSchema = new Schema(
+  {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     phone: String,
@@ -8,6 +11,12 @@ const SMS = mongoose.model('sms',{
     from: String,
     updated_at: Date,
     created_at: Date,
- });
+  },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  }
+);
 
- module.exports = SMS
+const SMS = mongoose.model('sms', SMSSchema);
+
+module.exports = SMS;

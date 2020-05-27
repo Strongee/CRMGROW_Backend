@@ -1,26 +1,39 @@
-const express = require('express')
+const express = require('express');
 
-const UserCtrl = require('../controllers/user')
-const AutomationCtrl = require('../controllers/automation')
-const { catchError } = require('../controllers/error')
+const UserCtrl = require('../controllers/user');
+const AutomationCtrl = require('../controllers/automation');
+const { catchError } = require('../controllers/error');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/search', UserCtrl.checkAuth, catchError(AutomationCtrl.search))
+router.post('/search', UserCtrl.checkAuth, catchError(AutomationCtrl.search));
 
-router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create))
+router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create));
 
-router.put('/:id' , UserCtrl.checkAuth, catchError(AutomationCtrl.update))
+router.put('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.update));
 
-router.delete('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.remove))
+router.delete('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.remove));
 
-router.get('/list/:page' , UserCtrl.checkAuth, catchError(AutomationCtrl.getPage))
+router.get(
+  '/list/:page',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getPage)
+);
 
-router.post('/detail/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.getStatus))
+router.post(
+  '/detail/:id',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getStatus)
+);
 
-router.get('/:id' , UserCtrl.checkAuth, catchError(AutomationCtrl.get))
+router.get('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
 
 // Default Video Edit
-router.post('/update-admin', UserCtrl.checkAuth, UserCtrl.checkSuspended, catchError(AutomationCtrl.updateDefault))
+router.post(
+  '/update-admin',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(AutomationCtrl.updateDefault)
+);
 
-module.exports = router
+module.exports = router;
