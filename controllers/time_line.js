@@ -355,7 +355,7 @@ const runTimeline = async (id) => {
         };
         TextHelper.bulkPDF(data)
           .then((res) => {
-            if (res[0] && res[0].status == true) {
+            if (res[0] && res[0].status === true) {
               timeline['status'] = 'completed';
               timeline['updated_at'] = new Date();
               timeline.save().catch((err) => {
@@ -384,7 +384,7 @@ const runTimeline = async (id) => {
         };
         EmailHelper.bulkPDF(data)
           .then((res) => {
-            if (res[0] && res[0].status == true) {
+            if (res[0] && res[0].status === true) {
               timeline['status'] = 'completed';
               timeline['updated_at'] = new Date();
               timeline.save().catch((err) => {

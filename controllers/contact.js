@@ -1404,6 +1404,10 @@ const advanceSearch = async (req, res) => {
     includeLastActivity,
     includeBrokerage,
   } = req.body;
+  let { includeFollowUps } = req.body;
+  if (includeFollowUps === null || includeFollowUps === 'undifined') {
+    includeFollowUps = true;
+  }
 
   // Material Check
   let watchedVideoContacts = [];
@@ -1961,7 +1965,7 @@ const advanceSearch = async (req, res) => {
 
   if (recruitingStageCondition && recruitingStageCondition.length) {
     if (recruitingStageCondition.indexOf(false) !== -1) {
-      var stageQuery = {
+      const stageQuery = {
         $or: [
           { recruiting_stage: { $in: recruitingStageCondition } },
           { recruiting_stage: '' },
@@ -1970,7 +1974,7 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(stageQuery);
     } else {
-      let stageQuery = {};
+      var stageQuery = {};
       if (includeStage) {
         stageQuery = { recruiting_stage: { $in: recruitingStageCondition } };
       } else {
@@ -2087,9 +2091,12 @@ const advanceSearch = async (req, res) => {
     lastMaterial['watched_pdf']['flag'] ||
     lastMaterial['watched_image']['flag']
   ) {
-    contacts.forEach((e) => {
+    await asyncForEach(contacts, async (e) => {
       const activity = e.last_activity;
       if (!activity) {
+        return;
+      }
+      if (await checkFollowUpCondition(includeFollowUps, e, currentUser)) {
         return;
       }
       if (activityStart || activityEnd) {
@@ -2234,16 +2241,24 @@ const advanceSearch = async (req, res) => {
         }
       }
     });
+
     if (!includeLastActivity) {
       results = [];
-      contacts.forEach((e) => {
+      await asyncForEach(contacts, async (e) => {
+        if (await checkFollowUpCondition(includeFollowUps, e, currentUser)) {
+          return;
+        }
         if (resultContactIds.indexOf(e._id) === -1) {
           results.push(e);
         }
       });
     }
   } else {
-    results = contacts;
+    await asyncForEach(contacts, async (e) => {
+      if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
+        results.push(e);
+      }
+    });
   }
 
   const count = await Contact.countDocuments({ user: currentUser.id });
@@ -2255,6 +2270,30 @@ const advanceSearch = async (req, res) => {
   });
 };
 
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+const checkFollowUpCondition = async (
+  includeFollowUps,
+  contact,
+  currentUser
+) => {
+  const contactFollowUps = await FollowUp.find({
+    user: currentUser.id,
+    contact: contact._id,
+    status: { $ne: -1 },
+  }).sort({ due_date: 1 });
+  if (
+    !includeFollowUps &&
+    contactFollowUps !== null &&
+    contactFollowUps.length > 0
+  ) {
+    return true;
+  }
+};
 const getBrokerages = async (req, res) => {
   const { currentUser } = req;
 

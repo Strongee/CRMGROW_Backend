@@ -4,9 +4,9 @@
   "description": "Teamgrow backend",
   "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=production node ./bin/www",
-    "staging": "NODE_ENV=staging node ./bin/www",
-    "dev": "nodemon ./bin/www",
+    "start": "NODE_ENV=production node ./bin/www > log/logFile.log",
+    "staging": "NODE_ENV=staging node ./bin/www > log/logFile.log",
+    "dev": "nodemon ./bin/www > log/logFile.log",
     "lint": "eslint '*.js' --quiet --fix",
     "format": "prettier '*.js' --write",
     "lint-fix": "bash fixTab.sh && eslint config controllers models routes --fix",
@@ -114,7 +114,6 @@
     "*.js": [
       "npm run lint",
       "npm run format",
-      "git add",
       "eslint --cache --fix"
     ]
   },
