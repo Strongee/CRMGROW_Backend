@@ -85,6 +85,9 @@ const play = async (req, res) => {
 
     let theme = 'theme2';
     let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
     if (garbage) {
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
@@ -94,6 +97,9 @@ const play = async (req, res) => {
       }
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
     } else {
       capture_dialog = false;
     }
@@ -127,6 +133,9 @@ const play = async (req, res) => {
       social_link,
       setting: {
         logo,
+        highlights,
+        brands,
+        intro_video,
       },
     });
   } else {
@@ -177,9 +186,13 @@ const play1 = async (req, res) => {
 
     let theme = 'theme2';
     let logo;
+    let highlights = [];
+    let brands = [];
     if (garbage) {
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
     }
 
     return res.render('video_' + theme, {
@@ -190,6 +203,8 @@ const play1 = async (req, res) => {
       social_link,
       setting: {
         logo,
+        highlights,
+        brands,
       },
     });
   } else {

@@ -24,6 +24,7 @@ const automation = require('./automation');
 const timeline = require('./time_line');
 const page = require('./page');
 const guest = require('./guest');
+const assets = require('./assets');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -57,6 +58,7 @@ router.use('/automation', automation);
 router.use('/timeline', timeline);
 router.use('/page', page);
 router.use('/guest', guest);
+router.use('/assets', assets);
 router.use('/admin', admin);
 
 module.exports = router;

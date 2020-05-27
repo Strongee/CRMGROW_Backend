@@ -481,3 +481,10 @@ body {
     font-size: 12px;
     display: none;
 }
+
+.intro_video{
+    max-width: 400px;
+    height: 180px;
+    margin: auto;
+    border-radius: 5px;
+}

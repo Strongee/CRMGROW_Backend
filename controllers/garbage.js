@@ -1,4 +1,5 @@
 const Garbage = require('../models/garbage');
+const { removeFile } = require('../helpers/fileUpload');
 
 const get = async (req, res) => {
   const data = await Garbage.find({ _id: req.params.id });
@@ -86,8 +87,59 @@ const edit = async (req, res) => {
   }
 };
 
+const uploadIntroVideo = async (req, res) => {
+  const { currentUser } = req;
+  const introVideoObject = req.file;
+  const introVideo = introVideoObject.location;
+  try {
+    const currentGarbage = await Garbage.find({ user: currentUser._id });
+    if (currentGarbage) {
+      if (currentGarbage.intro_video) {
+        try {
+          await removeFile(currentGarbage.intro_video);
+        } catch (err) {
+          console.log('Remove the Intro Video: ', err);
+        }
+      }
+      currentGarbage.intro_video = introVideo;
+      Garbage.update(
+        { user: currentUser._id },
+        { $set: { intro_video: introVideo } }
+      )
+        .then(() => {
+          return res.send({
+            status: true,
+            data: { intro_video: introVideo },
+          });
+        })
+        .catch((err) => {
+          return res.status(500).send({
+            status: false,
+            data: err.message,
+          });
+        });
+    } else {
+      const newGarbage = new Garbage({
+        intro_video: introVideo,
+        user: currentUser._id,
+      });
+      newGarbage.save().then((_garbage) => {
+        return res.send({
+          status: true,
+          data: _garbage,
+        });
+      });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ status: false, error: err.message || 'Internal server error' });
+  }
+};
+
 module.exports = {
   get,
   create,
   edit,
+  uploadIntroVideo,
 };

@@ -15,6 +15,10 @@ var duration = document.querySelector("#video-duration").value;
 
 (function($) {
     $(document).ready(function() {
+        if(document.querySelector(".intro_video")) {
+            console.log(document.querySelector(".intro_video"));
+        }
+
         let delayTime = parseInt($("#delay").val());
         let showable = $('#showable').val();
         if(showable == 'true') {
