@@ -15,7 +15,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "prettier/prettier": "error",
+    "prettier/prettier": 0,
     "quotes": 0,
     "no-underscore-dangle": 0,
     "camelcase": 0,
@@ -49,6 +49,6 @@
     "no-async-promise-executor": 0,
     "no-unused-expressions": 0, // "no-unused-expressions" used in /controllers/contact.js
     "radix": 0,
-    "import/order" : 0 
+    "import/order" : 0
   }
 }
