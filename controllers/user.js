@@ -830,10 +830,10 @@ const checkAuth = async (req, res, next) => {
   const token = req.get('Authorization');
   let decoded;
   try {
-    decoded = jwt.verify(token, config.JWT_SECRET);
+    decoded = jwt.verify(token, config.JWT_SECRET).;
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   } catch (err) {
-    console.error(err);
+    console.log('check verify error', err.message || err.msg);
 
     return res.status(401).send({
       status: false,
