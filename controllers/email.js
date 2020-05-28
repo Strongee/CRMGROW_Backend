@@ -46,7 +46,6 @@ const twilio = require('twilio')(accountSid, authToken);
 const emailHelper = require('../helpers/email');
 
 const bulkGmail = async (req, res) => {
-  console.error('here');
   const { currentUser } = req;
   const { cc, bcc, to, subject, content, contacts, attachments } = req.body;
   const promise_array = [];
