@@ -17,17 +17,6 @@ const EmailCtrl = require('./controllers/email');
 const { catchError } = require('./controllers/error');
 
 const app = express();
-const logPath = path.join(__dirname, 'log', 'logfile.log');
-if (!fs.existsSync(logPath)) {
-  fs.mkdirSync(path.dirname(logPath));
-  fs.writeFileSync(logPath, { flags: 'wx' });
-}
-app.use(
-  logger('dev', {
-    stream: fs.createWriteStream(logPath, { flags: 'a' }),
-  })
-);
-
 app.use(cors());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');

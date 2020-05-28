@@ -283,3 +283,10 @@ footer {
   display: block;
   color: white;
 }
+
+.intro_video{
+  max-width: 400px;
+  height: 180px;
+  margin: auto;
+  border-radius: 5px;
+}

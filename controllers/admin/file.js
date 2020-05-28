@@ -59,6 +59,7 @@ const remove = async (req, res) => {
       });
     }
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error(e);
     res.status(500).send({
       status: false,

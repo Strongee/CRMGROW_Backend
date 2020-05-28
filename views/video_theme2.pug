@@ -73,38 +73,60 @@ section.material-section
 .highlights-section
   h3.text-center Company Hightlights
   .container.cs-container.hightlights-slider
-    .highlights
-      .highlight-item
-        img(src='./theme/images/highlight (1).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (2).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (3).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (4).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (5).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (6).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (7).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (8).jpg')
-      .highlight-item
-        img(src='./theme/images/highlight (9).jpg')
+    if setting.highlights && setting.highlights.length
+      .highlights
+        each highlight in setting.highlights
+          .highlight-item
+            .highlight-item-wrapper
+              img(src=highlight)
+    else
+      .highlights
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (1).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (2).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (3).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (4).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (5).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (6).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (7).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (8).jpg')
+        .highlight-item
+          .highlight-item-wrapper
+            img(src='./theme/images/highlight (9).jpg')
 .logos-section
   h3.text-center As Seen On:
-  .logos.justify-content-center
-    .logo-item
-      img(src='./theme/images/forbes-gray.png')
-    .logo-item
-      img(src='./theme/images/nasdao.png')
-    .logo-item
-      img(src='./theme/images/yahoo-finance.png')
-    .logo-item
-      img(src='./theme/images/housingwire.png')
-    .logo-item
-      img(src='./theme/images/marketwatch.png')
+  if setting.brands && setting.brands.length
+    .logos.justify-content-center
+      each brand in setting.brands
+        .logo-item
+          img(src=brand)      
+  else 
+    .logos.justify-content-center
+      .logo-item
+        img(src='./theme/images/forbes-gray.png')
+      .logo-item
+        img(src='./theme/images/nasdao.png')
+      .logo-item
+        img(src='./theme/images/yahoo-finance.png')
+      .logo-item
+        img(src='./theme/images/housingwire.png')
+      .logo-item
+        img(src='./theme/images/marketwatch.png')
 footer
   .container.cs-container
     .disclaim

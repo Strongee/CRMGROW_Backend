@@ -7,6 +7,7 @@ const FileSchema = new Schema(
     name: String,
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     type: String,
+    url: String,
     created_at: Date,
     updated_at: Date,
   },
