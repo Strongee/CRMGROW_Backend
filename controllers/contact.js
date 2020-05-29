@@ -2034,7 +2034,13 @@ const advanceSearch = async (req, res) => {
       if (includeTag) {
         tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
       } else {
-        tagsQuery = { tags: { $elemMatch: { $nin: tagsCondition } } };
+        tagsQuery = {
+          $or: [
+            { tags: { $elemMatch: { $nin: tagsCondition } } },
+            { tags: [] },
+            { tags: undefined },
+          ],
+        };
       }
       query['$and'].push(tagsQuery);
     }
@@ -2054,7 +2060,13 @@ const advanceSearch = async (req, res) => {
       if (includeBrokerage) {
         brokerageQuery = { brokerage: { $in: brokerageCondition } };
       } else {
-        brokerageQuery = { brokerage: { $nin: brokerageCondition } };
+        brokerageQuery = {
+          $or: [
+            { brokerage: { $nin: brokerageCondition } },
+            { brokerage: undefined },
+            { brokerage: '' },
+          ],
+        };
       }
 
       query['$and'].push(brokerageQuery);
