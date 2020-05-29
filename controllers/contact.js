@@ -1404,6 +1404,7 @@ const advanceSearch = async (req, res) => {
     includeSource,
     includeLastActivity,
     includeBrokerage,
+    includeTag,
   } = req.body;
   let { includeFollowUps } = req.body;
   if (includeFollowUps === null || includeFollowUps === 'undifined') {
@@ -2029,7 +2030,12 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(tagsQuery);
     } else {
-      var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      var tagsQuery;
+      if (includeTag) {
+        tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      } else {
+        tagsQuery = { tags: { $elemMatch: { $nin: tagsCondition } } };
+      }
       query['$and'].push(tagsQuery);
     }
   }
