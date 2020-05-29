@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 const { google } = require('googleapis');
 const sgMail = require('@sendgrid/mail');
 
-const config = require('../config/config');
+const api = require('../config/api');
 const urls = require('../constants/urls');
 const time_zone = require('../constants/time_zone');
 const mail_contents = require('../constants/mail_contents');
@@ -15,8 +15,8 @@ const User = require('../models/user');
 const Contact = require('../models/contact');
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
@@ -301,8 +301,8 @@ const get = async (req, res) => {
       });
     } else {
       const oauth2Client = new google.auth.OAuth2(
-        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
 
@@ -474,8 +474,8 @@ const create = async (req, res) => {
         });
     } else {
       const oauth2Client = new google.auth.OAuth2(
-        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
       const token = JSON.parse(currentUser.google_refresh_token);
@@ -569,14 +569,14 @@ const create = async (req, res) => {
       .replace(/-|:|\.\d\d\d/g, '');
     const ctz = time_zone[currentUser.time_zone];
 
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     for (let i = 0; i < _appointment.guests.length; i++) {
       Promise((resolve, reject) => {
         const msg = {
           to: _appointment.guests[i],
           from: currentUser.email,
-          templateId: config.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
+          templateId: api.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
           dynamic_template_data: {
             event_title: _appointment.title,
             description: _appointment.description,
@@ -787,8 +787,8 @@ const edit = async (req, res) => {
       });
     } else {
       const oauth2Client = new google.auth.OAuth2(
-        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
 
@@ -957,8 +957,8 @@ const remove = async (req, res) => {
       });
     } else {
       const oauth2Client = new google.auth.OAuth2(
-        config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
@@ -1158,7 +1158,7 @@ const accept = async (req, res) => {
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
     subject: 'Appointment Accept Notification',
-    templateId: config.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
+    templateId: api.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
     dynamic_template_data: {
       event_title: _appointment.title,
       description: _appointment.description,
@@ -1204,7 +1204,7 @@ const decline = async (req, res) => {
     to: user.email,
     from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
     subject: 'Appointment Decline Notification',
-    templateId: config.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
+    templateId: api.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
     dynamic_template_data: {
       event_title: _appointment.title,
       description: _appointment.description,

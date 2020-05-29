@@ -8,7 +8,7 @@ const Video = require('../models/video');
 const Activity = require('../models/activity');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-const config = require('../config/config');
+const api = require('../config/api');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -96,8 +96,8 @@ const createbyDesktop = async (req, res) => {
   if (currentUser.desktop_notification === true) {
     webpush.setVapidDetails(
       'mailto:support@teamgrow.co',
-      config.VAPID.PUBLIC_VAPID_KEY,
-      config.VAPID.PRIVATE_VAPID_KEY
+      api.VAPID.PUBLIC_VAPID_KEY,
+      api.VAPID.PRIVATE_VAPID_KEY
     );
 
     const subscription = JSON.parse(
@@ -114,13 +114,13 @@ const createbyDesktop = async (req, res) => {
   }
 
   // send email notification
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const msg = {
     to: currentUser.email,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-    templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+    templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
     dynamic_template_data: {
       first_name: contact.first_name,
       last_name: contact.last_name,
@@ -195,8 +195,8 @@ const disconnect = async (video_tracker_id) => {
   if (currentUser.desktop_notification === true) {
     webpush.setVapidDetails(
       'mailto:support@crmgrow.com',
-      config.VAPID.PUBLIC_VAPID_KEY,
-      config.VAPID.PRIVATE_VAPID_KEY
+      api.VAPID.PUBLIC_VAPID_KEY,
+      api.VAPID.PRIVATE_VAPID_KEY
     );
 
     const subscription = JSON.parse(
@@ -213,13 +213,13 @@ const disconnect = async (video_tracker_id) => {
   }
 
   // send email notification
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const msg = {
     to: currentUser.email,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     subject: mail_contents.NOTIFICATION_SEND_MATERIAL.SUBJECT,
-    templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+    templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
     dynamic_template_data: {
       first_name: contact.first_name,
       last_name: contact.last_name,

@@ -20,12 +20,12 @@ const Email = require('../models/email');
 const EmailTracker = require('../models/email_tracker');
 const User = require('../models/user');
 const mail_contents = require('../constants/mail_contents');
-const config = require('../config/config');
+const api = require('../config/api');
 const urls = require('../constants/urls');
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
@@ -71,7 +71,7 @@ const bulkEmail = async (data) => {
     console.log('user find err', err.message);
   });
   if (!currentUser.primary_connected) {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const promise_array = [];
     let promise;
@@ -220,8 +220,8 @@ const bulkEmail = async (data) => {
     let promise;
 
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
 
@@ -633,7 +633,7 @@ const bulkVideo = async (data) => {
   let promise;
 
   if (!currentUser.primary_connected) {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -855,8 +855,8 @@ const bulkVideo = async (data) => {
     let promise;
 
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
     const token = JSON.parse(currentUser.google_refresh_token);
@@ -1509,7 +1509,7 @@ const bulkPDF = async (data) => {
           '</body></html>',
       };
 
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       promise = new Promise((resolve, reject) => {
         sgMail
@@ -1561,8 +1561,8 @@ const bulkPDF = async (data) => {
     const promise_array = [];
     let promise;
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
     const token = JSON.parse(currentUser.google_refresh_token);
@@ -2187,7 +2187,7 @@ const bulkImage = async (data) => {
           '</body></html>',
       };
 
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       promise = new Promise((resolve, reject) => {
         sgMail
@@ -2475,8 +2475,8 @@ const bulkImage = async (data) => {
     const promise_array = [];
     let promise;
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
     const token = JSON.parse(currentUser.google_refresh_token);

@@ -1,8 +1,9 @@
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const Payment = require('../models/payment');
 const User = require('../models/user');
 
-const stripeKey = config.STRIPE.SECRET_KEY;
+const stripeKey = api.STRIPE.SECRET_KEY;
 
 const stripe = require('stripe')(stripeKey);
 
@@ -30,7 +31,7 @@ const get = async (req, res) => {
       error: 'Payment doesn`t exist',
     });
   }
-  data['bill_amount'] = config.STRIPE.PRIOR_PLAN_AMOUNT;
+  data['bill_amount'] = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
 
   data.save().catch((err) => {
     console.log('err', err);
@@ -59,8 +60,8 @@ const create = async (payment_data) => {
             return;
           }
 
-          const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
-          const pricingPlan = config.STRIPE.PRIOR_PLAN;
+          const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
+          const pricingPlan = api.STRIPE.PRIOR_PLAN;
           createSubscription(customer.id, pricingPlan, card.id)
             .then(async (subscripition) => {
               // Save card information to DB.
@@ -117,8 +118,8 @@ const update = async (req, res) => {
               });
             }
 
-            const pricingPlan = config.STRIPE.PRIOR_PLAN;
-            const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+            const pricingPlan = api.STRIPE.PRIOR_PLAN;
+            const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
             updateSubscription(customer.id, pricingPlan, card.id)
               .then((subscription) => {
                 // Save card information to DB.
@@ -193,8 +194,9 @@ const update = async (req, res) => {
                 });
               }
 
-              const pricingPlan = config.STRIPE.PRIOR_PLAN;
-              const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+              const pricingPlan = api.STRIPE.PRIOR_PLAN;
+              const bill_amount =
+                system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
               updateSubscription(customer.id, pricingPlan, card.id)
                 .then((subscription) => {
                   // Save card information to DB.
@@ -265,8 +267,9 @@ const update = async (req, res) => {
                     });
                   }
 
-                  const pricingPlan = config.STRIPE.PRIOR_PLAN;
-                  const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+                  const pricingPlan = api.STRIPE.PRIOR_PLAN;
+                  const bill_amount =
+                    system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
                   updateSubscription(customer.id, pricingPlan, card.id)
                     .then((subscription) => {
                       // Save card information to DB.
@@ -339,8 +342,9 @@ const update = async (req, res) => {
                       error: 'Card is not valid',
                     });
                   }
-                  const pricingPlan = config.STRIPE.PRIOR_PLAN;
-                  const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+                  const pricingPlan = api.STRIPE.PRIOR_PLAN;
+                  const bill_amount =
+                    system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
 
                   updateSubscription(
                     payment['customer_id'],
@@ -416,8 +420,9 @@ const update = async (req, res) => {
                           error: 'Card is not valid',
                         });
                       }
-                      const pricingPlan = config.STRIPE.PRIOR_PLAN;
-                      const bill_amount = config.STRIPE.PRIOR_PLAN_AMOUNT;
+                      const pricingPlan = api.STRIPE.PRIOR_PLAN;
+                      const bill_amount =
+                        system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
 
                       updateSubscription(
                         payment['customer_id'],

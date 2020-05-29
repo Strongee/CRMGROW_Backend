@@ -1,5 +1,5 @@
-const { validationResult } = require("express-validator/check");
-const Label = require("../models/label");
+const { validationResult } = require('express-validator/check');
+const Label = require('../models/label');
 
 const create = async (req, res) => {
   const { currentUser } = req;
@@ -24,7 +24,7 @@ const create = async (req, res) => {
   } catch (err) {
     return res.status(500).send({
       status: false,
-      error: err.message || "Label creating failed.",
+      error: err.message || 'Label creating failed.',
     });
   }
 };
@@ -36,7 +36,7 @@ const getAll = async (req, res) => {
     if (!data) {
       return res.status(400).json({
         status: false,
-        error: "Label doesn`t exist",
+        error: 'Label doesn`t exist',
       });
     } else {
       res.send({
@@ -47,7 +47,7 @@ const getAll = async (req, res) => {
   } catch (err) {
     res.status(500).send({
       status: false,
-      error: err.message || "Internal server error.",
+      error: err.message || 'Internal server error.',
     });
   }
 };
@@ -55,15 +55,15 @@ const getAll = async (req, res) => {
 const update = async (req, res) => {
   const data = req.body;
   const { currentUser } = req;
-  console.log(data, "DATAAAAAA");
+  console.log(data, 'DATAAAAAA');
   try {
-    let label = await Label.findOne({
+    const label = await Label.findOne({
       user: currentUser.id,
       _id: req.params.id,
     });
-    console.log(label, "LABEEEEEEL");
+    console.log(label, 'LABEEEEEEL');
     if (label) {
-      if (label.user._id != currentUser.id) {
+      if (label.user._id !== currentUser.id) {
         return res.status(400).send({
           status: false,
           error: "This is not your label so couldn't update.",
@@ -83,7 +83,7 @@ const update = async (req, res) => {
   } catch (err) {
     res.status(500).send({
       status: false,
-      error: "Internal server error.",
+      error: 'Internal server error.',
     });
   }
 };
@@ -104,13 +104,13 @@ const remove = async (req, res) => {
     } else {
       res.status(404).send({
         status: false,
-        error: "Label not found.",
+        error: 'Label not found.',
       });
     }
   } catch (err) {
     res.status(500).send({
       status: false,
-      error: "Internal server error.",
+      error: 'Internal server error.',
     });
   }
 };

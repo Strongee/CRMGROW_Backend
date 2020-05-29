@@ -18,10 +18,10 @@ const Reminder = require('../models/reminder');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-const config = require('../config/config');
+const api = require('../config/api');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const createPDF = async (data) => {
@@ -62,8 +62,8 @@ const disconnectPDF = async (pdf_tracker_id) => {
   if (desktop_notification['material'] === true) {
     webpush.setVapidDetails(
       'mailto:support@crmgrow.com',
-      config.VAPID.PUBLIC_VAPID_KEY,
-      config.VAPID.PRIVATE_VAPID_KEY
+      api.VAPID.PUBLIC_VAPID_KEY,
+      api.VAPID.PRIVATE_VAPID_KEY
     );
 
     const subscription = JSON.parse(
@@ -114,7 +114,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
     } else {
       let fromNumber = currentUser['proxy_number'];
       if (!fromNumber) {
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
       }
 
       const title =
@@ -155,7 +155,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
   const email_notification = garbage['email_notification'];
 
   if (email_notification['material']) {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const created_at = moment(query['created_at'])
       .utcOffset(currentUser.time_zone)
@@ -163,7 +163,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
     const msg = {
       to: currentUser.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
         subject: `${mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
         first_name: contact.first_name,
@@ -391,8 +391,8 @@ const disconnectVideo = async (video_tracker_id) => {
     if (desktop_notification['material'] === true) {
       webpush.setVapidDetails(
         'mailto:support@crmgrow.com',
-        config.VAPID.PUBLIC_VAPID_KEY,
-        config.VAPID.PRIVATE_VAPID_KEY
+        api.VAPID.PUBLIC_VAPID_KEY,
+        api.VAPID.PRIVATE_VAPID_KEY
       );
 
       const subscription = JSON.parse(
@@ -442,7 +442,7 @@ const disconnectVideo = async (video_tracker_id) => {
       } else {
         let fromNumber = currentUser['proxy_number'];
         if (!fromNumber) {
-          fromNumber = config.TWILIO.TWILIO_NUMBER;
+          fromNumber = api.TWILIO.TWILIO_NUMBER;
         }
 
         const title =
@@ -484,7 +484,7 @@ const disconnectVideo = async (video_tracker_id) => {
     // send email notification
 
     if (email_notification['material']) {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       const created_at = moment(query['created_at'])
         .utcOffset(currentUser.time_zone)
         .format('h:mm: a');
@@ -492,7 +492,7 @@ const disconnectVideo = async (video_tracker_id) => {
       const msg = {
         to: currentUser.email,
         from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
-        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
           first_name: contact.first_name,
@@ -688,8 +688,8 @@ const disconnectImage = async (image_tracker_id) => {
   if (desktop_notification['material'] === true) {
     webpush.setVapidDetails(
       'mailto:support@crmgrow.com',
-      config.VAPID.PUBLIC_VAPID_KEY,
-      config.VAPID.PRIVATE_VAPID_KEY
+      api.VAPID.PUBLIC_VAPID_KEY,
+      api.VAPID.PRIVATE_VAPID_KEY
     );
 
     const subscription = JSON.parse(
@@ -739,7 +739,7 @@ const disconnectImage = async (image_tracker_id) => {
     } else {
       let fromNumber = currentUser['proxy_number'];
       if (!fromNumber) {
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
       }
 
       const title =
@@ -780,7 +780,7 @@ const disconnectImage = async (image_tracker_id) => {
   const email_notification = garbage['email_notification'];
   // send email notification
   if (email_notification['material']) {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const created_at = moment(query['created_at'])
       .utcOffset(currentUser.time_zone)
@@ -788,7 +788,7 @@ const disconnectImage = async (image_tracker_id) => {
     const msg = {
       to: currentUser.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
       dynamic_template_data: {
         subject: `${mail_contents.NOTIFICATION_REVIEWED_IMAGE.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
         first_name: contact.first_name,

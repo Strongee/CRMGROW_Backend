@@ -15,12 +15,12 @@ const { createCanvas, loadImage } = require('canvas');
 const pngFileStream = require('png-file-stream');
 const sharp = require('sharp');
 const urls = require('../../constants/urls');
-const config = require('../../config/config');
+const api = require('../../config/api');
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const {
@@ -144,7 +144,7 @@ const generatePreview = async (file_path) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: `gif${year}/${month}/${file_name}`,
             Body: data,
             ACL: 'public-read',
@@ -326,7 +326,7 @@ const remove = async (req, res) => {
 
     s3.deleteObject(
       {
-        Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+        Bucket: api.AWS.AWS_S3_BUCKET_NAME,
         Key: url.slice(44),
       },
       function (err, data) {

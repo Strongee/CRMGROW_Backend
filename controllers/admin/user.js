@@ -12,7 +12,7 @@ const Reminder = require('../../models/reminder');
 const FollowUp = require('../../models/follow_up');
 const PaymentCtrl = require('../payment');
 const { isBlockedEmail } = require('../../helpers/email');
-const config = require('../../config/config');
+const config = require('../../config/api');
 const urls = require('../../constants/urls');
 const mail_contents = require('../../constants/mail_contents');
 

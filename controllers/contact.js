@@ -27,11 +27,12 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const urls = require('../constants/urls');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 
@@ -263,7 +264,7 @@ const create = async (req, res) => {
 
   if (!currentUser.contact) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
+    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
@@ -559,7 +560,7 @@ const importCSV = async (req, res) => {
   let max_count = 0;
   if (!currentUser.contact) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
+    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
@@ -1071,11 +1072,11 @@ const leadContact = async (req, res) => {
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
-            sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
               from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
                 first_name,
@@ -1103,8 +1104,8 @@ const leadContact = async (req, res) => {
           if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
               'mailto:support@crmgrow.com',
-              config.VAPID.PUBLIC_VAPID_KEY,
-              config.VAPID.PRIVATE_VAPID_KEY
+              api.VAPID.PUBLIC_VAPID_KEY,
+              api.VAPID.PRIVATE_VAPID_KEY
             );
 
             const subscription = JSON.parse(
@@ -1149,7 +1150,7 @@ const leadContact = async (req, res) => {
             } else {
               let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
-                fromNumber = config.TWILIO.TWILIO_NUMBER;
+                fromNumber = api.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
@@ -1240,11 +1241,11 @@ const leadContact = async (req, res) => {
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
-            sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
               from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT,
                 first_name,
@@ -1272,8 +1273,8 @@ const leadContact = async (req, res) => {
           if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
               'mailto:support@crmgrow.com',
-              config.VAPID.PUBLIC_VAPID_KEY,
-              config.VAPID.PRIVATE_VAPID_KEY
+              api.VAPID.PUBLIC_VAPID_KEY,
+              api.VAPID.PRIVATE_VAPID_KEY
             );
 
             const subscription = JSON.parse(
@@ -1318,7 +1319,7 @@ const leadContact = async (req, res) => {
             } else {
               let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
-                fromNumber = config.TWILIO.TWILIO_NUMBER;
+                fromNumber = api.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
@@ -2546,7 +2547,7 @@ const bulkCreate = async (req, res) => {
   let max_count = 0;
   if (!currentUser.contact) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
+    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
@@ -2629,7 +2630,7 @@ const bulkCreate = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
   const { email } = req.body;
-  const verifier = new Verifier(config.EMAIL_VERIFICATION_KEY, {
+  const verifier = new Verifier(api.EMAIL_VERIFICATION_KEY, {
     checkFree: false,
     checkDisposable: false,
     checkCatchAll: false,

@@ -9,17 +9,18 @@ mongoose
   .connect(DB_PORT, { useNewUrlParser: true })
   .then(() => console.log('Connecting to database successful'))
   .catch((err) => console.error('Could not connect to mongo DB', err));
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Activity = require('../models/activity');
 
 const addContacts = async () => {
-  const admin = await User.findOne({ email: 'support@crmgrow.com' }).catch(
-    (err) => {
-      console.log('err', err);
-    }
-  );
+  const admin = await User.findOne({
+    email: system_settings.ADMIN_ACCOUNT,
+  }).catch((err) => {
+    console.log('err', err);
+  });
   if (admin) {
     const users = await User.find({ del: false }).catch((err) => {
       console.log('err', err);

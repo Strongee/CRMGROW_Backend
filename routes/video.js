@@ -9,20 +9,20 @@ const uuidv1 = require('uuid/v1');
 const VideoCtrl = require('../controllers/video');
 const UserCtrl = require('../controllers/user');
 const { catchError } = require('../controllers/error');
-const config = require('../config/config');
+const api = require('../config/api');
 const { TEMP_PATH } = require('../config/path');
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const router = express.Router();
 
 // const storage = multerS3({
 //     s3: s3,
-//     bucket: config.AWS.AWS_S3_BUCKET_NAME,
+//     bucket: api.AWS.AWS_S3_BUCKET_NAME,
 //     acl: 'public-read',
 //     metadata: function (req, file, cb) {
 //       cb(null, {fieldName: file.fieldname});

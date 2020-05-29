@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
 const Page = require('../models/page');
-const config = require('../config/config');
+const api = require('../config/api');
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
 
 AWS.config.update({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 const s3 = new AWS.S3();
 
