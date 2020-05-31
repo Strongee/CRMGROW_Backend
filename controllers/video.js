@@ -687,7 +687,7 @@ const updateDefault = async (req, res) => {
   }
 
   await garbage.save().catch((err) => {
-    return res.status.json({
+    return res.status(400).json({
       status: false,
       error: 'Update Garbage Error.',
     });
@@ -801,29 +801,35 @@ const updateDefault = async (req, res) => {
       }
        */
     } else {
-      defaultVideo['updated_at'] = new Date();
-      const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo));
-      delete defaultVideoJSON['_id'];
-      delete defaultVideoJSON['role'];
-
-      const newVideo = new Video({
-        ...defaultVideoJSON,
-        user: currentUser._id,
-        default_edited: true,
-      });
-
-      const _video = await newVideo
-        .save()
-        .then()
-        .catch((err) => {
-          console.log('err', err);
-        });
-
-      return res.send({
-        status: true,
-        data: _video,
+      console.log('thumbnail writting server error');
+      return res.status(400).json({
+        status: false,
+        error: 'thumbnail writing server error.',
       });
     }
+  } else {
+    defaultVideo['updated_at'] = new Date();
+    const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo));
+    delete defaultVideoJSON['_id'];
+    delete defaultVideoJSON['role'];
+
+    const newVideo = new Video({
+      ...defaultVideoJSON,
+      user: currentUser._id,
+      default_edited: true,
+    });
+
+    const _video = await newVideo
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('video save err', err);
+      });
+
+    return res.send({
+      status: true,
+      data: _video,
+    });
   }
   // if(!defaultVideo['preview']){
   //   const file_path = defaultVideo['path']
@@ -1137,29 +1143,35 @@ const remove = async (req, res) => {
 
     if (video) {
       if (video['default_edited']) {
-        return res.status(400).send({
-          status: false,
-          error: 'invalid permission',
-        });
-      }
-
-      const url = video.url;
-      if (url.indexOf('teamgrow.s3') > 0) {
-        s3.deleteObject(
+        Garbage.updateMany(
+          { user: currentUser.id },
           {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
+            $pull: { edited_video: { $in: [video.id] } },
+          }
+        ).catch((err) => {
+          console.log('default video remove err', err.message);
+        });
+      } else {
+        const url = video.url;
+        if (url.indexOf('teamgrow.s3') > 0) {
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        } else {
+          try {
+            const file_path = video.path;
+            if (file_path) {
+              fs.unlinkSync(file_path);
+            }
+          } catch (err) {
             console.log('err', err);
           }
-        );
-      } else {
-        try {
-          const file_path = video.path;
-          fs.unlinkSync(file_path);
-        } catch (err) {
-          console.log('err', err);
         }
       }
 

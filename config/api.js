@@ -1,39 +1,26 @@
 const api = {
   AWS: {
-    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || 'AKIAJ77XFUWEEZVAJF3Q',
-    AWS_SECRET_ACCESS_KEY:
-      process.env.AWS_SECRET_ACCESS_KEY ||
-      '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',
-    AWS_S3_REGION: process.env.AWS_S3_REGION || 'us-east-2',
-    AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || 'teamgrow',
+    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    AWS_S3_REGION: process.env.AWS_S3_REGION,
+    AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
   },
   OUTLOOK_CLIENT: {
-    OUTLOOK_CLIENT_ID:
-      process.env.OUTLOOK_CLIENT_ID || 'cf34076b-4bb2-4eef-8fdb-a7d7f2376095',
-    OUTLOOK_CLIENT_SECRET:
-      process.env.OUTLOOK_CLIENT_SECRET || 'pzckCYYXIL27}-]snkJ059)',
+    OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
+    OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET,
   },
   GMAIL_CLIENT: {
-    GMAIL_CLIENT_ID:
-      process.env.GMAIL_CLIENT_ID ||
-      '990850468296-839k09d6j1qggrhc798f36dc2eqdmt1g.apps.googleusercontent.com',
-    GMAIL_CLIENT_SECRET:
-      process.env.GMAIL_CLIENT_SECRET || 'C1ipsVYA3rN6i3Z6CGUvNrH4',
+    GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID,
+    GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET,
   },
   YAHOO_CLIENT: {
-    YAHOO_CLIENT_ID:
-      process.env.YAHOO_CLIENT_ID ||
-      'dj0yJmk9YWphSjhpYUNQemcxJmQ9WVdrOWJFRXdTSGRtTkRnbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTg1',
-    YAHOO_CLIENT_CECRET:
-      process.env.YAHOO_CLIENT_CECRET ||
-      '3446d2cd06a1db5d36eda8800bcb3d76485567d2',
+    YAHOO_CLIENT_ID: process.env.YAHOO_CLIENT_ID,
+    YAHOO_CLIENT_CECRET: process.env.YAHOO_CLIENT_CECRET,
   },
   JWT_SECRET:
     process.env.JWT_SECRET || 'THIS IS USED TO SIGN AND VERIFY JWT TOKENS',
   SENDGRID: {
-    SENDGRID_KEY:
-      process.env.SENDGRID_KEY ||
-      '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',
+    SENDGRID_KEY: process.env.SENDGRID_KEY,
     SENDGRID_APPOITMENT_TEMPLATE:
       process.env.SENDGRID_APPOITMENT_TEMPLATE ||
       'd-6e29f70dd72b4667afea58314bfbc2a7',
@@ -80,29 +67,22 @@ const api = {
       process.env.SENDGRID_INVITE_GUEST || 'd-5c8deb9857ec46a08b65ac484bbd9c92',
   },
   TWILIO: {
-    TWILIO_SID: process.env.TWILIO_SID || 'AC7e8d97c21a930d9d40e44356b452a263',
-    TWILIO_AUTH_TOKEN:
-      process.env.TWILIO_AUTH_TOKEN || 'd67f2fe5d3fbfd565b21285f37279372',
-    TWILIO_NUMBER: process.env.TWILIO_NUMBER || '+15104625516',
+    TWILIO_SID: process.env.TWILIO_SID,
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+    TWILIO_NUMBER: process.env.TWILIO_NUMBER,
   },
   VAPID: {
-    PUBLIC_VAPID_KEY:
-      process.env.PUBLIC_VAPID_KEY ||
-      'BP1lfE5RpD6bwz5FrLMc0uY1DAbPC-oOVZuk8kv6NHUKrqlYarEk8AOG-8wWCIp0gSzKjSNRnKlYC6kBjAEASJc',
-    PRIVATE_VAPID_KEY:
-      process.env.PRIVATE_VAPID_KEY ||
-      'sN8sRQRkMxc7G1VWbuXT4FsV99Z0oEaEkUTliOZAVNY',
+    PUBLIC_VAPID_KEY: process.env.PUBLIC_VAPID_KEY,
+    PRIVATE_VAPID_KEY: process.env.PRIVATE_VAPID_KEY,
   },
   STRIPE: {
-    SECRET_KEY:
-      process.env.SECRET_KEY || 'sk_test_M5ZibSlzCut26ZvhKgfeYY5x00oAOM4Bx9',
-    PRODUCT_ID: process.env.PRODUCT_ID || 'prod_F7xnR0702SkcZR',
-    PRIMARY_PLAN: process.env.PRIMARY_PLAN || 'plan_G5y3Wz6NbVZyQT',
-    PRIOR_PLAN: process.env.PRIOR_PLAN || 'plan_FFnfPJc8bPYCZi',
-    LIMIT: process.env.LIMIT || 100,
+    SECRET_KEY: process.env.SECRET_KEY,
+    PRODUCT_ID: process.env.PRODUCT_ID,
+    PRIMARY_PLAN: process.env.PRIMARY_PLAN,
+    PRIOR_PLAN: process.env.PRIOR_PLAN,
+    LIMIT: process.env.LIMIT,
   },
-  EMAIL_VERIFICATION_KEY:
-    process.env.EMAIL_VERIFICATION_KEY || 'at_ZuDMTpUpebJ7xLwK8HxT9nA1p1qxn',
+  EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
 };
 
 module.exports = api;

@@ -15,6 +15,7 @@ const GarbageSchema = new Schema(
     edited_automation: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     ],
+    edited_label: { type: Array, default: [] },
     desktop_notification: {
       material: { type: Boolean, default: false },
       email: { type: Boolean, default: false },
