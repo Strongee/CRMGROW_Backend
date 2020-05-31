@@ -1146,7 +1146,7 @@ const remove = async (req, res) => {
         Garbage.updateMany(
           { user: currentUser.id },
           {
-            $pull: { edited_video: { $in: [video.id] } },
+            $pull: { edited_video: { $in: [video.default_video] } },
           }
         ).catch((err) => {
           console.log('default video remove err', err.message);
