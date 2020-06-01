@@ -896,7 +896,13 @@ const searchEasy = async (req, res) => {
         },
         {
           cell_phone: {
-            $regex: '.*' + search.split(' ')[0] + '.*',
+            $regex:
+              '.*' +
+              search
+                .split('')
+                .filter((char) => /^[^\(\)\- ]$/.test(char))
+                .join('') +
+              '.*',
             $options: 'i',
           },
           user: currentUser.id,
