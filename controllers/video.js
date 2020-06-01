@@ -740,6 +740,7 @@ const updateDefault = async (req, res) => {
               const newVideo = new Video({
                 ...defaultVideoJSON,
                 user: currentUser._id,
+                default_video: id,
                 default_edited: true,
               });
 
@@ -816,6 +817,7 @@ const updateDefault = async (req, res) => {
     const newVideo = new Video({
       ...defaultVideoJSON,
       user: currentUser._id,
+      default_video: id,
       default_edited: true,
     });
 
