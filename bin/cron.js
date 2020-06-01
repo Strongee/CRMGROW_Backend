@@ -1476,19 +1476,23 @@ const timesheet_check = new CronJob(
   'US/Central'
 );
 
-const daily_limit_reset = new CronJob(
+const reset_daily_limit = new CronJob(
   '0 3 * * *',
   async () => {
-    User.updateMany(
-      { del: false },
-      {
-        $set: {
-          'text_info.is_limit': true,
-          'text.count': system_settings.TEXT_MONTHLY_LIMIT.BASIC,
-          updated_at: new Date(),
-        },
-      }
-    );
+    const users = await User.find({ del: false }).catch((err) => {
+      console.log('users found err', err.message);
+    });
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const max_email_count =
+        user['email_info']['max_count'] ||
+        system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+      user['email_info']['count'] = max_email_count;
+      user.save().catch((err) => {
+        console.log('users save err', err.message);
+      });
+    }
   },
   function () {
     console.log('Reminder Job finished.');
@@ -1506,4 +1510,4 @@ payment_check.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();
-daily_limit_reset.start();
+reset_daily_limit.start();

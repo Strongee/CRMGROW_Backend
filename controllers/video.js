@@ -1248,8 +1248,28 @@ const bulkEmail = async (req, res) => {
   if (contacts) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1399,11 +1419,15 @@ const bulkEmail = async (req, res) => {
           .then(async (_res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+              email_count += 1;
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
-                console.log('err', err);
+              Contact.updateMany(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('contact update err', err.message);
               });
               resolve();
             } else {
@@ -1425,7 +1449,6 @@ const bulkEmail = async (req, res) => {
               console.log('err', err);
             });
             console.log('email sending err', msg.to);
-            console.error(err);
             error.push({
               contact: {
                 first_name: _contact.first_name,
@@ -1441,6 +1464,11 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1452,7 +1480,7 @@ const bulkEmail = async (req, res) => {
         });
       })
       .catch((err) => {
-        console.log('err', err);
+        console.log('email sending err', err);
         if (err) {
           return res.status(400).json({
             status: false,
@@ -1492,15 +1520,35 @@ const bulkGmail = async (req, res) => {
     const token = JSON.parse(currentUser.google_refresh_token);
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
-      console.log('get access err', err);
+      console.log('get access err', err.message || err.msg);
       return res.status(406).send({
         status: false,
         error: 'not connected',
       });
     });
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1688,6 +1736,7 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
+              email_count += 1;
               Contact.update(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
@@ -1746,6 +1795,11 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).send({
             status: false,
@@ -2051,9 +2105,29 @@ const bulkOutlook = async (req, res) => {
       expires_in: 0,
     });
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
 
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
@@ -2240,6 +2314,7 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
+            email_count += 1;
             Contact.findByIdAndUpdate(contacts[i], {
               $set: { last_activity: activity.id },
             }).catch((err) => {
@@ -2267,6 +2342,10 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,

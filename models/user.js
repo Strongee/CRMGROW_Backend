@@ -70,9 +70,6 @@ const UserSchema = new Schema(
       },
       count: { type: Number, default: 0 },
     },
-    recurring: {
-      data: { type: String },
-    },
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },
     is_free: { type: Boolean, default: false },
@@ -82,6 +79,7 @@ const UserSchema = new Schema(
       is_suspended: { type: Boolean, default: false },
       suspended_at: Date,
       attempt_count: { type: Number, default: 0 },
+      period: { type: String, default: 'month' },
     },
     expired_at: Date,
     created_at: Date,

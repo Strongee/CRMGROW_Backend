@@ -712,10 +712,13 @@ const paymentSucceed = async (req, res) => {
     user['subscription']['is_suspended'] = false;
     user['subscription']['updated_at'] = new Date();
 
-    user['updated_at'] = new Date();
+    const max_text_count =
+      user['text_info']['max_count'] ||
+      system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+    user['text_info']['count'] = max_text_count;
 
     user.save().catch((err) => {
-      console.log('err', err);
+      console.log('user save err', err.message);
     });
     return res.send({
       status: true,
