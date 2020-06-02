@@ -2254,11 +2254,12 @@ const advanceSearch = async (req, res) => {
       });
     }
   } else {
-    await asyncForEach(contacts, async (e) => {
-      if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
-        results.push(e);
-      }
-    });
+    // await asyncForEach(contacts, async (e) => {
+    //   if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
+    //     results.push(e);
+    //   }
+    // });
+    results = contacts;
   }
 
   const count = await Contact.countDocuments({ user: currentUser.id });
