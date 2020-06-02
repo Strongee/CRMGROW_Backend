@@ -748,7 +748,7 @@ const updateDefault = async (req, res) => {
                 .save()
                 .then()
                 .catch((err) => {
-                  console.log('err', err);
+                  console.log('video new creating err', err.message);
                 });
 
               return res.send({
