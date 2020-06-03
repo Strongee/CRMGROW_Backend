@@ -55,7 +55,6 @@ const getAll = async (req, res) => {
     role: 'admin',
     del: false,
     _id: { $nin: editedLabels },
-    company,
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });

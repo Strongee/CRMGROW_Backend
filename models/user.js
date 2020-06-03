@@ -52,7 +52,6 @@ const UserSchema = new Schema(
         type: Number,
         default: system_settings.CONTACT_UPLOAD_LIMIT.BASIC,
       },
-      count: { type: Number, default: 0 },
     },
     text_info: {
       is_limit: { type: Boolean, default: true },
