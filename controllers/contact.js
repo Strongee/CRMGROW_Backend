@@ -26,6 +26,7 @@ const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
+const LabelHelper = require('../helpers/label');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
@@ -259,18 +260,17 @@ const create = async (req, res) => {
       error: errors.array(),
     });
   }
-  let max_count = 0;
+  let max_upload_count = 0;
   let count = 0;
 
-  if (!currentUser.contact) {
+  const contact_info = currentUser.contact_info;
+  if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
-  } else {
-    count = currentUser.contact.count;
-    max_count = currentUser.contact.max_count;
+    max_upload_count =
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   }
 
-  if (max_count < count) {
+  if (contact_info['is_limit'] && max_upload_count < count) {
     return res.status(400).send({
       status: false,
       error: 'You are exceed for max contacts',
@@ -323,13 +323,6 @@ const create = async (req, res) => {
   contact
     .save()
     .then((_contact) => {
-      count += 1;
-      const contact_info = {
-        count,
-        max_count,
-      };
-      currentUser.contact_info = contact_info;
-      currentUser.save();
       const activity = new Activity({
         content: 'added contact',
         contacts: _contact.id,
@@ -353,21 +346,11 @@ const create = async (req, res) => {
         });
       });
     })
-    .catch((e) => {
-      console.log(e);
-      let errors;
-      if (e.errors) {
-        errors = e.errors.map((err) => {
-          delete err.instance;
-          return err;
-        });
-      }
-      if (e.code === 11000) {
-        errors = 'Email and Phone number must be unique!';
-      }
+    .catch((err) => {
+      console.log('contact save error', err.message);
       return res.status(500).send({
         status: false,
-        error: errors || e,
+        error: 'Internal server error',
       });
     });
 };
@@ -557,13 +540,21 @@ const importCSV = async (req, res) => {
   const { currentUser } = req;
   const failure = [];
   let count = 0;
-  let max_count = 0;
-  if (!currentUser.contact) {
+  let max_upload_count = 0;
+  const contact_info = currentUser.contact_info;
+  const labels = await LabelHelper.getAll(currentUser.id);
+
+  if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
-  } else {
-    count = currentUser.contact.count;
-    max_count = currentUser.contact.max_count;
+    max_upload_count =
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+
+    if (max_upload_count < count) {
+      return res.status(400).json({
+        status: false,
+        error: 'Exceed upload max contacts',
+      });
+    }
   }
 
   const contact_array = [];
@@ -575,7 +566,7 @@ const importCSV = async (req, res) => {
     .on('end', () => {
       const promise_array = [];
       for (let i = 0; i < contact_array.length; i++) {
-        const promise = new Promise(async (resolve, reject) => {
+        const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
           if (data['first_name'] === '') {
             data['first_name'] = null;
@@ -599,7 +590,7 @@ const importCSV = async (req, res) => {
                 email: data['email'],
                 user: currentUser.id,
               }).catch((err) => {
-                console.log('err', err);
+                console.log('contact found err', err.message);
               });
               if (email_contact) {
                 const field = {
@@ -617,7 +608,7 @@ const importCSV = async (req, res) => {
                 cell_phone: data['cell_phone'],
                 user: currentUser.id,
               }).catch((err) => {
-                console.log('err', err);
+                console.log('contact found err', err.message);
               });
               if (phone_contact) {
                 const field = {
@@ -630,8 +621,10 @@ const importCSV = async (req, res) => {
                 return;
               }
             }
+
             count += 1;
-            if (max_count < count) {
+
+            if (contact_info['is_limit'] && max_upload_count < count) {
               const field = {
                 id: i,
                 email: data['email'],
@@ -646,10 +639,25 @@ const importCSV = async (req, res) => {
             if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
               tags = data['tags'].split(/,\s|\s,|,|\s/);
             }
+            let label;
+
+            if (data['label'] !== '' && typeof data['label'] !== 'undefined') {
+              for (let i = 0; i < labels.length; i++) {
+                if (capitalize(labels[i].name) === capitalize(data['label'])) {
+                  console.log('label id', labels[i]._id);
+                  label = labels[i]._id;
+                  break;
+                }
+              }
+            }
+
+            delete data.label;
             delete data.tags;
+
             const contact = new Contact({
               ...data,
               tags,
+              label,
               cell_phone,
               user: currentUser.id,
               created_at: new Date(),
@@ -670,9 +678,12 @@ const importCSV = async (req, res) => {
                 activity
                   .save()
                   .then((_activity) => {
-                    Contact.findByIdAndUpdate(_contact.id, {
-                      $set: { last_activity: _activity.id },
-                    }).catch((err) => {
+                    Contact.updateMany(
+                      { _id: _contact.id },
+                      {
+                        $set: { last_activity: _activity.id },
+                      }
+                    ).catch((err) => {
                       console.log('err', err);
                     });
                   })
@@ -700,7 +711,7 @@ const importCSV = async (req, res) => {
                     _activity
                       .save()
                       .then((__activity) => {
-                        Contact.update(
+                        Contact.updateMany(
                           { _id: _contact.id },
                           { $set: { last_activity: __activity.id } }
                         ).catch((err) => {
@@ -724,15 +735,7 @@ const importCSV = async (req, res) => {
         promise_array.push(promise);
       }
 
-      Promise.all(promise_array).then(function () {
-        const contact_info = {
-          count,
-          max_count,
-        };
-        currentUser.contact_info = contact_info;
-        currentUser.save().catch((err) => {
-          console.log('err', err);
-        });
+      Promise.all(promise_array).then(() => {
         return res.send({
           status: true,
           failure,
@@ -2693,6 +2696,18 @@ const verifyPhone = async (req, res) => {
       error: 'Invalid Phone Number',
     });
   }
+};
+
+const capitalize = (s) => {
+  if ((typeof s).toLowerCase() !== 'string') return;
+  if (s.split(' ').length === 2) {
+    const s1 = s.split(' ')[0];
+    const s2 = s.split(' ')[1];
+    return `${
+      s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()
+    } ${s2.charAt(0).toUpperCase()}${s2.slice(1).toLowerCase()}`;
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
 module.exports = {
