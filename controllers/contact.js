@@ -1413,7 +1413,7 @@ const advanceSearch = async (req, res) => {
     includeTag,
   } = req.body;
   let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || includeFollowUps === 'undifined') {
+  if (includeFollowUps === null || typeof includeFollowUps === 'undefined') {
     includeFollowUps = true;
   }
 
