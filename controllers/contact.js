@@ -1034,6 +1034,23 @@ const leadContact = async (req, res) => {
       },
     });
   } else {
+    if (email) {
+      await verifyEmail(email).catch((err) => {
+        return res.status(400).json({
+          status: false,
+          err: err.message,
+        });
+      });
+    }
+    const e164Phone = phone(cell_phone)[0];
+
+    if (!e164Phone) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid Phone Number',
+      });
+    }
+
     const label = 'New';
     const _contact = new Contact({
       first_name,
@@ -1049,13 +1066,13 @@ const leadContact = async (req, res) => {
         .save()
         .then(async (contact) => {
           const _video = await Video.findOne({ _id: video }).catch((err) => {
-            console.log('err', err);
+            console.log('video found err', err.message);
           });
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
-            console.log('err', err);
+            console.log('current user found err', err.message);
           });
           const garbage = await Garbage.findOne({ user }).catch((err) => {
-            console.log('err', err);
+            console.log('garbage found err', err.message);
           });
 
           const _activity = new Activity({
@@ -1196,7 +1213,7 @@ const leadContact = async (req, res) => {
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
-            console.log('err', err);
+            console.log('contact update err', err.message);
           });
 
           return res.send({
@@ -1416,7 +1433,7 @@ const advanceSearch = async (req, res) => {
     includeTag,
   } = req.body;
   let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || includeFollowUps === 'undifined') {
+  if (includeFollowUps === null || typeof includeFollowUps === 'undefined') {
     includeFollowUps = true;
   }
 
@@ -2655,30 +2672,25 @@ const bulkCreate = async (req, res) => {
   });
 };
 
-const verifyEmail = async (req, res) => {
-  const { email } = req.body;
+const verifyEmail = async (email) => {
+  // const { email } = req.body;
   const verifier = new Verifier(api.EMAIL_VERIFICATION_KEY, {
     checkFree: false,
     checkDisposable: false,
     checkCatchAll: false,
   });
-  verifier.verify(email, (err, data) => {
-    if (err) {
-      return res.status(400).json({
-        status: false,
-        error: err.message || err.msg,
-      });
-    }
-    if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
-      return res.send({
-        status: true,
-      });
-    } else {
-      return res.status(400).json({
-        status: false,
-        error: 'Email is not valid one',
-      });
-    }
+
+  return new Promise((resolve, reject) => {
+    verifier.verify(email, (err, data) => {
+      if (err) {
+        reject({ message: err.msg || err.message });
+      }
+      if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
+        resolve();
+      } else {
+        reject({ message: 'Email is not valid one' });
+      }
+    });
   });
 };
 
