@@ -12,14 +12,13 @@ const User = require('../../models/user');
 const Activity = require('../../models/activity');
 const PDF = require('../../models/pdf');
 const PDFTracker = require('../../models/pdf_tracker');
-const { FILES_PATH } = require('../../config/path');
-const { PREVIEW_PATH } = require('../../config/path');
-const config = require('../../config/config');
+const { FILES_PATH, PREVIEW_PATH } = require('../../config/path');
+const api = require('../../config/api');
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const create = async (req, res) => {
@@ -210,7 +209,7 @@ const remove = async (req, res) => {
 
     s3.deleteObject(
       {
-        Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+        Bucket: api.AWS.AWS_S3_BUCKET_NAME,
         Key: url.slice(44),
       },
       function (err, data) {

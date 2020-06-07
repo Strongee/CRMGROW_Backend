@@ -33,11 +33,12 @@ const {
   PLAY_BUTTON_PATH,
 } = require('../config/path');
 const urls = require('../constants/urls');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const User = require('../models/user');
@@ -48,14 +49,14 @@ const videoHelper = require('../helpers/video');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
@@ -403,7 +404,7 @@ const update = async (req, res) => {
           const year = today.getYear()
           const month = today.getMonth()
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
             Body: data,
             ACL: 'public-read'
@@ -468,7 +469,7 @@ const updateDetail = async (req, res) => {
     _id: req.params.id,
     user: currentUser.id,
   }).catch((err) => {
-    console.log('err', err.message);
+    console.log('video found err', err.message);
   });
 
   if (!video) {
@@ -581,7 +582,7 @@ const updateDetail = async (req, res) => {
           const year = today.getYear()
           const month = today.getMonth()
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
             Body: data,
             ACL: 'public-read'
@@ -686,7 +687,7 @@ const updateDefault = async (req, res) => {
   }
 
   await garbage.save().catch((err) => {
-    return res.status.json({
+    return res.status(400).json({
       status: false,
       error: 'Update Garbage Error.',
     });
@@ -715,7 +716,7 @@ const updateDefault = async (req, res) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'thumbnail' + year + '/' + month + '/' + file_name,
             Body: data,
             ACL: 'public-read',
@@ -739,6 +740,7 @@ const updateDefault = async (req, res) => {
               const newVideo = new Video({
                 ...defaultVideoJSON,
                 user: currentUser._id,
+                default_video: id,
                 default_edited: true,
               });
 
@@ -746,7 +748,7 @@ const updateDefault = async (req, res) => {
                 .save()
                 .then()
                 .catch((err) => {
-                  console.log('err', err);
+                  console.log('video new creating err', err.message);
                 });
 
               return res.send({
@@ -800,29 +802,36 @@ const updateDefault = async (req, res) => {
       }
        */
     } else {
-      defaultVideo['updated_at'] = new Date();
-      const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo));
-      delete defaultVideoJSON['_id'];
-      delete defaultVideoJSON['role'];
-
-      const newVideo = new Video({
-        ...defaultVideoJSON,
-        user: currentUser._id,
-        default_edited: true,
-      });
-
-      const _video = await newVideo
-        .save()
-        .then()
-        .catch((err) => {
-          console.log('err', err);
-        });
-
-      return res.send({
-        status: true,
-        data: _video,
+      console.log('thumbnail writting server error');
+      return res.status(400).json({
+        status: false,
+        error: 'thumbnail writing server error.',
       });
     }
+  } else {
+    defaultVideo['updated_at'] = new Date();
+    const defaultVideoJSON = JSON.parse(JSON.stringify(defaultVideo));
+    delete defaultVideoJSON['_id'];
+    delete defaultVideoJSON['role'];
+
+    const newVideo = new Video({
+      ...defaultVideoJSON,
+      user: currentUser._id,
+      default_video: id,
+      default_edited: true,
+    });
+
+    const _video = await newVideo
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('video save err', err);
+      });
+
+    return res.send({
+      status: true,
+      data: _video,
+    });
   }
   // if(!defaultVideo['preview']){
   //   const file_path = defaultVideo['path']
@@ -920,7 +929,7 @@ const generatePreview = async (data) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'gif' + year + '/' + month + '/' + file_name,
             Body: data,
             ACL: 'public-read',
@@ -1001,7 +1010,7 @@ const regeneratePreview = async (data) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'gif' + year + '/' + month + '/' + file_name,
             Body: data,
             ACL: 'public-read',
@@ -1136,29 +1145,35 @@ const remove = async (req, res) => {
 
     if (video) {
       if (video['default_edited']) {
-        return res.status(400).send({
-          status: false,
-          error: 'invalid permission',
-        });
-      }
-
-      const url = video.url;
-      if (url.indexOf('teamgrow.s3') > 0) {
-        s3.deleteObject(
+        Garbage.updateMany(
+          { user: currentUser.id },
           {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
+            $pull: { edited_video: { $in: [video.default_video] } },
+          }
+        ).catch((err) => {
+          console.log('default video remove err', err.message);
+        });
+      } else {
+        const url = video.url;
+        if (url.indexOf('teamgrow.s3') > 0) {
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        } else {
+          try {
+            const file_path = video.path;
+            if (file_path) {
+              fs.unlinkSync(file_path);
+            }
+          } catch (err) {
             console.log('err', err);
           }
-        );
-      } else {
-        try {
-          const file_path = video.path;
-          fs.unlinkSync(file_path);
-        } catch (err) {
-          console.log('err', err);
         }
       }
 
@@ -1224,17 +1239,35 @@ const getHistory = async (req, res) => {
 
 const bulkEmail = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
 
-  const videos = await Video.find({ _id: { $in: videoIds } });
-
   if (contacts) {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
     for (let i = 0; i < contacts.length; i++) {
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1267,7 +1300,9 @@ const bulkEmail = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('video found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
@@ -1384,11 +1419,15 @@ const bulkEmail = async (req, res) => {
           .then(async (_res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+              email_count += 1;
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
-                console.log('err', err);
+              Contact.updateMany(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('contact update err', err.message);
               });
               resolve();
             } else {
@@ -1410,7 +1449,6 @@ const bulkEmail = async (req, res) => {
               console.log('err', err);
             });
             console.log('email sending err', msg.to);
-            console.error(err);
             error.push({
               contact: {
                 first_name: _contact.first_name,
@@ -1426,6 +1464,11 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1437,7 +1480,7 @@ const bulkEmail = async (req, res) => {
         });
       })
       .catch((err) => {
-        console.log('err', err);
+        console.log('email sending err', err);
         if (err) {
           return res.status(400).json({
             status: false,
@@ -1455,37 +1498,55 @@ const bulkEmail = async (req, res) => {
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
 
-  const videos = await Video.find({ _id: { $in: videoIds } });
-
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
     const token = JSON.parse(currentUser.google_refresh_token);
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
-      console.log('get access err', err);
+      console.log('get access err', err.message || err.msg);
       return res.status(406).send({
         status: false,
         error: 'not connected',
       });
     });
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1517,7 +1578,9 @@ const bulkGmail = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('vidoe found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
@@ -1673,6 +1736,7 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
+              email_count += 1;
               Contact.update(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
@@ -1731,6 +1795,11 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).send({
             status: false,
@@ -1767,10 +1836,10 @@ const bulkText = async (req, res) => {
   const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -2018,17 +2087,15 @@ const createSmsContent = async (req, res) => {
 
 const bulkOutlook = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
 
-  const videos = await Video.find({ _id: { $in: videoIds } });
-
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
     const token = oauth2.accessToken.create({
@@ -2036,9 +2103,29 @@ const bulkOutlook = async (req, res) => {
       expires_in: 0,
     });
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
 
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
@@ -2100,7 +2187,9 @@ const bulkOutlook = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('video found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
@@ -2225,6 +2314,7 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
+            email_count += 1;
             Contact.findByIdAndUpdate(contacts[i], {
               $set: { last_activity: activity.id },
             }).catch((err) => {
@@ -2252,6 +2342,10 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,

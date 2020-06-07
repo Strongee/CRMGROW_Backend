@@ -5,12 +5,13 @@ const sharp = require('sharp');
 const AWS = require('aws-sdk');
 
 const { FILES_PATH } = require('../config/path');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const File = require('../models/file');
@@ -31,7 +32,7 @@ const create = async (req, res) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'profile' + year + '/' + month + '/' + file_name + '-resize',
             Body: data,
             ACL: 'public-read',
@@ -59,7 +60,7 @@ const create = async (req, res) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'profile' + year + '/' + month + '/' + file_name,
             Body: data,
             ACL: 'public-read',
@@ -149,7 +150,7 @@ const upload = async (req, res) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'profile' + year + '/' + month + '/' + file_name + '-resize',
             Body: data,
             ACL: 'public-read',
@@ -190,7 +191,7 @@ const upload = async (req, res) => {
           const year = today.getYear();
           const month = today.getMonth();
           const params = {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
             Key: 'profile' + year + '/' + month + '/' + file_name,
             Body: data,
             ACL: 'public-read',

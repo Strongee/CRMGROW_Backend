@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
+const system_settings = require('../config/system_settings');
 
 const UserSchema = new Schema(
   {
@@ -46,17 +47,27 @@ const UserSchema = new Schema(
     desktop_notification_subscription: String,
     text_notification: { type: Boolean, default: false },
     contact_info: {
-      is_limit: { type: Boolean, default: false },
-      max_count: { type: Number, default: 3000 },
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.CONTACT_UPLOAD_LIMIT.BASIC,
+      },
+    },
+    text_info: {
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.TEXT_MONTHLY_LIMIT.BASIC,
+      },
       count: { type: Number, default: 0 },
     },
-    text: {
-      is_limit: { type: Boolean, default: false },
-      max_count: { type: Number, default: 500 },
+    email_info: {
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.EMAIL_DAILY_LIMIT.BASIC,
+      },
       count: { type: Number, default: 0 },
-    },
-    recurring: {
-      data: { type: String },
     },
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },
@@ -67,6 +78,7 @@ const UserSchema = new Schema(
       is_suspended: { type: Boolean, default: false },
       suspended_at: Date,
       attempt_count: { type: Number, default: 0 },
+      period: { type: String, default: 'month' },
     },
     expired_at: Date,
     created_at: Date,
@@ -81,7 +93,7 @@ const UserSchema = new Schema(
       twitter: String,
       linkedin: String,
     },
-    company: { type: String, default: 'eXp Realty' },
+    company: { type: String, default: system_settings.COMPANY.DEFAULT },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

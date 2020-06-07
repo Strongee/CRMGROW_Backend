@@ -14,6 +14,7 @@ const ContactSchema = mongoose.Schema(
     label: {
       type: String,
     },
+    // label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
     cell_phone: { type: String, default: '' },
     country: { type: String, default: '' },
     source: String,
@@ -32,11 +33,6 @@ const ContactSchema = mongoose.Schema(
 ContactSchema.pre('save', function (next) {
   const contact = this;
   if (this.isNew) {
-    if (Labels.indexOf(capitalize(contact.label)) === -1) {
-      contact.label = '';
-    } else {
-      contact.label = capitalize(contact.label);
-    }
     if (contact.state) {
       if (States.indexOf(capitalize(contact.state)) === -1) {
         contact.state = '';

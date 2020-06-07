@@ -81,7 +81,7 @@ router.post(
 );
 
 // Verify Email
-router.post('/verify-email', catchError(ContactCtrl.verifyEmail));
+// router.post('/verify-email', catchError(ContactCtrl.verifyEmail));
 
 // Verify Phone number
 router.post('/verify-phone', catchError(ContactCtrl.verifyPhone));

@@ -25,22 +25,24 @@ const User = require('../models/user');
 const Garbage = require('../models/garbage');
 
 const mail_contents = require('../constants/mail_contents');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
+
 const urls = require('../constants/urls');
 
 const { TRAKER_PATH } = require('../config/path');
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const emailHelper = require('../helpers/email');
@@ -52,8 +54,8 @@ const bulkGmail = async (req, res) => {
   const error = [];
 
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
   const token = JSON.parse(currentUser.google_refresh_token);
@@ -73,10 +75,10 @@ const bulkGmail = async (req, res) => {
     });
   }
 
-  if (contacts.length > config.MAX_EMAIL) {
+  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
     });
   }
 
@@ -286,8 +288,8 @@ const bulkGmail = async (req, res) => {
 const listGmail = async (req, res) => {
   const { currentUser } = req;
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
   const token = JSON.parse(currentUser.google_refresh_token);
@@ -311,8 +313,8 @@ const listGmail = async (req, res) => {
 const getGmail = async (req, res) => {
   const { currentUser } = req;
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
   const token = JSON.parse(currentUser.google_refresh_token);
@@ -346,10 +348,10 @@ const bulkOutlook = async (req, res) => {
   });
   let accessToken;
 
-  if (contacts.length > config.MAX_EMAIL) {
+  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
     });
   }
 
@@ -681,11 +683,11 @@ const openTrack = async (req, res) => {
       const email_notification = garbage['email_notification'];
 
       if (email_notification['email']) {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
           dynamic_template_data: {
             subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
             first_name: contact.first_name,
@@ -715,8 +717,8 @@ const openTrack = async (req, res) => {
       if (desktop_notification['email']) {
         webpush.setVapidDetails(
           'mailto:support@crmgrow.com',
-          config.VAPID.PUBLIC_VAPID_KEY,
-          config.VAPID.PRIVATE_VAPID_KEY
+          api.VAPID.PUBLIC_VAPID_KEY,
+          api.VAPID.PRIVATE_VAPID_KEY
         );
 
         const subscription = JSON.parse(user.desktop_notification_subscription);
@@ -802,7 +804,7 @@ const openTrack = async (req, res) => {
                 console.log('err', err);
               });
             } else {
-              fromNumber = config.TWILIO.TWILIO_NUMBER;
+              fromNumber = api.TWILIO.TWILIO_NUMBER;
             }
           }
 
@@ -846,7 +848,7 @@ const openTrack = async (req, res) => {
 };
 
 const bulkEmail = async (req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  sgMail.setApiKey(system_settings.SENDGRID.SENDGRID_KEY);
 
   const { currentUser } = req;
   const { to, cc, bcc, contacts, content, attachments, subject } = req.body;
@@ -1040,8 +1042,8 @@ const bulkYahoo = async (req, res) => {
     auth: {
       type: 'oauth2',
       user: 'garrettsteve1@yahoo.com',
-      clientId: config.YAHOO_CLIENT.YAHOO_CLIENT_ID,
-      clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
+      clientId: api.YAHOO_CLIENT.YAHOO_CLIENT_ID,
+      clientSecret: api.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
       refreshToken: currentUser.yahoo_refresh_token,
     },
   });
@@ -1256,16 +1258,16 @@ const receiveEmailSendGrid = async (req, res) => {
         });
       }
       const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
-        console.log('err', err);
+        console.log('console garbage found err', err.message);
       });
       const email_notification = garbage['email_notification'];
 
       if (email_notification['email']) {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
         const msg = {
           to: user.email,
           from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-          templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+          templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
           dynamic_template_data: {
             subject: mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT,
             first_name: contact.first_name,
@@ -1295,8 +1297,8 @@ const receiveEmailSendGrid = async (req, res) => {
       if (desktop_notification['email']) {
         webpush.setVapidDetails(
           'mailto:support@crmgrow.com',
-          config.VAPID.PUBLIC_VAPID_KEY,
-          config.VAPID.PRIVATE_VAPID_KEY
+          api.VAPID.PUBLIC_VAPID_KEY,
+          api.VAPID.PRIVATE_VAPID_KEY
         );
 
         const subscription = JSON.parse(user.desktop_notification_subscription);
@@ -1382,7 +1384,7 @@ const receiveEmailSendGrid = async (req, res) => {
                 console.log('err', err);
               });
             } else {
-              fromNumber = config.TWILIO.TWILIO_NUMBER;
+              fromNumber = system_settings.TWILIO.TWILIO_NUMBER;
             }
           }
 
@@ -1523,11 +1525,11 @@ const receiveEmail = async (req, res) => {
         const email_notification = garbage['email_notification'];
 
         if (email_notification['email']) {
-          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           const msg = {
             to: user.email,
             from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-            templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+            templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
             dynamic_template_data: {
               subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
               first_name: contact.first_name,
@@ -1559,8 +1561,8 @@ const receiveEmail = async (req, res) => {
         if (desktop_notification['email']) {
           webpush.setVapidDetails(
             'mailto:support@crmgrow.com',
-            config.VAPID.PUBLIC_VAPID_KEY,
-            config.VAPID.PRIVATE_VAPID_KEY
+            api.VAPID.PUBLIC_VAPID_KEY,
+            api.VAPID.PRIVATE_VAPID_KEY
           );
 
           const subscription = JSON.parse(
@@ -1648,7 +1650,7 @@ const receiveEmail = async (req, res) => {
                   console.log('err', err);
                 });
               } else {
-                fromNumber = config.TWILIO.TWILIO_NUMBER;
+                fromNumber = api.TWILIO.TWILIO_NUMBER;
               }
             }
 
@@ -1870,11 +1872,11 @@ const unSubscribeEmail = async (req, res) => {
     const email_notification = garbage['email_notification'];
 
     if (email_notification['unsubscription']) {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       const msg = {
         to: user.email,
         from: mail_contents.NOTIFICATION_UNSUBSCRIPTION.MAIL,
-        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_UNSUBSCRIPTION.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
           first_name: contact.first_name,
@@ -1900,8 +1902,8 @@ const unSubscribeEmail = async (req, res) => {
     if (desktop_notification['unsubscription']) {
       webpush.setVapidDetails(
         'mailto:support@crmgrow.com',
-        config.VAPID.PUBLIC_VAPID_KEY,
-        config.VAPID.PRIVATE_VAPID_KEY
+        api.VAPID.PUBLIC_VAPID_KEY,
+        api.VAPID.PRIVATE_VAPID_KEY
       );
 
       const subscription = JSON.parse(user.desktop_notification_subscription);
@@ -1984,7 +1986,7 @@ const unSubscribeEmail = async (req, res) => {
               console.log('err', err);
             });
           } else {
-            fromNumber = config.TWILIO.TWILIO_NUMBER;
+            fromNumber = api.TWILIO.TWILIO_NUMBER;
           }
         }
 
@@ -2199,11 +2201,11 @@ const reSubscribeEmail = async (req, res) => {
     const email_notification = garbage['email_notification'];
 
     if (email_notification['resubscription']) {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       const msg = {
         to: user.email,
         from: mail_contents.NOTIFICATION_UNSUBSCRIPTION.MAIL,
-        templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_UNSUBSCRIPTION.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
           first_name: contact.first_name,
@@ -2229,8 +2231,8 @@ const reSubscribeEmail = async (req, res) => {
     if (desktop_notification['resubscription']) {
       webpush.setVapidDetails(
         'mailto:support@crmgrow.com',
-        config.VAPID.PUBLIC_VAPID_KEY,
-        config.VAPID.PRIVATE_VAPID_KEY
+        api.VAPID.PUBLIC_VAPID_KEY,
+        api.VAPID.PRIVATE_VAPID_KEY
       );
 
       const subscription = JSON.parse(user.desktop_notification_subscription);
@@ -2313,7 +2315,7 @@ const reSubscribeEmail = async (req, res) => {
               console.log('err', err);
             });
           } else {
-            fromNumber = config.TWILIO.TWILIO_NUMBER;
+            fromNumber = api.TWILIO.TWILIO_NUMBER;
           }
         }
 

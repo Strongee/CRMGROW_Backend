@@ -1,5 +1,6 @@
-const { validationResult } = require("express-validator/check");
-const Label = require("../models/label");
+const { validationResult } = require('express-validator/check');
+const Label = require('../models/label');
+const garbageHelper = require('../helpers/garbage.js');
 
 const create = async (req, res) => {
   const { currentUser } = req;
@@ -24,30 +25,51 @@ const create = async (req, res) => {
   } catch (err) {
     return res.status(500).send({
       status: false,
-      error: err.message || "Label creating failed.",
+      error: err.message || 'Label creating failed.',
     });
   }
 };
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
-  try {
-    const data = await Label.find({ user: currentUser.id });
-    if (!data) {
-      return res.status(400).json({
-        status: false,
-        error: "Label doesn`t exist",
-      });
-    } else {
-      res.send({
-        status: true,
-        data,
-      });
-    }
-  } catch (err) {
-    res.status(500).send({
+  const garbage = await garbageHelper.get(currentUser);
+
+  if (!garbage) {
+    return res.status(400).send({
       status: false,
-      error: err.message || "Internal server error.",
+      error: `Couldn't get the Garbage`,
+    });
+  }
+
+  let editedLabels = [];
+  if (garbage && garbage['edited_label']) {
+    editedLabels = garbage['edited_label'];
+  }
+
+  const company = currentUser.company || 'eXp Realty';
+  const _label_list = await Label.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  const _label_admin = await Label.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedLabels },
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  Array.prototype.push.apply(_label_list, _label_admin);
+
+  if (!_label_list) {
+    return res.status(400).json({
+      status: false,
+      error: 'Label doesn`t exist',
+    });
+  } else {
+    res.send({
+      status: true,
+      data: _label_list,
     });
   }
 };
@@ -55,25 +77,23 @@ const getAll = async (req, res) => {
 const update = async (req, res) => {
   const data = req.body;
   const { currentUser } = req;
-  console.log(data, "DATAAAAAA");
   try {
-    let label = await Label.findOne({
+    const label = await Label.findOne({
       user: currentUser.id,
       _id: req.params.id,
     });
-    console.log(label, "LABEEEEEEL");
     if (label) {
-      if (label.user._id != currentUser.id) {
-        return res.status(400).send({
-          status: false,
-          error: "This is not your label so couldn't update.",
+      Label.updateMany({ _id: req.params.id }, { $set: data })
+        .then(() => {
+          res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          res.status(400).json({
+            status: true,
+          });
         });
-      } else {
-        await Label.find({ _id: req.params.id }).update({ $set: data });
-        res.send({
-          status: true,
-        });
-      }
     } else {
       res.status(400).send({
         status: false,
@@ -83,7 +103,7 @@ const update = async (req, res) => {
   } catch (err) {
     res.status(500).send({
       status: false,
-      error: "Internal server error.",
+      error: 'Internal server error.',
     });
   }
 };
@@ -104,13 +124,13 @@ const remove = async (req, res) => {
     } else {
       res.status(404).send({
         status: false,
-        error: "Label not found.",
+        error: 'Label not found.',
       });
     }
   } catch (err) {
     res.status(500).send({
       status: false,
-      error: "Internal server error.",
+      error: 'Internal server error.',
     });
   }
 };

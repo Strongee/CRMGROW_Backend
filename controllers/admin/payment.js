@@ -1,6 +1,6 @@
-const config = require('../../config/config');
+const api = require('../../config/api');
 
-const stripeKey = config.STRIPE.SECRET_KEY;
+const stripeKey = api.STRIPE.SECRET_KEY;
 
 const stripe = require('stripe')(stripeKey);
 const Payment = require('../../models/payment');
@@ -35,7 +35,7 @@ const getCustomer = async (req, res) => {
     data.status = subscription.status;
     data.plan = subscription.plan.id;
 
-    if (subscription.plan.id === config.STRIPE.PRIOR_PLAN) {
+    if (subscription.plan.id === api.STRIPE.PRIOR_PLAN) {
       data.bill_amount = '29';
     } else {
       data.bill_amount = '39';
@@ -83,7 +83,6 @@ const getTransactions = async (req, res) => {
         error: err,
       });
     }
-    console.log('carges', charges);
     const charge_list = charges.data;
     const data = [];
     for (let i = 0; i < charge_list.length; i++) {
@@ -108,12 +107,12 @@ const getCustomers = async (req, res) => {
   let params;
   if (req.params.id !== 'null') {
     params = {
-      limit: config.STRIPE.LIMIT,
+      limit: api.STRIPE.LIMIT,
       starting_after: req.params.id,
     };
   } else {
     params = {
-      limit: config.STRIPE.LIMIT,
+      limit: api.STRIPE.LIMIT,
     };
   }
   stripe.customers.list(params, async function (err, customers) {

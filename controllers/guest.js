@@ -1,7 +1,7 @@
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 const Guest = require('../models/guest');
-const config = require('../config/config');
+const api = require('../config/api');
 const mail_contents = require('../constants/mail_contents');
 const urls = require('../constants/urls');
 
@@ -56,12 +56,12 @@ const create = async (req, res) => {
   guest
     .save()
     .then((_res) => {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       const msg = {
         to: _res.email,
         from: mail_contents.INVITE_GUEST.MAIL,
-        templateId: config.SENDGRID.SENDGRID_INVITE_GUEST,
+        templateId: api.SENDGRID.SENDGRID_INVITE_GUEST,
         dynamic_template_data: {
           subject: `${mail_contents.INVITE_GUEST.SUBJECT}${currentUser.user_name} has invited you to join CRMGrow`,
           user_name: currentUser.user_name,
@@ -72,7 +72,7 @@ const create = async (req, res) => {
       };
 
       sgMail.send(msg).catch((err) => {
-        console.log('err', err);
+        console.log('email message err', err.message || err.msg);
       });
 
       return res.send({
