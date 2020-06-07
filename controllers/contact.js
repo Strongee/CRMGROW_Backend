@@ -1038,7 +1038,7 @@ const leadContact = async (req, res) => {
       await verifyEmail(email).catch((err) => {
         return res.status(400).json({
           status: false,
-          err: err.message,
+          error: err.message,
         });
       });
     }
@@ -1051,7 +1051,7 @@ const leadContact = async (req, res) => {
       });
     }
 
-    const label = 'New';
+    const label = system_settings.NEW_LABEL;
     const _contact = new Contact({
       first_name,
       email,
@@ -2662,7 +2662,7 @@ const bulkCreate = async (req, res) => {
     };
     currentUser.contact = contact_info;
     currentUser.save().catch((err) => {
-      console.log('err', err);
+      console.log('user save err', err.message);
     });
     return res.send({
       status: true,
@@ -2685,7 +2685,11 @@ const verifyEmail = async (email) => {
       if (err) {
         reject({ message: err.msg || err.message });
       }
-      if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
+      if (
+        data['formatCheck'] === 'true' &&
+        data['smtpCheck'] === 'true' &&
+        data['dnsCheck'] === 'true'
+      ) {
         resolve();
       } else {
         reject({ message: 'Email is not valid one' });

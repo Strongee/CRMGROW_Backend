@@ -74,7 +74,16 @@ var duration = document.querySelector('#video-duration').value;
         error: function (data) {
           $('#info-form .btn').removeClass('loading');
           $('#info-form .btn').text('Submit');
-          alert('Error is occured. Error:', data);
+          if (data.status == 400) {
+            const response = data.responseJSON;
+            if (response && response['error']) {
+              alert(response['error']);
+            } else {
+              alert('Internal Server Error');
+            }
+          } else {
+            alert('Internal Server Error');
+          }
         },
       });
     });
