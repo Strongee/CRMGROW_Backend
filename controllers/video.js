@@ -302,13 +302,13 @@ const update = async (req, res) => {
     });
   }
   if (req.body.site_image) {
-    if (video.site_image) {
-      try {
-        await removeFile(video.site_image);
-      } catch (error) {
-        console.error('Remove Site Image', error);
-      }
-    }
+    // if (video.site_image) {
+    //   try {
+    //     await removeFile(video.site_image);
+    //   } catch (error) {
+    //     console.error('Remove Site Image', error);
+    //   }
+    // }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -323,13 +323,13 @@ const update = async (req, res) => {
     }
   }
   if (req.body.thumbnail) {
-    if (video.thumbnail) {
-      try {
-        await removeFile(video.thumbnail);
-      } catch (error) {
-        console.error('Remove Video Thumbnail Image', error);
-      }
-    }
+    // if (video.thumbnail) {
+    //   try {
+    //     await removeFile(video.thumbnail);
+    //   } catch (error) {
+    //     console.error('Remove Video Thumbnail Image', error);
+    //   }
+    // }
     try {
       const today = new Date();
       const year = today.getYear();
