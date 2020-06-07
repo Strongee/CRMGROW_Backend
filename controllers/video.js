@@ -469,7 +469,7 @@ const updateDetail = async (req, res) => {
     _id: req.params.id,
     user: currentUser.id,
   }).catch((err) => {
-    console.log('err', err.message);
+    console.log('video found err', err.message);
   });
 
   if (!video) {
