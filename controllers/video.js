@@ -1239,11 +1239,9 @@ const getHistory = async (req, res) => {
 
 const bulkEmail = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
-
-  const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -1302,7 +1300,9 @@ const bulkEmail = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('video found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
@@ -1498,7 +1498,7 @@ const bulkEmail = async (req, res) => {
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
   const oauth2Client = new google.auth.OAuth2(
@@ -1506,8 +1506,6 @@ const bulkGmail = async (req, res) => {
     api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
-
-  const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
     if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
@@ -1580,7 +1578,9 @@ const bulkGmail = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('vidoe found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
@@ -2087,11 +2087,9 @@ const createSmsContent = async (req, res) => {
 
 const bulkOutlook = async (req, res) => {
   const { currentUser } = req;
-  const { content, subject, videos: videoIds, contacts } = req.body;
+  const { content, subject, videos, contacts } = req.body;
   const promise_array = [];
   const error = [];
-
-  const videos = await Video.find({ _id: { $in: videoIds } });
 
   if (contacts) {
     if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
@@ -2189,7 +2187,9 @@ const bulkOutlook = async (req, res) => {
       let video_content = content;
       let activity;
       for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
+        const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
+          console.log('video found err', err.message);
+        });
         let preview;
         if (video['preview']) {
           preview = video['preview'];
