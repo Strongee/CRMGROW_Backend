@@ -1055,7 +1055,7 @@ const leadContact = async (req, res) => {
     const _contact = new Contact({
       first_name,
       email,
-      cell_phone,
+      cell_phone: e164Phone,
       label,
       tags: ['leadcapture'],
       user,
