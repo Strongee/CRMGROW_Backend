@@ -125,6 +125,13 @@ const get = async (req, res) => {
   let { dir } = req.body;
   const { key } = req.body;
 
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact',
+    });
+  }
+
   if (key === 'last_activity') {
     dir *= -1;
   }
