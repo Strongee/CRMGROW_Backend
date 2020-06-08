@@ -343,6 +343,7 @@ const update = async (req, res) => {
       console.error('Upload Video Thumbnail Image', error);
     }
   }
+  console.log('video111', video);
   const file_name = req.params.id;
   const thumbnail_name = uuidv1();
   if (req.body.thumbnail) {
