@@ -37,7 +37,8 @@ const makeBody = (to, from, subject, message) => {
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
 const mail_contents = require('../constants/mail_contents');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
 const { PREVIEW_PATH } = require('../config/path');
 const ImageTracker = require('../models/image_tracker');
@@ -50,8 +51,8 @@ const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
@@ -59,13 +60,13 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials);
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const play = async (req, res) => {
@@ -306,7 +307,7 @@ const remove = async (req, res) => {
         const url = urls[i];
         s3.deleteObject(
           {
-            Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
             Key: url.slice(44),
           },
           function (err, data) {
@@ -343,10 +344,10 @@ const bulkEmail = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -491,7 +492,7 @@ const bulkEmail = async (req, res) => {
         text: image_content,
       };
 
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       promise = new Promise((resolve, reject) => {
         sgMail
@@ -575,10 +576,10 @@ const bulkText = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -832,8 +833,8 @@ const bulkGmail = async (req, res) => {
   const error = [];
 
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
   const token = JSON.parse(currentUser.google_refresh_token);
@@ -847,10 +848,10 @@ const bulkGmail = async (req, res) => {
   });
 
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -1112,10 +1113,10 @@ const bulkOutlook = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > config.MAX_EMAIL) {
+    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${config.MAX_EMAIL} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
     const token = oauth2.accessToken.create({

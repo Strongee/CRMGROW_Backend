@@ -1,11 +1,11 @@
 const uuid = require('uuid');
 const AWS = require('aws-sdk');
-const config = require('../config/config');
+const api = require('../config/api');
 
 AWS.config.update({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 var s3 = new AWS.S3();
 
@@ -17,7 +17,7 @@ exports.uploadBase64Image = async (base64, dest = '') => {
   const fileType = base64.split(';')[0].split('/')[1];
   const fileName = uuid();
   var fileParam = {
-    Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
     Key: `${dest ? dest + '/' : ''}${fileName}.${fileType}`,
     Body: base64Data,
     ContentEncoding: 'base64',
@@ -37,7 +37,7 @@ exports.uploadBase64Image = async (base64, dest = '') => {
 exports.removeFile = async (originalFile) => {
   try {
     const removeParam = {
-      Bucket: config.AWS.AWS_S3_BUCKET_NAME,
+      Bucket: api.AWS.AWS_S3_BUCKET_NAME,
       Key: originalFile,
     };
     await s3.deleteObject(removeParam).promise();

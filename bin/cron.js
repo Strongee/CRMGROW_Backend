@@ -26,13 +26,14 @@ const Notification = require('../models/notification');
 const TimeLine = require('../models/time_line');
 const TimeLineCtrl = require('../controllers/time_line');
 const Garbage = require('../models/garbage');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const EmailHelper = require('../helpers/email');
@@ -48,9 +49,9 @@ mongoose
   .catch((err) => console.error('Could not connect to mongo DB', err));
 
 const s3 = new AWS.S3({
-  accessKeyId: config.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: config.AWS.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS.AWS_S3_REGION,
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
 });
 
 const daily_report = new CronJob(
@@ -58,7 +59,7 @@ const daily_report = new CronJob(
   async () => {
     await User.find({ daily_report: true })
       .then(async (users) => {
-        sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
         const start = new Date();
         start.setHours(0, 0, 0, 0);
@@ -150,7 +151,7 @@ const daily_report = new CronJob(
               to: currentUser.email,
               from: mail_contents.DAILY_REPORT.MAIL,
               subject: mail_contents.DAILY_REPORT.SUBJECT,
-              templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
               dynamic_template_data: {
                 contacts,
                 overdue,
@@ -188,7 +189,7 @@ const weekly_report = new CronJob({
   // Run at 21:00 Central time, only on friday
   cronTime: '00 21 * * Sun',
   onTick: async () => {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
     await User.find({ weekly_report: true })
       .then(async (users) => {
         const today = new Date();
@@ -286,7 +287,7 @@ const weekly_report = new CronJob({
               to: currentUser.email,
               from: mail_contents.DAILY_REPORT.MAIL,
               subject: mail_contents.DAILY_REPORT.SUBJECT,
-              templateId: config.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_DAILY_REPORT_TEMPLATE,
               dynamic_template_data: {
                 contacts,
                 overdue,
@@ -320,7 +321,7 @@ const weekly_report = new CronJob({
 const reminder_job = new CronJob(
   '*/10 * * * 0-6',
   async () => {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
     const due_date = new Date();
     due_date.setSeconds(0);
     due_date.setMilliseconds(0);
@@ -364,7 +365,7 @@ const reminder_job = new CronJob(
               to: user.email,
               from: mail_contents.FOLLOWUP_REMINDER.MAIL,
               subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-              templateId: config.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
               dynamic_template_data: {
                 contact:
                   contact.first_name +
@@ -404,7 +405,7 @@ const reminder_job = new CronJob(
           const text_notification = garbage['text_notification'];
           if (text_notification['follow_up']) {
             const e164Phone = phone(user.cell_phone)[0];
-            const fromNumber = config.TWILIO.TWILIO_NUMBER;
+            const fromNumber = api.TWILIO.TWILIO_NUMBER;
             console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
             if (!e164Phone) {
               const error = {
@@ -459,8 +460,8 @@ const reminder_job = new CronJob(
           if (desktop_notification['follow_up']) {
             webpush.setVapidDetails(
               'mailto:support@crmgrow.com',
-              config.VAPID.PUBLIC_VAPID_KEY,
-              config.VAPID.PRIVATE_VAPID_KEY
+              api.VAPID.PUBLIC_VAPID_KEY,
+              api.VAPID.PRIVATE_VAPID_KEY
             );
 
             const subscription = JSON.parse(
@@ -513,7 +514,7 @@ const reminder_job = new CronJob(
           to: user.email,
           from: mail_contents.APPOINTMENT_REMINDER.MAIL,
           subject: mail_contents.APPOINTMENT_REMINDER.SUBJECT,
-          templateId: config.SENDGRID.SENDGRID_APPOINTMENT_REMINDER_TEMPLATE,
+          templateId: api.SENDGRID.SENDGRID_APPOINTMENT_REMINDER_TEMPLATE,
           dynamic_template_data: {
             contact:
               contact.first_name +
@@ -551,7 +552,7 @@ const reminder_job = new CronJob(
           });
 
         const e164Phone = phone(user.cell_phone)[0];
-        const fromNumber = config.TWILIO.TWILIO_NUMBER;
+        const fromNumber = api.TWILIO.TWILIO_NUMBER;
         console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
         if (!e164Phone) {
           const error = {
@@ -611,7 +612,7 @@ const reminder_job = new CronJob(
 const signup_job = new CronJob(
   '0,30 * * * 0-6',
   async () => {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const subscribers = await User.find({ welcome_email: false }).catch(
       (err) => {
@@ -629,7 +630,7 @@ const signup_job = new CronJob(
           const msg = {
             to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
             dynamic_template_data: {
               first_name: subscriber.user_name,
             },
@@ -652,7 +653,7 @@ const signup_job = new CronJob(
           const msg = {
             to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_THIRD,
             dynamic_template_data: {
               first_name: subscriber.user_name,
               video_link: `<a href="${urls.INTRO_VIDEO_URL}">Click this link - Download Video</a>`,
@@ -677,7 +678,7 @@ const signup_job = new CronJob(
           const msg = {
             to: subscriber.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FORTH,
             dynamic_template_data: {
               first_name: subscriber.user_name,
               login_link: `<a href="${urls.LOGIN_URL}">Click here to login into your account</a>`,
@@ -714,7 +715,7 @@ const signup_job = new CronJob(
 const payment_check = new CronJob(
   '0 21 */3 * *',
   async () => {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const payment_notification = await Notification.findOne({
       type: 'urgent',
@@ -737,7 +738,7 @@ const payment_check = new CronJob(
           const msg = {
             to: subscriber.email,
             from: mail_contents.SUPPORT_CRMGROW.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
+            templateId: api.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
             dynamic_template_data: {
               first_name: subscriber.user_name,
               content: payment_notification['content'],
@@ -791,7 +792,7 @@ const logger_check = new CronJob(
           const msg = {
             to: users.email,
             from: mail_contents.SUPPORT_CRMGROW.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
+            templateId: api.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
             dynamic_template_data: {
               first_name: subscriber.user_name,
               content: logger_notification['content'],
@@ -824,7 +825,7 @@ const logger_check = new CronJob(
 const notification_check = new CronJob(
   '0 21 * * *',
   async () => {
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const notifications = await Notification.find({
       type: 'static',
@@ -844,7 +845,7 @@ const notification_check = new CronJob(
           const msg = {
             to: subscriber.email,
             from: mail_contents.SUPPORT_CRMGROW.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
+            templateId: api.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
             dynamic_template_data: {
               first_name: subscriber.user_name,
               content: notification.content,
@@ -1025,7 +1026,7 @@ const upload_video_job = new CronJob(
                       const year = today.getYear();
                       const month = today.getMonth();
                       const params = {
-                        Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                        Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                         Key: 'video' + year + '/' + month + '/' + file_name,
                         Body: data1,
                         ACL: 'public-read',
@@ -1057,7 +1058,7 @@ const upload_video_job = new CronJob(
                   const year = today.getYear();
                   const month = today.getMonth();
                   const params = {
-                    Bucket: config.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+                    Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
                     Key: 'video' + year + '/' + month + '/' + file_name,
                     Body: data,
                     ACL: 'public-read',
@@ -1106,7 +1107,7 @@ const timesheet_check = new CronJob(
       status: 'active',
       due_date: { $lte: due_date },
     });
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     if (timelines) {
       for (let i = 0; i < timelines.length; i++) {
@@ -1475,6 +1476,31 @@ const timesheet_check = new CronJob(
   'US/Central'
 );
 
+const reset_daily_limit = new CronJob(
+  '0 3 * * *',
+  async () => {
+    const users = await User.find({ del: false }).catch((err) => {
+      console.log('users found err', err.message);
+    });
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const max_email_count =
+        user['email_info']['max_count'] ||
+        system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+      user['email_info']['count'] = max_email_count;
+      user.save().catch((err) => {
+        console.log('users save err', err.message);
+      });
+    }
+  },
+  function () {
+    console.log('Reminder Job finished.');
+  },
+  false,
+  'US/Central'
+);
+
 signup_job.start();
 reminder_job.start();
 weekly_report.start();
@@ -1484,3 +1510,4 @@ payment_check.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();
+reset_daily_limit.start();

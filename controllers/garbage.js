@@ -33,7 +33,7 @@ const create = async (req, res) => {
       });
     })
     .catch((err) => {
-      console.log('err', err);
+      console.log('err', err.message);
       return res.status(400).json({
         status: false,
         error: err.message || 'Internal server error',
@@ -59,7 +59,7 @@ const edit = async (req, res) => {
         });
       })
       .catch((err) => {
-        console.log('err', err);
+        console.log('err', err.message);
         return res.status(500).json({
           status: false,
           error: err.message || 'Internal server error',

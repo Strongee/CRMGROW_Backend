@@ -6,11 +6,12 @@ const sgMail = require('@sendgrid/mail');
 const { google } = require('googleapis');
 const outlook = require('node-outlook');
 
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 
 const yahooCredentials = {
-  clientID: config.YAHOO_CLIENT.YAHOO_CLIENT_ID1,
-  clientSecret: config.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
+  clientID: api.YAHOO_CLIENT.YAHOO_CLIENT_ID1,
+  clientSecret: api.YAHOO_CLIENT.YAHOO_CLIENT_CECRET,
   site: 'https://api.login.yahoo.com',
   authorizationPath: '/oauth2/request_auth',
   tokenPath: '/oauth2/get_token',
@@ -18,8 +19,8 @@ const yahooCredentials = {
 const yahooOauth2 = require('simple-oauth2')(yahooCredentials);
 
 const credentials = {
-  clientID: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
-  clientSecret: config.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
+  clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
+  clientSecret: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_SECRET,
   site: 'https://login.microsoftonline.com/common',
   authorizationPath: '/oauth2/v2.0/authorize',
   tokenPath: '/oauth2/v2.0/token',
@@ -91,11 +92,11 @@ const signUp = async (req, res) => {
 
   //   user.save()
   //     .then(_res => {
-  //       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+  //       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY)
   //       let msg = {
   //         to: _res.email,
   //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
   //         dynamic_template_data: {
   //           first_name: _res.user_name,
   //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
@@ -112,7 +113,7 @@ const signUp = async (req, res) => {
   //       msg = {
   //         to: _res.email,
   //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
   //         dynamic_template_data: {
   //           first_name: _res.user_name,
   //           connect_email: `Click here to ensure your contact information and profile picture is uploaded correctly to your profile.`,
@@ -126,7 +127,7 @@ const signUp = async (req, res) => {
   //         console.log('err', err)
   //       })
 
-  //       const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
+  //       const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, { expiresIn: '30d' })
 
   //       const myJSON = JSON.stringify(_res)
   //       const user = JSON.parse(myJSON);
@@ -186,11 +187,11 @@ const signUp = async (req, res) => {
       user
         .save()
         .then((_res) => {
-          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
             dynamic_template_data: {
               first_name: _res.user_name,
               login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
@@ -207,7 +208,7 @@ const signUp = async (req, res) => {
           msg = {
             to: _res.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
             dynamic_template_data: {
               first_name: _res.user_name,
               connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
@@ -221,7 +222,7 @@ const signUp = async (req, res) => {
             console.log('err', err);
           });
 
-          const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, {
+          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
             expiresIn: '30d',
           });
 
@@ -309,11 +310,11 @@ const socialSignUp = async (req, res) => {
   //   })
   //   user.save()
   //     .then(_res => {
-  //       sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY)
+  //       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY)
   //       let msg = {
   //         to: _res.email,
   //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
   //         dynamic_template_data: {
   //           first_name: _res.user_name,
   //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
@@ -329,7 +330,7 @@ const socialSignUp = async (req, res) => {
   //       msg = {
   //         to: _res.email,
   //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
   //         dynamic_template_data: {
   //           first_name: _res.user_name,
   //           // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
@@ -343,7 +344,7 @@ const socialSignUp = async (req, res) => {
   //         console.log('err', err)
   //       })
 
-  //       const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, { expiresIn: '30d' })
+  //       const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, { expiresIn: '30d' })
 
   //       const myJSON = JSON.stringify(_res)
   //       const user = JSON.parse(myJSON);
@@ -400,11 +401,11 @@ const socialSignUp = async (req, res) => {
       user
         .save()
         .then((_res) => {
-          sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
             dynamic_template_data: {
               first_name: _res.user_name,
               login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
@@ -420,7 +421,7 @@ const socialSignUp = async (req, res) => {
           msg = {
             to: _res.email,
             from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
             dynamic_template_data: {
               first_name: _res.user_name,
               // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
@@ -434,7 +435,7 @@ const socialSignUp = async (req, res) => {
             console.log('err', err);
           });
 
-          const token = jwt.sign({ id: _res.id }, config.JWT_SECRET, {
+          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
             expiresIn: '30d',
           });
 
@@ -475,8 +476,8 @@ const socialSignUp = async (req, res) => {
 
 const signUpGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.SOCIAL_SIGNUP_URL + 'gmail'
   );
 
@@ -538,8 +539,8 @@ const signUpOutlook = async (req, res) => {
 const socialGmail = async (req, res) => {
   const code = req.query.code;
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.SOCIAL_SIGNUP_URL + 'gmail'
   );
 
@@ -705,7 +706,7 @@ const login = async (req, res) => {
     });
     // TODO: Include only email for now
     if (_user) {
-      const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
+      const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
         expiresIn: '30d',
       });
       const myJSON = JSON.stringify(_user);
@@ -736,7 +737,10 @@ const login = async (req, res) => {
       .pbkdf2Sync(password, _user.salt.split(' ')[0], 10000, 512, 'sha512')
       .toString('hex');
 
-    if (hash !== _user.hash && req.body.password !== config.DEFAULT_PASS) {
+    if (
+      hash !== _user.hash &&
+      req.body.password !== system_settings.PASSWORD.ADMIN
+    ) {
       if (_user.primary_connected && _user.social_id) {
         return res.send({
           status: false,
@@ -748,14 +752,14 @@ const login = async (req, res) => {
         error: 'Invalid email or password!',
       });
     }
-  } else if (req.body.password !== config.DEFAULT_PASS) {
+  } else if (req.body.password !== system_settings.PASSWORD.ADMIN) {
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
     });
   }
 
-  if (req.body.password === config.DEFAULT_PASS) {
+  if (req.body.password === system_settings.PASSWORD.ADMIN) {
     _user['admin_loggin'] = true;
   } else {
     _user['admin_loggin'] = false;
@@ -764,7 +768,7 @@ const login = async (req, res) => {
     console.log('err', err.message);
   });
   // TODO: Include only email for now
-  const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
     expiresIn: '30d',
   });
   const myJSON = JSON.stringify(_user);
@@ -811,7 +815,7 @@ const socialLogin = async (req, res) => {
     });
   }
   // TODO: Include only email for now
-  const token = jwt.sign({ id: _user.id }, config.JWT_SECRET, {
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
     expiresIn: '30d',
   });
   const myJSON = JSON.stringify(_user);
@@ -830,7 +834,7 @@ const checkAuth = async (req, res, next) => {
   const token = req.get('Authorization');
   let decoded;
   try {
-    decoded = jwt.verify(token, config.JWT_SECRET);
+    decoded = jwt.verify(token, api.JWT_SECRET);
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   } catch (err) {
     console.log('check verify error', err.message || err.msg);
@@ -873,7 +877,7 @@ const checkAuth2 = async (req, res, next) => {
   const token = req.get('Authorization');
   let decoded;
   try {
-    decoded = jwt.verify(token, config.JWT_SECRET);
+    decoded = jwt.verify(token, api.JWT_SECRET);
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   } catch (err) {
     console.error(err);
@@ -1135,8 +1139,8 @@ const syncYahoo = async (req, res) => {
 
 const syncGmail = async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
 
@@ -1236,8 +1240,8 @@ const authorizeGmail = async (req, res) => {
   const user = req.currentUser;
   const code = req.query.code;
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
 
@@ -1385,8 +1389,8 @@ const syncCalendar = async (req, res) => {
     });
   } else {
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
     const token = JSON.parse(user.google_refresh_token);
@@ -1507,8 +1511,8 @@ const disconCalendar = async (req, res) => {
     });
   } else {
     const oauth2Client = new google.auth.OAuth2(
-      config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.GMAIL_AUTHORIZE_URL
     );
     oauth2Client.setCredentials(JSON.parse(user.google_refresh_token));
@@ -1752,7 +1756,7 @@ const forgotPassword = async (req, res) => {
       </body>
       </html>`;
 
-    sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const msg = {
       to: _user['email'],
@@ -1854,8 +1858,8 @@ const connectAnotherEmail = async (req, res) => {
 const disconnectGmail = async (req, res) => {
   const { currentUser } = req;
   const oauth2Client = new google.auth.OAuth2(
-    config.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    config.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GMAIL_AUTHORIZE_URL
   );
   const token = JSON.parse(currentUser.google_refresh_token);

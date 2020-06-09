@@ -2,11 +2,11 @@ const phone = require('phone');
 
 const User = require('../models/user');
 const Contact = require('../models/contact');
-const config = require('../config/config');
+const api = require('../config/api');
 const Activity = require('../models/activity');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const urls = require('../constants/urls');
@@ -14,14 +14,14 @@ const urls = require('../constants/urls');
 const bulkVideo = async (data) => {
   const { user, content, videos, contacts } = data;
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('err', err);
+    console.log('user not found err', err.message);
   });
   const promise_array = [];
 
   for (let i = 0; i < contacts.length; i++) {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
-        console.log('err', err);
+        console.log('contact not found err', err.message);
       }
     );
     let video_titles = '';
@@ -125,7 +125,7 @@ const bulkVideo = async (data) => {
           console.log('err', err);
         });
       } else {
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
       }
     }
 
@@ -291,7 +291,7 @@ const bulkPDF = async (data) => {
           console.log('err', err);
         });
       } else {
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
       }
     }
 
@@ -455,7 +455,7 @@ const bulkImage = async (data) => {
           console.log('err', err);
         });
       } else {
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
       }
     }
 
@@ -527,7 +527,7 @@ const getTwilioNumber = async (id) => {
     })
     .catch((err) => {
       console.log('phone number get err', err);
-      fromNumber = config.TWILIO.TWILIO_NUMBER;
+      fromNumber = api.TWILIO.TWILIO_NUMBER;
       return fromNumber;
     });
 
@@ -547,7 +547,7 @@ const getTwilioNumber = async (id) => {
       })
       .catch((err) => {
         console.log('phone number get err', err);
-        fromNumber = config.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.TWILIO.TWILIO_NUMBER;
         return fromNumber;
       });
     number = data1[0];
@@ -575,7 +575,7 @@ const getTwilioNumber = async (id) => {
       console.log('err', err.message);
     });
   } else {
-    fromNumber = config.TWILIO.TWILIO_NUMBER;
+    fromNumber = api.TWILIO.TWILIO_NUMBER;
   }
 
   return fromNumber;

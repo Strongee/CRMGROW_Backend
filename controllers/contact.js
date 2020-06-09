@@ -26,12 +26,14 @@ const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
+const LabelHelper = require('../helpers/label');
 const urls = require('../constants/urls');
-const config = require('../config/config');
+const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 
-const accountSid = config.TWILIO.TWILIO_SID;
-const authToken = config.TWILIO.TWILIO_AUTH_TOKEN;
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 
@@ -258,18 +260,17 @@ const create = async (req, res) => {
       error: errors.array(),
     });
   }
-  let max_count = 0;
+  let max_upload_count = 0;
   let count = 0;
 
-  if (!currentUser.contact) {
+  const contact_info = currentUser.contact_info;
+  if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
-  } else {
-    count = currentUser.contact.count;
-    max_count = currentUser.contact.max_count;
+    max_upload_count =
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   }
 
-  if (max_count < count) {
+  if (contact_info['is_limit'] && max_upload_count < count) {
     return res.status(400).send({
       status: false,
       error: 'You are exceed for max contacts',
@@ -322,13 +323,6 @@ const create = async (req, res) => {
   contact
     .save()
     .then((_contact) => {
-      count += 1;
-      const contact_info = {
-        count,
-        max_count,
-      };
-      currentUser.contact_info = contact_info;
-      currentUser.save();
       const activity = new Activity({
         content: 'added contact',
         contacts: _contact.id,
@@ -352,21 +346,11 @@ const create = async (req, res) => {
         });
       });
     })
-    .catch((e) => {
-      console.log(e);
-      let errors;
-      if (e.errors) {
-        errors = e.errors.map((err) => {
-          delete err.instance;
-          return err;
-        });
-      }
-      if (e.code === 11000) {
-        errors = 'Email and Phone number must be unique!';
-      }
+    .catch((err) => {
+      console.log('contact save error', err.message);
       return res.status(500).send({
         status: false,
-        error: errors || e,
+        error: 'Internal server error',
       });
     });
 };
@@ -556,13 +540,21 @@ const importCSV = async (req, res) => {
   const { currentUser } = req;
   const failure = [];
   let count = 0;
-  let max_count = 0;
-  if (!currentUser.contact) {
+  let max_upload_count = 0;
+  const contact_info = currentUser.contact_info;
+  const labels = await LabelHelper.getAll(currentUser.id);
+
+  if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
-  } else {
-    count = currentUser.contact.count;
-    max_count = currentUser.contact.max_count;
+    max_upload_count =
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+
+    if (max_upload_count < count) {
+      return res.status(400).json({
+        status: false,
+        error: 'Exceed upload max contacts',
+      });
+    }
   }
 
   const contact_array = [];
@@ -574,7 +566,7 @@ const importCSV = async (req, res) => {
     .on('end', () => {
       const promise_array = [];
       for (let i = 0; i < contact_array.length; i++) {
-        const promise = new Promise(async (resolve, reject) => {
+        const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
           if (data['first_name'] === '') {
             data['first_name'] = null;
@@ -598,7 +590,7 @@ const importCSV = async (req, res) => {
                 email: data['email'],
                 user: currentUser.id,
               }).catch((err) => {
-                console.log('err', err);
+                console.log('contact found err', err.message);
               });
               if (email_contact) {
                 const field = {
@@ -616,7 +608,7 @@ const importCSV = async (req, res) => {
                 cell_phone: data['cell_phone'],
                 user: currentUser.id,
               }).catch((err) => {
-                console.log('err', err);
+                console.log('contact found err', err.message);
               });
               if (phone_contact) {
                 const field = {
@@ -629,8 +621,10 @@ const importCSV = async (req, res) => {
                 return;
               }
             }
+
             count += 1;
-            if (max_count < count) {
+
+            if (contact_info['is_limit'] && max_upload_count < count) {
               const field = {
                 id: i,
                 email: data['email'],
@@ -645,10 +639,25 @@ const importCSV = async (req, res) => {
             if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
               tags = data['tags'].split(/,\s|\s,|,|\s/);
             }
+            let label;
+
+            if (data['label'] !== '' && typeof data['label'] !== 'undefined') {
+              for (let i = 0; i < labels.length; i++) {
+                if (capitalize(labels[i].name) === capitalize(data['label'])) {
+                  console.log('label id', labels[i]._id);
+                  label = labels[i]._id;
+                  break;
+                }
+              }
+            }
+
+            delete data.label;
             delete data.tags;
+
             const contact = new Contact({
               ...data,
               tags,
+              label,
               cell_phone,
               user: currentUser.id,
               created_at: new Date(),
@@ -669,9 +678,12 @@ const importCSV = async (req, res) => {
                 activity
                   .save()
                   .then((_activity) => {
-                    Contact.findByIdAndUpdate(_contact.id, {
-                      $set: { last_activity: _activity.id },
-                    }).catch((err) => {
+                    Contact.updateMany(
+                      { _id: _contact.id },
+                      {
+                        $set: { last_activity: _activity.id },
+                      }
+                    ).catch((err) => {
                       console.log('err', err);
                     });
                   })
@@ -699,7 +711,7 @@ const importCSV = async (req, res) => {
                     _activity
                       .save()
                       .then((__activity) => {
-                        Contact.update(
+                        Contact.updateMany(
                           { _id: _contact.id },
                           { $set: { last_activity: __activity.id } }
                         ).catch((err) => {
@@ -723,15 +735,7 @@ const importCSV = async (req, res) => {
         promise_array.push(promise);
       }
 
-      Promise.all(promise_array).then(function () {
-        const contact_info = {
-          count,
-          max_count,
-        };
-        currentUser.contact_info = contact_info;
-        currentUser.save().catch((err) => {
-          console.log('err', err);
-        });
+      Promise.all(promise_array).then(() => {
         return res.send({
           status: true,
           failure,
@@ -895,7 +899,13 @@ const searchEasy = async (req, res) => {
         },
         {
           cell_phone: {
-            $regex: '.*' + search.split(' ')[0] + '.*',
+            $regex:
+              '.*' +
+              search
+                .split('')
+                .filter((char) => /^[^\(\)\- ]$/.test(char))
+                .join('') +
+              '.*',
             $options: 'i',
           },
           user: currentUser.id,
@@ -1024,11 +1034,28 @@ const leadContact = async (req, res) => {
       },
     });
   } else {
-    const label = 'New';
+    if (email) {
+      await verifyEmail(email).catch((err) => {
+        return res.status(400).json({
+          status: false,
+          error: err.message,
+        });
+      });
+    }
+    const e164Phone = phone(cell_phone)[0];
+
+    if (!e164Phone) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid Phone Number',
+      });
+    }
+
+    const label = system_settings.NEW_LABEL;
     const _contact = new Contact({
       first_name,
       email,
-      cell_phone,
+      cell_phone: e164Phone,
       label,
       tags: ['leadcapture'],
       user,
@@ -1039,13 +1066,13 @@ const leadContact = async (req, res) => {
         .save()
         .then(async (contact) => {
           const _video = await Video.findOne({ _id: video }).catch((err) => {
-            console.log('err', err);
+            console.log('video found err', err.message);
           });
           const currentUser = await User.findOne({ _id: user }).catch((err) => {
-            console.log('err', err);
+            console.log('current user found err', err.message);
           });
           const garbage = await Garbage.findOne({ user }).catch((err) => {
-            console.log('err', err);
+            console.log('garbage found err', err.message);
           });
 
           const _activity = new Activity({
@@ -1071,11 +1098,11 @@ const leadContact = async (req, res) => {
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
-            sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
               from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT,
                 first_name,
@@ -1103,8 +1130,8 @@ const leadContact = async (req, res) => {
           if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
               'mailto:support@crmgrow.com',
-              config.VAPID.PUBLIC_VAPID_KEY,
-              config.VAPID.PRIVATE_VAPID_KEY
+              api.VAPID.PUBLIC_VAPID_KEY,
+              api.VAPID.PRIVATE_VAPID_KEY
             );
 
             const subscription = JSON.parse(
@@ -1149,7 +1176,7 @@ const leadContact = async (req, res) => {
             } else {
               let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
-                fromNumber = config.TWILIO.TWILIO_NUMBER;
+                fromNumber = api.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
@@ -1186,7 +1213,7 @@ const leadContact = async (req, res) => {
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
-            console.log('err', err);
+            console.log('contact update err', err.message);
           });
 
           return res.send({
@@ -1240,11 +1267,11 @@ const leadContact = async (req, res) => {
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
-            sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
             const msg = {
               to: currentUser.email,
               from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-              templateId: config.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+              templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
               dynamic_template_data: {
                 subject: mail_contents.NOTIFICATION_REVIEWED_PDF.SUBJECT,
                 first_name,
@@ -1272,8 +1299,8 @@ const leadContact = async (req, res) => {
           if (desktop_notification['lead_capture']) {
             webpush.setVapidDetails(
               'mailto:support@crmgrow.com',
-              config.VAPID.PUBLIC_VAPID_KEY,
-              config.VAPID.PRIVATE_VAPID_KEY
+              api.VAPID.PUBLIC_VAPID_KEY,
+              api.VAPID.PRIVATE_VAPID_KEY
             );
 
             const subscription = JSON.parse(
@@ -1318,7 +1345,7 @@ const leadContact = async (req, res) => {
             } else {
               let fromNumber = currentUser['proxy_number'];
               if (!fromNumber) {
-                fromNumber = config.TWILIO.TWILIO_NUMBER;
+                fromNumber = api.TWILIO.TWILIO_NUMBER;
               }
 
               const title =
@@ -1403,9 +1430,10 @@ const advanceSearch = async (req, res) => {
     includeSource,
     includeLastActivity,
     includeBrokerage,
+    includeTag,
   } = req.body;
   let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || includeFollowUps === 'undifined') {
+  if (includeFollowUps === null || typeof includeFollowUps === 'undefined') {
     includeFollowUps = true;
   }
 
@@ -2028,7 +2056,18 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(tagsQuery);
     } else {
-      var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      var tagsQuery;
+      if (includeTag) {
+        tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      } else {
+        tagsQuery = {
+          $or: [
+            { tags: { $elemMatch: { $nin: tagsCondition } } },
+            { tags: [] },
+            { tags: undefined },
+          ],
+        };
+      }
       query['$and'].push(tagsQuery);
     }
   }
@@ -2047,7 +2086,13 @@ const advanceSearch = async (req, res) => {
       if (includeBrokerage) {
         brokerageQuery = { brokerage: { $in: brokerageCondition } };
       } else {
-        brokerageQuery = { brokerage: { $nin: brokerageCondition } };
+        brokerageQuery = {
+          $or: [
+            { brokerage: { $nin: brokerageCondition } },
+            { brokerage: undefined },
+            { brokerage: '' },
+          ],
+        };
       }
 
       query['$and'].push(brokerageQuery);
@@ -2547,7 +2592,7 @@ const bulkCreate = async (req, res) => {
   let max_count = 0;
   if (!currentUser.contact) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = config.MAX_CONTACT;
+    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
@@ -2618,7 +2663,7 @@ const bulkCreate = async (req, res) => {
     };
     currentUser.contact = contact_info;
     currentUser.save().catch((err) => {
-      console.log('err', err);
+      console.log('user save err', err.message);
     });
     return res.send({
       status: true,
@@ -2628,30 +2673,29 @@ const bulkCreate = async (req, res) => {
   });
 };
 
-const verifyEmail = async (req, res) => {
-  const { email } = req.body;
-  const verifier = new Verifier(config.EMAIL_VERIFICATION_KEY, {
+const verifyEmail = async (email) => {
+  // const { email } = req.body;
+  const verifier = new Verifier(api.EMAIL_VERIFICATION_KEY, {
     checkFree: false,
     checkDisposable: false,
     checkCatchAll: false,
   });
-  verifier.verify(email, (err, data) => {
-    if (err) {
-      return res.status(400).json({
-        status: false,
-        error: err.message || err.msg,
-      });
-    }
-    if (data['formatCheck'] && data['smtpCheck'] && data['dnsCheck']) {
-      return res.send({
-        status: true,
-      });
-    } else {
-      return res.status(400).json({
-        status: false,
-        error: 'Email is not valid one',
-      });
-    }
+
+  return new Promise((resolve, reject) => {
+    verifier.verify(email, (err, data) => {
+      if (err) {
+        reject({ message: err.msg || err.message });
+      }
+      if (
+        data['formatCheck'] === 'true' &&
+        data['smtpCheck'] === 'true' &&
+        data['dnsCheck'] === 'true'
+      ) {
+        resolve();
+      } else {
+        reject({ message: 'Email is not valid one' });
+      }
+    });
   });
 };
 
@@ -2669,6 +2713,18 @@ const verifyPhone = async (req, res) => {
       error: 'Invalid Phone Number',
     });
   }
+};
+
+const capitalize = (s) => {
+  if ((typeof s).toLowerCase() !== 'string') return;
+  if (s.split(' ').length === 2) {
+    const s1 = s.split(' ')[0];
+    const s2 = s.split(' ')[1];
+    return `${
+      s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()
+    } ${s2.charAt(0).toUpperCase()}${s2.slice(1).toLowerCase()}`;
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
 module.exports = {
