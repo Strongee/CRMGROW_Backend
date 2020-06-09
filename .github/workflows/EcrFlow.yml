@@ -36,6 +36,7 @@ jobs:
           ECR_REPOSITORY: teamgrow
           IMAGE_TAG: latest
         run: |
+          aws s3 cp s3://cloudformation-teamgrow/ENV ./.env
           # Build a docker container and
           # push it to ECR so that it can
           # be deployed to ECS.
