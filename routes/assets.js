@@ -6,6 +6,7 @@ const UserCtrl = require('../controllers/user');
 const config = require('../config/config');
 const multer = require('multer');
 var multerS3 = require('multer-s3');
+const uuidv1 = require('uuid/v1');
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ var upload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      cb(null, Date.now().toString());
+      cb(null, uuidv1() + '-' + Date.now().toString());
     },
   }),
 });
