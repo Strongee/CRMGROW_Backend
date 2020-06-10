@@ -2294,7 +2294,6 @@ const advanceSearch = async (req, res) => {
       }
     });
   }
-
   const count = await Contact.countDocuments({ user: currentUser.id });
 
   return res.send({
