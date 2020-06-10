@@ -125,6 +125,13 @@ const get = async (req, res) => {
   let { dir } = req.body;
   const { key } = req.body;
 
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact',
+    });
+  }
+
   if (key === 'last_activity') {
     dir *= -1;
   }
@@ -823,7 +830,8 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  const search = req.body.search;
+  const searchI = req.body.search;
+  const search = searchI.replace(/[&\/\\#, +()$~%-.'":*?<>{}]/g, '');
   let contacts = [];
   if (!search.split(' ')[1]) {
     contacts = await Contact.find({
@@ -867,7 +875,6 @@ const search = async (req, res) => {
   }
 
   const count = await Contact.countDocuments({ user: currentUser.id });
-
   return res.send({
     status: true,
     data: {
