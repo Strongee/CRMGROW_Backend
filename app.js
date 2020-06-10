@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname1, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/video', catchError(VideoCtrl.play));
 app.get('/video1/:id', catchError(VideoCtrl.play1));
@@ -42,6 +42,8 @@ app.get('/auth', (req, res) => {
 });
 
 app.use('/api', indexRouter);
-app.get('*', catchError(PageCtrl.display));
+app.get('*', catchError(PageCtrl.display), (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
 
 module.exports = app;
