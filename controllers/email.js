@@ -848,7 +848,7 @@ const openTrack = async (req, res) => {
 };
 
 const bulkEmail = async (req, res) => {
-  sgMail.setApiKey(system_settings.SENDGRID.SENDGRID_KEY);
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const { currentUser } = req;
   const { to, cc, bcc, contacts, content, attachments, subject } = req.body;
