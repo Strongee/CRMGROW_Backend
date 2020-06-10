@@ -72,15 +72,18 @@ body(class=capture_dialog && !capture_delay ? 'is_protected' : '')
         h3.modal-title Looking forward to your feedback!
       .modal-body
         form#info-form
-          .form-group.custom-form
-            label.form-label Name
-            input.form-control(type="text", name="first_name", placeholder="John Smith", required=capture_field['first_name'] ? true : false )
-          .form-group.custom-form
-            label.form-label Email
-            input.form-control(type="email", name="email", placeholder="Johnsmith@gmail.com", required=capture_field['email'] ? true : false)
-          .form-group.custom-form
-            label.form-label Phone
-            input.form-control.phone-info(type="tel", name="cell_phone", placeholder="***-***-****", required=capture_field['cell_phone'] ? true : false)
+          if capture_field['first_name']
+            .form-group.custom-form
+              label.form-label Name
+              input.form-control(type="text", name="first_name", placeholder="John Smith", required=capture_field['first_name'] ? true : false )
+          if capture_field['email']
+            .form-group.custom-form
+              label.form-label Email
+              input.form-control(type="email", name="email", placeholder="Johnsmith@gmail.com", required=capture_field['email'] ? true : false)
+          if capture_field['cell_phone']
+            .form-group.custom-form
+              label.form-label Phone
+              input.form-control.phone-info(type="tel", name="cell_phone", placeholder="***-***-****", required=capture_field['cell_phone'] ? true : false)
           input(type="hidden", name="user", value=`${user._id}`)
           input(type="hidden", name="video", value=`${video._id}`)
           p.privacy-link

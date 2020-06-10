@@ -1437,10 +1437,9 @@ const advanceSearch = async (req, res) => {
     includeSource,
     includeLastActivity,
     includeBrokerage,
-    includeTag,
   } = req.body;
   let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || typeof includeFollowUps === 'undefined') {
+  if (includeFollowUps === null || includeFollowUps === 'undifined') {
     includeFollowUps = true;
   }
 
@@ -2063,18 +2062,7 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(tagsQuery);
     } else {
-      var tagsQuery;
-      if (includeTag) {
-        tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
-      } else {
-        tagsQuery = {
-          $or: [
-            { tags: { $elemMatch: { $nin: tagsCondition } } },
-            { tags: [] },
-            { tags: undefined },
-          ],
-        };
-      }
+      var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
       query['$and'].push(tagsQuery);
     }
   }
@@ -2093,13 +2081,7 @@ const advanceSearch = async (req, res) => {
       if (includeBrokerage) {
         brokerageQuery = { brokerage: { $in: brokerageCondition } };
       } else {
-        brokerageQuery = {
-          $or: [
-            { brokerage: { $nin: brokerageCondition } },
-            { brokerage: undefined },
-            { brokerage: '' },
-          ],
-        };
+        brokerageQuery = { brokerage: { $nin: brokerageCondition } };
       }
 
       query['$and'].push(brokerageQuery);
@@ -2306,14 +2288,12 @@ const advanceSearch = async (req, res) => {
       });
     }
   } else {
-    // await asyncForEach(contacts, async (e) => {
-    //   if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
-    //     results.push(e);
-    //   }
-    // });
-    results = contacts;
+    await asyncForEach(contacts, async (e) => {
+      if (!(await checkFollowUpCondition(includeFollowUps, e, currentUser))) {
+        results.push(e);
+      }
+    });
   }
-
   const count = await Contact.countDocuments({ user: currentUser.id });
 
   return res.send({
@@ -2347,6 +2327,7 @@ const checkFollowUpCondition = async (
     return true;
   }
 };
+
 const getBrokerages = async (req, res) => {
   const { currentUser } = req;
 
