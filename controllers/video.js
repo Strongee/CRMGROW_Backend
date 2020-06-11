@@ -1255,20 +1255,6 @@ const bulkEmail = async (req, res) => {
     for (let i = 0; i < contacts.length; i++) {
       let promise;
 
-      if (email_count > max_email_count) {
-        promise = new Promise((resolve, reject) => {
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'email daily limit exceed!',
-          });
-          resolve();
-        });
-        promise_array.push(promise);
-        continue;
-      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1287,6 +1273,21 @@ const bulkEmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -1534,20 +1535,6 @@ const bulkGmail = async (req, res) => {
     for (let i = 0; i < contacts.length; i++) {
       let promise;
 
-      if (email_count > max_email_count) {
-        promise = new Promise((resolve, reject) => {
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'email daily limit exceed!',
-          });
-          resolve();
-        });
-        promise_array.push(promise);
-        continue;
-      }
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -1572,6 +1559,22 @@ const bulkGmail = async (req, res) => {
         promise_array.push(promise);
         continue;
       }
+
+      if (email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let video_titles = '';
       let video_descriptions = '';
       let video_objects = '';
@@ -2113,6 +2116,31 @@ const bulkOutlook = async (req, res) => {
       let accessToken;
       let promise;
 
+      let _contact = await Contact.findOne({
+        _id: contacts[i],
+        tags: { $nin: ['unsubscribed'] },
+      }).catch((err) => {
+        console.log('contact found err', err.message);
+      });
+
+      if (!_contact) {
+        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       if (email_count > max_email_count) {
         promise = new Promise((resolve, reject) => {
           error.push({
@@ -2155,31 +2183,6 @@ const bulkOutlook = async (req, res) => {
           done(null, accessToken);
         },
       });
-
-      let _contact = await Contact.findOne({
-        _id: contacts[i],
-        tags: { $nin: ['unsubscribed'] },
-      }).catch((err) => {
-        console.log('contact found err', err.message);
-      });
-
-      if (!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
-          console.log('contact found err', err.message);
-        });
-        promise = new Promise(async (resolve, reject) => {
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'contact email not found or unsubscribed',
-          });
-          resolve();
-        });
-        promise_array.push(promise);
-        continue;
-      }
 
       let video_titles = '';
       let video_descriptions = '';
