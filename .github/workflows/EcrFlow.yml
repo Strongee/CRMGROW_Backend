@@ -1,9 +1,9 @@
 name: TeamGrow Build to ECR
 on:
   push:
-    branches: [stage]
+    branches: [staging]
   pull_request:
-    branches: [stage]
+    branches: [staging]
 
 jobs:
   deploy:
