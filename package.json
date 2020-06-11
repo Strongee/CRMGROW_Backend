@@ -4,7 +4,7 @@
   "description": "Teamgrow backend",
   "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=production node ./bin/www > log/logFile.log",
+    "start": "NODE_ENV=production node ./bin/www",
     "staging": "NODE_ENV=staging node ./bin/www",
     "dev": "nodemon ./bin/www",
     "lint": "eslint '*.js' --quiet --fix",
@@ -117,5 +117,10 @@
       "git add",
       "eslint --cache --fix"
     ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
