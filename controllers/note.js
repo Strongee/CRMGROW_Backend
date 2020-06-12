@@ -76,7 +76,72 @@ const create = async (req, res) => {
     });
 };
 
+const bulkCreate = async (req, res) => {
+  const { currentUser } = req;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      error: errors.array(),
+    });
+  }
+
+  const { contacts, content } = req.body;
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+
+    const note = new Note({
+      content,
+      contact,
+      user: currentUser.id,
+    });
+
+    note
+      .save()
+      .then((_note) => {
+        const activity = new Activity({
+          content: 'added note',
+          contacts: _note.contact,
+          user: currentUser.id,
+          type: 'notes',
+          notes: _note.id,
+        });
+
+        activity
+          .save()
+          .then((_activity) => {
+            Contact.findByIdAndUpdate(_note.contact, {
+              $set: { last_activity: _activity.id },
+            }).catch((err) => {
+              console.log('err', err);
+            });
+            const myJSON = JSON.stringify(_note);
+            const data = JSON.parse(myJSON);
+            data.activity = _activity;
+          })
+          .catch((e) => {
+            console.log('note creating Error', e);
+            return res.status().send({
+              status: false,
+              error: e,
+            });
+          });
+      })
+      .catch((e) => {
+        console.log('note creating Error', e);
+        return res.status().send({
+          status: false,
+          error: e,
+        });
+      });
+  }
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   create,
+  bulkCreate,
 };
