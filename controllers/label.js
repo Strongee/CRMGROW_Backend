@@ -47,7 +47,6 @@ const getAll = async (req, res) => {
   const company = currentUser.company || 'eXp Realty';
   const _label_list = await Label.find({
     user: currentUser.id,
-    del: false,
   }).sort({ priority: 1 });
 
   const _label_admin = await Label.find({
