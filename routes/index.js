@@ -24,6 +24,7 @@ const automation = require('./automation');
 const timeline = require('./time_line');
 const page = require('./page');
 const guest = require('./guest');
+const label = require('./label');
 const assets = require('./assets');
 const admin = require('./admin/index');
 
@@ -60,5 +61,6 @@ router.use('/page', page);
 router.use('/guest', guest);
 router.use('/assets', assets);
 router.use('/admin', admin);
+router.use('/label', label)
 
 module.exports = router;
