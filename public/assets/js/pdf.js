@@ -17,6 +17,18 @@ $(function () {
 
   const changeControls = (e) => {
     const currentPage = $('#viewer').pdf('getPageNumber');
+    const totalPages = $('#viewer').pdf('getTotalPages');
+    if (currentPage === totalPages) {
+      $('button.next').hide();
+    } else {
+      $('button.next').show();
+    }
+
+    if (currentPage === 1) {
+      $('button.prev').hide();
+    } else {
+      $('button.prev').show();
+    }
     $('.page-status .current-page').text(currentPage);
   };
 
