@@ -1487,8 +1487,8 @@ const reset_daily_limit = new CronJob(
       const user = users[i];
       const max_email_count =
         user['email_info']['max_count'] ||
-        system_settings.TEXT_MONTHLY_LIMIT.BASIC;
-      user['email_info']['count'] = max_email_count;
+        system_settings.EMAIL_DAILY_LIMIT.BASIC;
+      user['email_info']['count'] = 0;
       user.save().catch((err) => {
         console.log('users save err', err.message);
       });
