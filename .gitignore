@@ -62,4 +62,3 @@ typings/
 package-lock.json
 teamgrow_env
 ecosystem.config.json
-/dist
