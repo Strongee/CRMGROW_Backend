@@ -15,8 +15,6 @@ const create = async (req, res) => {
   const label = new Label({
     ...req.body,
     user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   try {
@@ -47,17 +45,14 @@ const getAll = async (req, res) => {
   }
 
   const company = currentUser.company || 'eXp Realty';
-  const _label_list = await Label.find({ user: currentUser.id, del: false })
-    .sort({ priority: 1 })
-    .sort({ created_at: 1 });
+  const _label_list = await Label.find({
+    user: currentUser.id,
+  }).sort({ priority: 1 });
 
   const _label_admin = await Label.find({
     role: 'admin',
-    del: false,
     _id: { $nin: editedLabels },
-  })
-    .sort({ priority: 1 })
-    .sort({ created_at: 1 });
+  }).sort({ priority: 1 });
 
   Array.prototype.push.apply(_label_list, _label_admin);
 
@@ -90,8 +85,9 @@ const update = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(400).json({
-            status: true,
+          res.status(500).json({
+            status: false,
+            error: err.message,
           });
         });
     } else {

@@ -59,6 +59,7 @@ router.use('/automation', automation);
 router.use('/timeline', timeline);
 router.use('/page', page);
 router.use('/guest', guest);
+router.use('/label', label);
 router.use('/assets', assets);
 router.use('/admin', admin);
 router.use('/label', label)

@@ -18,6 +18,7 @@
     "prettier/prettier": "error",
     "quotes": 0,
     "no-underscore-dangle": 0,
+    "no-console": "off",
     "camelcase": 0,
     "prefer-destructuring": 0,
     "no-await-in-loop": 0,

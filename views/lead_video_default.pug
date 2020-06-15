@@ -66,8 +66,11 @@ body(class=capture_dialog && !capture_delay ? 'is_protected' : '')
   .modal-dialog
     .modal-content.p-4.info-step
       if setting.intro_video
-        video.intro_video(autoplay=true, loop=true, preload="metadata", playsinline=true, muted)
-          source(src=setting.intro_video, type="video/mp4")
+        div.quick-video-wrapper
+          video.intro_video(autoplay=true, loop=true, preload="metadata", playsinline=true, muted)
+            source(src=setting.intro_video, type="video/mp4")
+          button.volume-control
+            | Unmute Video
       .modal-header.border-bottom-0
         h3.modal-title Looking forward to your feedback!
       .modal-body

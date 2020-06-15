@@ -727,8 +727,9 @@ const payment_check = new CronJob(
     if (payment_notification) {
       const subscribers = await User.find({
         'subscription.is_failed': true,
+        del: false,
       }).catch((err) => {
-        console.log('err', err);
+        console.log('err', err.messsage);
       });
 
       if (subscribers) {
@@ -780,11 +781,12 @@ const logger_check = new CronJob(
     if (logger_notification) {
       let startdate = moment();
       startdate = startdate.subtract(30, 'days');
-      const users = await User.find({ last_logged: { $lt: startdate } }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
+      const users = await User.find({
+        last_logged: { $lt: startdate },
+        del: false,
+      }).catch((err) => {
+        console.log('err', err);
+      });
       if (users) {
         for (let i = 0; i < users.length; i++) {
           const subscriber = users[i];

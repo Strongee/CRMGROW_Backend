@@ -13,5 +13,11 @@ router.post(
   catchError(NoteCtrl.create)
 );
 router.get('/', UserCtrl.checkAuth, catchError(NoteCtrl.get));
+router.post(
+  '/create',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(NoteCtrl.bulkCreate)
+);
 
 module.exports = router;

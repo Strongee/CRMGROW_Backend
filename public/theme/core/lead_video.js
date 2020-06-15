@@ -59,6 +59,9 @@ var duration = document.querySelector('#video-duration').value;
         success: function (data) {
           const response = data.data;
           if (response) {
+            document.querySelector(".intro_video").muted = true
+            document.querySelector(".intro_video").pause();
+
             $('#contact').val(response.contact);
             $('#activity').val(response.activity);
             var siteAddr = location.protocol + '//' + location.hostname;
@@ -87,6 +90,11 @@ var duration = document.querySelector('#video-duration').value;
         },
       });
     });
+
+    $(".quick-video-wrapper .volume-control").click(e => {
+      let volumnStatus = document.querySelector(".intro_video").muted;
+      document.querySelector(".intro_video").muted = !volumnStatus
+    })
   });
 })(jQuery);
 
