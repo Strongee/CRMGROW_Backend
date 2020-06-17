@@ -2454,7 +2454,10 @@ const checkPhone = async (req, res) => {
   const { cell_phone } = req.body;
 
   if (typeof cell_phone === 'object') {
-    return;
+    return res.send({
+      data: [],
+      status: true,
+    });
   }
 
   const contacts = await Contact.find({
