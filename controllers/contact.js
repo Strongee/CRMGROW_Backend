@@ -1058,7 +1058,7 @@ const leadContact = async (req, res) => {
       });
     }
 
-    const label = system_settings.NEW_LABEL;
+    const label = system_settings.LEAD;
     const _contact = new Contact({
       first_name,
       email,
