@@ -59,8 +59,10 @@ var duration = document.querySelector('#video-duration').value;
         success: function (data) {
           const response = data.data;
           if (response) {
-            document.querySelector(".intro_video").muted = true
-            document.querySelector(".intro_video").pause();
+            if(document.querySelector(".intro_video")) {
+              document.querySelector(".intro_video").muted = true
+              document.querySelector(".intro_video").pause();
+            }            
 
             $('#contact').val(response.contact);
             $('#activity').val(response.activity);
@@ -94,6 +96,12 @@ var duration = document.querySelector('#video-duration').value;
     $(".quick-video-wrapper .volume-control").click(e => {
       let volumnStatus = document.querySelector(".intro_video").muted;
       document.querySelector(".intro_video").muted = !volumnStatus
+      if(volumnStatus) {
+        $(".quick-video-wrapper .volume-control img").attr("src", "./theme/icons/mute.png")
+      }
+      else {
+        $(".quick-video-wrapper .volume-control img").attr("src", "./theme/icons/unmute.png")
+      }
     })
   });
 })(jQuery);
