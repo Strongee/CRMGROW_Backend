@@ -11,6 +11,13 @@ var currentTrackerIndex = 0;
 var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector('#video-duration').value;
+let limit = duration
+if(duration > 600) {
+  limit = duration - 60
+}
+else {
+  limit = duration - 10
+}
 function updateStartTime() {
   const contact = document.querySelector('#contact').value;
   const activity = document.querySelector('#activity').value;
@@ -111,7 +118,7 @@ function reportTime() {
   });
   watched_time = total;
   if (total != 0 && socket) {
-    if (watched_time < duration) {
+    if (watched_time < limit) {
       if (!registered_flag) {
         const video = document.querySelector('#video').value;
         const user = document.querySelector('#user').value;
