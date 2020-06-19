@@ -1286,7 +1286,7 @@ const leadContact = async (req, res) => {
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
                   first_name +
-                  ' watched lead capture pdf - <b>' +
+                  ' Viewed lead capture pdf - <b>' +
                   _pdf.title +
                   '</b>at ' +
                   created_at,
