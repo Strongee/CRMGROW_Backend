@@ -180,7 +180,7 @@ const updateDetail = async (req, res) => {
   } else {
     return res.status(400).json({
       status: false,
-      error: 'Not_found_preview',
+      error: 'Access not Allowed',
     });
   }
 };
