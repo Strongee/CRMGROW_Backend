@@ -151,47 +151,37 @@ const create = async (req, res) => {
 
 const updateDetail = async (req, res) => {
   const { currentUser } = req;
+  const editData = req.body;
+  const image = await Image.findOne({
+    user: currentUser.id,
+    _id: req.params.id,
+  });
+  if (!image) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid_permission',
+    });
+  }
+  for (const key in editData) {
+    image[key] = editData[key];
+  }
   if (req.body.preview) {
     // base 64 image
-    const editData = req.body;
     const file_name = uuidv1();
     const file_path = base64Img.imgSync(
       req.body.preview,
       PREVIEW_PATH,
       file_name
     );
-    const image = await Image.findOne({
-      user: currentUser.id,
-      _id: req.params.id,
-    });
-
-    if (!image) {
-      return res.status(400).json({
-        status: false,
-        error: 'Invalid_permission',
-      });
-    }
-
-    for (const key in editData) {
-      image[key] = editData[key];
-    }
 
     image['preview'] = urls.IMAGE_PREVIEW_URL + path.basename(file_path);
-
-    image['updated_at'] = new Date();
-
-    image.save().then((data) => {
-      return res.send({
-        status: true,
-        data,
-      });
-    });
-  } else {
-    return res.status(400).json({
-      status: false,
-      error: 'Not_found_preview',
-    });
   }
+  image.save().then((data) => {
+    return res.send({
+      status: true,
+      data,
+    });
+  });
 };
 
 const get = async (req, res) => {

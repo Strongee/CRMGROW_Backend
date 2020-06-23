@@ -145,44 +145,33 @@ const create = async (req, res) => {
 
 const updateDetail = async (req, res) => {
   const { currentUser } = req;
+  const editData = req.body;
+  const pdf = await PDF.findOne({ user: currentUser.id, _id: req.params.id });
+  if (!pdf) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid_permission',
+    });
+  }
+  for (const key in editData) {
+    pdf[key] = editData[key];
+  }
   if (req.body.preview) {
     // base 64 image
-    const editData = req.body;
     const file_name = uuidv1();
     const file_path = base64Img.imgSync(
       req.body.preview,
       PREVIEW_PATH,
       file_name
     );
-    const pdf = await PDF.findOne({ user: currentUser.id, _id: req.params.id });
-
-    if (!pdf) {
-      return res.status(400).json({
-        status: false,
-        error: 'Invalid_permission',
-      });
-    }
-
-    for (const key in editData) {
-      pdf[key] = editData[key];
-    }
-
     pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path);
-
-    pdf['updated_at'] = new Date();
-
-    pdf.save().then((_pdf) => {
-      return res.send({
-        status: true,
-        data: _pdf,
-      });
-    });
-  } else {
-    return res.status(400).json({
-      status: false,
-      error: 'Access not Allowed',
-    });
   }
+  pdf.save().then((_pdf) => {
+    return res.send({
+      status: true,
+      data: _pdf,
+    });
+  });
 };
 
 const get = async (req, res) => {
