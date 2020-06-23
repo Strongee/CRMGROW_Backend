@@ -257,10 +257,19 @@ const uploadBase64 = async (req, res) => {
   }
 };
 
+const loadAll = async (req, res) => {
+  File.find({}).then((data) => {
+    return res.send({
+      data,
+    });
+  });
+};
+
 module.exports = {
   create,
   get,
   upload,
   remove,
   uploadBase64,
+  loadAll,
 };

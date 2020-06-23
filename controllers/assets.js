@@ -1,5 +1,6 @@
 const File = require('../models/file');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const urls = require('../constants/urls');
 
 const load = async (req, res) => {
   const { currentUser } = req;
@@ -45,7 +46,7 @@ const create = async (req, res) => {
   const { name, url } = req.body;
   const { currentUser } = req;
   try {
-    const newURL = await uploadBase64Image(url);
+    const newURL = await uploadBase64Image(url, 'assets');
     const file = new File({
       name,
       url: newURL,
@@ -83,13 +84,14 @@ const replace = async (req, res) => {
   });
   if (file) {
     try {
-      await removeFile();
+      const key = file.url.slice(urls.STORAGE_BASE.length + 1);
+      await removeFile(key);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('File Remove Error: File ID=', _id, err);
     }
     try {
-      const newURL = await uploadBase64Image(url);
+      const newURL = await uploadBase64Image(url, 'assets');
       File.updateOne({ _id }, { $set: { url: newURL } })
         .then(() => {
           return res.send({
@@ -132,12 +134,8 @@ const remove = async (req, res) => {
     const file = files[i];
     try {
       // console.log('File Remove', file.url);
-      if (file.url.startsWith('https://') || file.url.startsWith('http://')) {
-        const key = file.url.split('/').slice(3).join('/');
-        await removeFile(key);
-      } else {
-        await removeFile(file.url);
-      }
+      const key = file.url.slice(urls.STORAGE_BASE.length + 1);
+      await removeFile(key);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Remove Assets From Amazon: ', err);
