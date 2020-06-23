@@ -217,13 +217,6 @@ const updateDetail = async (req, res) => {
   }
 
   if (req.body.preview) {
-    if (pdf.preview) {
-      try {
-        await removeFile(pdf.preview);
-      } catch (error) {
-        console.error('Remove PDF Preview Image', error);
-      }
-    }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -242,21 +235,10 @@ const updateDetail = async (req, res) => {
     pdf[key] = editData[key];
   }
 
-  if (pdf['path'] && req.body.preview) {
-    PDF.updateMany({ _id: req.params.id }, { $set: { preview: res } })
-      .catch((err) => {
-        console.log('update preview err', err.message);
-      })
-      .catch((err) => {
-        console.log('generate preview err', err.message);
-      });
-  }
-
   pdf['updated_at'] = new Date();
   pdf
     .save()
     .then((_pdf) => {
-      console.log('_pdf', _pdf);
       return res.send({
         status: true,
         data: _pdf,
@@ -316,6 +298,10 @@ const updateDefault = async (req, res) => {
   if (pdf.preview) {
     // base 64 image
     const file_name = uuidv1();
+
+    if (!fs.existsSync(PREVIEW_PATH)) {
+      fs.mkdirSync(PREVIEW_PATH);
+    }
 
     preview_path = base64Img.imgSync(pdf.preview, PREVIEW_PATH, file_name);
     if (fs.existsSync(preview_path)) {
