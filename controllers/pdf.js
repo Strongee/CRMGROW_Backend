@@ -147,57 +147,6 @@ const create = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
-  const editData = { ...req.body };
-  delete editData.preview;
-  const { currentUser } = req;
-  const pdf = await PDF.findOne({
-    _id: req.params.id,
-    user: currentUser.id,
-  }).catch((err) => {
-    console.log('err', err.message);
-  });
-
-  if (!pdf) {
-    return res.status(400).json({
-      status: false,
-      error: 'Invalid_permission',
-    });
-  }
-
-  if (req.body.preview) {
-    try {
-      const today = new Date();
-      const year = today.getYear();
-      const month = today.getMonth();
-      const preview_image = await uploadBase64Image(
-        req.body.preview,
-        'preview' + year + '/' + month
-      );
-      pdf['preview'] = preview_image;
-    } catch (error) {
-      console.error('Upload PDF Preview Image', error);
-    }
-  }
-
-  for (const key in editData) {
-    pdf[key] = editData[key];
-  }
-
-  pdf['updated_at'] = new Date();
-  pdf
-    .save()
-    .then((_pdf) => {
-      res.send({
-        status: true,
-        data: _pdf,
-      });
-    })
-    .catch((err) => {
-      console.log('err', err.message);
-    });
-};
-
 const updateDetail = async (req, res) => {
   const editData = { ...req.body };
   delete editData.preview;
@@ -1791,7 +1740,6 @@ module.exports = {
   play,
   play1,
   create,
-  update,
   updateDetail,
   updateDefault,
   get,
