@@ -11,6 +11,8 @@ const PDFSchema = new Schema(
     type: String,
     url: String,
     role: String,
+    default_edited: { type: Boolean, default: false },
+    default_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,
