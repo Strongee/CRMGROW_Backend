@@ -160,129 +160,101 @@ const updateContacts = async () => {
   for (let i = 0; i < adminContacts.length; i++) {
     let label;
     const adminContact = adminContacts[i];
-    const user = await User.findOne({
-      _id: adminContact.source,
-      del: false,
-    }).catch((err) => {
-      console.log('admin user found err', err.message);
-    });
+    if (adminContact.source) {
+      console.log('adminContact.source', adminContact.source);
+      const user = await User.findOne({
+        _id: adminContact.source,
+        del: false,
+      }).catch((err) => {
+        console.log('admin user found err', err.message);
+      });
 
-    if (!user) {
-      const _user = await User.findOne({ _id: adminContact.source }).catch(
-        (err) => {
-          console.log('admin user found err', err.message);
-        }
-      );
-
-      if (_user) {
-        Contact.updateMany(
-          { _id: adminContact.source },
-          {
-            $set: {
-              tags: ['canceled', _user.company],
-              label: 'Trash',
-              updated_at: new Date(),
-            },
-          }
-        ).catch((err) => {
-          console.log('err', err.message);
-        });
-        continue;
-      } else {
-        Contact.updateMany(
-          { _id: adminContact.source },
-          {
-            $set: {
-              tags: ['canceled'],
-              label: 'Trash',
-              updated_at: new Date(),
-            },
-          }
-        ).catch((err) => {
+      if (!user) {
+        Contact.deleteMany({ source: adminContact.source }).catch((err) => {
           console.log('err', err.message);
         });
         continue;
       }
-    }
 
-    let update_data = {};
-    const week_ago = new Date();
-    const month_ago = new Date();
-    const two_month_ago = new Date();
+      let update_data = {};
+      const week_ago = new Date();
+      const month_ago = new Date();
+      const two_month_ago = new Date();
 
-    week_ago.setDate(week_ago.getDate() - 7);
-    month_ago.setMonth(month_ago.getMonth() - 1);
-    two_month_ago.setMonth(two_month_ago.getMonth() - 2);
+      week_ago.setDate(week_ago.getDate() - 7);
+      month_ago.setMonth(month_ago.getMonth() - 1);
+      two_month_ago.setMonth(two_month_ago.getMonth() - 2);
 
-    if (user.last_logged) {
-      const last_logged = new Date(user.last_logged);
-      const created = new Date(user.created_at);
+      if (user.last_logged) {
+        const last_logged = new Date(user.last_logged);
+        const created = new Date(user.created_at);
 
-      if (created.getTime() > week_ago.getTime()) {
-        label = 'New';
-      } else if (last_logged.getTime() > week_ago.getTime()) {
-        label = 'Hot';
-      } else if (last_logged.getTime() > month_ago.getTime()) {
-        label = 'Warm';
+        if (created.getTime() > week_ago.getTime()) {
+          label = 'New';
+        } else if (last_logged.getTime() > week_ago.getTime()) {
+          label = 'Hot';
+        } else if (last_logged.getTime() > month_ago.getTime()) {
+          label = 'Warm';
+        } else {
+          label = 'Cold';
+        }
       } else {
         label = 'Cold';
       }
-    } else {
-      label = 'Cold';
-    }
-    if (user.payment) {
-      if (user.subscription && user.subscription.is_suspended) {
+      if (user.payment) {
+        if (user.subscription && user.subscription.is_suspended) {
+          update_data = {
+            email: user.email,
+            cell_phone: user.cell_phone,
+            tags: ['suspended', user.company],
+            label,
+            updated_at: new Date(),
+          };
+        } else if (user.subscription && user.subscription.is_failed) {
+          update_data = {
+            email: user.email,
+            cell_phone: user.cell_phone,
+            tags: ['failed', user.company],
+            label,
+            updated_at: new Date(),
+          };
+        } else {
+          update_data = {
+            email: user.email,
+            cell_phone: user.cell_phone,
+            tags: ['active', user.company],
+            label,
+            updated_at: new Date(),
+          };
+        }
+      } else if (
+        user.last_logged &&
+        new Date(user.last_logged.getTime()) > two_month_ago.getTime()
+      ) {
         update_data = {
           email: user.email,
           cell_phone: user.cell_phone,
-          tags: ['suspended', user.company],
           label,
-          updated_at: new Date(),
-        };
-      } else if (user.subscription && user.subscription.is_failed) {
-        update_data = {
-          email: user.email,
-          cell_phone: user.cell_phone,
-          tags: ['failed', user.company],
-          label,
+          tags: ['free', user.company],
           updated_at: new Date(),
         };
       } else {
         update_data = {
           email: user.email,
           cell_phone: user.cell_phone,
-          tags: ['active', user.company],
-          label,
+          label: 'Trash',
+          tags: ['free', user.company],
           updated_at: new Date(),
         };
       }
-    } else if (
-      user.last_logged &&
-      new Date(user.last_logged.getTime()) > two_month_ago.getTime()
-    ) {
-      update_data = {
-        email: user.email,
-        cell_phone: user.cell_phone,
-        label,
-        tags: ['free', user.company],
-        updated_at: new Date(),
-      };
-    } else {
-      update_data = {
-        email: user.email,
-        cell_phone: user.cell_phone,
-        label: 'Trash',
-        tags: ['free', user.company],
-        updated_at: new Date(),
-      };
-    }
 
-    Contact.updateMany(
-      { _id: adminContact.source },
-      { $set: update_data }
-    ).catch((err) => {
-      console.log('contact update error', err.message);
-    });
+      Contact.updateMany(
+        { source: adminContact.source },
+        { $set: update_data }
+      ).catch((err) => {
+        console.log('contact update error', err.message);
+      });
+    }
   }
 };
 
