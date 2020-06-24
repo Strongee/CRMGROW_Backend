@@ -160,8 +160,14 @@ const updateContacts = async () => {
   for (let i = 0; i < adminContacts.length; i++) {
     let label;
     const adminContact = adminContacts[i];
+    if (adminContact.tags && adminContact.tags.include('unsubscribed')) {
+      Contact.deleteOne({ _id: adminContact.id }).catch((err) => {
+        console.log('err', err.message);
+      });
+      continue;
+    }
+
     if (adminContact.source) {
-      console.log('adminContact.source', adminContact.source);
       const user = await User.findOne({
         _id: adminContact.source,
         del: false,
@@ -276,8 +282,6 @@ const sourceUpdate = async () => {
     }).catch((err) => {
       console.log('admin user maching contact err ', err.message);
     });
-    console.log('email', user.email);
-    console.log('user.id', user.id);
     Contact.updateMany(
       { _id: adminContact.id },
       { $set: { source: user.id } }
