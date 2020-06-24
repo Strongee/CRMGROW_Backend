@@ -969,6 +969,7 @@ const convert_video_job = new CronJob(
             '128k',
             new_path,
           ];
+
           const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
           ffmpegConvert.on('close', function () {
             console.log('converted end', file_path);
@@ -1013,7 +1014,6 @@ const upload_video_job = new CronJob(
       for (let i = 0; i < videos.length; i++) {
         const video = videos[i];
         const file_path = video.path;
-        console.log('file path');
         if (file_path) {
           const file_name = video.path.slice(23);
 
@@ -1055,7 +1055,6 @@ const upload_video_job = new CronJob(
                     });
                 } else {
                   console.log('File read was successful', data);
-                  console.log('file_path', file_path);
                   const today = new Date();
                   const year = today.getYear();
                   const month = today.getMonth();
