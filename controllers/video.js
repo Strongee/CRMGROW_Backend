@@ -380,6 +380,9 @@ const update = async (req, res) => {
         ctx.drawImage(play, 10, 95, 40, 40);
         const buf = canvas.toBuffer();
 
+        if (!fs.existsSync(GIF_PATH)) {
+          fs.mkdirSync(GIF_PATH);
+        }
         for (let i = 0; i < 20; i++) {
           if (i < 10) {
             fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
