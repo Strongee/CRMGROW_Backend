@@ -14,4 +14,4 @@ COPY --chown=node:node . .
 
 EXPOSE 3000
 
-CMD NODE_ENV=production node ./bin/www
+CMD NODE_ENV=staging node ./bin/www
