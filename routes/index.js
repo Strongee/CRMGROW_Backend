@@ -31,7 +31,7 @@ const admin = require('./admin/index');
 const router = express.Router();
 
 router.get('/health', (req, res) => {
-  res.send('OK');
+  res.send('OK Cool!');
 });
 
 // User Dashboard api
