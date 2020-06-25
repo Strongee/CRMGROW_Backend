@@ -62,3 +62,12 @@ typings/
 package-lock.json
 teamgrow_env
 ecosystem.config.json
+
+# project directories
+files/
+thumbnails/
+gif/
+previews/
+temp/   
+video/
+video_log/

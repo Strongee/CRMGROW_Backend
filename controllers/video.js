@@ -4,6 +4,9 @@ const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const uuidv1 = require('uuid/v1');
 const phone = require('phone');

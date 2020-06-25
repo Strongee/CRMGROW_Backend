@@ -14,7 +14,7 @@ const PDF = require('../../models/pdf');
 const PDFTracker = require('../../models/pdf_tracker');
 const { FILES_PATH, PREVIEW_PATH } = require('../../config/path');
 const api = require('../../config/api');
-const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const { uploadBase64Image, removeFile } = require('../../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,

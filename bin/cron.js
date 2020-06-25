@@ -10,6 +10,8 @@ const webpush = require('web-push');
 const sharp = require('sharp');
 const child_process = require('child_process');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 const { ENV_PATH } = require('../config/path');
 
 require('dotenv').config({ path: ENV_PATH });
