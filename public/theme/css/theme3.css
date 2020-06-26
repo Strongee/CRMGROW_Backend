@@ -156,3 +156,7 @@ footer {
   margin: auto;
   border-radius: 5px;
 }
+
+.watched-time.testing {
+  display: block!important;
+}

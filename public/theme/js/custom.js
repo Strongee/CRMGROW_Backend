@@ -24,3 +24,10 @@ $('.highlights').slick({
     },
   ],
 });
+
+$(document).ready(function(e){
+  let loc = location.href;
+  if(loc.indexOf('test') !== -1) {
+    $('.watched-time').addClass("testing");
+  }
+})
