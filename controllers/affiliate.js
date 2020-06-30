@@ -1,31 +1,77 @@
-const Note = require('../models/note');
-const Activity = require('../models/activity');
-const Contact = require('../models/contact');
 const api = require('../config/api');
 
 const request = require('request-promise');
 
 const get = async (req, res) => {
   const { currentUser } = req;
-  const query = { ...req.query };
-  const contact = query['contact'];
-
-  const data = await Note.find({ user: currentUser.id, contact });
-  if (!data) {
-    return res.status(400).json({
+  if (currentUser.affiliate && currentUser.affiliate.id) {
+    const auth = Buffer.from(api.REWARDFUL_API_KEY + ':').toString('base64');
+    request({
+      method: 'GET',
+      uri: `https://api.getrewardful.com/v1/affiliates/${currentUser.affiliate.id}`,
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        return res.send({
+          status: true,
+          data: response,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          status: false,
+          err: err.details[0],
+        });
+      });
+  } else {
+    res.status(400).json({
       status: false,
-      error: 'Note doesn`t exist',
+      err: `Can't find affilate id`,
     });
   }
-
-  res.send({
-    status: true,
-    data,
-  });
 };
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+  if (currentUser.affiliate && currentUser.affiliate.id) {
+    const auth = Buffer.from(api.REWARDFUL_API_KEY + ':').toString('base64');
+    request({
+      method: 'GET',
+      uri: `https://api.getrewardful.com/v1/referrals?affiliate_id=${currentUser.affiliate.id}`,
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        const visitors = response.data;
+        const customers = [];
+        for (let i = 0; i < visitors.length; i++) {
+          const visitor = visitors[i];
+          if (visitor.customer) {
+            customers.push(visitor.customer);
+          }
+        }
+        return res.send({
+          status: true,
+          data: customers,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          status: false,
+          err: err.details[0],
+        });
+      });
+  } else {
+    res.status(400).json({
+      status: false,
+      err: `Can't find affilate id`,
+    });
+  }
 };
 
 const create = async (req, res) => {
