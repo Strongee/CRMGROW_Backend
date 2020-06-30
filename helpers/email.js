@@ -67,9 +67,12 @@ const makeBody = (to, from, subject, message) => {
 const bulkEmail = async (data) => {
   const { user, subject, content, bcc, cc, contacts } = data;
 
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('user find err', err.message);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('user find err', err.message);
+    }
+  );
+
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 

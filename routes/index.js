@@ -26,6 +26,7 @@ const page = require('./page');
 const guest = require('./guest');
 const label = require('./label');
 const assets = require('./assets');
+const affiliate = require('./affiliate');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -61,6 +62,7 @@ router.use('/page', page);
 router.use('/guest', guest);
 router.use('/label', label);
 router.use('/assets', assets);
+router.use('/affiliate', affiliate);
 router.use('/admin', admin);
 
 module.exports = router;

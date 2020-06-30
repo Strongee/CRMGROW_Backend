@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'production') {
       'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
     // INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
     INTRO_VIDEO_URL:
-      'https://www.loom.com/share/7ac336c756d14f48990b61c06f18dadf',
+      'https://app.crmgrow.com/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc',
     GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
     TRACK_URL: 'https://app.crmgrow.com/api/email/opened/',
     UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe/',

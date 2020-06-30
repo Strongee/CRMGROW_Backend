@@ -80,6 +80,7 @@ const create = async (payment_data) => {
                 exp_year: token.card.exp_year,
                 last4: token.card.last4,
                 active: true,
+                referral,
                 updated_at: new Date(),
                 created_at: new Date(),
               });
@@ -335,7 +336,6 @@ const update = async (req, res) => {
                 payment['customer_id'],
                 { source: token.id },
                 function (err, card) {
-                  console.log('_card', card);
                   if (!card) {
                     return res.status(400).send({
                       status: false,

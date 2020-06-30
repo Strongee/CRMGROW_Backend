@@ -83,6 +83,7 @@ const api = {
     LIMIT: process.env.LIMIT,
   },
   EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
+  REWARDFUL_API_KEY: process.env.REWARDFUL_API_KEY,
 };
 
 module.exports = api;
