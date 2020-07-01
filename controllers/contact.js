@@ -955,6 +955,17 @@ const searchEasy = async (req, res) => {
   });
 };
 
+const filter = async (req, res) => {
+  const { currentUser } = req;
+  const query = req.body;
+  let data = [];
+  data = await Contact.find({ ...query, user: currentUser.id });
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
 const getById = async (req, res) => {
   const { currentUser } = req;
   const _contact = await Contact.findOne({
@@ -2764,4 +2775,5 @@ module.exports = {
   bulkCreate,
   verifyEmail,
   verifyPhone,
+  filter,
 };
