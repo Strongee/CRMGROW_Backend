@@ -752,6 +752,11 @@ const bulkEmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let _contact = await Contact.findOne({
@@ -772,6 +777,22 @@ const bulkEmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -895,9 +916,15 @@ const bulkEmail = async (req, res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              email_count += 1;
+              Contact.updateOne(
+                {
+                  _id: contacts[i],
+                },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               resolve();
@@ -1229,6 +1256,11 @@ const bulkOutlook = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -1239,7 +1271,7 @@ const bulkOutlook = async (req, res) => {
       let promise;
 
       await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
+        token.refresh((error, result) => {
           if (error) {
             reject(error.message);
           } else {
@@ -1284,6 +1316,22 @@ const bulkOutlook = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -1412,11 +1460,15 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
+            email_count += 1;
             resolve();
           })
           .catch((err) => {
@@ -1495,6 +1547,11 @@ const bulkGmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let _contact = await Contact.findOne({
@@ -1515,6 +1572,22 @@ const bulkGmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -1678,6 +1751,7 @@ const bulkGmail = async (req, res) => {
               ).catch((err) => {
                 console.log('err', err);
               });
+              email_count += 1;
               resolve();
             })
             .catch((err) => {
