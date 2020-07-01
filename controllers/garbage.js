@@ -1,5 +1,6 @@
 const Garbage = require('../models/garbage');
 const { removeFile } = require('../helpers/fileUpload');
+const urls = require('../constants/urls');
 
 const get = async (req, res) => {
   const data = await Garbage.find({ _id: req.params.id });
@@ -92,11 +93,15 @@ const uploadIntroVideo = async (req, res) => {
   const introVideoObject = req.file;
   const introVideo = introVideoObject.location;
   try {
-    const currentGarbage = await Garbage.find({ user: currentUser._id });
+    const currentGarbage = await Garbage.findOne({ user: currentUser._id });
     if (currentGarbage) {
       if (currentGarbage.intro_video) {
         try {
-          await removeFile(currentGarbage.intro_video);
+          const key = currentGarbage.intro_video.slice(
+            urls.STORAGE_BASE.length + 1
+          );
+          console.log('quick video key', key);
+          await removeFile(key);
         } catch (err) {
           console.log('Remove the Intro Video: ', err);
         }

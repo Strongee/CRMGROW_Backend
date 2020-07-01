@@ -38,10 +38,11 @@ if (process.env.NODE_ENV === 'production') {
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'https://app.crmgrow.com/theme/images/default_logo.png',
+    STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
   };
 } else if (process.env.NODE_ENV === 'staging') {
   urls = {
-    DOMAIN_URL: 'https://DOMAIN_URL.crmgrow.com/',
+    DOMAIN_URL: 'https://ecsbe.crmgrow.com/',
     API_URL: 'https://ecsbe.crmgrow.com/api/',
     LOGIN_URL: 'https://ecsbe.crmgrow.com/login',
     PROFILE_URL: 'https://ecsbe.crmgrow.com/profile/',
@@ -79,6 +80,7 @@ if (process.env.NODE_ENV === 'production') {
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'https://ecsbe.crmgrow.com/theme/images/default_logo.png',
+    STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
   };
 } else {
   urls = {
@@ -118,6 +120,7 @@ if (process.env.NODE_ENV === 'production') {
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'http://localhost:3000/theme/images/default_logo.png',
+    STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
   };
 }
 

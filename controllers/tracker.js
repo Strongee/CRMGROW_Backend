@@ -172,7 +172,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
         email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
         activity:
           contact.first_name + ' reviewed pdf - <b>' + pdf.title + '</b>',
-        duration: 'Watched <b>' + timeWatched + ' </b>at ' + created_at,
+        duration: 'Viewed <b>' + timeWatched + ' </b>at ' + created_at,
         detailed_activity:
           "<a href='" +
           urls.CONTACT_PAGE_URL +

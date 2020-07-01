@@ -64,5 +64,6 @@ router.use('/label', label);
 router.use('/assets', assets);
 router.use('/affiliate', affiliate);
 router.use('/admin', admin);
+router.use('/label', label)
 
 module.exports = router;

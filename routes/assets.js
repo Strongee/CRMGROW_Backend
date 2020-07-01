@@ -1,5 +1,6 @@
 const express = require('express');
 var aws = require('aws-sdk');
+const mime = require('mime-types');
 
 const AssetsCtrl = require('../controllers/assets');
 const UserCtrl = require('../controllers/user');
@@ -25,7 +26,15 @@ var upload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      cb(null, uuidv1() + '-' + Date.now().toString());
+      cb(
+        null,
+        'assets/' +
+          uuidv1() +
+          '-' +
+          Date.now().toString() +
+          '.' +
+          mime.extension(file.mimetype)
+      );
     },
   }),
 });

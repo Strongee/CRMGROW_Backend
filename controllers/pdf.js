@@ -164,7 +164,6 @@ const updateDetail = async (req, res) => {
       error: 'Invalid_permission',
     });
   }
-
   if (req.body.preview) {
     try {
       const today = new Date();
@@ -338,6 +337,12 @@ const updateDefault = async (req, res) => {
       data: _pdf,
     });
   }
+  pdf.save().then((_pdf) => {
+    return res.send({
+      status: true,
+      data: _pdf,
+    });
+  });
 };
 
 const get = async (req, res) => {
@@ -1057,17 +1062,17 @@ const bulkText = async (req, res) => {
 
       const promise = new Promise((resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];
-
+        console.log('e164Phone', e164Phone);
         if (!e164Phone) {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              err,
-            });
+          });
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            err: 'Invalid phone number',
           });
           resolve(); // Invalid phone number
         }

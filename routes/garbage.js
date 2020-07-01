@@ -6,6 +6,7 @@ const api = require('../config/api');
 const UserCtrl = require('../controllers/user');
 const GarbageCtrl = require('../controllers/garbage');
 const { catchError } = require('../controllers/error');
+const mime = require('mime-types');
 
 const router = express.Router();
 
@@ -24,7 +25,10 @@ var upload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      cb(null, Date.now().toString());
+      cb(
+        null,
+        `quickvideos/${Date.now().toString()}.${mime.extension(file.mimetype)}`
+      );
     },
   }),
 });
