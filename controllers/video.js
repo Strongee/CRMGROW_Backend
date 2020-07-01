@@ -1187,7 +1187,7 @@ const remove = async (req, res) => {
     } else {
       res.status(400).send({
         status: false,
-        error: 'invalid permission',
+        error: 'There is no video.',
       });
     }
   } catch (e) {

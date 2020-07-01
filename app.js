@@ -27,6 +27,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use(express.static('../frontend/dist'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/video', catchError(VideoCtrl.play));
@@ -43,4 +44,8 @@ app.get('/auth', (req, res) => {
 });
 
 app.use('/api', indexRouter);
+app.get('*', catchError(PageCtrl.display), (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
+
 module.exports = app;

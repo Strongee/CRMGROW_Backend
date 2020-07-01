@@ -62,8 +62,7 @@ var duration = document.querySelector('#video-duration').value;
             if(document.querySelector(".intro_video")) {
               document.querySelector(".intro_video").muted = true
               document.querySelector(".intro_video").pause();
-            }            
-
+            }
             $('#contact').val(response.contact);
             $('#activity').val(response.activity);
             var siteAddr = location.protocol + '//' + location.hostname;

@@ -830,8 +830,13 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  const searchI = req.body.search;
-  const search = searchI.replace(/[&\/\\#, +()$~%-.'":*?<>{}]/g, '');
+  const search = req.body.search;
+  // const search = searchI.replace(/[&\/\\#, +()$~%-.'":*?<>{}]/g, '');
+  let phoneSearch = search;
+  if (/^[\\\d\(\)\s]+$/.test(search)) {
+    phoneSearch = phoneSearch.replace(/[\\\(\)\s]+/g, '');
+  }
+
   let contacts = [];
   if (!search.split(' ')[1]) {
     contacts = await Contact.find({
@@ -850,7 +855,7 @@ const search = async (req, res) => {
         },
         {
           cell_phone: {
-            $regex: '.*' + search.split(' ')[0] + '.*',
+            $regex: '.*' + phoneSearch.split(' ')[0] + '.*',
             $options: 'i',
           },
           user: currentUser.id,
@@ -867,7 +872,7 @@ const search = async (req, res) => {
           last_name: { $regex: search.split(' ')[1], $options: 'i' },
           user: currentUser.id,
         },
-        { cell_phone: search, user: currentUser.id },
+        { cell_phone: phoneSearch, user: currentUser.id },
       ],
     })
       .populate('last_activity')
@@ -1286,7 +1291,7 @@ const leadContact = async (req, res) => {
                 email: `<a href="mailto:${email}">${email}</a>`,
                 activity:
                   first_name +
-                  ' watched lead capture pdf - <b>' +
+                  ' Viewed lead capture pdf - <b>' +
                   _pdf.title +
                   '</b>at ' +
                   created_at,
@@ -1970,13 +1975,19 @@ const advanceSearch = async (req, res) => {
 
   if (searchStr) {
     var strQuery = {};
+    var phoneSearchStr = searchStr;
+    if (/^[\\\d\(\)\s]+$/.test(phoneSearchStr)) {
+      phoneSearchStr = phoneSearchStr.replace(/[\\\(\)\s]+/g, '');
+    }
     if (!searchStr.split(' ')[1]) {
       strQuery = {
         $or: [
           { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
           { email: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
           { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
-          { cell_phone: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          {
+            cell_phone: { $regex: '.*' + phoneSearchStr + '.*', $options: 'i' },
+          },
         ],
       };
     } else {
@@ -1990,7 +2001,9 @@ const advanceSearch = async (req, res) => {
           },
           { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
           { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
-          { cell_phone: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          {
+            cell_phone: { $regex: '.*' + phoneSearchStr + '.*', $options: 'i' },
+          },
         ],
       };
     }
@@ -2454,7 +2467,10 @@ const checkPhone = async (req, res) => {
   const { cell_phone } = req.body;
 
   if (typeof cell_phone === 'object') {
-    return;
+    return res.send({
+      data: [],
+      status: true,
+    });
   }
 
   const contacts = await Contact.find({

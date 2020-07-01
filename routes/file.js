@@ -35,6 +35,8 @@ router.post(
 // Upload attached file
 router.post('/upload', upload.single('file'), catchError(FileCtrl.upload));
 
+router.get('/load-all', UserCtrl.checkAuth, catchError(FileCtrl.loadAll));
+
 // Get a file
 router.get('/:name', catchError(FileCtrl.get));
 
