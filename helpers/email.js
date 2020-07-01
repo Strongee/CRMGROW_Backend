@@ -66,6 +66,7 @@ const makeBody = (to, from, subject, message) => {
 
 const bulkEmail = async (data) => {
   const { user, subject, content, bcc, cc, contacts } = data;
+  const promise_array = [];
 
   const currentUser = await User.findOne({ _id: user, del: false }).catch(
     (err) => {
@@ -74,22 +75,27 @@ const bulkEmail = async (data) => {
   );
 
   if (!currentUser) {
-    return new Promise((resolve, reject) => {
-      resolve({
-        status: false,
-        err: 'User not found',
-      });
-    });
+    promise_array.push(
+      new Promise((resolve, reject) => {
+        resolve({
+          status: false,
+          err: 'User not found',
+        });
+      })
+    );
+  }
+  if (promise_array.length > 0) {
+    return Promise.all(promise_array);
   }
 
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-    const promise_array = [];
-    let promise;
     for (let i = 0; i < contacts.length; i++) {
       let email_content = content;
       let email_subject = subject;
+      let promise;
+
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -211,6 +217,9 @@ const bulkEmail = async (data) => {
               });
             } else {
               console.log('email sending err', msg.to + _res[0].statusCode);
+              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                console.log('err', err);
+              });
               resolve({
                 status: false,
                 contact: contacts[i],
@@ -234,9 +243,6 @@ const bulkEmail = async (data) => {
     }
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'gmail') {
-    const promise_array = [];
-    let promise;
-
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -265,6 +271,7 @@ const bulkEmail = async (data) => {
     for (let i = 0; i < contacts.length; i++) {
       let email_subject = subject;
       let email_content = content;
+      let promise;
 
       let _contact = await Contact.findOne({
         _id: contacts[i],
@@ -401,6 +408,9 @@ const bulkEmail = async (data) => {
               })
               .catch((err) => {
                 console.log('gmail send err helper 309', err.message);
+                Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                  console.log('err', err);
+                });
                 resolve({
                   contact: contacts[i],
                   err: err.message,
@@ -408,6 +418,9 @@ const bulkEmail = async (data) => {
               });
           } catch (err) {
             console.log('gmail send err helper', err.message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
             resolve({
               contact: contacts[i],
               err: err.message || err.mgs,
@@ -430,8 +443,6 @@ const bulkEmail = async (data) => {
 
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'outlook') {
-    const promise_array = [];
-
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -440,7 +451,7 @@ const bulkEmail = async (data) => {
 
     for (let i = 0; i < contacts.length; i++) {
       await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
+        token.refresh((error, result) => {
           if (error) {
             reject(error.message);
           } else {
@@ -606,9 +617,12 @@ const bulkEmail = async (data) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(async () => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve({
@@ -617,6 +631,9 @@ const bulkEmail = async (data) => {
           })
           .catch((err) => {
             console.log('bulk outlook err helper 493', err.message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
             if (err.code === 'ErrorMessageSubmissionBlocked') {
               resolve({
                 status: false,
@@ -644,16 +661,34 @@ const bulkEmail = async (data) => {
 
 const bulkVideo = async (data) => {
   const { user, content, subject, videos, contacts } = data;
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('err', err);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
   const promise_array = [];
-  let promise;
+
+  if (!currentUser) {
+    promise_array.push(
+      new Promise((resolve, reject) => {
+        resolve({
+          status: false,
+          err: 'User not found',
+        });
+      })
+    );
+  }
+
+  if (promise_array.length > 0) {
+    return Promise.all(promise_array);
+  }
 
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     for (let i = 0; i < contacts.length; i++) {
+      let promise;
+
       let _contact = await Contact.findOne({
         _id: contacts[i],
         tags: { $nin: ['unsubscribed'] },
@@ -836,18 +871,15 @@ const bulkVideo = async (data) => {
                   status: true,
                 });
               } else {
-                try {
-                  Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                    console.log('err', err);
-                  });
-                } catch (err) {
-                  console.log('email sending err', msg.to + _res[0].statusCode);
-                  resolve({
-                    status: false,
-                    err: err.messaeg || err.msg,
-                    contact: contacts[i],
-                  });
-                }
+                Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                  console.log('err', err);
+                });
+                console.log('email sending err', msg.to + _res[0].statusCode);
+                resolve({
+                  status: false,
+                  err: msg.to + _res[0].statusCode,
+                  contact: contacts[i],
+                });
               }
             })
             .catch((err) => {
@@ -1373,12 +1405,30 @@ const bulkVideo = async (data) => {
 
 const bulkPDF = async (data) => {
   const { user, content, subject, pdfs, contacts } = data;
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('user found err', err.message);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('user found err', err.message);
+    }
+  );
+
+  const promise_array = [];
+
+  if (!currentUser) {
+    promise_array.push(
+      new Promise((resolve, reject) => {
+        resolve({
+          status: false,
+          err: 'User not found',
+        });
+      })
+    );
+  }
+
+  if (promise_array.length > 0) {
+    return Promise.all(promise_array);
+  }
 
   if (!currentUser.primary_connected) {
-    const promise_array = [];
     let promise;
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -1546,18 +1596,16 @@ const bulkPDF = async (data) => {
                 status: true,
               });
             } else {
-              try {
-                Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                  console.log('activity delete err', err.message);
-                });
-              } catch (err) {
-                console.log('email sending err', msg.to + _res[0].statusCode);
-                resolve({
-                  status: false,
-                  err: err.message,
-                  contact: contacts[i],
-                });
-              }
+              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                console.log('activity delete err', err.message);
+              });
+
+              console.log('email sending err', msg.to + _res[0].statusCode);
+              resolve({
+                status: false,
+                err: _res[0].statusCode,
+                contact: contacts[i],
+              });
             }
           })
           .catch((err) => {
@@ -1576,7 +1624,6 @@ const bulkPDF = async (data) => {
     }
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'gmail') {
-    const promise_array = [];
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -1811,7 +1858,6 @@ const bulkPDF = async (data) => {
     }
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'outlook') {
-    const promise_array = [];
     let promise;
 
     const token = oauth2.accessToken.create({
@@ -2047,12 +2093,30 @@ const bulkPDF = async (data) => {
 
 const bulkImage = async (data) => {
   const { user, content, subject, images, contacts } = data;
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('current user found err', err.message);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('current user found err', err.message);
+    }
+  );
+
+  const promise_array = [];
+
+  if (!currentUser) {
+    promise_array.push(
+      new Promise((resolve, reject) => {
+        resolve({
+          status: false,
+          err: 'User not found',
+        });
+      })
+    );
+  }
+
+  if (promise_array.length > 0) {
+    return Promise.all(promise_array);
+  }
 
   if (!currentUser.primary_connected) {
-    const promise_array = [];
     let promise;
     for (let i = 0; i < contacts.length; i++) {
       let _contact = await Contact.findOne({
@@ -2223,18 +2287,15 @@ const bulkImage = async (data) => {
                 status: true,
               });
             } else {
-              try {
-                Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                  console.log('activity found err', err.message);
-                });
-              } catch (err) {
-                console.log('email sending err', msg.to + _res[0].statusCode);
-                resolve({
-                  status: false,
-                  err,
-                  contact: contacts[i],
-                });
-              }
+              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                console.log('activity found err', err.message);
+              });
+              console.log('email sending err', msg.to + _res[0].statusCode);
+              resolve({
+                status: false,
+                err: _res[0].statusCode,
+                contact: contacts[i],
+              });
             }
           })
           .catch((err) => {
@@ -2254,7 +2315,6 @@ const bulkImage = async (data) => {
     }
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'outlook') {
-    const promise_array = [];
     let promise;
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
@@ -2262,7 +2322,7 @@ const bulkImage = async (data) => {
     });
     let accessToken;
     await new Promise((resolve, reject) => {
-      token.refresh(function (error, result) {
+      token.refresh((error, result) => {
         if (error) {
           reject(error.message);
         } else {
@@ -2490,7 +2550,6 @@ const bulkImage = async (data) => {
 
     return Promise.all(promise_array);
   } else if (currentUser.connected_email_type === 'gmail') {
-    const promise_array = [];
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
