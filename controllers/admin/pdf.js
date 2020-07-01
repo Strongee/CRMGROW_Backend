@@ -14,6 +14,7 @@ const PDF = require('../../models/pdf');
 const PDFTracker = require('../../models/pdf_tracker');
 const { FILES_PATH, PREVIEW_PATH } = require('../../config/path');
 const api = require('../../config/api');
+const { uploadBase64Image, removeFile } = require('../../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -44,20 +45,28 @@ const create = async (req, res) => {
 const updateDetail = async (req, res) => {
   if (req.body.preview) {
     // base 64 image
-    const editData = req.body;
-    const file_name = uuidv1();
-    const file_path = base64Img.imgSync(
-      req.body.preview,
-      PREVIEW_PATH,
-      file_name
-    );
+    const editData = { ...req.body };
+    delete editData.preview;
     const pdf = await PDF.findOne({ _id: req.params.id });
+
+    if (req.body.preview) {
+      try {
+        const today = new Date();
+        const year = today.getYear();
+        const month = today.getMonth();
+        const preview_image = await uploadBase64Image(
+          req.body.preview,
+          'preview' + year + '/' + month
+        );
+        pdf['preview'] = preview_image;
+      } catch (error) {
+        console.error('Upload PDF Preview Image', error);
+      }
+    }
 
     for (const key in editData) {
       pdf[key] = editData[key];
     }
-
-    pdf.preview = urls.PDF_PREVIEW_URL + path.basename(file_path);
 
     pdf.updated_at = new Date();
 
@@ -76,7 +85,6 @@ const updateDetail = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  console.log('id', req.params.id);
   const pdf = await PDF.findOne({ _id: req.params.id });
   const user = await User.findOne({ _id: pdf.user });
   if (!pdf) {

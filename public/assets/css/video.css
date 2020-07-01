@@ -494,7 +494,7 @@ body {
     display: flex;
   }
   
-  .quick-video-wrapper .volume-control {
+.quick-video-wrapper .volume-control {
     outline: none!important;
     position: absolute;
     top: 5px;
@@ -502,18 +502,27 @@ body {
     transform: translateX(-50%);
     border: none;
     background: white;
-    padding: 2px 10px;
-    border-radius: 3px;
+    padding: 5px;
     font-size: 12px;
     animation: shadow-pulse 2s infinite;
-  }
+    border-radius: 50%;
+    border: 3px solid gray;
+}
+
+.quick-video-wrapper .volume-control img {
+    width: 30px;
+    height: 30px;
+}
  
 @keyframes shadow-pulse
 {
   0% {
-    box-shadow: 0 0 0 0px rgba(255, 0, 0, 0.9);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
   100% {
-    box-shadow: 0 0 0 6px rgba(0, 0, 255, 0.3);
+    opacity: 1;
   }
 }

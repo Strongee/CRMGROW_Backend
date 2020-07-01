@@ -22,6 +22,9 @@ const router = express.Router();
 
 const fileStorage = multer.diskStorage({
   destination: function fn(req, file, cb) {
+    if (!fs.existsSync(TEMP_PATH)) {
+      fs.mkdirSync(TEMP_PATH);
+    }
     cb(null, TEMP_PATH);
   },
   filename: (req, file, cb) => {

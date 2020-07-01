@@ -20,27 +20,11 @@ const s3 = new AWS.S3({
 
 const router = express.Router();
 
-// const storage = multerS3({
-//     s3: s3,
-//     bucket: api.AWS.AWS_S3_BUCKET_NAME,
-//     acl: 'public-read',
-//     metadata: function (req, file, cb) {
-//       cb(null, {fieldName: file.fieldname});
-//     },
-//     key: function (req, file, cb) {
-//       const today = new Date()
-//       const year = today.getYear()
-//       const month = today.getMonth()
-//       cb(null, 'video' +  year + '/' + month + '/' + file.originalname)
-//     },
-//   })
-
-// const upload = multer({
-//     storage: storage
-//   })
-
 const fileStorage = multer.diskStorage({
   destination: function fn(req, file, cb) {
+    if (!fs.existsSync(TEMP_PATH)) {
+      fs.mkdirSync(TEMP_PATH);
+    }
     cb(null, TEMP_PATH);
   },
   filename: (req, file, cb) => {

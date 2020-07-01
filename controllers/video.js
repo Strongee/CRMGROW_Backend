@@ -4,6 +4,9 @@ const sgMail = require('@sendgrid/mail');
 const base64Img = require('base64-img');
 const mime = require('mime-types');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const uuidv1 = require('uuid/v1');
 const phone = require('phone');
@@ -302,13 +305,6 @@ const update = async (req, res) => {
     });
   }
   if (req.body.site_image) {
-    // if (video.site_image) {
-    //   try {
-    //     await removeFile(video.site_image);
-    //   } catch (error) {
-    //     console.error('Remove Site Image', error);
-    //   }
-    // }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -323,13 +319,6 @@ const update = async (req, res) => {
     }
   }
   if (req.body.thumbnail) {
-    // if (video.thumbnail) {
-    //   try {
-    //     await removeFile(video.thumbnail);
-    //   } catch (error) {
-    //     console.error('Remove Video Thumbnail Image', error);
-    //   }
-    // }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -345,9 +334,13 @@ const update = async (req, res) => {
   }
 
   const file_name = req.params.id;
-  const thumbnail_name = uuidv1();
   if (req.body.thumbnail) {
     // base 64 image
+
+    if (!fs.existsSync(THUMBNAILS_PATH)) {
+      fs.mkdirSync(THUMBNAILS_PATH);
+    }
+
     thumbnail_path = base64Img.imgSync(
       req.body.thumbnail,
       THUMBNAILS_PATH,
@@ -387,6 +380,9 @@ const update = async (req, res) => {
         ctx.drawImage(play, 10, 95, 40, 40);
         const buf = canvas.toBuffer();
 
+        if (!fs.existsSync(GIF_PATH)) {
+          fs.mkdirSync(GIF_PATH);
+        }
         for (let i = 0; i < 20; i++) {
           if (i < 10) {
             fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
@@ -480,13 +476,6 @@ const updateDetail = async (req, res) => {
     });
   }
   if (req.body.site_image) {
-    if (video.site_image) {
-      try {
-        await removeFile(video.site_image);
-      } catch (error) {
-        console.error('Remove Site Image', error);
-      }
-    }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -501,13 +490,6 @@ const updateDetail = async (req, res) => {
     }
   }
   if (req.body.thumbnail) {
-    if (video.thumbnail) {
-      try {
-        await removeFile(video.thumbnail);
-      } catch (error) {
-        console.error('Remove Video Thumbnail Image', error);
-      }
-    }
     try {
       const today = new Date();
       const year = today.getYear();
@@ -525,6 +507,11 @@ const updateDetail = async (req, res) => {
   let custom_thumbnail = false;
   if (req.body.thumbnail) {
     // base 64 image
+
+    if (!fs.existsSync(THUMBNAILS_PATH)) {
+      fs.mkdirSync(THUMBNAILS_PATH);
+    }
+
     thumbnail_path = base64Img.imgSync(
       req.body.thumbnail,
       THUMBNAILS_PATH,
@@ -702,6 +689,10 @@ const updateDefault = async (req, res) => {
     // base 64 image
     const file_name = uuidv1();
 
+    if (!fs.existsSync(THUMBNAILS_PATH)) {
+      fs.mkdirSync(THUMBNAILS_PATH);
+    }
+
     thumbnail_path = base64Img.imgSync(
       video.thumbnail,
       THUMBNAILS_PATH,
@@ -845,6 +836,10 @@ const updateDefault = async (req, res) => {
 const generatePreview = async (data) => {
   const { file_name, file_path, custom_thumbnail } = data;
 
+  if (!fs.existsSync(GIF_PATH)) {
+    fs.mkdirSync(GIF_PATH);
+  }
+
   return new Promise(async (resolve, reject) => {
     const offsets = [];
     for (let i = 0; i < 4000; i += 100) {
@@ -954,6 +949,10 @@ const generatePreview = async (data) => {
 
 const regeneratePreview = async (data) => {
   const { file_name } = data;
+
+  if (!fs.existsSync(GIF_PATH)) {
+    fs.mkdirSync(GIF_PATH);
+  }
 
   return new Promise(async (resolve, reject) => {
     const play = await loadImage(PLAY_BUTTON_PATH);
@@ -1280,7 +1279,8 @@ const bulkEmail = async (req, res) => {
         continue;
       }
 
-      if (email_count > max_email_count) {
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
         promise = new Promise((resolve, reject) => {
           error.push({
             contact: {
@@ -1560,7 +1560,8 @@ const bulkGmail = async (req, res) => {
         continue;
       }
 
-      if (email_count > max_email_count) {
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
         promise = new Promise((resolve, reject) => {
           error.push({
             contact: {
@@ -1952,9 +1953,12 @@ const bulkText = async (req, res) => {
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               video_content
             );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
@@ -2140,8 +2144,8 @@ const bulkOutlook = async (req, res) => {
         promise_array.push(promise);
         continue;
       }
-
-      if (email_count > max_email_count) {
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
         promise = new Promise((resolve, reject) => {
           error.push({
             contact: {

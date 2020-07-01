@@ -68,6 +68,7 @@ const s3 = new AWS.S3({
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const play = async (req, res) => {
   const image_id = req.query.image;
@@ -151,31 +152,40 @@ const create = async (req, res) => {
 
 const updateDetail = async (req, res) => {
   const { currentUser } = req;
-  const editData = req.body;
+  const editData = { ...req.body };
+  delete editData.preview;
+
   const image = await Image.findOne({
     user: currentUser.id,
     _id: req.params.id,
   });
+
   if (!image) {
     return res.status(400).json({
       status: false,
       error: 'Invalid_permission',
     });
   }
+
+  if (req.body.preview) {
+    // base 64 image
+    const today = new Date();
+    const year = today.getYear();
+    const month = today.getMonth();
+
+    const preview_image = await uploadBase64Image(
+      req.body.preview,
+      'preview' + year + '/' + month
+    );
+    image['preview'] = preview_image;
+  }
+
   for (const key in editData) {
     image[key] = editData[key];
   }
-  if (req.body.preview) {
-    // base 64 image
-    const file_name = uuidv1();
-    const file_path = base64Img.imgSync(
-      req.body.preview,
-      PREVIEW_PATH,
-      file_name
-    );
 
-    image['preview'] = urls.IMAGE_PREVIEW_URL + path.basename(file_path);
-  }
+  image['updated_at'] = new Date();
+
   image.save().then((data) => {
     return res.send({
       status: true,
