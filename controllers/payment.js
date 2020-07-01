@@ -532,6 +532,7 @@ const updateCustomerEmail = async (customer_id, email) => {
 };
 
 const createCustomer = async (email, referral) => {
+  console.log('referral', referral);
   return new Promise((resolve, reject) => {
     stripe.customers.create(
       {
