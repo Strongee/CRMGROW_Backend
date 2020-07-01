@@ -13,9 +13,11 @@ const urls = require('../constants/urls');
 
 const bulkVideo = async (data) => {
   const { user, content, videos, contacts } = data;
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('user not found err', err.message);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('user not found err', err.message);
+    }
+  );
   const promise_array = [];
 
   for (let i = 0; i < contacts.length; i++) {
@@ -96,37 +98,7 @@ const bulkVideo = async (data) => {
     let fromNumber = currentUser['proxy_number'];
 
     if (!fromNumber) {
-      const areaCode = currentUser.cell_phone.substring(1, 4);
-
-      const data = await twilio.availablePhoneNumbers('US').local.list({
-        areaCode,
-      });
-
-      let number = data[0];
-
-      if (typeof number === 'undefined') {
-        const areaCode1 = currentUser.cell_phone.substring(1, 3);
-
-        const data1 = await twilio.availablePhoneNumbers('US').local.list({
-          areaCode: areaCode1,
-        });
-        number = data1[0];
-      }
-
-      if (typeof number !== 'undefined') {
-        const proxy_number = await twilio.incomingPhoneNumbers.create({
-          phoneNumber: number.phoneNumber,
-          smsUrl: urls.SMS_RECEIVE_URL,
-        });
-
-        currentUser['proxy_number'] = proxy_number.phoneNumber;
-        fromNumber = currentUser['proxy_number'];
-        currentUser.save().catch((err) => {
-          console.log('err', err);
-        });
-      } else {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
-      }
+      fromNumber = getTwilioNumber(currentUser.id);
     }
 
     const promise = new Promise((resolve, reject) => {
@@ -178,9 +150,11 @@ const bulkVideo = async (data) => {
 
 const bulkPDF = async (data) => {
   const { user, content, pdfs, contacts } = data;
-  const currentUser = await User.findOne({ _id: user }).catch((err) => {
-    console.log('err', err);
-  });
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
   const promise_array = [];
 
   for (let i = 0; i < contacts.length; i++) {
@@ -262,37 +236,7 @@ const bulkPDF = async (data) => {
     let fromNumber = currentUser['proxy_number'];
 
     if (!fromNumber) {
-      const areaCode = currentUser.cell_phone.substring(1, 4);
-
-      const data = await twilio.availablePhoneNumbers('US').local.list({
-        areaCode,
-      });
-
-      let number = data[0];
-
-      if (typeof number === 'undefined') {
-        const areaCode1 = currentUser.cell_phone.substring(1, 3);
-
-        const data1 = await twilio.availablePhoneNumbers('US').local.list({
-          areaCode: areaCode1,
-        });
-        number = data1[0];
-      }
-
-      if (typeof number !== 'undefined') {
-        const proxy_number = await twilio.incomingPhoneNumbers.create({
-          phoneNumber: number.phoneNumber,
-          smsUrl: urls.SMS_RECEIVE_URL,
-        });
-
-        currentUser['proxy_number'] = proxy_number.phoneNumber;
-        fromNumber = currentUser['proxy_number'];
-        currentUser.save().catch((err) => {
-          console.log('err', err);
-        });
-      } else {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
-      }
+      fromNumber = await getTwilioNumber(currentUser.id);
     }
 
     const promise = new Promise((resolve, reject) => {
@@ -426,37 +370,7 @@ const bulkImage = async (data) => {
     let fromNumber = currentUser['proxy_number'];
 
     if (!fromNumber) {
-      const areaCode = currentUser.cell_phone.substring(1, 4);
-
-      const data = await twilio.availablePhoneNumbers('US').local.list({
-        areaCode,
-      });
-
-      let number = data[0];
-
-      if (typeof number === 'undefined') {
-        const areaCode1 = currentUser.cell_phone.substring(1, 3);
-
-        const data1 = await twilio.availablePhoneNumbers('US').local.list({
-          areaCode: areaCode1,
-        });
-        number = data1[0];
-      }
-
-      if (typeof number !== 'undefined') {
-        const proxy_number = await twilio.incomingPhoneNumbers.create({
-          phoneNumber: number.phoneNumber,
-          smsUrl: urls.SMS_RECEIVE_URL,
-        });
-
-        currentUser['proxy_number'] = proxy_number.phoneNumber;
-        fromNumber = currentUser['proxy_number'];
-        currentUser.save().catch((err) => {
-          console.log('err', err);
-        });
-      } else {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
-      }
+      fromNumber = await getTwilioNumber(currentUser.id);
     }
 
     const promise = new Promise((resolve, reject) => {

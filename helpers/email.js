@@ -73,6 +73,15 @@ const bulkEmail = async (data) => {
     }
   );
 
+  if (!currentUser) {
+    return new Promise((resolve, reject) => {
+      resolve({
+        status: false,
+        err: 'User not found',
+      });
+    });
+  }
+
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
@@ -188,9 +197,12 @@ const bulkEmail = async (data) => {
                 console.log('email update err', err.message);
               });
 
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err.message);
               });
 
@@ -208,6 +220,9 @@ const bulkEmail = async (data) => {
           })
           .catch((err) => {
             console.log('email sending err', err.message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
             resolve({
               status: false,
               contact: contacts[i],

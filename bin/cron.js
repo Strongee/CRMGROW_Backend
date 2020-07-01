@@ -1282,7 +1282,6 @@ const timesheet_check = new CronJob(
                 } else {
                   timeline['status'] = 'error';
                   timeline['updated_at'] = new Date();
-                  console.log('err', res[0].err);
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
