@@ -145,7 +145,6 @@ const upload = async (req, res) => {
         .resize(100, 100)
         .toBuffer()
         .then((data) => {
-          console.log('data', data);
           const today = new Date();
           const year = today.getYear();
           const month = today.getMonth();

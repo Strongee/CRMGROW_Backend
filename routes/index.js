@@ -26,12 +26,13 @@ const page = require('./page');
 const guest = require('./guest');
 const label = require('./label');
 const assets = require('./assets');
+const affiliate = require('./affiliate');
 const admin = require('./admin/index');
 
 const router = express.Router();
 
 router.get('/health', (req, res) => {
-  res.send('OK');
+  res.send('OK Cool!');
 });
 
 // User Dashboard api
@@ -61,7 +62,8 @@ router.use('/page', page);
 router.use('/guest', guest);
 router.use('/label', label);
 router.use('/assets', assets);
+router.use('/affiliate', affiliate);
 router.use('/admin', admin);
-router.use('/label', label)
+router.use('/label', label);
 
 module.exports = router;

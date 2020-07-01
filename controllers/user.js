@@ -61,7 +61,7 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { email, token } = req.body;
+  const { email, token, referral } = req.body;
 
   // if (isBlockedEmail(email)) {
   //   res.status(400).send({
@@ -74,6 +74,7 @@ const signUp = async (req, res) => {
   const payment_data = {
     email,
     token,
+    referral,
   };
 
   // if(!token) {
@@ -156,6 +157,7 @@ const signUp = async (req, res) => {
   //       })
   //     });
   // }
+
   PaymentCtrl.create(payment_data)
     .then(async (payment) => {
       const password = req.body.password;

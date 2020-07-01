@@ -23,7 +23,7 @@ const system_settings = {
     DEFAULT: 'eXp Realty',
   },
   ADMIN_ACCOUNT: 'support@crmgrow.com',
-  LEAD: 'lead',
+  LEAD: 'Lead',
 };
 
 module.exports = system_settings;

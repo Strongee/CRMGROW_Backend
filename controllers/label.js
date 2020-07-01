@@ -72,63 +72,44 @@ const getAll = async (req, res) => {
 const update = async (req, res) => {
   const data = req.body;
   const { currentUser } = req;
-  try {
-    const label = await Label.findOne({
-      user: currentUser.id,
+  Label.updateMany(
+    {
       _id: req.params.id,
-    });
-    if (label) {
-      Label.updateMany({ _id: req.params.id }, { $set: data })
-        .then(() => {
-          res.send({
-            status: true,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            status: false,
-            error: err.message,
-          });
-        });
-    } else {
-      res.status(400).send({
-        status: false,
-        error: "Label doesn't exist.",
+      user: currentUser.id,
+    },
+    { $set: data }
+  )
+    .then(() => {
+      res.send({
+        status: true,
       });
-    }
-  } catch (err) {
-    res.status(500).send({
-      status: false,
-      error: 'Internal server error.',
+    })
+    .catch((err) => {
+      res.status(500).json({
+        status: false,
+        error: err.message || 'Label Update Error',
+      });
     });
-  }
 };
 
-const remove = async (req, res) => {
+const remove = (req, res) => {
   const { currentUser } = req;
-  try {
-    const label = await Label.findOne({
-      user: currentUser.id,
-      _id: req.params.id,
-    });
 
-    if (label) {
-      await Label.deleteOne({ _id: req.params.id });
+  Label.deleteOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  })
+    .then(() => {
       return res.send({
         status: true,
       });
-    } else {
-      res.status(404).send({
+    })
+    .catch((err) => {
+      res.status(500).send({
         status: false,
-        error: 'Label not found.',
+        error: err.message || 'Label Delete Error',
       });
-    }
-  } catch (err) {
-    res.status(500).send({
-      status: false,
-      error: 'Internal server error.',
     });
-  }
 };
 
 module.exports = {

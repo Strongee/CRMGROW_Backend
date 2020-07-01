@@ -54,6 +54,7 @@
     "express-validator": "^5.3.1",
     "ffmpeg": "0.0.4",
     "ffmpeg-extract-frames": "^2.0.2",
+    "fluent-ffmpeg": "^2.1.2",
     "gifencoder": "^2.0.1",
     "gmail-api-create-message-body": "^1.0.0",
     "googleapis": "^27.0.0",
