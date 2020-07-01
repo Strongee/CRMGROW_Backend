@@ -1,7 +1,7 @@
 const express = require('express');
 const uuidv1 = require('uuid/v1');
 const mime = require('mime-types');
-
+const fs = require('fs');
 const multer = require('multer');
 const FileCtrl = require('../controllers/file');
 const UserCtrl = require('../controllers/user');
@@ -12,6 +12,9 @@ const router = express.Router();
 
 const fileStorage = multer.diskStorage({
   destination: function fn(req, file, cb) {
+    if (!fs.existsSync(FILES_PATH)) {
+      fs.mkdirSync(FILES_PATH);
+    }
     cb(null, FILES_PATH);
   },
   filename: (req, file, cb) => {

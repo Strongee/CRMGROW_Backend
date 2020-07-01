@@ -17,6 +17,7 @@ const PaymentSchema = new Schema(
     bill_amount: String,
     exp_year: String,
     exp_month: String,
+    referral: String,
     last4: String,
     active: { type: Boolean, default: false },
     updated_at: Date,

@@ -1,5 +1,5 @@
 const express = require('express');
-
+const fs = require('fs');
 const multer = require('multer');
 const UserCtrl = require('../controllers/user');
 const ContactCtrl = require('../controllers/contact');
@@ -10,6 +10,9 @@ const router = express.Router();
 
 const fileStorage = multer.diskStorage({
   destination(req, file, cb) {
+    if (!fs.existsSync(FILES_PATH)) {
+      fs.mkdirSync(FILES_PATH);
+    }
     cb(null, FILES_PATH);
   },
 });

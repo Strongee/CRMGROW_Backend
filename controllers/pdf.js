@@ -8,11 +8,14 @@ const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const nodemailer = require('nodemailer');
+const Garbage = require('../models/garbage');
+const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
 const { google } = require('googleapis');
 const Base64 = require('js-base64').Base64;
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
@@ -122,6 +125,7 @@ const play1 = async (req, res) => {
     });
   }
 };
+
 const create = async (req, res) => {
   if (req.file) {
     if (req.currentUser) {
@@ -144,27 +148,194 @@ const create = async (req, res) => {
 };
 
 const updateDetail = async (req, res) => {
+  const editData = { ...req.body };
+  delete editData.preview;
   const { currentUser } = req;
-  const editData = req.body;
-  const pdf = await PDF.findOne({ user: currentUser.id, _id: req.params.id });
+  const pdf = await PDF.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('pdf found err', err.message);
+  });
+
   if (!pdf) {
     return res.status(400).json({
       status: false,
       error: 'Invalid_permission',
     });
   }
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      const preview_image = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+      pdf['preview'] = preview_image;
+    } catch (error) {
+      console.error('Upload PDF Preview Image', error);
+    }
+  }
+
   for (const key in editData) {
     pdf[key] = editData[key];
   }
-  if (req.body.preview) {
+
+  pdf['updated_at'] = new Date();
+  pdf
+    .save()
+    .then((_pdf) => {
+      return res.send({
+        status: true,
+        data: _pdf,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const updateDefault = async (req, res) => {
+  const { pdf, id } = req.body;
+  let preview_path;
+  const { currentUser } = req;
+
+  const defaultPDF = await PDF.findOne({ _id: id, role: 'admin' }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+  if (!defaultPDF) {
+    return res.status(400).json({
+      status: false,
+      error: 'This Default PDF does not exist',
+    });
+  }
+  // Update Garbage
+  const garbage = await garbageHelper.get(currentUser);
+  if (!garbage) {
+    return res.status(400).send({
+      status: false,
+      error: `Couldn't get the Garbage`,
+    });
+  }
+
+  if (garbage['edited_pdf']) {
+    garbage['edited_pdf'].push(id);
+  } else {
+    garbage['edited_pdf'] = [id];
+  }
+
+  await garbage.save().catch((err) => {
+    return res.status(400).json({
+      status: false,
+      error: 'Update Garbage Error.',
+    });
+  });
+
+  for (const key in pdf) {
+    defaultPDF[key] = pdf[key];
+  }
+
+  if (pdf.preview) {
     // base 64 image
     const file_name = uuidv1();
-    const file_path = base64Img.imgSync(
-      req.body.preview,
-      PREVIEW_PATH,
-      file_name
-    );
-    pdf['preview'] = urls.PDF_PREVIEW_URL + path.basename(file_path);
+
+    if (!fs.existsSync(PREVIEW_PATH)) {
+      fs.mkdirSync(PREVIEW_PATH);
+    }
+
+    preview_path = base64Img.imgSync(pdf.preview, PREVIEW_PATH, file_name);
+    if (fs.existsSync(preview_path)) {
+      fs.readFile(preview_path, (err, data) => {
+        if (err) {
+          console.log('File read error', err.message || err.msg);
+        } else {
+          console.log('File read done successful', data);
+          const today = new Date();
+          const year = today.getYear();
+          const month = today.getMonth();
+          const params = {
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'preview' + year + '/' + month + '/' + file_name,
+            Body: data,
+            ACL: 'public-read',
+          };
+          s3.upload(params, async (s3Err, upload) => {
+            if (s3Err) {
+              console.log('upload s3 error', s3Err);
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`);
+
+              preview_path = upload.Location;
+              if (preview_path) {
+                defaultPDF['preview'] = preview_path;
+              }
+
+              defaultPDF['updated_at'] = new Date();
+              const defaultPdfJSON = JSON.parse(JSON.stringify(defaultPDF));
+              delete defaultPdfJSON['_id'];
+              delete defaultPdfJSON['role'];
+
+              const newPDF = new PDF({
+                ...defaultPdfJSON,
+                user: currentUser._id,
+                default_pdf: id,
+                default_edited: true,
+              });
+
+              const _pdf = await newPDF
+                .save()
+                .then()
+                .catch((err) => {
+                  console.log('pdf new creating err', err.message);
+                });
+
+              return res.send({
+                status: true,
+                data: _pdf,
+              });
+            }
+          });
+        }
+      });
+    } else {
+      console.log('preview writting server error');
+      return res.status(400).json({
+        status: false,
+        error: 'preview writing server error.',
+      });
+    }
+  } else {
+    defaultPDF['updated_at'] = new Date();
+    const defaultPdfJSON = JSON.parse(JSON.stringify(defaultPDF));
+    delete defaultPdfJSON['_id'];
+    delete defaultPdfJSON['role'];
+
+    const newPDF = new PDF({
+      ...defaultPdfJSON,
+      user: currentUser._id,
+      default_pdf: id,
+      default_edited: true,
+    });
+
+    const _pdf = await newPDF
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('pdf save err', err);
+      });
+
+    return res.send({
+      status: true,
+      data: _pdf,
+    });
   }
   pdf.save().then((_pdf) => {
     return res.send({
@@ -217,10 +388,21 @@ const getPreview = (req, res) => {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+  const garbage = await garbageHelper.get(currentUser);
+  let editedPDFs = [];
+  if (garbage && garbage['edited_pdf']) {
+    editedPDFs = garbage['edited_pdf'];
+  }
+
+  // const company = currentUser.company || 'eXp Realty';
   const _pdf_list = await PDF.find({ user: currentUser.id, del: false }).sort({
     created_at: 1,
   });
-  const _pdf_admin = await PDF.find({ role: 'admin', del: false }).sort({
+  const _pdf_admin = await PDF.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedPDFs },
+  }).sort({
     created_at: 1,
   });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
@@ -234,32 +416,31 @@ const getAll = async (req, res) => {
   const _pdf_detail_list = [];
 
   for (let i = 0; i < _pdf_list.length; i++) {
-    // const _pdf_detail = await PDFTracker.aggregate([
-    //     {
-    //       $lookup:
-    //         {
-    //         from:  'pdfs',
-    //         localField: 'pdf',
-    //         foreignField: '_id',
-    //         as: "pdf_detail"
-    //         }
-    //     },
-    //     {
-    //       $match: {
-    //                 "pdf": _pdf_list[i]._id,
-    //                 "user": currentUser._id
-    //               }
-    //     }
-    // ])
+    const _pdf_detail = await PDFTracker.aggregate([
+      {
+        $lookup: {
+          from: 'pdfs',
+          localField: 'pdf',
+          foreignField: '_id',
+          as: 'pdf_detail',
+        },
+      },
+      {
+        $match: {
+          pdf: _pdf_list[i]._id,
+          user: currentUser._id,
+        },
+      },
+    ]);
 
-    const view = await PDFTracker.countDocuments({
-      pdf: _pdf_list[i]._id,
-      user: currentUser._id,
-    });
+    // const view = await PDFTracker.countDocuments({
+    //   pdf: _pdf_list[i]._id,
+    //   user: currentUser._id,
+    // });
 
     const myJSON = JSON.stringify(_pdf_list[i]);
     const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, { views: view });
+    const pdf_detail = await Object.assign(_pdf, { views: _pdf_detail.length });
     _pdf_detail_list.push(pdf_detail);
   }
 
@@ -473,28 +654,42 @@ const remove = async (req, res) => {
     const pdf = await PDF.findOne({ _id: req.params.id, user: currentUser.id });
 
     if (pdf) {
-      const url = pdf.url;
-      s3.deleteObject(
-        {
-          Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-          Key: url.slice(44),
-        },
-        function (err, data) {
-          console.log('err', err);
+      if (pdf['default_edited']) {
+        Garbage.updateMany(
+          { user: currentUser.id },
+          {
+            $pull: { edited_pdf: { $in: [pdf.default_pdf] } },
+          }
+        ).catch((err) => {
+          console.log('default pdf remove err', err.message);
+        });
+      } else {
+        const url = pdf.url;
+        if (url.indexOf('teamgrow.s3') > 0) {
+          const url = pdf.url;
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+
+          pdf['del'] = true;
+          pdf.save();
+
+          res.send({
+            status: true,
+          });
+        } else {
+          res.status(404).send({
+            status: false,
+            error: 'invalid permission',
+          });
         }
-      );
-
-      pdf['del'] = true;
-      pdf.save();
-
-      res.send({
-        status: true,
-      });
-    } else {
-      res.status(404).send({
-        status: false,
-        error: 'invalid permission',
-      });
+      }
     }
   } catch (e) {
     console.error(e);
@@ -1551,6 +1746,7 @@ module.exports = {
   play1,
   create,
   updateDetail,
+  updateDefault,
   get,
   getAll,
   getPreview,

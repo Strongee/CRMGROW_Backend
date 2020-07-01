@@ -29,6 +29,10 @@ const convertRecordVideo = async (id) => {
     new_path,
   ];
 
+  if (!fs.existsSync(TEMP_PATH)) {
+    fs.mkdirSync(TEMP_PATH);
+  }
+
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function () {
     const new_url = urls.VIDEO_URL + new_file;
@@ -44,6 +48,10 @@ const convertRecordVideo = async (id) => {
         console.log('vide update err', err.message || err.msg);
       });
   });
+
+  if (!fs.existsSync(VIDEO_CONVERT_LOG_PATH)) {
+    fs.mkdirSync(VIDEO_CONVERT_LOG_PATH);
+  }
 
   ffmpegConvert.stderr.on('data', function (data) {
     const content = new Buffer(data).toString();
@@ -86,6 +94,14 @@ const convertUploadVideo = async (id) => {
     'faststart',
     new_path,
   ];
+
+  if (!fs.existsSync(TEMP_PATH)) {
+    fs.mkdirSync(TEMP_PATH);
+  }
+
+  if (!fs.existsSync(VIDEO_CONVERT_LOG_PATH)) {
+    fs.mkdirSync(VIDEO_CONVERT_LOG_PATH);
+  }
 
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function () {

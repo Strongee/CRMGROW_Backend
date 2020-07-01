@@ -10,6 +10,9 @@ const webpush = require('web-push');
 const sharp = require('sharp');
 const child_process = require('child_process');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 const { ENV_PATH } = require('../config/path');
 
 require('dotenv').config({ path: ENV_PATH });
@@ -344,11 +347,16 @@ const reminder_job = new CronJob(
         });
 
         if (follow_up) {
-          const user = await User.findOne({ _id: follow_up.user }).catch(
-            (err) => {
-              console.log('err: ', err);
-            }
-          );
+          const user = await User.findOne({
+            _id: follow_up.user,
+            del: false,
+          }).catch((err) => {
+            console.log('err: ', err);
+          });
+
+          if (!user) {
+            continue;
+          }
           const contact = await Contact.findOne({
             _id: follow_up.contact,
           }).catch((err) => {
@@ -969,6 +977,7 @@ const convert_video_job = new CronJob(
             '128k',
             new_path,
           ];
+
           const ffmpegConvert = await child_process.spawn(ffmpegPath, args);
           ffmpegConvert.on('close', function () {
             console.log('converted end', file_path);
@@ -1013,7 +1022,6 @@ const upload_video_job = new CronJob(
       for (let i = 0; i < videos.length; i++) {
         const video = videos[i];
         const file_path = video.path;
-        console.log('file path');
         if (file_path) {
           const file_name = video.path.slice(23);
 
@@ -1055,7 +1063,6 @@ const upload_video_job = new CronJob(
                     });
                 } else {
                   console.log('File read was successful', data);
-                  console.log('file_path', file_path);
                   const today = new Date();
                   const year = today.getYear();
                   const month = today.getMonth();
@@ -1281,14 +1288,17 @@ const timesheet_check = new CronJob(
                 } else {
                   timeline['status'] = 'error';
                   timeline['updated_at'] = new Date();
-                  console.log('err', res[0].err);
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_text_video':
@@ -1309,14 +1319,17 @@ const timesheet_check = new CronJob(
                 } else {
                   timeline['status'] = 'error';
                   timeline['updated_at'] = new Date();
-                  console.log('err', res[0].err);
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_email_video':
@@ -1337,7 +1350,6 @@ const timesheet_check = new CronJob(
                   });
                 } else {
                   timeline['status'] = 'error';
-                  console.log('err', res[0].err);
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1345,7 +1357,11 @@ const timesheet_check = new CronJob(
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_text_pdf':
@@ -1365,7 +1381,6 @@ const timesheet_check = new CronJob(
                   });
                 } else {
                   timeline['status'] = 'error';
-                  console.log('err', res[0].err);
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1373,7 +1388,11 @@ const timesheet_check = new CronJob(
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_email_pdf':
@@ -1394,7 +1413,6 @@ const timesheet_check = new CronJob(
                   });
                 } else {
                   timeline['status'] = 'error';
-                  console.log('err', res[0].err);
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1402,7 +1420,11 @@ const timesheet_check = new CronJob(
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_text_image':
@@ -1422,7 +1444,6 @@ const timesheet_check = new CronJob(
                   });
                 } else {
                   timeline['status'] = 'error';
-                  console.log('err', res[0].err);
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1430,7 +1451,11 @@ const timesheet_check = new CronJob(
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
           case 'send_email_image':
@@ -1451,7 +1476,6 @@ const timesheet_check = new CronJob(
                   });
                 } else {
                   timeline['status'] = 'error';
-                  console.log('err', res[0].err);
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1459,7 +1483,11 @@ const timesheet_check = new CronJob(
                 }
               })
               .catch((err) => {
-                console.log('err', err);
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
               });
             break;
         }
@@ -1487,9 +1515,6 @@ const reset_daily_limit = new CronJob(
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
-      const max_email_count =
-        user['email_info']['max_count'] ||
-        system_settings.EMAIL_DAILY_LIMIT.BASIC;
       user['email_info']['count'] = 0;
       user.save().catch((err) => {
         console.log('users save err', err.message);

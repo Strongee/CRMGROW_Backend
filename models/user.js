@@ -94,6 +94,11 @@ const UserSchema = new Schema(
       linkedin: String,
     },
     company: { type: String, default: system_settings.COMPANY.DEFAULT },
+    affiliate: {
+      id: String,
+      link: String,
+      paypal: String,
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

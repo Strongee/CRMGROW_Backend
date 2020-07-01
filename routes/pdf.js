@@ -56,6 +56,14 @@ router.get('/:id', catchError(PDFCtrl.get));
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll));
 
+// Default PDF Edit
+router.post(
+  '/update-admin',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(PDFCtrl.updateDefault)
+);
+
 // Send PDF
 router.post(
   '/send',
