@@ -1953,9 +1953,12 @@ const bulkText = async (req, res) => {
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               video_content
             );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
