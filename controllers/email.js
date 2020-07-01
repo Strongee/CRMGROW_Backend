@@ -1510,6 +1510,7 @@ const receiveEmail = async (req, res) => {
     }
   );
 
+  console.log('email opend id', req.params.id);
   if (activity) {
     const user = await User.findOne({ _id: activity.user }).catch((err) => {
       console.log('err', err);
