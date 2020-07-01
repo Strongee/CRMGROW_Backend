@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === 'production') {
   };
 } else if (process.env.NODE_ENV === 'staging') {
   urls = {
-    DOMAIN_URL: 'https://DOMAIN_URL.crmgrow.com/',
+    DOMAIN_URL: 'https://ecsbe.crmgrow.com/',
     API_URL: 'https://ecsbe.crmgrow.com/api/',
     LOGIN_URL: 'https://ecsbe.crmgrow.com/login',
     PROFILE_URL: 'https://ecsbe.crmgrow.com/profile/',
