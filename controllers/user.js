@@ -302,7 +302,7 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { email, token, bill_amount } = req.body;
+  const { email, token, referral } = req.body;
 
   // if(!token) {
   //   const user = new User({
@@ -377,7 +377,7 @@ const socialSignUp = async (req, res) => {
   const payment_data = {
     email,
     token,
-    bill_amount,
+    referral,
   };
 
   PaymentCtrl.create(payment_data)
