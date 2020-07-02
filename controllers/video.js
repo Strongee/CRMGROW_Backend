@@ -28,6 +28,7 @@ const Video = require('../models/video');
 const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
 const Contact = require('../models/contact');
+const Team = require('../models/team');
 const {
   THUMBNAILS_PATH,
   TEMP_PATH,
@@ -1093,7 +1094,17 @@ const getAll = async (req, res) => {
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
+
   Array.prototype.push.apply(_video_list, _video_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('videos');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_video_list, team.videos);
+    }
+  }
 
   if (!_video_list) {
     return res.status(400).json({

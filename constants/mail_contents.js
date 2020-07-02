@@ -56,6 +56,14 @@ const mail_contents = {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'CRMGROW Invitation: ',
   },
+  NOTIFICATION_INVITE_TEAM_MEMBER: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Invitation: ',
+  },
+  NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Invitation Accepted: ',
+  },
   MAIL_SEND: 'mailservice@crmgrow.com',
   VIDEO_TITLE: 'eXp Realty eXplained Videos',
   PDF_TITLE: 'eXp Realty eXplained PDFs',

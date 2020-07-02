@@ -237,7 +237,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
   }
 
   const activity = new Activity({
-    content: contact.first_name + ' reviewed pdf',
+    content: 'reviewed pdf',
     contacts: query.contact,
     user: currentUser.id,
     type: 'pdf_trackers',
