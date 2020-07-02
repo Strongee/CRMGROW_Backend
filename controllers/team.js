@@ -222,10 +222,133 @@ const acceptInviation = async (req, res) => {
     });
 };
 
+const shareVideos = async (req, res) => {
+  const { currentUser } = req;
+  const { video_ids, team_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      videos: { $push: video_ids },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+    res.send(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
+const sharePdfs = async (req, res) => {
+  const { currentUser } = req;
+  const { pdf_ids, team_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      pdfs: { $push: pdf_ids },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+    res.send(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
+const shareImages = async (req, res) => {
+  const { currentUser } = req;
+  const { image_ids, team_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      images: { $push: image_ids },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+    res.send(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
 module.exports = {
   get,
   create,
   update,
   bulkInvites,
   acceptInviation,
+  shareVideos,
+  sharePdfs,
+  shareImages,
 };

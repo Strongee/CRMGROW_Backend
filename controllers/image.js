@@ -46,6 +46,7 @@ const Image = require('../models/image');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
+const Team = require('../models/team');
 
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
@@ -249,6 +250,15 @@ const getAll = async (req, res) => {
     created_at: 1,
   });
   Array.prototype.push.apply(_image_list, _image_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('images');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_image_list, team.images);
+    }
+  }
 
   if (!_image_list) {
     return res.status(400).json({

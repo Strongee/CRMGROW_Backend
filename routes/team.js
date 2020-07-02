@@ -19,4 +19,16 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptInviation)
 );
+router.post(
+  '/share-videos',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.shareVideos)
+);
+router.post('/share-pdfs', UserCtrl.checkAuth, catchError(TeamCtrl.sharePdfs));
+router.post(
+  '/share-images',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.shareImages)
+);
+
 module.exports = router;

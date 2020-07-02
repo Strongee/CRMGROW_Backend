@@ -9,6 +9,7 @@ const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const nodemailer = require('nodemailer');
 const Garbage = require('../models/garbage');
+const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
@@ -406,6 +407,15 @@ const getAll = async (req, res) => {
     created_at: 1,
   });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('pdfs');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_pdf_list, team.pdfs);
+    }
+  }
 
   if (!_pdf_list) {
     return res.status(400).json({
