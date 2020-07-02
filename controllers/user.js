@@ -778,7 +778,7 @@ const login = async (req, res) => {
   // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
   //   expiresIn: '30d',
   // });
-  const token = jwt.sign({ id: user.id }, api.JWT_SECRET);
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
 
