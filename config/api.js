@@ -65,6 +65,9 @@ const api = {
       'd-a829cc5764184be695de903030681eb5',
     SENDGRID_INVITE_GUEST:
       process.env.SENDGRID_INVITE_GUEST || 'd-5c8deb9857ec46a08b65ac484bbd9c92',
+    NOTIFICATION_INVITE_TEAM_MEMBER:
+      process.env.NOTIFICATION_INVITE_TEAM_MEMBER ||
+      'd-b7cdf4b01448440f80ba0d2a88ac3310',
   },
   TWILIO: {
     TWILIO_SID: process.env.TWILIO_SID,
