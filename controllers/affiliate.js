@@ -13,6 +13,7 @@ const get = async (req, res) => {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
+      json: true,
     })
       .then((response) => {
         return res.send({
@@ -27,9 +28,9 @@ const get = async (req, res) => {
         });
       });
   } else {
-    res.status(400).json({
-      status: false,
-      err: `Can't find affilate id`,
+    res.send({
+      status: true,
+      data: {},
     });
   }
 };
@@ -45,6 +46,7 @@ const getAll = async (req, res) => {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
+      json: true,
     })
       .then((response) => {
         const visitors = response.data;
@@ -57,7 +59,8 @@ const getAll = async (req, res) => {
         }
         return res.send({
           status: true,
-          data: customers,
+          data: response.data,
+          pagination: response.pagination
         });
       })
       .catch((err) => {
@@ -94,7 +97,6 @@ const create = async (req, res) => {
     json: true,
   })
     .then((response) => {
-      console.log('response', response);
       const affiliate = {
         id: response.id,
         link: response.links[0].url,
@@ -106,9 +108,11 @@ const create = async (req, res) => {
 
       res.send({
         status: true,
+        data: response,
       });
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).json({
         status: false,
         err: err.details[0],
@@ -148,7 +152,7 @@ const update = async (req, res) => {
 
         res.send({
           status: true,
-          data: response.links[0].url,
+          data: response,
         });
       })
       .catch((err) => {

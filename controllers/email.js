@@ -2429,6 +2429,96 @@ const reSubscribeEmail = async (req, res) => {
   res.send('You successfully resubscribed CRMGrow email');
 };
 
+const sharePlatform = async (req, res) => {
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+  const { currentUser } = req;
+  const { contacts, content, subject } = req.body;
+
+  const promise_array = [];
+  const error = [];
+
+  for (let i = 0; i < contacts.length; i++) {
+    let email_content = content;
+    let email_subject = subject;
+    const _contact = contacts[i];
+
+    email_subject = email_subject
+      .replace(/{user_name}/gi, currentUser.user_name)
+      .replace(/{user_email}/gi, currentUser.connected_email)
+      .replace(/{user_phone}/gi, currentUser.cell_phone)
+      .replace(/{contact_first_name}/gi, _contact.name)
+      .replace(/{contact_last_name}/gi, _contact.last_name)
+      .replace(/{contact_email}/gi, _contact.email);
+
+    email_content = email_content
+      .replace(/{user_name}/gi, currentUser.user_name)
+      .replace(/{user_email}/gi, currentUser.connected_email)
+      .replace(/{user_phone}/gi, currentUser.cell_phone)
+      .replace(/{contact_first_name}/gi, _contact.name)
+      .replace(/{contact_last_name}/gi, _contact.last_name)
+      .replace(/{contact_email}/gi, _contact.email);
+
+    const msg = {
+      from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+      to: _contact.email,
+      replyTo: currentUser.connected_email,
+      subject: email_subject,
+      html: email_content + '<br/><br/>' + currentUser.email_signature,
+      text: email_content,
+    };
+
+    const promise = new Promise((resolve, reject) => {
+      sgMail
+        .send(msg)
+        .then(async (_res) => {
+          if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+            resolve();
+          } else {
+            error.push({
+              contact: {
+                first_name: _contact.name,
+                email: _contact.email,
+              },
+              err: _res[0].statusCode,
+            });
+            resolve();
+          }
+        })
+        .catch((err) => {
+          error.push({
+            contact: {
+              first_name: _contact.name,
+              email: _contact.email,
+            },
+            err,
+          });
+          resolve();
+        });
+    });
+    promise_array.push(promise);
+  }
+  Promise.all(promise_array)
+    .then(() => {
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   openTrack,
   getGmail,
@@ -2441,4 +2531,5 @@ module.exports = {
   receiveEmail,
   unSubscribeEmail,
   reSubscribeEmail,
+  sharePlatform,
 };
