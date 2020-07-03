@@ -2460,9 +2460,9 @@ const sharePlatform = async (req, res) => {
       .replace(/{contact_email}/gi, _contact.email);
 
     const msg = {
-      from: `${currentUser.user_name} <${mail_contents.REPLY}>`,
+      from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
       to: _contact.email,
-      replyTo: [currentUser.connected_email, mail_contents.REPLY],
+      replyTo: [currentUser.connected_email, mail_contents.MAIL_SEND],
       subject: email_subject,
       html: email_content + '<br/><br/>' + currentUser.email_signature,
       text: email_content,
