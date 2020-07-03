@@ -61,7 +61,7 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { email, token, referral } = req.body;
+  const { user_name, email, token, referral } = req.body;
 
   // if (isBlockedEmail(email)) {
   //   res.status(400).send({
@@ -72,6 +72,7 @@ const signUp = async (req, res) => {
   // }
 
   const payment_data = {
+    user_name,
     email,
     token,
     referral,
@@ -304,7 +305,7 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { email, token, referral } = req.body;
+  const { user_name, email, token, referral } = req.body;
 
   // if(!token) {
   //   const user = new User({
@@ -377,6 +378,7 @@ const socialSignUp = async (req, res) => {
   // }
 
   const payment_data = {
+    user_name,
     email,
     token,
     referral,

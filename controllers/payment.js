@@ -45,8 +45,8 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { email, token, referral } = payment_data;
-    createCustomer(email, referral).then((customer) => {
+    const { user_name, email, token, referral } = payment_data;
+    createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
         { source: token.id },
@@ -531,11 +531,11 @@ const updateCustomerEmail = async (customer_id, email) => {
   });
 };
 
-const createCustomer = async (email, referral) => {
-  console.log('referral', referral);
+const createCustomer = async (user_name, email, referral) => {
   return new Promise((resolve, reject) => {
     stripe.customers.create(
       {
+        name: user_name,
         email,
         metadata: { referral },
       },
