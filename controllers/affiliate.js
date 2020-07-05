@@ -60,7 +60,7 @@ const getAll = async (req, res) => {
         return res.send({
           status: true,
           data: response.data,
-          pagination: response.pagination
+          pagination: response.pagination,
         });
       })
       .catch((err) => {
@@ -136,7 +136,7 @@ const update = async (req, res) => {
         first_name: currentUser.user_name.split(' ')[0],
         last_name: currentUser.user_name.split(' ')[1],
         email: currentUser.email,
-        paypal,
+        paypal_email: paypal,
       },
       json: true,
     })
