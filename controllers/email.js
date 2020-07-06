@@ -2462,7 +2462,7 @@ const sharePlatform = async (req, res) => {
     const msg = {
       from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
       to: _contact.email,
-      replyTo: [currentUser.connected_email, mail_contents.MAIL_SEND],
+      replyTo: currentUser.connected_email,
       subject: email_subject,
       html: email_content + '<br/><br/>' + currentUser.email_signature,
       text: email_content,
