@@ -30,5 +30,15 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.shareImages)
 );
+router.post(
+  '/share-automations',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.shareAutomations)
+);
+router.post(
+  '/share-templates',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.shareEmailTemplates)
+);
 
 module.exports = router;

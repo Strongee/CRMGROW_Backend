@@ -1,4 +1,5 @@
 const EmailTemplate = require('../models/email_template');
+const Team = require('../models/team');
 
 const get = async (req, res) => {
   const { id } = req.params;
@@ -20,11 +21,28 @@ const get = async (req, res) => {
 const getTemplates = async (req, res) => {
   const { currentUser } = req;
   const { page } = req.params;
+  const team_templates = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.email_templates) {
+        Array.prototype.push.apply(team_templates, team.email_templates);
+      }
+    }
+  }
+
   const templates = await EmailTemplate.find({
-    $or: [{ user: currentUser.id }, { role: 'admin' }],
+    $or: [
+      { user: currentUser.id },
+      { role: 'admin' },
+      { _id: { $in: team_templates } },
+    ],
   })
     .skip((page - 1) * 10)
     .limit(10);
+
   const total = await EmailTemplate.countDocuments({
     $or: [{ user: currentUser.id }, { role: 'admin' }],
   });

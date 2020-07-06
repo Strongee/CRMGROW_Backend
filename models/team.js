@@ -12,6 +12,10 @@ const TeamSchema = new Schema(
     videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
     pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
+    automations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'automation' }],
+    email_templates: [
+      { type: mongoose.Schema.Types.ObjectId, ref: 'email_template' },
+    ],
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     created_at: Date,
     updated_at: Date,

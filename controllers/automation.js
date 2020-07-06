@@ -3,6 +3,7 @@ const Automation = require('../models/automation');
 const TimeLine = require('../models/time_line');
 const Contact = require('../models/contact');
 const Video = require('../models/video');
+const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
 
 const get = (req, res) => {
@@ -61,8 +62,24 @@ const getPage = async (req, res) => {
   //     editedAutomations = garbage['edited_automation']
   // }
 
+  const team_automations = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.automations) {
+        Array.prototype.push.apply(team_automations, team.automations);
+      }
+    }
+  }
+
   const automations = await Automation.find({
-    $or: [{ user: currentUser.id }, { role: 'admin' }],
+    $or: [
+      { user: currentUser.id },
+      { role: 'admin' },
+      { _id: { $in: team_automations } },
+    ],
   })
     .skip((page - 1) * 10)
     .limit(10);
@@ -97,6 +114,7 @@ const getPage = async (req, res) => {
     const myJSON = JSON.stringify(automation);
     const data = JSON.parse(myJSON);
     const automation_detail = await Object.assign(data, { contacts });
+
     automation_array.push(automation_detail);
   }
 

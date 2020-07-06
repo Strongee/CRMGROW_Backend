@@ -5,6 +5,11 @@ const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
 const Team = require('../models/team');
 const User = require('../models/user');
+const Image = require('../models/image');
+const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const Automation = require('../models/automation');
+const EmailTemplate = require('../models/email_template');
 
 const get = (req, res) => {
   const { currentUser } = req;
@@ -248,6 +253,13 @@ const shareVideos = async (req, res) => {
     });
   }
 
+  Video.update(
+    { _id: { $in: video_ids } },
+    {
+      role: { $set: 'team' },
+    }
+  );
+
   Team.updateOne(
     { _id: team_id },
     {
@@ -287,6 +299,13 @@ const sharePdfs = async (req, res) => {
       error: 'Invalid Permission',
     });
   }
+
+  PDF.update(
+    { _id: { $in: pdf_ids } },
+    {
+      role: { $set: 'team' },
+    }
+  );
 
   Team.updateOne(
     { _id: team_id },
@@ -328,10 +347,110 @@ const shareImages = async (req, res) => {
     });
   }
 
+  Image.update(
+    { _id: { $in: image_ids } },
+    {
+      role: { $set: 'team' },
+    }
+  );
   Team.updateOne(
     { _id: team_id },
     {
       images: { $push: image_ids },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+    res.send(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
+const shareAutomations = async (req, res) => {
+  const { currentUser } = req;
+  const { automation_ids, team_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  Automation.update(
+    { _id: { $in: automation_ids } },
+    {
+      role: { $set: 'team' },
+    }
+  );
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      automations: { $push: automation_ids },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+    res.send(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
+const shareEmailTemplates = async (req, res) => {
+  const { currentUser } = req;
+  const { template_ids, team_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  EmailTemplate.update(
+    { _id: { $in: template_ids } },
+    {
+      role: { $set: 'team' },
+    }
+  );
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      email_templates: { $push: template_ids },
     }
   ).catch((err) => {
     console.log('err', err.message);
@@ -351,4 +470,6 @@ module.exports = {
   shareVideos,
   sharePdfs,
   shareImages,
+  shareAutomations,
+  shareEmailTemplates,
 };
