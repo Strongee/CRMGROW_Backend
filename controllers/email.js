@@ -2447,16 +2447,16 @@ const sharePlatform = async (req, res) => {
       .replace(/{user_name}/gi, currentUser.user_name)
       .replace(/{user_email}/gi, currentUser.connected_email)
       .replace(/{user_phone}/gi, currentUser.cell_phone)
-      .replace(/{contact_first_name}/gi, _contact.name)
-      .replace(/{contact_last_name}/gi, _contact.last_name)
+      .replace(/{contact_first_name}/gi, _contact.first_name || '')
+      .replace(/{contact_last_name}/gi, _contact.last_name || '')
       .replace(/{contact_email}/gi, _contact.email);
 
     email_content = email_content
       .replace(/{user_name}/gi, currentUser.user_name)
       .replace(/{user_email}/gi, currentUser.connected_email)
       .replace(/{user_phone}/gi, currentUser.cell_phone)
-      .replace(/{contact_first_name}/gi, _contact.name)
-      .replace(/{contact_last_name}/gi, _contact.last_name)
+      .replace(/{contact_first_name}/gi, _contact.first_name || '')
+      .replace(/{contact_last_name}/gi, _contact.last_name || '')
       .replace(/{contact_email}/gi, _contact.email);
 
     const msg = {
