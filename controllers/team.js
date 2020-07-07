@@ -461,12 +461,53 @@ const shareEmailTemplates = async (req, res) => {
   });
 };
 
+const searchUser = async (req, res) => {
+  const search = req.body.search;
+  let data = [];
+  data = await User.find({
+    $or: [
+      {
+        user_name: { $regex: '*.' + search + '.*', $options: 'i' },
+        del: false,
+      },
+      {
+        email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+        del: false,
+      },
+      {
+        cell_phone: {
+          $regex:
+            '.*' +
+            search
+              .split('')
+              .filter((char) => /^[^\(\)\- ]$/.test(char))
+              .join('') +
+            '.*',
+          $options: 'i',
+        },
+        del: false,
+      },
+    ],
+  })
+    .sort({ first_name: 1 })
+    .limit(8)
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
 module.exports = {
   get,
   create,
   update,
   bulkInvites,
   acceptInviation,
+  searchUser,
   shareVideos,
   sharePdfs,
   shareImages,

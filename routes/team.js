@@ -40,5 +40,10 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.shareEmailTemplates)
 );
+router.post(
+  '/search-user',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.searchUser)
+);
 
 module.exports = router;
