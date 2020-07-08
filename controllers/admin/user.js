@@ -481,34 +481,43 @@ const disableUser = async (req, res) => {
     console.log('user found err', err.message);
   });
   if (user['payment']) {
-    PaymentCtrl.cancelCustomer(user['payment']).catch((err) => {
-      console.log('err', err);
-    });
-  }
-
-  User.update(
-    { _id: req.params.id },
-    { $set: { del: true, updated_at: new Date() }, $unset: { payment: true } }
-  )
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      return res
-        .status(500)
-        .send({
-          status: false,
-          error: err,
-        })
-        .catch((err) => {
-          return res.status(500).send({
-            status: false,
-            error: err,
+    PaymentCtrl.cancelCustomer(user['payment'])
+      .then(() => {
+        User.update(
+          { _id: req.params.id },
+          {
+            $set: { del: true, updated_at: new Date() },
+            $unset: { payment: true },
+          }
+        )
+          .then(() => {
+            return res.send({
+              status: true,
+            });
+          })
+          .catch((err) => {
+            return res
+              .status(500)
+              .send({
+                status: false,
+                error: err,
+              })
+              .catch((err) => {
+                return res.status(500).send({
+                  status: false,
+                  error: err,
+                });
+              });
           });
+      })
+      .catch((err) => {
+        console.log('err', err);
+        return res.status(400).send({
+          status: false,
+          error: `User's Payment infomation is not correct. Please cancel in stripe manually`,
         });
-    });
+      });
+  }
 };
 
 const suspendUser = async (req, res) => {

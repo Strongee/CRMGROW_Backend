@@ -865,6 +865,12 @@ const bulkGmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    let no_connected = false;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     for (let i = 0; i < contacts.length; i++) {
       let image_titles = '';
       let image_descriptions = '';
@@ -891,6 +897,22 @@ const bulkGmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -1054,6 +1076,7 @@ const bulkGmail = async (req, res) => {
               ).catch((err) => {
                 console.log('err', err);
               });
+              email_count += 1;
               resolve();
             })
             .catch((err) => {
@@ -1075,13 +1098,32 @@ const bulkGmail = async (req, res) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
             console.log('err', err);
           });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err,
-          });
+          if (err.statusCode === 403) {
+            no_connected = true;
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'No Connected Gmail',
+            });
+          } else if (err.statusCode === 400) {
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: err.message,
+            });
+          } else {
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'Recipient address required',
+            });
+          }
           resolve();
         }
       });
@@ -1091,6 +1133,12 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        if (no_connected) {
+          return res.status(406).send({
+            status: false,
+            error: 'no connected',
+          });
+        }
         if (error.length > 0) {
           return res.status(405).json({
             status: false,

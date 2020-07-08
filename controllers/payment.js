@@ -641,16 +641,13 @@ const cancelCustomer = async (id) => {
     console.log('err', err);
   });
   return new Promise((resolve, reject) => {
-    cancelSubscription(payment.subscription)
+    cancelSubscription(payment.subscription).catch((err) => {
+      console.log('err', err);
+    });
+
+    deleteCustomer(payment.customer_id)
       .then(() => {
-        deleteCustomer(payment.customer_id)
-          .then(() => {
-            resolve();
-          })
-          .catch((err) => {
-            console.log('err', err);
-            reject();
-          });
+        resolve();
       })
       .catch((err) => {
         console.log('err', err);

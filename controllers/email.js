@@ -83,6 +83,7 @@ const bulkGmail = async (req, res) => {
   }
 
   let email_count = currentUser['email_info']['count'] || 0;
+  let no_connected = false;
   const max_email_count =
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
@@ -274,13 +275,33 @@ const bulkGmail = async (req, res) => {
         Activity.deleteOne({ _id: activity.id }).catch((err) => {
           console.log('err', err);
         });
-        error.push({
-          contact: {
-            first_name: _contact.first_name,
-            email: _contact.email,
-          },
-          err: err.messagae,
-        });
+
+        if (err.statusCode === 403) {
+          no_connected = true;
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'No Connected Gmail',
+          });
+        } else if (err.statusCode === 400) {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: err.message,
+          });
+        } else {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'Recipient address required',
+          });
+        }
         resolve();
       }
     }).catch((err) => {
@@ -291,6 +312,13 @@ const bulkGmail = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
+      if (no_connected) {
+        return res.status(406).send({
+          status: false,
+          error: 'no connected',
+        });
+      }
+
       if (error.length > 0) {
         return res.status(405).json({
           status: false,

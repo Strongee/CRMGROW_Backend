@@ -11,10 +11,51 @@ const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 
+const getAll = (req, res) => {
+  const { currentUser } = req;
+
+  Team.find({
+    $or: [
+      {
+        members: currentUser.id,
+      },
+      { owner: currentUser.id },
+    ],
+  })
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 const get = (req, res) => {
   const { currentUser } = req;
 
-  Team.find({ members: currentUser.id })
+  Team.find({
+    $or: [
+      {
+        members: currentUser.id,
+      },
+      { owner: currentUser.id },
+    ],
+  })
+    .populate([
+      { path: 'owner' },
+      { path: 'members' },
+      { path: 'videos' },
+      { path: 'pdfs' },
+      { path: 'images' },
+      { path: 'automations' },
+      { path: 'email_templates' },
+    ])
     .then((data) => {
       return res.send({
         status: true,
@@ -502,6 +543,7 @@ const searchUser = async (req, res) => {
 };
 
 module.exports = {
+  getAll,
   get,
   create,
   update,

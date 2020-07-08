@@ -7,8 +7,8 @@ const { catchError } = require('../controllers/error');
 const router = express.Router();
 
 router.post('/', UserCtrl.checkAuth, catchError(TeamCtrl.create));
-router.get('/', UserCtrl.checkAuth, catchError(TeamCtrl.get));
-router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
+router.get('/', UserCtrl.checkAuth, catchError(TeamCtrl.getAll));
+
 router.post(
   '/bulk-invite',
   UserCtrl.checkAuth,
@@ -45,5 +45,8 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.searchUser)
 );
+
+router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
+router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 
 module.exports = router;
