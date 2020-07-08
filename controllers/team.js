@@ -10,6 +10,7 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
+const Contact = require('../models/contact');
 
 const getAll = (req, res) => {
   const { currentUser } = req;
@@ -59,11 +60,62 @@ const get = (req, res) => {
     .then((data) => {
       return res.send({
         status: true,
-        data,
+        data: teams,
       });
     })
     .catch((err) => {
       return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const get = async (req, res) => {
+  const { currentUser } = req;
+  const team_id = req.params.id;
+  Team.findById(team_id)
+    .then(async (_team) => {
+      console.log('Team', _team);
+      if (
+        _team.owner.indexOf(currentUser.id) !== -1 ||
+        _team.members.indexOf(currentUser.id) !== -1
+      ) {
+        const owner = await User.findById(_team.owner);
+        const members = await User.find({ _id: { $in: _team.members } });
+        const videos = await Video.find({ _id: { $in: _team.videos } });
+        const pdfs = await PDF.find({ _id: { $in: _team.pdfs } });
+        const images = await Image.find({ _id: { $in: _team.images } });
+        const automations = await Automation.find({
+          _id: { $in: _team.automations },
+        });
+        const contacts = await Contact.find({ _id: { $in: _team.contacts } });
+        const templates = await EmailTemplate.find({
+          _id: { $in: _team.email_templates },
+        });
+        return res.send({
+          status: true,
+          data: {
+            ..._team._doc,
+            owner,
+            members,
+            videos,
+            pdfs,
+            images,
+            automations,
+            contacts,
+            templates,
+          },
+        });
+      } else {
+        return res.status(400).send({
+          status: false,
+          error: 'Invalid Permission',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).send({
         status: false,
         error: err.message,
       });
@@ -80,9 +132,10 @@ const create = async (req, res) => {
 
   team
     .save()
-    .then(() => {
+    .then((_team) => {
       return res.send({
         status: true,
+        data: _team,
       });
     })
     .catch((err) => {
@@ -151,26 +204,35 @@ const bulkInvites = async (req, res) => {
     });
   }
 
+  const inviteIds = team.invites;
+  const newInvites = [];
+  invites.forEach((e) => {
+    if (inviteIds.indexOf(e) === -1) {
+      inviteIds.push(e);
+      newInvites.push(e);
+    }
+  });
+
   Team.updateOne(
     {
       _id: req.params.id,
       owner: currentUser.id,
     },
     {
-      $push: {
-        invites,
+      $set: {
+        invites: inviteIds,
       },
     }
   )
     .then(async () => {
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-      const invites = await User.find({
+      const invitedUsers = await User.find({
         _id: { $in: invites },
       });
 
-      for (let i = 0; i < invites.length; i++) {
-        const invite = invites[i];
+      for (let i = 0; i < invitedUsers.length; i++) {
+        const invite = invitedUsers[i];
 
         const msg = {
           to: invite.email,
@@ -192,6 +254,10 @@ const bulkInvites = async (req, res) => {
             console.log('send message err: ', err);
           });
       }
+
+      return res.send({
+        status: true,
+      });
     })
     .catch((err) => {
       return res.status(500).send({
@@ -297,22 +363,41 @@ const shareVideos = async (req, res) => {
   Video.update(
     { _id: { $in: video_ids } },
     {
-      role: { $set: 'team' },
+      $set: { role: 'team' },
     }
   );
+
+  const videoIds = team.videos;
+  const newTeamVideos = [];
+  video_ids.forEach((e) => {
+    if (videoIds.indexOf(e) === -1) {
+      videoIds.push(e);
+      newTeamVideos.push(e);
+    }
+  });
 
   Team.updateOne(
     { _id: team_id },
     {
-      videos: { $push: video_ids },
+      $set: {
+        videos: [videoIds],
+      },
     }
-  ).catch((err) => {
-    console.log('err', err.message);
-    res.send(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(async (_data) => {
+      const updatedVideos = await Video.find({ _id: { $in: newTeamVideos } });
+      res.send({
+        status: true,
+        data: updatedVideos,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      res.send(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const sharePdfs = async (req, res) => {
@@ -344,22 +429,41 @@ const sharePdfs = async (req, res) => {
   PDF.update(
     { _id: { $in: pdf_ids } },
     {
-      role: { $set: 'team' },
+      $set: { role: 'team' },
     }
   );
+
+  const pdfIds = team.pdfs;
+  const newTeamPdfs = [];
+  pdf_ids.forEach((e) => {
+    if (pdfIds.indexOf(e) === -1) {
+      pdfIds.push(e);
+      newTeamPdfs.push(e);
+    }
+  });
 
   Team.updateOne(
     { _id: team_id },
     {
-      pdfs: { $push: pdf_ids },
+      $set: {
+        pdfs: [pdfIds],
+      },
     }
-  ).catch((err) => {
-    console.log('err', err.message);
-    res.send(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(async (data) => {
+      const updatedPdfs = await PDF.find({ _id: { $in: newTeamPdfs } });
+      res.send({
+        status: true,
+        data: updatedPdfs,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      res.send(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const shareImages = async (req, res) => {
@@ -391,21 +495,39 @@ const shareImages = async (req, res) => {
   Image.update(
     { _id: { $in: image_ids } },
     {
-      role: { $set: 'team' },
+      $set: { role: 'team' },
     }
   );
+
+  const imageIds = team.images;
+  const newTeamImages = [];
+  image_ids.forEach((e) => {
+    if (imageIds.indexOf(e) === -1) {
+      imageIds.push(e);
+      newTeamImages.push(e);
+    }
+  });
+
   Team.updateOne(
     { _id: team_id },
     {
-      images: { $push: image_ids },
+      $set: { images: imageIds },
     }
-  ).catch((err) => {
-    console.log('err', err.message);
-    res.send(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(async (_data) => {
+      const updatedImages = await Image.find({ _id: { $in: newTeamImages } });
+      res.send({
+        status: true,
+        data: updatedImages,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      res.send(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const shareAutomations = async (req, res) => {
@@ -508,7 +630,7 @@ const searchUser = async (req, res) => {
   data = await User.find({
     $or: [
       {
-        user_name: { $regex: '*.' + search + '.*', $options: 'i' },
+        user_name: { $regex: '.*' + search + '.*', $options: 'i' },
         del: false,
       },
       {
