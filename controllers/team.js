@@ -40,12 +40,16 @@ const getAll = (req, res) => {
 const get = (req, res) => {
   const { currentUser } = req;
 
-  Team.find({
+  Team.findOne({
     $or: [
       {
+        _id: req.params.id,
         members: currentUser.id,
       },
-      { owner: currentUser.id },
+      {
+        _id: req.params.id,
+        owner: currentUser.id,
+      },
     ],
   })
     .populate([
@@ -60,7 +64,7 @@ const get = (req, res) => {
     .then((data) => {
       return res.send({
         status: true,
-        data: teams,
+        data,
       });
     })
     .catch((err) => {
@@ -71,7 +75,7 @@ const get = (req, res) => {
     });
 };
 
-const get = async (req, res) => {
+const get1 = async (req, res) => {
   const { currentUser } = req;
   const team_id = req.params.id;
   Team.findById(team_id)
