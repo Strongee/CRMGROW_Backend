@@ -1593,6 +1593,7 @@ const bulkGmail = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
@@ -1660,6 +1661,7 @@ const bulkGmail = async (req, res) => {
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
         const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a><br/></p>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_subject === '') {
@@ -1764,7 +1766,7 @@ const bulkGmail = async (req, res) => {
             })
             .catch((err) => {
               console.log('gmail video send err', err.message);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
               if (err.statusCode === 403) {

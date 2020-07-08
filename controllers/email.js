@@ -261,13 +261,33 @@ const bulkGmail = async (req, res) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              err: err.message,
-            });
+
+            if (err.statusCode === 403) {
+              no_connected = true;
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: 'No Connected Gmail',
+              });
+            } else if (err.statusCode === 400) {
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err.message,
+              });
+            } else {
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: 'Recipient address required',
+              });
+            }
             resolve();
           });
       } catch (err) {
@@ -276,32 +296,13 @@ const bulkGmail = async (req, res) => {
           console.log('err', err);
         });
 
-        if (err.statusCode === 403) {
-          no_connected = true;
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'No Connected Gmail',
-          });
-        } else if (err.statusCode === 400) {
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: err.message,
-          });
-        } else {
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err: 'Recipient address required',
-          });
-        }
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: err.message || 'Unknown Error',
+        });
         resolve();
       }
     }).catch((err) => {
