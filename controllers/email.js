@@ -616,7 +616,7 @@ const bulkOutlook = async (req, res) => {
         .post(sendMail)
         .then(() => {
           email_count += 1;
-          Contact.udpateOne(
+          Contact.updateOne(
             { _id: contacts[i] },
             {
               $set: { last_activity: activity.id },
