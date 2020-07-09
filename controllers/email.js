@@ -1809,9 +1809,11 @@ const unSubscribeEmail = async (req, res) => {
 
   let _activity;
   if (activity) {
-    const user = await User.findOne({ _id: activity.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     const contact = await Contact.findOne({ _id: activity.contacts }).catch(
       (err) => {
