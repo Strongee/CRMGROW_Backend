@@ -815,6 +815,7 @@ const bulkEmail = async (req, res) => {
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -876,6 +877,7 @@ const bulkEmail = async (req, res) => {
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (pdf_subject === '') {
@@ -939,8 +941,8 @@ const bulkEmail = async (req, res) => {
               });
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -954,8 +956,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             console.error(err);
@@ -1354,6 +1356,7 @@ const bulkOutlook = async (req, res) => {
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -1415,6 +1418,7 @@ const bulkOutlook = async (req, res) => {
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (subject === '') {
@@ -1482,7 +1486,7 @@ const bulkOutlook = async (req, res) => {
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             console.log('err', err);
@@ -1611,6 +1615,7 @@ const bulkGmail = async (req, res) => {
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -1672,6 +1677,7 @@ const bulkGmail = async (req, res) => {
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
         const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (pdf_subject === '') {
@@ -1767,7 +1773,7 @@ const bulkGmail = async (req, res) => {
             })
             .catch((err) => {
               console.log('gmail pdf send err', err);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
               error.push({
@@ -1781,7 +1787,7 @@ const bulkGmail = async (req, res) => {
             });
         } catch (err) {
           console.log('err', err);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
             console.log('err', err);
           });
           if (err.statusCode === 403) {
