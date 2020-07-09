@@ -90,7 +90,7 @@ const create = async (req, res) => {
     },
     body: {
       first_name: currentUser.user_name.split(' ')[0],
-      last_name: currentUser.user_name.split(' ')[1] || '',
+      last_name: currentUser.user_name.split(' ')[1] || ' ',
       email: currentUser.email,
       paypal,
     },
@@ -134,7 +134,7 @@ const update = async (req, res) => {
       },
       body: {
         first_name: currentUser.user_name.split(' ')[0],
-        last_name: currentUser.user_name.split(' ')[1],
+        last_name: currentUser.user_name.split(' ')[1] || ' ',
         email: currentUser.email,
         paypal_email: paypal,
       },
