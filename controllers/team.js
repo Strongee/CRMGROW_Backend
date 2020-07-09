@@ -1,5 +1,5 @@
 const sgMail = require('@sendgrid/mail');
-
+const mongoose = require('mongoose');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
@@ -23,6 +23,7 @@ const getAll = (req, res) => {
       { owner: currentUser.id },
     ],
   })
+    .populate([{ path: 'owner' }, { path: 'members' }])
     .then((data) => {
       return res.send({
         status: true,
