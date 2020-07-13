@@ -34,7 +34,7 @@ const GarbageSchema = new Schema(
     },
     text_notification: {
       material: { type: Boolean, default: true },
-      email: { type: Boolean, default: true },
+      email: { type: Boolean, default: false },
       follow_up: { type: Boolean, default: false },
       lead_capture: { type: Boolean, default: false },
       unsubscription: { type: Boolean, default: false },
