@@ -302,6 +302,20 @@ const updateDefault = async (req, res) => {
   });
 };
 
+const loadOwn = async (req, res) => {
+  console.log('Load OWN');
+  const { currentUser } = req;
+
+  const automations = await Automation.find({
+    $and: [{ user: currentUser.id }, { role: { $ne: 'admin' } }],
+  });
+
+  return res.json({
+    status: true,
+    data: automations,
+  });
+}
+
 module.exports = {
   get,
   getStatus,
@@ -311,4 +325,5 @@ module.exports = {
   remove,
   updateDefault,
   search,
+  loadOwn,
 };

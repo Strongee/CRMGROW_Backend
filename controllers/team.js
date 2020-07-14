@@ -181,12 +181,18 @@ const update = async (req, res) => {
         ...req.body,
       },
     }
-  ).catch((err) => {
-    return res.status(500).send({
-      status: false,
-      error: err.message,
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const bulkInvites = async (req, res) => {
@@ -251,7 +257,6 @@ const bulkInvites = async (req, res) => {
             ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
           },
         };
-
         sgMail
           .send(msg)
           .then()
@@ -385,7 +390,7 @@ const shareVideos = async (req, res) => {
     { _id: team_id },
     {
       $set: {
-        videos: [videoIds],
+        videos: videoIds,
       },
     }
   )
@@ -398,7 +403,7 @@ const shareVideos = async (req, res) => {
     })
     .catch((err) => {
       console.log('err', err.message);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         error: err.message,
       });
@@ -451,7 +456,7 @@ const sharePdfs = async (req, res) => {
     { _id: team_id },
     {
       $set: {
-        pdfs: [pdfIds],
+        pdfs: pdfIds,
       },
     }
   )
@@ -464,7 +469,7 @@ const sharePdfs = async (req, res) => {
     })
     .catch((err) => {
       console.log('err', err.message);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         error: err.message,
       });
@@ -528,7 +533,7 @@ const shareImages = async (req, res) => {
     })
     .catch((err) => {
       console.log('err', err.message);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         error: err.message,
       });
@@ -564,22 +569,41 @@ const shareAutomations = async (req, res) => {
   Automation.update(
     { _id: { $in: automation_ids } },
     {
-      role: { $set: 'team' },
+      $set: { role: 'team' },
     }
   );
+
+  const automationIds = team.automations;
+  const newTeamAutomations = [];
+  automation_ids.forEach((e) => {
+    if (automationIds.indexOf(e) === -1) {
+      automationIds.push(e);
+      newTeamAutomations.push(e);
+    }
+  });
 
   Team.updateOne(
     { _id: team_id },
     {
-      automations: { $push: automation_ids },
+      $set: { automations: automationIds },
     }
-  ).catch((err) => {
-    console.log('err', err.message);
-    res.send(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(async (data) => {
+      const updatedAutomations = await Automation.find({
+        _id: { $in: newTeamAutomations },
+      });
+      res.send({
+        status: true,
+        data: updatedAutomations,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      res.status(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const shareEmailTemplates = async (req, res) => {
@@ -611,22 +635,41 @@ const shareEmailTemplates = async (req, res) => {
   EmailTemplate.update(
     { _id: { $in: template_ids } },
     {
-      role: { $set: 'team' },
+      $set: { role: 'team' },
     }
   );
+
+  const templateIds = team.email_templates;
+  const newTeamTemplates = [];
+  template_ids.forEach((e) => {
+    if (templateIds.indexOf(e) === -1) {
+      templateIds.push(e);
+      newTeamTemplates.push(e);
+    }
+  });
 
   Team.updateOne(
     { _id: team_id },
     {
-      email_templates: { $push: template_ids },
+      $set: { email_templates: templateIds },
     }
-  ).catch((err) => {
-    console.log('err', err.message);
-    res.send(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(async (_data) => {
+      const updatedTemplates = await EmailTemplate.find({
+        _id: { $in: newTeamTemplates },
+      });
+      res.send({
+        status: true,
+        data: updatedTemplates,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      res.status(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const searchUser = async (req, res) => {

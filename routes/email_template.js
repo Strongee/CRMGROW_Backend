@@ -10,6 +10,7 @@ router.post('/create', UserCtrl.checkAuth, catchError(TemplateCtrl.create));
 router.get('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.get));
 router.put('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.update));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.remove));
+router.post('/list/own', UserCtrl.checkAuth, catchError(TemplateCtrl.loadOwn));
 router.post(
   '/list/:page',
   UserCtrl.checkAuth,
