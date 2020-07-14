@@ -368,6 +368,7 @@ const bulkEmail = async (req, res) => {
       let image_objects = '';
       let image_subject = subject;
       let image_content = content;
+      const activities = [];
       let activity;
 
       let _contact = await Contact.findOne({
@@ -455,6 +456,7 @@ const bulkEmail = async (req, res) => {
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
         const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
         image_objects += image_object;
+        activities.push(activity.id);
       }
 
       if (image_subject === '') {
@@ -511,15 +513,18 @@ const bulkEmail = async (req, res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -533,8 +538,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             console.error(err);
@@ -878,6 +883,7 @@ const bulkGmail = async (req, res) => {
       let image_subject = subject;
       let image_content = content;
       let activity;
+      const activities = [];
       let promise;
       let _contact = await Contact.findOne({
         _id: contacts[i],
@@ -963,6 +969,8 @@ const bulkGmail = async (req, res) => {
           .catch((err) => {
             console.log('err', err);
           });
+
+        activities.push(activity.id);
 
         const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
 
@@ -1081,8 +1089,8 @@ const bulkGmail = async (req, res) => {
             })
             .catch((err) => {
               console.log('gmail send err', err);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
 
               if (err.statusCode === 403) {
@@ -1115,8 +1123,8 @@ const bulkGmail = async (req, res) => {
             });
         } catch (err) {
           console.log('err', err);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('err', err.message);
           });
 
           error.push({
@@ -1244,6 +1252,7 @@ const bulkOutlook = async (req, res) => {
       let image_objects = '';
       let image_subject = subject;
       let image_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < images.length; j++) {
         const image = images[j];
@@ -1305,6 +1314,7 @@ const bulkOutlook = async (req, res) => {
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
         const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
         image_objects += image_object;
+        activities.push(activity.id);
       }
 
       if (image_subject === '') {
@@ -1366,16 +1376,19 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.udpateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('err', err);
             error.push({

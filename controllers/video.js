@@ -1311,6 +1311,7 @@ const bulkEmail = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
@@ -1379,6 +1380,7 @@ const bulkEmail = async (req, res) => {
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
         const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (subject === '') {
@@ -1434,7 +1436,7 @@ const bulkEmail = async (req, res) => {
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               email_count += 1;
               console.log('status', _res[0].statusCode);
-              Contact.updateMany(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 {
                   $set: { last_activity: activity.id },
@@ -1444,8 +1446,8 @@ const bulkEmail = async (req, res) => {
               });
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -1458,8 +1460,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             error.push({
@@ -1767,7 +1769,7 @@ const bulkGmail = async (req, res) => {
             .catch((err) => {
               console.log('gmail video send err', err.message);
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-                console.log('err', err);
+                console.log('err', err.message);
               });
               if (err.statusCode === 403) {
                 no_connected = true;
@@ -1799,8 +1801,8 @@ const bulkGmail = async (req, res) => {
             });
         } catch (err) {
           console.log('gmail video send err', err.message);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('err', err.message);
           });
           error.push({
             contact: {
@@ -2216,7 +2218,9 @@ const bulkOutlook = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
+
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
           console.log('video found err', err.message);
@@ -2284,6 +2288,7 @@ const bulkOutlook = async (req, res) => {
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
         const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_subject === '') {
@@ -2354,7 +2359,7 @@ const bulkOutlook = async (req, res) => {
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err.message);
             });
             console.log('err', err.message);
