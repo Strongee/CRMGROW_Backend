@@ -27,6 +27,7 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const LabelHelper = require('../helpers/label');
+const AssistantHelper = require('../helpers/assistant');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
@@ -330,8 +331,13 @@ const create = async (req, res) => {
   contact
     .save()
     .then((_contact) => {
+      let detail_content = 'added contact';
+      if (req.guest_loggin) {
+        detail_content = AssistantHelper.activityLog(detail_content);
+      }
+
       const activity = new Activity({
-        content: 'added contact',
+        content: detail_content,
         contacts: _contact.id,
         user: currentUser.id,
         type: 'contacts',
@@ -572,6 +578,13 @@ const importCSV = async (req, res) => {
     })
     .on('end', () => {
       const promise_array = [];
+      let add_content = 'added contact';
+      let note_content = 'added note';
+      if (req.guest_loggin) {
+        add_content = AssistantHelper.activityLog(add_content);
+        note_content = AssistantHelper.activityLog(note_content);
+      }
+
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
@@ -675,7 +688,7 @@ const importCSV = async (req, res) => {
               .save()
               .then((_contact) => {
                 const activity = new Activity({
-                  content: 'added contact',
+                  content: add_content,
                   contacts: _contact.id,
                   user: currentUser.id,
                   type: 'contacts',
@@ -707,7 +720,7 @@ const importCSV = async (req, res) => {
                   });
                   note.save().then((_note) => {
                     const _activity = new Activity({
-                      content: 'added note',
+                      content: note_content,
                       contacts: _contact.id,
                       user: currentUser.id,
                       type: 'notes',
@@ -2616,6 +2629,11 @@ const bulkCreate = async (req, res) => {
   const failure = [];
   const succeed = [];
   const promise_array = [];
+  let detail_content = 'added contact';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     const promise = new Promise(async (resolve, reject) => {
       const data = contacts[i];
@@ -2641,8 +2659,9 @@ const bulkCreate = async (req, res) => {
         .save()
         .then((_contact) => {
           succeed.push(_contact);
+
           const activity = new Activity({
-            content: 'added contact',
+            content: detail_content,
             contacts: _contact.id,
             user: currentUser.id,
             type: 'contacts',

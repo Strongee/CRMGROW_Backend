@@ -50,6 +50,7 @@ const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
+const AssistantHelper = require('../helpers/assistant');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
@@ -1262,6 +1263,11 @@ const bulkEmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
 
@@ -1347,7 +1353,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -1546,6 +1552,11 @@ const bulkGmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
 
@@ -1630,7 +1641,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -2141,6 +2152,11 @@ const bulkOutlook = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
@@ -2255,7 +2271,7 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',

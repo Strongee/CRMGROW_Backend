@@ -229,7 +229,12 @@ const signUp = async (req, res) => {
           //   expiresIn: '30d',
           // });
 
-          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET);
+          const token = jwt.sign(
+            {
+              id: _res.id,
+            },
+            api.JWT_SECRET
+          );
 
           const myJSON = JSON.stringify(_res);
           const user = JSON.parse(myJSON);
@@ -717,7 +722,10 @@ const login = async (req, res) => {
       // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
       //   expiresIn: '30d',
       // });
-      const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+      const token = jwt.sign(
+        { id: _user.id, guest_loggin: true },
+        api.JWT_SECRET
+      );
       const myJSON = JSON.stringify(_user);
       const user = JSON.parse(myJSON);
 
@@ -863,6 +871,60 @@ const checkAuth = async (req, res, next) => {
 
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email);
+
+    if (decoded.guest_loggin) {
+      req.guest_loggin = true;
+    }
+
+    if (
+      req.currentUser.primary_connected ||
+      req.currentUser.connected_email_type === 'email'
+    ) {
+      next();
+    } else {
+      res.status(402).send({
+        status: false,
+        error: 'not connected',
+      });
+    }
+  } else {
+    console.error('Valid JWT but no user:', decoded);
+    res.status(401).send({
+      status: false,
+      error: 'invalid_user',
+    });
+  }
+};
+
+const checkAuthGuest = async (req, res, next) => {
+  const token = req.get('Authorization');
+  let decoded;
+  try {
+    decoded = jwt.verify(token, api.JWT_SECRET);
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  } catch (err) {
+    console.log('check verify error', err.message || err.msg);
+
+    return res.status(401).send({
+      status: false,
+      error: err.message,
+    });
+    // err
+  }
+
+  req.currentUser = await User.findOne({ _id: decoded.id }).catch((err) => {
+    console.log('err', err);
+  });
+
+  if (req.currentUser) {
+    console.info('Auth Success:', req.currentUser.email);
+
+    if (decoded.guest_loggin) {
+      res.status(400).send({
+        status: false,
+        error: 'you have no access for this action',
+      });
+    }
 
     if (
       req.currentUser.primary_connected ||
@@ -1968,6 +2030,7 @@ module.exports = {
   weeklyReport,
   checkAuth,
   checkAuth2,
+  checkAuthGuest,
   checkSuspended,
   checkLastLogin,
   closeAccount,

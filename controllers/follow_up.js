@@ -6,6 +6,7 @@ const Activity = require('../models/activity');
 const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
 const User = require('../models/user');
+const AssistantHelper = require('../helpers/assistant');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -69,9 +70,7 @@ const create = async (req, res) => {
     .save()
     .then((_followup) => {
       const startdate = moment(_followup.due_date);
-      console.log('reminder_before', reminder_before);
       const due_date = startdate.subtract(reminder_before, 'minutes');
-      console.log('due_date', due_date);
       const reminder = new Reminder({
         contact: _followup.contact,
         due_date,
@@ -86,8 +85,12 @@ const create = async (req, res) => {
         console.log('error', err);
       });
 
+      let detail_content = 'added follow up';
+      if (req.guest_loggin) {
+        detail_content = AssistantHelper.activityLog(detail_content);
+      }
       const activity = new Activity({
-        content: 'added follow up',
+        content: detail_content,
         contacts: _followup.contact,
         user: currentUser.id,
         type: 'follow_ups',
@@ -130,13 +133,27 @@ const create = async (req, res) => {
 };
 
 const edit = async (req, res) => {
+  const { currentUser } = req;
+  const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+
+  let reminder_before = 30;
+  if (garbage) {
+    reminder_before = garbage.reminder_before;
+  }
+
   const editData = req.body;
 
   if (req.body.due_date || req.body.contact) {
     Reminder.findOne({ follow_up: req.params.id })
       .then((_reminder) => {
         if (req.body.due_date) {
-          _reminder['due_date'] = req.body.due_date;
+          const startdate = moment(req.body.due_date);
+          const due_date = startdate.subtract(reminder_before, 'minutes');
+          _reminder['due_date'] = due_date;
         }
         if (req.body.contact) {
           _reminder['contact'] = req.body.contact;
@@ -553,6 +570,31 @@ const updateChecked = async (req, res) => {
 
 const bulkUpdate = async (req, res) => {
   const { ids, content, due_date } = req.body;
+
+  const { currentUser } = req;
+  const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+
+  let reminder_before = 30;
+  if (garbage) {
+    reminder_before = garbage.reminder_before;
+  }
+
+  if (req.body.due_date) {
+    const startdate = moment(req.body.due_date);
+    const reminder_due_date = startdate.subtract(reminder_before, 'minutes');
+
+    Reminder.updateMany(
+      { follow_up: { $in: ids } },
+      { $set: { due_date: reminder_due_date } }
+    ).catch((err) => {
+      console.log('err', err);
+    });
+  }
+
   if (ids && ids.length) {
     try {
       const query = {};
@@ -612,6 +654,11 @@ const bulkCreate = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
+  let detail_content = 'added follow up';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
     const followUp = new FollowUp({
@@ -627,9 +674,7 @@ const bulkCreate = async (req, res) => {
       .save()
       .then((_followup) => {
         const startdate = moment(_followup.due_date);
-        console.log('reminder_before', reminder_before);
         const due_date = startdate.subtract(reminder_before, 'minutes');
-        console.log('due_date', due_date);
         const reminder = new Reminder({
           contact: _followup.contact,
           due_date,
@@ -645,7 +690,7 @@ const bulkCreate = async (req, res) => {
         });
 
         const activity = new Activity({
-          content: 'added follow up',
+          content: detail_content,
           contacts: _followup.contact,
           user: currentUser.id,
           type: 'follow_ups',

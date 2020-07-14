@@ -50,6 +50,7 @@ const Team = require('../models/team');
 
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+const AssistantHelper = require('../helpers/assistant');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -361,6 +362,16 @@ const bulkEmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let image_titles = '';
@@ -396,6 +407,22 @@ const bulkEmail = async (req, res) => {
         continue;
       }
 
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       for (let j = 0; j < images.length; j++) {
         const image = images[j];
 
@@ -422,7 +449,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -512,6 +539,7 @@ const bulkEmail = async (req, res) => {
           .then((_res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+              email_count += 1;
               console.log('status', _res[0].statusCode);
               Contact.updateOne(
                 { _id: contacts[i] },
@@ -559,6 +587,10 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -876,6 +908,11 @@ const bulkGmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let image_titles = '';
       let image_descriptions = '';
@@ -952,7 +989,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -1143,6 +1180,10 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (no_connected) {
           return res.status(406).send({
             status: false,
@@ -1187,10 +1228,22 @@ const bulkOutlook = async (req, res) => {
         error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
       });
     }
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
     });
+
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
@@ -1247,6 +1300,23 @@ const bulkOutlook = async (req, res) => {
         promise_array.push(promise);
         continue;
       }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let image_titles = '';
       let image_descriptions = '';
       let image_objects = '';
@@ -1280,14 +1350,14 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
           images: image._id,
           created_at: new Date(),
           updated_at: new Date(),
-          subject,
+          subject: image_subject,
           description: image_content,
         });
 
@@ -1376,6 +1446,7 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
+            email_count += 1;
             Contact.udpateOne(
               { _id: contacts[i] },
               {
@@ -1406,6 +1477,11 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,

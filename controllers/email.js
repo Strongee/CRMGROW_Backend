@@ -46,6 +46,7 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const emailHelper = require('../helpers/email');
+const AssistantHelper = require('../helpers/assistant');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -87,6 +88,11 @@ const bulkGmail = async (req, res) => {
   const max_email_count =
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
 
   for (let i = 0; i < contacts.length; i++) {
     let email_subject = subject;
@@ -170,7 +176,7 @@ const bulkGmail = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -313,6 +319,10 @@ const bulkGmail = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
       if (no_connected) {
         return res.status(406).send({
           status: false,
@@ -413,6 +423,11 @@ const bulkOutlook = async (req, res) => {
   const max_email_count =
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
 
   for (let i = 0; i < contacts.length; i++) {
     await new Promise((resolve, reject) => {
@@ -522,7 +537,7 @@ const bulkOutlook = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -655,6 +670,10 @@ const bulkOutlook = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
       if (error.length > 0) {
         return res.status(405).json({
           status: false,
@@ -940,6 +959,11 @@ const bulkEmail = async (req, res) => {
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     let email_content = content;
     let email_subject = subject;
@@ -1022,7 +1046,7 @@ const bulkEmail = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -1108,6 +1132,10 @@ const bulkEmail = async (req, res) => {
   }
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
       if (error.length > 0) {
         return res.status(405).json({
           status: false,

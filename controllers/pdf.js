@@ -71,6 +71,7 @@ const makeBody = (to, from, subject, message) => {
 };
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+const AssistantHelper = require('../helpers/assistant');
 
 const play = async (req, res) => {
   const pdf_id = req.query.pdf;
@@ -767,6 +768,11 @@ const bulkEmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let _contact = await Contact.findOne({
@@ -843,7 +849,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -1278,6 +1284,11 @@ const bulkOutlook = async (req, res) => {
       expires_in: 0,
     });
 
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
@@ -1384,7 +1395,7 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -1567,6 +1578,11 @@ const bulkGmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = AssistantHelper.activityLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let _contact = await Contact.findOne({
@@ -1643,7 +1659,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',

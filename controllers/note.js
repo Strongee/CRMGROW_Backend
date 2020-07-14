@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check');
 const Note = require('../models/note');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
+const AssistantHelper = require('../helpers/assistant');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -42,8 +43,13 @@ const create = async (req, res) => {
   note
     .save()
     .then((_note) => {
+      let detail_content = 'added note';
+      if (req.guest_loggin) {
+        detail_content = AssistantHelper.activityLog(detail_content);
+      }
+
       const activity = new Activity({
-        content: 'added note',
+        content: detail_content,
         contacts: _note.contact,
         user: currentUser.id,
         type: 'notes',
@@ -78,15 +84,13 @@ const create = async (req, res) => {
 
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
+  const { contacts, content } = req.body;
+
+  let detail_content = 'added note';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
   }
 
-  const { contacts, content } = req.body;
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
 
@@ -100,7 +104,7 @@ const bulkCreate = async (req, res) => {
       .save()
       .then((_note) => {
         const activity = new Activity({
-          content: 'added note',
+          content: detail_content,
           contacts: _note.contact,
           user: currentUser.id,
           type: 'notes',

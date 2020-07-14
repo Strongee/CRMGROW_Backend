@@ -47,7 +47,7 @@ router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout));
 router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe));
 
 // Edit own profile
-router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe));
+router.put('/me', UserCtrl.checkAuthGuest, catchError(UserCtrl.editMe));
 
 // New Password by old one
 router.post(
