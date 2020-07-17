@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const TeamSchema = new Schema(
   {
-    owner: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     name: String,
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     invites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],

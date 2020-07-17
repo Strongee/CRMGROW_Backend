@@ -320,6 +320,7 @@ const acceptInviation = async (req, res) => {
         },
       };
 
+      console.log('msg', msg);
       sgMail
         .send(msg)
         .then()
