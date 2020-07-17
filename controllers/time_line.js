@@ -194,9 +194,12 @@ const runTimeline = async (id) => {
                 timeline.save().catch((err) => {
                   console.log('err', err);
                 });
-                Contact.findByIdAndUpdate(_followup.contact, {
-                  $set: { last_activity: _activity.id },
-                }).catch((err) => {
+                Contact.updateOne(
+                  { _id: _followup.contact },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
                   console.log('err', err);
                 });
               })
@@ -237,9 +240,12 @@ const runTimeline = async (id) => {
             });
 
             activity.save().then((_activity) => {
-              Contact.findByIdAndUpdate(_note.contact, {
-                $set: { last_activity: _activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: _note.contact },
+                {
+                  $set: { last_activity: _activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               timeline.status = 'completed';

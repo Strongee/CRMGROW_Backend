@@ -496,9 +496,12 @@ const sendPDF = async (req, res) => {
         .catch((err) => {
           console.log('err', err);
         });
-      Contact.findByIdAndUpdate(contacts[i], {
-        $set: { last_activity: activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: contacts[i] },
+        {
+          $set: { last_activity: activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -583,9 +586,12 @@ const sendText = async (req, res) => {
         .catch((err) => {
           console.log('err', err);
         });
-      Contact.findByIdAndUpdate(contacts[i], {
-        $set: { last_activity: activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: contacts[i] },
+        {
+          $set: { last_activity: activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
 
@@ -666,7 +672,7 @@ const remove = async (req, res) => {
 
     if (pdf) {
       if (pdf['default_edited']) {
-        Garbage.updateMany(
+        Garbage.updateOne(
           { user: currentUser.id },
           {
             $pull: { edited_pdf: { $in: [pdf.default_pdf] } },
@@ -1033,6 +1039,7 @@ const bulkText = async (req, res) => {
       let pdf_descriptions = '';
       let pdf_objects = '';
       let pdf_content = content;
+      const activities = [];
       let activity;
 
       for (let j = 0; j < pdfs.length; j++) {
@@ -1080,6 +1087,7 @@ const bulkText = async (req, res) => {
         }
         const pdf_object = `\n${pdf.title}:\n\n${pdf_link}\n`;
         pdf_objects += pdf_object;
+        activities.push(activity);
       }
 
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
@@ -1109,7 +1117,7 @@ const bulkText = async (req, res) => {
         const e164Phone = phone(_contact.cell_phone)[0];
         console.log('e164Phone', e164Phone);
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
             console.log('err', err);
           });
           error.push({
@@ -1128,16 +1136,19 @@ const bulkText = async (req, res) => {
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               pdf_content
             );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
           })
           .catch((err) => {
             console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             error.push({
@@ -1778,7 +1789,7 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {

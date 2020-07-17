@@ -249,7 +249,7 @@ const bulkGmail = async (req, res) => {
         })
           .then(async () => {
             email_count += 1;
-            Contact.update(
+            Contact.updateOne(
               { _id: contacts[i] },
               {
                 $set: { last_activity: activity.id },
@@ -768,7 +768,7 @@ const openTrack = async (req, res) => {
           console.log('err', err);
         });
 
-      Contact.update(
+      Contact.updateOne(
         { _id: contact.id },
         { $set: { last_activity: _activity.id } }
       ).catch((err) => {
@@ -1081,7 +1081,7 @@ const bulkEmail = async (req, res) => {
         .send(msg)
         .then(async (_res) => {
           if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-            Email.updateMany(
+            Email.updateOne(
               { _id: _email.id },
               { $set: { message_id: _res[0].headers['x-message-id'] } }
             ).catch((err) => {
@@ -1267,7 +1267,7 @@ const receiveEmailSendGrid = async (req, res) => {
               console.log('err', err);
             });
 
-          Contact.update(
+          Contact.updateOne(
             { _id: contact.id },
             { $set: { last_activity: _activity.id } }
           ).catch((err) => {
@@ -1331,7 +1331,7 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.findByIdAndUpdate(contact.id, {
+        Contact.updateOne(contact.id, {
           $set: { last_activity: _activity.id },
         }).catch((err) => {
           console.log('err', err);
@@ -1379,7 +1379,7 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.update(
+        Contact.updateOne(
           { _id: contact.id },
           {
             $set: { last_activity: _activity.id },
@@ -1643,7 +1643,7 @@ const receiveEmail = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.update(
+        Contact.updateOne(
           { _id: contact.id },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
@@ -1985,7 +1985,7 @@ const unSubscribeEmail = async (req, res) => {
       .catch((err) => {
         console.log('err', err);
       });
-    Contact.update(
+    Contact.updateOne(
       { _id: contact.id },
       {
         $set: { last_activity: last_activity.id },
@@ -2314,7 +2314,7 @@ const reSubscribeEmail = async (req, res) => {
       .catch((err) => {
         console.log('err', err.message);
       });
-    Contact.update(
+    Contact.updateOne(
       { _id: contact.id },
       {
         $set: { last_activity: last_activity.id },

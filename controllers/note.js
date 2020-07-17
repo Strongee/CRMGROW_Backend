@@ -59,7 +59,7 @@ const create = async (req, res) => {
       });
 
       activity.save().then((_activity) => {
-        Contact.updateMany(
+        Contact.updateOne(
           { _id: _note.contact },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
@@ -114,9 +114,12 @@ const bulkCreate = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.findByIdAndUpdate(_note.contact, {
-              $set: { last_activity: _activity.id },
-            }).catch((err) => {
+            Contact.fineOne(
+              { _id: _note.contact },
+              {
+                $set: { last_activity: _activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             const myJSON = JSON.stringify(_note);

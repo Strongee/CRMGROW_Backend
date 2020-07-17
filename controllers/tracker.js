@@ -250,9 +250,12 @@ const disconnectPDF = async (pdf_tracker_id) => {
   activity
     .save()
     .then((_activity) => {
-      Contact.findByIdAndUpdate(query.contact, {
-        $set: { last_activity: _activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: query.contact },
+        {
+          $set: { last_activity: _activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err.message);
       });
     })
@@ -300,7 +303,7 @@ const disconnectVideo = async (video_tracker_id) => {
     activity
       .save()
       .then((_activity) => {
-        Contact.updateMany(
+        Contact.updateOne(
           { _id: query.contact },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
@@ -613,9 +616,12 @@ const disconnectImage = async (image_tracker_id) => {
   activity
     .save()
     .then((_activity) => {
-      Contact.findByIdAndUpdate(query.contact, {
-        $set: { last_activity: _activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: query.contact },
+        {
+          $set: { last_activity: _activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
     })

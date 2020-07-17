@@ -148,9 +148,12 @@ const createbyDesktop = async (req, res) => {
     activity
       .save()
       .then((_activity) => {
-        Contact.findByIdAndUpdate(query.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: query.contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       })
@@ -257,9 +260,12 @@ const disconnect = async (pdf_tracker_id) => {
   });
 
   activity.save().then((_activity) => {
-    Contact.findByIdAndUpdate(query.contact, {
-      $set: { last_activity: _activity.id },
-    }).catch((err) => {
+    Contact.updateOne(
+      { _id: query.contact },
+      {
+        $set: { last_activity: _activity.id },
+      }
+    ).catch((err) => {
       console.log('err', err);
     });
     const myJSON = JSON.stringify(query);
@@ -288,7 +294,6 @@ const setup = (io) => {
 
     socket.on('update', (duration) => {
       const { pdf_tracker } = socket;
-      console.log('udpate', pdf_tracker._id);
       update(duration, pdf_tracker._id);
     });
 

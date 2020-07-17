@@ -57,7 +57,7 @@ const mail_contents = {
     SUBJECT: 'CRMGROW Invitation: ',
   },
   NOTIFICATION_INVITE_TEAM_MEMBER: {
-    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    MAIL: 'CRMGROW <support@crmgrow.com>',
     SUBJECT: 'CRMGROW Invitation: ',
   },
   NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT: {

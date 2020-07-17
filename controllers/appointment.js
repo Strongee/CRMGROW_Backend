@@ -510,9 +510,14 @@ const create = async (req, res) => {
         });
 
         activity.save().then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            {
+              _id: _appointment.contact,
+            },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(_appointment);
@@ -650,9 +655,12 @@ const create = async (req, res) => {
     activity
       .save()
       .then((_activity) => {
-        Contact.findByIdAndUpdate(_appointment.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: _appointment.contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
         const myJSON = JSON.stringify(_appointment);
@@ -827,9 +835,12 @@ const edit = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: _appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(_appointment);
@@ -885,9 +896,12 @@ const edit = async (req, res) => {
         });
 
         activity.save().then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: _appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(_appointment);
@@ -987,9 +1001,12 @@ const remove = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findByIdAndUpdate(appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(appointment);
@@ -1042,9 +1059,12 @@ const remove = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findByIdAndUpdate(appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(appointment);

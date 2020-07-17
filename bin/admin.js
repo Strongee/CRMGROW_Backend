@@ -282,7 +282,7 @@ const sourceUpdate = async () => {
     }).catch((err) => {
       console.log('admin user maching contact err ', err.message);
     });
-    Contact.updateMany(
+    Contact.updateOne(
       { _id: adminContact.id },
       { $set: { source: user.id } }
     ).catch((err) => {

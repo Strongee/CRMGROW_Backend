@@ -154,8 +154,7 @@ const update = async (req, res) => {
     slug = `${slug}--${samePages.length}`;
   }
 
-  Page.find({ _id: id })
-    .update({ $set: { ...data, sslug: `/${slug}` } })
+  Page.updateOne({ _id: id }, { $set: { ...data, sslug: `/${slug}` } })
     .then(() => {
       res.send({
         status: true,

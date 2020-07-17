@@ -52,9 +52,12 @@ const create = async (req, res) => {
       });
 
       activity.save().then((_activity) => {
-        Contact.findByIdAndUpdate(_phone_log.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: _phone_log.contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
         const myJSON = JSON.stringify(_phone_log);

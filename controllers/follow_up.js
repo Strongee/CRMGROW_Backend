@@ -102,9 +102,12 @@ const create = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findByIdAndUpdate(_followup.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.findOne(
+            { _id: _followup.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(_followup);
@@ -457,7 +460,7 @@ const updateArchived = async (req, res) => {
     try {
       for (let i = 0; i < follow_ups.length; i++) {
         const follow_up = follow_ups[i];
-        FollowUp.findByIdAndUpdate(follow_up, { $set: { status: -1 } }).catch(
+        FollowUp.updateOne({ _id: follow_up }, { $set: { status: -1 } }).catch(
           (err) => {
             console.log('err', err);
           }
@@ -535,9 +538,12 @@ const updateChecked = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.findByIdAndUpdate(_follow_up.contact, {
-              $set: { last_activity: _activity.id },
-            }).catch((err) => {
+            Contact.findOne(
+              { _id: _follow_up.contact },
+              {
+                $set: { last_activity: _activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
           })
@@ -702,9 +708,12 @@ const bulkCreate = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.findByIdAndUpdate(_followup.contact, {
-              $set: { last_activity: _activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: _followup.contact },
+              {
+                $set: { last_activity: _activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             const myJSON = JSON.stringify(_followup);

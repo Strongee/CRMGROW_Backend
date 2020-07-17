@@ -432,7 +432,7 @@ const update = async (req, res) => {
 
     regeneratePreview(data)
       .then((res) => {
-        Video.updateMany(
+        Video.updateOne(
           { _id: req.params.id },
           { $set: { preview: res } }
         ).catch((err) => {
@@ -603,7 +603,7 @@ const updateDetail = async (req, res) => {
 
     generatePreview(data)
       .then((res) => {
-        Video.updateMany(
+        Video.updateOne(
           { _id: req.params.id },
           { $set: { preview: res } }
         ).catch((err) => {
@@ -1157,7 +1157,7 @@ const remove = async (req, res) => {
 
     if (video) {
       if (video['default_edited']) {
-        Garbage.updateMany(
+        Garbage.updateOne(
           { user: currentUser.id },
           {
             $pull: { edited_video: { $in: [video.default_video] } },
@@ -1769,7 +1769,7 @@ const bulkGmail = async (req, res) => {
           })
             .then(() => {
               email_count += 1;
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
@@ -1894,6 +1894,7 @@ const bulkText = async (req, res) => {
       let video_descriptions = '';
       let video_objects = '';
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = videos[j];
@@ -1940,6 +1941,7 @@ const bulkText = async (req, res) => {
         }
         const video_object = `\n${video.title}:\n\n${video_link}\n`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_content.search(/{video_object}/gi) !== -1) {
@@ -1970,8 +1972,8 @@ const bulkText = async (req, res) => {
       const promise = new Promise((resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('activity delete err', err.message);
           });
           error.push({
             contact: {
@@ -2001,7 +2003,7 @@ const bulkText = async (req, res) => {
           })
           .catch((err) => {
             console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             error.push({
@@ -2367,9 +2369,12 @@ const bulkOutlook = async (req, res) => {
           .post(sendMail)
           .then(() => {
             email_count += 1;
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();

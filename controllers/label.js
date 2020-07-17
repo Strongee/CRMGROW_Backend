@@ -72,7 +72,7 @@ const getAll = async (req, res) => {
 const update = async (req, res) => {
   const data = req.body;
   const { currentUser } = req;
-  Label.updateMany(
+  Label.updateOne(
     {
       _id: req.params.id,
       user: currentUser.id,

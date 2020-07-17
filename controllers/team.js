@@ -240,13 +240,15 @@ const bulkInvites = async (req, res) => {
 
       const invitedUsers = await User.find({
         _id: { $in: invites },
+        del: false,
       });
 
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
 
+        console.log('invite.email', invite.email);
         const msg = {
-          to: invite.email,
+          to: 'gsteve@gmail.com',
           from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
           templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
           dynamic_template_data: {
@@ -259,15 +261,27 @@ const bulkInvites = async (req, res) => {
         };
         sgMail
           .send(msg)
-          .then()
+          .then((_res) => {
+            if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+              console.log('sendgrid email send success');
+              return res.send({
+                status: true,
+              });
+            } else {
+              return res.status(400).json({
+                status: false,
+                error: _res[0].statusCode,
+              });
+            }
+          })
           .catch((err) => {
             console.log('send message err: ', err);
+            return res.status(500).json({
+              status: false,
+              error: err.message,
+            });
           });
       }
-
-      return res.send({
-        status: true,
-      });
     })
     .catch((err) => {
       return res.status(500).send({
@@ -370,7 +384,7 @@ const shareVideos = async (req, res) => {
     });
   }
 
-  Video.update(
+  Video.updateMany(
     { _id: { $in: video_ids } },
     {
       $set: { role: 'team' },
@@ -436,7 +450,7 @@ const sharePdfs = async (req, res) => {
     });
   }
 
-  PDF.update(
+  PDF.updateMany(
     { _id: { $in: pdf_ids } },
     {
       $set: { role: 'team' },
@@ -502,7 +516,7 @@ const shareImages = async (req, res) => {
     });
   }
 
-  Image.update(
+  Image.updateMany(
     { _id: { $in: image_ids } },
     {
       $set: { role: 'team' },
@@ -566,7 +580,7 @@ const shareAutomations = async (req, res) => {
     });
   }
 
-  Automation.update(
+  Automation.updateMany(
     { _id: { $in: automation_ids } },
     {
       $set: { role: 'team' },
@@ -632,7 +646,7 @@ const shareEmailTemplates = async (req, res) => {
     });
   }
 
-  EmailTemplate.update(
+  EmailTemplate.updateMany(
     { _id: { $in: template_ids } },
     {
       $set: { role: 'team' },

@@ -180,8 +180,7 @@ const update = async (req, res) => {
       error: `Automation doesn't exist`,
     });
   }
-  Automation.find({ _id: id })
-    .update({ $set: data })
+  Automation.updateOne({ _id: id }, { $set: data })
     .then(() => {
       res.send({
         status: true,
@@ -314,7 +313,7 @@ const loadOwn = async (req, res) => {
     status: true,
     data: automations,
   });
-}
+};
 
 module.exports = {
   get,

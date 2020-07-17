@@ -196,7 +196,7 @@ const bulkEmail = async (data) => {
           .send(msg)
           .then(async (_res) => {
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-              Email.updateMany(
+              Email.updateOne(
                 { _id: _email.id },
                 { $set: { message_id: _res[0].headers['x-message-id'] } }
               ).catch((err) => {
@@ -390,7 +390,7 @@ const bulkEmail = async (data) => {
               body,
             })
               .then(async () => {
-                Contact.updateMany(
+                Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 )
@@ -861,7 +861,7 @@ const bulkVideo = async (data) => {
               console.log('mailres.errorcode', _res[0].statusCode);
               if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
                 console.log('status', _res[0].statusCode);
-                Contact.updateMany(
+                Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {
@@ -1110,7 +1110,7 @@ const bulkVideo = async (data) => {
               body,
             })
               .then(() => {
-                Contact.update(
+                Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {
@@ -1121,7 +1121,7 @@ const bulkVideo = async (data) => {
                 });
               })
               .catch((err) => {
-                console.log('err', err);
+                console.log('err', err.message);
                 Activity.deleteOne({ _id: activity.id }).catch((err) => {
                   console.log('err', err);
                 });
@@ -1374,9 +1374,12 @@ const bulkVideo = async (data) => {
             .api('/me/sendMail')
             .post(sendMail)
             .then(() => {
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err.message);
               });
               resolve({
@@ -1586,7 +1589,7 @@ const bulkPDF = async (data) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
-              Contact.updateMany(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
@@ -1812,7 +1815,7 @@ const bulkPDF = async (data) => {
               body,
             })
               .then(() => {
-                Contact.updateMany(
+                Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {
@@ -2063,7 +2066,7 @@ const bulkPDF = async (data) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.updateMany(
+            Contact.updateOne(
               { _id: contacts[i] },
               { $set: { last_activity: activity.id } }
             ).catch((err) => {
@@ -2278,9 +2281,12 @@ const bulkImage = async (data) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               resolve({
@@ -2522,7 +2528,7 @@ const bulkImage = async (data) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.updateMany(
+            Contact.updateOne(
               { _id: contacts[i] },
               { $set: { last_activity: activity.id } }
             ).catch((err) => {
@@ -2749,7 +2755,7 @@ const bulkImage = async (data) => {
               body,
             })
               .then(() => {
-                Contact.updateMany(
+                Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {

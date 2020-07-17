@@ -107,7 +107,7 @@ const uploadIntroVideo = async (req, res) => {
         }
       }
       currentGarbage.intro_video = introVideo;
-      Garbage.update(
+      Garbage.updateOne(
         { user: currentUser._id },
         { $set: { intro_video: introVideo } }
       )

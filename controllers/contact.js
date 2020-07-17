@@ -698,7 +698,7 @@ const importCSV = async (req, res) => {
                 activity
                   .save()
                   .then((_activity) => {
-                    Contact.updateMany(
+                    Contact.updateOne(
                       { _id: _contact.id },
                       {
                         $set: { last_activity: _activity.id },
@@ -731,7 +731,7 @@ const importCSV = async (req, res) => {
                     _activity
                       .save()
                       .then((__activity) => {
-                        Contact.updateMany(
+                        Contact.updateOne(
                           { _id: _contact.id },
                           { $set: { last_activity: __activity.id } }
                         ).catch((err) => {
@@ -1245,7 +1245,7 @@ const leadContact = async (req, res) => {
             }
           }
 
-          Contact.updateMany(
+          Contact.updateOne(
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
@@ -1414,7 +1414,7 @@ const leadContact = async (req, res) => {
             }
           }
 
-          Contact.update(
+          Contact.updateOne(
             { _id: contact.id },
             { $set: { last_activity: activity.id } }
           ).catch((err) => {
@@ -2671,9 +2671,12 @@ const bulkCreate = async (req, res) => {
           activity
             .save()
             .then((_activity) => {
-              Contact.findByIdAndUpdate(_contact.id, {
-                $set: { last_activity: _activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: _contact.id },
+                {
+                  $set: { last_activity: _activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
             })

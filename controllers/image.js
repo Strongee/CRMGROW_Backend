@@ -640,6 +640,7 @@ const bulkText = async (req, res) => {
       let image_descriptions = '';
       let image_objects = '';
       let image_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < images.length; j++) {
         const image = images[j];
@@ -686,6 +687,7 @@ const bulkText = async (req, res) => {
         }
         const image_object = `\n${image.title}:\n\n${image_link}\n`;
         image_objects += image_object;
+        activities.push(activity);
       }
 
       if (image_content.search(/{image_object}/gi) !== -1) {
@@ -718,7 +720,7 @@ const bulkText = async (req, res) => {
         const e164Phone = phone(_contact.cell_phone)[0];
 
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
             console.log('err', err);
           });
           error.push({
@@ -737,17 +739,20 @@ const bulkText = async (req, res) => {
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               image_content
             );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.udpateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
           })
           .catch((err) => {
             console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             error.push({
               contact: {
@@ -1115,7 +1120,7 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
