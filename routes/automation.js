@@ -14,6 +14,8 @@ router.put('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.update));
 
 router.delete('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.remove));
 
+router.get('/list/own', UserCtrl.checkAuth, catchError(AutomationCtrl.loadOwn));
+
 router.get(
   '/list/:page',
   UserCtrl.checkAuth,

@@ -153,6 +153,18 @@ const search = async (req, res) => {
   });
 };
 
+const loadOwn = async (req, res) => {
+  const { currentUser } = req;
+
+  const templates = await EmailTemplate.find({
+    $and: [{ user: currentUser.id }, { role: { $ne: 'admin' } }],
+  });
+  return res.json({
+    status: true,
+    data: templates,
+  });
+};
+
 module.exports = {
   create,
   get,
@@ -161,4 +173,5 @@ module.exports = {
   getTemplates,
   bulkRemove,
   search,
+  loadOwn,
 };
