@@ -246,9 +246,8 @@ const bulkInvites = async (req, res) => {
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
 
-        console.log('invite.email', invite.email);
         const msg = {
-          to: 'gsteve@gmail.com',
+          to: invite.email,
           from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
           templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
           dynamic_template_data: {
@@ -259,29 +258,11 @@ const bulkInvites = async (req, res) => {
             ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
           },
         };
-        sgMail
-          .send(msg)
-          .then((_res) => {
-            if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-              console.log('sendgrid email send success');
-              return res.send({
-                status: true,
-              });
-            } else {
-              return res.status(400).json({
-                status: false,
-                error: _res[0].statusCode,
-              });
-            }
-          })
-          .catch((err) => {
-            console.log('send message err: ', err);
-            return res.status(500).json({
-              status: false,
-              error: err.message,
-            });
-          });
+        sgMail.send(msg);
       }
+      res.send({
+        status: true,
+      });
     })
     .catch((err) => {
       return res.status(500).send({
