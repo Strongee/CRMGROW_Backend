@@ -310,10 +310,6 @@ const acceptInviation = async (req, res) => {
     .then(async () => {
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-      const invites = await User.find({
-        _id: { $in: invites },
-      });
-
       const msg = {
         to: team.owner.email,
         from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
