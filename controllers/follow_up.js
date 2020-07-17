@@ -184,6 +184,23 @@ const edit = async (req, res) => {
   follow_up
     .save()
     .then((_follow_up) => {
+      let detail_content = 'edited follow up';
+      if (req.guest_loggin) {
+        detail_content = AssistantHelper.activityLog(detail_content);
+      }
+
+      const activity = new Activity({
+        content: detail_content,
+        contacts: req.params.id,
+        user: currentUser.id,
+        type: 'follow_ups',
+        follow_ups: _follow_up.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      activity.save();
+
       res.send({
         status: true,
         data: _follow_up,
