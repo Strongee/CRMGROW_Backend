@@ -1619,7 +1619,7 @@ const receiveEmail = async (req, res) => {
             console.log('err', err);
           });
 
-        const activity = new Activity({
+        const opened_activity = new Activity({
           content: 'opened email',
           contacts: contact.id,
           user: user.id,
@@ -1630,7 +1630,7 @@ const receiveEmail = async (req, res) => {
           updated_at: new Date(),
         });
 
-        const _activity = await activity
+        const _activity = await opened_activity
           .save()
           .then()
           .catch((err) => {

@@ -114,7 +114,7 @@ const bulkCreate = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.fineOne(
+            Contact.updateOne(
               { _id: _note.contact },
               {
                 $set: { last_activity: _activity.id },

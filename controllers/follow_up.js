@@ -102,7 +102,7 @@ const create = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findOne(
+          Contact.updateOne(
             { _id: _followup.contact },
             {
               $set: { last_activity: _activity.id },
@@ -555,7 +555,7 @@ const updateChecked = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.findOne(
+            Contact.updateOne(
               { _id: _follow_up.contact },
               {
                 $set: { last_activity: _activity.id },
