@@ -4,10 +4,10 @@
       document.querySelector(".button").addEventListener('click', function(){
         let params = (new URL(document.location)).searchParams;
         let activity = params.get('activity');
-        
+ 
         $.ajax({
             type: 'GET',
-            url: `api/unsubscribe/${activity}`,
+            url: `api/email/unsubscribe/${activity}`,
             headers: {
               'Content-Type': 'application/json',
             },
