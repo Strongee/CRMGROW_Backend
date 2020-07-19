@@ -739,7 +739,7 @@ const bulkText = async (req, res) => {
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               image_content
             );
-            Contact.udpateOne(
+            Contact.updateOne(
               { _id: contacts[i] },
               {
                 $set: { last_activity: activity.id },
@@ -1452,7 +1452,7 @@ const bulkOutlook = async (req, res) => {
           .post(sendMail)
           .then(() => {
             email_count += 1;
-            Contact.udpateOne(
+            Contact.updateOne(
               { _id: contacts[i] },
               {
                 $set: { last_activity: activity.id },

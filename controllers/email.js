@@ -699,9 +699,11 @@ const openTrack = async (req, res) => {
   const _email = await Email.findOne({ message_id }).catch((err) => {
     console.log('err', err);
   });
-  const user = await User.findOne({ _id: _email.user }).catch((err) => {
-    console.log('err', err);
-  });
+  const user = await User.findOne({ _id: _email.user, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
 
   const contact = await Contact.findOne({ _id: _email.contacts }).catch(
     (err) => {
@@ -1567,7 +1569,6 @@ const receiveEmail = async (req, res) => {
     }
   );
 
-  console.log('email opend id', req.params.id);
   if (activity) {
     const user = await User.findOne({ _id: activity.user }).catch((err) => {
       console.log('err', err);
@@ -1826,6 +1827,10 @@ const receiveEmail = async (req, res) => {
   const contentType = mime.contentType(path.extname(TRAKER_PATH));
   res.set('Content-Type', contentType);
   res.sendFile(TRAKER_PATH);
+};
+
+const unSubscribePage = async (req, res) => {
+  return res.render('unsubscribe');
 };
 
 const unSubscribeEmail = async (req, res) => {
