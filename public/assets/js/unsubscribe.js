@@ -12,12 +12,8 @@
               'Content-Type': 'application/json',
             },
             success: function (data) {
-              const response = data.data;
-              console.log('data', data);
-              if (response && response.status) {
-                $('#unsubscribe-content').removeClass('content-hide');
-                $('#subscribe-content').addClass('content-hide');
-              }
+              $('#unsubscribe-content').removeClass('content-hide');
+              $('#subscribe-content').addClass('content-hide');
             },
           });
       }, true);
