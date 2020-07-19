@@ -128,9 +128,9 @@ const create = async (req, res) => {
     })
     .catch((e) => {
       console.log('follow error', e);
-      return res.status().send({
+      return res.status(500).send({
         status: false,
-        error: e,
+        error: e.message,
       });
     });
 };
@@ -184,7 +184,7 @@ const edit = async (req, res) => {
   follow_up
     .save()
     .then((_follow_up) => {
-      let detail_content = 'edited follow up';
+      let detail_content = 'updated follow up';
       if (req.guest_loggin) {
         detail_content = AssistantHelper.activityLog(detail_content);
       }
@@ -199,12 +199,28 @@ const edit = async (req, res) => {
         updated_at: new Date(),
       });
 
-      activity.save();
-
-      res.send({
-        status: true,
-        data: _follow_up,
-      });
+      activity
+        .save()
+        .then((_activity) => {
+          Contact.updateOne(
+            { _id: req.params.id },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((e) => {
+          console.log('follow error', e);
+          return res.status(500).send({
+            status: false,
+            error: e.message,
+          });
+        });
     })
     .catch((err) => {
       console.log('err', err);
