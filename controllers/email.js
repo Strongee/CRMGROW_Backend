@@ -1199,9 +1199,11 @@ const receiveEmailSendGrid = async (req, res) => {
     console.log('err', err);
   });
   if (_email) {
-    const user = await User.findOne({ _id: _email.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: _email.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     let contact;
     if (user) {
@@ -1570,9 +1572,11 @@ const receiveEmail = async (req, res) => {
   );
 
   if (activity) {
-    const user = await User.findOne({ _id: activity.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     const contact = await Contact.findOne({ _id: activity.contacts }).catch(
       (err) => {
@@ -1582,26 +1586,15 @@ const receiveEmail = async (req, res) => {
 
     const opened = new Date();
     if (contact && user) {
-      const _email = await Email.findOne({ _id: activity.emails }).catch(
-        (err) => {
-          console.log('email finding err', err);
-        }
-      );
       const created_at = moment(opened)
         .utcOffset(user.time_zone)
         .format('h:mm a');
       const action = 'opened';
-      const email_activity = await Activity.findOne({
-        contacts: contact.id,
-        emails: _email.id,
-      }).catch((err) => {
-        console.log('err', err);
-      });
 
       let reopened = moment();
       reopened = reopened.subtract(1, 'hours');
       const old_activity = await EmailTracker.findOne({
-        activity: email_activity.id,
+        activity: req.params.id,
         type: 'open',
         created_at: { $gte: reopened },
       }).catch((err) => {
@@ -1612,9 +1605,9 @@ const receiveEmail = async (req, res) => {
         const email_tracker = new EmailTracker({
           user: user.id,
           contact: contact.id,
-          email: _email.id,
+          email: activity.emails,
           type: 'open',
-          activity: email_activity.id,
+          activity: req.params.id,
           updated_at: opened,
           created_at: opened,
         });
@@ -1631,7 +1624,7 @@ const receiveEmail = async (req, res) => {
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
-          emails: _email.id,
+          emails: activity.emails,
           email_trackers: _email_tracker.id,
           created_at: new Date(),
           updated_at: new Date(),
@@ -1657,6 +1650,11 @@ const receiveEmail = async (req, res) => {
           }
         );
         const email_notification = garbage['email_notification'];
+        const _email = await Email.findOne({ _id: activity.emails }).catch(
+          (err) => {
+            console.log('email finding err', err);
+          }
+        );
 
         if (email_notification['email']) {
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
