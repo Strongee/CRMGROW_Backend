@@ -33,7 +33,7 @@ if (process.env.NODE_ENV === 'production') {
       'https://app.crmgrow.com/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc',
     GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
     TRACK_URL: 'https://app.crmgrow.com/api/email/opened/',
-    UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe/',
+    UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
     RESUBSCRIPTION_URL: 'https://email.crmgrow.com/resubscribe/',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
@@ -76,7 +76,7 @@ if (process.env.NODE_ENV === 'production') {
     GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
     TRACK_URL: 'https://ecsbe.crmgrow.com/api/email/track/',
     EMAIL_OPENED_URL: 'https://ecsbe.crmgrow.com/api/email/opened/',
-    UNSUBSCRIPTION_URL: 'https://ecsbe.crmgrow.com/api/email/unsubscribe/',
+    UNSUBSCRIPTION_URL: 'https://ecsbe.crmgrow.com/api/email/unsubscribe',
     RESUBSCRIPTION_URL: 'https://ecsbe.crmgrow.com/api/email/resubscribe/',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
@@ -117,7 +117,7 @@ if (process.env.NODE_ENV === 'production') {
     INTRO_VIDEO_URL:
       'https://www.loom.com/share/7ac336c756d14f48990b61c06f18dadf',
     GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
-    UNSUBSCRIPTION_URL: 'http://localhost:3000/api/email/unsubscribe/',
+    UNSUBSCRIPTION_URL: 'http://localhost:3000/api/email/unsubscribe',
     RESUBSCRIPTION_URL: 'http://localhost:3000/api/email/resubscribe/',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:

@@ -2594,6 +2594,7 @@ module.exports = {
   receiveEmailSendGrid,
   receiveEmail,
   unSubscribeEmail,
+  unSubscribePage,
   reSubscribeEmail,
   sharePlatform,
 };
