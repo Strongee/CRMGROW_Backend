@@ -497,7 +497,7 @@ const disconnectVideo = async (video_tracker_id) => {
         from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
         templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
+          subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT} ${contact.first_name} ${contact.last_name} - ${created_at}`,
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
