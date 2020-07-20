@@ -194,18 +194,19 @@ const update = async (req, res) => {
     });
 };
 
-const remove = async (req, res) => {
-  const { id } = req.params;
-
-  await Automation.deleteOne({ _id: req.params.id }).catch((err) => {
-    res.status(400).send({
-      status: false,
+const remove = (req, res) => {
+  Automation.deleteOne({ _id: req.params.id })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message || 'Automation Removing is failed.',
+      });
     });
-  });
-
-  res.send({
-    status: false,
-  });
 };
 
 const search = async (req, res) => {

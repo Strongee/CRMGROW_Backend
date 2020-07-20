@@ -388,7 +388,7 @@ const reminder_job = new CronJob(
                 content: follow_up.content,
                 detailed_contact:
                   "<a href='" +
-                  urls.CONTACT_PAGE_URL +
+                  urls.TEAM_URL +
                   contact.id +
                   "'><img src='" +
                   urls.DOMAIN_URL +

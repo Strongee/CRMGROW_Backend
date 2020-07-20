@@ -56,6 +56,7 @@ const get = (req, res) => {
     .populate([
       { path: 'owner' },
       { path: 'members' },
+      { path: 'invites' },
       { path: 'videos' },
       { path: 'pdfs' },
       { path: 'images' },
@@ -81,7 +82,6 @@ const get1 = async (req, res) => {
   const team_id = req.params.id;
   Team.findById(team_id)
     .then(async (_team) => {
-      console.log('Team', _team);
       if (
         _team.owner.indexOf(currentUser.id) !== -1 ||
         _team.members.indexOf(currentUser.id) !== -1
@@ -324,6 +324,13 @@ const acceptInviation = async (req, res) => {
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
           activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+          team:
+            "<a href='" +
+            urls.CONTACT_PAGE_URL +
+            team.id +
+            "'><img src='" +
+            urls.DOMAIN_URL +
+            "assets/images/team.png'/></a>",
         },
       };
 
