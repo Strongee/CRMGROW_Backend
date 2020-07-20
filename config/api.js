@@ -68,6 +68,9 @@ const api = {
     NOTIFICATION_INVITE_TEAM_MEMBER:
       process.env.NOTIFICATION_INVITE_TEAM_MEMBER ||
       'd-b7cdf4b01448440f80ba0d2a88ac3310',
+    TEAM_ACCEPT_NOTIFICATION:
+      process.env.TEAM_ACCEPT_NOTIFICATION ||
+      'd-c8561720ef7a4b87bed4bfbffd38f00e',
   },
   TWILIO: {
     TWILIO_SID: process.env.TWILIO_SID,

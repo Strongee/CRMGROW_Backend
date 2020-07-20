@@ -326,7 +326,7 @@ const acceptInviation = async (req, res) => {
           activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
           team:
             "<a href='" +
-            urls.CONTACT_PAGE_URL +
+            urls.TEAM_URL +
             team.id +
             "'><img src='" +
             urls.DOMAIN_URL +
