@@ -293,17 +293,24 @@ const acceptInviation = async (req, res) => {
     });
   }
 
+  const members = team.members;
+  const invites = team.invites;
+  if (members.indexOf(currentUser.id) === -1) {
+    members.push(currentUser.id);
+  }
+  if (invites.indexOf(currentUser.id) !== -1) {
+    const pos = invites.indexOf(currentUser.id);
+    invites.splice(pos, 1);
+  }
+
   Team.updateOne(
     {
       _id: req.params.id,
-      owner: currentUser.id,
     },
     {
-      $push: {
-        members: currentUser.id,
-      },
-      $pull: {
-        invites: currentUser.id,
+      $set: {
+        members,
+        invites,
       },
     }
   )
@@ -326,6 +333,9 @@ const acceptInviation = async (req, res) => {
         .catch((err) => {
           console.log('send message err: ', err);
         });
+      return res.send({
+        status: true,
+      });
     })
     .catch((err) => {
       return res.status(500).send({
