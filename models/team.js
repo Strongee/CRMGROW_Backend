@@ -6,6 +6,12 @@ const TeamSchema = new Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     name: String,
+    description: String,
+    email: String,
+    cell_phone: String,
+    picture: String,
+    highlights: { type: Array, default: [] },
+    brands: { type: Array, default: [] },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     invites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],

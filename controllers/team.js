@@ -11,6 +11,7 @@ const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 const Contact = require('../models/contact');
+const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const getAll = (req, res) => {
   const { currentUser } = req;
@@ -129,9 +130,14 @@ const get1 = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-
+  const teamReq = req.body;
+  let picture = '';
+  if (teamReq.picture) {
+    picture = await uploadBase64Image(teamReq.picture);
+  }
   const team = new Team({
-    ...req.body,
+    ...teamReq,
+    picture,
     owner: currentUser.id,
   });
 
