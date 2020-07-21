@@ -492,7 +492,11 @@ const edit = async (req, res) => {
 };
 
 const bulkEditLabel = async (req, res) => {
-  const { contacts, label } = req.body;
+  const { contacts } = req.body;
+  let { label } = req.body;
+  if (label === '') {
+    label = undefined;
+  }
   Contact.find({ _id: { $in: contacts } })
     .updateMany({ $set: { label } })
     .then(() => {
@@ -2075,9 +2079,6 @@ const advanceSearch = async (req, res) => {
     }
   }
   if (labelCondition && labelCondition.length) {
-    if (labelCondition.indexOf('') !== -1) {
-      labelCondition.push(undefined);
-    }
     var labelQuery;
     if (includeLabel) {
       labelQuery = { label: { $in: labelCondition } };

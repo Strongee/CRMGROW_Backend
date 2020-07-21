@@ -11,10 +11,10 @@ const ContactSchema = mongoose.Schema(
     city: String,
     state: String,
     zip: String,
-    label: {
-      type: String,
-    },
-    // label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
+    // label: {
+    //   type: String,
+    // },
+    label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
     cell_phone: { type: String, default: '' },
     country: { type: String, default: '' },
     source: String,
