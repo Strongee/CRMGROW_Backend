@@ -643,15 +643,46 @@ const bulkUpdate = async (req, res) => {
       if (due_date) {
         query['due_date'] = due_date;
       }
-      FollowUp.find({ _id: { $in: ids } })
-        .updateMany({ $set: query })
-        .then((data) => {
+      FollowUp.updateMany({ _id: { $in: ids } }, { $set: query })
+        .then(async (data) => {
+          let detail_content = 'updated follow up';
+          if (req.guest_loggin) {
+            detail_content = AssistantHelper.activityLog(detail_content);
+          }
+          const follow_ups = await FollowUp.find({ _id: { $in: ids } });
+          for (let i = 0; i < follow_ups.length; i++) {
+            const follow_up = follow_ups[i];
+            const activity = new Activity({
+              content: detail_content,
+              contacts: follow_up.contact,
+              user: currentUser.id,
+              type: 'follow_ups',
+              follow_ups: follow_up.id,
+            });
+
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  { _id: follow_up.contact },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('follow bulk update error', err.message);
+              });
+          }
           res.send({
             status: true,
             data,
           });
         })
         .catch((err) => {
+          console.log('err', err);
           res.send({
             status: false,
             error: err,
