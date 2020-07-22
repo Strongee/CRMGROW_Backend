@@ -7,7 +7,7 @@ module.exports.PREVIEW_PATH = path.join(__dirname, '../..', 'previews/');
 module.exports.TEMP_PATH = path.join(__dirname, '..', 'temp/');
 module.exports.VIDEO_PATH = path.join(__dirname, '..', 'video/');
 module.exports.ENV_PATH = path.join(__dirname, '..', '.env');
-module.exports.TRAKER_PATH = path.join(__dirname, '..', 'tracker.jpg');
+module.exports.TRAKER_PATH = path.join(__dirname, '..', 'email.gif');
 module.exports.PLAY_BUTTON_PATH = path.join(__dirname, '..', 'play-button.png');
 module.exports.VIDEO_CONVERT_LOG_PATH = path.join(
   __dirname,
