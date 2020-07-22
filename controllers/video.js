@@ -186,6 +186,11 @@ const play1 = async (req, res) => {
       }
     }
 
+    let material_start = 0;
+
+    if (activity.material_last) {
+      material_start = activity.material_last;
+    }
     const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
       console.log('err', err);
     });
@@ -207,6 +212,7 @@ const play1 = async (req, res) => {
       contact: activity['contacts'],
       activity: activity.id,
       social_link,
+      material_start,
       setting: {
         logo,
         highlights,

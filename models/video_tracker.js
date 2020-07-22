@@ -10,6 +10,7 @@ const TrackerSchema = new Schema(
     activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
     type: { type: String, default: 'watch' },
     duration: Number,
+    material_last: Number,
     created_at: Date,
     updated_at: Date,
   },
