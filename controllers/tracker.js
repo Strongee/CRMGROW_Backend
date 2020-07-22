@@ -300,6 +300,19 @@ const disconnectVideo = async (video_tracker_id) => {
       updated_at: new Date(),
     });
 
+    if (query.material_last) {
+      Activity.updateOne(
+        {
+          _id: query.activity,
+        },
+        {
+          material_last: query.material_last,
+        }
+      ).catch((err) => {
+        console.log('activty material_last update err', err.message);
+      });
+    }
+
     activity
       .save()
       .then((_activity) => {
@@ -321,7 +334,7 @@ const disconnectVideo = async (video_tracker_id) => {
       'condition.case': 'watched_video',
       'condition.answer': true,
     }).catch((err) => {
-      console.log('err', err);
+      console.log('err', err.message);
     });
 
     if (timelines.length > 0) {
@@ -578,11 +591,16 @@ const disconnectVideo = async (video_tracker_id) => {
   }
 };
 
-const updateVideo = async (duration, video_tracker_id) => {
-  const video_tracker = await VideoTracker.findOne({ _id: video_tracker_id });
-  video_tracker['duration'] = duration;
-  video_tracker['updated_at'] = new Date();
-  video_tracker.save();
+const updateVideo = (duration, material_last, video_tracker_id) => {
+  VideoTracker.updateOne(
+    { _id: video_tracker_id },
+    {
+      $set: {
+        duration,
+        material_last,
+      },
+    }
+  );
 };
 
 const createImage = async (data) => {
@@ -857,10 +875,10 @@ const setup = (io) => {
       });
     });
 
-    socket.on('update_video', (duration) => {
+    socket.on('update_video', (duration, material_last) => {
       const video_tracker = socket.video_tracker;
       if (typeof video_tracker !== 'undefined') {
-        updateVideo(duration, video_tracker._id)
+        updateVideo(duration, material_last, video_tracker._id)
           .then(() => {})
           .catch((err) => {
             console.log('err', err);

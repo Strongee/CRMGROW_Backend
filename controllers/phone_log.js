@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check');
 const PhoneLog = require('../models/phone_log');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
+const AssistantHelper = require('../helpers/assistant');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -31,6 +32,11 @@ const create = async (req, res) => {
     });
   }
 
+  let detail_content = 'added phone log';
+  if (req.guest_loggin) {
+    detail_content = AssistantHelper.activityLog(detail_content);
+  }
+
   const phone_log = new PhoneLog({
     ...req.body,
     user: currentUser.id,
@@ -42,7 +48,7 @@ const create = async (req, res) => {
     .save()
     .then((_phone_log) => {
       const activity = new Activity({
-        content: 'added phone log',
+        content: detail_content,
         contacts: _phone_log.contact,
         user: currentUser.id,
         type: 'phone_logs',

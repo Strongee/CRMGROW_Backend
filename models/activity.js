@@ -30,6 +30,7 @@ const ActivitySchema = new Schema(
     },
     sms: { type: mongoose.Schema.Types.ObjectId, ref: 'sms' },
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    material_last: Number,
     subject: String,
     description: String,
     created_at: Date,
