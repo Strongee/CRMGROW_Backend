@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
+const system_settings = require('../config/system_settings');
 
 const GarbageSchema = new Schema(
   {
@@ -54,8 +55,8 @@ const GarbageSchema = new Schema(
     material_theme: { type: String, default: 'theme2' },
     auto_follow_up: {
       enabled: { type: Boolean, default: false },
-      period: Number,
-      content: String,
+      period: { type: Number, default: 12 },
+      content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
     },
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },
