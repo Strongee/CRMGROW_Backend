@@ -384,7 +384,7 @@ const shareVideos = async (req, res) => {
     });
   }
 
-  Video.updateMany(
+  await Video.updateMany(
     { _id: { $in: video_ids } },
     {
       $set: { role: 'team' },
@@ -450,7 +450,7 @@ const sharePdfs = async (req, res) => {
     });
   }
 
-  PDF.updateMany(
+  await PDF.updateMany(
     { _id: { $in: pdf_ids } },
     {
       $set: { role: 'team' },
@@ -516,7 +516,7 @@ const shareImages = async (req, res) => {
     });
   }
 
-  Image.updateMany(
+  await Image.updateMany(
     { _id: { $in: image_ids } },
     {
       $set: { role: 'team' },
@@ -580,7 +580,7 @@ const shareAutomations = async (req, res) => {
     });
   }
 
-  Automation.updateMany(
+  await Automation.updateMany(
     { _id: { $in: automation_ids } },
     {
       $set: { role: 'team' },
@@ -646,12 +646,14 @@ const shareEmailTemplates = async (req, res) => {
     });
   }
 
-  EmailTemplate.updateMany(
+  await EmailTemplate.updateMany(
     { _id: { $in: template_ids } },
     {
       $set: { role: 'team' },
     }
-  );
+  ).catch((err) => {
+    console.log('Error', err);
+  });
 
   const templateIds = team.email_templates;
   const newTeamTemplates = [];
