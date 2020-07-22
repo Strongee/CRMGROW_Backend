@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Team = require('../models/team');
 
@@ -50,6 +51,41 @@ const getTemplates = async (req, res) => {
     status: true,
     data: templates,
     total,
+  });
+};
+
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+
+  const email_templates = await EmailTemplate.find({
+    user: currentUser.id,
+  });
+
+  const _template_admin = await EmailTemplate.find({
+    role: 'admin',
+  });
+
+  Array.prototype.push.apply(email_templates, _template_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('videos');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(email_templates, team.email_templates);
+    }
+  }
+
+  if (!email_templates) {
+    return res.status(400).json({
+      status: false,
+      error: 'Templates doesn`t exist',
+    });
+  }
+
+  return res.send({
+    status: true,
+    data: email_templates,
   });
 };
 
@@ -133,6 +169,18 @@ const search = async (req, res) => {
   const str = req.query.q;
   const option = { ...req.body };
 
+  const team_templates = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.email_templates) {
+        Array.prototype.push.apply(team_templates, team.email_templates);
+      }
+    }
+  }
+
   const templates = await EmailTemplate.find({
     $and: [
       option,
@@ -143,7 +191,13 @@ const search = async (req, res) => {
           { content: { $regex: `.*${str}.*`, $options: 'i' } },
         ],
       },
-      { $or: [{ user: currentUser.id }, { role: 'admin' }] },
+      {
+        $or: [
+          { user: currentUser.id },
+          { role: 'admin' },
+          { _id: { $in: team_templates } },
+        ],
+      },
     ],
   });
 
@@ -168,6 +222,7 @@ const loadOwn = async (req, res) => {
 module.exports = {
   create,
   get,
+  getAll,
   update,
   remove,
   getTemplates,

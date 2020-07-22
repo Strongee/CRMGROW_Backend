@@ -24,6 +24,77 @@ const get = (req, res) => {
     });
 };
 
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+
+  const automations = await Automation.find({
+    user: currentUser.id,
+    del: false,
+  });
+
+  const _automation_admin = await Automation.find({
+    role: 'admin',
+    del: false,
+  });
+
+  Array.prototype.push.apply(automations, _automation_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('videos');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(automations, team.automations);
+    }
+  }
+
+  if (!automations) {
+    return res.status(400).json({
+      status: false,
+      error: 'Automation doesn`t exist',
+    });
+  }
+  const automation_array = [];
+
+  for (let i = 0; i < automations.length; i++) {
+    const automation = automations[i];
+    const contacts = await TimeLine.aggregate([
+      {
+        $match: {
+          $and: [
+            {
+              user: mongoose.Types.ObjectId(currentUser._id),
+              automation: mongoose.Types.ObjectId(automation._id),
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: { contact: '$contact' },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.contact',
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+    const myJSON = JSON.stringify(automation);
+    const data = JSON.parse(myJSON);
+    const automation_detail = await Object.assign(data, { contacts });
+
+    automation_array.push(automation_detail);
+  }
+  return res.send({
+    status: true,
+    data: automation_array,
+  });
+};
+
 const getStatus = async (req, res) => {
   const { id } = req.params;
   const { contacts } = req.body;
@@ -212,10 +283,27 @@ const remove = (req, res) => {
 const search = async (req, res) => {
   const condition = req.body;
   const { currentUser } = req;
+
+  const team_automations = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.automations) {
+        Array.prototype.push.apply(team_automations, team.automations);
+      }
+    }
+  }
+
   Automation.find({
     $and: [
       {
-        $or: [{ user: currentUser.id }, { role: 'admin' }],
+        $or: [
+          { user: currentUser.id },
+          { role: 'admin' },
+          { _id: { $in: team_automations } },
+        ],
       },
       {
         title: { $regex: `.*${condition.search}.*`, $options: 'i' },
@@ -318,6 +406,7 @@ const loadOwn = async (req, res) => {
 
 module.exports = {
   get,
+  getAll,
   getStatus,
   getPage,
   create,

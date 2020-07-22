@@ -875,9 +875,10 @@ const setup = (io) => {
       });
     });
 
-    socket.on('update_video', (duration, material_last) => {
+    socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
       if (typeof video_tracker !== 'undefined') {
+        const { duration, material_last } = data;
         updateVideo(duration, material_last, video_tracker._id)
           .then(() => {})
           .catch((err) => {
