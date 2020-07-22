@@ -51,6 +51,7 @@ const Team = require('../models/team');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
 const AssistantHelper = require('../helpers/assistant');
+const Garbage = require('../models/garbage');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -78,16 +79,69 @@ const play = async (req, res) => {
   const image = await Image.findOne({ _id: image_id });
   const sender = await User.findOne({ _id: sender_id, del: false });
 
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+
   if (sender) {
+    const garbage = await Garbage.findOne({ user: sender._id }).catch((err) => {
+      console.log('err', err);
+    });
+
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    if (garbage) {
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_images = garbage['capture_images'] || [];
+      if (capture_images.indexOf(image_id) === -1) {
+        capture_dialog = false;
+      }
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+    } else {
+      capture_dialog = false;
+    }
+
     const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
 
     if (!pattern.test(sender.learn_more)) {
       sender.learn_more = 'http://' + sender.learn_more;
     }
 
-    res.render('image', {
+    if (sender.social_link) {
+      social_link = sender.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+
+    return res.render('image_theme2', {
       image,
       user: sender,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      social_link,
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
     });
   } else {
     res.send(
