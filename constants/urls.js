@@ -101,7 +101,7 @@ if (process.env.NODE_ENV === 'production') {
     TRACK_URL: 'http://localhost:3000/api/email/track/',
     FILE_URL: 'http://localhost:3000/api/file/',
     VIDEO_URL: 'http://localhost:3000/api/video/pipe/',
-    MATERIAL_VIEW_VIDEO_URL: 'https://app.crmgrow.com/video1/',
+    MATERIAL_VIEW_VIDEO_URL: 'http://localhost:3000/video1/',
     MATERIAL_VIEW_PAGE: 'https://app.crmgrow.com/material',
     MATERIAL_VIEW_PDF_URL: 'http://localhost:3000/pdf1/',
     MATERIAL_VIEW_IMAGE_URL: 'http://localhost:3000/image/',

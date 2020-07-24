@@ -41,6 +41,8 @@ router.post(
 );
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
+router.post('/interest', catchError(ContactCtrl.interestSubmitContact));
+router.post('/interest-submit', catchError(ContactCtrl.interestContact));
 
 // Import contact list as file
 router.post(

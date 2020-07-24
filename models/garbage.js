@@ -45,6 +45,8 @@ const GarbageSchema = new Schema(
     capture_dialog: { type: Boolean, default: false },
     capture_delay: { type: Number, default: 0 },
     capture_videos: { type: Array, default: [] },
+    capture_images: { type: Array, default: [] },
+    capture_pdfs: { type: Array, default: [] },
     capture_field: {
       email: { type: Boolean, default: true },
       cell_phone: { type: Boolean, default: true },

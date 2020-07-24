@@ -646,7 +646,7 @@ const shareEmailTemplates = async (req, res) => {
     });
   }
 
-  await EmailTemplate.updateMany(
+  EmailTemplate.updateMany(
     { _id: { $in: template_ids } },
     {
       $set: { role: 'team' },
