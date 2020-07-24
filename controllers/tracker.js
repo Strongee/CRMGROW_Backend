@@ -307,6 +307,9 @@ const disconnectVideo = async (video_tracker_id) => {
         },
         {
           material_last: query.material_last,
+        },
+        {
+          timestamps: false,
         }
       ).catch((err) => {
         console.log('activty material_last update err', err.message);
@@ -591,8 +594,8 @@ const disconnectVideo = async (video_tracker_id) => {
   }
 };
 
-const updateVideo = (duration, material_last, video_tracker_id) => {
-  VideoTracker.updateOne(
+const updateVideo = async (duration, material_last, video_tracker_id) => {
+  await VideoTracker.updateOne(
     { _id: video_tracker_id },
     {
       $set: {
@@ -875,9 +878,10 @@ const setup = (io) => {
       });
     });
 
-    socket.on('update_video', (duration, material_last) => {
+    socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
       if (typeof video_tracker !== 'undefined') {
+        const { duration, material_last } = data;
         updateVideo(duration, material_last, video_tracker._id)
           .then(() => {})
           .catch((err) => {

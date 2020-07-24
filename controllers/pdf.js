@@ -77,17 +77,67 @@ const play = async (req, res) => {
   const pdf_id = req.query.pdf;
   const sender_id = req.query.user;
   const pdf = await PDF.findOne({ _id: pdf_id });
-  const sender = await User.findOne({ _id: sender_id, del: false });
+  const user = await User.findOne({ _id: sender_id, del: false });
 
-  if (sender) {
-    const pattern = /^((http|https|ftp):\/\/)/;
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
 
-    if (!pattern.test(sender.learn_more)) {
-      sender.learn_more = 'http://' + sender.learn_more;
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    if (garbage) {
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_pdfs = garbage['capture_pdfs'] || [];
+      if (capture_pdfs.indexOf(pdf_id) === -1) {
+        capture_dialog = false;
+      }
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+    } else {
+      capture_dialog = false;
     }
-    res.render('pdf', {
-      pdf,
-      user: sender,
+    let social_link = {};
+    const pattern = /^((http|https|ftp):\/\/)/;
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
+    }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    res.render('lead_material_' + theme, {
+      material: pdf,
+      material_type: 'pdf',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      social_link: {},
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
     });
   } else {
     res.send(
@@ -111,19 +161,51 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const pattern = /^((http|https|ftp):\/\/)/;
+    const pdf = activity['pdfs'];
 
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
     if (!pattern.test(user.learn_more)) {
       user.learn_more = 'http://' + user.learn_more;
     }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    if (garbage) {
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+    }
 
-    const pdf = activity['pdfs'];
-
-    res.render('pdf1', {
-      pdf,
+    res.render('material_' + theme, {
+      material: pdf,
+      material_type: 'pdf',
       user,
       contact: activity['contacts'],
       activity: activity.id,
+      social_link,
+      setting: {
+        logo,
+        highlights,
+        brands,
+      },
     });
   }
 };

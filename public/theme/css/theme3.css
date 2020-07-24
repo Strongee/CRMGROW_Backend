@@ -14,6 +14,9 @@
 
 body {
   font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 
@@ -128,6 +131,7 @@ footer {
   font-size: 10px;
   color: #b2b2b2;
   padding: 15px 0px;
+  margin-top: auto;
 }
 
 
@@ -159,4 +163,54 @@ footer {
 
 .watched-time.testing {
   display: block!important;
+}
+
+
+/* Image Material Container */
+.material-wrapper .gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -o-object-fit: conver;
+  border-radius: 8px;
+  max-height: 40vh;
+}
+.material-wrapper  .gallery {
+  display: grid;
+  grid-gap: 10px;
+}
+.material-wrapper  .gallery.full-grid {
+  grid-template-columns: auto auto auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-4 {
+  grid-template-columns: auto auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-3 {
+  grid-template-columns: auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-2 {
+  grid-template-columns: auto auto;
+}
+@media screen and (max-width: 768px) {
+  .material-wrapper  .gallery.full-grid {
+    grid-template-columns: auto auto auto auto;
+  }
+}
+@media screen and (max-width: 500px) {
+  .material-wrapper  .gallery.full-grid {
+    grid-template-columns: auto auto auto;
+  }
+  .material-wrapper  .gallery.col-grid-4 {
+    grid-template-columns: auto auto auto;
+  }
+}
+
+/* PDF Material Container */
+#pdf-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-height: 440px;
+  background: #f8f8f8;
+  border-radius: 5px;
 }

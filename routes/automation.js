@@ -6,6 +6,8 @@ const { catchError } = require('../controllers/error');
 
 const router = express.Router();
 
+router.get('/', UserCtrl.checkAuth, catchError(AutomationCtrl.getAll));
+
 router.post('/search', UserCtrl.checkAuth, catchError(AutomationCtrl.search));
 
 router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create));

@@ -6,6 +6,7 @@ const { catchError } = require('../controllers/error');
 
 const router = express.Router();
 
+router.get('/', UserCtrl.checkAuth, catchError(TemplateCtrl.getAll));
 router.post('/create', UserCtrl.checkAuth, catchError(TemplateCtrl.create));
 router.get('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.get));
 router.put('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.update));

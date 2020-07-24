@@ -129,9 +129,9 @@ const play = async (req, res) => {
         social_link.linkedin = 'http://' + social_link.linkedin;
       }
     }
-
-    return res.render('lead_video_' + theme, {
-      video,
+    return res.render('lead_material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       capture_dialog,
       capture_delay,
@@ -206,8 +206,9 @@ const play1 = async (req, res) => {
       brands = garbage['brands'] || [];
     }
 
-    return res.render('video_' + theme, {
-      video,
+    return res.render('material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       contact: activity['contacts'],
       activity: activity.id,
