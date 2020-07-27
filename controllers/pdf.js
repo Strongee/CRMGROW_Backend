@@ -421,12 +421,6 @@ const updateDefault = async (req, res) => {
       data: _pdf,
     });
   }
-  pdf.save().then((_pdf) => {
-    return res.send({
-      status: true,
-      data: _pdf,
-    });
-  });
 };
 
 const get = async (req, res) => {
