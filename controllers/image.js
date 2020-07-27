@@ -50,7 +50,7 @@ const Team = require('../models/team');
 const Garbage = require('../models/garbage');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -452,7 +452,7 @@ const bulkEmail = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -705,6 +705,11 @@ const bulkText = async (req, res) => {
   const promise_array = [];
   const error = [];
 
+  let detail_content = 'sent image using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
     if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
@@ -742,7 +747,7 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -998,7 +1003,7 @@ const bulkGmail = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1329,7 +1334,7 @@ const bulkOutlook = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {

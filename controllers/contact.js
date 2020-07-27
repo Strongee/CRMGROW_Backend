@@ -28,7 +28,7 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const LabelHelper = require('../helpers/label');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
@@ -334,7 +334,7 @@ const create = async (req, res) => {
     .then((_contact) => {
       let detail_content = 'added contact';
       if (req.guest_loggin) {
-        detail_content = AssistantHelper.activityLog(detail_content);
+        detail_content = ActivityHelper.assistantLog(detail_content);
       }
 
       const activity = new Activity({
@@ -586,8 +586,8 @@ const importCSV = async (req, res) => {
       let add_content = 'added contact';
       let note_content = 'added note';
       if (req.guest_loggin) {
-        add_content = AssistantHelper.activityLog(add_content);
-        note_content = AssistantHelper.activityLog(note_content);
+        add_content = ActivityHelper.assistantLog(add_content);
+        note_content = ActivityHelper.assistantLog(note_content);
       }
 
       for (let i = 0; i < contact_array.length; i++) {
@@ -2810,7 +2810,7 @@ const bulkCreate = async (req, res) => {
   const promise_array = [];
   let detail_content = 'added contact';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {

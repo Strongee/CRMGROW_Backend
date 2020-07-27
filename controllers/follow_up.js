@@ -6,7 +6,7 @@ const Activity = require('../models/activity');
 const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
 const User = require('../models/user');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -87,7 +87,7 @@ const create = async (req, res) => {
 
       let detail_content = 'added follow up';
       if (req.guest_loggin) {
-        detail_content = AssistantHelper.activityLog(detail_content);
+        detail_content = ActivityHelper.assistantLog(detail_content);
       }
       const activity = new Activity({
         content: detail_content,
@@ -186,7 +186,7 @@ const edit = async (req, res) => {
     .then((_follow_up) => {
       let detail_content = 'updated follow up';
       if (req.guest_loggin) {
-        detail_content = AssistantHelper.activityLog(detail_content);
+        detail_content = ActivityHelper.assistantLog(detail_content);
       }
 
       const activity = new Activity({
@@ -647,7 +647,7 @@ const bulkUpdate = async (req, res) => {
         .then(async (data) => {
           let detail_content = 'updated follow up';
           if (req.guest_loggin) {
-            detail_content = AssistantHelper.activityLog(detail_content);
+            detail_content = ActivityHelper.assistantLog(detail_content);
           }
           const follow_ups = await FollowUp.find({ _id: { $in: ids } });
           for (let i = 0; i < follow_ups.length; i++) {
@@ -726,7 +726,7 @@ const bulkCreate = async (req, res) => {
 
   let detail_content = 'added follow up';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {

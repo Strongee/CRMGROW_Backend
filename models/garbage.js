@@ -57,7 +57,7 @@ const GarbageSchema = new Schema(
     material_theme: { type: String, default: 'theme2' },
     auto_follow_up: {
       enabled: { type: Boolean, default: false },
-      period: { type: Number, default: 12 },
+      period: { type: Number, default: 0 },
       content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
     },
     highlights: { type: Array, default: [] },

@@ -17,6 +17,7 @@ const ContactSchema = mongoose.Schema(
     label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
     cell_phone: { type: String, default: '' },
     country: { type: String, default: '' },
+    auto_follow_up: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     source: String,
     brokerage: String,
     tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],

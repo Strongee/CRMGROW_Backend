@@ -15,6 +15,7 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
+const ActivityHelper = require('../helpers/activity');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -545,51 +546,116 @@ const disconnectVideo = async (video_tracker_id) => {
       const now = moment();
       now.set({ second: 0, millisecond: 0 });
       const follow_due_date = now.add(auto_follow_up.period, 'hours');
-
-      const follow_up = new FollowUp({
-        user: currentUser.id,
-        contact: contact.id,
-        content: auto_follow_up['content'],
-        due_date: follow_due_date,
-      });
-
-      follow_up
-        .save()
-        .then(async (_followup) => {
-          let reminder_before = 30;
-          if (garbage) {
-            reminder_before = garbage.reminder_before;
+      if (contact.auto_follow_up) {
+        FollowUp.updateOne(
+          {
+            _id: contact.auto_follow_up,
+          },
+          {
+            $set: { due_date: follow_due_date },
           }
-
-          const startdate = moment(_followup.due_date);
-          const reminder_due_date = startdate.subtract(reminder_before, 'mins');
-
-          const reminder = new Reminder({
-            contact: contact.id,
-            due_date: reminder_due_date,
-            type: 'follow_up',
-            user: currentUser.id,
-            follow_up: _followup.id,
-          });
-
-          reminder.save().catch((err) => {
-            console.log('reminder save error', err.message);
-          });
-
-          const activity = new Activity({
-            content: 'added follow up',
-            contacts: contact.id,
-            user: currentUser.id,
-            type: 'follow_ups',
-            follow_ups: _followup.id,
-          });
-          activity.save().catch((err) => {
-            console.log('follow error', err.message);
-          });
-        })
-        .catch((err) => {
+        ).catch((err) => {
           console.log('follow error', err.message);
         });
+
+        let reminder_before = 30;
+        if (garbage) {
+          reminder_before = garbage.reminder_before;
+        }
+
+        const startdate = moment(follow_due_date);
+        const reminder_due_date = startdate.subtract(reminder_before, 'mins');
+
+        Reminder.updateOne(
+          {
+            follow_up: contact.auto_follow_up,
+          },
+          {
+            $set: {
+              due_date: reminder_due_date,
+            },
+          }
+        ).catch((err) => {
+          console.log('reminder update error', err.message);
+        });
+
+        let detail_content = 'updated follow up';
+        detail_content = ActivityHelper.autoSettingLog(detail_content);
+
+        const activity = new Activity({
+          content: detail_content,
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'follow_ups',
+          follow_ups: contact.auto_follow_up,
+        });
+
+        activity.save().catch((err) => {
+          console.log('follow save error', err.message);
+        });
+      } else {
+        const follow_up = new FollowUp({
+          user: currentUser.id,
+          contact: contact.id,
+          content: auto_follow_up['content'],
+          due_date: follow_due_date,
+        });
+
+        follow_up
+          .save()
+          .then(async (_followup) => {
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+
+            const startdate = moment(_followup.due_date);
+            const reminder_due_date = startdate.subtract(
+              reminder_before,
+              'mins'
+            );
+
+            const reminder = new Reminder({
+              contact: contact.id,
+              due_date: reminder_due_date,
+              type: 'follow_up',
+              user: currentUser.id,
+              follow_up: _followup.id,
+            });
+
+            reminder.save().catch((err) => {
+              console.log('reminder save error', err.message);
+            });
+
+            Contact.updateOne(
+              {
+                _id: contact.id,
+              },
+              {
+                $set: {
+                  auto_follow_up: _followup.id,
+                },
+              }
+            ).catch((err) => {
+              console.log('contact update error', err.message);
+            });
+
+            const activity = new Activity({
+              content: 'added follow up',
+              contacts: contact.id,
+              user: currentUser.id,
+              type: 'follow_ups',
+              follow_ups: _followup.id,
+            });
+
+            activity.save().catch((err) => {
+              console.log('follow error', err.message);
+            });
+          })
+          .catch((err) => {
+            console.log('follow error', err.message);
+          });
+      }
     }
   }
 };

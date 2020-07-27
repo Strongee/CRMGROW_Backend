@@ -50,7 +50,7 @@ const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
@@ -1272,7 +1272,7 @@ const bulkEmail = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1561,7 +1561,7 @@ const bulkGmail = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1883,11 +1883,16 @@ const bulkText = async (req, res) => {
 
   const videos = await Video.find({ _id: { $in: videoIds } });
 
+  let detail_content = 'sent video using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_MONTHLY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_MONTHLY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -1920,7 +1925,7 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -2163,7 +2168,7 @@ const bulkOutlook = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {

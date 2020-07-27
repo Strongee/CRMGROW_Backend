@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator/check');
 const Note = require('../models/note');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -45,7 +45,7 @@ const create = async (req, res) => {
     .then((_note) => {
       let detail_content = 'added note';
       if (req.guest_loggin) {
-        detail_content = AssistantHelper.activityLog(detail_content);
+        detail_content = ActivityHelper.assistantLog(detail_content);
       }
 
       const activity = new Activity({
@@ -88,7 +88,7 @@ const bulkCreate = async (req, res) => {
 
   let detail_content = 'added note';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {
