@@ -125,7 +125,7 @@ const getByLastActivity = async (req, res) => {
 const get = async (req, res) => {
   const { currentUser } = req;
   let { dir } = req.body;
-  const { key } = req.body;
+  const { key, index } = req.body;
 
   if (req.params.id === 'null' || req.params.id === 'undefined') {
     return res.status(400).json({
@@ -139,6 +139,7 @@ const get = async (req, res) => {
   }
   let next_contact;
   let prev_contact;
+
   const _contact = await Contact.findOne({
     _id: req.params.id,
     user: currentUser.id,
@@ -146,36 +147,49 @@ const get = async (req, res) => {
     console.log('contact found err', err.message);
   });
 
-  if (dir === 1) {
+  if (key === 'first_name') {
     next_contact = await Contact.find({
-      [key]: { $gte: _contact[key] },
       user: currentUser.id,
-      _id: { $ne: req.params.id },
     })
-      .sort({ [key]: 1 })
-      .limit(1);
+      .sort({ [key]: dir })
+      .limit(index + 1);
     prev_contact = await Contact.find({
-      [key]: { $lte: _contact[key] },
       user: currentUser.id,
-      _id: { $ne: req.params.id },
     })
-      .sort({ [key]: -1 })
-      .limit(1);
+      .sort({ [key]: dir })
+      .limit(index - 1);
   } else {
-    next_contact = await Contact.find({
-      [key]: { $lte: _contact[key] },
-      user: currentUser.id,
-      _id: { $ne: req.params.id },
-    })
-      .sort({ [key]: -1 })
-      .limit(1);
-    prev_contact = await Contact.find({
-      [key]: { $gte: _contact[key] },
-      user: currentUser.id,
-      _id: { $ne: req.params.id },
-    })
-      .sort({ [key]: 1 })
-      .limit(1);
+    if (dir === 1) {
+      next_contact = await Contact.find({
+        [key]: { $gte: _contact[key] },
+        user: currentUser.id,
+        _id: { $ne: req.params.id },
+      })
+        .sort({ [key]: 1 })
+        .limit(1);
+      prev_contact = await Contact.find({
+        [key]: { $lte: _contact[key] },
+        user: currentUser.id,
+        _id: { $ne: req.params.id },
+      })
+        .sort({ [key]: -1 })
+        .limit(1);
+    } else {
+      next_contact = await Contact.find({
+        [key]: { $lte: _contact[key] },
+        user: currentUser.id,
+        _id: { $ne: req.params.id },
+      })
+        .sort({ [key]: -1 })
+        .limit(1);
+      prev_contact = await Contact.find({
+        [key]: { $gte: _contact[key] },
+        user: currentUser.id,
+        _id: { $ne: req.params.id },
+      })
+        .sort({ [key]: 1 })
+        .limit(1);
+    }
   }
 
   let next = null;
@@ -185,16 +199,6 @@ const get = async (req, res) => {
   }
   if (prev_contact[0]) {
     prev = prev_contact[0].id;
-  }
-  const contacts = await Contact.find({ user: currentUser.id })
-    .populate('last_activity')
-    .sort({ first_name: 1 })
-    .limit(15);
-  if (!_contact) {
-    return res.status(400).json({
-      status: false,
-      error: 'Contact doesn`t exist',
-    });
   }
 
   const _follow_up = await FollowUp.find({
