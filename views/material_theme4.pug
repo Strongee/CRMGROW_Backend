@@ -61,30 +61,30 @@ body.theme4
             i.fab.fa-twitter
           a(class=social_link['linkedin']?'':'d-none' href=social_link['linkedin'])
             i.fab.fa-linkedin-in
+      .widget-actions
+        .widget-action.interesting
+          a.icon
+            img(src='theme/icons/heart_icon.png')
+        .widget-action.phone
+          a.icon(href="tel:" + user.cell_phone)
+            img(src='theme/icons/phone_icon.png')
+          .content
+            | (312) 493-8446
+        .widget-action.email
+          a.icon(href="mailto:" + user.email)
+            img(src='theme/icons/email_icon.png')
+          .content
+            | #{user.email}
+        //- .widget-action.share
+        //-   a.icon(data-toggle="modal" data-target="#shareModal")
+        //-     img(src='theme/icons/share_icon.png')
+      //- .chat-widget
     .info-container
       div
         h1.material-title.mb-1
           | #{material.title}
         p.material-description
           != material.description
-    .widget-actions
-      .widget-action.interesting
-        a.icon
-          img(src='theme/icons/interest_icon.png')
-      .widget-action.phone
-        a.icon(href="tel:" + user.cell_phone)
-          img(src='theme/icons/phone_icon.png')
-        .content
-          | (312) 493-8446
-      .widget-action.email
-        a.icon(href="mailto:" + user.email)
-          img(src='theme/icons/email_icon.png')
-        .content
-          | #{user.email}
-      //- .widget-action.share
-      //-   a.icon(data-toggle="modal" data-target="#shareModal")
-      //-     img(src='theme/icons/share_icon.png')
-    //- .chat-widget
     .widgets
       .widget.interesting
         .modal.fade(role="dialog", id="interestModal")
