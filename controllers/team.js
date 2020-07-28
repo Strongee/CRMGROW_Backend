@@ -206,7 +206,14 @@ const bulkInvites = async (req, res) => {
   const { invites } = req.body;
   const team = await Team.findOne({
     _id: req.params.id,
-    owner: currentUser.id,
+    $or: [
+      {
+        members: currentUser.id,
+      },
+      {
+        owner: currentUser.id,
+      },
+    ],
   }).catch((err) => {
     return res.status(500).send({
       status: false,
@@ -233,7 +240,6 @@ const bulkInvites = async (req, res) => {
   Team.updateOne(
     {
       _id: req.params.id,
-      owner: currentUser.id,
     },
     {
       $set: {
