@@ -1,3 +1,4 @@
+var first_seekable = false;
 var registered_flag = false;
 var reported = false;
 var socket;
@@ -22,6 +23,9 @@ else {
 var material_start = 0;
 if(document.querySelector('#material-start')) {
   material_start = parseFloat(document.querySelector('#material-start').value);
+  if(material_start < duration) {
+    vPlayer.currentTime = material_start;
+  }
 }
 
 function updateStartTime() {
@@ -29,8 +33,8 @@ function updateStartTime() {
   const activity = document.querySelector('#activity').value;
   if (contact && activity) {
     if (!socket) {
-      var siteAddr = location.protocol + '//' + location.hostname;
-      // var siteAddr = 'http://localhost:3000'
+      // var siteAddr = location.protocol + '//' + location.hostname;
+      var siteAddr = 'http://localhost:3000'
       socket = io.connect(siteAddr);
     }
   }
@@ -171,12 +175,24 @@ function reportTime() {
 
 vPlayer.on('loadeddata', () => {
   if(material_start) {
-    vPlayer.currentTime = material_start;
-    vPlayer.rewind(2);
+    first_seekable = true;
+    if(material_start < vPlayer.duration) {
+      vPlayer.currentTime = material_start;
+    }
   }
 })
 
+vPlayer.on('ready', () => {
+  first_seekable = true;
+})
+
 vPlayer.on('playing', function () {
+  if(first_seekable) {
+    if(material_start < vPlayer.duration) {
+      vPlayer.currentTime = material_start;
+    }
+    first_seekable = false;
+  }
   if (seek_flag || watched_time == 0) {
     updateStartTime();
     seek_flag = false;
