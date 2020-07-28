@@ -33,8 +33,8 @@ function updateStartTime() {
   const activity = document.querySelector('#activity').value;
   if (contact && activity) {
     if (!socket) {
-      // var siteAddr = location.protocol + '//' + location.hostname;
-      var siteAddr = 'http://localhost:3000'
+      var siteAddr = location.protocol + '//' + location.hostname;
+      // var siteAddr = 'http://localhost:3000'
       socket = io.connect(siteAddr);
     }
   }
