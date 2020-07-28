@@ -8,17 +8,26 @@ const router = express.Router();
 
 router.post('/', UserCtrl.checkAuth, catchError(TeamCtrl.create));
 router.get('/load', UserCtrl.checkAuth, catchError(TeamCtrl.getAll));
+router.get('/user/:id', UserCtrl.checkAuth, catchError(TeamCtrl.getTeam));
 
 router.post(
   '/bulk-invite/:id',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.bulkInvites)
 );
+
 router.post(
   '/accept/:id',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptInviation)
 );
+
+router.post(
+  '/admin-accept/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.acceptRequest)
+);
+
 router.post(
   '/share-videos',
   UserCtrl.checkAuth,

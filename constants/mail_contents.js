@@ -62,7 +62,11 @@ const mail_contents = {
   },
   NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
-    SUBJECT: 'CRMGROW Invitation Accepted: ',
+    SUBJECT: 'CRMGROW Team join invitation: ',
+  },
+  NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Team join request: ',
   },
   MAIL_SEND: 'mailservice@crmgrow.com',
   REPLY: 'support@crmgrow.com',

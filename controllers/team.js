@@ -32,7 +32,31 @@ const getAll = (req, res) => {
       });
     })
     .catch((err) => {
-      return res.status(400).send({
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const getTeam = (req, res) => {
+  Team.find({
+    $or: [
+      {
+        members: req.params.id,
+      },
+      { owner: req.params.id },
+    ],
+  })
+    .populate({ path: 'owner' })
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
         status: false,
         error: err.message,
       });
@@ -203,7 +227,7 @@ const update = async (req, res) => {
 
 const bulkInvites = async (req, res) => {
   const { currentUser } = req;
-  const { invites } = req.body;
+  const { invites, referrals } = req.body;
   const team = await Team.findOne({
     _id: req.params.id,
     $or: [
@@ -237,6 +261,15 @@ const bulkInvites = async (req, res) => {
     }
   });
 
+  const referralEmails = team.referrals;
+  const newReferrals = [];
+  referrals.forEach((e) => {
+    if (referralEmails.indexOf(e) === -1) {
+      referralEmails.push(e);
+      newReferrals.push(e);
+    }
+  });
+
   Team.updateOne(
     {
       _id: req.params.id,
@@ -244,6 +277,7 @@ const bulkInvites = async (req, res) => {
     {
       $set: {
         invites: inviteIds,
+        referrals: referralEmails,
       },
     }
   )
@@ -251,7 +285,7 @@ const bulkInvites = async (req, res) => {
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       const invitedUsers = await User.find({
-        _id: { $in: invites },
+        _id: { $in: newInvites },
         del: false,
       });
 
@@ -272,6 +306,7 @@ const bulkInvites = async (req, res) => {
         };
         sgMail.send(msg);
       }
+
       res.send({
         status: true,
       });
@@ -332,10 +367,99 @@ const acceptInviation = async (req, res) => {
       const msg = {
         to: team.owner.email,
         from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
           activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+          team:
+            "<a href='" +
+            urls.TEAM_URL +
+            team.id +
+            "'><img src='" +
+            urls.DOMAIN_URL +
+            "assets/images/team.png'/></a>",
+        },
+      };
+
+      sgMail
+        .send(msg)
+        .then()
+        .catch((err) => {
+          console.log('send message err: ', err);
+        });
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const acceptRequest = async (req, res) => {
+  const { currentUser } = req;
+
+  const team = await Team.findOne({
+    _id: req.params.id,
+    owner: currentUser.id,
+    requests: req.params.id,
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  const request = await User.findOne({ _id: req.params.id, del: false });
+
+  if (!request) {
+    return res.status(400).send({
+      status: false,
+      error: 'No exist user',
+    });
+  }
+
+  const members = team.members;
+  const requests = team.requests;
+  if (members.indexOf(req.params.id) === -1) {
+    members.push(req.params.id);
+  }
+  if (requests.indexOf(req.params.id) !== -1) {
+    const pos = requests.indexOf(req.params.id);
+    requests.splice(pos, 1);
+  }
+
+  Team.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: {
+        members,
+        requests,
+      },
+    }
+  )
+    .then(async () => {
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+      const msg = {
+        to: request.email,
+        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+        dynamic_template_data: {
+          subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted request to join ${team.name} in CRMGrow`,
           team:
             "<a href='" +
             urls.TEAM_URL +
@@ -736,11 +860,13 @@ const searchUser = async (req, res) => {
 
 module.exports = {
   getAll,
+  getTeam,
   get,
   create,
   update,
   bulkInvites,
   acceptInviation,
+  acceptRequest,
   searchUser,
   shareVideos,
   sharePdfs,

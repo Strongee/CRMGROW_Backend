@@ -14,6 +14,8 @@ const TeamSchema = new Schema(
     brands: { type: Array, default: [] },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     invites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    referrals: { type: Array, default: [] },
     editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
     pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
