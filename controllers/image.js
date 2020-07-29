@@ -47,11 +47,10 @@ const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Team = require('../models/team');
-
+const Garbage = require('../models/garbage');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
-const AssistantHelper = require('../helpers/assistant');
-const Garbage = require('../models/garbage');
+const ActivityHelper = require('../helpers/activity');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -77,17 +76,16 @@ const play = async (req, res) => {
   const image_id = req.query.image;
   const sender_id = req.query.user;
   const image = await Image.findOne({ _id: image_id });
-  const sender = await User.findOne({ _id: sender_id, del: false });
+  const user = await User.findOne({ _id: sender_id, del: false });
 
   let capture_dialog = true;
   let capture_delay = 0;
   let capture_field = {};
 
-  if (sender) {
-    const garbage = await Garbage.findOne({ user: sender._id }).catch((err) => {
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
       console.log('err', err);
     });
-
     let theme = 'theme2';
     let logo;
     let highlights = [];
@@ -108,16 +106,14 @@ const play = async (req, res) => {
     } else {
       capture_dialog = false;
     }
-
-    const pattern = /^((http|https|ftp):\/\/)/;
     let social_link = {};
+    const pattern = /^((http|https|ftp):\/\/)/;
 
-    if (!pattern.test(sender.learn_more)) {
-      sender.learn_more = 'http://' + sender.learn_more;
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
     }
-
-    if (sender.social_link) {
-      social_link = sender.social_link || {};
+    if (user.social_link) {
+      social_link = user.social_link || {};
       if (social_link.facebook && !pattern.test(social_link.facebook)) {
         social_link.facebook = 'http://' + social_link.facebook;
       }
@@ -129,13 +125,14 @@ const play = async (req, res) => {
       }
     }
 
-    return res.render('image_theme2', {
-      image,
-      user: sender,
+    res.render('lead_material_' + theme, {
+      material: image,
+      material_type: 'image',
+      user,
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
-      social_link,
+      social_link: {},
       setting: {
         logo,
         highlights,
@@ -165,19 +162,51 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const pattern = /^((http|https|ftp):\/\/)/;
+    const image = activity['images'];
 
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
     if (!pattern.test(user.learn_more)) {
       user.learn_more = 'http://' + user.learn_more;
     }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    if (garbage) {
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+    }
 
-    const image = activity['images'];
-
-    res.render('image1', {
-      image,
+    res.render('material_' + theme, {
+      material: image,
+      material_type: 'image',
       user,
       contact: activity['contacts'],
       activity: activity.id,
+      social_link,
+      setting: {
+        logo,
+        highlights,
+        brands,
+      },
     });
   }
 };
@@ -423,7 +452,7 @@ const bulkEmail = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -676,6 +705,11 @@ const bulkText = async (req, res) => {
   const promise_array = [];
   const error = [];
 
+  let detail_content = 'sent image using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
     if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
       return res.status(400).json({
@@ -713,7 +747,7 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -969,7 +1003,7 @@ const bulkGmail = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1300,7 +1334,7 @@ const bulkOutlook = async (req, res) => {
 
     let detail_content = 'sent image using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {

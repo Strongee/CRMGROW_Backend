@@ -46,7 +46,7 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const emailHelper = require('../helpers/email');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -91,7 +91,7 @@ const bulkGmail = async (req, res) => {
 
   let detail_content = 'sent email';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {
@@ -426,7 +426,7 @@ const bulkOutlook = async (req, res) => {
 
   let detail_content = 'sent email';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {
@@ -963,7 +963,7 @@ const bulkEmail = async (req, res) => {
 
   let detail_content = 'sent email';
   if (req.guest_loggin) {
-    detail_content = AssistantHelper.activityLog(detail_content);
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {

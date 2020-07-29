@@ -25,6 +25,10 @@ const system_settings = {
   ADMIN_ACCOUNT: 'support@crmgrow.com',
   LEAD: '5f16d58d0af09220208b6e11',
   AUTO_FOLLOW_UP: 'has reviewed material',
+  THUMBNAIL: {
+    WIDTH: 400,
+    HEIGHT: 220,
+  },
 };
 
 module.exports = system_settings;

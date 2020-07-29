@@ -2810,7 +2810,7 @@ const generateUnsubscribeLink = (id) => {
 };
 
 const generateOpenTrackLink = (id) => {
-  return `<img src='${urls.TRACK_URL}${id}' style='display:none'/>`;
+  return `<img src='${urls.TRACK_URL}${id}'/>`;
 };
 
 module.exports = {

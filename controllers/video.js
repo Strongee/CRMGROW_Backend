@@ -50,7 +50,7 @@ const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
-const AssistantHelper = require('../helpers/assistant');
+const ActivityHelper = require('../helpers/activity');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
@@ -154,9 +154,9 @@ const play = async (req, res) => {
         social_link.linkedin = 'http://' + social_link.linkedin;
       }
     }
-
-    return res.render('lead_video_' + theme, {
-      video,
+    return res.render('lead_material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       capture_dialog,
       capture_delay,
@@ -231,8 +231,9 @@ const play1 = async (req, res) => {
       brands = garbage['brands'] || [];
     }
 
-    return res.render('video_' + theme, {
-      video,
+    return res.render('material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       contact: activity['contacts'],
       activity: activity.id,
@@ -384,33 +385,42 @@ const update = async (req, res) => {
       if (req.body.thumbnail) {
         const play = await loadImage(PLAY_BUTTON_PATH);
 
-        const canvas = createCanvas(250, 140);
+        const canvas = createCanvas(
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
         const ctx = canvas.getContext('2d');
         const image = await loadImage(thumbnail_path);
 
         let height = image.height;
         let width = image.width;
         if (height > width) {
-          ctx.rect(0, 0, 250, 140);
+          ctx.rect(
+            0,
+            0,
+            system_settings.THUMBNAIL.WIDTH,
+            system_settings.THUMBNAIL.HEIGHT
+          );
           ctx.fillStyle = '#000000';
           ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
+          width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+          height = system_settings.THUMBNAIL.HEIGHT;
           ctx.drawImage(image, (250 - width) / 2, 0, width, height);
         } else {
-          height = 140;
-          width = 250;
+          height = system_settings.THUMBNAIL.HEIGHT;
+          width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(60, 100, 150, 30);
+        ctx.rect(70, 170, 200, 40);
         ctx.globalAlpha = 0.7;
         ctx.fillStyle = '#333';
         ctx.fill();
         ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
+        ctx.font = '24px Arial';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
+        ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 165, 50, 50);
+
         const buf = canvas.toBuffer();
 
         if (!fs.existsSync(GIF_PATH)) {
@@ -550,47 +560,60 @@ const updateDetail = async (req, res) => {
       THUMBNAILS_PATH,
       file_name
     );
-    if (fs.existsSync(thumbnail_path)) {
+    if (fs.existsSync(thumbnail_path) && req.body.custom_thumbnail) {
       // Thumbnail
-      if (req.body.custom_thumbnail) {
-        custom_thumbnail = true;
-        const play = await loadImage(PLAY_BUTTON_PATH);
+      custom_thumbnail = true;
+      const play = await loadImage(PLAY_BUTTON_PATH);
 
-        const canvas = createCanvas(250, 140);
-        const ctx = canvas.getContext('2d');
-        const image = await loadImage(thumbnail_path);
+      const canvas = createCanvas(
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      const ctx = canvas.getContext('2d');
+      const image = await loadImage(thumbnail_path);
 
-        let height = image.height;
-        let width = image.width;
-        if (height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-        } else {
-          height = 140;
-          width = 250;
-          ctx.drawImage(image, 0, 0, width, height);
-        }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
+      let height = image.height;
+      let width = image.width;
+      if (height > width) {
+        ctx.rect(
+          0,
+          0,
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
+        ctx.fillStyle = '#000000';
         ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
-        const buf = canvas.toBuffer();
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        ctx.drawImage(
+          image,
+          (system_settings.THUMBNAIL.WIDTH - width) / 2,
+          0,
+          width,
+          height
+        );
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
 
-        for (let i = 0; i < 20; i++) {
-          if (i < 10) {
-            fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-          } else {
-            fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-          }
+      ctx.rect(70, 170, 200, 40);
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.font = '24px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 165, 50, 50);
+      const buf = canvas.toBuffer();
+
+      for (let i = 0; i < 20; i++) {
+        if (i < 10) {
+          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
+        } else {
+          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
         }
       }
 
@@ -889,9 +912,15 @@ const generatePreview = async (data) => {
 
     const play = await loadImage(PLAY_BUTTON_PATH);
 
-    const canvas = createCanvas(250, 140);
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
+    const encoder = new GIFEncoder(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
 
     for (let i = 1; i < 40; i++) {
       const image = await loadImage(
@@ -908,27 +937,38 @@ const generatePreview = async (data) => {
       let width = image.width;
 
       if (height > width) {
-        ctx.rect(0, 0, 250, 140);
+        ctx.rect(
+          0,
+          0,
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
         ctx.fillStyle = '#000000';
         ctx.fill();
-        width = (140 * width) / height;
-        height = 140;
-        ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        ctx.drawImage(
+          image,
+          (system_settings.THUMBNAIL.WIDTH - width) / 2,
+          0,
+          width,
+          height
+        );
       } else {
-        height = 140;
-        width = 250;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
         ctx.drawImage(image, 0, 0, width, height);
       }
 
-      ctx.rect(60, 100, 150, 30);
+      ctx.rect(70, 170, 200, 40);
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = '#333';
       ctx.fill();
       ctx.globalAlpha = 1.0;
-      ctx.font = '20px Impact';
+      ctx.font = '24px Arial';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 70, 120);
-      ctx.drawImage(play, 10, 95, 40, 40);
+      ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 165, 50, 50);
 
       const buf = canvas.toBuffer();
 
@@ -990,9 +1030,15 @@ const regeneratePreview = async (data) => {
   return new Promise(async (resolve, reject) => {
     const play = await loadImage(PLAY_BUTTON_PATH);
 
-    const canvas = createCanvas(250, 140);
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
+    const encoder = new GIFEncoder(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
 
     if (fs.existsSync(GIF_PATH + `screenshot-${file_name}-1.jpg`)) {
       for (let i = 1; i < 40; i++) {
@@ -1003,26 +1049,37 @@ const regeneratePreview = async (data) => {
         let height = image.height;
         let width = image.width;
         if (height > width) {
-          ctx.rect(0, 0, 250, 140);
+          ctx.rect(
+            0,
+            0,
+            system_settings.THUMBNAIL.WIDTH,
+            system_settings.THUMBNAIL.HEIGHT
+          );
           ctx.fillStyle = '#000000';
           ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+          width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+          height = system_settings.THUMBNAIL.HEIGHT;
+          ctx.drawImage(
+            image,
+            (system_settings.THUMBNAIL.WIDTH - width) / 2,
+            0,
+            width,
+            height
+          );
         } else {
-          height = 140;
-          width = 250;
+          height = system_settings.THUMBNAIL.HEIGHT;
+          width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(60, 100, 150, 30);
+        ctx.rect(70, 170, 200, 40);
         ctx.globalAlpha = 0.7;
         ctx.fillStyle = '#333';
         ctx.fill();
         ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
+        ctx.font = '24px Arial';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
+        ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 165, 50, 50);
         const buf = canvas.toBuffer();
         fs.writeFileSync(GIF_PATH + `${file_name}-${i + 19}.png`, buf);
       }
@@ -1296,7 +1353,7 @@ const bulkEmail = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1585,7 +1642,7 @@ const bulkGmail = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1907,11 +1964,16 @@ const bulkText = async (req, res) => {
 
   const videos = await Video.find({ _id: { $in: videoIds } });
 
+  let detail_content = 'sent video using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_MONTHLY_LIMIT.BASIC) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_MONTHLY_LIMIT.BASIC} contacts at a time`,
       });
     }
 
@@ -1944,7 +2006,7 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -2187,7 +2249,7 @@ const bulkOutlook = async (req, res) => {
 
     let detail_content = 'sent video using email';
     if (req.guest_loggin) {
-      detail_content = AssistantHelper.activityLog(detail_content);
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {

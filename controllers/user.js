@@ -37,6 +37,7 @@ const Contact = require('../models/contact');
 const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
+const Team = require('../models/team');
 
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -229,6 +230,72 @@ const signUp = async (req, res) => {
           //   expiresIn: '30d',
           // });
 
+          Team.find({ referrals: email })
+            .populate('owner')
+            .then((teams) => {
+              for (let i = 0; i < teams.length; i++) {
+                const team = teams[i];
+                const members = team.members;
+                const referrals = team.referrals;
+                if (members.indexOf(_res.id) === -1) {
+                  members.push(_res.id);
+                }
+                if (referrals.indexOf(email) !== -1) {
+                  const pos = referrals.indexOf(email);
+                  referrals.splice(pos, 1);
+                }
+
+                Team.updateOne(
+                  {
+                    _id: req.params.id,
+                  },
+                  {
+                    $set: {
+                      members,
+                      referrals,
+                    },
+                  }
+                )
+                  .then(async () => {
+                    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+                    const msg = {
+                      to: team.owner.email,
+                      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                      dynamic_template_data: {
+                        subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                        activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                        team:
+                          "<a href='" +
+                          urls.TEAM_URL +
+                          team.id +
+                          "'><img src='" +
+                          urls.DOMAIN_URL +
+                          "assets/images/team.png'/></a>",
+                      },
+                    };
+
+                    sgMail
+                      .send(msg)
+                      .then()
+                      .catch((err) => {
+                        console.log('send message err: ', err);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log('team update err: ', err.message);
+                  });
+              }
+            })
+            .catch((err) => {
+              console.log('err', err);
+              res.status(400).send({
+                status: false,
+                error: err,
+              });
+            });
+
           const token = jwt.sign(
             {
               id: _res.id,
@@ -265,8 +332,8 @@ const signUp = async (req, res) => {
         });
     })
     .catch((err) => {
-      console.log('err', err);
-      res.status(400).send({
+      console.log('signup payment create err', err);
+      res.status(500).send({
         status: false,
         error: err,
       });
@@ -449,6 +516,72 @@ const socialSignUp = async (req, res) => {
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
           // });
+
+          Team.find({ referrals: email })
+            .populate('owner')
+            .then((teams) => {
+              for (let i = 0; i < teams.length; i++) {
+                const team = teams[i];
+                const members = team.members;
+                const referrals = team.referrals;
+                if (members.indexOf(_res.id) === -1) {
+                  members.push(_res.id);
+                }
+                if (referrals.indexOf(email) !== -1) {
+                  const pos = referrals.indexOf(email);
+                  referrals.splice(pos, 1);
+                }
+
+                Team.updateOne(
+                  {
+                    _id: req.params.id,
+                  },
+                  {
+                    $set: {
+                      members,
+                      referrals,
+                    },
+                  }
+                )
+                  .then(async () => {
+                    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+                    const msg = {
+                      to: team.owner.email,
+                      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                      dynamic_template_data: {
+                        subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                        activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                        team:
+                          "<a href='" +
+                          urls.TEAM_URL +
+                          team.id +
+                          "'><img src='" +
+                          urls.DOMAIN_URL +
+                          "assets/images/team.png'/></a>",
+                      },
+                    };
+
+                    sgMail
+                      .send(msg)
+                      .then()
+                      .catch((err) => {
+                        console.log('send message err: ', err);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log('team update err: ', err.message);
+                  });
+              }
+            })
+            .catch((err) => {
+              console.log('err', err);
+              res.status(400).send({
+                status: false,
+                error: err,
+              });
+            });
 
           const token = jwt.sign({ id: _res.id }, api.JWT_SECRET);
 

@@ -45,6 +45,8 @@ const GarbageSchema = new Schema(
     capture_dialog: { type: Boolean, default: false },
     capture_delay: { type: Number, default: 0 },
     capture_videos: { type: Array, default: [] },
+    capture_images: { type: Array, default: [] },
+    capture_pdfs: { type: Array, default: [] },
     capture_field: {
       email: { type: Boolean, default: true },
       cell_phone: { type: Boolean, default: true },
@@ -55,7 +57,7 @@ const GarbageSchema = new Schema(
     material_theme: { type: String, default: 'theme2' },
     auto_follow_up: {
       enabled: { type: Boolean, default: false },
-      period: { type: Number, default: 12 },
+      period: { type: Number, default: 0 },
       content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
     },
     highlights: { type: Array, default: [] },

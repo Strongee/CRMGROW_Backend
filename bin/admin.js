@@ -14,6 +14,7 @@ const system_settings = require('../config/system_settings');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Activity = require('../models/activity');
+const Labels = require('../constants/label');
 
 const addContacts = async () => {
   const admin = await User.findOne({
@@ -48,16 +49,16 @@ const addContacts = async () => {
           const created = new Date(user.created_at);
 
           if (created.getTime() > week_ago.getTime()) {
-            label = 'New';
+            label = Labels[1].id;
           } else if (last_logged.getTime() > week_ago.getTime()) {
-            label = 'Hot';
+            label = Labels[5].id;
           } else if (last_logged.getTime() > month_ago.getTime()) {
-            label = 'Warm';
+            label = Labels[4].id;
           } else {
-            label = 'Cold';
+            label = Labels[2].id;
           }
         } else {
-          label = 'Cold';
+          label = Labels[2].id;
         }
         if (user.payment) {
           if (user.subscription && user.subscription.is_suspended) {
@@ -196,16 +197,21 @@ const updateContacts = async () => {
         const created = new Date(user.created_at);
 
         if (created.getTime() > week_ago.getTime()) {
-          label = 'New';
+          // New
+          label = Labels[1].id;
         } else if (last_logged.getTime() > week_ago.getTime()) {
-          label = 'Hot';
+          //  Hot
+          label = Labels[5].id;
         } else if (last_logged.getTime() > month_ago.getTime()) {
-          label = 'Warm';
+          //  Warm
+          label = Labels[4].id;
         } else {
-          label = 'Cold';
+          //  Cold
+          label = Labels[2].id;
         }
       } else {
-        label = 'Cold';
+        //  Cold
+        label = Labels[2].id;
       }
       if (user.payment) {
         if (user.subscription && user.subscription.is_suspended) {
