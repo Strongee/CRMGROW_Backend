@@ -386,15 +386,16 @@ const update = async (req, res) => {
           width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(70, 170, 200, 40);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 80, 200);
-        ctx.drawImage(play, 10, 165, 50, 50);
+
+        // ctx.rect(70, 170, 200, 40);
+        // ctx.globalAlpha = 0.7;
+        // ctx.fillStyle = '#333';
+        // ctx.fill();
+        // ctx.globalAlpha = 1.0;
+        // ctx.font = '24px Arial';
+        // ctx.fillStyle = '#ffffff';
+        // ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 150);
 
         const buf = canvas.toBuffer();
 
@@ -573,15 +574,15 @@ const updateDetail = async (req, res) => {
         ctx.drawImage(image, 0, 0, width, height);
       }
 
-      ctx.rect(70, 170, 200, 40);
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '24px Arial';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 165, 50, 50);
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
       const buf = canvas.toBuffer();
 
       for (let i = 0; i < 20; i++) {
@@ -873,7 +874,7 @@ const generatePreview = async (data) => {
 
   return new Promise(async (resolve, reject) => {
     const offsets = [];
-    for (let i = 0; i < 4000; i += 100) {
+    for (let i = 1000; i < 5000; i += 100) {
       offsets.push(i);
     }
 
@@ -935,15 +936,15 @@ const generatePreview = async (data) => {
         ctx.drawImage(image, 0, 0, width, height);
       }
 
-      ctx.rect(70, 170, 200, 40);
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '24px Arial';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 165, 50, 50);
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
 
       const buf = canvas.toBuffer();
 
@@ -1046,15 +1047,16 @@ const regeneratePreview = async (data) => {
           width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(70, 170, 200, 40);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 80, 200);
-        ctx.drawImage(play, 10, 165, 50, 50);
+        // ctx.rect(70, 170, 200, 40);
+        // ctx.globalAlpha = 0.7;
+        // ctx.fillStyle = '#333';
+        // ctx.fill();
+        // ctx.globalAlpha = 1.0;
+        // ctx.font = '24px Arial';
+        // ctx.fillStyle = '#ffffff';
+        // ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 150);
+
         const buf = canvas.toBuffer();
         fs.writeFileSync(GIF_PATH + `${file_name}-${i + 19}.png`, buf);
       }
