@@ -40,6 +40,7 @@ const getAll = (req, res) => {
 };
 
 const getTeam = (req, res) => {
+  const { currentUser } = req;
   Team.find({
     $or: [
       {
@@ -87,6 +88,7 @@ const get = (req, res) => {
       { path: 'images' },
       { path: 'automations' },
       { path: 'email_templates' },
+      { path: 'requests' },
     ])
     .then((data) => {
       return res.send({
@@ -401,11 +403,11 @@ const acceptInviation = async (req, res) => {
 
 const acceptRequest = async (req, res) => {
   const { currentUser } = req;
+  const { team_id, request_id } = req.body;
 
   const team = await Team.findOne({
-    _id: req.params.id,
+    _id: team_id,
     owner: currentUser.id,
-    requests: req.params.id,
   }).catch((err) => {
     return res.status(500).send({
       status: false,
@@ -420,7 +422,7 @@ const acceptRequest = async (req, res) => {
     });
   }
 
-  const request = await User.findOne({ _id: req.params.id, del: false });
+  const request = await User.findOne({ _id: request_id, del: false });
 
   if (!request) {
     return res.status(400).send({
@@ -431,17 +433,17 @@ const acceptRequest = async (req, res) => {
 
   const members = team.members;
   const requests = team.requests;
-  if (members.indexOf(req.params.id) === -1) {
-    members.push(req.params.id);
+  if (members.indexOf(request_id) === -1) {
+    members.push(request_id);
   }
-  if (requests.indexOf(req.params.id) !== -1) {
-    const pos = requests.indexOf(req.params.id);
+  if (requests.indexOf(request_id) !== -1) {
+    const pos = requests.indexOf(request_id);
     requests.splice(pos, 1);
   }
 
   Team.updateOne(
     {
-      _id: req.params.id,
+      _id: team_id,
     },
     {
       $set: {
@@ -858,6 +860,43 @@ const searchUser = async (req, res) => {
   });
 };
 
+const requestTeam = async (req, res) => {
+  const { currentUser } = req;
+  const team_id = req.params.team;
+  const team = await Team.findById(team_id);
+  if (team.owner + '' == currentUser._id + '') {
+    return res.status(400).send({
+      status: false,
+      error: 'You are a owner of this team.',
+    });
+  }
+  if (team.members.indexOf(currentUser._id) !== -1) {
+    return res.status(400).send({
+      status: false,
+      error: 'You are a member already.',
+    });
+  }
+  if (team.requests.indexOf(currentUser._id) !== -1) {
+    return res.send({
+      status: true,
+    });
+  }
+  team.requests.push(currentUser._id);
+  team
+    .save()
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getTeam,
@@ -873,4 +912,5 @@ module.exports = {
   shareImages,
   shareAutomations,
   shareEmailTemplates,
+  requestTeam,
 };

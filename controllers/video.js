@@ -71,6 +71,7 @@ const oauth2 = require('simple-oauth2')(credentials);
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
+  const team_id = req.query.team;
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
     console.log('err', err.message);
   });
@@ -79,6 +80,30 @@ const play = async (req, res) => {
       console.log('err', err.message);
     }
   );
+  let team;
+  if (team_id) {
+    team = await Team.findOne({ _id: team_id }).catch((err) => {
+      console.log('err', err.message);
+    });
+    if (team) {
+      // let theme = 'theme2';
+      // let highlights = team['highlights'];
+      // let brands = team['brands'];
+      // return res.render('lead_video_' + theme, {
+      //   video,
+      //   user,
+      //   capture_dialog,
+      //   capture_delay,
+      //   capture_field: capture_field || {},
+      //   social_link,
+      //   setting: {
+      //     logo: team.picture,
+      //     highlights,
+      //     brands,
+      //   },
+      // });
+    }
+  }
 
   let capture_dialog = true;
   let capture_delay = 0;
