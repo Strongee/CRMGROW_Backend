@@ -9,6 +9,11 @@ const router = express.Router();
 router.post('/', UserCtrl.checkAuth, catchError(TeamCtrl.create));
 router.get('/load', UserCtrl.checkAuth, catchError(TeamCtrl.getAll));
 router.get('/user/:id', UserCtrl.checkAuth, catchError(TeamCtrl.getTeam));
+router.get(
+  '/request/:team',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.requestTeam)
+);
 
 router.post(
   '/bulk-invite/:id',
@@ -23,7 +28,7 @@ router.post(
 );
 
 router.post(
-  '/admin-accept/:id',
+  '/admin-accept',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptRequest)
 );

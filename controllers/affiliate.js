@@ -24,7 +24,7 @@ const get = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details[0],
+          err: err.details,
         });
       });
   } else {
