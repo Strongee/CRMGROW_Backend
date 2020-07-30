@@ -152,12 +152,16 @@ const get = async (req, res) => {
       user: currentUser.id,
     })
       .sort({ [key]: dir })
-      .limit(index + 1);
-    prev_contact = await Contact.find({
-      user: currentUser.id,
-    })
-      .sort({ [key]: dir })
-      .limit(index - 1);
+      .skip(index + 1)
+      .limit(1);
+    if (index - 1 >= 0) {
+      prev_contact = await Contact.find({
+        user: currentUser.id,
+      })
+        .sort({ [key]: dir })
+        .skip(index - 1)
+        .limit(1);
+    }
   } else {
     if (dir === 1) {
       next_contact = await Contact.find({
@@ -194,10 +198,10 @@ const get = async (req, res) => {
 
   let next = null;
   let prev = null;
-  if (next_contact[0]) {
+  if (next_contact && next_contact[0]) {
     next = next_contact[0].id;
   }
-  if (prev_contact[0]) {
+  if (prev_contact && prev_contact[0]) {
     prev = prev_contact[0].id;
   }
 
@@ -482,12 +486,12 @@ const edit = async (req, res) => {
       })
       .catch((e) => {
         let errors;
-        if (e.errors) {
-          errors = e.errors.map((err) => {
-            delete err.instance;
-            return err;
-          });
-        }
+        // if (e.errors) {
+        //   errors = e.errors.map((err) => {
+        //     delete err.instance;
+        //     return err;
+        //   });
+        // }
         return res.status(500).send({
           status: false,
           error: errors || e,

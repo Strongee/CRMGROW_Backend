@@ -23,7 +23,7 @@ else {
 var material_start = 0;
 if(document.querySelector('#material-start')) {
   material_start = parseFloat(document.querySelector('#material-start').value);
-  if(material_start < duration) {
+  if(material_start + 5 < duration) {
     vPlayer.currentTime = material_start;
   }
 }
@@ -176,7 +176,7 @@ function reportTime() {
 vPlayer.on('loadeddata', () => {
   if(material_start) {
     first_seekable = true;
-    if(material_start < vPlayer.duration) {
+    if(material_start + 5 < vPlayer.duration) {
       vPlayer.currentTime = material_start;
     }
   }
@@ -188,7 +188,7 @@ vPlayer.on('ready', () => {
 
 vPlayer.on('playing', function () {
   if(first_seekable) {
-    if(material_start < vPlayer.duration) {
+    if(material_start + 5 < vPlayer.duration) {
       vPlayer.currentTime = material_start;
     }
     first_seekable = false;
