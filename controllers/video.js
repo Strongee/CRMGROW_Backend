@@ -300,8 +300,60 @@ const create = async (req, res) => {
 };
 
 const createVideo = async (req, res) => {
+  let preview;
+  if (req.body.thumbnail) {
+    // Thumbnail
+
+    const play = await loadImage(PLAY_BUTTON_PATH);
+
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
+    const ctx = canvas.getContext('2d');
+    const image = await loadImage(req.body.thumbnail);
+
+    let height = image.height;
+    let width = image.width;
+    if (height > width) {
+      ctx.rect(
+        0,
+        0,
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+      height = system_settings.THUMBNAIL.HEIGHT;
+      ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+    } else {
+      height = system_settings.THUMBNAIL.HEIGHT;
+      width = system_settings.THUMBNAIL.WIDTH;
+      ctx.drawImage(image, 0, 0, width, height);
+    }
+
+    ctx.drawImage(play, 10, 150);
+
+    const buf = canvas.toBuffer();
+    const file_name = uuidv1();
+    const today = new Date();
+    const year = today.getYear();
+    const month = today.getMonth();
+    const params = {
+      Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+      Key: 'preview' + year + '/' + month + '/' + file_name,
+      Body: buf,
+      ACL: 'public-read',
+    };
+
+    const { Location, Key } = await s3.upload(params).promise();
+    preview = Location;
+  }
+
   const video = new Video({
     ...req.body,
+    preview,
     user: req.currentUser.id,
     created_at: new Date(),
   });
@@ -382,56 +434,55 @@ const update = async (req, res) => {
     );
     if (fs.existsSync(thumbnail_path)) {
       // Thumbnail
-      if (req.body.thumbnail) {
-        const play = await loadImage(PLAY_BUTTON_PATH);
+      const play = await loadImage(PLAY_BUTTON_PATH);
 
-        const canvas = createCanvas(
+      const canvas = createCanvas(
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      const ctx = canvas.getContext('2d');
+      const image = await loadImage(thumbnail_path);
+
+      let height = image.height;
+      let width = image.width;
+      if (height > width) {
+        ctx.rect(
+          0,
+          0,
           system_settings.THUMBNAIL.WIDTH,
           system_settings.THUMBNAIL.HEIGHT
         );
-        const ctx = canvas.getContext('2d');
-        const image = await loadImage(thumbnail_path);
-
-        let height = image.height;
-        let width = image.width;
-        if (height > width) {
-          ctx.rect(
-            0,
-            0,
-            system_settings.THUMBNAIL.WIDTH,
-            system_settings.THUMBNAIL.HEIGHT
-          );
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
-          height = system_settings.THUMBNAIL.HEIGHT;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-        } else {
-          height = system_settings.THUMBNAIL.HEIGHT;
-          width = system_settings.THUMBNAIL.WIDTH;
-          ctx.drawImage(image, 0, 0, width, height);
-        }
-        ctx.rect(70, 170, 200, 40);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = '#000000';
         ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 80, 200);
-        ctx.drawImage(play, 10, 165, 50, 50);
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
 
-        const buf = canvas.toBuffer();
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
 
-        if (!fs.existsSync(GIF_PATH)) {
-          fs.mkdirSync(GIF_PATH);
-        }
-        for (let i = 0; i < 20; i++) {
-          if (i < 10) {
-            fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-          } else {
-            fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-          }
+      const buf = canvas.toBuffer();
+
+      if (!fs.existsSync(GIF_PATH)) {
+        fs.mkdirSync(GIF_PATH);
+      }
+      for (let i = 0; i < 20; i++) {
+        if (i < 10) {
+          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
+        } else {
+          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
         }
       }
 
@@ -598,15 +649,15 @@ const updateDetail = async (req, res) => {
         ctx.drawImage(image, 0, 0, width, height);
       }
 
-      ctx.rect(70, 170, 200, 40);
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '24px Arial';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 165, 50, 50);
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
       const buf = canvas.toBuffer();
 
       for (let i = 0; i < 20; i++) {
@@ -898,7 +949,7 @@ const generatePreview = async (data) => {
 
   return new Promise(async (resolve, reject) => {
     const offsets = [];
-    for (let i = 0; i < 4000; i += 100) {
+    for (let i = 1000; i < 5000; i += 100) {
       offsets.push(i);
     }
 
@@ -960,15 +1011,15 @@ const generatePreview = async (data) => {
         ctx.drawImage(image, 0, 0, width, height);
       }
 
-      ctx.rect(70, 170, 200, 40);
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '24px Arial';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 165, 50, 50);
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
 
       const buf = canvas.toBuffer();
 
@@ -1071,15 +1122,16 @@ const regeneratePreview = async (data) => {
           width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(70, 170, 200, 40);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 80, 200);
-        ctx.drawImage(play, 10, 165, 50, 50);
+        // ctx.rect(70, 170, 200, 40);
+        // ctx.globalAlpha = 0.7;
+        // ctx.fillStyle = '#333';
+        // ctx.fill();
+        // ctx.globalAlpha = 1.0;
+        // ctx.font = '24px Arial';
+        // ctx.fillStyle = '#ffffff';
+        // ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 150);
+
         const buf = canvas.toBuffer();
         fs.writeFileSync(GIF_PATH + `${file_name}-${i + 19}.png`, buf);
       }

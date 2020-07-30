@@ -1023,7 +1023,7 @@ const upload_video_job = new CronJob(
         const video = videos[i];
         const file_path = video.path;
         if (file_path) {
-          const file_name = video.path.slice(23);
+          const file_name = video.path.slice(36);
 
           if (fs.existsSync(file_path)) {
             try {

@@ -294,6 +294,9 @@ const create = async (req, res) => {
     });
   }
 
+  /**
+   *  Email / Phone unique validation
+   * 
   let contact_old;
   if (typeof req.body['email'] !== 'undefined') {
     contact_old = await Contact.findOne({
@@ -321,7 +324,7 @@ const create = async (req, res) => {
     }
   }
 
-  const cell_phone = req.body.cell_phone;
+   */
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -331,7 +334,6 @@ const create = async (req, res) => {
 
   const contact = new Contact({
     ...req.body,
-    cell_phone,
     user: currentUser.id,
     created_at: new Date(),
     updated_at: new Date(),
