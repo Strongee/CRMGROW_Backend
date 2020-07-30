@@ -27,7 +27,7 @@ const storage = multerS3({
     const today = new Date();
     const year = today.getYear();
     const month = today.getMonth();
-    cb(null, 'image ' + year + '/' + month + '/' + file.originalname);
+    cb(null, 'image' + year + '/' + month + '/' + file.originalname);
   },
 });
 
