@@ -26,7 +26,7 @@ const get = (req, res) => {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
-
+  const company = currentUser.company || 'eXp Realty';
   const automations = await Automation.find({
     user: currentUser.id,
     del: false,
@@ -34,6 +34,7 @@ const getAll = async (req, res) => {
 
   const _automation_admin = await Automation.find({
     role: 'admin',
+    company,
     del: false,
   });
 
