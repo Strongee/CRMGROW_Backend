@@ -8,7 +8,7 @@ head
   meta(property='og:description', content=`${material.description}`)
   meta(property='og:image:width', content='600')
   meta(property='og:image:height', content='300')
-  meta(property='og:image', content=`${material.thumbnail || material.preview}`)
+  meta(property='og:image', content=`${material.site_image || material.thumbnail || material.preview}`)
   meta(name='viewport', content='width=device-width, initial-scale=1')
   link(rel='stylesheet', href='./theme/css/bootstrap.min.css')
   //- Font Import
@@ -64,7 +64,7 @@ body.theme4
       .widget-actions
         .widget-action.interesting
           a.icon
-            img(src='theme/icons/bell_icon.png')
+            img(src='theme/icons/question_icon.png')
         .widget-action.phone
           a.icon(href="tel:" + user.cell_phone)
             img(src='theme/icons/phone_icon.png')
@@ -96,11 +96,11 @@ body.theme4
                 a.modal-close(data-dismiss="modal") &times;
               .modal-body
                 form#interest-form
-                  .form-group.custom-form.email-form
+                  .form-group.email-form
                     input.form-control(type="text", name="first_name", placeholder="John Smith")
-                  .form-group.custom-form
+                  .form-group
                     input.form-control(type="email", name="email", placeholder="Johnsmith@gmail.com")
-                  .form-group.custom-form
+                  .form-group
                     input.form-control.phone-info(type="tel", name="cell_phone", placeholder="***-***-****")
                   input(type="hidden", name="user", value=`${user._id}`)
                   input(type="hidden", name="material", value=`${material._id}`)
