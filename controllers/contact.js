@@ -2972,7 +2972,7 @@ const interestContact = async (req, res) => {
     let _activity;
     if (materialType === 'video') {
       _activity = new Activity({
-        content: 'INTERESTED',
+        content: 'gave thumbs up',
         contacts: _exist.id,
         user,
         type: 'videos',
@@ -2980,7 +2980,7 @@ const interestContact = async (req, res) => {
       });
     } else if (materialType === 'pdf') {
       _activity = new Activity({
-        content: 'INTERESTED',
+        content: 'gave thumbs up',
         contacts: _exist.id,
         user,
         type: 'pdfs',
@@ -2988,7 +2988,7 @@ const interestContact = async (req, res) => {
       });
     } else if (materialType === 'image') {
       _activity = new Activity({
-        content: 'INTERESTED',
+        content: 'gave thumbs up',
         contacts: _exist.id,
         user,
         type: 'images',
@@ -3000,7 +3000,7 @@ const interestContact = async (req, res) => {
       .save()
       .then()
       .catch((err) => {
-        console.log('err', err);
+        console.log('activity save err', err.message);
       });
 
     return res.json({

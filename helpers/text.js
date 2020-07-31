@@ -4,6 +4,7 @@ const User = require('../models/user');
 const Contact = require('../models/contact');
 const api = require('../config/api');
 const Activity = require('../models/activity');
+const ActivityHelper = require('./activity');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -35,6 +36,8 @@ const bulkVideo = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent video using sms';
+  detail_content = ActivityHelper.automationLog(detail_content);
   for (let i = 0; i < contacts.length; i++) {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
@@ -76,7 +79,7 @@ const bulkVideo = async (data) => {
         .replace(/{contact_phone}/gi, _contact.cell_phone);
 
       const _activity = new Activity({
-        content: 'sent video using sms',
+        content: detail_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'videos',
@@ -203,6 +206,9 @@ const bulkPDF = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent pdf using sms';
+  detail_content = ActivityHelper.automationLog(detail_content);
+
   for (let i = 0; i < contacts.length; i++) {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
@@ -245,7 +251,7 @@ const bulkPDF = async (data) => {
         .replace(/{contact_phone}/gi, _contact.cell_phone);
 
       const _activity = new Activity({
-        content: 'sent pdf using sms',
+        content: detail_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'pdfs',
@@ -371,6 +377,9 @@ const bulkImage = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent image using sms';
+  detail_content = ActivityHelper.automationLog(detail_content);
+
   for (let i = 0; i < contacts.length; i++) {
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
@@ -412,7 +421,7 @@ const bulkImage = async (data) => {
         .replace(/{contact_phone}/gi, _contact.cell_phone);
 
       const _activity = new Activity({
-        content: 'sent image using sms',
+        content: detail_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'images',
