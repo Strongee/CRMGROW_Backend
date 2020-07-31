@@ -299,6 +299,7 @@ const bulkInvites = async (req, res) => {
           from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
           templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
           dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
             subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER.SUBJECT}${currentUser.user_name} has invited you to join ${team.name} in CRMGrow`,
             user_name: invite.user_name,
             owner_name: currentUser.user_name,
@@ -372,7 +373,7 @@ const acceptInviation = async (req, res) => {
         templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your invitation to join ${team.name} in CRMGrow`,
           team:
             "<a href='" +
             urls.TEAM_URL +
@@ -461,7 +462,7 @@ const acceptRequest = async (req, res) => {
         templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
         dynamic_template_data: {
           subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted request to join ${team.name} in CRMGrow`,
+          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your request to join ${team.name} in CRMGrow`,
           team:
             "<a href='" +
             urls.TEAM_URL +
@@ -802,7 +803,7 @@ const shareEmailTemplates = async (req, res) => {
       $set: { email_templates: templateIds },
     }
   )
-    .then(async (_data) => {
+    .then(async () => {
       const updatedTemplates = await EmailTemplate.find({
         _id: { $in: newTeamTemplates },
       });
@@ -863,8 +864,8 @@ const searchUser = async (req, res) => {
 const requestTeam = async (req, res) => {
   const { currentUser } = req;
   const team_id = req.params.team;
-  const team = await Team.findById(team_id);
-  if (team.owner + '' == currentUser._id + '') {
+  const team = await Team.findById(team_id).populate('owner');
+  if (team.owner._id + '' === currentUser._id + '') {
     return res.status(400).send({
       status: false,
       error: 'You are a owner of this team.',
@@ -881,6 +882,33 @@ const requestTeam = async (req, res) => {
       status: true,
     });
   }
+
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+  const msg = {
+    to: team.owner.email,
+    from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+    templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+    dynamic_template_data: {
+      subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+      activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has requested to join your ${team.name} in CRMGrow`,
+      team:
+        "<a href='" +
+        urls.TEAM_ACCEPT_REQUEST_URL +
+        `?team=${team.id}&user=${currentUser.id}` +
+        "'><img src='" +
+        urls.DOMAIN_URL +
+        "assets/images/accept.png'/></a>",
+    },
+  };
+
+  sgMail
+    .send(msg)
+    .then()
+    .catch((err) => {
+      console.log('send message err: ', err);
+    });
+
   team.requests.push(currentUser._id);
   team
     .save()

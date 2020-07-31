@@ -42,6 +42,7 @@ const twilio = require('twilio')(accountSid, authToken);
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const FileHelper = require('../helpers/file');
+const ActivityHelper = require('../helpers/activity');
 
 const { DB_PORT } = require('../config/database');
 
@@ -1185,8 +1186,10 @@ const timesheet_check = new CronJob(
                   console.log('error', err);
                 });
 
+                let detail_content = 'added follow up';
+                detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({
-                  content: 'added follow up',
+                  content: detail_content,
                   contacts: _followup.contact,
                   user: timeline.user,
                   type: 'follow_ups',
@@ -1236,8 +1239,11 @@ const timesheet_check = new CronJob(
             note
               .save()
               .then((_note) => {
+                let detail_content = 'added note';
+                detail_content = ActivityHelper.automationLog(detail_content);
+
                 const activity = new Activity({
-                  content: 'added note',
+                  content: detail_content,
                   contacts: _note.contact,
                   user: timeline.user,
                   type: 'notes',

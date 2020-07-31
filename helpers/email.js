@@ -19,6 +19,7 @@ const Contact = require('../models/contact');
 const Email = require('../models/email');
 const EmailTracker = require('../models/email_tracker');
 const User = require('../models/user');
+const ActivityHelper = require('./activity');
 const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
 const urls = require('../constants/urls');
@@ -87,6 +88,9 @@ const bulkEmail = async (data) => {
   if (promise_array.length > 0) {
     return Promise.all(promise_array);
   }
+
+  let detail_content = 'sent email';
+  detail_content = ActivityHelper.automationLog(detail_content);
 
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -165,7 +169,7 @@ const bulkEmail = async (data) => {
         });
 
       const _activity = new Activity({
-        content: 'sent email',
+        content: detail_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'emails',
@@ -343,7 +347,7 @@ const bulkEmail = async (data) => {
           });
 
         const _activity = new Activity({
-          content: 'sent email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'emails',
@@ -562,7 +566,7 @@ const bulkEmail = async (data) => {
         });
 
       const _activity = new Activity({
-        content: 'sent email',
+        content: detail_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'emails',
@@ -683,6 +687,9 @@ const bulkVideo = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent video using email';
+  detail_content = ActivityHelper.automationLog(detail_content);
+
   if (!currentUser.primary_connected) {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
@@ -768,7 +775,7 @@ const bulkVideo = async (data) => {
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
           const _activity = new Activity({
-            content: 'sent video using email',
+            content: detail_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -1007,7 +1014,7 @@ const bulkVideo = async (data) => {
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
           const _activity = new Activity({
-            content: 'sent video using email',
+            content: detail_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -1278,7 +1285,7 @@ const bulkVideo = async (data) => {
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
           const _activity = new Activity({
-            content: 'sent video using email',
+            content: detail_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
@@ -1431,6 +1438,9 @@ const bulkPDF = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent pdf using email';
+  detail_content = ActivityHelper.automationLog(detail_content);
+
   if (!currentUser.primary_connected) {
     let promise;
     for (let i = 0; i < contacts.length; i++) {
@@ -1506,7 +1516,7 @@ const bulkPDF = async (data) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -1723,7 +1733,7 @@ const bulkPDF = async (data) => {
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
           const _activity = new Activity({
-            content: 'sent pdf using email',
+            content: detail_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'pdfs',
@@ -1976,7 +1986,7 @@ const bulkPDF = async (data) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -2119,6 +2129,9 @@ const bulkImage = async (data) => {
     return Promise.all(promise_array);
   }
 
+  let detail_content = 'sent image using email';
+  detail_content = Activity.automationLog(detail_content);
+
   if (!currentUser.primary_connected) {
     let promise;
     for (let i = 0; i < contacts.length; i++) {
@@ -2192,7 +2205,7 @@ const bulkImage = async (data) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -2433,7 +2446,7 @@ const bulkImage = async (data) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -2652,7 +2665,7 @@ const bulkImage = async (data) => {
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
           const _activity = new Activity({
-            content: 'sent image using email',
+            content: detail_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',

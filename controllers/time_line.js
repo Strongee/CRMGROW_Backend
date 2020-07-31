@@ -6,8 +6,10 @@ const Note = require('../models/note');
 const Activity = require('../models/activity');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
+const Garbage = require('../models/garbage');
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
+const ActivityHelper = require('../helpers/activity');
 
 const create = async (req, res) => {
   const { currentUser } = req;
@@ -157,10 +159,20 @@ const runTimeline = async (id) => {
 
         followUp
           .save()
-          .then((_followup) => {
-            const mins = new Date(_followup.due_date).getMinutes() - 30;
-            const reminder_due_date = new Date(_followup.due_date).setMinutes(
-              mins
+          .then(async (_followup) => {
+            const garbage = await Garbage.findOne({
+              user: timeline.user,
+            }).catch((err) => {
+              console.log('err', err);
+            });
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+            const startdate = moment(_followup.due_date);
+            const reminder_due_date = startdate.subtract(
+              reminder_before,
+              'mins'
             );
             const reminder = new Reminder({
               contact: timeline.contact,
@@ -176,8 +188,11 @@ const runTimeline = async (id) => {
               console.log('error', err);
             });
 
+            let detail_content = 'added follow up';
+            detail_content = ActivityHelper.automationLog(detail_content);
+
             const activity = new Activity({
-              content: 'added follow up',
+              content: detail_content,
               contacts: _followup.contact,
               user: timeline.user,
               type: 'follow_ups',
@@ -226,11 +241,14 @@ const runTimeline = async (id) => {
           created_at: new Date(),
         });
 
+        let detail_content = 'added note';
+        detail_content = ActivityHelper.automationLog(detail_content);
+
         note
           .save()
           .then((_note) => {
             const activity = new Activity({
-              content: 'added note',
+              content: detail_content,
               contacts: _note.contact,
               user: timeline.user,
               type: 'notes',
