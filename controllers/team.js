@@ -156,6 +156,21 @@ const get1 = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
+
+  const old_team = Team.findOne({ owner: currentUser.id }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  if (old_team) {
+    return res.status(400).send({
+      status: false,
+      error: 'You can create only one team.',
+    });
+  }
+
   const teamReq = req.body;
   let picture = '';
   if (teamReq.picture) {
@@ -203,6 +218,11 @@ const update = async (req, res) => {
     });
   }
 
+  let picture;
+  if (req.body.picture) {
+    picture = await uploadBase64Image(req.body.picture);
+  }
+
   Team.updateOne(
     {
       _id: req.params.id,
@@ -211,6 +231,7 @@ const update = async (req, res) => {
     {
       $set: {
         ...req.body,
+        picture,
       },
     }
   )
@@ -925,12 +946,30 @@ const requestTeam = async (req, res) => {
     });
 };
 
+const remove = async (req, res) => {
+  Team.deleteOne({
+    _id: req.params.id,
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getTeam,
   get,
   create,
   update,
+  remove,
   bulkInvites,
   acceptInviation,
   acceptRequest,

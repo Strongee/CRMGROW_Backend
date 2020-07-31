@@ -640,8 +640,11 @@ const disconnectVideo = async (video_tracker_id) => {
               console.log('contact update error', err.message);
             });
 
+            let detail_content = 'added follow up';
+            detail_content = ActivityHelper.autoSettingLog(detail_content);
+
             const activity = new Activity({
-              content: 'added follow up',
+              content: detail_content,
               contacts: contact.id,
               user: currentUser.id,
               type: 'follow_ups',

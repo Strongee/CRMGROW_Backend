@@ -493,21 +493,15 @@ const updateArchived = async (req, res) => {
     try {
       for (let i = 0; i < follow_ups.length; i++) {
         const follow_up = follow_ups[i];
-        FollowUp.updateOne({ _id: follow_up }, { $set: { status: -1 } }).catch(
-          (err) => {
-            console.log('err', err);
-          }
-        );
-        const reminder = await Reminder.findOne({
+        FollowUp.deleteOne({ _id: follow_up }).catch((err) => {
+          console.log('follow up delete err', err.message);
+        });
+        Reminder.deleteOne({
           type: 'follow_up',
           follow_up: follow_up.id,
+        }).catch((err) => {
+          console.log('reminder up delete err', err.message);
         });
-        if (reminder) {
-          reminder['del'] = true;
-          reminder.save().catch((err) => {
-            console.log('err', err);
-          });
-        }
       }
       res.send({
         status: true,

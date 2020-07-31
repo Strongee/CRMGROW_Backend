@@ -62,5 +62,6 @@ router.post(
 
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
+router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
 
 module.exports = router;
