@@ -234,7 +234,7 @@ const update = async (req, res) => {
         picture,
       },
     },
-    { returnNewDocument: true }
+    { new: true }
   )
     .then((data) => {
       console.log('data', data);
