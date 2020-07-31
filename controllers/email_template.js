@@ -56,6 +56,7 @@ const getTemplates = async (req, res) => {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
 
   const email_templates = await EmailTemplate.find({
     user: currentUser.id,
@@ -63,6 +64,7 @@ const getAll = async (req, res) => {
 
   const _template_admin = await EmailTemplate.find({
     role: 'admin',
+    company,
   });
 
   Array.prototype.push.apply(email_templates, _template_admin);
