@@ -458,6 +458,10 @@ const edit = async (req, res) => {
       console.log('err', err);
     });
 
+    if (editData['label'] === '') {
+      editData['label'] = undefined;
+    }
+
     for (const key in editData) {
       contact[key] = editData[key];
     }
