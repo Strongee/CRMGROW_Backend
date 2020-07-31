@@ -223,7 +223,7 @@ const update = async (req, res) => {
     picture = await uploadBase64Image(req.body.picture);
   }
 
-  Team.updateOne(
+  Team.findOneAndUpdate(
     {
       _id: req.params.id,
       owner: currentUser.id,
@@ -235,9 +235,10 @@ const update = async (req, res) => {
       },
     }
   )
-    .then(() => {
+    .then((data) => {
       return res.send({
         status: true,
+        data,
       });
     })
     .catch((err) => {
