@@ -7,7 +7,7 @@ const autoSettingLog = (content) => {
 };
 
 const automationLog = (content) => {
-  return `${content} {automation}`;
+  return `${content} (automation)`;
 };
 
 module.exports = {
