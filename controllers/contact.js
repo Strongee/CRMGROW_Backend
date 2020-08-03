@@ -2600,6 +2600,27 @@ const getSources = async (req, res) => {
   });
 };
 
+const getCities = async (req, res) => {
+  const { currentUser } = req;
+
+  const data = await Contact.aggregate([
+    {
+      $match: { user: mongoose.Types.ObjectId(currentUser.id) },
+    },
+    { $group: { _id: '$city' } },
+    {
+      $sort: { _id: 1 },
+    },
+  ]).catch((err) => {
+    console.log('err', err);
+  });
+
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
 const getNthContact = async (req, res) => {
   const { currentUser } = req;
   const skip = req.params.id;
@@ -3647,6 +3668,7 @@ module.exports = {
   get,
   getBrokerages,
   getSources,
+  getCities,
   create,
   search,
   advanceSearch,
