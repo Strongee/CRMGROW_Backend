@@ -11,7 +11,7 @@
   width: 40px;
   height: 40px;
   background-color: gainsboro;
-  border-radius: 8px;
+  border-radius: 50%;
   /* margin-top: 8px;
   margin-bottom: 8px; */
   position: relative;
@@ -21,7 +21,7 @@
 .widget-actions .widget-action a.icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 50%;
   position: relative;
   z-index: 2;
   display: block;
@@ -83,7 +83,6 @@
   bottom: 10px;
   left: calc(50% + 340px);
 }
-
 .widget.interesting form {
   display: grid;
   grid-template-columns: auto auto;
@@ -154,27 +153,35 @@
   color: blue;
   font-weight: bold;
 }
-
-/* @media screen and (max-width: 900px) {
-  
-} */
-.widget-actions {
-  position: fixed;
-  bottom: 10px;
-  top: unset;
-  transform: none;
-  left: calc(50% - 375px);
-  display: flex;
-  flex-direction: row;
+.page-link-content {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  height: 36px;
+  line-height: 2;
 }
+.copy-link {
+  min-width: 92px;
+}
+@media screen and (max-width: 900px) {
+  .widget-actions {
+    position: fixed;
+    bottom: 10px;
+    top: unset;
+    transform: translateX(-50%);
+    left: 50%;
+    display: flex;
+    flex-direction: row;
+  }  
+}
+
 .widget-actions .widget-action {
   margin-right: 8px;
 }
 .widget-action .content {
-  left: 20px;
+  /* left: 20px;
   top: 0px;
-  right: unset;
-  border-radius: 0px 40px 40px 0px;
+  right: unset; */
+  border-radius: 40px 0px 0px 40px;
 }
 .widget-action:hover {
   z-index: 4;
@@ -184,8 +191,8 @@
   .widget-actions {
     bottom: 10px;
     top: unset;
-    transform: none;
-    left: 22px;
+    transform: translateX(-50%);
+    left: 50%;
     display: flex;
     flex-direction: row;
   }
@@ -351,3 +358,55 @@ body.is_protected > *:not(.modal) {
   pointer-events: none;
 }
 
+.widget-action.grad-btn {
+  display: flex;
+  height: 36px;
+  align-items: center;
+  background: white;
+  padding: 0px 12px;
+  border-radius: 20px;
+  border: 1px solid gainsboro;
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+}
+.widget-action.share {
+  width: fit-content;
+  margin: auto;
+}
+.widget-action.share a.icon {
+  height: unset;
+  display: contents;
+  background-color: unset;
+}
+.widget-action.grad-btn img {
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  background-color: white;
+  margin-right: 4px;
+}
+.bottom{
+  text-align: center;
+  background: gainsboro;
+  padding: 20px 0px;
+  cursor: pointer;
+  margin-top: auto;
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 280px;
+}
+
+.toast.success {
+  background-color: #64f385cc;
+}
+
+.toast.error {
+  background-color: #ff5656cc;
+}

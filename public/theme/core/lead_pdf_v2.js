@@ -115,6 +115,9 @@ $(document).ready(function () {
           var siteAddr = location.protocol + '//' + location.hostname;
           // var siteAddr = "http://localhost:3000";
           socket = io.connect(siteAddr);
+          if(updateInterested) {
+            updateInterested();
+          }
         }
         $('#info-form .btn').removeClass('loading');
         $('#info-form .btn').text('Submit');

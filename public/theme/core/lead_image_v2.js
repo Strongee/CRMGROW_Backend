@@ -91,6 +91,9 @@
             var siteAddr = location.protocol + '//' + location.hostname;
             // var siteAddr = "http://localhost:3000";
             socket = io.connect(siteAddr);
+            if(updateInterested) {
+              updateInterested();
+            }
           }
           $('#info-form .btn').removeClass('loading');
           $('#info-form .btn').text('Submit');
@@ -128,4 +131,14 @@
       }
     })
   })
+  Galleria.loadTheme('./theme/plugins/galleria/galleria.classic.min.js');
+
+  // Initialize Galleria
+  Galleria.run('#galleria');
+
+  $("#galleria").on("click", ".galleria-stage .galleria-image img", function(e) {
+    let currentIndex = $("#galleria .galleria-current").html();
+    $("#gallery-container a:nth-child(" + currentIndex + ") img").click();
+  });
+
 })(jQuery)

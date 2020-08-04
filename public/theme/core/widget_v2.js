@@ -9,6 +9,10 @@ if($("#activity").val() != 'undefined' && $("#contact").val() != 'undefined') {
   isTrackMaterial = true;
 }
 
+$("#contact").change(function(e) {
+  console.log("Contact Changed", $(this).val());
+})
+
 $(".widget-action.interesting").click(function() {
   if (hasCapture && captured) {
     likeWithContact()  
@@ -43,9 +47,9 @@ function likeWithContact() {
     success: function (data) {
       $(".widget-action.interesting").removeClass('loading');
       const response = data.data;
-      delay(250).then(() => check())
-      delay(150).then(() => check())
-      delay(500).then(() => check())
+      // TODO: Interested
+      showSuccess("SUCCESS", "You gave thumbs up successfully.");
+      hideInterested();
       if (response) {
         if(!socket) {
           var siteAddr = location.protocol + '//' + location.hostname;
@@ -59,12 +63,12 @@ function likeWithContact() {
       if (data.status == 400) {
         const response = data.responseJSON;
         if (response && response['error']) {
-          alert(response['error']);
+          showError('ERROR', response['error'])
         } else {
-          alert('Internal Server Error');
+          showError('ERROR', 'Internal Server Error')
         }
       } else {
-        alert('Internal Server Error');
+        showError('ERROR', 'Internal Server Error')
       }
     },
   });
@@ -92,9 +96,9 @@ $('#interest-form').submit((e) => {
     data: JSON.stringify(data),
     success: function (data) {
       const response = data.data;
-      delay(250).then(() => check())
-      delay(150).then(() => check())
-      delay(500).then(() => check())
+      // TODO: Interest Completed
+      showSuccess("SUCCESS", "You gave thumbs up successfully.");
+      hideInterested();
       if (response) {
         $('#contact').val(response.contact);
         $('#activity').val(response.activity);
@@ -115,104 +119,119 @@ $('#interest-form').submit((e) => {
       if (data.status == 400) {
         const response = data.responseJSON;
         if (response && response['error']) {
-          alert(response['error']);
+          showError('ERROR', response['error'])
         } else {
-          alert('Internal Server Error');
+          showError('ERROR', 'Internal Server Error')
         }
       } else {
-        alert('Internal Server Error');
+        showError('ERROR', 'Internal Server Error')
       }
     },
   });
 })
 
+var share_popup;
+$(".share-action.icon").click(function(e) {
+  e.preventDefault();
+  let href = this.href;
+  if(share_popup) {
+    share_popup.close();  
+  }
+  share_popup = window.open(href, '', "width=600, height=400");
 
-
-var brd = document.createElement("DIV");
-brd.classList.add("rate-board");
-document.body.insertBefore(brd, document.getElementById("board"));
-
-const genDur = 3000;
-const speed = 0.5;
-const cursorXOffset = 0;
-const cursorYOffset = -5;
-
-var hearts = [];
-		
-function generateHeart(x, y, xBound, xStart, scale)
-{
-	var heart = document.createElement("DIV");
-	heart.setAttribute('class', 'heart');
-	brd.appendChild(heart);
-	heart.time = genDur;
-	heart.x = x;
-	heart.y = y;
-	heart.bound = xBound;
-	heart.direction = xStart;
-	heart.style.left = heart.x + "px";
-	heart.style.top = heart.y + "px";
-	heart.scale = scale;
-	heart.style.transform = "scale(" + scale + "," + scale + ")";
-	if(hearts == null)
-		hearts = [];
-	hearts.push(heart);
-	return heart;
-}
-
-var down = false;
-var event = null;
-
-document.onmousedown = function(e) {
-	down = true;
-	event = e;
-}
-
-document.ontouchmove = function(e) {
-	event = e.touches[0];
-}
-
-var before = Date.now();
-var id = setInterval(frame, 5);
-// var gr = setInterval(check, 100);
-
-function frame()
-{
-	var current = Date.now();
-	var deltaTime = current - before;
-	before = current;
-	for(i in hearts)
-	{
-		var heart = hearts[i];
-		heart.time -= deltaTime;
-		if(heart.time > 0)
-		{
-			heart.y -= speed;
-			heart.style.top = heart.y + "px";
-			heart.style.left = heart.x + heart.direction * heart.bound * Math.sin(heart.y * heart.scale / 30) / heart.y * 100 + "px";
-    }
-		else
-		{
-			heart.parentNode.removeChild(heart);
-			hearts.splice(i, 1);
-		}
-	}
-}
-
-function check()
-{
-		var start = 1 - Math.round(Math.random()) * 2;
-		var scale = Math.random() * Math.random() * 0.8 + 0.2;
-    var bound = 30 + Math.random() * 20;
-    let button = document.querySelector(".widget-action.interesting");
-    if(button) {
-      let x = document.querySelector(".widget-action.interesting").offsetLeft;
-      let y = document.querySelector(".widget-action.interesting").offsetTop;
-      generateHeart(x - brd.offsetLeft + cursorXOffset, y - brd.offsetTop + cursorYOffset, bound, start, scale);
-    }
-}
-
-delay = (ms) => new Promise((resolve) => {
-  setTimeout(() => {
-    resolve();
-  }, ms);
+  // REGISTER ACTION
+  let contact = $("#contact").val();
+  if(!contact) {
+    return;
+  }
+  let data = {
+    site: $(this).attr("data-media"),
+    contact: contact,
+  }
+  $.ajax({
+    type: 'POST',
+    url: 'api/contact/share',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: JSON.stringify(data),
+    success: function (data) {
+      const response = data.data;
+      // TODO: Show ALERT
+    },
+    error: function (data) {
+      
+    },
+  });
 });
+$(".action.icon").click(function(e) {
+  // REGISTER ACTION
+  let contact = $("#contact").val();
+  if(!contact) {
+    return;
+  }
+  let data = {
+    site: $(this).attr("data-media"),
+    contact: contact,
+  }
+  $.ajax({
+    type: 'POST',
+    url: 'api/contact/share',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: JSON.stringify(data),
+    success: function (data) {
+      const response = data.data;
+      // TODO: Show ALERT
+    },
+    error: function (data) {
+      
+    },
+  });
+});
+
+$(".copy-link").click(function(e) {
+  let link = $(".page-link-content").html();
+  let el = document.createElement("input");
+  el.value = link;
+  el.setAttribute('readonly', '');
+  el.style.position = 'absolute';
+  el.style.left = '-9999px';
+  document.body.appendChild(el);
+  el.select();
+  el.setSelectionRange(0, 99999)
+  document.execCommand("copy");
+  document.body.removeChild(el);
+  $(this).html("Copied");
+  setTimeout(() => {
+    $(this).html("Copy Link");
+  }, 3000);
+});
+
+
+const showSuccess = (title, message) => {
+  $(".toast.success").toast('hide');
+  $(".toast.error").toast('hide');
+  $(".toast.success .title").html(title);
+  $(".toast.success .content").html(message);
+  setTimeout(() => {
+    $(".toast.success").toast('show');
+  }, 1000);
+}
+const showError = (title, message) => {
+  $(".toast.success").toast('hide');
+  $(".toast.error").toast('hide');
+  $(".toast.error .title").html(title);
+  $(".toast.error .content").html(message);
+  setTimeout(() => {
+    $(".toast.error").toast('show');
+  }, 1000);
+}
+
+const hideInterested = () => {
+  $(".widget-action.interesting").addClass('d-none');
+}
+const updateInterested = () => {
+  $(".widget-action.interesting .icon img").attr('src', './theme/icons/interest_icon.png');
+}

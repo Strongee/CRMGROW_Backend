@@ -43,4 +43,14 @@ $(function () {
     }
     total++;
   }
+
+  Galleria.loadTheme('./theme/plugins/galleria/galleria.classic.min.js');
+
+  // Initialize Galleria
+  Galleria.run('#galleria');
+
+  $("#galleria").on("click", ".galleria-stage .galleria-image img", function(e) {
+    let currentIndex = $("#galleria .galleria-current").html();
+    $("#gallery-container a:nth-child(" + currentIndex + ") img").click();
+  });
 });
