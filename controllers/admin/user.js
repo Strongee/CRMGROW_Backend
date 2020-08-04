@@ -12,7 +12,8 @@ const Reminder = require('../../models/reminder');
 const FollowUp = require('../../models/follow_up');
 const PaymentCtrl = require('../payment');
 const { isBlockedEmail } = require('../../helpers/email');
-const config = require('../../config/api');
+const api = require('../../config/api');
+const system_settings = require('../../config/system_settings');
 const urls = require('../../constants/urls');
 const mail_contents = require('../../constants/mail_contents');
 
@@ -108,7 +109,7 @@ const login = async (req, res) => {
   }
 
   // TODO: Include only email for now
-  const token = jwt.sign({ id: _user.id }, config.JWT_SECRET);
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   delete user.hash;
@@ -294,7 +295,7 @@ const checkAuth = async (req, res, next) => {
   const token = req.get('Authorization');
   let decoded;
   try {
-    decoded = jwt.verify(token, config.JWT_SECRET);
+    decoded = jwt.verify(token, api.JWT_SECRET);
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.info('Auth Success:', decoded);
   } catch (err) {
@@ -367,7 +368,7 @@ const create = async (req, res) => {
 
   const { email } = req.body;
 
-  const password = req.body.password || config.ADMIN_DEFAULT_PASS;
+  const password = req.body.password || system_settings.PASSWORD.USER;
 
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto
@@ -385,11 +386,11 @@ const create = async (req, res) => {
   user
     .save()
     .then((_res) => {
-      sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       let msg = {
         to: _res.email,
         from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+        templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
         dynamic_template_data: {
           first_name: _res.user_name,
           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
@@ -406,7 +407,7 @@ const create = async (req, res) => {
       msg = {
         to: _res.email,
         from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: config.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+        templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
         dynamic_template_data: {
           first_name: _res.user_name,
           connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
@@ -483,7 +484,7 @@ const disableUser = async (req, res) => {
   if (user['payment']) {
     PaymentCtrl.cancelCustomer(user['payment'])
       .then(() => {
-        User.update(
+        User.updateOne(
           { _id: req.params.id },
           {
             $set: { del: true, updated_at: new Date() },

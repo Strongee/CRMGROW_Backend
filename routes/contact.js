@@ -128,6 +128,9 @@ router.get(
 // Get Source data
 router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources));
 
+// Get City data
+router.get('/cities', UserCtrl.checkAuth2, catchError(ContactCtrl.getCities));
+
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById));
 
