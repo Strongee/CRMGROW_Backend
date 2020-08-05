@@ -74,6 +74,9 @@ if(duration > 600) {
             // var siteAddr = "http://localhost:3000";
             socket = io.connect(siteAddr);
             vPlayer.play();
+            if(updateInterested) {
+              updateInterested();
+            }
           }
           $('#info-form .btn').removeClass('loading');
           $('#info-form .btn').text('Submit');

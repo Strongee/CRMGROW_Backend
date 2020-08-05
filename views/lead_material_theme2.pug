@@ -30,6 +30,7 @@ head
   script(src='./theme/js/bootstrap.min.js')
   script(src='https://kit.fontawesome.com/a076d05399.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
+  script(type='text/javascript', src='./theme/plugins/galleria/galleria.min.js')
 header
   .profile.container.cs-container
     .avatar-social
@@ -81,12 +82,15 @@ section.material-section
             .watched-time
               | 00:00
         if material_type === 'image'
-          .images-wrapper
-            section.regular.slider
-              div.gallery(class=`${material.url.length >= 12 ? 'full-grid' : 'col-grid-' + Math.ceil(material.url.length / 3)}`)
-                each url in material.url
-                  a(href=`${url}`)
-                    img(src=`${url}`)
+          .gallery-wrapper
+            #galleria
+              each url in material.url
+                a(href=url)
+                  img(src=url)
+            #gallery-container.d-none
+              each url in material.url
+                a(href=url)
+                  img(src=url)
         if material_type === 'pdf'
           .pdf-wrapper
             #pdf-container
@@ -217,7 +221,7 @@ if material_type === 'image'
   //- Image Materials Plugin
   script(type='text/javascript', src='./theme/plugins/simple-lightbox/simple-lightbox.js')
   script.
-    var lightbox = new SimpleLightbox('.gallery a', {
+    var lightbox = new SimpleLightbox('#gallery-container a', {
     /* options */
     });
 //- PDF Track JS

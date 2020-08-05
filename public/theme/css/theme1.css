@@ -23,7 +23,7 @@ header {
   text-align: center;
   padding: 13px 0px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   position: sticky;
   top: 0px;
 }
@@ -415,4 +415,28 @@ div#pdf-container::before {
   padding: 15px 16px;
   border-radius: 14px;
   border-top-right-radius: 0px;
+}
+
+
+.gallery-wrapper {
+  padding-top: calc(60% + 60px);
+  position: relative;
+}
+#galleria {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+#galleria .galleria-theme-classic {
+  background-color: gainsboro;
+}
+#galleria .galleria-thumbnails {
+  margin: auto;
+}
+#galleria .galleria-counter {
+  opacity: 1!important;
+  background: #000a!important;
+  padding: 5px!important;
 }

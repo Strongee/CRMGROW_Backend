@@ -28,6 +28,7 @@ head
   script(src='./theme/js/bootstrap.min.js')
   script(src='https://kit.fontawesome.com/a076d05399.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
+  script(type='text/javascript', src='./theme/plugins/galleria/galleria.min.js')
 body.theme4
   section.main-container.theme4-container
     .material-container(class=`${material_type}`)
@@ -39,12 +40,15 @@ body.theme4
             video#player(poster=`${material.thumbnail}`, controls, name="media")
               source(src=`${material.url}`, type=`video/mp4`)
       if material_type === 'image'
-        .images-wrapper
-          section.regular.slider
-            div.gallery(class=`${material.url.length >= 12 ? 'full-grid' : 'col-grid-' + Math.ceil(material.url.length / 3)}`)
-              each url in material.url
-                a(href=`${url}`)
-                  img(src=`${url}`)
+        .gallery-wrapper
+          #galleria
+            each url in material.url
+              a(href=url)
+                img(src=url)
+          #gallery-container.d-none
+            each url in material.url
+              a(href=url)
+                img(src=url)
       if material_type === 'pdf'
         .pdf-wrapper
           #pdf-container
@@ -64,7 +68,7 @@ body.theme4
       .widget-actions
         .widget-action.interesting
           a.icon
-            img(src='theme/icons/question_icon.png')
+            img(src='theme/icons/interest_icon.png')
         .widget-action.phone
           a.icon(href="tel:" + user.cell_phone)
             img(src='theme/icons/phone_icon.png')
@@ -85,6 +89,11 @@ body.theme4
           | #{material.title}
         p.material-description
           != material.description
+    .bottom
+      a.widget-action.share.grad-btn(data-toggle="modal" data-target="#shareModal")
+        img(src='theme/icons/share_icon.png')
+        span
+          | Share this page
     .widgets
       .widget.interesting
         .modal.fade(role="dialog", id="interestModal")
@@ -117,29 +126,29 @@ body.theme4
               .modal-body
                 .share_socials
                   .mail
-                    a.icon(href="mailto:?subject=body=")
+                    a.icon.action(href="mailto:?subject=body=")
                       img(src='theme/icons/email_share.png')
                   .sms
-                    a.icon(href="sms:?body=")
+                    a.icon.action(href="sms:?body=")
                       img(src='theme/icons/message_share.png')
-                  .facebook-messenger
-                    a.icon
-                      img(src='theme/icons/facebook_messenger_share.png')
+                  //- .facebook-messenger
+                  //-   a.icon
+                  //-     img(src='theme/icons/facebook_messenger_share.png')
                   .facebook
-                    a.icon
+                    a.icon.share-action(href="http://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent('https://app.crmgrow.com/video?video=' + material._id + '&user=' + user._id))
                       img(src='theme/icons/facebook_share.png')
                   .linkedin
-                    a.icon
+                    a.icon.share-action(href="https://www.linkedin.com/shareArticle?url=" + encodeURIComponent('https://app.crmgrow.com/video?video=' + material._id + '&user=' + user._id))
                       img(src='theme/icons/linked_share.png')
                   .twitter
-                    a.icon
+                    a.icon.share-action(href="https://twitter.com/intent/tweet?url=" + encodeURIComponent('https://app.crmgrow.com/video?video=' + material._id + '&user=' + user._id))
                       img(src='theme/icons/twitter_share.png')
-                  .instagram
-                    a.icon
-                      img(src='theme/icons/instagram_share.png')
+                  //- .instagram
+                  //-   a.icon
+                  //-     img(src='theme/icons/instagram_share.png')
                 .link-wrapper
                   .page-link-content
-                    | page link
+                    | #{`https://app.crmgrow.com/video?video=${material._id}&user=${user._id}`}
                   button.copy-link Copy Link
     .disclaim
         | The statements and opinions contained in this advertisement are solely those of the individual author and do not necessarily reflect the positions or opinions of eXp Realty, LLC, or its subsidiaries or affiliates (the “Company”). The Company does not assume any responsibility for, nor does it warrant the accuracy, completeness or quality of the information provided.
@@ -153,6 +162,18 @@ input#user(type='hidden', value=`${user._id}`)
 input#material(type='hidden', value=`${material._id}`)
 input#material-start(type='hidden', value=`${material_start}`)
 input#material-type(type='hidden', value=`${material_type}`)
+.toast.success(data-autohide='true', data-delay="3000")
+  .toast-header
+    strong.mr-auto.text-success.title Toast Header
+    button.ml-2.mb-1.close(type='button', data-dismiss='toast') ×
+  .toast-body.content
+    | Some text inside the toast body
+.toast.error(data-autohide='true', data-delay="3000")
+  .toast-header
+    strong.mr-auto.text-danger.title Toast Header
+    button.ml-2.mb-1.close(type='button', data-dismiss='toast') ×
+  .toast-body.content
+    | Some text inside the toast body
 //- Widget JS
 script(type='text/javascript', src='./theme/core/widget_v2.js')
 //- Video Track JS
@@ -165,7 +186,7 @@ if material_type === 'image'
   //- Image Materials Plugin
   script(type='text/javascript', src='./theme/plugins/simple-lightbox/simple-lightbox.js')
   script.
-    var lightbox = new SimpleLightbox('.gallery a', {
+    var lightbox = new SimpleLightbox('#gallery-container a', {
     /* options */
     });
 //- PDF Track JS
