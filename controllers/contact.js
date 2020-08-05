@@ -3664,6 +3664,43 @@ const interestSubmitContact = async (req, res) => {
   }
 };
 
+const resubscribe = async (req, res) => {
+  const { currentUser } = req;
+  const { contact } = req.body;
+
+  const _activity = new Activity({
+    user: currentUser.id,
+    contacts: contact,
+    content: 'resubscribed',
+    type: 'emails',
+  });
+  const activity = await _activity
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err.message);
+    });
+  Contact.updateOne(
+    { _id: contact.id },
+    {
+      $set: { last_activity: activity.id },
+      $pull: { tags: { $in: ['unsubscribed'] } },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err.message);
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -3698,6 +3735,7 @@ module.exports = {
   bulkCreate,
   verifyEmail,
   verifyPhone,
+  resubscribe,
   filter,
   interestContact,
   interestSubmitContact,
