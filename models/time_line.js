@@ -12,6 +12,7 @@ const TimeLineSchema = new Schema(
     action: Object,
     ref: String,
     parent_ref: String,
+    activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     automation: { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     condition: {
       case: String,

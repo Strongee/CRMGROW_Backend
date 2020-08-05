@@ -1499,12 +1499,47 @@ const timesheet_check = new CronJob(
                 });
               });
             break;
+          case 'resend_email_video':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            EmailHelper.resendVideo(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            break;
         }
         const next_data = {
           contact: timeline.contact,
           ref: timeline.ref,
         };
-        TimeLineCtrl.activeNext(next_data);
+        if (timeline.ref) {
+          TimeLineCtrl.activeNext(next_data);
+        }
       }
     }
   },

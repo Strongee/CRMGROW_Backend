@@ -15,6 +15,7 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
+const EmailTemplate = require('../models/email_template');
 const ActivityHelper = require('../helpers/activity');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
@@ -215,7 +216,9 @@ const disconnectPDF = async (pdf_tracker_id) => {
           contact: contact.id,
           ref: timeline.ref,
         };
-        TimeLineCtrl.activeNext(data);
+        if (timeline.ref) {
+          TimeLineCtrl.activeNext(data);
+        }
       } catch (err) {
         console.log('err', err);
       }
@@ -350,7 +353,9 @@ const disconnectVideo = async (video_tracker_id) => {
             contact: contact.id,
             ref: timeline.ref,
           };
-          TimeLineCtrl.activeNext(data);
+          if (timeline.ref) {
+            TimeLineCtrl.activeNext(data);
+          }
         } catch (err) {
           console.log('err', err.message);
         }
@@ -546,7 +551,11 @@ const disconnectVideo = async (video_tracker_id) => {
       const now = moment();
       now.set({ second: 0, millisecond: 0 });
       const follow_due_date = now.add(auto_follow_up.period, 'hours');
+      let follow_up = null;
       if (contact.auto_follow_up) {
+        follow_up = await FollowUp.findOne({ _id: contact.auto_follow_up });
+      }
+      if (follow_up) {
         FollowUp.updateOne(
           {
             _id: contact.auto_follow_up,
@@ -660,6 +669,57 @@ const disconnectVideo = async (video_tracker_id) => {
           });
       }
     }
+
+    const auto_resend = garbage.auto_resend;
+    if (auto_resend['enabled']) {
+      if (query.material_last < video.duration - 5) {
+        const _activity = Activity.findOne({ _id: query.activity }).catch(
+          (err) => {
+            console.log('activity found err', err.message);
+          }
+        );
+        let time_line;
+        const now = moment();
+        const due_date = now.add(auto_resend.period, 'hours');
+        due_date.set({ second: 0, millisecond: 0 });
+        const canned_message = await EmailTemplate.findOne({
+          _id: auto_resend.canned_message,
+        });
+
+        if (_activity.send_type === 0) {
+          time_line = new TimeLine({
+            user: currentUser.id,
+            contact: contact.id,
+            action: {
+              type: 'resend_email_video',
+              activity: _activity.id,
+              content: canned_message.content,
+              subject: canned_message.subject,
+              video: video.id,
+            },
+            status: 'active',
+            due_date,
+          });
+        } else {
+          time_line = new TimeLine({
+            user: currentUser.id,
+            contact: contact.id,
+            action: {
+              type: 'resend_text_video',
+              activity: _activity.id,
+              content: canned_message.content,
+              video: video.id,
+            },
+            status: 'active',
+            due_date,
+          });
+        }
+
+        time_line.save().catch((err) => {
+          console.log('err', err);
+        });
+      }
+    }
   }
 };
 
@@ -742,7 +802,9 @@ const disconnectImage = async (image_tracker_id) => {
           contact: contact.id,
           ref: timeline.ref,
         };
-        TimeLineCtrl.activeNext(data);
+        if (timeline.ref) {
+          TimeLineCtrl.activeNext(data);
+        }
       } catch (err) {
         console.log('err', err);
       }

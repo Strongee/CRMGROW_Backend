@@ -60,6 +60,14 @@ const GarbageSchema = new Schema(
       period: { type: Number, default: 0 },
       content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
     },
+    auto_resend: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 24 },
+      canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+    },
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },
     intro_video: { type: String },
