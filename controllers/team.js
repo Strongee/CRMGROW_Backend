@@ -157,12 +157,14 @@ const get1 = async (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
 
-  const old_team = Team.findOne({ owner: currentUser.id }).catch((err) => {
-    return res.status(500).send({
-      status: false,
-      error: err.message,
-    });
-  });
+  const old_team = await Team.findOne({ owner: currentUser.id }).catch(
+    (err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    }
+  );
 
   if (old_team) {
     return res.status(400).send({
@@ -237,7 +239,6 @@ const update = async (req, res) => {
     { new: true }
   )
     .then((data) => {
-      console.log('data', data);
       return res.send({
         status: true,
         data,

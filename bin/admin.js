@@ -162,7 +162,20 @@ const updateContacts = async () => {
     let label;
     const adminContact = adminContacts[i];
     if (adminContact.tags && adminContact.tags.include('unsubscribed')) {
-      Contact.deleteOne({ _id: adminContact.id }).catch((err) => {
+      Contact.deleteOne({
+        _id: adminContact.id,
+        user: admin.id,
+      }).catch((err) => {
+        console.log('err', err.message);
+      });
+      continue;
+    }
+
+    if (adminContact.label === Labels[6].id) {
+      Contact.deleteOne({
+        _id: adminContact.id,
+        user: admin.id,
+      }).catch((err) => {
         console.log('err', err.message);
       });
       continue;
@@ -177,7 +190,10 @@ const updateContacts = async () => {
       });
 
       if (!user) {
-        Contact.deleteMany({ source: adminContact.source }).catch((err) => {
+        Contact.deleteOne({
+          _id: adminContact.id,
+          user: admin.id,
+        }).catch((err) => {
           console.log('err', err.message);
         });
         continue;

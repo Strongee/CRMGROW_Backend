@@ -31,6 +31,7 @@ const ActivitySchema = new Schema(
     sms: { type: mongoose.Schema.Types.ObjectId, ref: 'sms' },
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     material_last: Number,
+    send_type: { type: Number, default: 0 },
     subject: String,
     description: String,
     created_at: Date,
