@@ -2326,7 +2326,7 @@ const advanceSearch = async (req, res) => {
     query['$and'].push(regionQuery);
   }
   if (cityCondition) {
-    var cityQuery = { city: { $regex: '.*' + cityCondition + '.*' } };
+    var cityQuery = { city: { $in: cityCondition } };
     query['$and'].push(cityQuery);
   }
   if (zipcodeCondition) {
