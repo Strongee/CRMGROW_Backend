@@ -2328,7 +2328,7 @@ const advanceSearch = async (req, res) => {
     var regionQuery = { state: { $in: regionCondition } };
     query['$and'].push(regionQuery);
   }
-  if (cityCondition) {
+  if (cityCondition && cityCondition.length) {
     var cityQuery = { city: { $in: cityCondition } };
     query['$and'].push(cityQuery);
   }
