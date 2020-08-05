@@ -14,11 +14,13 @@ const system_settings = require('../config/system_settings');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Activity = require('../models/activity');
+const FollowUp = require('../models/follow_up');
 const Labels = require('../constants/label');
 
 const addContacts = async () => {
   const admin = await User.findOne({
     email: system_settings.ADMIN_ACCOUNT,
+    role: 'admin',
   }).catch((err) => {
     console.log('err', err);
   });
@@ -149,11 +151,12 @@ const addContacts = async () => {
 };
 
 const updateContacts = async () => {
-  const admin = await User.findOne({ email: 'support@crmgrow.com' }).catch(
-    (err) => {
-      console.log('admin account found', err.message);
-    }
-  );
+  const admin = await User.findOne({
+    email: 'support@crmgrow.com',
+    role: 'admin',
+  }).catch((err) => {
+    console.log('admin account found', err.message);
+  });
 
   const adminContacts = await Contact.find({ user: admin.id }).catch((err) => {
     console.log('admin contact found err', err.message);
@@ -161,7 +164,7 @@ const updateContacts = async () => {
   for (let i = 0; i < adminContacts.length; i++) {
     let label;
     const adminContact = adminContacts[i];
-    if (adminContact.tags && adminContact.tags.include('unsubscribed')) {
+    if (adminContact.tags && adminContact.tags.indexOf('unsubscribed') !== -1) {
       Contact.deleteOne({
         _id: adminContact.id,
         user: admin.id,
@@ -333,7 +336,26 @@ const add_contact = new CronJob(
   'US/Central'
 );
 
-update_contact.start();
-add_contact.start();
+// update_contact.start();
+// add_contact.start();
 // addContacts()
 // sourceUpdate()
+
+// updateContacts();
+// addContacts();
+const clean = async () => {
+  const admin = await User.findOne({
+    email: 'support@crmgrow.com',
+    role: 'admin',
+  }).catch((err) => {
+    console.log('admin account found', err.message);
+  });
+  Activity.deleteMany({ user: admin.id }).catch((err) => {
+    console.log('activity remove error', err.message);
+  });
+  FollowUp.deleteMany({ user: admin.id }).catch((err) => {
+    console.log('activity remove error', err.message);
+  });
+};
+
+// clean();

@@ -205,6 +205,12 @@ router.post(
   catchError(ContactCtrl.bulkCreate)
 );
 
+router.post(
+  '/resubscribe',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.resubscribe)
+);
+
 router.post('/filter', UserCtrl.checkAuth, catchError(ContactCtrl.filter));
 
 // Get a pull contact info for profile page
