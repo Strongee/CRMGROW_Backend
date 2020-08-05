@@ -3681,7 +3681,7 @@ const resubscribe = async (req, res) => {
       console.log('err', err.message);
     });
   Contact.updateOne(
-    { _id: contact.id },
+    { _id: contact },
     {
       $set: { last_activity: activity.id },
       $pull: { tags: { $in: ['unsubscribed'] } },
