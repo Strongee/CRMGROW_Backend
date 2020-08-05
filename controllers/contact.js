@@ -838,7 +838,10 @@ const exportCSV = async (req, res) => {
       user: currentUser.id,
       contact: contacts[i],
     });
-    const _contact = await Contact.findOne({ _id: contacts[i] });
+    const _contact = await Contact.findOne({ _id: contacts[i] }).populate({
+      path: 'label',
+      select: 'name',
+    });
 
     if (_note.length !== 0) {
       _data['note'] = _note;
