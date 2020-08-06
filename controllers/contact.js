@@ -3127,12 +3127,17 @@ const interestSubmitContact = async (req, res) => {
     });
   } else {
     if (email) {
-      await verifyEmail(email).catch((err) => {
-        return res.status(400).json({
-          status: false,
+      const { error } = await verifyEmail(email).catch((err) => {
+        return {
           error: err.message,
-        });
+        };
       });
+      if (error) {
+        res.status(400).json({
+          status: false,
+          error,
+        });
+      }
     }
     const e164Phone = phone(cell_phone)[0];
 
