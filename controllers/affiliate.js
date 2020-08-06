@@ -117,7 +117,7 @@ const create = async (req, res) => {
       console.log(err);
       res.status(500).json({
         status: false,
-        err: err.details[0],
+        err: err.error.details[0],
       });
     });
 };
@@ -160,7 +160,7 @@ const update = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details[0],
+          err: err.error.details[0],
         });
       });
   } else {
