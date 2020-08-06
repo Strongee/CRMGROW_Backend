@@ -35,15 +35,16 @@ function likeWithContact() {
   let material = $('#material').val();
   let materialType = $('#material-type').val();
   let user = $('#user').val();
+  let activity_id = $('#activity').val();
 
   $(".widget-action.interesting").addClass('loading');
   $.ajax({
     type: 'POST',
-    url: 'api/contact/interest-submit',
+    url: 'api/material/thumbs-up',
     headers: {
       'Content-Type': 'application/json',
     },
-    data: JSON.stringify({contact, material, materialType, user}),
+    data: JSON.stringify({activity_id}),
     success: function (data) {
       $(".widget-action.interesting").removeClass('loading');
       const response = data.data;
@@ -52,8 +53,8 @@ function likeWithContact() {
       hideInterested();
       if (response) {
         if(!socket) {
-          var siteAddr = location.protocol + '//' + location.hostname;
-          // var siteAddr = "http://localhost:3000";
+          // var siteAddr = location.protocol + '//' + location.hostname;
+          var siteAddr = "http://localhost:3000";
           socket = io.connect(siteAddr);
         }
       }
@@ -79,17 +80,22 @@ $('#interest-form').submit((e) => {
   e.preventDefault();
   var formData = $("#interest-form").serializeArray();
   var data = {};
+  var material_id;
   formData.forEach((e) => {
     data[e['name']] = e['value'];
+    if(e.name === 'material') {
+      material_id = e.value;
+    }
   });
   let materialType = $('#material-type').val();
   data['materialType'] = materialType;
+  data[materialType] = material_id
   $('#interest-form .btn').addClass('loading');
   $('#interest-form .btn').text('Please wait...');
 
   $.ajax({
     type: 'POST',
-    url: 'api/contact/interest',
+    url: 'api/contact/lead',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -97,8 +103,6 @@ $('#interest-form').submit((e) => {
     success: function (data) {
       const response = data.data;
       // TODO: Interest Completed
-      showSuccess("SUCCESS", "You gave thumbs up successfully.");
-      hideInterested();
       if (response) {
         $('#contact').val(response.contact);
         $('#activity').val(response.activity);
@@ -107,6 +111,7 @@ $('#interest-form').submit((e) => {
           // var siteAddr = "http://localhost:3000";
           socket = io.connect(siteAddr);
         }
+        likeWithContact();
       }
       $('#interest-form .btn').removeClass('loading');
       $('#interest-form .btn').text('I\'M INTERESTED');

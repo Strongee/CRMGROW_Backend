@@ -14,10 +14,10 @@ var watched_time = 0;
 var duration = document.querySelector('#duration').value;
 let limit = duration
 if(duration > 600) {
-  limit = duration - 60
+  limit = duration - 5
 }
 else {
-  limit = duration - 10
+  limit = duration - 3
 }
 
 var material_start = 0;
@@ -153,9 +153,13 @@ function reportTime() {
       }
     } else {
       if (!reported) {
+        let currentTime = vPlayer.currentTime;
+        if(currentTime > limit - 2 ) {
+          currentTime = 0;
+        }
         socket.emit('update_video', {
           duration: duration * 1000,
-          material_last: vPlayer.currentTime
+          material_last: currentTime
         });
         socket.emit('close');
         reported = true;
