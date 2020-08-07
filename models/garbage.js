@@ -63,7 +63,11 @@ const GarbageSchema = new Schema(
     auto_resend: {
       enabled: { type: Boolean, default: false },
       period: { type: Number, default: 24 },
-      canned_message: {
+      sms_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+      email_canned_message: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'email_template',
       },

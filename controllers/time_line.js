@@ -232,6 +232,20 @@ const runTimeline = async (id) => {
           });
         break;
       }
+      case 'update_follow_up': {
+        let follow_due_date;
+        if (action.due_date) {
+          follow_due_date = action.due_date;
+        } else {
+          const now = moment();
+          // let tens = parseInt(now.minutes() / 10)
+          // now.set({ minute: tens*10, second: 0, millisecond: 0 })
+          now.set({ second: 0, millisecond: 0 });
+          follow_due_date = now.add(action.due_duration, 'hours');
+          follow_due_date.set({ second: 0, millisecond: 0 });
+        }
+        break;
+      }
       case 'note': {
         const note = new Note({
           content: action.content,
