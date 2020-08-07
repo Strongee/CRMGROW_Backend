@@ -564,7 +564,7 @@ const bulkEmail = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true"/></a></td></tr>`;
         image_objects += image_object;
         activities.push(activity.id);
       }
@@ -605,8 +605,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: image_subject,
         html:
-          '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           image_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +

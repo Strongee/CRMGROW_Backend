@@ -433,7 +433,7 @@ const acceptRequest = async (req, res) => {
 
   const team = await Team.findOne({
     _id: team_id,
-    owner: currentUser.id,
+    $or: [{ owner: currentUser.id }, { editors: currentUser.id }],
   }).catch((err) => {
     return res.status(500).send({
       status: false,
@@ -447,7 +447,6 @@ const acceptRequest = async (req, res) => {
       error: 'Invalid Permission',
     });
   }
-
   const request = await User.findOne({ _id: request_id, del: false });
 
   if (!request) {
@@ -887,7 +886,7 @@ const searchUser = async (req, res) => {
 };
 
 const requestTeam = async (req, res) => {
-  const { currentUser } = req;
+  const { currentUser, searchedUser } = req;
   const team_id = req.params.team;
   const team = await Team.findById(team_id).populate('owner');
   if (team.owner._id + '' === currentUser._id + '') {
@@ -908,10 +907,18 @@ const requestTeam = async (req, res) => {
     });
   }
 
+  let sender;
+  if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
+    const editor = await User.findOne({ _id: searchedUser });
+    sender = editor.email;
+  } else {
+    sender = team.owner.email;
+  }
+
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const msg = {
-    to: team.owner.email,
+    to: sender,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
     dynamic_template_data: {
