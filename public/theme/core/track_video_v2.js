@@ -1,10 +1,9 @@
+var deviceType;
 var first_seekable = false;
 var registered_flag = false;
 var reported = false;
 var socket;
-// var vPlayer = videojs('material-video');
 var vPlayer = new Plyr('#player');
-// var timer;
 var trackingTimes = [];
 var startOverlapFlag = false;
 var endOverlapFlag = false;
@@ -13,6 +12,7 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector('#duration').value;
 let limit = duration
+
 if(duration > 600) {
   limit = duration - 5
 }
@@ -20,6 +20,7 @@ else {
   limit = duration - 3
 }
 
+// Set the Material Start Time From end of the previous watch activity
 var material_start = 0;
 if(document.querySelector('#material-start')) {
   material_start = parseFloat(document.querySelector('#material-start').value);
@@ -28,6 +29,7 @@ if(document.querySelector('#material-start')) {
   }
 }
 
+// Update Start Time in Watched Video time tracking
 function updateStartTime() {
   const contact = document.querySelector('#contact').value;
   const activity = document.querySelector('#activity').value;
@@ -54,6 +56,7 @@ function updateStartTime() {
   startOverlapFlag = false;
 }
 
+// Update End time of the Watched Time Tracking list
 function updateEndTime() {
   let currentTime = vPlayer.currentTime;
   // Seeking Check
@@ -120,6 +123,7 @@ function updateEndTime() {
   }
 }
 
+// Report the time 
 function reportTime() {
   var total = 0;
   trackingTimes.forEach((e) => {
@@ -177,6 +181,7 @@ function reportTime() {
   }
 }
 
+// Player Update Time
 vPlayer.on('loadeddata', () => {
   if(material_start) {
     first_seekable = true;
@@ -185,11 +190,9 @@ vPlayer.on('loadeddata', () => {
     }
   }
 })
-
 vPlayer.on('ready', () => {
   first_seekable = true;
 })
-
 vPlayer.on('playing', function () {
   if(first_seekable) {
     if(material_start + 5 < vPlayer.duration) {
@@ -202,7 +205,6 @@ vPlayer.on('playing', function () {
     seek_flag = false;
   }
 });
-
 vPlayer.on('timeupdate', function () {
   if (vPlayer.seeking || seek_flag) {
     seek_flag = true;
@@ -212,19 +214,58 @@ vPlayer.on('timeupdate', function () {
     reportTime();
   }
 });
-
 vPlayer.on('seeking', () => {
   seek_flag = true;
 });
 
-setInterval(() => {
-  if (socket && socket.connected) {
-    if (document.querySelector('.watched-time')) {
-      document.querySelector('.watched-time').classList.add('connected');
+function initRecord() {
+  registered_flag = false;
+  reported = false;
+  socket = undefined;
+  trackingTimes = [];
+  startOverlapFlag = false;
+  endOverlapFlag = false;
+  currentTrackerIndex = 0;
+  seek_flag = false;
+  watched_time = 0;
+}
+
+// Document View and Hide activity
+function handleVisibilityChange() {
+  if (document.hidden) {
+    // Close the Socket on mobile
+    if(deviceType === 'mobile') {
+      if(socket) {
+        socket.emit('close');
+      }
     }
-  } else {
-    if (document.querySelector('.watched-time')) {
-      document.querySelector('.watched-time').classList.remove('connected');
+  } else  {
+    // Restart the Socket on mobile
+    if(deviceType === 'mobile') {
+      initRecord();
+      var siteAddr = location.protocol + '//' + location.hostname;
+      // var siteAddr = 'http://localhost:3000'
+      socket = io.connect(siteAddr);
     }
   }
-}, 1000);
+}
+
+document.addEventListener("visibilitychange", handleVisibilityChange, false);
+
+
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+  deviceType = 'mobile'
+} else { 
+  deviceType = 'desktop'
+}
+// setInterval(() => {
+//   if (socket && socket.connected) {
+//     if (document.querySelector('.watched-time')) {
+//       document.querySelector('.watched-time').classList.add('connected');
+//     }
+//   } else {
+//     if (document.querySelector('.watched-time')) {
+//       document.querySelector('.watched-time').classList.remove('connected');
+//     }
+//   }
+// }, 1000);
