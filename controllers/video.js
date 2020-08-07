@@ -1329,6 +1329,15 @@ const remove = async (req, res) => {
         }
       }
 
+      if (video.role === 'team') {
+        Team.updateOne(
+          { videos: req.params.id },
+          {
+            $pull: { videos: { $in: [req.params.id] } },
+          }
+        );
+      }
+
       video['del'] = true;
       video.save().catch((err) => {
         console.log('err', err.message);
@@ -1339,7 +1348,7 @@ const remove = async (req, res) => {
     } else {
       res.status(400).send({
         status: false,
-        error: 'There is no video.',
+        error: 'Invalid permission.',
       });
     }
   } catch (e) {
@@ -1523,8 +1532,7 @@ const bulkEmail = async (req, res) => {
           video_descriptions += video.description;
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-        // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}"/></a></td></tr>`;
         video_objects += video_object;
         activities.push(activity.id);
       }
@@ -1565,8 +1573,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: video_subject,
         html:
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +

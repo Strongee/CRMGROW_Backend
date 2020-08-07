@@ -318,15 +318,17 @@ const bulkInvites = async (req, res) => {
 
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
-
+        const user_name = invite.user_name
+          ? invite.user_name.split(' ')[0]
+          : '';
         const msg = {
           to: invite.email,
           from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
           templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
           dynamic_template_data: {
             LOGO_URL: urls.LOGO_URL,
-            subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER.SUBJECT}${currentUser.user_name} has invited you to join ${team.name} in CRMGrow`,
-            user_name: invite.user_name,
+            subject: `You've been invited to join team ${team.name} in CRMGrow`,
+            user_name,
             owner_name: currentUser.user_name,
             team_name: team.name,
             ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
@@ -433,7 +435,7 @@ const acceptRequest = async (req, res) => {
 
   const team = await Team.findOne({
     _id: team_id,
-    owner: currentUser.id,
+    $or: [{ owner: currentUser.id }, { editors: currentUser.id }],
   }).catch((err) => {
     return res.status(500).send({
       status: false,
@@ -447,7 +449,6 @@ const acceptRequest = async (req, res) => {
       error: 'Invalid Permission',
     });
   }
-
   const request = await User.findOne({ _id: request_id, del: false });
 
   if (!request) {
@@ -543,7 +544,10 @@ const shareVideos = async (req, res) => {
   }
 
   await Video.updateMany(
-    { _id: { $in: video_ids } },
+    {
+      _id: { $in: video_ids },
+      user: currentUser.id,
+    },
     {
       $set: { role: 'team' },
     }
@@ -848,8 +852,8 @@ const shareEmailTemplates = async (req, res) => {
 
 const searchUser = async (req, res) => {
   const search = req.body.search;
-  let data = [];
-  data = await User.find({
+  const { currentUser } = req;
+  const user_array = await User.find({
     $or: [
       {
         user_name: { $regex: '.*' + search + '.*', $options: 'i' },
@@ -873,6 +877,16 @@ const searchUser = async (req, res) => {
         del: false,
       },
     ],
+    _id: { $nin: [currentUser.id] },
+  })
+    .sort({ first_name: 1 })
+    .limit(8)
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  const team_array = await Team.find({
+    name: { $regex: '.*' + search + '.*', $options: 'i' },
   })
     .sort({ first_name: 1 })
     .limit(8)
@@ -882,12 +896,13 @@ const searchUser = async (req, res) => {
 
   return res.send({
     status: true,
-    data,
+    user_array,
+    team_array,
   });
 };
 
 const requestTeam = async (req, res) => {
-  const { currentUser } = req;
+  const { currentUser, searchedUser } = req;
   const team_id = req.params.team;
   const team = await Team.findById(team_id).populate('owner');
   if (team.owner._id + '' === currentUser._id + '') {
@@ -908,10 +923,18 @@ const requestTeam = async (req, res) => {
     });
   }
 
+  let sender;
+  if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
+    const editor = await User.findOne({ _id: searchedUser });
+    sender = editor.email;
+  } else {
+    sender = team.owner.email;
+  }
+
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const msg = {
-    to: team.owner.email,
+    to: sender,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
     dynamic_template_data: {
@@ -951,6 +974,62 @@ const requestTeam = async (req, res) => {
 };
 
 const remove = async (req, res) => {
+  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
+    console.log('team found error', err.message);
+  });
+
+  if (team.videos && team.videos.length > 0) {
+    Video.updateMany(
+      {
+        _id: {
+          $in: team.videos,
+        },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.pdfs && team.pdfs.length > 0) {
+    PDF.updateMany(
+      {
+        _id: { $in: team.pdfs },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.images && team.images.length > 0) {
+    Image.updateMany(
+      {
+        _id: { $in: team.images },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.email_templates && team.email_templates.length > 0) {
+    EmailTemplate.updateMany(
+      {
+        _id: { $in: team.email_templates },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.automations && team.automations.length > 0) {
+    Automation.updateMany(
+      {
+        _id: { $in: team.automations },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
   Team.deleteOne({
     _id: req.params.id,
   })
@@ -965,6 +1044,171 @@ const remove = async (req, res) => {
         error: err.message,
       });
     });
+};
+
+const removeVideos = async (req, res) => {
+  const { currentUser } = req;
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!video) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { videos: req.params.id },
+    {
+      $pull: { videos: { $in: [req.params.id] } },
+    }
+  );
+
+  Video.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removePdfs = async (req, res) => {
+  const { currentUser } = req;
+  const pdf = await PDF.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!pdf) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { pdfs: req.params.id },
+    {
+      $pull: { pdfs: { $in: [req.params.id] } },
+    }
+  );
+
+  PDF.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeImages = async (req, res) => {
+  const { currentUser } = req;
+  const image = await Image.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!image) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { images: req.params.id },
+    {
+      $pull: { images: { $in: [req.params.id] } },
+    }
+  );
+
+  Image.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeAutomations = async (req, res) => {
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!automation) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { automations: req.params.id },
+    {
+      $pull: { automations: { $in: [req.params.id] } },
+    }
+  );
+
+  Automation.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeEmailTemplates = async (req, res) => {
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!automation) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { automations: req.params.id },
+    {
+      $pull: { automations: { $in: [req.params.id] } },
+    }
+  );
+
+  Automation.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
 };
 
 module.exports = {
@@ -983,5 +1227,10 @@ module.exports = {
   shareImages,
   shareAutomations,
   shareEmailTemplates,
+  removeVideos,
+  removePdfs,
+  removeImages,
+  removeAutomations,
+  removeEmailTemplates,
   requestTeam,
 };

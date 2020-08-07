@@ -769,20 +769,30 @@ const remove = async (req, res) => {
               console.log('err', err);
             }
           );
-
-          pdf['del'] = true;
-          pdf.save();
-
-          res.send({
-            status: true,
-          });
-        } else {
-          res.status(404).send({
-            status: false,
-            error: 'invalid permission',
-          });
         }
       }
+
+      if (pdf.role === 'team') {
+        Team.updateOne(
+          { pdfs: req.params.id },
+          {
+            $pull: { pdfs: { $in: [req.params.id] } },
+          }
+        );
+      }
+
+      pdf['del'] = true;
+      pdf.save();
+
+      res.send({
+        status: true,
+      });
+    } else {
+      res.status(404).send({
+        status: false,
+        error: 'invalid permission',
+      });
+      return;
     }
   } catch (e) {
     console.error(e);
@@ -963,7 +973,7 @@ const bulkEmail = async (req, res) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a></td></tr>`;
         pdf_objects += pdf_object;
         activities.push(activity.id);
       }
@@ -998,8 +1008,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: pdf_subject,
         html:
-          '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           pdf_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +

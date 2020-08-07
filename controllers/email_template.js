@@ -137,6 +137,27 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   const { id } = req.params;
   const { currentUser } = req;
+  const email_template = await EmailTemplate.findOne({ 
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!email_template) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission.',
+    });
+  }
+
+  if (email_template.role === 'team') {
+    Team.updateOne(
+      { email_templates: req.params.id },
+      {
+        $pull: { email_templates: { $in: [req.params.id] } },
+      }
+    );
+  }
+
   EmailTemplate.deleteOne({ _id: id, user: currentUser.id })
     .then(() => {
       return res.send({

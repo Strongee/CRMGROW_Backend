@@ -682,11 +682,11 @@ const disconnectVideo = async (video_tracker_id) => {
         const now = moment();
         const due_date = now.add(auto_resend.period, 'hours');
         due_date.set({ second: 0, millisecond: 0 });
-        const canned_message = await EmailTemplate.findOne({
-          _id: auto_resend.canned_message,
-        });
 
         if (_activity.send_type === 0) {
+          const canned_message = await EmailTemplate.findOne({
+            _id: auto_resend.email_canned_message,
+          });
           time_line = new TimeLine({
             user: currentUser.id,
             contact: contact.id,
@@ -701,6 +701,9 @@ const disconnectVideo = async (video_tracker_id) => {
             due_date,
           });
         } else {
+          const canned_message = await EmailTemplate.findOne({
+            _id: auto_resend.sms_canned_message,
+          });
           time_line = new TimeLine({
             user: currentUser.id,
             contact: contact.id,

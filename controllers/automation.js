@@ -268,7 +268,29 @@ const update = async (req, res) => {
     });
 };
 
-const remove = (req, res) => {
+const remove = async (req, res) => {
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!automation) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission.',
+    });
+  }
+
+  if (automation.role === 'team') {
+    Team.updateOne(
+      { automations: req.params.id },
+      {
+        $pull: { automations: { $in: [req.params.id] } },
+      }
+    );
+  }
+
   Automation.deleteOne({ _id: req.params.id })
     .then(() => {
       return res.send({
