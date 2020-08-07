@@ -1329,6 +1329,15 @@ const remove = async (req, res) => {
         }
       }
 
+      if (video.role === 'team') {
+        Team.updateOne(
+          { videos: req.params.id },
+          {
+            $pull: { videos: { $in: [req.params.id] } },
+          }
+        );
+      }
+
       video['del'] = true;
       video.save().catch((err) => {
         console.log('err', err.message);
@@ -1339,7 +1348,7 @@ const remove = async (req, res) => {
     } else {
       res.status(400).send({
         status: false,
-        error: 'There is no video.',
+        error: 'Invalid permission.',
       });
     }
   } catch (e) {

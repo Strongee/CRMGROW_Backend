@@ -769,20 +769,30 @@ const remove = async (req, res) => {
               console.log('err', err);
             }
           );
-
-          pdf['del'] = true;
-          pdf.save();
-
-          res.send({
-            status: true,
-          });
-        } else {
-          res.status(404).send({
-            status: false,
-            error: 'invalid permission',
-          });
         }
       }
+
+      if (pdf.role === 'team') {
+        Team.updateOne(
+          { pdfs: req.params.id },
+          {
+            $pull: { pdfs: { $in: [req.params.id] } },
+          }
+        );
+      }
+
+      pdf['del'] = true;
+      pdf.save();
+
+      res.send({
+        status: true,
+      });
+    } else {
+      res.status(404).send({
+        status: false,
+        error: 'invalid permission',
+      });
+      return;
     }
   } catch (e) {
     console.error(e);

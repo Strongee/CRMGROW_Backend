@@ -410,6 +410,15 @@ const remove = async (req, res) => {
         );
       }
 
+      if (image.role === 'team') {
+        Team.updateOne(
+          { images: req.params.id },
+          {
+            $pull: { images: { $in: [req.params.id] } },
+          }
+        );
+      }
+
       image['del'] = true;
       image.save();
 

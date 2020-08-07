@@ -542,7 +542,10 @@ const shareVideos = async (req, res) => {
   }
 
   await Video.updateMany(
-    { _id: { $in: video_ids } },
+    {
+      _id: { $in: video_ids },
+      user: currentUser.id,
+    },
     {
       $set: { role: 'team' },
     }
@@ -847,8 +850,8 @@ const shareEmailTemplates = async (req, res) => {
 
 const searchUser = async (req, res) => {
   const search = req.body.search;
-  let data = [];
-  data = await User.find({
+  const { currentUser } = req;
+  const user_array = await User.find({
     $or: [
       {
         user_name: { $regex: '.*' + search + '.*', $options: 'i' },
@@ -872,6 +875,16 @@ const searchUser = async (req, res) => {
         del: false,
       },
     ],
+    _id: { $nin: [currentUser.id] },
+  })
+    .sort({ first_name: 1 })
+    .limit(8)
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  const team_array = await Team.find({
+    name: { $regex: '.*' + search + '.*', $options: 'i' },
   })
     .sort({ first_name: 1 })
     .limit(8)
@@ -881,7 +894,8 @@ const searchUser = async (req, res) => {
 
   return res.send({
     status: true,
-    data,
+    user_array,
+    team_array,
   });
 };
 
@@ -958,6 +972,62 @@ const requestTeam = async (req, res) => {
 };
 
 const remove = async (req, res) => {
+  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
+    console.log('team found error', err.message);
+  });
+
+  if (team.videos && team.videos.length > 0) {
+    Video.updateMany(
+      {
+        _id: {
+          $in: team.videos,
+        },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.pdfs && team.pdfs.length > 0) {
+    PDF.updateMany(
+      {
+        _id: { $in: team.pdfs },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.images && team.images.length > 0) {
+    Image.updateMany(
+      {
+        _id: { $in: team.images },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.email_templates && team.email_templates.length > 0) {
+    EmailTemplate.updateMany(
+      {
+        _id: { $in: team.email_templates },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
+  if (team.automations && team.automations.length > 0) {
+    Automation.updateMany(
+      {
+        _id: { $in: team.automations },
+        role: 'team',
+      },
+      { $unset: { role: true } }
+    );
+  }
+
   Team.deleteOne({
     _id: req.params.id,
   })
@@ -972,6 +1042,171 @@ const remove = async (req, res) => {
         error: err.message,
       });
     });
+};
+
+const removeVideos = async (req, res) => {
+  const { currentUser } = req;
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!video) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { videos: req.params.id },
+    {
+      $pull: { videos: { $in: [req.params.id] } },
+    }
+  );
+
+  Video.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removePdfs = async (req, res) => {
+  const { currentUser } = req;
+  const pdf = await PDF.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!pdf) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { pdfs: req.params.id },
+    {
+      $pull: { pdfs: { $in: [req.params.id] } },
+    }
+  );
+
+  PDF.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeImages = async (req, res) => {
+  const { currentUser } = req;
+  const image = await Image.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!image) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { images: req.params.id },
+    {
+      $pull: { images: { $in: [req.params.id] } },
+    }
+  );
+
+  Image.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeAutomations = async (req, res) => {
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!automation) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { automations: req.params.id },
+    {
+      $pull: { automations: { $in: [req.params.id] } },
+    }
+  );
+
+  Automation.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
+};
+
+const removeEmailTemplates = async (req, res) => {
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!automation) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { automations: req.params.id },
+    {
+      $pull: { automations: { $in: [req.params.id] } },
+    }
+  );
+
+  Automation.updateOne(
+    {
+      _id: req.params.id,
+      role: 'team',
+    },
+    { $unset: { role: true } }
+  );
+
+  return res.send({
+    status: true,
+  });
 };
 
 module.exports = {
@@ -990,5 +1225,10 @@ module.exports = {
   shareImages,
   shareAutomations,
   shareEmailTemplates,
+  removeVideos,
+  removePdfs,
+  removeImages,
+  removeAutomations,
+  removeEmailTemplates,
   requestTeam,
 };

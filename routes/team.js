@@ -55,6 +55,31 @@ router.post(
   catchError(TeamCtrl.shareEmailTemplates)
 );
 router.post(
+  '/remove-videos/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removeVideos)
+);
+router.post(
+  '/remove-pdfs/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removePdfs)
+);
+router.post(
+  '/remove-images/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removeImages)
+);
+router.post(
+  '/remove-templates/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removeEmailTemplates)
+);
+router.post(
+  '/remove-automations/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removeAutomations)
+);
+router.post(
   '/search-user',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.searchUser)
