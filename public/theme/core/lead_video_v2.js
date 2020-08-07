@@ -1,3 +1,4 @@
+var deviceType;
 var registered_flag = false;
 var reported = false;
 var socket;
@@ -260,3 +261,42 @@ vPlayer.on('timeupdate', function () {
 vPlayer.on('seeking', () => {
   seek_flag = true;
 });
+
+function initRecord() {
+  registered_flag = false;
+  reported = false;
+  socket = undefined;
+  trackingTimes = [];
+  startOverlapFlag = false;
+  endOverlapFlag = false;
+  currentTrackerIndex = 0;
+  seek_flag = false;
+  watched_time = 0;
+}
+
+// Document View and Hide activity
+function handleVisibilityChange() {
+  if (document.hidden) {
+    // Close the Socket on mobile
+    if(deviceType === 'mobile') {
+      if(socket) {
+        socket.emit('close');
+      }
+    }
+  } else  {
+    // Restart the Socket on mobile
+    if(deviceType === 'mobile') {
+      initRecord();
+      var siteAddr = location.protocol + '//' + location.hostname;
+      // var siteAddr = 'http://localhost:3000'
+      socket = io.connect(siteAddr);
+    }
+  }
+}
+
+
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+  deviceType = 'mobile'
+} else { 
+  deviceType = 'desktop'
+}

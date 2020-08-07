@@ -211,6 +211,33 @@ const search = async (req, res) => {
   });
 };
 
+const ownSearch = async (req, res) => {
+  const { currentUser } = req;
+  const str = req.query.q;
+  const option = { ...req.body };
+
+  const templates = await EmailTemplate.find({
+    $and: [
+      option,
+      {
+        $or: [
+          { title: { $regex: `.*${str}.*`, $options: 'i' } },
+          { subject: { $regex: `.*${str}.*`, $options: 'i' } },
+          { content: { $regex: `.*${str}.*`, $options: 'i' } },
+        ],
+      },
+      {
+        $or: [{ user: currentUser.id }, { role: 'admin' }],
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: templates,
+  });
+};
+
 const loadOwn = async (req, res) => {
   const { currentUser } = req;
 
@@ -233,4 +260,5 @@ module.exports = {
   bulkRemove,
   search,
   loadOwn,
+  ownSearch,
 };
