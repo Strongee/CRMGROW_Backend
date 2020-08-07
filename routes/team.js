@@ -32,7 +32,6 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptRequest)
 );
-
 router.post(
   '/share-videos',
   UserCtrl.checkAuth,
@@ -54,6 +53,7 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.shareEmailTemplates)
 );
+
 router.post(
   '/remove-videos/:id',
   UserCtrl.checkAuth,
