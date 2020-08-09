@@ -19,7 +19,11 @@ router.post(
 );
 router.post('/delete', UserCtrl.checkAuth, catchError(TemplateCtrl.bulkRemove));
 router.post('/search', UserCtrl.checkAuth, catchError(TemplateCtrl.search));
-
+router.post(
+  '/search-own',
+  UserCtrl.checkAuth,
+  catchError(TemplateCtrl.ownSearch)
+);
 // router.get('/receive' , UserCtrl.checkAuth, catchError(EmailCtrl.receive))
 
 module.exports = router;
