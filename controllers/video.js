@@ -2619,6 +2619,22 @@ const getConvertStatus = async (req, res) => {
   return res.send(result_array);
 };
 
+const getContactsByLatestSent = async (req, res) => {
+  const { currentUser } = req;
+  const activities = await Activity.find({
+    user: currentUser.id,
+    videos: req.params.id,
+    type: 'videos',
+  })
+    .populate('contacts')
+    .limit(8);
+
+  return res.send({
+    status: true,
+    activities,
+  });
+};
+
 module.exports = {
   play,
   play1,
@@ -2636,6 +2652,7 @@ module.exports = {
   bulkText,
   remove,
   getHistory,
+  getContactsByLatestSent,
   createVideo,
   createSmsContent,
   bulkGmail,
