@@ -1063,9 +1063,11 @@ const removeVideos = async (req, res) => {
   Team.updateOne(
     { videos: req.params.id },
     {
-      $pull: { videos: { $in: [req.params.id] } },
+      $pull: { videos: mongoose.Types.ObjectId(req.params.id) },
     }
-  );
+  ).catch((err) => {
+    console.log('team remove video error', err.message);
+  });
 
   Video.updateOne(
     {
@@ -1096,7 +1098,7 @@ const removePdfs = async (req, res) => {
   Team.updateOne(
     { pdfs: req.params.id },
     {
-      $pull: { pdfs: { $in: [req.params.id] } },
+      $pull: { pdfs: mongoose.Types.ObjectId(req.params.id) },
     }
   );
 
@@ -1129,7 +1131,7 @@ const removeImages = async (req, res) => {
   Team.updateOne(
     { images: req.params.id },
     {
-      $pull: { images: { $in: [req.params.id] } },
+      $pull: { images: mongoose.Types.ObjectId(req.params.id) },
     }
   );
 
@@ -1162,7 +1164,7 @@ const removeAutomations = async (req, res) => {
   Team.updateOne(
     { automations: req.params.id },
     {
-      $pull: { automations: { $in: [req.params.id] } },
+      $pull: { automations: mongoose.Types.ObjectId(req.params.id) },
     }
   );
 
@@ -1181,25 +1183,25 @@ const removeAutomations = async (req, res) => {
 
 const removeEmailTemplates = async (req, res) => {
   const { currentUser } = req;
-  const automation = await Automation.findOne({
+  const email_template = await EmailTemplate.findOne({
     _id: req.params.id,
     user: currentUser.id,
   });
 
-  if (!automation) {
+  if (!email_template) {
     return res.status(400).send({
       status: false,
       error: 'Invalid permission',
     });
   }
   Team.updateOne(
-    { automations: req.params.id },
+    { email_templates: req.params.id },
     {
-      $pull: { automations: { $in: [req.params.id] } },
+      $pull: { email_templates: mongoose.Types.ObjectId(req.params.id) },
     }
   );
 
-  Automation.updateOne(
+  EmailTemplate.updateOne(
     {
       _id: req.params.id,
       role: 'team',
