@@ -9,7 +9,6 @@ const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const nodemailer = require('nodemailer');
 const Garbage = require('../models/garbage');
-const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
