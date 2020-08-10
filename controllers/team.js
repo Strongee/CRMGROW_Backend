@@ -888,6 +888,7 @@ const searchUser = async (req, res) => {
   const team_array = await Team.find({
     name: { $regex: '.*' + search + '.*', $options: 'i' },
   })
+    .populate({ path: 'owner' })
     .sort({ first_name: 1 })
     .limit(8)
     .catch((err) => {
@@ -902,8 +903,8 @@ const searchUser = async (req, res) => {
 };
 
 const requestTeam = async (req, res) => {
-  const { currentUser, searchedUser } = req;
-  const team_id = req.params.team;
+  const { currentUser } = req;
+  const { searchedUser, team_id } = req.body;
   const team = await Team.findById(team_id).populate('owner');
   if (team.owner._id + '' === currentUser._id + '') {
     return res.status(400).send({
@@ -1211,6 +1212,15 @@ const removeEmailTemplates = async (req, res) => {
   });
 };
 
+const updateTeam = (req, res) => {
+  const { team_id, data } = req.body;
+  Team.updateOne({ _id: team_id }, { $set: data })
+    .then(res.send({ status: true }))
+    .catch((err) => {
+      res.status(500).send({ status: false, error: err.message });
+    });
+};
+
 module.exports = {
   getAll,
   getTeam,
@@ -1233,4 +1243,5 @@ module.exports = {
   removeAutomations,
   removeEmailTemplates,
   requestTeam,
+  updateTeam,
 };
