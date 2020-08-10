@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Team = require('../models/team');
 
@@ -137,7 +136,7 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   const { id } = req.params;
   const { currentUser } = req;
-  const email_template = await EmailTemplate.findOne({ 
+  const email_template = await EmailTemplate.findOne({
     _id: req.params.id,
     user: currentUser.id,
   });
