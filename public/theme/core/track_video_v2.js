@@ -202,13 +202,11 @@ vPlayer.on('playing', function () {
   }
   if (seek_flag || watched_time == 0) {
     updateStartTime();
-    seek_flag = false;
   }
+  seek_flag = false;
 });
 vPlayer.on('timeupdate', function () {
-  if (vPlayer.seeking || seek_flag) {
-    seek_flag = true;
-  } else {
+  if (!vPlayer.seeking && !seek_flag) {
     seek_flag = false;
     updateEndTime();
     reportTime();
@@ -216,6 +214,10 @@ vPlayer.on('timeupdate', function () {
 });
 vPlayer.on('seeking', () => {
   seek_flag = true;
+});
+vPlayer.on('seeked', () => {
+  seek_flag = false;
+  updateStartTime();
 });
 
 function initRecord() {
