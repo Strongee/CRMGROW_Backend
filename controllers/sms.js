@@ -181,6 +181,17 @@ const receive = async (req, res) => {
   }
 };
 
+const receive1 = async (req, res) => {
+  const text = req.body['Body'];
+  const from = req.body['From'];
+  const to = req.body['To'];
+
+  console.log('req.body******** receive1', req.body);
+  return res.send({
+    status: true,
+  });
+};
+
 const get = async (req, res) => {
   const { currentUser } = req;
   const query = { ...req.query };
@@ -204,4 +215,5 @@ module.exports = {
   get,
   send,
   receive,
+  receive1,
 };
