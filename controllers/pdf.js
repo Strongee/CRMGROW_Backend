@@ -29,6 +29,7 @@ const PDF = require('../models/pdf');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
+const Team = require('../models/team');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
