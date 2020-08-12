@@ -619,7 +619,7 @@ const getSignalWireNumber = async (id) => {
     api.SIGNALWIRE.PROJECT_ID + ':' + api.SIGNALWIRE.TOKEN
   );
 
-  const data = await request({
+  const response = await request({
     method: 'GET',
     uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/search`,
     headers: {
@@ -644,9 +644,8 @@ const getSignalWireNumber = async (id) => {
     return fromNumber;
   }
 
-  const number = data[0];
+  const number = response.data[0];
 
-  console.log('number***********', data);
   if (number) {
     console.log('number', number);
     const proxy_number = await request({
