@@ -1227,14 +1227,19 @@ const receiveEmailSendGrid = async (req, res) => {
           console.log('err', err);
         });
 
-        const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: 'open',
-          created_at: { $gte: reopened },
-        }).catch((err) => {
-          console.log('err', err.message);
-        });
+        let old_activity;
+        if (email_activity) {
+          const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
+          old_activity = await EmailTracker.findOne({
+            activity: email_activity.id,
+            type: 'open',
+            created_at: { $gte: reopened },
+          }).catch((err) => {
+            console.log('err', err.message);
+          });
+        }
+
+
 
         if (!old_activity) {
           const email_tracker = new EmailTracker({
