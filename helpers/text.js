@@ -615,15 +615,10 @@ const getSignalWireNumber = async (id) => {
     countryCode = 'US';
   }
 
-  const auth = Buffer.from(
-    api.SIGNALWIRE.PROJECT_ID + ':' + api.SIGNALWIRE.TOKEN
-  );
-
   const response = await request({
     method: 'GET',
     uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/search`,
     headers: {
-      Authorization: `Basic ${auth}`,
       'Content-Type': 'application/json',
     },
     auth: {
@@ -647,13 +642,15 @@ const getSignalWireNumber = async (id) => {
   const number = response.data[0];
 
   if (number) {
-    console.log('number', number);
     const proxy_number = await request({
       method: 'POST',
       uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers`,
       headers: {
-        Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
+      },
+      auth: {
+        user: api.SIGNALWIRE.PROJECT_ID,
+        password: api.SIGNALWIRE.TOKEN,
       },
       body: {
         number: number.e164,
@@ -664,7 +661,6 @@ const getSignalWireNumber = async (id) => {
       fromNumber = api.TWILIO.TWILIO_NUMBER;
       return fromNumber;
     });
-    console.log('proxy_number*', proxy_number);
     user['proxy_number'] = proxy_number.number;
     fromNumber = proxy_number.number;
     user.save().catch((err) => {

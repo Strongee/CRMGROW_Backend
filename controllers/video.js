@@ -2030,117 +2030,142 @@ const bulkText = async (req, res) => {
     detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
-  if (contacts) {
-    if (contacts.length > system_settings.TEXT_MONTHLY_LIMIT.BASIC) {
-      return res.status(400).json({
-        status: false,
-        error: `You can send max ${system_settings.TEXT_MONTHLY_LIMIT.BASIC} contacts at a time`,
-      });
-    }
-
-    for (let i = 0; i < contacts.length; i++) {
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
-      let video_titles = '';
-      let video_descriptions = '';
-      let video_objects = '';
-      let video_content = content;
-      const activities = [];
-      let activity;
-      for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
-
-        if (typeof video_content === 'undefined') {
-          video_content = '';
-        }
-
-        video_content = video_content
-          .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.connected_email)
-          .replace(/{user_phone}/gi, currentUser.cell_phone)
-          .replace(/{contact_first_name}/gi, _contact.first_name)
-          .replace(/{contact_last_name}/gi, _contact.last_name)
-          .replace(/{contact_email}/gi, _contact.email)
-          .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-        const _activity = new Activity({
-          content: detail_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'videos',
-          videos: video._id,
-          created_at: new Date(),
-          updated_at: new Date(),
-          description: video_content,
+  client.on('signalwire.ready', async (client) => {
+    if (contacts) {
+      if (contacts.length > system_settings.TEXT_MONTHLY_LIMIT.BASIC) {
+        return res.status(400).json({
+          status: false,
+          error: `You can send max ${system_settings.TEXT_MONTHLY_LIMIT.BASIC} contacts at a time`,
         });
+      }
 
-        activity = await _activity
-          .save()
-          .then()
-          .catch((err) => {
+      for (let i = 0; i < contacts.length; i++) {
+        const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+          (err) => {
             console.log('err', err);
+          }
+        );
+        let video_titles = '';
+        let video_descriptions = '';
+        let video_objects = '';
+        let video_content = content;
+        const activities = [];
+        let activity;
+        for (let j = 0; j < videos.length; j++) {
+          const video = videos[j];
+
+          if (typeof video_content === 'undefined') {
+            video_content = '';
+          }
+
+          video_content = video_content
+            .replace(/{user_name}/gi, currentUser.user_name)
+            .replace(/{user_email}/gi, currentUser.connected_email)
+            .replace(/{user_phone}/gi, currentUser.cell_phone)
+            .replace(/{contact_first_name}/gi, _contact.first_name)
+            .replace(/{contact_last_name}/gi, _contact.last_name)
+            .replace(/{contact_email}/gi, _contact.email)
+            .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+          const _activity = new Activity({
+            content: detail_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: video._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            description: video_content,
           });
 
-        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          activity = await _activity
+            .save()
+            .then()
+            .catch((err) => {
+              console.log('err', err);
+            });
 
-        if (j < videos.length - 1) {
-          video_titles = video_titles + video.title + ', ';
-          video_descriptions += `${video.description}, `;
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+
+          if (j < videos.length - 1) {
+            video_titles = video_titles + video.title + ', ';
+            video_descriptions += `${video.description}, `;
+          } else {
+            video_titles += video.title;
+            video_descriptions += video.description;
+          }
+          const video_object = `\n${video.title}:\n\n${video_link}\n`;
+          video_objects += video_object;
+          activities.push(activity.id);
+        }
+
+        if (video_content.search(/{video_object}/gi) !== -1) {
+          video_content = video_content.replace(
+            /{video_object}/gi,
+            video_objects
+          );
         } else {
-          video_titles += video.title;
-          video_descriptions += video.description;
+          video_content = video_content + '\n' + video_objects;
         }
-        const video_object = `\n${video.title}:\n\n${video_link}\n`;
-        video_objects += video_object;
-        activities.push(activity.id);
-      }
 
-      if (video_content.search(/{video_object}/gi) !== -1) {
-        video_content = video_content.replace(
-          /{video_object}/gi,
-          video_objects
-        );
-      } else {
-        video_content = video_content + '\n' + video_objects;
-      }
-
-      if (video_content.search(/{video_title}/gi) !== -1) {
-        video_content = video_content.replace(/{video_title}/gi, video_titles);
-      }
-
-      if (video_content.search(/{video_description}/gi) !== -1) {
-        video_content = video_content.replace(
-          /{video_description}/gi,
-          video_descriptions
-        );
-      }
-
-      let fromNumber = currentUser['proxy_number'];
-
-      if (!fromNumber) {
-        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
-      }
-      const promise = new Promise((resolve, reject) => {
-        const e164Phone = phone(_contact.cell_phone)[0];
-        if (!e164Phone) {
-          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-            console.log('activity delete err', err.message);
-          });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              cell_phone: _contact.cell_phone,
-            },
-            err: 'Invalid phone number',
-          });
-          resolve(); // Invalid phone number
+        if (video_content.search(/{video_title}/gi) !== -1) {
+          video_content = video_content.replace(
+            /{video_title}/gi,
+            video_titles
+          );
         }
-        twilio.messages
-          .create({ from: fromNumber, body: video_content, to: e164Phone })
-          .then(() => {
+
+        if (video_content.search(/{video_description}/gi) !== -1) {
+          video_content = video_content.replace(
+            /{video_description}/gi,
+            video_descriptions
+          );
+        }
+
+        let fromNumber = currentUser['proxy_number'];
+
+        if (!fromNumber) {
+          fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
+        }
+        const promise = new Promise(async (resolve, reject) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
+
+          const sendResult = await client.messaging
+            .send({
+              context: 'office',
+              from: fromNumber,
+              to: e164Phone,
+              body: video_content,
+            })
+            .catch((err) => {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err,
+              });
+              resolve();
+            });
+
+          if (sendResult.successful) {
+            console.log('Message ID: ', sendResult.messageId);
             console.info(
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               video_content
@@ -2154,9 +2179,7 @@ const bulkText = async (req, res) => {
               console.log('err', err);
             });
             resolve();
-          })
-          .catch((err) => {
-            console.log('err', err);
+          } else {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
@@ -2165,39 +2188,45 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err,
+              err: sendResult.result
+                ? sendResult.result.message
+                : 'Message send error',
             });
             resolve();
-          });
-      });
-      promise_array.push(promise);
-    }
+          }
+          console.log('sendResult', sendResult);
+        });
+        promise_array.push(promise);
+      }
 
-    Promise.all(promise_array)
-      .then(() => {
-        if (error.length > 0) {
-          return res.status(405).json({
-            status: false,
-            error,
+      Promise.all(promise_array)
+        .then(() => {
+          if (error.length > 0) {
+            return res.status(405).json({
+              status: false,
+              error,
+            });
+          }
+          return res.send({
+            status: true,
           });
-        }
-        return res.send({
-          status: true,
+        })
+        .catch((err) => {
+          console.log('err', err);
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
         });
-      })
-      .catch((err) => {
-        console.log('err', err);
-        return res.status(400).json({
-          status: false,
-          error: err,
-        });
+    } else {
+      return res.status(400).json({
+        status: false,
+        error: 'Contacts not found',
       });
-  } else {
-    return res.status(400).json({
-      status: false,
-      error: 'Contacts not found',
-    });
-  }
+    }
+  });
+
+  client.connect();
 };
 
 const createSmsContent = async (req, res) => {
