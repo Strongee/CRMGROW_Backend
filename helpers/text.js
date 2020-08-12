@@ -631,7 +631,7 @@ const getSignalWireNumber = async (id) => {
       password: api.SIGNALWIRE.TOKEN,
     },
     qs: {
-      areaCode,
+      areacode: areaCode,
     },
     json: true,
   }).catch((err) => {
