@@ -9,6 +9,7 @@ const ActivityHelper = require('./activity');
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+const request = require('request-promise');
 
 const urls = require('../constants/urls');
 
@@ -598,6 +599,81 @@ const getTwilioNumber = async (id) => {
   return fromNumber;
 };
 
+const getSignalWireNumber = async (id) => {
+  const user = await User.findOne({ _id: id }).catch((err) => {
+    console.log('err', err);
+  });
+  let areaCode;
+  let countryCode;
+  let fromNumber;
+  const phone = user.phone;
+  if (phone) {
+    areaCode = phone.areaCode;
+    countryCode = phone.countryCode;
+  } else {
+    areaCode = user.cell_phone.substring(1, 4);
+    countryCode = 'US';
+  }
+
+  const auth = Buffer.from(
+    api.SIGNALWIRE.PROJECT_ID + ':' + api.SIGNALWIRE.TOKEN
+  ).toString('base64');
+
+  const data = await request({
+    method: 'GET',
+    uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/search`,
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    },
+    qs: {
+      areaCode,
+    },
+    json: true,
+  }).catch((err) => {
+    console.log('phone number get err', err);
+    fromNumber = api.TWILIO.TWILIO_NUMBER;
+    return fromNumber;
+  });
+
+  if (fromNumber) {
+    return fromNumber;
+  }
+
+  const number = data[0];
+
+  console.log('number***********', data);
+  if (number) {
+    console.log('number', number);
+    const proxy_number = await request({
+      method: 'POST',
+      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers`,
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        number: number.e164,
+      },
+      json: true,
+    }).catch((err) => {
+      console.log('phone number get err', err);
+      fromNumber = api.TWILIO.TWILIO_NUMBER;
+      return fromNumber;
+    });
+    console.log('proxy_number*', proxy_number);
+    user['proxy_number'] = proxy_number.number;
+    fromNumber = proxy_number.number;
+    user.save().catch((err) => {
+      console.log('err', err.message);
+    });
+  } else {
+    fromNumber = api.TWILIO.TWILIO_NUMBER;
+  }
+
+  return fromNumber;
+};
+
 const matchUSPhoneNumber = (phoneNumberString) => {
   const cleaned = ('' + phoneNumberString).replace(/\D/g, '');
   const match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/);
@@ -613,5 +689,6 @@ module.exports = {
   bulkPDF,
   bulkImage,
   getTwilioNumber,
+  getSignalWireNumber,
   matchUSPhoneNumber,
 };

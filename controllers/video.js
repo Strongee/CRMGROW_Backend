@@ -2121,7 +2121,7 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
-        fromNumber = await textHelper.getTwilioNumber(currentUser.id);
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
       }
       const promise = new Promise((resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];

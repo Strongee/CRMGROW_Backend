@@ -186,10 +186,37 @@ const receive1 = async (req, res) => {
   const from = req.body['From'];
   const to = req.body['To'];
 
-  console.log('req.body******** receive1', req.body);
-  return res.send({
-    status: true,
+  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+    console.log('current user found err sms', err.message);
   });
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
+
+    const contact = await Contact.findOne({
+      cell_phone: phoneNumber,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact found err sms reply', err);
+    });
+
+    if (contact) {
+      const content =
+        contact.first_name +
+        ', please call/text ' +
+        currentUser.user_name +
+        ' back at: ' +
+        currentUser.cell_phone;
+      await twilio.messages
+        .create({ from: to, body: content, to: from })
+        .catch((err) => {
+          console.log('sms reply err', err);
+        });
+    }
+    return res.send({
+      status: true,
+    });
+  }
 };
 
 const get = async (req, res) => {
