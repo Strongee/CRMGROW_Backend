@@ -67,6 +67,12 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
+const { RelayClient } = require('@signalwire/node');
+
+const client = new RelayClient({
+  project: api.SIGNALWIRE.PROJECT_ID,
+  token: api.SIGNALWIRE.TOKEN,
+});
 
 const play = async (req, res) => {
   const video_id = req.query.video;
