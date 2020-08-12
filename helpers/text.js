@@ -617,7 +617,7 @@ const getSignalWireNumber = async (id) => {
 
   const auth = Buffer.from(
     api.SIGNALWIRE.PROJECT_ID + ':' + api.SIGNALWIRE.TOKEN
-  ).toString('base64');
+  );
 
   const data = await request({
     method: 'GET',
@@ -625,6 +625,10 @@ const getSignalWireNumber = async (id) => {
     headers: {
       Authorization: `Basic ${auth}`,
       'Content-Type': 'application/json',
+    },
+    auth: {
+      user: api.SIGNALWIRE.PROJECT_ID,
+      password: api.SIGNALWIRE.TOKEN,
     },
     qs: {
       areaCode,
