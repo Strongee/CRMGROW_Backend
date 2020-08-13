@@ -2149,7 +2149,6 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          console.log('fromNumber', fromNumber);
           const sendResult = await client.messaging
             .send({
               context: 'office',
@@ -2201,7 +2200,6 @@ const bulkText = async (req, res) => {
             });
             resolve();
           }
-          console.log('sendResult', sendResult);
         });
         promise_array.push(promise);
       }

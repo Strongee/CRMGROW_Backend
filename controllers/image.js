@@ -72,6 +72,13 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
+const { RelayClient } = require('@signalwire/node');
+
+const client = new RelayClient({
+  project: api.SIGNALWIRE.PROJECT_ID,
+  token: api.SIGNALWIRE.TOKEN,
+});
+
 const play = async (req, res) => {
   const image_id = req.query.image;
   const sender_id = req.query.user;
@@ -720,119 +727,142 @@ const bulkText = async (req, res) => {
     detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
-  if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
-      return res.status(400).json({
-        status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
-      });
-    }
-
-    for (let i = 0; i < contacts.length; i++) {
-      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('err', err);
-        }
-      );
-      let image_titles = '';
-      let image_descriptions = '';
-      let image_objects = '';
-      let image_content = content;
-      const activities = [];
-      let activity;
-      for (let j = 0; j < images.length; j++) {
-        const image = images[j];
-
-        if (!image_content) {
-          image_content = '';
-        }
-
-        image_content = image_content
-          .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.connected_email)
-          .replace(/{user_phone}/gi, currentUser.cell_phone)
-          .replace(/{contact_first_name}/gi, _contact.first_name)
-          .replace(/{contact_last_name}/gi, _contact.last_name)
-          .replace(/{contact_email}/gi, _contact.email)
-          .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-        const _activity = new Activity({
-          content: detail_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'images',
-          images: image._id,
-          created_at: new Date(),
-          updated_at: new Date(),
-          description: image_content,
+  client.on('signalwire.ready', async (client) => {
+    if (contacts) {
+      if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+        return res.status(400).json({
+          status: false,
+          error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
         });
+      }
 
-        activity = await _activity
-          .save()
-          .then()
-          .catch((err) => {
+      for (let i = 0; i < contacts.length; i++) {
+        const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+          (err) => {
             console.log('err', err);
+          }
+        );
+        let image_titles = '';
+        let image_descriptions = '';
+        let image_objects = '';
+        let image_content = content;
+        const activities = [];
+        let activity;
+        for (let j = 0; j < images.length; j++) {
+          const image = images[j];
+
+          if (!image_content) {
+            image_content = '';
+          }
+
+          image_content = image_content
+            .replace(/{user_name}/gi, currentUser.user_name)
+            .replace(/{user_email}/gi, currentUser.connected_email)
+            .replace(/{user_phone}/gi, currentUser.cell_phone)
+            .replace(/{contact_first_name}/gi, _contact.first_name)
+            .replace(/{contact_last_name}/gi, _contact.last_name)
+            .replace(/{contact_email}/gi, _contact.email)
+            .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+          const _activity = new Activity({
+            content: detail_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'images',
+            images: image._id,
+            created_at: new Date(),
+            updated_at: new Date(),
+            description: image_content,
           });
 
-        const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
+          activity = await _activity
+            .save()
+            .then()
+            .catch((err) => {
+              console.log('err', err);
+            });
 
-        if (j < images.length - 1) {
-          image_titles = image_titles + image.title + ', ';
-          image_descriptions += `${image.description}, `;
+          const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
+
+          if (j < images.length - 1) {
+            image_titles = image_titles + image.title + ', ';
+            image_descriptions += `${image.description}, `;
+          } else {
+            image_titles += image.title;
+            image_descriptions += image.description;
+          }
+          const image_object = `\n${image.title}:\n\n${image_link}\n`;
+          image_objects += image_object;
+          activities.push(activity);
+        }
+
+        if (image_content.search(/{image_object}/gi) !== -1) {
+          image_content = image_content.replace(
+            /{image_object}/gi,
+            image_objects
+          );
         } else {
-          image_titles += image.title;
-          image_descriptions += image.description;
+          image_content = image_content + '\n' + image_objects;
         }
-        const image_object = `\n${image.title}:\n\n${image_link}\n`;
-        image_objects += image_object;
-        activities.push(activity);
-      }
 
-      if (image_content.search(/{image_object}/gi) !== -1) {
-        image_content = image_content.replace(
-          /{image_object}/gi,
-          image_objects
-        );
-      } else {
-        image_content = image_content + '\n' + image_objects;
-      }
-
-      if (image_content.search(/{image_title}/gi) !== -1) {
-        image_content = image_content.replace(/{image_title}/gi, image_titles);
-      }
-
-      if (image_content.search(/{image_description}/gi) !== -1) {
-        image_content = image_content.replace(
-          /{image_description}/gi,
-          image_descriptions
-        );
-      }
-
-      let fromNumber = currentUser['proxy_number'];
-
-      if (!fromNumber) {
-        fromNumber = await textHelper.getTwilioNumber(currentUser.id);
-      }
-
-      const promise = new Promise((resolve, reject) => {
-        const e164Phone = phone(_contact.cell_phone)[0];
-
-        if (!e164Phone) {
-          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-            console.log('err', err);
-          });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              cell_phone: _contact.cell_phone,
-            },
-            err: 'Invalid phone number',
-          });
-          resolve(); // Invalid phone number
+        if (image_content.search(/{image_title}/gi) !== -1) {
+          image_content = image_content.replace(
+            /{image_title}/gi,
+            image_titles
+          );
         }
-        twilio.messages
-          .create({ from: fromNumber, body: image_content, to: e164Phone })
-          .then(() => {
+
+        if (image_content.search(/{image_description}/gi) !== -1) {
+          image_content = image_content.replace(
+            /{image_description}/gi,
+            image_descriptions
+          );
+        }
+
+        let fromNumber = currentUser['proxy_number'];
+
+        if (!fromNumber) {
+          fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
+        }
+        const promise = new Promise(async (resolve, reject) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
+
+          const sendResult = await client.messaging
+            .send({
+              context: 'office',
+              from: fromNumber,
+              to: e164Phone,
+              body: image_content,
+            })
+            .catch((err) => {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err,
+              });
+              resolve();
+            });
+
+          if (sendResult.successful) {
+            console.log('Message ID: ', sendResult.messageId);
             console.info(
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
               image_content
@@ -846,50 +876,53 @@ const bulkText = async (req, res) => {
               console.log('err', err);
             });
             resolve();
-          })
-          .catch((err) => {
-            console.log('err', err);
+          } else {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('err', err.message);
+              console.log('err', err);
             });
             error.push({
               contact: {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err,
+              err: sendResult.result
+                ? sendResult.result.message
+                : 'Message send error',
             });
             resolve();
-          });
-      });
-      promise_array.push(promise);
-    }
+          }
+        });
+        promise_array.push(promise);
+      }
 
-    Promise.all(promise_array)
-      .then(() => {
-        if (error.length > 0) {
-          return res.status(405).json({
-            status: false,
-            error,
+      Promise.all(promise_array)
+        .then(() => {
+          if (error.length > 0) {
+            return res.status(405).json({
+              status: false,
+              error,
+            });
+          }
+          return res.send({
+            status: true,
           });
-        }
-        return res.send({
-          status: true,
+        })
+        .catch((err) => {
+          console.log('err', err);
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
         });
-      })
-      .catch((err) => {
-        console.log('err', err);
-        return res.status(400).json({
-          status: false,
-          error: err,
-        });
+    } else {
+      return res.status(400).json({
+        status: false,
+        error: 'Contacts not found',
       });
-  } else {
-    return res.status(400).json({
-      status: false,
-      error: 'Contacts not found',
-    });
-  }
+    }
+  });
+
+  client.connect();
 };
 
 const createSmsContent = async (req, res) => {
