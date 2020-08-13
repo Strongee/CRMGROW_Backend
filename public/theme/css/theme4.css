@@ -105,6 +105,9 @@ body {
   margin-top: 20px;
   line-height: 1.6;
 }
+.info-container img {
+  max-width: 100%;
+}
 .disclaim {
   font-size: 10px;
   color: #b2b2b2;
