@@ -94,6 +94,7 @@ const api = {
     PROJECT_ID: process.env.SIGNALWIRE_PROJECT_ID,
     TOKEN: process.env.SIGNALWIRE_TOKEN,
     WORKSPACE: 'https://crmgrow.signalwire.com',
+    DEFAULT_NUMBER: '+13127391036',
   },
 };
 

@@ -23,6 +23,7 @@ if (process.env.NODE_ENV === 'production') {
     ACCEPT_INVITATION_URL: 'https://app.crmgrow.com/api/appointment/accept?',
     DECLINE_INVITATION_URL: 'https://app.crmgrow.com/api/appointment/decline?',
     SMS_RECEIVE_URL: 'https://app.crmgrow.com/api/sms/receive/',
+    SMS_RECEIVE_URL1: 'https://app.crmgrow.com/api/sms/receive1/',
     RESET_PASSWORD_URL: 'https://app.crmgrow.com/reset-password/',
     AVATAR_URL:
       'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
@@ -68,6 +69,7 @@ if (process.env.NODE_ENV === 'production') {
     DECLINE_INVITATION_URL:
       'https://ecsbe.crmgrow.com/api/appointment/decline?',
     SMS_RECEIVE_URL: 'https://ecsbe.crmgrow.com/api/sms/receive/',
+    SMS_RECEIVE_URL1: 'https://ecsbe.crmgrow.com/api/sms/receive1/',
     RESET_PASSWORD_URL: 'https://ecsbe.crmgrow.com/reset-password/',
     AVATAR_URL:
       'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
@@ -113,6 +115,7 @@ if (process.env.NODE_ENV === 'production') {
     ACCEPT_INVITATION_URL: 'http://localhost:3000/api/appointment/accept?',
     DECLINE_INVITATION_URL: 'http://localhost:3000/api/appointment/decline?',
     SMS_RECEIVE_URL: 'https://app.crmgrow.com/api/sms/receive/',
+    SMS_RECEIVE_URL1: 'https://app.crmgrow.com/api/sms/receive1/',
     RESET_PASSWORD_URL: 'http://localhost:4200/reset-password/',
     AVATAR_URL:
       'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',

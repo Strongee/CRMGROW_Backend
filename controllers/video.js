@@ -2130,9 +2130,10 @@ const bulkText = async (req, res) => {
 
         let fromNumber = currentUser['proxy_number'];
 
-        if (!fromNumber) {
-          fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
-        }
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
+        // if (!fromNumber) {
+        //   fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
+        // }
         const promise = new Promise(async (resolve, reject) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
@@ -2149,6 +2150,7 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
+          console.log('fromNumber', fromNumber);
           const sendResult = await client.messaging
             .send({
               context: 'office',

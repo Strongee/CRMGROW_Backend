@@ -13,6 +13,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RelayClient } = require('@signalwire/node');
+
+const client = new RelayClient({
+  project: api.SIGNALWIRE.PROJECT_ID,
+  token: api.SIGNALWIRE.TOKEN,
+});
 const send = async (req, res) => {
   const { currentUser } = req;
   const { text } = req.body;
@@ -175,10 +181,10 @@ const receive = async (req, res) => {
     // })
 
     // activity.save()
-    return res.send({
-      status: true,
-    });
   }
+  return res.send({
+    status: true,
+  });
 };
 
 const receive1 = async (req, res) => {
@@ -201,22 +207,37 @@ const receive1 = async (req, res) => {
     });
 
     if (contact) {
-      const content =
-        contact.first_name +
-        ', please call/text ' +
-        currentUser.user_name +
-        ' back at: ' +
-        currentUser.cell_phone;
-      await twilio.messages
-        .create({ from: to, body: content, to: from })
-        .catch((err) => {
-          console.log('sms reply err', err);
-        });
+      client.on('signalwire.ready', async (client) => {
+        const content =
+          contact.first_name +
+          ', please call/text ' +
+          currentUser.user_name +
+          ' back at: ' +
+          currentUser.cell_phone;
+
+        client.messaging
+          .send({
+            context: 'office',
+            from: to,
+            to: from,
+            body: content,
+          })
+          .then((sendResult) => {
+            if (sendResult.successful) {
+              console.log('Replied Message ID: ', sendResult.messageId);
+            }
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      });
+
+      client.connect();
     }
-    return res.send({
-      status: true,
-    });
   }
+  return res.send({
+    status: true,
+  });
 };
 
 const get = async (req, res) => {

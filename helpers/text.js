@@ -631,7 +631,7 @@ const getSignalWireNumber = async (id) => {
     json: true,
   }).catch((err) => {
     console.log('phone number get err', err);
-    fromNumber = api.TWILIO.TWILIO_NUMBER;
+    fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
     return fromNumber;
   });
 
@@ -658,16 +658,40 @@ const getSignalWireNumber = async (id) => {
       json: true,
     }).catch((err) => {
       console.log('phone number get err', err);
-      fromNumber = api.TWILIO.TWILIO_NUMBER;
+      fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       return fromNumber;
     });
+
+    if (fromNumber) {
+      return fromNumber;
+    }
+
+    request({
+      method: 'PUT',
+      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/${proxy_number.id}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        user: api.SIGNALWIRE.PROJECT_ID,
+        password: api.SIGNALWIRE.TOKEN,
+      },
+      body: {
+        name: user.user_name,
+        message_request_url: urls.SMS_RECEIVE_URL1,
+      },
+      json: true,
+    }).catch((err) => {
+      console.log('phone number update redirect err', err);
+    });
+
     user['proxy_number'] = proxy_number.number;
     fromNumber = proxy_number.number;
     user.save().catch((err) => {
       console.log('err', err.message);
     });
   } else {
-    fromNumber = api.TWILIO.TWILIO_NUMBER;
+    fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
   }
 
   return fromNumber;
