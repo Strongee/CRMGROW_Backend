@@ -336,8 +336,8 @@ const add_contact = new CronJob(
   'US/Central'
 );
 
-// update_contact.start();
-// add_contact.start();
+update_contact.start();
+add_contact.start();
 // addContacts()
 // sourceUpdate()
 
