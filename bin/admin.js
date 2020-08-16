@@ -279,12 +279,13 @@ const updateContacts = async () => {
         };
       }
 
-      Contact.updateMany(
-        { source: adminContact.source },
-        { $set: update_data }
-      ).catch((err) => {
-        console.log('contact update error', err.message);
-      });
+      Contact.updateMany({ source: adminContact.source }, { $set: update_data })
+        .then(() => {
+          console.log('updated email', adminContact.email);
+        })
+        .catch((err) => {
+          console.log('contact update error', err.message);
+        });
     }
   }
 };
@@ -340,9 +341,7 @@ update_contact.start();
 add_contact.start();
 // addContacts()
 // sourceUpdate()
-
 // updateContacts();
-// addContacts();
 const clean = async () => {
   const admin = await User.findOne({
     email: 'support@crmgrow.com',
