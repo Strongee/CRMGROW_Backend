@@ -203,13 +203,15 @@ const bulkGmail = async (req, res) => {
         '</body></html>';
     } else {
       html_content =
-        '<html><head><title>Email</title></head><body>' +
+        '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
+        '</td></tr><tr><td>' +
         emailHelper.generateOpenTrackLink(activity.id) +
-        '<br/><br/>' +
+        '</td></tr><tr><td>' +
         currentUser.email_signature +
+        '</td></tr><tr><td>' +
         emailHelper.generateUnsubscribeLink(activity.id) +
-        '</body></html>';
+        '</td></tr></tbody></body></html>';
     }
 
     const attachment_array = [];
