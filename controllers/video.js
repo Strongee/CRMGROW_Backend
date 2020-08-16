@@ -70,7 +70,7 @@ const oauth2 = require('simple-oauth2')(credentials);
 const { RestClient } = require('@signalwire/node');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
-  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE,
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
 
 const play = async (req, res) => {
