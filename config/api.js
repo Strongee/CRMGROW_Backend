@@ -90,6 +90,12 @@ const api = {
   },
   EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
   REWARDFUL_API_KEY: process.env.REWARDFUL_API_KEY,
+  SIGNALWIRE: {
+    PROJECT_ID: process.env.SIGNALWIRE_PROJECT_ID,
+    TOKEN: process.env.SIGNALWIRE_TOKEN,
+    WORKSPACE: 'https://crmgrow.signalwire.com',
+    DEFAULT_NUMBER: '+13127391036',
+  },
 };
 
 module.exports = api;
