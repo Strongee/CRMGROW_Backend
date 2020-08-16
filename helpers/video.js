@@ -203,7 +203,6 @@ const getConvertStatus = (video_path) => {
 
     // get the time
     matches = content.match(/time=(.*?) bitrate/g);
-    console.log(matches);
 
     if (matches && matches.length > 0) {
       let rawTime = matches.pop();

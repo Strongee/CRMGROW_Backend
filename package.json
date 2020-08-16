@@ -31,6 +31,7 @@
     "@microsoft/microsoft-graph-client": "^2.0.0",
     "@nguniversal/express-engine": "^1.0.0-beta.3",
     "@sendgrid/mail": "^6.3.1",
+    "@signalwire/node": "^2.3.3",
     "aws-sdk": "^2.687.0",
     "base64-img": "^1.0.4",
     "bcrypt": "^3.0.5",

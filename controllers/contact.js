@@ -765,7 +765,7 @@ const importCSV = async (req, res) => {
                 resolve();
               })
               .catch((err) => {
-                console.log('err', err);
+                console.log('contact save err', err);
               });
           } else {
             resolve();

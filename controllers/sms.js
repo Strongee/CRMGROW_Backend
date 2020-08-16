@@ -13,6 +13,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RelayClient } = require('@signalwire/node');
+
+const client = new RelayClient({
+  project: api.SIGNALWIRE.PROJECT_ID,
+  token: api.SIGNALWIRE.TOKEN,
+});
 const send = async (req, res) => {
   const { currentUser } = req;
   const { text } = req.body;
@@ -108,7 +114,7 @@ const receive = async (req, res) => {
   const from = req.body['From'];
   const to = req.body['To'];
 
-  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+  const currentUser = await User.findOne({ twilio_number: to }).catch((err) => {
     console.log('current user found err sms', err.message);
   });
 
@@ -175,10 +181,10 @@ const receive = async (req, res) => {
     // })
 
     // activity.save()
-    return res.send({
-      status: true,
-    });
   }
+  return res.send({
+    status: true,
+  });
 };
 
 const receive1 = async (req, res) => {
@@ -186,7 +192,49 @@ const receive1 = async (req, res) => {
   const from = req.body['From'];
   const to = req.body['To'];
 
-  console.log('req.body******** receive1', req.body);
+  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+    console.log('current user found err sms', err.message);
+  });
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
+
+    const contact = await Contact.findOne({
+      cell_phone: phoneNumber,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact found err sms reply', err);
+    });
+
+    if (contact) {
+      client.on('signalwire.ready', async (client) => {
+        const content =
+          contact.first_name +
+          ', please call/text ' +
+          currentUser.user_name +
+          ' back at: ' +
+          currentUser.cell_phone;
+
+        client.messaging
+          .send({
+            context: 'office',
+            from: to,
+            to: from,
+            body: content,
+          })
+          .then((sendResult) => {
+            if (sendResult.successful) {
+              console.log('Replied Message ID: ', sendResult.messageId);
+            }
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      });
+
+      client.connect();
+    }
+  }
   return res.send({
     status: true,
   });
