@@ -717,6 +717,7 @@ const getSignalWireNumber = async (id) => {
 
   const number = response.data[0];
 
+  console.log('response', response);
   if (number) {
     const proxy_number = await request({
       method: 'POST',
