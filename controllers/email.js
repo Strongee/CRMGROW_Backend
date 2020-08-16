@@ -195,12 +195,13 @@ const bulkGmail = async (req, res) => {
     let html_content;
     if (cc.length > 0 || bcc.length > 0) {
       html_content =
-        '<html><head><title>Email</title></head><body>' +
+        '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
-        '<br/><br/>' +
+        '</td></tr><tr><td>' +
         currentUser.email_signature +
+        '</td></tr><tr><td>' +
         emailHelper.generateUnsubscribeLink(activity.id) +
-        '</body></html>';
+        '</td></tr></tbody></body></html>';
     } else {
       html_content =
         '<html><head><title>Email</title></head><body><tbody><tr><td>' +
