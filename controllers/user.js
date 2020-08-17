@@ -720,12 +720,18 @@ const socialGmail = async (req, res) => {
       });
     }
 
-    console.log(_res);
+    let email_max_count;
+    if (_res.data.hd) {
+      email_max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
+    } else {
+      email_max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
+    }
 
     const data = {
       email: _res.data.email,
       social_id: _res.data.id,
       connected_email_type: 'gmail',
+      email_max_count,
       primary_connected: true,
       google_refresh_token: JSON.stringify(tokens),
     };
@@ -775,12 +781,22 @@ const socialOutlook = async (req, res) => {
 
         const jwt = JSON.parse(decoded_token);
 
+        let email_max_count;
+        if (
+          jwt.preferred_username.indexOf('@outlook.com') !== -1 ||
+          jwt.preferred_username.indexOf('@hotmail.com') !== -1
+        ) {
+          email_max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
+        } else {
+          email_max_count = system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
+        }
         const data = {
           email: jwt.preferred_username,
           social_id: jwt.oid,
           connected_email_type: 'outlook',
           primary_connected: true,
           outlook_refresh_token,
+          email_max_count,
         };
         return res.send({
           status: true,
@@ -1303,12 +1319,21 @@ const authorizeOutlook = async (req, res) => {
         user.social_id = jwt.oid;
         user.connected_email_type = 'outlook';
         user.primary_connected = true;
+        if (
+          user.connected_email.indexOf('@outlook.com') !== -1 ||
+          user.connected_email.indexOf('@hotmail.com') !== -1
+        ) {
+          user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
+        } else {
+          user.email_info.max_count =
+            system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
+        }
         user
           .save()
           .then((_res) => {
             res.send({
               status: true,
-              data: user.email,
+              data: user.connected_email,
             });
           })
           .catch((err) => {
@@ -1472,19 +1497,32 @@ const authorizeGmail = async (req, res) => {
     version: 'v2',
   });
 
-  oauth2.userinfo.v2.me.get(function (err, _res) {
+  oauth2.userinfo.v2.me.get((err, _res) => {
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
+      });
+    }
+
     // Email is in the preferred_username field
     user.connected_email = _res.data.email;
-    user.connected_email_type = 'gmail';
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
+    user.connected_email_type = 'gmail';
+    if (_res.data.hd) {
+      user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
+    } else {
+      user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
+    }
+
     user
       .save()
       .then((_res) => {
         res.send({
           status: true,
-          data: user.email,
+          data: user.connected_email,
         });
       })
       .catch((err) => {

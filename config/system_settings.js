@@ -4,7 +4,11 @@ const system_settings = {
     TEAM: '25',
   },
   EMAIL_DAILY_LIMIT: {
-    BASIC: 300,
+    BASIC: 500,
+    GMAIL: 500,
+    GSUIT: 2000,
+    OUTLOOK: 300,
+    MICROSOFT: 1000,
   },
   TEXT_MONTHLY_LIMIT: {
     BASIC: 250,
