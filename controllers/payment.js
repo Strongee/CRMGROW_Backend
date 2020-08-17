@@ -1,7 +1,9 @@
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
+const urls = require('../constants/urls');
 const Payment = require('../models/payment');
 const User = require('../models/user');
+const Notification = require('../models/notification');
 
 const stripeKey = api.STRIPE.SECRET_KEY;
 
@@ -688,6 +690,17 @@ const paymentFailed = async (req, res) => {
     console.log('err', err.message);
   });
 
+  const notification = new Notification({
+    type: 'personal',
+    criteria: 'subscription_failed',
+    content: `Your payment for your crmgrow account has failed. Please update cc card info at <a href="${urls.BILLING_URL}" style="color:black;">billing page</a>`,
+    user: user.id,
+  });
+
+  notification.save().catch((err) => {
+    console.log('err', err.message);
+  });
+
   return res.send({
     status: true,
   });
@@ -719,6 +732,15 @@ const paymentSucceed = async (req, res) => {
     user.save().catch((err) => {
       console.log('user save err', err.message);
     });
+
+    Notification.deleteMany({
+      type: 'personal',
+      criteria: 'subscription_failed',
+      user: user.id,
+    }).catch((err) => {
+      console.log('notification delete error', err.message);
+    });
+
     return res.send({
       status: true,
     });
