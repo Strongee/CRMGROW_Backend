@@ -39,6 +39,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const FileHelper = require('../helpers/file');
@@ -439,11 +445,12 @@ const reminder_job = new CronJob(
               '\n';
             const body = follow_up.content + '\n';
             const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
+
+            client.messages
               .create({
                 from: fromNumber,
-                body: title + body + '\n' + contact_link,
                 to: e164Phone,
+                body: title + body + '\n' + contact_link,
               })
               .then(() => {
                 console.log(
@@ -455,10 +462,7 @@ const reminder_job = new CronJob(
                   `UTC timezone ${moment(follow_up.due_date).toISOString()}`
                 );
               })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
-
+              .catch((err) => console.error('send sms err: ', err));
             reminder['del'] = true;
 
             reminder.save().catch((err) => {
@@ -586,22 +590,21 @@ const reminder_job = new CronJob(
           '\n';
         const body = appointment.content + '\n';
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + body + '\n' + contact_link,
             to: e164Phone,
+            body: title + body + '\n' + contact_link,
           })
           .then(() => {
             console.log(
               `Reminder at: ${moment(appointment.due_date)
                 .utcOffset(user.time_zone)
-                .format('h:mm a')}`
+                .format('MMMM Do YYYY h:mm a')}`
             );
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
 
         reminder['del'] = true;
 

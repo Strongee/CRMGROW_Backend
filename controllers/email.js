@@ -45,6 +45,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const emailHelper = require('../helpers/email');
 const ActivityHelper = require('../helpers/activity');
 
@@ -875,40 +881,7 @@ const openTrack = async (req, res) => {
         } else {
           let fromNumber = user['proxy_number'];
           if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
-
-            const data = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number === 'undefined') {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers('US')
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number !== 'undefined') {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log('proxy_number', proxy_number);
-              user['proxy_number'] = proxy_number.phoneNumber;
-              fromNumber = user['proxy_number'];
-              user.save().catch((err) => {
-                console.log('err', err);
-              });
-            } else {
-              fromNumber = api.TWILIO.TWILIO_NUMBER;
-            }
+            fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           }
 
           const title =
@@ -932,15 +905,14 @@ const openTrack = async (req, res) => {
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
           const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
+
+          client.messages
             .create({
               from: fromNumber,
-              body: title + '\n' + time + contact_link,
               to: e164Phone,
+              body: title + '\n' + time + contact_link,
             })
-            .catch((err) => {
-              console.log('send sms err: ', err);
-            });
+            .catch((err) => console.error('send sms err', err));
         }
       }
     }
@@ -1494,40 +1466,7 @@ const receiveEmailSendGrid = async (req, res) => {
         } else {
           let fromNumber = user['proxy_number'];
           if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
-
-            const data = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number === 'undefined') {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers('US')
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number !== 'undefined') {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log('proxy_number', proxy_number);
-              user['proxy_number'] = proxy_number.phoneNumber;
-              fromNumber = user['proxy_number'];
-              user.save().catch((err) => {
-                console.log('err', err);
-              });
-            } else {
-              fromNumber = system_settings.TWILIO.TWILIO_NUMBER;
-            }
+            fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           }
 
           const title =
@@ -1551,15 +1490,14 @@ const receiveEmailSendGrid = async (req, res) => {
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
           const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
+
+          client.messages
             .create({
               from: fromNumber,
-              body: title + '\n' + time + contact_link,
               to: e164Phone,
+              body: title + '\n' + time + contact_link,
             })
-            .catch((err) => {
-              console.log('send sms err: ', err);
-            });
+            .catch((err) => console.error('send sms err: ', err));
         }
       }
     }
@@ -1756,40 +1694,7 @@ const receiveEmail = async (req, res) => {
           } else {
             let fromNumber = user['proxy_number'];
             if (!fromNumber) {
-              const areaCode = user.cell_phone.substring(1, 4);
-
-              const data = await twilio.availablePhoneNumbers('US').local.list({
-                areaCode,
-              });
-
-              let number = data[0];
-
-              if (typeof number === 'undefined') {
-                const areaCode1 = user.cell_phone.substring(1, 3);
-
-                const data1 = await twilio
-                  .availablePhoneNumbers('US')
-                  .local.list({
-                    areaCode: areaCode1,
-                  });
-                number = data1[0];
-              }
-
-              if (typeof number !== 'undefined') {
-                const proxy_number = await twilio.incomingPhoneNumbers.create({
-                  phoneNumber: number.phoneNumber,
-                  smsUrl: urls.SMS_RECEIVE_URL,
-                });
-
-                console.log('proxy_number', proxy_number);
-                user['proxy_number'] = proxy_number.phoneNumber;
-                fromNumber = user['proxy_number'];
-                user.save().catch((err) => {
-                  console.log('err', err);
-                });
-              } else {
-                fromNumber = api.TWILIO.TWILIO_NUMBER;
-              }
+              fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
             }
 
             const title =
@@ -1813,15 +1718,14 @@ const receiveEmail = async (req, res) => {
               moment(opened).utcOffset(user.time_zone).format('h:mm a');
             const time = ' on ' + created_at + '\n ';
             const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
+
+            client.messages
               .create({
                 from: fromNumber,
-                body: title + '\n' + time + contact_link,
                 to: e164Phone,
+                body: title + '\n' + time + contact_link,
               })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
+              .catch((err) => console.error('send sms err: ', err));
           }
         }
       }
@@ -2100,38 +2004,7 @@ const unSubscribeEmail = async (req, res) => {
       } else {
         let fromNumber = user['proxy_number'];
         if (!fromNumber) {
-          const areaCode = user.cell_phone.substring(1, 4);
-
-          const data = await twilio.availablePhoneNumbers('US').local.list({
-            areaCode,
-          });
-
-          let number = data[0];
-
-          if (typeof number === 'undefined') {
-            const areaCode1 = user.cell_phone.substring(1, 3);
-
-            const data1 = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode: areaCode1,
-            });
-            number = data1[0];
-          }
-
-          if (typeof number !== 'undefined') {
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl: urls.SMS_RECEIVE_URL,
-            });
-
-            console.log('proxy_number', proxy_number);
-            user['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = user['proxy_number'];
-            user.save().catch((err) => {
-              console.log('err', err);
-            });
-          } else {
-            fromNumber = api.TWILIO.TWILIO_NUMBER;
-          }
+          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         }
 
         const title =
@@ -2153,15 +2026,14 @@ const unSubscribeEmail = async (req, res) => {
           moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + time + contact_link,
             to: e164Phone,
+            body: title + '\n' + time + contact_link,
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
       }
     }
   }
@@ -2429,38 +2301,7 @@ const reSubscribeEmail = async (req, res) => {
       } else {
         let fromNumber = user['proxy_number'];
         if (!fromNumber) {
-          const areaCode = user.cell_phone.substring(1, 4);
-
-          const data = await twilio.availablePhoneNumbers('US').local.list({
-            areaCode,
-          });
-
-          let number = data[0];
-
-          if (typeof number === 'undefined') {
-            const areaCode1 = user.cell_phone.substring(1, 3);
-
-            const data1 = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode: areaCode1,
-            });
-            number = data1[0];
-          }
-
-          if (typeof number !== 'undefined') {
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl: urls.SMS_RECEIVE_URL,
-            });
-
-            console.log('proxy_number', proxy_number);
-            user['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = user['proxy_number'];
-            user.save().catch((err) => {
-              console.log('err', err);
-            });
-          } else {
-            fromNumber = api.TWILIO.TWILIO_NUMBER;
-          }
+          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         }
 
         const title =
@@ -2482,15 +2323,14 @@ const reSubscribeEmail = async (req, res) => {
           moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + time + contact_link,
             to: e164Phone,
+            body: title + '\n' + time + contact_link,
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
       }
     }
   }

@@ -25,6 +25,11 @@ const api = require('../config/api');
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
 
 const createPDF = async (data) => {
   const pdf_tracker = new PDFTracker({
@@ -116,7 +121,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
     } else {
       let fromNumber = currentUser['proxy_number'];
       if (!fromNumber) {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       }
 
       const title =
@@ -142,15 +147,14 @@ const disconnectPDF = async (pdf_tracker_id) => {
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-      twilio.messages
+
+      client.messages
         .create({
           from: fromNumber,
-          body: title + '\n' + body + '\n' + contact_link,
           to: e164Phone,
+          body: title + '\n' + body + '\n' + contact_link,
         })
-        .catch((err) => {
-          console.log('send sms err: ', err);
-        });
+        .catch((err) => console.error(err));
     }
   }
 
@@ -471,7 +475,7 @@ const disconnectVideo = async (video_tracker_id) => {
       } else {
         let fromNumber = currentUser['proxy_number'];
         if (!fromNumber) {
-          fromNumber = api.TWILIO.TWILIO_NUMBER;
+          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         }
 
         const title =
@@ -499,11 +503,11 @@ const disconnectVideo = async (video_tracker_id) => {
           'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
-        twilio.messages
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + body + '\n' + contact_link,
             to: e164Phone,
+            body: title + '\n' + body + '\n' + contact_link,
           })
           .catch((err) => console.error(err));
       }
@@ -915,7 +919,7 @@ const disconnectImage = async (image_tracker_id) => {
     } else {
       let fromNumber = currentUser['proxy_number'];
       if (!fromNumber) {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
+        fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       }
 
       const title =
@@ -941,15 +945,14 @@ const disconnectImage = async (image_tracker_id) => {
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-      twilio.messages
+
+      client.messages
         .create({
           from: fromNumber,
-          body: title + '\n' + body + '\n' + contact_link,
           to: e164Phone,
+          body: title + '\n' + body + '\n' + contact_link,
         })
-        .catch((err) => {
-          console.log('send sms err: ', err);
-        });
+        .catch((err) => console.error(err));
     }
   }
 
