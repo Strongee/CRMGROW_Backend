@@ -171,6 +171,13 @@ const updateContacts = async () => {
       }).catch((err) => {
         console.log('err', err.message);
       });
+
+      Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+      FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
       continue;
     }
 
@@ -180,6 +187,12 @@ const updateContacts = async () => {
         user: admin.id,
       }).catch((err) => {
         console.log('err', err.message);
+      });
+      Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+      FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
       });
       continue;
     }
@@ -198,6 +211,12 @@ const updateContacts = async () => {
           user: admin.id,
         }).catch((err) => {
           console.log('err', err.message);
+        });
+        Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+          console.log('activity remove error', err.message);
+        });
+        FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+          console.log('activity remove error', err.message);
         });
         continue;
       }
