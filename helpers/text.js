@@ -2,9 +2,11 @@ const phone = require('phone');
 
 const User = require('../models/user');
 const Contact = require('../models/contact');
-const api = require('../config/api');
+const Video = require('../models/video');
 const Activity = require('../models/activity');
 const ActivityHelper = require('./activity');
+
+const api = require('../config/api');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -530,6 +532,172 @@ const bulkImage = async (data) => {
   return Promise.all(promise_array);
 };
 
+const resendVideo = async (data) => {
+  const { user, content, activities, videos, contacts } = data;
+  const promise_array = [];
+
+  const currentUser = await User.findOne({ _id: user, del: false }).catch(
+    (err) => {
+      console.log('user not found err', err.message);
+    }
+  );
+
+  if (!currentUser) {
+    promise_array.push(
+      new Promise((resolve, reject) => {
+        resolve({
+          status: false,
+          err: 'User not found',
+        });
+      })
+    );
+  }
+  if (promise_array.length > 0) {
+    return Promise.all(promise_array);
+  }
+
+  let detail_content = 'resent video using sms';
+  detail_content = ActivityHelper.autoSettingLog(detail_content);
+
+  for (let i = 0; i < contacts.length; i++) {
+    const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+      (err) => {
+        console.log('contact not found err', err.message);
+      }
+    );
+
+    if (!_contact) {
+      promise_array.push(
+        new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            err: 'Contact not found',
+          });
+        })
+      );
+      continue;
+    }
+
+    let video_titles = '';
+    let video_descriptions = '';
+    let video_objects = '';
+    let video_content = content;
+    let activity;
+    for (let j = 0; j < activities.length; j++) {
+      activity = activities[j];
+      const video = await Video.findOne({ _id: videos[j] });
+
+      if (typeof video_content === 'undefined') {
+        video_content = '';
+      }
+
+      video_content = video_content
+        .replace(/{user_name}/gi, currentUser.user_name)
+        .replace(/{user_email}/gi, currentUser.email)
+        .replace(/{user_phone}/gi, currentUser.cell_phone)
+        .replace(/{contact_first_name}/gi, _contact.first_name)
+        .replace(/{contact_last_name}/gi, _contact.last_name)
+        .replace(/{contact_email}/gi, _contact.email)
+        .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+      const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
+
+      if (j < videos.length - 1) {
+        video_titles = video_titles + video.title + ', ';
+        video_descriptions += `${video.description}, `;
+      } else {
+        video_titles += video.title;
+        video_descriptions += video.description;
+      }
+      const video_object = `\n${video.title}:\n\n${video_link}\n`;
+      video_objects += video_object;
+    }
+
+    if (video_content.search(/{video_object}/gi) !== -1) {
+      video_content = video_content.replace(/{video_object}/gi, video_objects);
+    } else {
+      video_content = video_content + '\n' + video_objects;
+    }
+
+    if (video_content.search(/{video_title}/gi) !== -1) {
+      video_content = video_content.replace(/{video_title}/gi, video_titles);
+    }
+
+    if (video_content.search(/{video_description}/gi) !== -1) {
+      video_content = video_content.replace(
+        /{video_description}/gi,
+        video_descriptions
+      );
+    }
+
+    let fromNumber = currentUser['proxy_number'];
+
+    if (!fromNumber) {
+      fromNumber = await getSignalWireNumber(currentUser.id);
+    }
+
+    const promise = new Promise((resolve, reject) => {
+      const e164Phone = phone(_contact.cell_phone)[0];
+
+      if (!e164Phone) {
+        resolve({
+          contact: contacts[i],
+          error: 'Phone number is not valid format',
+          status: false,
+        }); // Invalid phone number
+      }
+
+      client.messages
+        .create({
+          from: fromNumber,
+          to: e164Phone,
+          body: video_content,
+        })
+        .then(async (message) => {
+          console.log('Message ID: ', message.sid);
+
+          const _activity = new Activity({
+            content: detail_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: videos[0],
+            description: video_content,
+          });
+
+          const resend_activity = await _activity
+            .save()
+            .then()
+            .catch((err) => {
+              console.log('err', err);
+            });
+
+          Contact.updateOne(
+            { _id: contacts[i] },
+            {
+              $set: { last_activity: resend_activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+          resolve({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          resolve({
+            contact: contacts[i],
+            error: err,
+            status: false,
+          });
+        });
+    });
+    promise_array.push(promise);
+  }
+
+  return Promise.all(promise_array);
+};
+
 const getTwilioNumber = async (id) => {
   const user = await User.findOne({ _id: id }).catch((err) => {
     console.log('err', err);
@@ -718,6 +886,7 @@ module.exports = {
   bulkVideo,
   bulkPDF,
   bulkImage,
+  resendVideo,
   getTwilioNumber,
   getSignalWireNumber,
   matchUSPhoneNumber,

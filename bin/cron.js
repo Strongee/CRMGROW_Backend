@@ -1528,6 +1528,39 @@ const timesheet_check = new CronJob(
                 });
               });
             break;
+          case 'resend_text_video':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            TextHelper.resendVideo(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            break;
         }
         if (timeline.ref) {
           const next_data = {

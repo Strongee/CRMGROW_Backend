@@ -2993,9 +2993,7 @@ const resendVideo = async (data) => {
                   contacts: contacts[i],
                   user: currentUser.id,
                   type: 'videos',
-                  videos: video.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
+                  videos: videos[0],
                   subject: video_subject,
                   description: video_content,
                 });
@@ -3010,7 +3008,7 @@ const resendVideo = async (data) => {
                   { _id: contacts[i] },
                   { $set: { last_activity: resend_activity.id } }
                 ).catch((err) => {
-                  console.log('err', err);
+                  console.log('conatct update err', err.message);
                 });
                 resolve({
                   status: true,
