@@ -11,6 +11,7 @@ const NotificationSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     is_read: { type: Boolean, default: false },
     criteria: String,
+    team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
     content: String,
     created_at: Date,
     updated_at: Date,

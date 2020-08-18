@@ -369,6 +369,7 @@ const bulkInvites = async (req, res) => {
         const team_url = `<a href="${urls.TEAM_UR}">${team.name}</a>`;
         const notification = new Notification({
           user: invite.id,
+          team: team.id,
           criteria: 'team_invited',
           content: `You've been invited to join team ${team_url} in CRMGrow`,
         });
@@ -431,6 +432,9 @@ const acceptInviation = async (req, res) => {
     }
   )
     .then(async () => {
+      /** **********
+       *  Send email accept notification to the inviated users
+       *  */
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       const msg = {
@@ -456,6 +460,15 @@ const acceptInviation = async (req, res) => {
         .catch((err) => {
           console.log('send message err: ', err);
         });
+
+      /** **********
+       *  Mark read true dashboard notification for accepted users
+       *  */
+
+      Notification.updateOne(
+        { team: team.id, user: currentUser.id, criteria: 'team_inviated' },
+        { is_read: true }
+      );
       return res.send({
         status: true,
       });
