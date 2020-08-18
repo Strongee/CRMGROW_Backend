@@ -2937,7 +2937,7 @@ const resendVideo = async (data) => {
             .replace(/{contact_email}/gi, _contact.email)
             .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
           const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
           video_objects += video_object;
@@ -2975,7 +2975,7 @@ const resendVideo = async (data) => {
             video_content +
             '<br/>Thank you,<br/>' +
             currentUser.email_signature +
-            generateUnsubscribeLink(activity.id) +
+            generateUnsubscribeLink(activity) +
             '</body></html>',
           text: video_content,
         };
@@ -3156,7 +3156,7 @@ const resendVideo = async (data) => {
           } else {
             video_descriptions += video.description;
           }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
           const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
           video_objects += video_object;
@@ -3203,7 +3203,7 @@ const resendVideo = async (data) => {
           video_content +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
-          generateUnsubscribeLink(activity.id) +
+          generateUnsubscribeLink(activity) +
           '</body></html>';
 
         // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
@@ -3421,7 +3421,7 @@ const resendVideo = async (data) => {
           } else {
             video_descriptions += video.description;
           }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
           const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
           video_objects += video_object;
@@ -3469,7 +3469,7 @@ const resendVideo = async (data) => {
                 video_content +
                 '<br/>Thank you,<br/>' +
                 currentUser.email_signature +
-                generateUnsubscribeLink(activity.id) +
+                generateUnsubscribeLink(activity) +
                 '</body></html>',
             },
             toRecipients: [

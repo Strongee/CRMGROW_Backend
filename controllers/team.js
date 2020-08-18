@@ -11,6 +11,7 @@ const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 const Contact = require('../models/contact');
+const Notification = require('../models/notification');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const getAll = (req, res) => {
@@ -25,6 +26,25 @@ const getAll = (req, res) => {
     ],
   })
     .populate([{ path: 'owner' }, { path: 'members' }])
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const getInvitedTeam = (req, res) => {
+  const { currentUser } = req;
+
+  Team.find({ invites: currentUser.id })
+    .populate('owner')
     .then((data) => {
       return res.send({
         status: true,
@@ -346,23 +366,15 @@ const bulkInvites = async (req, res) => {
 
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
-        const user_name = invite.user_name
-          ? invite.user_name.split(' ')[0]
-          : '';
-        const msg = {
-          to: invite.email,
-          from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
-          templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
-          dynamic_template_data: {
-            LOGO_URL: urls.LOGO_URL,
-            subject: `You've been invited to join team ${team.name} in CRMGrow`,
-            user_name,
-            owner_name: currentUser.user_name,
-            team_name: team.name,
-            ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
-          },
-        };
-        sgMail.send(msg);
+        const team_url = `<a href="${urls.TEAM_UR}">${team.name}</a>`;
+        const notification = new Notification({
+          user: invite.id,
+          criteria: 'team_invited',
+          content: `You've been invited to join team ${team_url} in CRMGrow`,
+        });
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
       }
       res.send({
         status: true,
@@ -1253,6 +1265,7 @@ const updateTeam = (req, res) => {
 module.exports = {
   getAll,
   getTeam,
+  getInvitedTeam,
   get,
   create,
   update,

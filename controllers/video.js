@@ -2076,6 +2076,7 @@ const bulkText = async (req, res) => {
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
+          send_type: 1,
           videos: video._id,
           created_at: new Date(),
           updated_at: new Date(),

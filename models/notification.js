@@ -8,7 +8,7 @@ const NotificationSchema = new Schema(
     type: String,
     del: { type: Boolean, default: false },
     sent: { type: Boolean, default: false },
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     is_read: { type: Boolean, default: false },
     criteria: String,
     content: String,
