@@ -52,7 +52,7 @@ const create = async (req, res) => {
           });
           _time_line
             .save()
-            .then((timeline) => {
+            .then(async (timeline) => {
               if (timeline.period === 0) {
                 try {
                   runTimeline(timeline.id);
@@ -107,17 +107,19 @@ const activeNext = async (data) => {
   if (timelines) {
     for (let i = 0; i < timelines.length; i++) {
       const timeline = timelines[i];
-      const { period } = timeline;
-      const now = moment();
-      // let tens = parseInt(now.minutes() / 10)
-      // now.set({ minute: tens*10, second: 0, millisecond: 0 })
-      now.set({ second: 0, millisecond: 0 });
-      const due_date = now.add(period, 'hours');
-      due_date.set({ second: 0, millisecond: 0 });
-      timeline.status = 'active';
-      timeline.due_date = due_date;
+      if (timeline.condition && timeline.condition.answer === true) {
+        timeline.status = 'checking';
+      } else {
+        const { period } = timeline;
+        const now = moment();
+        now.set({ second: 0, millisecond: 0 });
+        const due_date = now.add(period, 'hours');
+        due_date.set({ second: 0, millisecond: 0 });
+        timeline.status = 'active';
+        timeline.due_date = due_date;
+      }
       timeline.save().catch((err) => {
-        console.log('err', err);
+        console.log('err', err.message);
       });
     }
   }
@@ -634,10 +636,29 @@ const disableNext = async (id) => {
         timeline.status = 'disabled';
         timeline.updated_at = new Date();
         timeline.save().catch((err) => {
-          console.log('err', err);
+          console.log('err', err.message);
         });
       }
     } while (timelines.length > 0 || timeline);
+  }
+};
+
+const activeTimeline = async (id) => {
+  const timeline = await TimeLine.findOne({ _id: id }).catch((err) => {
+    console.log('err', err);
+  });
+
+  if (timeline) {
+    const now = moment();
+    const { period } = timeline;
+    now.set({ second: 0, millisecond: 0 });
+    const due_date = now.add(period, 'hours');
+    due_date.set({ second: 0, millisecond: 0 });
+    timeline.status = 'active';
+    timeline.due_date = due_date;
+    timeline.save().catch((err) => {
+      console.log('err', err.message);
+    });
   }
 };
 
@@ -647,5 +668,6 @@ module.exports = {
   activeNext,
   disableNext,
   runTimeline,
+  activeTimeline,
   cancel,
 };

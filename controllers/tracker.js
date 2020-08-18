@@ -195,7 +195,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
 
   const timelines = await TimeLine.find({
     contact: contact.id,
-    status: 'active',
+    status: 'checking',
     watched_pdf: query['pdf'],
     'condition.case': 'watched_pdf',
     'condition.answer': true,
@@ -203,24 +203,35 @@ const disconnectPDF = async (pdf_tracker_id) => {
     console.log('err', err);
   });
 
+  // if (timelines.length > 0) {
+  //   for (let i = 0; i < timelines.length; i++) {
+  //     try {
+  //       const timeline = timelines[i];
+  //       TimeLineCtrl.runTimeline(timeline.id);
+  //       timeline['status'] = 'completed';
+  //       timeline.save().catch((err) => {
+  //         console.log('err', err);
+  //       });
+  //       const data = {
+  //         contact: contact.id,
+  //         ref: timeline.ref,
+  //       };
+  //       if (timeline.ref) {
+  //         TimeLineCtrl.activeNext(data);
+  //       }
+  //     } catch (err) {
+  //       console.log('err', err);
+  //     }
+  //   }
+  // }
+
   if (timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       try {
         const timeline = timelines[i];
-        TimeLineCtrl.runTimeline(timeline.id);
-        timeline['status'] = 'completed';
-        timeline.save().catch((err) => {
-          console.log('err', err);
-        });
-        const data = {
-          contact: contact.id,
-          ref: timeline.ref,
-        };
-        if (timeline.ref) {
-          TimeLineCtrl.activeNext(data);
-        }
+        TimeLineCtrl.activeTimeline(timeline.id);
       } catch (err) {
-        console.log('err', err);
+        console.log('err', err.message);
       }
     }
   }
@@ -336,7 +347,7 @@ const disconnectVideo = async (video_tracker_id) => {
 
     const timelines = await TimeLine.find({
       contact: contact.id,
-      status: 'active',
+      status: 'checking',
       watched_video: query['video'],
       'condition.case': 'watched_video',
       'condition.answer': true,
@@ -348,14 +359,7 @@ const disconnectVideo = async (video_tracker_id) => {
       for (let i = 0; i < timelines.length; i++) {
         try {
           const timeline = timelines[i];
-          TimeLineCtrl.runTimeline(timeline.id);
-          const data = {
-            contact: contact.id,
-            ref: timeline.ref,
-          };
-          if (timeline.ref) {
-            TimeLineCtrl.activeNext(data);
-          }
+          TimeLineCtrl.activeTimeline(timeline.id);
         } catch (err) {
           console.log('err', err.message);
         }
@@ -792,24 +796,35 @@ const disconnectImage = async (image_tracker_id) => {
     console.log('err', err);
   });
 
+  // if (timelines.length > 0) {
+  //   for (let i = 0; i < timelines.length; i++) {
+  //     try {
+  //       const timeline = timelines[i];
+  //       TimeLineCtrl.runTimeline(timeline.id);
+  //       timeline['status'] = 'completed';
+  //       timeline.save().catch((err) => {
+  //         console.log('err', err);
+  //       });
+  //       const data = {
+  //         contact: contact.id,
+  //         ref: timeline.ref,
+  //       };
+  //       if (timeline.ref) {
+  //         TimeLineCtrl.activeNext(data);
+  //       }
+  //     } catch (err) {
+  //       console.log('err', err);
+  //     }
+  //   }
+  // }
+
   if (timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       try {
         const timeline = timelines[i];
-        TimeLineCtrl.runTimeline(timeline.id);
-        timeline['status'] = 'completed';
-        timeline.save().catch((err) => {
-          console.log('err', err);
-        });
-        const data = {
-          contact: contact.id,
-          ref: timeline.ref,
-        };
-        if (timeline.ref) {
-          TimeLineCtrl.activeNext(data);
-        }
+        TimeLineCtrl.activeTimeline(timeline.id);
       } catch (err) {
-        console.log('err', err);
+        console.log('err', err.message);
       }
     }
   }

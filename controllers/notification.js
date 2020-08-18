@@ -7,6 +7,7 @@ const get = async (req, res) => {
       {
         type: 'personal',
         user: currentUser.id,
+        is_read: false,
       },
       { type: 'global' },
     ],

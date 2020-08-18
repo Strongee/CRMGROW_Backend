@@ -309,12 +309,15 @@ const bulkInvites = async (req, res) => {
     }
   )
     .then(async () => {
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-
       const invitedUsers = await User.find({
         _id: { $in: newInvites },
         del: false,
       });
+
+      /** **********
+       *  Send email notification to the inviated users
+       *  */
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
@@ -337,6 +340,30 @@ const bulkInvites = async (req, res) => {
         sgMail.send(msg);
       }
 
+      /** **********
+       *  Creat dashboard notification to the inviated users
+       *  */
+
+      for (let i = 0; i < invitedUsers.length; i++) {
+        const invite = invitedUsers[i];
+        const user_name = invite.user_name
+          ? invite.user_name.split(' ')[0]
+          : '';
+        const msg = {
+          to: invite.email,
+          from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
+          templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
+          dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
+            subject: `You've been invited to join team ${team.name} in CRMGrow`,
+            user_name,
+            owner_name: currentUser.user_name,
+            team_name: team.name,
+            ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
+          },
+        };
+        sgMail.send(msg);
+      }
       res.send({
         status: true,
       });

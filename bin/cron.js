@@ -1127,10 +1127,6 @@ const timesheet_check = new CronJob(
         if (!action) {
           continue;
         }
-        if (timeline.condition && timeline.condition.answer === true) {
-          TimeLineCtrl.disableNext(timeline.id);
-          continue;
-        }
         switch (action.type) {
           case 'follow_up': {
             let follow_due_date;
@@ -1533,12 +1529,22 @@ const timesheet_check = new CronJob(
               });
             break;
         }
-        const next_data = {
-          contact: timeline.contact,
-          ref: timeline.ref,
-        };
         if (timeline.ref) {
+          const next_data = {
+            contact: timeline.contact,
+            ref: timeline.ref,
+          };
           TimeLineCtrl.activeNext(next_data);
+        }
+        if (timeline.condition && timeline.condition.answer === false) {
+          const pair_timeline = await TimeLine.findOne({
+            parent_ref: timeline.parent_ref,
+            contact: timeline.contact,
+            'condition.answer': true,
+          });
+          if (pair_timeline) {
+            TimeLineCtrl.disableNext(pair_timeline.id);
+          }
         }
       }
     }
