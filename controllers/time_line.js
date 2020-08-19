@@ -1,4 +1,5 @@
 const moment = require('moment');
+const mongoose = require('mongoose');
 const TimeLine = require('../models/time_line');
 const Automation = require('../models/automation');
 const Contact = require('../models/contact');
@@ -515,30 +516,36 @@ const runTimeline = async (id) => {
                 _id: timeline.contact,
               },
               {
-                $set: { label: action.content },
+                $set: { label: mongoose.Types.ObjectId(action.content) },
               }
             );
             break;
-          case 'push_tag':
+          case 'push_tag': {
+            const tags = action.content.map((tag) => tag.value);
+            console.log('tags', tags);
             Contact.updateOne(
               {
                 _id: timeline.contact,
               },
               {
-                $push: { tags: { $each: action.content } },
+                $push: { tags: { $each: tags } },
               }
             );
             break;
-          case 'pull_tag':
+          }
+          case 'pull_tag': {
+            const tags = action.content.map((tag) => tag.value);
+            console.log('tags', tags);
             Contact.updateOne(
               {
                 _id: timeline.contact,
               },
               {
-                $pull: { tags: { $in: action.content } },
+                $pull: { tags: { $in: tags } },
               }
             );
             break;
+          }
         }
         timeline['status'] = 'completed';
         timeline['updated_at'] = new Date();
