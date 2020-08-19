@@ -507,6 +507,7 @@ const runTimeline = async (id) => {
           });
         break;
       case 'update_contact': {
+        console.log('action', action);
         switch (action.command) {
           case 'update_label':
             Contact.updateOne(
