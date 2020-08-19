@@ -506,7 +506,7 @@ const runTimeline = async (id) => {
             console.log('err', err);
           });
         break;
-      case 'update_content': {
+      case 'update_contact': {
         switch (action.command) {
           case 'update_label':
             Contact.updateOne(

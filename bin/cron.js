@@ -1571,8 +1571,7 @@ const timesheet_check = new CronJob(
                 });
               });
             break;
-          case 'update_content': {
-            console.log('label update', action);
+          case 'update_contact': {
             switch (action.command) {
               case 'update_label':
                 Contact.updateOne(
