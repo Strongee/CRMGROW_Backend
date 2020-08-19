@@ -23,6 +23,8 @@ const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
+const TimeLine = require('../models/time_line');
+const TimeLineCtrl = require('./time_line');
 
 const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
@@ -1255,6 +1257,45 @@ const receiveEmailSendGrid = async (req, res) => {
           ).catch((err) => {
             console.log('err', err);
           });
+
+          /**
+           * Automation checking
+           */
+          const timelines = await TimeLine.find({
+            contact: contact.id,
+            status: 'active',
+            opened_email: req.params.id,
+            'condition.case': 'opened_email',
+            'condition.answer': true,
+          }).catch((err) => {
+            console.log('err', err);
+          });
+
+          if (timelines.length > 0) {
+            for (let i = 0; i < timelines.length; i++) {
+              try {
+                const timeline = timelines[i];
+                TimeLineCtrl.activeTimeline(timeline.id);
+              } catch (err) {
+                console.log('err', err.message);
+              }
+            }
+          }
+          const unopened_timelines = await TimeLine.find({
+            contact: contact.id,
+            status: 'active',
+            opened_email: req.params.id,
+            'condition.case': 'opened_email',
+            'condition.answer': false,
+          }).catch((err) => {
+            console.log('err', err);
+          });
+          if (unopened_timelines.length > 0) {
+            for (let i = 0; i < unopened_timelines.length; i++) {
+              const timeline = unopened_timelines[i];
+              TimeLineCtrl.disableNext(timeline.id);
+            }
+          }
         } else {
           return;
         }
@@ -1588,6 +1629,47 @@ const receiveEmail = async (req, res) => {
           console.log('err', err);
         });
 
+        /**
+         * Automation checking
+         */
+        const timelines = await TimeLine.find({
+          contact: contact.id,
+          status: 'active',
+          opened_email: req.params.id,
+          'condition.case': 'opened_email',
+          'condition.answer': true,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+
+        if (timelines.length > 0) {
+          for (let i = 0; i < timelines.length; i++) {
+            try {
+              const timeline = timelines[i];
+              TimeLineCtrl.activeTimeline(timeline.id);
+            } catch (err) {
+              console.log('err', err.message);
+            }
+          }
+        }
+        const unopened_timelines = await TimeLine.find({
+          contact: contact.id,
+          status: 'active',
+          opened_email: req.params.id,
+          'condition.case': 'opened_email',
+          'condition.answer': false,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+        if (unopened_timelines.length > 0) {
+          for (let i = 0; i < unopened_timelines.length; i++) {
+            const timeline = unopened_timelines[i];
+            TimeLineCtrl.disableNext(timeline.id);
+          }
+        }
+        /**
+         * Notification
+         */
         const garbage = await Garbage.findOne({ user: user.id }).catch(
           (err) => {
             console.log('err', err);

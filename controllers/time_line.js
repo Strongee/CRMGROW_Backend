@@ -662,6 +662,22 @@ const activeTimeline = async (id) => {
   }
 };
 
+const setEmailTrackTimeline = async (data) => {
+  const { activity, contact, parent_ref } = data;
+  TimeLine.updateMany(
+    {
+      contact,
+      parent_ref,
+      'condition.case': 'opened_email',
+    },
+    {
+      $set: { opened_email: activity },
+    }
+  ).catch((err) => {
+    console.log('err', err);
+  });
+};
+
 module.exports = {
   create,
   recreate,
@@ -669,5 +685,6 @@ module.exports = {
   disableNext,
   runTimeline,
   activeTimeline,
+  setEmailTrackTimeline,
   cancel,
 };

@@ -220,6 +220,7 @@ const bulkEmail = async (data) => {
 
               resolve({
                 status: true,
+                activity: activity.id,
               });
             } else {
               console.log('email sending err', msg.to + _res[0].statusCode);
@@ -403,6 +404,7 @@ const bulkEmail = async (data) => {
                   .then(() => {
                     resolve({
                       status: true,
+                      activity: activity.id,
                     });
                   })
                   .catch((err) => {
@@ -633,6 +635,7 @@ const bulkEmail = async (data) => {
             });
             resolve({
               status: true,
+              activity: activity.id,
             });
           })
           .catch((err) => {
