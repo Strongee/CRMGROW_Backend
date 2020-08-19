@@ -508,7 +508,6 @@ const runTimeline = async (id) => {
           });
         break;
       case 'update_contact': {
-        console.log('action', action);
         switch (action.command) {
           case 'update_label':
             Contact.updateOne(
@@ -518,17 +517,12 @@ const runTimeline = async (id) => {
               {
                 $set: { label: mongoose.Types.ObjectId(action.content) },
               }
-            )
-              .then(() => {
-                console.log('updated');
-              })
-              .catch((err) => {
-                console.log('label set err', err.message);
-              });
+            ).catch((err) => {
+              console.log('label set err', err.message);
+            });
             break;
           case 'push_tag': {
             const tags = action.content.map((tag) => tag.value);
-            console.log('tags', tags);
             Contact.updateOne(
               {
                 _id: timeline.contact,
