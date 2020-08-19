@@ -1572,6 +1572,7 @@ const timesheet_check = new CronJob(
               });
             break;
           case 'update_content': {
+            console.log('label update', action);
             switch (action.command) {
               case 'update_label':
                 Contact.updateOne(
@@ -1604,6 +1605,11 @@ const timesheet_check = new CronJob(
                 );
                 break;
             }
+            timeline['status'] = 'completed';
+            timeline['updated_at'] = new Date();
+            timeline.save().catch((err) => {
+              console.log('time line err', err.message);
+            });
             break;
           }
         }

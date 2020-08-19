@@ -506,6 +506,46 @@ const runTimeline = async (id) => {
             console.log('err', err);
           });
         break;
+      case 'update_content': {
+        switch (action.command) {
+          case 'update_label':
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $set: { label: action.content },
+              }
+            );
+            break;
+          case 'push_tag':
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $push: { tags: { $each: action.content } },
+              }
+            );
+            break;
+          case 'pull_tag':
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $pull: { tags: { $in: action.content } },
+              }
+            );
+            break;
+        }
+        timeline['status'] = 'completed';
+        timeline['updated_at'] = new Date();
+        timeline.save().catch((err) => {
+          console.log('time line err', err.message);
+        });
+        break;
+      }
     }
   }
 };
