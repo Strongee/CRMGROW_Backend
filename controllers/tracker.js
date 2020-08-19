@@ -699,9 +699,6 @@ const disconnectVideo = async (video_tracker_id) => {
           });
           if (time_line) {
             time_line.due_date = due_date;
-            time_line.save().catch((err) => {
-              console.log('time line save err', err.message);
-            });
           } else {
             const canned_message = await EmailTemplate.findOne({
               _id: auto_resend.email_canned_message,
@@ -728,9 +725,6 @@ const disconnectVideo = async (video_tracker_id) => {
           });
           if (time_line) {
             time_line.due_date = due_date;
-            time_line.save().catch((err) => {
-              console.log('time line save err', err.message);
-            });
           } else {
             const canned_message = await EmailTemplate.findOne({
               _id: auto_resend.sms_canned_message,
@@ -751,7 +745,7 @@ const disconnectVideo = async (video_tracker_id) => {
         }
 
         time_line.save().catch((err) => {
-          console.log('err', err);
+          console.log('time line save err', err);
         });
       }
     }
