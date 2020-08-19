@@ -518,7 +518,13 @@ const runTimeline = async (id) => {
               {
                 $set: { label: mongoose.Types.ObjectId(action.content) },
               }
-            );
+            )
+              .then(() => {
+                console.log('updated');
+              })
+              .catch((err) => {
+                console.log('label set err', err.message);
+              });
             break;
           case 'push_tag': {
             const tags = action.content.map((tag) => tag.value);
