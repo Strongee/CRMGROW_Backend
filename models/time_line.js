@@ -21,6 +21,7 @@ const TimeLineSchema = new Schema(
     watched_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     watched_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     watched_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
+    opened_email: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     created_at: Date,
     updated_at: Date,
   },
