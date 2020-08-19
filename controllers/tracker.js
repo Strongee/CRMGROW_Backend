@@ -810,7 +810,7 @@ const disconnectImage = async (image_tracker_id) => {
 
   const timelines = await TimeLine.find({
     contact: contact.id,
-    status: 'active',
+    status: 'checking',
     watched_image: query['image'],
     'condition.case': 'watched_image',
     'condition.answer': true,

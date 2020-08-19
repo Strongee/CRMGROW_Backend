@@ -1634,7 +1634,7 @@ const receiveEmail = async (req, res) => {
          */
         const timelines = await TimeLine.find({
           contact: contact.id,
-          status: 'active',
+          status: 'checking',
           opened_email: req.params.id,
           'condition.case': 'opened_email',
           'condition.answer': true,
