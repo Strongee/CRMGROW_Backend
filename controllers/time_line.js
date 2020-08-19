@@ -523,7 +523,6 @@ const runTimeline = async (id) => {
             break;
           case 'push_tag': {
             const tags = action.content.map((tag) => tag.value);
-            console.log('tags', tags);
             Contact.updateOne(
               {
                 _id: timeline.contact,
@@ -531,18 +530,13 @@ const runTimeline = async (id) => {
               {
                 $push: { tags: { $each: tags } },
               }
-            )
-              .then(() => {
-                console.log('tags updated');
-              })
-              .catch((err) => {
-                console.log('tag update err', err.message);
-              });
+            ).catch((err) => {
+              console.log('tag update err', err.message);
+            });
             break;
           }
           case 'pull_tag': {
             const tags = action.content.map((tag) => tag.value);
-            console.log('tags', tags);
             Contact.updateOne(
               {
                 _id: timeline.contact,

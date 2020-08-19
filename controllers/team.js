@@ -468,7 +468,10 @@ const acceptInviation = async (req, res) => {
       Notification.updateOne(
         { team: team.id, user: currentUser.id, criteria: 'team_inviated' },
         { is_read: true }
-      );
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+
       return res.send({
         status: true,
       });
@@ -1127,7 +1130,9 @@ const removeVideos = async (req, res) => {
       role: 'team',
     },
     { $unset: { role: true } }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   return res.send({
     status: true,
@@ -1152,7 +1157,9 @@ const removePdfs = async (req, res) => {
     {
       $pull: { pdfs: mongoose.Types.ObjectId(req.params.id) },
     }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   PDF.updateOne(
     {
@@ -1160,7 +1167,9 @@ const removePdfs = async (req, res) => {
       role: 'team',
     },
     { $unset: { role: true } }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   return res.send({
     status: true,
@@ -1185,7 +1194,9 @@ const removeImages = async (req, res) => {
     {
       $pull: { images: mongoose.Types.ObjectId(req.params.id) },
     }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   Image.updateOne(
     {
@@ -1193,7 +1204,9 @@ const removeImages = async (req, res) => {
       role: 'team',
     },
     { $unset: { role: true } }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   return res.send({
     status: true,
@@ -1218,7 +1231,9 @@ const removeAutomations = async (req, res) => {
     {
       $pull: { automations: mongoose.Types.ObjectId(req.params.id) },
     }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   Automation.updateOne(
     {
@@ -1226,7 +1241,9 @@ const removeAutomations = async (req, res) => {
       role: 'team',
     },
     { $unset: { role: true } }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   return res.send({
     status: true,
@@ -1251,7 +1268,9 @@ const removeEmailTemplates = async (req, res) => {
     {
       $pull: { email_templates: mongoose.Types.ObjectId(req.params.id) },
     }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   EmailTemplate.updateOne(
     {
@@ -1259,7 +1278,9 @@ const removeEmailTemplates = async (req, res) => {
       role: 'team',
     },
     { $unset: { role: true } }
-  );
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
 
   return res.send({
     status: true,

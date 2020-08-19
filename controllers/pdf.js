@@ -784,7 +784,9 @@ const remove = async (req, res) => {
           {
             $pull: { pdfs: { $in: [req.params.id] } },
           }
-        );
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
       }
 
       pdf['del'] = true;

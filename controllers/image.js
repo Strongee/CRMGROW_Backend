@@ -422,7 +422,9 @@ const remove = async (req, res) => {
           {
             $pull: { images: { $in: [req.params.id] } },
           }
-        );
+        ).catch((err) => {
+          console.log('team update err', err);
+        });
       }
 
       image['del'] = true;

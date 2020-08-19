@@ -1581,7 +1581,9 @@ const timesheet_check = new CronJob(
                   {
                     $set: { label: mongoose.Types.ObjectId(action.content) },
                   }
-                );
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
                 break;
               case 'push_tag': {
                 const tags = action.content.map((tag) => tag.value);
@@ -1592,7 +1594,9 @@ const timesheet_check = new CronJob(
                   {
                     $push: { tags: { $each: tags } },
                   }
-                );
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
                 break;
               }
               case 'pull_tag': {
@@ -1604,7 +1608,9 @@ const timesheet_check = new CronJob(
                   {
                     $pull: { tags: { $in: tags } },
                   }
-                );
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
                 break;
               }
             }

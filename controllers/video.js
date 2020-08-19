@@ -1340,7 +1340,9 @@ const remove = async (req, res) => {
           {
             $pull: { videos: { $in: [req.params.id] } },
           }
-        );
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
       }
 
       video['del'] = true;
