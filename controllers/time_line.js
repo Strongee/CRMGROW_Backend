@@ -315,6 +315,12 @@ const runTimeline = async (id) => {
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
+              const activity_data = {
+                activity: res[0].activity,
+                contact: timeline.contact,
+                parent_ref: timeline.ref,
+              };
+              setEmailTrackTimeline(activity_data);
             } else {
               timeline.status = 'error';
               timeline.updated_at = new Date();

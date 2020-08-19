@@ -1293,6 +1293,7 @@ const timesheet_check = new CronJob(
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
+                  console.log('res[0]', res[0]);
                   const activity_data = {
                     activity: res[0].activity,
                     contact: timeline.contact,
