@@ -73,7 +73,7 @@ body.theme4
           a.icon(href="tel:" + user.cell_phone)
             img(src='theme/icons/phone_icon.png')
           .content
-            | (312) 493-8446
+            | #{user.cell_phone}
         .widget-action.email
           a.icon(href="mailto:" + user.email)
             img(src='theme/icons/email_icon.png')
