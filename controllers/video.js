@@ -5,6 +5,7 @@ const base64Img = require('base64-img');
 const mime = require('mime-types');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
+const moment = require('moment');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -29,6 +30,9 @@ const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
 const Contact = require('../models/contact');
 const Team = require('../models/team');
+const User = require('../models/user');
+const TimeLine = require('../models/time_line');
+const EmailTemplate = require('../models/email_template');
 const {
   THUMBNAILS_PATH,
   TEMP_PATH,
@@ -41,11 +45,6 @@ const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 
-const accountSid = api.TWILIO.TWILIO_SID;
-const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
-const twilio = require('twilio')(accountSid, authToken);
-
-const User = require('../models/user');
 const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
@@ -1923,7 +1922,7 @@ const bulkGmail = async (req, res) => {
             },
             body,
           })
-            .then(() => {
+            .then(async () => {
               email_count += 1;
               Contact.updateOne(
                 { _id: contacts[i] },
@@ -1931,6 +1930,12 @@ const bulkGmail = async (req, res) => {
               ).catch((err) => {
                 console.log('err', err);
               });
+
+              const garbage = await Garbage.findOne({ user: currentUser.id });
+              const auto_resend = garbage.auto_resend;
+              if (auto_resend['enabled']) {
+                autoResend(activity.id, auto_resend);
+              }
               resolve();
             })
             .catch((err) => {
@@ -2648,6 +2653,81 @@ const getContactsByLatestSent = async (req, res) => {
   });
 };
 
+const autoResend = async (data) => {
+  const { activity, auto_resend } = data;
+  let time_line;
+  const now = moment();
+  const due_date = now.add(auto_resend.period, 'hours');
+  due_date.set({ second: 0, millisecond: 0 });
+
+  const _activity = await Activity.findOne({ _id: activity }).catch((err) => {
+    console.log('activity find err', err.message);
+  });
+  if (_activity.send_type === 0) {
+    time_line = await TimeLine.findOne({
+      'action.type': 'resend_email_video',
+      'action.activity': _activity.id,
+      status: 'active',
+    });
+    if (time_line) {
+      time_line.due_date = due_date;
+    } else {
+      const canned_message = await EmailTemplate.findOne({
+        _id: auto_resend.email_canned_message,
+      });
+      time_line = new TimeLine({
+        user: activity.user,
+        contact: activity.contacts,
+        action: {
+          type: 'resend_email_video',
+          activity: _activity.id,
+          content: canned_message.content,
+          subject: canned_message.subject,
+          video: activity.videos,
+        },
+        watched_video: activity.videos,
+        'condition.case': 'watched_video',
+        'condition.answer': false,
+        status: 'active',
+        due_date,
+      });
+    }
+  } else {
+    time_line = await TimeLine.findOne({
+      'action.type': 'resend_text_video',
+      'action.activity': _activity.id,
+      status: 'active',
+    });
+    if (time_line) {
+      time_line.due_date = due_date;
+    } else {
+      const canned_message = await EmailTemplate.findOne({
+        _id: auto_resend.sms_canned_message,
+      });
+      time_line = new TimeLine({
+        user: activity.user,
+        contact: activity.contacts,
+        action: {
+          type: 'resend_text_video',
+          activity: _activity.id,
+          content: canned_message.content,
+          subject: canned_message.subject,
+          video: activity.videos,
+        },
+        watched_video: activity.videos,
+        'condition.case': 'watched_video',
+        'condition.answer': false,
+        status: 'active',
+        due_date,
+      });
+    }
+  }
+
+  time_line.save().catch((err) => {
+    console.log('time line save err', err);
+  });
+};
+
 module.exports = {
   play,
   play1,
@@ -2670,4 +2750,5 @@ module.exports = {
   createSmsContent,
   bulkGmail,
   bulkOutlook,
+  autoResend,
 };

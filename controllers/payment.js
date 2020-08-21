@@ -108,7 +108,7 @@ const update = async (req, res) => {
   const { token } = req.body;
   const { currentUser } = req;
   if (!currentUser.payment) {
-    createCustomer(currentUser.email)
+    createCustomer(currentUser.user_name, currentUser.email)
       .then(async (customer) => {
         stripe.customers.createSource(
           customer.id,
@@ -184,7 +184,7 @@ const update = async (req, res) => {
     );
 
     if (!payment) {
-      createCustomer(currentUser.email)
+      createCustomer(currentUser.user_name, currentUser.email)
         .then(async (customer) => {
           stripe.customers.createSource(
             customer.id,
@@ -257,7 +257,7 @@ const update = async (req, res) => {
       ) {
         if (err || customer['deleted']) {
           console.log('customer retrieve error', err);
-          createCustomer(currentUser.email)
+          createCustomer(currentUser.user_name, currentUser.email)
             .then(async (customer) => {
               stripe.customers.createSource(
                 customer.id,

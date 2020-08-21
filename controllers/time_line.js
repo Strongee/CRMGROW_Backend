@@ -564,7 +564,10 @@ const runTimeline = async (id) => {
 const cancel = (req, res) => {
   const { contact } = req.params;
 
-  TimeLine.deleteMany({ contact }).then(
+  TimeLine.deleteMany({
+    contact,
+    automation: { $ne: null },
+  }).then(
     (data) => {
       return res.send({
         status: true,
@@ -582,7 +585,10 @@ const cancel = (req, res) => {
 const recreate = async (req, res) => {
   const { currentUser } = req;
   const { contact, automation_id } = req.body;
-  await TimeLine.deleteMany({ contact }).catch((err) => {
+  await TimeLine.deleteMany({
+    contact,
+    automation: { $ne: null },
+  }).catch((err) => {
     return res.status(500).send({
       status: false,
       error: err,
