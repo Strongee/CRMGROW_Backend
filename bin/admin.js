@@ -164,6 +164,7 @@ const updateContacts = async () => {
   for (let i = 0; i < adminContacts.length; i++) {
     let label;
     const adminContact = adminContacts[i];
+    /**
     if (adminContact.tags && adminContact.tags.indexOf('unsubscribed') !== -1) {
       Contact.deleteOne({
         _id: adminContact.id,
@@ -180,6 +181,7 @@ const updateContacts = async () => {
       });
       continue;
     }
+     */
 
     if (adminContact.label === Labels[6].id) {
       Contact.deleteOne({
