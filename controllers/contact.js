@@ -213,6 +213,7 @@ const get = async (req, res) => {
   const _timelines = await TimeLine.find({
     user: currentUser.id,
     contact: req.params.id,
+    automation: { $ne: null },
   })
     .sort({ due_date: 1 })
     .catch((err) => {
