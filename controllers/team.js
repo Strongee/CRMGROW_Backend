@@ -357,7 +357,9 @@ const bulkInvites = async (req, res) => {
             ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
           },
         };
-        sgMail.send(msg);
+        sgMail.send(msg).catch((err) => {
+          console.log('team invitation email err', err);
+        });
       }
 
       /** **********
@@ -366,7 +368,7 @@ const bulkInvites = async (req, res) => {
 
       for (let i = 0; i < invitedUsers.length; i++) {
         const invite = invitedUsers[i];
-        const team_url = `<a href="${urls.TEAM_UR}">${team.name}</a>`;
+        const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
         const notification = new Notification({
           user: invite.id,
           team: team.id,
@@ -466,7 +468,7 @@ const acceptInviation = async (req, res) => {
        *  */
 
       Notification.updateOne(
-        { team: team.id, user: currentUser.id, criteria: 'team_inviated' },
+        { team: team.id, user: currentUser.id, criteria: 'team_invited' },
         { is_read: true }
       ).catch((err) => {
         console.log('err', err.message);
@@ -560,6 +562,14 @@ const acceptRequest = async (req, res) => {
         .catch((err) => {
           console.log('send message err: ', err);
         });
+
+      Notification.updateOne(
+        { team: team.id, user: currentUser.id, criteria: 'team_requested' },
+        { is_read: true }
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+
       return res.send({
         status: true,
       });
@@ -1008,7 +1018,22 @@ const requestTeam = async (req, res) => {
 
   sgMail
     .send(msg)
-    .then()
+    .then(() => {
+      /** **********
+       *  Creat dashboard notification to the team owner
+       *  */
+
+      const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
+      const notification = new Notification({
+        user: sender.id,
+        team: team.id,
+        criteria: 'team_requested',
+        content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
+      });
+      notification.save().catch((err) => {
+        console.log('notification save err', err.message);
+      });
+    })
     .catch((err) => {
       console.log('send message err: ', err);
     });
