@@ -1934,7 +1934,8 @@ const bulkGmail = async (req, res) => {
               const garbage = await Garbage.findOne({ user: currentUser.id });
               const auto_resend = garbage.auto_resend;
               if (auto_resend['enabled']) {
-                autoResend(activity.id, auto_resend);
+                const data = { activity: activity.id, auto_resend };
+                autoResend(data);
               }
               resolve();
             })
