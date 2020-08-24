@@ -685,8 +685,6 @@ const disconnectVideo = async (video_tracker_id) => {
 
     const auto_resend = garbage.auto_resend;
     if (auto_resend['enabled']) {
-      console.log('query.material_last', query.material_last);
-      console.log('video.duration', video.duration);
       if (query.material_last * 1000 < video.duration - 10000) {
         const _activity = await Activity.findOne({ _id: query.activity }).catch(
           (err) => {

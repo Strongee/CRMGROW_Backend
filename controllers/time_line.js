@@ -15,6 +15,7 @@ const ActivityHelper = require('../helpers/activity');
 const create = async (req, res) => {
   const { currentUser } = req;
   const { contacts, automation_id } = req.body;
+  const error = [];
   const _automation = await Automation.findOne({ _id: automation_id }).catch(
     (err) => {
       console.log('err', err);
@@ -27,9 +28,26 @@ const create = async (req, res) => {
 
   if (_automation) {
     const { automations } = _automation;
-    for (let i = 0; i < automations.length; i++) {
-      const automation = automations[i];
-      for (let j = 0; j < contacts.length; j++) {
+
+    for (let i = 0; i < contacts.length; i++) {
+      const old_timeline = await TimeLine.findOne({
+        contact: contacts[i],
+        automation: { $ne: null },
+      });
+
+      if (old_timeline) {
+        const contact = await Contact.findOne({ _id: contacts[i] });
+        error.push({
+          contact: {
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          err: 'A contact has been already assigned automation',
+        });
+        continue;
+      }
+      for (let j = 0; j < automations.length; j++) {
+        const automation = automations[j];
         let time_line;
         if (automation.status === 'active') {
           const { period } = automation;
@@ -45,7 +63,7 @@ const create = async (req, res) => {
             ref: automation.id,
             parent_ref: automation.parent,
             user: currentUser.id,
-            contact: contacts[j],
+            contact: contacts[i],
             automation: automation_id,
             due_date,
             created_at: new Date(),
@@ -58,7 +76,7 @@ const create = async (req, res) => {
                 try {
                   runTimeline(timeline.id);
                   const data = {
-                    contact: contacts[j],
+                    contact: contacts[i],
                     ref: timeline.ref,
                   };
                   activeNext(data);
@@ -76,7 +94,7 @@ const create = async (req, res) => {
             ref: automation.id,
             parent_ref: automation.parent,
             user: currentUser.id,
-            contact: contacts[j],
+            contact: contacts[i],
             automation: automation_id,
             created_at: new Date(),
             updated_at: new Date(),
@@ -86,6 +104,12 @@ const create = async (req, res) => {
           });
         }
       }
+    }
+    if (error.length > 0) {
+      return res.status(405).json({
+        status: false,
+        error,
+      });
     }
     return res.send({
       status: true,
