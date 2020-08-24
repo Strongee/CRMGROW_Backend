@@ -306,6 +306,7 @@ const disconnectVideo = async (video_tracker_id) => {
   const contact = await Contact.findOne({ _id: query['contact'] });
   const video = await Video.findOne({ _id: query['video'] });
   const garbage = await Garbage.findOne({ user: query['user'] });
+  let full_watched;
 
   if (currentUser && contact) {
     const activity = new Activity({
@@ -320,12 +321,16 @@ const disconnectVideo = async (video_tracker_id) => {
     });
 
     if (query.material_last) {
+      if (query.material_last * 1000 > video.duration - 10000) {
+        full_watched = true;
+      }
       Activity.updateOne(
         {
           _id: query.activity,
         },
         {
           material_last: query.material_last,
+          full_watched,
         },
         {
           timestamps: false,
@@ -682,73 +687,75 @@ const disconnectVideo = async (video_tracker_id) => {
     if (auto_resend['enabled']) {
       console.log('query.material_last', query.material_last);
       console.log('video.duration', video.duration);
-      if (query.material_last < video.duration - 5) {
+      if (query.material_last * 1000 < video.duration - 10000) {
         const _activity = await Activity.findOne({ _id: query.activity }).catch(
           (err) => {
             console.log('activity found err', err.message);
           }
         );
-        let time_line;
-        const now = moment();
-        const due_date = now.add(auto_resend.period, 'hours');
-        due_date.set({ second: 0, millisecond: 0 });
+        if (_activity && !_activity.full_watched) {
+          let time_line;
+          const now = moment();
+          const due_date = now.add(auto_resend.period, 'hours');
+          due_date.set({ second: 0, millisecond: 0 });
 
-        if (_activity.send_type === 0) {
-          time_line = await TimeLine.findOne({
-            'action.type': 'resend_email_video',
-            'action.activity': _activity.id,
-            status: 'active',
-          });
-          if (time_line) {
-            time_line.due_date = due_date;
-          } else {
-            const canned_message = await EmailTemplate.findOne({
-              _id: auto_resend.email_canned_message,
-            });
-            time_line = new TimeLine({
-              user: currentUser.id,
-              contact: contact.id,
-              action: {
-                type: 'resend_email_video',
-                activity: _activity.id,
-                content: canned_message.content,
-                subject: canned_message.subject,
-                video: video.id,
-              },
+          if (_activity.send_type === 0) {
+            time_line = await TimeLine.findOne({
+              'action.type': 'resend_email_video',
+              'action.activity': _activity.id,
               status: 'active',
-              due_date,
             });
-          }
-        } else {
-          time_line = await TimeLine.findOne({
-            'action.type': 'resend_text_video',
-            'action.activity': _activity.id,
-            status: 'active',
-          });
-          if (time_line) {
-            time_line.due_date = due_date;
+            if (time_line) {
+              time_line.due_date = due_date;
+            } else {
+              const canned_message = await EmailTemplate.findOne({
+                _id: auto_resend.email_canned_message,
+              });
+              time_line = new TimeLine({
+                user: currentUser.id,
+                contact: contact.id,
+                action: {
+                  type: 'resend_email_video',
+                  activity: _activity.id,
+                  content: canned_message.content,
+                  subject: canned_message.subject,
+                  video: video.id,
+                },
+                status: 'active',
+                due_date,
+              });
+            }
           } else {
-            const canned_message = await EmailTemplate.findOne({
-              _id: auto_resend.sms_canned_message,
-            });
-            time_line = new TimeLine({
-              user: currentUser.id,
-              contact: contact.id,
-              action: {
-                type: 'resend_text_video',
-                activity: _activity.id,
-                content: canned_message.content,
-                video: video.id,
-              },
+            time_line = await TimeLine.findOne({
+              'action.type': 'resend_text_video',
+              'action.activity': _activity.id,
               status: 'active',
-              due_date,
             });
+            if (time_line) {
+              time_line.due_date = due_date;
+            } else {
+              const canned_message = await EmailTemplate.findOne({
+                _id: auto_resend.sms_canned_message,
+              });
+              time_line = new TimeLine({
+                user: currentUser.id,
+                contact: contact.id,
+                action: {
+                  type: 'resend_text_video',
+                  activity: _activity.id,
+                  content: canned_message.content,
+                  video: video.id,
+                },
+                status: 'active',
+                due_date,
+              });
+            }
           }
+
+          time_line.save().catch((err) => {
+            console.log('time line save err', err);
+          });
         }
-
-        time_line.save().catch((err) => {
-          console.log('time line save err', err);
-        });
       }
     }
   }
