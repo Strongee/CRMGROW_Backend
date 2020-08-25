@@ -1621,6 +1621,10 @@ const timesheet_check = new CronJob(
             });
             break;
           }
+          case 'update_follow_up': {
+            console.log('this is update follow up');
+            break;
+          }
         }
         if (timeline.ref) {
           const next_data = {

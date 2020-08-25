@@ -1216,7 +1216,7 @@ const receiveEmailSendGrid = async (req, res) => {
           });
         }
 
-        if (!old_activity) {
+        if (!old_activity && email_activity) {
           const email_tracker = new EmailTracker({
             user: user.id,
             contact: contact.id,
