@@ -1215,6 +1215,18 @@ const timesheet_check = new CronJob(
                   .catch((err) => {
                     console.log('follow error', err.message);
                   });
+
+                TimeLine.updateMany(
+                  {
+                    contact: timeline.contact,
+                    'action.ref_id': timeline.ref,
+                  },
+                  {
+                    $set: { 'action.follow_up': _followup.id },
+                  }
+                ).catch((err) => {
+                  console.log('follow error', err.message);
+                });
               })
               .catch((err) => {
                 timeline['status'] = 'error';
@@ -1622,7 +1634,144 @@ const timesheet_check = new CronJob(
             break;
           }
           case 'update_follow_up': {
-            console.log('this is update follow up');
+            switch (action.command) {
+              case 'update_follow_up': {
+                let follow_due_date;
+                let content;
+                if (action.due_date) {
+                  follow_due_date = action.due_date;
+                }
+                if (action.due_duration) {
+                  const now = moment();
+                  now.set({ second: 0, millisecond: 0 });
+                  follow_due_date = now.add(action.due_duration, 'hours');
+                  follow_due_date.set({ second: 0, millisecond: 0 });
+                }
+                if (action.content) {
+                  content = action.content;
+                }
+                FollowUp.updateOne(
+                  {
+                    _id: action.follow_up,
+                  },
+                  {
+                    due_date: follow_due_date,
+                    content,
+                  }
+                )
+                  .then(async () => {
+                    if (follow_due_date) {
+                      const garbage = await Garbage.findOne({
+                        user: timeline.user,
+                      }).catch((err) => {
+                        console.log('err', err);
+                      });
+                      let reminder_before = 30;
+                      if (garbage) {
+                        reminder_before = garbage.reminder_before;
+                      }
+                      const startdate = moment(follow_due_date);
+                      const reminder_due_date = startdate.subtract(
+                        reminder_before,
+                        'mins'
+                      );
+
+                      Reminder.updateOne(
+                        {
+                          follow_up: action.follow_up,
+                        },
+                        {
+                          due_date: reminder_due_date,
+                        }
+                      ).catch((err) => {
+                        console.log('reminder delete err', err.message);
+                      });
+
+                      let detail_content = 'updated follow up';
+                      detail_content = ActivityHelper.automationLog(
+                        detail_content
+                      );
+                      const activity = new Activity({
+                        content: detail_content,
+                        contacts: timeline.contact,
+                        user: timeline.user,
+                        type: 'follow_ups',
+                        follow_ups: action.follow_up,
+                      });
+
+                      activity
+                        .save()
+                        .then((_activity) => {
+                          Contact.updateOne(
+                            { _id: timeline.contact },
+                            { $set: { last_activity: _activity.id } }
+                          ).catch((err) => {
+                            console.log('contact update err', err.message);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('follow error', err.message);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('update follow up cron err', err.message);
+                  });
+                break;
+              }
+              case 'complete_follow_up': {
+                FollowUp.updateOne(
+                  {
+                    _id: action.follow_up,
+                  },
+                  {
+                    status: 1,
+                  }
+                )
+                  .then(() => {
+                    Reminder.deleteOne({
+                      follow_up: action.follow_up,
+                    }).catch((err) => {
+                      console.log('reminder delete err', err.message);
+                    });
+
+                    let detail_content = 'completed follow up';
+                    detail_content = ActivityHelper.automationLog(
+                      detail_content
+                    );
+                    const activity = new Activity({
+                      content: detail_content,
+                      contacts: timeline.contact,
+                      user: timeline.user,
+                      type: 'follow_ups',
+                      follow_ups: action.follow_up,
+                    });
+
+                    activity
+                      .save()
+                      .then((_activity) => {
+                        Contact.updateOne(
+                          { _id: timeline.contact },
+                          { $set: { last_activity: _activity.id } }
+                        ).catch((err) => {
+                          console.log('contact update err', err.message);
+                        });
+                      })
+                      .catch((err) => {
+                        console.log('follow error', err.message);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log('update follow up cron err', err.message);
+                  });
+                break;
+              }
+            }
+            timeline['status'] = 'completed';
+            timeline['updated_at'] = new Date();
+            timeline.save().catch((err) => {
+              console.log('time line err', err.message);
+            });
             break;
           }
         }
