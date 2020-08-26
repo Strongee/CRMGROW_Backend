@@ -1641,6 +1641,7 @@ const timesheet_check = new CronJob(
               case 'update_follow_up': {
                 let follow_due_date;
                 let content;
+                let update_data;
                 if (action.due_date) {
                   follow_due_date = action.due_date;
                 }
@@ -1650,24 +1651,27 @@ const timesheet_check = new CronJob(
                   follow_due_date = now.add(action.due_duration, 'hours');
                   follow_due_date.set({ second: 0, millisecond: 0 });
                 }
+                if (follow_due_date) {
+                  update_data = {
+                    follow_due_date,
+                  };
+                }
                 if (action.content) {
                   content = action.content;
+                  update_data = { ...update_data, content };
                 }
                 FollowUp.updateOne(
                   {
                     _id: action.follow_up,
                   },
-                  {
-                    due_date: follow_due_date,
-                    content,
-                  }
+                  update_data
                 )
                   .then(async () => {
                     if (follow_due_date) {
                       const garbage = await Garbage.findOne({
                         user: timeline.user,
                       }).catch((err) => {
-                        console.log('err', err);
+                        console.log('err', err.message);
                       });
                       let reminder_before = 30;
                       if (garbage) {
