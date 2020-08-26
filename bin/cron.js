@@ -1216,6 +1216,8 @@ const timesheet_check = new CronJob(
                     console.log('follow error', err.message);
                   });
 
+                console.log('action', timeline.contact);
+                console.log('timeline.ref', timeline.ref);
                 TimeLine.updateMany(
                   {
                     contact: timeline.contact,
@@ -1224,9 +1226,13 @@ const timesheet_check = new CronJob(
                   {
                     $set: { 'action.follow_up': _followup.id },
                   }
-                ).catch((err) => {
-                  console.log('follow error', err.message);
-                });
+                )
+                  .then(() => {
+                    console.log('follow up updated');
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
               })
               .catch((err) => {
                 timeline['status'] = 'error';
