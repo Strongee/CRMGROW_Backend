@@ -1605,6 +1605,13 @@ const bulkEmail = async (req, res) => {
               ).catch((err) => {
                 console.log('contact update err', err.message);
               });
+
+              const garbage = await Garbage.findOne({ user: currentUser.id });
+              const auto_resend = garbage.auto_resend;
+              if (auto_resend['enabled']) {
+                const data = { activities, auto_resend };
+                autoResend(data);
+              }
               resolve();
             } else {
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -2540,7 +2547,7 @@ const bulkOutlook = async (req, res) => {
         client
           .api('/me/sendMail')
           .post(sendMail)
-          .then(() => {
+          .then(async () => {
             email_count += 1;
             Contact.updateOne(
               { _id: contacts[i] },
@@ -2550,6 +2557,13 @@ const bulkOutlook = async (req, res) => {
             ).catch((err) => {
               console.log('err', err);
             });
+
+            const garbage = await Garbage.findOne({ user: currentUser.id });
+            const auto_resend = garbage.auto_resend;
+            if (auto_resend['enabled']) {
+              const data = { activities, auto_resend };
+              autoResend(data);
+            }
             resolve();
           })
           .catch((err) => {

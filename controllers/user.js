@@ -2008,7 +2008,9 @@ const forgotPassword = async (req, res) => {
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html,
     };
-    sgMail.send(msg);
+    sgMail.send(msg).catch((err) => {
+      console.log('err', err);
+    });
 
     res.send({
       status: true,

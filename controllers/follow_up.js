@@ -525,6 +525,11 @@ const updateChecked = async (req, res) => {
   const { currentUser } = req;
   const { follow_ups } = req.body;
   if (follow_ups) {
+    let detail_content = 'completed follow up';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     try {
       for (let i = 0; i < follow_ups.length; i++) {
         const follow_up = follow_ups[i];
@@ -539,21 +544,14 @@ const updateChecked = async (req, res) => {
           console.log('err', err);
         });
 
-        const reminder = await Reminder.findOne({
-          type: 'follow_up',
+        Reminder.deleteOne({
           follow_up,
         }).catch((err) => {
           console.log('err', err);
         });
-        if (reminder) {
-          reminder['del'] = true;
-          reminder.save().catch((err) => {
-            console.log('err', err);
-          });
-        }
 
         const activity = new Activity({
-          content: 'completed follow up',
+          content: detail_content,
           contacts: _follow_up.contact,
           user: currentUser.id,
           type: 'follow_ups',

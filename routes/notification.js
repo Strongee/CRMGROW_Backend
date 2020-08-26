@@ -7,5 +7,10 @@ const { catchError } = require('../controllers/error');
 const router = express.Router();
 
 router.get('/', UserCtrl.checkAuth2, catchError(NotificationCtrl.get));
+router.post(
+  '/bulk-read',
+  UserCtrl.checkAuth,
+  catchError(NotificationCtrl.bulkRead)
+);
 
 module.exports = router;
