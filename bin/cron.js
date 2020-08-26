@@ -1216,8 +1216,6 @@ const timesheet_check = new CronJob(
                     console.log('follow error', err.message);
                   });
 
-                console.log('action', timeline.contact);
-                console.log('timeline.ref', timeline.ref);
                 TimeLine.updateMany(
                   {
                     contact: timeline.contact,
@@ -1311,7 +1309,6 @@ const timesheet_check = new CronJob(
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
-                  console.log('res[0]', res[0]);
                   const activity_data = {
                     activity: res[0].activity,
                     contact: timeline.contact,

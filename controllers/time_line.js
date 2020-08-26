@@ -248,6 +248,18 @@ const runTimeline = async (id) => {
               .catch((err) => {
                 console.log('follow error', err);
               });
+
+            TimeLine.updateMany(
+              {
+                contact: timeline.contact,
+                'action.ref_id': timeline.ref,
+              },
+              {
+                $set: { 'action.follow_up': _followup.id },
+              }
+            ).catch((err) => {
+              console.log('follow error', err.message);
+            });
           })
           .catch((err) => {
             timeline.status = 'error';
@@ -265,8 +277,6 @@ const runTimeline = async (id) => {
           follow_due_date = action.due_date;
         } else {
           const now = moment();
-          // let tens = parseInt(now.minutes() / 10)
-          // now.set({ minute: tens*10, second: 0, millisecond: 0 })
           now.set({ second: 0, millisecond: 0 });
           follow_due_date = now.add(action.due_duration, 'hours');
           follow_due_date.set({ second: 0, millisecond: 0 });
