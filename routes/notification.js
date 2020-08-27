@@ -13,4 +13,10 @@ router.post(
   catchError(NotificationCtrl.bulkRead)
 );
 
+router.get(
+  '/list/:page',
+  UserCtrl.checkAuth,
+  catchError(NotificationCtrl.getPage)
+);
+
 module.exports = router;

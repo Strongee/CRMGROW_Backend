@@ -2,16 +2,16 @@ const Notification = require('../models/notification');
 
 const get = async (req, res) => {
   const { currentUser } = req;
+  const { limit } = req.query;
   const notifications = await Notification.find({
     $or: [
       {
-        type: 'personal',
         user: currentUser.id,
         is_read: false,
       },
       { type: 'global' },
     ],
-  });
+  }).limit(parseInt(limit));
 
   res.send({
     status: true,
@@ -43,7 +43,41 @@ const bulkRead = (req, res) => {
     });
 };
 
+const getPage = async (req, res) => {
+  const { currentUser } = req;
+  const { page } = req.params;
+
+  const notifications = await Notification.find({
+    $or: [
+      {
+        user: currentUser.id,
+        is_read: false,
+      },
+      { type: 'global' },
+    ],
+  })
+    .skip((page - 1) * 15)
+    .limit(15);
+
+  const total = await Notification.countDocuments({
+    $or: [
+      {
+        user: currentUser.id,
+        is_read: false,
+      },
+      { type: 'global' },
+    ],
+  });
+
+  return res.json({
+    status: true,
+    notifications,
+    total,
+  });
+};
+
 module.exports = {
   get,
+  getPage,
   bulkRead,
 };
