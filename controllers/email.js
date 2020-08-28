@@ -1354,9 +1354,12 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.updateOne(contact.id, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       }
