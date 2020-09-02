@@ -43,6 +43,7 @@ const ActivitySchema = new Schema(
   }
 );
 
+ActivitySchema.index({ user: 1 });
 const Activity = mongoose.model('activity', ActivitySchema);
 
 module.exports = Activity;
