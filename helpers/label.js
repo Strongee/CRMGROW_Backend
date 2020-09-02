@@ -23,6 +23,9 @@ const getAll = async (user) => {
   return _label_list;
 };
 
+const convertLabel = async(label_str) => {
+}
+
 module.exports = {
   getAll,
 };

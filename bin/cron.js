@@ -420,7 +420,10 @@ const reminder_job = new CronJob(
           const text_notification = garbage['text_notification'];
           if (text_notification['follow_up']) {
             const e164Phone = phone(user.cell_phone)[0];
-            const fromNumber = api.TWILIO.TWILIO_NUMBER;
+            let fromNumber = user['proxy_number'];
+            if (!fromNumber) {
+              fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            }
             console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
             if (!e164Phone) {
               const error = {
@@ -565,7 +568,10 @@ const reminder_job = new CronJob(
           });
 
         const e164Phone = phone(user.cell_phone)[0];
-        const fromNumber = api.TWILIO.TWILIO_NUMBER;
+        let fromNumber = user['proxy_number'];
+        if (!fromNumber) {
+          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        }
         console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
         if (!e164Phone) {
           const error = {
