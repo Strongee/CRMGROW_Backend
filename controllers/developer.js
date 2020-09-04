@@ -26,13 +26,16 @@ const addContact = async (req, res) => {
     });
   }
 
+  console.log('label', label);
   if (label) {
     req.body.label = await LabelHelper.convertLabel(label);
+    console.log('here');
   }
   if (cell_phone) {
     req.body.cell_phone = phone(cell_phone)[0];
   }
 
+  console.log('req.body', req.body);
   const contact = new Contact({
     ...req.body,
     user: currentUser.id,

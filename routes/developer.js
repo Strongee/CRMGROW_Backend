@@ -18,7 +18,7 @@ router.get(
   catchError(DeveloperCtrl.getContact)
 );
 router.put(
-  '/conatct',
+  '/contact',
   UserCtrl.checkAuth,
   catchError(DeveloperCtrl.updateContact)
 );
