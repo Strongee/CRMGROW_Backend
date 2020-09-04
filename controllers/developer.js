@@ -30,9 +30,13 @@ const addContact = async (req, res) => {
   if (label) {
     req.body.label = await LabelHelper.convertLabel(label);
     console.log('here');
+  } else {
+    delete req.body.label;
   }
   if (cell_phone) {
     req.body.cell_phone = phone(cell_phone)[0];
+  } else {
+    delete req.body.cell_phone;
   }
 
   console.log('req.body', req.body);
@@ -74,12 +78,18 @@ const addContact = async (req, res) => {
 };
 
 const updateContact = async (req, res) => {
-  const { label, cell_phone, currentUser } = req.body;
+  const { label, cell_phone } = req.body;
+  const { currentUser } = req;
+
   if (label) {
     req.body.label = await LabelHelper.convertLabel(label);
+  } else {
+    delete req.body.label;
   }
   if (cell_phone) {
     req.body.cell_phone = phone(cell_phone)[0];
+  } else {
+    delete req.body.cell_phone;
   }
   Contact.updateOne(
     {
