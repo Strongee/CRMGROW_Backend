@@ -10,8 +10,13 @@ const automationLog = (content) => {
   return `${content} (automation)`;
 };
 
+const apiLog = (content) => {
+  return `${content} (api)`;
+};
+
 module.exports = {
   assistantLog,
   autoSettingLog,
   automationLog,
+  apiLog,
 };

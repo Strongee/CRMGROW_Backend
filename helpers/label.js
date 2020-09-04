@@ -19,13 +19,41 @@ const getAll = async (user) => {
   }).select({ name: 1 });
 
   Array.prototype.push.apply(_label_list, _label_admin);
-  console.log('label_list', _label_list);
   return _label_list;
 };
 
-const convertLabel = async(label_str) => {
-}
+const convertLabel = async (user, label_str) => {
+  let label;
+  label = await Label.findOne({
+    $or: [
+      {
+        user,
+        name: new RegExp(label_str, 'i'),
+      },
+      {
+        role: 'admin',
+        name: new RegExp(label_str, 'i'),
+      },
+    ],
+  }).catch((err) => {
+    console.log('label find err', err.message);
+  });
+
+  if (label) {
+    return label.id;
+  } else {
+    label = new Label({
+      user,
+      name: label_str,
+    });
+    const new_label = await label.save().catch((err) => {
+      console.log('new label save err', err.message);
+    });
+    return new_label.id;
+  }
+};
 
 module.exports = {
   getAll,
+  convertLabel,
 };
