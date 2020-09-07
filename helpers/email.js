@@ -3540,7 +3540,6 @@ const resendVideo = async (data) => {
 const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);
   $('a[href]').each((index, elem) => {
-    console.log(index, $(elem).attr('href'));
     const url = $(elem).attr('href');
     const attached_link =
       urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
