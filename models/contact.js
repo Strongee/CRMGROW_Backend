@@ -23,6 +23,7 @@ const ContactSchema = mongoose.Schema(
     tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],
     tags: Array,
     recruiting_stage: String,
+    website: String,
     created_at: Date,
     updated_at: Date,
   },
