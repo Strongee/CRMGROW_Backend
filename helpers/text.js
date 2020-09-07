@@ -860,9 +860,11 @@ const getSignalWireNumber = async (id) => {
       console.log('phone number update redirect err', err);
     });
 
-    user['proxy_number'] = proxy_number.number;
     fromNumber = proxy_number.number;
-    user.save().catch((err) => {
+    await User.updateOne(
+      { _id: id },
+      { $set: { proxy_number: fromNumber } }
+    ).catch((err) => {
       console.log('err', err.message);
     });
   } else {
