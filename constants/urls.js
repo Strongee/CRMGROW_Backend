@@ -36,6 +36,7 @@ if (process.env.NODE_ENV === 'production') {
     TRACK_URL: 'https://app.crmgrow.com/api/email/opened/',
     UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
     RESUBSCRIPTION_URL: 'https://email.crmgrow.com/resubscribe/',
+    CLICK_REDIRECT_URL: 'https://email.crmgrow.com/redirect',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'https://app.crmgrow.com/theme/images/default_logo.png',
@@ -83,6 +84,7 @@ if (process.env.NODE_ENV === 'production') {
     EMAIL_OPENED_URL: 'https://ecsbe.crmgrow.com/api/email/opened/',
     UNSUBSCRIPTION_URL: 'https://ecsbe.crmgrow.com/api/email/unsubscribe',
     RESUBSCRIPTION_URL: 'https://ecsbe.crmgrow.com/api/email/resubscribe/',
+    CLICK_REDIRECT_URL: 'https://ecsbe.crmgrow.com/redirect',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'https://ecsbe.crmgrow.com/theme/images/default_logo.png',
@@ -128,6 +130,7 @@ if (process.env.NODE_ENV === 'production') {
     GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
     UNSUBSCRIPTION_URL: 'http://localhost:3000/api/email/unsubscribe',
     RESUBSCRIPTION_URL: 'http://localhost:3000/api/email/resubscribe/',
+    CLICK_REDIRECT_URL: 'http://localhost:3000/redirect',
     LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
     DEFAULT_TEMPLATE_PAGE_LOGO:
       'http://localhost:3000/theme/images/default_logo.png',

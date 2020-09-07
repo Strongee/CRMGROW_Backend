@@ -28,6 +28,14 @@ const mail_contents = {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'CRMGROW email opened: ',
   },
+  NOTIFICATION_UNSUBSCRIPTION: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW email unsubscribed: ',
+  },
+  NOTIFICATION_CLICKED_EMAIL: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW email clicked the link: ',
+  },
   DAILY_REPORT: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'Daily report: ',
@@ -47,10 +55,6 @@ const mail_contents = {
   NOTIFICATION_APPOINTMENT: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'Appointment notification',
-  },
-  NOTIFICATION_UNSUBSCRIPTION: {
-    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
-    SUBJECT: 'CRMGROW email unsubscribed: ',
   },
   INVITE_GUEST: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
