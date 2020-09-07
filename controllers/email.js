@@ -200,8 +200,6 @@ const bulkGmail = async (req, res) => {
         console.log('err', err.message);
       });
 
-    email_content = emailHelper.addLinkTracking(email_content, activity.id);
-
     let html_content;
     if (cc.length > 0 || bcc.length > 0) {
       html_content =
@@ -213,6 +211,7 @@ const bulkGmail = async (req, res) => {
         emailHelper.generateUnsubscribeLink(activity.id) +
         '</td></tr></tbody></body></html>';
     } else {
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
