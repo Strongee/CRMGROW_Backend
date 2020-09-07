@@ -39,6 +39,8 @@ const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
 
+const { getSignalWireNumber } = require('../helpers/text');
+
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 
@@ -174,8 +176,6 @@ const signUp = async (req, res) => {
         payment: payment.id,
         salt,
         hash,
-        updated_at: new Date(),
-        created_at: new Date(),
       });
 
       const garbage = new Garbage({
@@ -185,12 +185,16 @@ const signUp = async (req, res) => {
       });
 
       garbage.save().catch((err) => {
-        console.log('err', err);
+        console.log('garbage save err', err.message);
       });
 
       user
         .save()
         .then((_res) => {
+          // purchase proxy number
+          getSignalWireNumber(_res.id);
+
+          // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
@@ -479,6 +483,10 @@ const socialSignUp = async (req, res) => {
       user
         .save()
         .then((_res) => {
+          // purchase proxy number
+          getSignalWireNumber(_res.id);
+
+          // send welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
