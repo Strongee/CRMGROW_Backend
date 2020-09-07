@@ -211,6 +211,7 @@ const bulkGmail = async (req, res) => {
         emailHelper.generateUnsubscribeLink(activity.id) +
         '</td></tr></tbody></body></html>';
     } else {
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
@@ -600,6 +601,8 @@ const bulkOutlook = async (req, res) => {
         emailHelper.generateUnsubscribeLink(activity.id) +
         '</body></html>';
     } else {
+      // Add click tracking
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><p>' +
         email_content +
@@ -1354,9 +1357,12 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.updateOne(contact.id, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       }
@@ -1689,7 +1695,7 @@ const receiveEmail = async (req, res) => {
             from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
             templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
             dynamic_template_data: {
-              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
+              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
               first_name: contact.first_name,
               last_name: contact.last_name,
               phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -2509,6 +2515,204 @@ const sharePlatform = async (req, res) => {
     });
 };
 
+const clickEmailLink = async (req, res) => {
+  const { url, activity_id } = req.query;
+  const activity = await Activity.findOne({ _id: activity_id }).catch((err) => {
+    console.log('activity finding err', err.message);
+  });
+
+  let _activity;
+  if (activity) {
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('user found err', err.message);
+      }
+    );
+
+    const contact = await Contact.findOne({ _id: activity.contacts }).catch(
+      (err) => {
+        console.log('contact found err', err.message);
+      }
+    );
+
+    const action = 'clicked the link on';
+
+    if (user && contact) {
+      const email_tracker = new EmailTracker({
+        user: user.id,
+        contact: contact.id,
+        email: activity.emails,
+        type: 'click',
+        activity: activity.id,
+      });
+
+      const _email_tracker = await email_tracker
+        .save()
+        .then()
+        .catch((err) => {
+          console.log('email tracker save error', err.message);
+        });
+
+      _activity = new Activity({
+        content: 'clicked the link on email',
+        contacts: contact.id,
+        user: user.id,
+        type: 'email_trackers',
+        emails: activity.emails,
+        email_trackers: _email_tracker.id,
+      });
+    }
+
+    const last_activity = await _activity
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('activity save err', err.message);
+      });
+
+    Contact.updateOne(
+      { _id: contact.id },
+      {
+        $set: { last_activity: last_activity.id },
+      }
+    ).catch((err) => {
+      console.log('contact update err', err.message);
+    });
+
+    const clicked = new Date();
+    const created_at = moment(clicked)
+      .utcOffset(user.time_zone)
+      .format('h:mm a');
+
+    const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
+      console.log('garbage found err', err.message);
+    });
+
+    const email_notification = garbage['email_notification'];
+
+    if (email_notification['email']) {
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      const msg = {
+        to: user.email,
+        from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
+        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          activity:
+            contact.first_name + ' ' + action + ' email at ' + created_at,
+          detailed_activity:
+            "<a href='" +
+            urls.CONTACT_PAGE_URL +
+            contact.id +
+            "'><img src='" +
+            urls.DOMAIN_URL +
+            "assets/images/contact.png'/></a>",
+        },
+      };
+      sgMail.send(msg).catch((err) => console.error(err));
+    }
+
+    const desktop_notification = garbage['desktop_notification'];
+
+    if (desktop_notification['email']) {
+      webpush.setVapidDetails(
+        'mailto:support@crmgrow.com',
+        api.VAPID.PUBLIC_VAPID_KEY,
+        api.VAPID.PRIVATE_VAPID_KEY
+      );
+
+      const subscription = JSON.parse(user.desktop_notification_subscription);
+      const title =
+        contact.first_name +
+        ' ' +
+        contact.last_name +
+        ' - ' +
+        contact.email +
+        ' ' +
+        action +
+        ' email';
+      const created_at =
+        moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        ' at ' +
+        moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+      const body =
+        contact.first_name +
+        ' ' +
+        contact.last_name +
+        ' - ' +
+        contact.email +
+        ' ' +
+        action +
+        ' email: ' +
+        ' on ' +
+        created_at;
+      const playload = JSON.stringify({
+        notification: {
+          title,
+          body,
+          icon: '/fav.ico',
+          badge: '/fav.ico',
+        },
+      });
+      webpush
+        .sendNotification(subscription, playload)
+        .catch((err) => console.error(err));
+    }
+    const text_notification = garbage['text_notification'];
+    if (text_notification['email']) {
+      const e164Phone = phone(user.cell_phone)[0];
+
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number',
+        };
+
+        throw error; // Invalid phone number
+      } else {
+        let fromNumber = user['proxy_number'];
+        if (!fromNumber) {
+          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        }
+
+        const title =
+          contact.first_name +
+          ' ' +
+          contact.last_name +
+          '\n' +
+          contact.email +
+          '\n' +
+          contact.cell_phone +
+          '\n' +
+          '\n' +
+          action +
+          ' email:' +
+          '\n';
+        const created_at =
+          moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+          ' at ' +
+          moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+        const time = ' on ' + created_at + '\n ';
+        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+        client.messages
+          .create({
+            from: fromNumber,
+            to: e164Phone,
+            body: title + '\n' + time + contact_link,
+          })
+          .catch((err) => console.error('send sms err: ', err));
+      }
+    }
+  }
+  res.render('redirect', {
+    url,
+  });
+};
+
 module.exports = {
   openTrack,
   getGmail,
@@ -2519,6 +2723,7 @@ module.exports = {
   bulkEmail,
   receiveEmailSendGrid,
   receiveEmail,
+  clickEmailLink,
   unSubscribeEmail,
   unSubscribePage,
   reSubscribeEmail,

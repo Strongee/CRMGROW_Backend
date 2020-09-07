@@ -34,6 +34,7 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
+const cheerio = require('cheerio');
 
 const isBlockedEmail = (email) => {
   const mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
@@ -3536,6 +3537,17 @@ const resendVideo = async (data) => {
   }
 };
 
+const addLinkTracking = (content, activity) => {
+  const $ = cheerio.load(content);
+  $('a[href]').each((index, elem) => {
+    const url = $(elem).attr('href');
+    const attached_link =
+      urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
+    $(elem).attr('href', attached_link);
+  });
+  return $.html();
+};
+
 const generateUnsubscribeLink = (id) => {
   return `<p style="color: #222;margin-top: 20px;font-size: 11px;">If you'd like to unsubscribe and stop receiving these emails <a href="${urls.UNSUBSCRIPTION_URL}?activity=${id}" style="color: #222;"> Unsubscribe.</a></p>`;
   // <p style="color: #222;margin-top: 20px;font-size: 11px;">Or If you'd like to resubscribe receiving these emails <a href="${urls.RESUBSCRIPTION_URL}${id}" style="color: #222;"> Resubscribe.</a></p>`;
@@ -3552,6 +3564,7 @@ module.exports = {
   bulkPDF,
   bulkImage,
   resendVideo,
+  addLinkTracking,
   generateUnsubscribeLink,
   generateOpenTrackLink,
 };

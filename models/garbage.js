@@ -83,6 +83,7 @@ const GarbageSchema = new Schema(
   }
 );
 
+GarbageSchema.index({ user: 1, unique: true });
 const Garbage = mongoose.model('garbage', GarbageSchema);
 
 module.exports = Garbage;

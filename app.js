@@ -38,6 +38,7 @@ app.get('/image', catchError(ImageCtrl.play));
 app.get('/image/:id', catchError(ImageCtrl.play1));
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay));
 app.get('/unsubscribe', catchError(EmailCtrl.unSubscribePage));
+app.get('/redirect', catchError(EmailCtrl.clickEmailLink));
 
 app.get('/auth', (req, res) => {
   res.render('auth');

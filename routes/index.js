@@ -29,6 +29,7 @@ const assets = require('./assets');
 const affiliate = require('./affiliate');
 const team = require('./team');
 const material = require('./material.js');
+const developer = require('./developer');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -67,6 +68,7 @@ router.use('/assets', assets);
 router.use('/affiliate', affiliate);
 router.use('/team', team);
 router.use('/material', material);
+router.use('/developer', developer);
 router.use('/admin', admin);
 
 module.exports = router;

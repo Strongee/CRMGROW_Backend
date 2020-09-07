@@ -49,8 +49,6 @@ const create = async (req, res) => {
     salt,
     hash,
     user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   guest
