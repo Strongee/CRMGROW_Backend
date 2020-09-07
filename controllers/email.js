@@ -201,7 +201,6 @@ const bulkGmail = async (req, res) => {
       });
 
     email_content = emailHelper.addLinkTracking(email_content, activity.id);
-    console.log('email_content', email_content);
 
     let html_content;
     if (cc.length > 0 || bcc.length > 0) {
@@ -603,6 +602,8 @@ const bulkOutlook = async (req, res) => {
         emailHelper.generateUnsubscribeLink(activity.id) +
         '</body></html>';
     } else {
+      // Add click tracking
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><p>' +
         email_content +
@@ -1695,7 +1696,7 @@ const receiveEmail = async (req, res) => {
             from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
             templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
             dynamic_template_data: {
-              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
+              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
               first_name: contact.first_name,
               last_name: contact.last_name,
               phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -2560,8 +2561,6 @@ const clickEmailLink = async (req, res) => {
         type: 'email_trackers',
         emails: activity.emails,
         email_trackers: _email_tracker.id,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
     }
 
@@ -2599,7 +2598,7 @@ const clickEmailLink = async (req, res) => {
         from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
         templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
+          subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
