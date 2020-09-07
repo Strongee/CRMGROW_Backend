@@ -200,7 +200,7 @@ const bulkGmail = async (req, res) => {
         console.log('err', err.message);
       });
 
-    email_content = emailHelper.addLinkTracking(email_content, activity);
+    email_content = emailHelper.addLinkTracking(email_content, activity.id);
     console.log('email_content', email_content);
 
     let html_content;
