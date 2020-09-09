@@ -3,19 +3,19 @@ const Notification = require('../models/notification');
 const get = async (req, res) => {
   const { currentUser } = req;
   const { limit } = req.query;
-  const notifications = await Notification.find({
-    $or: [
-      {
-        user: currentUser.id,
-        is_read: false,
-      },
-      { type: 'global' },
-    ],
+  const personal_notifications = await Notification.find({
+    user: currentUser.id,
+    is_read: false,
   }).limit(parseInt(limit));
+
+  const system_notifications = await Notification.find({
+    type: 'global',
+  });
 
   res.send({
     status: true,
-    notifications,
+    personal_notifications,
+    system_notifications,
   });
 };
 
@@ -108,7 +108,6 @@ const getPage = async (req, res) => {
     $or: [
       {
         user: currentUser.id,
-        is_read: false,
       },
       { type: 'global' },
     ],
