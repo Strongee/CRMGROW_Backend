@@ -33,6 +33,7 @@ const system_settings = {
     WIDTH: 400,
     HEIGHT: 220,
   },
+  IMAP_PORT: 587,
 };
 
 module.exports = system_settings;

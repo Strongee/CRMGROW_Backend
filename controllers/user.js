@@ -26,6 +26,7 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
+const nodemailer = require('nodemailer');
 
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
@@ -1355,6 +1356,68 @@ const authorizeOutlook = async (req, res) => {
   );
 };
 
+const authorizeOtherEmailer = async (req, res) => {
+  const { currentUser } = req;
+  const { user, pass, host, port, secure } = req.body;
+
+  // create reusable transporter object using the default SMTP transport
+  const transporter = nodemailer.createTransport({
+    host,
+    port: port || system_settings.IMAP_PORT,
+    secure, // true for 465, false for other ports
+    auth: {
+      user, // generated ethereal user
+      pass, // generated ethereal password
+    },
+  });
+
+  // send mail with defined transport object
+  transporter
+    .sendMail({
+      from: `${currentUser.user_name} <${user}>`,
+      to: currentUser.email, // list of receivers
+      subject: 'Hello ✔', // Subject line
+      text: 'Hello world?', // plain text body
+      html: '<b>Hello world?</b>', // html body
+    })
+    .then((res) => {
+      if (res.messageId) {
+        User.updateOne(
+          {
+            _id: currentUser.id,
+          },
+          {
+            $set: {
+              other_emailer: {
+                user,
+                pass,
+                host,
+                port,
+                secure,
+              },
+            },
+          }
+        ).catch((err) => {
+          console.log('user update error', err.message);
+        });
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.status(400).json({
+          status: false,
+          error: res.error || 'Something went wrong',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        error: err.message || 'Internal server error',
+      });
+    });
+};
+
 const syncYahoo = async (req, res) => {
   const scopes = ['openid', 'admg-w'];
 
@@ -2198,6 +2261,7 @@ module.exports = {
   authorizeGmail,
   syncYahoo,
   authorizeYahoo,
+  authorizeOtherEmailer,
   syncCalendar,
   disconCalendar,
   dailyReport,

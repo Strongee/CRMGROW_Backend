@@ -93,6 +93,13 @@ router.get(
   catchError(UserCtrl.authorizeOutlook)
 );
 
+// Synchorinze other mailer
+router.post(
+  '/authorize-mailer',
+  UserCtrl.checkAuth2,
+  catchError(UserCtrl.authorizeOtherEmailer)
+);
+
 // Gmail authorized
 router.get(
   '/authorize-gmail',

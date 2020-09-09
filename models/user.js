@@ -38,6 +38,7 @@ const UserSchema = new Schema(
     outlook_refresh_token: String,
     google_refresh_token: String,
     yahoo_refresh_token: String,
+    other_emailer: Object,
     connected_email_type: String,
     connect_calendar: { type: Boolean, default: false },
     connected_email: String,
