@@ -12,6 +12,16 @@ router.post(
   UserCtrl.checkAuth,
   catchError(NotificationCtrl.bulkRead)
 );
+router.post(
+  '/bulk-unread',
+  UserCtrl.checkAuth,
+  catchError(NotificationCtrl.bulkUnread)
+);
+router.post(
+  '/bulk-remove',
+  UserCtrl.checkAuth,
+  catchError(NotificationCtrl.bulkRemove)
+);
 
 router.get(
   '/list/:page',

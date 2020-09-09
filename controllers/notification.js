@@ -43,6 +43,51 @@ const bulkRead = (req, res) => {
     });
 };
 
+const bulkUnread = (req, res) => {
+  const { ids } = req.body;
+  const { currentUser } = req;
+  Notification.updateMany(
+    {
+      _id: { $in: ids },
+      type: 'personal',
+      user: currentUser.id,
+    },
+    { is_read: false }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const bulkRemove = (req, res) => {
+  const { ids } = req.body;
+  const { currentUser } = req;
+  Notification.deleteMany({
+    _id: { $in: ids },
+    type: 'personal',
+    user: currentUser.id,
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 const getPage = async (req, res) => {
   const { currentUser } = req;
   const { page } = req.params;
@@ -80,4 +125,6 @@ module.exports = {
   get,
   getPage,
   bulkRead,
+  bulkUnread,
+  bulkRemove,
 };
