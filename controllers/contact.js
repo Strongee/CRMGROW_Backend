@@ -1668,7 +1668,7 @@ const advanceSearch = async (req, res) => {
     includeBrokerage,
   } = req.body;
   let { includeFollowUps } = req.body;
-  if (includeFollowUps === null || includeFollowUps === 'undifined') {
+  if (includeFollowUps === null || includeFollowUps === 'undefined') {
     includeFollowUps = true;
   }
 
@@ -1682,6 +1682,9 @@ const advanceSearch = async (req, res) => {
   let notSentVideoContacts = [];
   let notSentPdfContacts = [];
   let notSentImageContacts = [];
+  let sentVideoContacts = [];
+  let sentPdfContacts = [];
+  let sentImageContacts = [];
 
   const excludeMaterialContacts = [];
   if (materialCondition['watched_video']['flag']) {
@@ -2133,6 +2136,126 @@ const advanceSearch = async (req, res) => {
       }
     });
   }
+  if (materialCondition['sent_video']['flag']) {
+    let query = [];
+    if (materialCondition['sent_video']['material']) {
+      query = [
+        {
+          type: 'videos',
+          videos: mongoose.Types.ObjectId(
+            materialCondition['sent_video']['material']
+          ),
+        },
+      ];
+    } else {
+      query = [{ type: 'videos' }];
+    }
+    sentVideoContacts = await Activity.aggregate([
+      {
+        $match: {
+          $and: [
+            { user: mongoose.Types.ObjectId(currentUser._id) },
+            { $and: query },
+          ],
+        },
+      },
+      { $unwind: '$contacts' },
+      {
+        $group: {
+          _id: { contact: '$contacts' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.contact',
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+  }
+  if (materialCondition['sent_pdf']['flag']) {
+    let query = [];
+    if (materialCondition['sent_pdf']['material']) {
+      query = [
+        {
+          type: 'pdfs',
+          pdfs: mongoose.Types.ObjectId(
+            materialCondition['sent_pdf']['material']
+          ),
+        },
+      ];
+    } else {
+      query = [{ type: 'pdfs' }];
+    }
+    sentPdfContacts = await Activity.aggregate([
+      {
+        $match: {
+          $and: [
+            { user: mongoose.Types.ObjectId(currentUser._id) },
+            { $and: query },
+          ],
+        },
+      },
+      { $unwind: '$contacts' },
+      {
+        $group: {
+          _id: { contact: '$contacts' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.contact',
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+  }
+  if (materialCondition['sent_image']['flag']) {
+    let query = [];
+    if (materialCondition['sent_image']['material']) {
+      query = [
+        {
+          type: 'images',
+          images: mongoose.Types.ObjectId(
+            materialCondition['sent_image']['material']
+          ),
+        },
+      ];
+    } else {
+      query = [{ type: 'images' }];
+    }
+    sentImageContacts = await Activity.aggregate([
+      {
+        $match: {
+          $and: [
+            { user: mongoose.Types.ObjectId(currentUser._id) },
+            { $and: query },
+          ],
+        },
+      },
+      { $unwind: '$contacts' },
+      {
+        $group: {
+          _id: { contact: '$contacts' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.contact',
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+  }
   const materialContacts = [];
   watchedVideoContacts.forEach((e) => {
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
@@ -2152,6 +2275,15 @@ const advanceSearch = async (req, res) => {
   notWatchedImageContacts.forEach((e) => {
     e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
   });
+  sentVideoContacts.forEach((e) => {
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  });
+  sentPdfContacts.forEach((e) => {
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  });
+  sentImageContacts.forEach((e) => {
+    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+  });
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
 
   const includeMaterialCondition =
@@ -2160,7 +2292,10 @@ const advanceSearch = async (req, res) => {
     materialCondition['watched_pdf']['flag'] ||
     materialCondition['watched_video']['flag'] ||
     materialCondition['watched_image']['flag'] ||
-    materialCondition['not_watched_image']['flag'];
+    materialCondition['not_watched_image']['flag'] ||
+    materialCondition['sent_video']['flag'] ||
+    materialCondition['sent_pdf']['flag'] ||
+    materialCondition['sent_image']['flag'];
   const excludeMaterialCondition =
     materialCondition['not_sent_video']['flag'] ||
     materialCondition['not_sent_pdf']['flag'] ||
