@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const NotificationSchema = new Schema(
   {
     name: String,
-    type: String,
+    type: { type: String, default: 'personal' },
     del: { type: Boolean, default: false },
     sent: { type: Boolean, default: false },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },

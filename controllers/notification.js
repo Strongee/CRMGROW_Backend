@@ -25,10 +25,11 @@ const bulkRead = (req, res) => {
   Notification.updateMany(
     {
       _id: { $in: ids },
-      type: 'personal',
       user: currentUser.id,
     },
-    { is_read: true }
+    {
+      $set: { is_read: true },
+    }
   )
     .then(() => {
       return res.send({
@@ -72,7 +73,6 @@ const bulkRemove = (req, res) => {
   const { currentUser } = req;
   Notification.deleteMany({
     _id: { $in: ids },
-    type: 'personal',
     user: currentUser.id,
   })
     .then(() => {
