@@ -117,7 +117,7 @@ router.post(
 );
 
 router.get(
-  '/lastest-sent/:id',
+  '/latest-sent/:id',
   UserCtrl.checkAuth,
   catchError(VideoCtrl.getContactsByLatestSent)
 );
