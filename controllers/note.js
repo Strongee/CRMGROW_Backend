@@ -25,12 +25,19 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
+
+  if (req.api_loggin) {
+    const contact = await Contact.findOne({ _id: req.body.contact }).catch(
+      (err) => {
+        console.log('contact fond errror', err.message);
+      }
+    );
+    if (!contact) {
+      return res.status(400).json({
+        status: false,
+        error: 'Can`t find contact',
+      });
+    }
   }
 
   const note = new Note({

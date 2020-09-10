@@ -1034,6 +1034,10 @@ const checkAuth = async (req, res, next) => {
       req.guest_loggin = true;
     }
 
+    if (decoded.api_loggin) {
+      req.api_loggin = true;
+    }
+
     if (
       req.currentUser.primary_connected ||
       req.currentUser.connected_email_type === 'email'

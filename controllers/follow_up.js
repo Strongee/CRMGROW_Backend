@@ -40,12 +40,19 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
+
+  if (req.api_loggin) {
+    const contact = await Contact.findOne({ _id: req.body.contact }).catch(
+      (err) => {
+        console.log('contact fond errror', err.message);
+      }
+    );
+    if (!contact) {
+      return res.status(400).json({
+        status: false,
+        error: 'Can`t find contact',
+      });
+    }
   }
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
@@ -229,13 +236,6 @@ const edit = async (req, res) => {
 
 const getByDate = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   // TODO: query condition should be defined in route
   // TODO: limit access to users
@@ -697,13 +697,6 @@ const bulkUpdate = async (req, res) => {
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
   const { contacts, content, due_date } = req.body;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
     (err) => {

@@ -26,7 +26,6 @@ const addContact = async (req, res) => {
     });
   }
 
-  console.log('label', label);
   if (label) {
     req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
     console.log('here');
@@ -39,7 +38,6 @@ const addContact = async (req, res) => {
     delete req.body.cell_phone;
   }
 
-  console.log('req.body', req.body);
   const contact = new Contact({
     ...req.body,
     user: currentUser.id,

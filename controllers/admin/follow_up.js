@@ -36,13 +36,6 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   const followUp = new FollowUp({
     ...req.body,
@@ -92,13 +85,6 @@ const create = async (req, res) => {
 
 const getByDate = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   // TODO: query condition should be defined in route
   // TODO: limit access to users

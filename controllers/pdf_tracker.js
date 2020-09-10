@@ -43,13 +43,7 @@ const create = async (data) => {
 
 const createbyDesktop = async (req, res) => {
   const query = { ...req.query };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
+
   const pdf_tracker = new PDFTracker({
     ...query,
     updated_at: new Date(),

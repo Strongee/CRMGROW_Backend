@@ -4,13 +4,6 @@ const garbageHelper = require('../helpers/garbage.js');
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   const label = new Label({
     ...req.body,
