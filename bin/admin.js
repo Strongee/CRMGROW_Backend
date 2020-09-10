@@ -32,14 +32,46 @@ const addContacts = async () => {
       const user = users[i];
       let contact;
       let label;
-      const old_user = await Contact.findOne({
+      let old_user;
+      old_user = await Contact.findOne({
         source: user.id,
         user: admin.id,
       }).catch((err) => {
         console.log('err', err);
       });
+
       if (!old_user) {
-        console.log('old_user', user.email);
+        old_user = await Contact.findOne({
+          email: user.email,
+          user: admin.id,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+        if (old_user) {
+          let tags;
+          if (user.payment) {
+            tags = ['active', user.company];
+          } else {
+            tags = ['free', user.company];
+          }
+          Contact.updateOne(
+            {
+              _id: user.id,
+            },
+            {
+              $set: {
+                source: user.id,
+                tags,
+                label: Labels[1].id,
+              },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+        }
+      }
+
+      if (!old_user) {
         const week_ago = new Date();
         const month_ago = new Date();
         const two_month_ago = new Date();
