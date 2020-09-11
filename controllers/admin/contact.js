@@ -4,7 +4,7 @@ const Contact = require('../../models/contact');
 const Activity = require('../../models/activity');
 const FollowUp = require('../../models/follow_up');
 const Appointment = require('../../models/appointment');
-const config = require('../../config/config');
+const api = require('../../config/api');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -196,7 +196,7 @@ const edit = async (req, res) => {
 };
 
 const sendBatch = async (req, res) => {
-  sgMail.setApiKey(config.SENDGRID.SENDGRID_KEY);
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const { currentUser } = req;
   const { email_list, subject, content } = req.body;

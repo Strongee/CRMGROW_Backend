@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator/check');
 const Activity = require('../../models/activity');
 const Contact = require('../../models/contact');
 
