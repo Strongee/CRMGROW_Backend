@@ -75,6 +75,11 @@ const GarbageSchema = new Schema(
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },
     intro_video: { type: String },
+    calendly: {
+      token: String,
+      email: String,
+      link: String,
+    },
     created_at: Date,
     updated_at: Date,
   },
