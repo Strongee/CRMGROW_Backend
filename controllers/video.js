@@ -123,18 +123,25 @@ const play = async (req, res) => {
     let highlights = [];
     let brands = [];
     let intro_video = '';
+    let calendly;
     if (garbage) {
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       const capture_videos = garbage['capture_videos'];
+
       if (capture_videos.indexOf(video_id) === -1) {
         capture_dialog = false;
       }
+
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
       intro_video = garbage['intro_video'];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     } else {
       capture_dialog = false;
     }
@@ -166,6 +173,7 @@ const play = async (req, res) => {
       capture_delay,
       capture_field: capture_field || {},
       social_link,
+      calendly,
       setting: {
         logo,
         highlights,
