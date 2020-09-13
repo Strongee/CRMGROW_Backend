@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/calendly/check-auth',
   UserCtrl.checkAuth,
-  catchError(IntegrationCtrl.checkCalendly)
+  catchError(IntegrationCtrl.checkAuthCalendly)
 );
 router.get(
   '/calendly',

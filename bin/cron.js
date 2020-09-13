@@ -32,6 +32,7 @@ const Garbage = require('../models/garbage');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
+const notifications = require('../constants/notification');
 const mail_contents = require('../constants/mail_contents');
 const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
 
@@ -666,6 +667,16 @@ const signup_job = new CronJob(
             .catch((err) => {
               console.log('err', err);
             });
+
+          const notification = new Notification({
+            user: subscribers[i].id,
+            criteria: 'webniar',
+            content: notifications.webinar.content,
+            description: notifications.webinar.description,
+          });
+          notification.save().catch((err) => {
+            console.log('notification save err', err.message);
+          });
         }
         if (offset >= 24 * 60 * 60 * 1000 && offset < 24.5 * 60 * 60 * 1000) {
           const msg = {
