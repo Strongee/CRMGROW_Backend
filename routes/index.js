@@ -30,6 +30,7 @@ const affiliate = require('./affiliate');
 const team = require('./team');
 const material = require('./material.js');
 const developer = require('./developer');
+const integration = require('./integration');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -69,6 +70,7 @@ router.use('/affiliate', affiliate);
 router.use('/team', team);
 router.use('/material', material);
 router.use('/developer', developer);
+router.use('/integration', integration);
 router.use('/admin', admin);
 
 module.exports = router;

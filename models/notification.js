@@ -11,6 +11,7 @@ const NotificationSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     is_read: { type: Boolean, default: false },
     criteria: String,
+    followup: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
     description: String,
     content: String,

@@ -368,11 +368,11 @@ const reminder_job = new CronJob(
           const contact = await Contact.findOne({
             _id: follow_up.contact,
           }).catch((err) => {
-            console.log('err: ', err);
+            console.log('err: ', err.message);
           });
           const garbage = await Garbage.findOne({ user: user.id }).catch(
             (err) => {
-              console.log('err: ', err);
+              console.log('err: ', err.message);
             }
           );
           const email_notification = garbage['email_notification'];
@@ -510,6 +510,10 @@ const reminder_job = new CronJob(
               .sendNotification(subscription, playload)
               .catch((err) => console.error(err));
           }
+          const notification = new Notification({
+            user: user.id,
+            criteria: 'due_followup',
+          });
         }
       } else {
         const appointment = await Appointment.findOne({
