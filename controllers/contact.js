@@ -2432,7 +2432,7 @@ const advanceSearch = async (req, res) => {
       } else {
         tagsQuery = {
           $or: [
-            { tags: { $nin: tagsCondition } },
+            { tags: { $not: { $in: tagsCondition } } },
             { tags: [] },
             { tags: undefined },
           ],
