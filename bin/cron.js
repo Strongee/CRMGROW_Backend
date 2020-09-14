@@ -510,10 +510,6 @@ const reminder_job = new CronJob(
               .sendNotification(subscription, playload)
               .catch((err) => console.error(err));
           }
-          const notification = new Notification({
-            user: user.id,
-            criteria: 'due_followup',
-          });
         }
       } else {
         const appointment = await Appointment.findOne({
