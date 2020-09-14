@@ -2069,7 +2069,7 @@ const bulkText = async (req, res) => {
     for (let i = 0; i < contacts.length; i++) {
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
-          console.log('err', err);
+          console.log('contact update err', err.messgae);
         }
       );
       let video_titles = '';
