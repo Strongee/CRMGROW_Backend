@@ -13,10 +13,10 @@ const checkAuthCalendly = async (req, res) => {
     },
     json: true,
   })
-    .then((res) => {
+    .then((response) => {
       const calendly = {
         token,
-        email: res.email,
+        email: response.email,
       };
 
       Garbage.updateOne({ user: currentUser.id }, { $set: { calendly } }).catch(
@@ -30,6 +30,7 @@ const checkAuthCalendly = async (req, res) => {
       });
     })
     .catch((err) => {
+      console.log('err', err.message);
       return res.status(400).json({
         status: false,
         error: 'UnAuthorized',
@@ -57,10 +58,10 @@ const getCalendly = async (req, res) => {
       },
       json: true,
     })
-      .then((res) => {
+      .then((response) => {
         return res.send({
           status: true,
-          data: res.data,
+          data: response.data,
         });
       })
       .catch((err) => {
