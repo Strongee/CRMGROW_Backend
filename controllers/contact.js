@@ -1658,6 +1658,7 @@ const advanceSearch = async (req, res) => {
     includeLabel,
     includeStage,
     includeSource,
+    includeTag,
     includeLastActivity,
     includeBrokerage,
   } = req.body;
@@ -2425,7 +2426,18 @@ const advanceSearch = async (req, res) => {
       };
       query['$and'].push(tagsQuery);
     } else {
-      var tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      var tagsQuery;
+      if (includeTag) {
+        tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+      } else {
+        tagsQuery = {
+          $or: [
+            { tags: { $nin: tagsCondition } },
+            { tags: [] },
+            { tags: undefined },
+          ],
+        };
+      }
       query['$and'].push(tagsQuery);
     }
   }
