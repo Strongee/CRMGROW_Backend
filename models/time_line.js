@@ -30,6 +30,7 @@ const TimeLineSchema = new Schema(
   }
 );
 
+TimeLineSchema.index({ status: 1 });
 const TimeLine = mongoose.model('time_line', TimeLineSchema);
 
 module.exports = TimeLine;

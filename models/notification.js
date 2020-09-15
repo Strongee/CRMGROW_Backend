@@ -22,7 +22,7 @@ const NotificationSchema = new Schema(
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   }
 );
-
+NotificationSchema.index({ user: 1 });
 const Notification = mongoose.model('notification', NotificationSchema);
 
 module.exports = Notification;
