@@ -86,7 +86,7 @@ const setEventCalendly = async (req, res) => {
     },
     {
       $set: {
-        'calendly.id': req.boody.id,
+        'calendly.id': req.body.id,
         'calendly.link': req.body.link + '?embed_type=Inline',
       },
     }
