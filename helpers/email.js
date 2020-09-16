@@ -2901,6 +2901,7 @@ const resendVideo = async (data) => {
         let video_content = content;
         let video_titles = '';
         let video_objects = '';
+        let html_content = '';
         let activity;
 
         for (let j = 0; j < activities.length; j++) {
@@ -2960,6 +2961,7 @@ const resendVideo = async (data) => {
           );
         }
 
+        html_content = video_content;
         if (video_content.search(/{video_object}/gi) !== -1) {
           video_content = video_content.replace(
             /{video_object}/gi,
@@ -2999,7 +3001,7 @@ const resendVideo = async (data) => {
                   type: 'videos',
                   videos: videos[0],
                   subject: video_subject,
-                  description: video_content,
+                  description: html_content,
                 });
 
                 const resend_activity = await _activity
@@ -3114,6 +3116,7 @@ const resendVideo = async (data) => {
         let video_objects = '';
         let video_subject = subject;
         let video_content = content;
+        let html_content = '';
         let activity;
         for (let j = 0; j < activities.length; j++) {
           activity = activities[j];
@@ -3176,6 +3179,8 @@ const resendVideo = async (data) => {
             video_titles
           );
         }
+
+        html_content = video_content;
 
         if (video_content.search(/{video_object}/gi) !== -1) {
           video_content = video_content.replace(
@@ -3241,7 +3246,7 @@ const resendVideo = async (data) => {
                   created_at: new Date(),
                   updated_at: new Date(),
                   subject: video_subject,
-                  description: video_content,
+                  description: html_content,
                 });
 
                 const resend_activity = await _activity
@@ -3379,6 +3384,7 @@ const resendVideo = async (data) => {
         let video_objects = '';
         let video_subject = subject;
         let video_content = content;
+        let html_content = '';
         let activity;
         for (let j = 0; j < activities.length; j++) {
           activity = activities[j];
@@ -3429,6 +3435,7 @@ const resendVideo = async (data) => {
           video_objects += video_object;
         }
 
+        html_content = video_content;
         if (video_subject === '') {
           video_subject = 'VIDEO: ' + video_titles;
         } else {
@@ -3499,7 +3506,7 @@ const resendVideo = async (data) => {
                 created_at: new Date(),
                 updated_at: new Date(),
                 subject: video_subject,
-                description: video_content,
+                description: html_content,
               });
 
               const resend_activity = await _activity
