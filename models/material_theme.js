@@ -5,11 +5,11 @@ const Schema = mongoose.Schema;
 const MaterialThemeSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    color: { type: String, default: '#FFFFFF' },
-    font_color: { type: String, default: '#000000' },
+    title: String,
     role: String,
+    thumbnail: String,
+    content: String,
     company: String,
-    priority: { type: Number, default: 1000 },
     created_at: Date,
     updated_at: Date,
   },

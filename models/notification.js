@@ -13,6 +13,7 @@ const NotificationSchema = new Schema(
     criteria: String,
     followup: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
+    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     description: String,
     content: String,
     created_at: Date,

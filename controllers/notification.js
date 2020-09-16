@@ -10,7 +10,7 @@ const get = async (req, res) => {
 
   const system_notifications = await Notification.find({
     type: 'global',
-  });
+  }).sort({ updated_at: -1 });
 
   res.send({
     status: true,

@@ -8,9 +8,12 @@ const Activity = require('../models/activity');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
+const Notification = require('../models/notification');
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const ActivityHelper = require('../helpers/activity');
+const notifications = require('../constants/notification');
+const urls = require('../constants/urls');
 
 const create = async (req, res) => {
   const { currentUser } = req;
@@ -129,7 +132,7 @@ const activeNext = async (data) => {
     status: 'pending',
     parent_ref: ref,
   });
-  if (timelines) {
+  if (timelines && timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       const timeline = timelines[i];
       if (timeline.condition && timeline.condition.answer === true) {
@@ -145,6 +148,30 @@ const activeNext = async (data) => {
       }
       timeline.save().catch((err) => {
         console.log('err', err.message);
+      });
+    }
+  } else {
+    TimeLine.deleteMany({
+      contact,
+      automation: { $ne: null },
+    }).catch((err) => {
+      console.log('timeline delete error', err.message);
+    });
+
+    const _contact = await Contact.findOne({
+      _id: contact,
+    });
+
+    if (_contact) {
+      const notification = new Notification({
+        user: _contact.user,
+        criteria: 'automation_completed',
+        contact,
+        content: notifications.automation_completed.content,
+        description: `<p>Click <a href="${urls.CONTACT_PAGE_URL}${contact}">here</a> to check it out</p>`,
+      });
+      notification.save().catch((err) => {
+        console.log('notification save err', err.message);
       });
     }
   }
@@ -601,19 +628,18 @@ const cancel = (req, res) => {
   TimeLine.deleteMany({
     contact,
     automation: { $ne: null },
-  }).then(
-    (data) => {
+  })
+    .then(() => {
       return res.send({
         status: true,
       });
-    },
-    (err) => {
+    })
+    .catch((err) => {
       return res.status(500).send({
         status: false,
         error: err,
       });
-    }
-  );
+    });
 };
 
 const recreate = async (req, res) => {
