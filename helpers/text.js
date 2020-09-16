@@ -863,7 +863,12 @@ const getSignalWireNumber = async (id) => {
     fromNumber = proxy_number.number;
     await User.updateOne(
       { _id: id },
-      { $set: { proxy_number: fromNumber } }
+      {
+        $set: {
+          proxy_number: fromNumber,
+          proxy_number_id: proxy_number.id,
+        },
+      }
     ).catch((err) => {
       console.log('err', err.message);
     });
@@ -884,6 +889,13 @@ const matchUSPhoneNumber = (phoneNumberString) => {
   return phoneNumber;
 };
 
+const releaseSignalWireNumber = (phoneNumberSid) => {
+  client
+    .incomingPhoneNumbers(phoneNumberSid)
+    .remove()
+    .then((incoming_phone_number) => console.log(incoming_phone_number.sid))
+    .done();
+};
 module.exports = {
   bulkVideo,
   bulkPDF,
@@ -892,4 +904,5 @@ module.exports = {
   getTwilioNumber,
   getSignalWireNumber,
   matchUSPhoneNumber,
+  releaseSignalWireNumber,
 };

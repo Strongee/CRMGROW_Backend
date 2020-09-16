@@ -16,6 +16,7 @@ const api = require('../../config/api');
 const system_settings = require('../../config/system_settings');
 const urls = require('../../constants/urls');
 const mail_contents = require('../../constants/mail_contents');
+const { releaseSignalWireNumber } = require('../../helpers/text');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -462,6 +463,10 @@ const closeAccount = async (req, res) => {
     await Tag.deleteMany({ user: user.id });
   }
 
+  if (user.proxy_number_id) {
+    releaseSignalWireNumber(user.proxy_number_id);
+  }
+
   if (user.payment) {
     PaymentCtrl.cancelCustomer(user.payment).catch((err) => {
       console.log('err', err);
@@ -484,11 +489,18 @@ const disableUser = async (req, res) => {
   if (user['payment']) {
     PaymentCtrl.cancelCustomer(user['payment'])
       .then(() => {
+        if (user.proxy_number_id) {
+          releaseSignalWireNumber(user.proxy_number_id);
+        }
         User.updateOne(
           { _id: req.params.id },
           {
             $set: { del: true, updated_at: new Date() },
-            $unset: { payment: true },
+            $unset: {
+              payment: true,
+              proxy_number: true,
+              proxy_number_id: true,
+            },
           }
         )
           .then(() => {
@@ -525,6 +537,10 @@ const suspendUser = async (req, res) => {
   const user = await User.findOne({ _id: req.params.id }).catch((err) => {
     console.log('supsend user found error', err);
   });
+
+  if (user.proxy_number_id) {
+    releaseSignalWireNumber(user.proxy_number_id);
+  }
 
   if (user['payment']) {
     const payment = await Payment.findOne({ _id: user.payment }).catch(
