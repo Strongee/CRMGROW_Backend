@@ -32,6 +32,7 @@ const UserSchema = new Schema(
       is_released: { type: Boolean, default: false },
       updated_at: Date,
     },
+    access_token: String,
     picture_profile: String,
     learn_more: String,
     role: String,
