@@ -72,6 +72,7 @@ const GarbageSchema = new Schema(
         ref: 'email_template',
       },
     },
+    access_token: String,
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },
     intro_video: { type: String },

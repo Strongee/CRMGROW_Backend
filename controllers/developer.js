@@ -2,10 +2,11 @@ const phone = require('phone');
 const Contact = require('../models/contact');
 const LabelHelper = require('../helpers/label');
 const Activity = require('../models/activity');
-const User = require('../models/user');
+const Garbage = require('../models/garbage');
 const system_settings = require('../config/system_settings');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
+
 
 const addContact = async (req, res) => {
   const { currentUser } = req;
@@ -149,8 +150,8 @@ const createToken = (req, res) => {
     { _id: currentUser.id, api_loggin: true },
     api.JWT_SECRET
   );
-  User.updateOne(
-    { _id: currentUser.id },
+  Garbage.updateOne(
+    { user: currentUser.id },
     {
       $set: { access_token: token },
     }
