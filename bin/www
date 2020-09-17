@@ -113,14 +113,11 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
-const videoRequests = {};
-const fileStreams = {}
+const fileStreams = {};
 io.sockets.on('connection', (socket) => {
   socket.emit('connected');
   socket.on('initVideo', (data) => {
     const videoId = uuidv1();
-    videoRequests[videoId] = [];
-    console.log('initVideo');
     const ws = fs.createWriteStream(GIF_PATH + videoId + `stream.webm`);
     fileStreams[videoId] = ws;
     socket.emit('createdVideo', { video: videoId });
@@ -128,7 +125,6 @@ io.sockets.on('connection', (socket) => {
   socket.on('pushVideoData', (data) => {
     const videoId = data.videoId;
     const blob = data.data;
-    videoRequests[videoId] = videoRequests[videoId].concat(blob);
     blob.forEach((e) => {
       fileStreams[videoId].write(e);
     });
@@ -136,13 +132,6 @@ io.sockets.on('connection', (socket) => {
   });
   socket.on('saveVideo', async (data) => {
     const videoId = data.videoId;
-    const blob = new Blob(videoRequests[videoId], {
-      type: 'video/webm; codecs=vp9',
-    });
     fileStreams[videoId].close();
-    fs.writeFile(GIF_PATH + videoId + `1111.webm`, blob.buffer, function (err) {
-      if (err) return console.log(err);
-      console.log('Saved Video');
-    });
   });
 });
