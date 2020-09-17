@@ -27,7 +27,37 @@ const getAll = (req, res) => {
     });
 };
 
+const create = async (req, res) => {
+  const { currentUser } = req;
+  const material_template = new MaterialTheme({
+    user: currentUser.id,
+    ...req.body,
+  });
+
+  material_template.save().catch((err) => {
+    console.log('material theme save err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
+const update = async (req, res) => {
+  MaterialTheme.updateOne(
+    { _id: req.params.id },
+    { $set: { ...req.body } }
+  ).catch((err) => {
+    console.log('material theme update error', err.emssage);
+  });
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
+  create,
   getAll,
+  update,
 };
