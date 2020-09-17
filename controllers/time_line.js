@@ -168,7 +168,7 @@ const activeNext = async (data) => {
         criteria: 'automation_completed',
         contact,
         content: notifications.automation_completed.content,
-        description: `<p>Click <a href="${urls.CONTACT_PAGE_URL}${contact}">here</a> to check it out</p>`,
+        description: `<p style="font-size: 13px;">Click <a href="${urls.CONTACT_PAGE_URL}${contact}">here</a> to check it out</p>`,
       });
       notification.save().catch((err) => {
         console.log('notification save err', err.message);
