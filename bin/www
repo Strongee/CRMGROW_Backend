@@ -118,11 +118,12 @@ io.sockets.on('connection', (socket) => {
   socket.emit('connected');
   socket.on('initVideo', (data) => {
     const videoId = uuidv1();
-    const ws = fs.createWriteStream(GIF_PATH + videoId + `stream.webm`);
+    const ws = fs.createWriteStream(GIF_PATH + videoId + `.webm`);
     fileStreams[videoId] = ws;
     socket.emit('createdVideo', { video: videoId });
   });
   socket.on('pushVideoData', (data) => {
+    console.log('pushVideoData', data.index);
     const videoId = data.videoId;
     const blob = data.data;
     blob.forEach((e) => {
