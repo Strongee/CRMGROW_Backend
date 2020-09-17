@@ -21,6 +21,10 @@ const VideoSchema = new Schema(
     duration: Number,
     url: String,
     role: String,
+    material_theme: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'material_theme',
+    },
     default_edited: { type: Boolean, default: false },
     default_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     priority: { type: Number, default: 1000 },

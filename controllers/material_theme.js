@@ -13,8 +13,14 @@ const get = async (req, res) => {
 
 const getAll = (req, res) => {
   const { currentUser } = req;
+
   MaterialTheme.find({
-    user: currentUser.id,
+    $or: [
+      {
+        user: currentUser.id,
+      },
+      { role: 'admin' },
+    ],
   })
     .then((data) => {
       return res.send({
