@@ -7,7 +7,7 @@ const { catchError } = require('../controllers/error');
 
 const router = express.Router();
 
-router.get('/token', UserCtrl.checkAuth, catchError(DeveloperCtrl.createToken))
+router.get('/token', UserCtrl.checkAuth, catchError(DeveloperCtrl.createToken));
 router.post(
   '/calendly/check-auth',
   UserCtrl.checkAuth,
