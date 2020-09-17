@@ -7,7 +7,6 @@ const system_settings = require('../config/system_settings');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
 
-
 const addContact = async (req, res) => {
   const { currentUser } = req;
   const { label, cell_phone } = req.body;
