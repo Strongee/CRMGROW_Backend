@@ -20,6 +20,11 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const { DB_PORT } = require('../config/database');
+const uuidv1 = require('uuid/v1');
+const fs = require('fs');
+const { GIF_PATH } = require('../config/path');
+const Blob = require('node-blob');
+
 /**
  * Connect Monogo Database.
  */
@@ -107,3 +112,30 @@ function onListening() {
   console.log('App listening on', bind);
   debug('Listening on ' + bind);
 }
+
+const videoRequests = {};
+io.sockets.on('connection', (socket) => {
+  socket.emit('connected');
+  socket.on('initVideo', (data) => {
+    const videoId = uuidv1();
+    videoRequests[videoId] = [];
+    console.log('initVideo');
+    socket.emit('createdVideo', { video: videoId });
+  });
+  socket.on('pushVideoData', (data) => {
+    const videoId = data.videoId;
+    const blob = data.data;
+    videoRequests[videoId] = videoRequests[videoId].concat(blob);
+    socket.emit('receivedVideoData');
+  });
+  socket.on('saveVideo', async (data) => {
+    const videoId = data.videoId;
+    const blob = new Blob(videoRequests[videoId], {
+      type: 'video/webm; codecs=vp9',
+    });
+    fs.writeFile(GIF_PATH + videoId + `.webm`, blob.buffer, function (err) {
+      if (err) return console.log(err);
+      console.log('Saved Video');
+    });
+  });
+});
