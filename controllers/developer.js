@@ -29,7 +29,6 @@ const addContact = async (req, res) => {
 
   if (label) {
     req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
-    console.log('here');
   } else {
     delete req.body.label;
   }
