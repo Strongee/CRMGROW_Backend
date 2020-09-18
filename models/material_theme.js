@@ -8,7 +8,8 @@ const MaterialThemeSchema = new Schema(
     title: String,
     role: String,
     thumbnail: String,
-    content: String,
+    html_content: String,
+    json_content: String,
     company: String,
     created_at: Date,
     updated_at: Date,
@@ -18,4 +19,7 @@ const MaterialThemeSchema = new Schema(
   }
 );
 
-module.exports = mongoose.model('material_theme', MaterialThemeSchema);
+MaterialThemeSchema.index({ user: 1 });
+const Material = mongoose.model('material_theme', MaterialThemeSchema);
+
+module.exports = Material;
