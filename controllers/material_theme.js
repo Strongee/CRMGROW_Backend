@@ -1,4 +1,5 @@
 const MaterialTheme = require('../models/material_theme');
+const { uploadBase64Image } = require('../helpers/fileUpload');
 
 const get = async (req, res) => {
   const material_theme = await MaterialTheme.findOne({
@@ -35,8 +36,14 @@ const getAll = (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
+  let thumbnail;
+  if (req.body.thumbnail) {
+    thumbnail = await uploadBase64Image(req.body.thumbnail);
+  }
+
   const material_template = new MaterialTheme({
     user: currentUser.id,
+    thumbnail,
     ...req.body,
   });
 
