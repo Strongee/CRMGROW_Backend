@@ -97,6 +97,9 @@ const api = {
     WORKSPACE_DOMAIN: 'crmgrow.signalwire.com',
     DEFAULT_NUMBER: '+13127391036',
   },
+  UNLAYER: {
+    PROJECT_ID: process.env.UNLAYER_PROJECT_ID,
+  },
 };
 
 module.exports = api;

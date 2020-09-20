@@ -8,6 +8,7 @@ const MaterialThemeSchema = new Schema(
     title: String,
     role: String,
     thumbnail: String,
+    template_id: String,
     html_content: String,
     json_content: String,
     company: String,
