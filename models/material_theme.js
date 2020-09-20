@@ -20,6 +20,6 @@ const MaterialThemeSchema = new Schema(
 );
 
 MaterialThemeSchema.index({ user: 1 });
-const Material = mongoose.model('material_theme', MaterialThemeSchema);
+const MaterialTheme = mongoose.model('material_theme', MaterialThemeSchema);
 
-module.exports = Material;
+module.exports = MaterialTheme;
