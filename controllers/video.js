@@ -6,6 +6,7 @@ const mime = require('mime-types');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const moment = require('moment');
+const mongoose = require('mongoose');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -2662,14 +2663,32 @@ const getConvertStatus = async (req, res) => {
 
 const getContactsByLatestSent = async (req, res) => {
   const { currentUser } = req;
-  const activities = await Activity.find({
-    user: currentUser.id,
-    videos: req.params.id,
-    type: 'videos',
-  })
-    .populate('contacts')
-    .limit(8);
 
+  const activities = await Activity.aggregate([
+    {
+      $match: {
+        user: mongoose.Types.ObjectId(currentUser._id),
+        videos: mongoose.Types.ObjectId(req.params.id),
+        type: 'videos',
+      },
+    },
+    {
+      $group: {
+        _id: '$contacts',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+    {
+      $lookup: {
+        from: 'contacts',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'contacts',
+      },
+    },
+  ]).limit(8);
   return res.send({
     status: true,
     activities,

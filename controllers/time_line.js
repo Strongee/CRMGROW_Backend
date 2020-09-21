@@ -51,11 +51,24 @@ const create = async (req, res) => {
         continue;
       }
 
-      const count = await TimeLine.countDocuments({
-        user: currentUser.id,
-      });
+      const count = await TimeLine.aggregate([
+        {
+          $match: {
+            user: mongoose.Types.ObjectId(currentUser._id),
+          },
+        },
+        {
+          $group: {
+            _id: { contact: '$contact' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $count: 'total',
+        },
+      ]);
 
-      if (count > system_settings.AUTOMATION) {
+      if (count[0] && count[0]['total'] > system_settings.AUTOMATION) {
         const contact = await Contact.findOne({ _id: contacts[i] });
         error.push({
           contact: {
