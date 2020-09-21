@@ -31,6 +31,7 @@ const team = require('./team');
 const material = require('./material.js');
 const developer = require('./developer');
 const integration = require('./integration');
+const theme = require('./material_theme');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -71,6 +72,7 @@ router.use('/team', team);
 router.use('/material', material);
 router.use('/developer', developer);
 router.use('/integration', integration);
+router.use('/theme', theme);
 router.use('/admin', admin);
 
 module.exports = router;

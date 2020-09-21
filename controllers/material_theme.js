@@ -38,7 +38,7 @@ const create = async (req, res) => {
   const { currentUser } = req;
   let thumbnail;
   if (req.body.thumbnail) {
-    thumbnail = await uploadBase64Image(req.body.thumbnail);
+    thumbnail = await uploadBase64Image(req.body.thumbnail, 'theme');
   }
 
   const material_template = new MaterialTheme({
