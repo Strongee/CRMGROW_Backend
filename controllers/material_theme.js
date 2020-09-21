@@ -1,6 +1,7 @@
 const MaterialTheme = require('../models/material_theme');
 const { uploadBase64Image, downloadFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
+const api = require('../config/api');
 
 const get = async (req, res) => {
   const material_theme = await MaterialTheme.findOne({
@@ -23,6 +24,7 @@ const get = async (req, res) => {
     data: {
       ...data,
       json_content,
+      project_id: api.UNLAYER.PROJECT_ID,
     },
   });
 };
