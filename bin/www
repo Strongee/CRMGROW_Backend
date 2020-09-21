@@ -178,6 +178,24 @@ io.sockets.on('connection', (socket) => {
         .save()
         .then((_video) => {
           socket.emit('savedVideo', { video: _video.id });
+
+          if (data.mode === 'crop') {
+            // Crop area
+            const screen = data.screen;
+            const area = data.area;
+            const videoWidth = 1440;
+            const videoHeight = Math.floor(
+              (videoWidth * screen.height) / screen.width
+            );
+            const areaX = (area.startX * videoWidth) / screen.width;
+            const areaY = (area.startY * videoHeight) / screen.height;
+            const areaW = (area.w * videoWidth) / screen.width;
+            const areaH = (area.h * videoHeight) / screen.height;
+            // CROP AREA USING FFMPEG
+            console.log('CROP AREA', areaX, areaY, areaW, areaH);
+          } else {
+            // CONVERT FFMPEG
+          }
         })
         .catch((err) => {
           socket.emit('failedSaveVideo');
