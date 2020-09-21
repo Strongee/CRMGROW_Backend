@@ -14,6 +14,7 @@ const TextHelper = require('../helpers/text');
 const ActivityHelper = require('../helpers/activity');
 const notifications = require('../constants/notification');
 const urls = require('../constants/urls');
+const system_settings = require('../config/system_settings');
 
 const create = async (req, res) => {
   const { currentUser } = req;
@@ -49,6 +50,23 @@ const create = async (req, res) => {
         });
         continue;
       }
+
+      const count = TimeLine.countDocuments({
+        user: currentUser.id,
+      });
+
+      if (count > system_settings.AUTOMATION) {
+        const contact = await Contact.findOne({ _id: contacts[i] });
+        error.push({
+          contact: {
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          err: 'Exceed automation max contacts',
+        });
+        continue;
+      }
+
       for (let j = 0; j < automations.length; j++) {
         const automation = automations[j];
         let time_line;
@@ -645,6 +663,7 @@ const cancel = (req, res) => {
 const recreate = async (req, res) => {
   const { currentUser } = req;
   const { contact, automation_id } = req.body;
+
   await TimeLine.deleteMany({
     contact,
     automation: { $ne: null },
