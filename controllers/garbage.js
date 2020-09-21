@@ -100,7 +100,6 @@ const uploadIntroVideo = async (req, res) => {
           const key = currentGarbage.intro_video.slice(
             urls.STORAGE_BASE.length + 1
           );
-          console.log('quick video key', key);
           await removeFile(key);
         } catch (err) {
           console.log('Remove the Intro Video: ', err);

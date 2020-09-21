@@ -45,3 +45,21 @@ exports.removeFile = async (originalFile) => {
     throw error;
   }
 };
+
+exports.downloadFile = async (originalFile) => {
+  return new Promise((resolve, reject) => {
+    const removeParam = {
+      Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+      Key: originalFile,
+    };
+
+    s3.getObject(removeParam, function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        console.log('Successfully dowloaded data from  bucket');
+        resolve(data);
+      }
+    });
+  });
+};
