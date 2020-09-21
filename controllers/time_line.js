@@ -51,7 +51,7 @@ const create = async (req, res) => {
         continue;
       }
 
-      const count = TimeLine.countDocuments({
+      const count = await TimeLine.countDocuments({
         user: currentUser.id,
       });
 
