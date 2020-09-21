@@ -117,7 +117,10 @@ function onListening() {
 const fileStreams = {};
 const fileStreamSizeStatus = {};
 io.sockets.on('connection', (socket) => {
+  console.log('CONNECT WITH FRONT APP');
+
   socket.on('initVideo', () => {
+    console.log('SOCKET INIT VIDEO');
     const videoId = uuidv1();
     const ws = fs.createWriteStream(GIF_PATH + videoId + `.webm`);
     fileStreams[videoId] = ws;
@@ -125,6 +128,7 @@ io.sockets.on('connection', (socket) => {
     socket.emit('createdVideo', { video: videoId });
   });
   socket.on('pushVideoData', (data) => {
+    console.log('PUSH VIDEO DATA');
     const videoId = data.videoId;
     const blob = data.data;
     if (!fileStreams[videoId]) {
