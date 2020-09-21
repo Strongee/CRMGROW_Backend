@@ -336,7 +336,13 @@ const getAll = async (req, res) => {
     user: currentUser.id,
     del: false,
   }).sort({ created_at: 1 });
-  const _image_admin = await Image.find({ role: 'admin', del: false }).sort({
+
+  const company = currentUser.company || 'eXp Realty';
+  const _image_admin = await Image.find({
+    role: 'admin',
+    del: false,
+    company,
+  }).sort({
     created_at: 1,
   });
   Array.prototype.push.apply(_image_list, _image_admin);

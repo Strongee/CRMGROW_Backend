@@ -478,7 +478,7 @@ const getAll = async (req, res) => {
     editedPDFs = garbage['edited_pdf'];
   }
 
-  // const company = currentUser.company || 'eXp Realty';
+  const company = currentUser.company || 'eXp Realty';
   const _pdf_list = await PDF.find({ user: currentUser.id, del: false }).sort({
     created_at: 1,
   });
@@ -486,6 +486,7 @@ const getAll = async (req, res) => {
     role: 'admin',
     del: false,
     _id: { $nin: editedPDFs },
+    company,
   }).sort({
     created_at: 1,
   });
