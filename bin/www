@@ -14,6 +14,8 @@ const tracker = require('../controllers/tracker');
 const Video = require('../models/video');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
+
+var allowedOrigins = "*";
 /**
  * Get port from environment and store in Express.
  */
@@ -45,7 +47,9 @@ mongoose
  */
 
 var server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  origins: allowedOrigins,
+});
 
 /**
  * Listen on provided port, on all network interfaces.
