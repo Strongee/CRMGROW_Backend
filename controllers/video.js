@@ -7,6 +7,7 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const moment = require('moment');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -2774,6 +2775,107 @@ const autoResend = async (data) => {
   }
 };
 
+const setupRecording = (io) => {
+  const fileStreams = {};
+  const fileStreamSizeStatus = {};
+  io.sockets.on('connection', (socket) => {
+    console.log('CONNECT WITH FRONT APP');
+
+    socket.on('initVideo', () => {
+      console.log('SOCKET INIT VIDEO');
+      const videoId = uuidv1();
+      const ws = fs.createWriteStream(GIF_PATH + videoId + `.webm`);
+      fileStreams[videoId] = ws;
+      fileStreamSizeStatus[videoId] = 0;
+      socket.emit('createdVideo', { video: videoId });
+    });
+    socket.on('pushVideoData', (data) => {
+      console.log('PUSH VIDEO DATA');
+      const videoId = data.videoId;
+      const blob = data.data;
+      if (!fileStreams[videoId]) {
+        fileStreams[videoId] = fs.createWriteStream(
+          GIF_PATH + videoId + `.webm`,
+          { flags: 'a' }
+        );
+        const stats = fs.statSync(GIF_PATH + videoId + `.webm`);
+        fileStreamSizeStatus[videoId] = stats.size;
+      }
+      if (data.sentSize === fileStreamSizeStatus[videoId]) {
+        console.log(
+          'already received : ',
+          data.sentSize,
+          fileStreamSizeStatus[videoId]
+        );
+        socket.emit('receivedVideoData', {
+          receivedSize: fileStreamSizeStatus[videoId],
+        });
+      } else {
+        let bufferSize = 0;
+        blob.forEach((e) => {
+          fileStreams[videoId].write(e);
+          bufferSize += e.length;
+        });
+        fileStreamSizeStatus[videoId] += bufferSize;
+        console.log('Saved : ', data.sentSize, fileStreamSizeStatus[videoId]);
+        socket.emit('receivedVideoData', {
+          receivedSize: fileStreamSizeStatus[videoId],
+        });
+      }
+    });
+    socket.on('saveVideo', async (data) => {
+      const videoId = data.videoId;
+      fileStreams[videoId].close();
+
+      const token = data.token;
+      let decoded;
+      try {
+        decoded = jwt.verify(token, api.JWT_SECRET);
+      } catch (err) {
+        socket.emit('failedSaveVideo');
+      }
+      if (token) {
+        const video = new Video({
+          url: GIF_PATH + videoId + `.webm`,
+          user: decoded.id,
+          created_at: new Date(),
+        });
+        video
+          .save()
+          .then((_video) => {
+            socket.emit('savedVideo', { video: _video.id });
+
+            if (data.mode === 'crop') {
+              // Crop area
+              const screen = data.screen;
+              const area = data.area;
+              const videoWidth = 1440;
+              const videoHeight = Math.floor(
+                (videoWidth * screen.height) / screen.width
+              );
+              const areaX = (area.startX * videoWidth) / screen.width;
+              const areaY = (area.startY * videoHeight) / screen.height;
+              const areaW = (area.w * videoWidth) / screen.width;
+              const areaH = (area.h * videoHeight) / screen.height;
+              // CROP AREA USING FFMPEG
+              console.log('CROP AREA', areaX, areaY, areaW, areaH);
+            } else {
+              // CONVERT FFMPEG
+            }
+          })
+          .catch((err) => {
+            socket.emit('failedSaveVideo');
+          });
+      }
+    });
+    socket.on('cancelRecord', (data) => {
+      const videoId = data.videoId;
+      fs.unlinkSync(GIF_PATH + videoId + `.webm`);
+      socket.emit('removedVideo');
+    });
+  });
+};
+
 module.exports = {
   play,
   play1,
@@ -2797,4 +2899,5 @@ module.exports = {
   bulkGmail,
   bulkOutlook,
   autoResend,
+  setupRecording,
 };

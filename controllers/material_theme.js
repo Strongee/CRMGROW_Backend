@@ -1,5 +1,10 @@
 const MaterialTheme = require('../models/material_theme');
-const { uploadBase64Image, downloadFile } = require('../helpers/fileUpload');
+const {
+  uploadBase64Image,
+  downloadFile,
+  uploadFile,
+  removeFile,
+} = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 
@@ -54,14 +59,29 @@ const getAll = (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
   let thumbnail;
+  let html_content;
+  let json_content;
   if (req.body.thumbnail) {
     thumbnail = await uploadBase64Image(req.body.thumbnail, 'theme');
   }
 
+  if (req.body.json_content) {
+    const content = req.body.json_content;
+    json_content = await uploadFile(content, 'json', 'theme');
+    console.log('json_content', json_content);
+  }
+
+  if (req.body.html_content) {
+    const content = req.body.html_content;
+    html_content = await uploadFile(content, 'html', 'theme');
+  }
+
   const material_template = new MaterialTheme({
     user: currentUser.id,
-    thumbnail,
     ...req.body,
+    thumbnail,
+    html_content,
+    json_content,
   });
 
   material_template.save().catch((err) => {
@@ -74,9 +94,42 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const { currentUser } = req;
+  const editData = { ...req.body };
+  const material_theme = MaterialTheme.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+  if (!material_theme) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+
+  if (req.body.thumbnail) {
+    editData['thumbnail'] = await uploadBase64Image(
+      req.body.thumbnail,
+      'theme'
+    );
+  }
+
+  if (req.body.json_content) {
+    const content = req.body.json_content;
+    editData['json_content'] = await uploadFile(content, 'json', 'theme');
+  }
+
+  if (req.body.html_content) {
+    const content = req.body.html_content;
+    editData['html_content'] = await uploadFile(content, 'html', 'theme');
+  }
   MaterialTheme.updateOne(
     { _id: req.params.id },
-    { $set: { ...req.body } }
+    {
+      $set: {
+        ...editData,
+      },
+    }
   ).catch((err) => {
     console.log('material theme update error', err.emssage);
   });
@@ -85,9 +138,50 @@ const update = async (req, res) => {
   });
 };
 
+const remove = async (req, res) => {
+  const { currentUser } = req;
+  const material_theme = await MaterialTheme.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+  if (!material_theme) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  if (material_theme.json_content) {
+    try {
+      const key = material_theme.json_content.slice(
+        urls.STORAGE_BASE.length + 1
+      );
+      await removeFile(key);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('File Remove Error: File ID=', err);
+    }
+  }
+  if (material_theme.html_content) {
+    try {
+      const key = material_theme.html_content.slice(
+        urls.STORAGE_BASE.length + 1
+      );
+      await removeFile(key);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('File Remove Error: File ID=', err);
+    }
+  }
+  MaterialTheme.deleteOne({ _id: req.params.id }).then(() => {
+    return res.send({
+      status: true,
+    });
+  });
+};
 module.exports = {
   get,
   create,
   getAll,
   update,
+  remove,
 };

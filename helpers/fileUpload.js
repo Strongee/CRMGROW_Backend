@@ -16,13 +16,40 @@ exports.uploadBase64Image = async (base64, dest = '') => {
   );
   const fileType = base64.split(';')[0].split('/')[1];
   const fileName = uuid();
+  const today = new Date();
+  const year = today.getYear();
+  const month = today.getMonth();
   var fileParam = {
     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: `${dest ? dest + '/' : ''}${fileName}.${fileType}`,
+    Key: `${
+      dest ? dest + year + '/' + month + '/' : ''
+    }${fileName}.${fileType}`,
     Body: base64Data,
     ContentEncoding: 'base64',
     ACL: 'public-read',
     ContentType: `image/${fileType}`,
+  };
+  try {
+    const { Location, Key } = await s3.upload(fileParam).promise();
+    return Location;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+exports.uploadFile = async (data, fileType, dest = '') => {
+  const fileName = uuid();
+  const today = new Date();
+  const year = today.getYear();
+  const month = today.getMonth();
+  var fileParam = {
+    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+    Key: `${
+      dest ? dest + year + '/' + month + '/' : ''
+    }${fileName}.${fileType}`,
+    Body: data,
+    ACL: 'public-read',
   };
   try {
     const { Location, Key } = await s3.upload(fileParam).promise();
