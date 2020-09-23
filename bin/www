@@ -12,9 +12,6 @@ const mongoose = require('mongoose');
 const app = require('../app');
 const tracker = require('../controllers/tracker');
 const { setupRecording } = require('../controllers/video');
-const Video = require('../models/video');
-const jwt = require('jsonwebtoken');
-const api = require('../config/api');
 
 /**
  * Get port from environment and store in Express.
@@ -24,9 +21,6 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const { DB_PORT } = require('../config/database');
-const uuidv1 = require('uuid/v1');
-const fs = require('fs');
-const { GIF_PATH } = require('../config/path');
 
 /**
  * Connect Monogo Database.
