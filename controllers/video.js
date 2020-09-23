@@ -2784,7 +2784,7 @@ const setupRecording = (io) => {
     socket.on('initVideo', () => {
       console.log('SOCKET INIT VIDEO');
       const videoId = uuidv1();
-      const ws = fs.createWriteStream(GIF_PATH + videoId + `.webm`);
+      const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
       fileStreams[videoId] = ws;
       fileStreamSizeStatus[videoId] = 0;
       socket.emit('createdVideo', { video: videoId });
@@ -2795,10 +2795,10 @@ const setupRecording = (io) => {
       const blob = data.data;
       if (!fileStreams[videoId]) {
         fileStreams[videoId] = fs.createWriteStream(
-          GIF_PATH + videoId + `.webm`,
+          TEMP_PATH + videoId + `.webm`,
           { flags: 'a' }
         );
-        const stats = fs.statSync(GIF_PATH + videoId + `.webm`);
+        const stats = fs.statSync(TEMP_PATH + videoId + `.webm`);
         fileStreamSizeStatus[videoId] = stats.size;
       }
       if (data.sentSize === fileStreamSizeStatus[videoId]) {
@@ -2836,7 +2836,7 @@ const setupRecording = (io) => {
       }
       if (token) {
         const video = new Video({
-          url: GIF_PATH + videoId + `.webm`,
+          url: TEMP_PATH + videoId + `.webm`,
           user: decoded.id,
           created_at: new Date(),
         });
@@ -2866,11 +2866,14 @@ const setupRecording = (io) => {
           .catch((err) => {
             socket.emit('failedSaveVideo');
           });
+
+          video['converted'] = 'progress';
+          videoHelper.convertRecordVideo(video.id);
       }
     });
     socket.on('cancelRecord', (data) => {
       const videoId = data.videoId;
-      fs.unlinkSync(GIF_PATH + videoId + `.webm`);
+      fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
       socket.emit('removedVideo');
     });
   });
