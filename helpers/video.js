@@ -6,28 +6,59 @@ const Video = require('../models/video');
 const { VIDEO_CONVERT_LOG_PATH, TEMP_PATH } = require('../config/path');
 const urls = require('../constants/urls');
 
-const convertRecordVideo = async (id) => {
+const convertRecordVideo = async (id, area) => {
   const video = await Video.findOne({ _id: id }).catch((err) => {
     console.log('video convert find video error', err.message);
   });
 
   const file_path = video['path'];
-  const new_file = uuidv1() + '.mov';
+  const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  const args = [
-    '-i',
-    file_path,
-    '-c:v',
-    'libx264',
-    '-b:v',
-    '1.5M',
-    '-c:a',
-    'aac',
-    '-b:a',
-    '128k',
-    new_path,
-  ];
+  console.log('file_path', file_path);
+  let args = [];
+
+  if (area) {
+    const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
+    args = [
+      '-i',
+      file_path,
+      '-movflags',
+      'faststart',
+      '-profile:v',
+      'high',
+      '-level',
+      '4.2',
+      '-filter:v',
+      crop,
+      new_path,
+    ];
+  } else {
+    // args = [
+    //   '-i',
+    //   file_path,
+    //   '-c:v',
+    //   'libx264',
+    //   '-b:v',
+    //   '1.5M',
+    //   '-c:a',
+    //   'aac',
+    //   '-b:a',
+    //   '128k',
+    //   new_path,
+    // ];
+    args = [
+      '-i',
+      file_path,
+      '-movflags',
+      'faststart',
+      '-profile:v',
+      'high',
+      '-level',
+      '4.2',
+      new_path,
+    ];
+  }
 
   if (!fs.existsSync(TEMP_PATH)) {
     fs.mkdirSync(TEMP_PATH);

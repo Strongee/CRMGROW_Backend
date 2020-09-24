@@ -2836,7 +2836,8 @@ const setupRecording = (io) => {
       }
       if (token) {
         const video = new Video({
-          url: TEMP_PATH + videoId + `.webm`,
+          url: urls.VIDEO_URL + videoId + `.webm`,
+          path: TEMP_PATH + videoId + `.webm`,
           user: decoded.id,
           created_at: new Date(),
         });
@@ -2848,27 +2849,39 @@ const setupRecording = (io) => {
             if (data.mode === 'crop') {
               // Crop area
               const screen = data.screen;
-              const area = data.area;
               const videoWidth = 1440;
               const videoHeight = Math.floor(
                 (videoWidth * screen.height) / screen.width
               );
-              const areaX = (area.startX * videoWidth) / screen.width;
-              const areaY = (area.startY * videoHeight) / screen.height;
-              const areaW = (area.w * videoWidth) / screen.width;
-              const areaH = (area.h * videoHeight) / screen.height;
+              const areaX = (data.area.startX * videoWidth) / screen.width;
+              const areaY = (data.area.startY * videoHeight) / screen.height;
+              const areaW = (data.area.w * videoWidth) / screen.width;
+              const areaH = (data.area.h * videoHeight) / screen.height;
+              const area = {
+                areaX,
+                areaY,
+                areaW,
+                areaH,
+              };
               // CROP AREA USING FFMPEG
               console.log('CROP AREA', areaX, areaY, areaW, areaH);
+              videoHelper.convertRecordVideo(_video.id, area);
             } else {
+              videoHelper.convertRecordVideo(_video.id);
               // CONVERT FFMPEG
             }
+            Video.updateOne(
+              { _id: _video.id },
+              {
+                converted: 'progress',
+              }
+            ).catch((err) => {
+              console.log('video update err', err.message);
+            });
           })
           .catch((err) => {
             socket.emit('failedSaveVideo');
           });
-
-          video['converted'] = 'progress';
-          videoHelper.convertRecordVideo(video.id);
       }
     });
     socket.on('cancelRecord', (data) => {
