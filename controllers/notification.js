@@ -10,6 +10,7 @@ const get = async (req, res) => {
 
   const system_notifications = await Notification.find({
     type: 'global',
+    del: false,
   }).sort({ updated_at: -1 });
 
   res.send({
@@ -98,7 +99,10 @@ const getPage = async (req, res) => {
         user: currentUser.id,
         is_read: false,
       },
-      { type: 'global' },
+      {
+        type: 'global',
+        del: false,
+      },
     ],
   })
     .skip((page - 1) * 15)
