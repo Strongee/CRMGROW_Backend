@@ -32,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/video', catchError(VideoCtrl.play));
 app.get('/video1/:id', catchError(VideoCtrl.play1));
+app.get('/video2', catchError(VideoCtrl.play2));
 app.get('/pdf', catchError(PDFCtrl.play));
 app.get('/pdf1/:id', catchError(PDFCtrl.play1));
 app.get('/image', catchError(ImageCtrl.play));
