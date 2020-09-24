@@ -72,7 +72,7 @@ const GarbageSchema = new Schema(
         ref: 'email_template',
       },
     },
-    material_themes: Object,
+    material_themes: { type: Object },
     access_token: String,
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },

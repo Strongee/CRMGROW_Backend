@@ -2864,7 +2864,6 @@ const setupRecording = (io) => {
                 areaH,
               };
               // CROP AREA USING FFMPEG
-              console.log('CROP AREA', areaX, areaY, areaW, areaH);
               videoHelper.convertRecordVideo(_video.id, area);
             } else {
               videoHelper.convertRecordVideo(_video.id);

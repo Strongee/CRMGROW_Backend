@@ -1,4 +1,5 @@
 const MaterialTheme = require('../models/material_theme');
+const Garbage = require('../models/garbage');
 const {
   uploadBase64Image,
   downloadFile,
@@ -178,10 +179,47 @@ const remove = async (req, res) => {
     });
   });
 };
+
+const setVideo = async (req, res) => {
+  const { currentUser } = req;
+  const { videoId, themeId } = req.body;
+
+  const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+    (err) => {
+      console.log('garbage find error', err.message);
+    }
+  );
+
+  let material_themes = garbage.material_themes;
+  if (material_themes) {
+    material_themes[videoId] = themeId;
+  } else {
+    material_themes = { videoId: themeId };
+  }
+
+  Garbage.updateOne(
+    {
+      user: currentUser.id,
+    },
+    {
+      $set: {
+        material_themes,
+      },
+    }
+  ).catch((err) => {
+    console.log('garbage material theme err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   create,
   getAll,
   update,
   remove,
+  setVideo,
 };

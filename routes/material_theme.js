@@ -12,6 +12,12 @@ router.get('/:id', UserCtrl.checkAuth, catchError(MaterialThemeCtrl.get));
 
 router.post('/', UserCtrl.checkAuth, catchError(MaterialThemeCtrl.create));
 
+router.post(
+  '/set-video',
+  UserCtrl.checkAuth,
+  catchError(MaterialThemeCtrl.setVideo)
+);
+
 router.put('/:id', UserCtrl.checkAuth, catchError(MaterialThemeCtrl.update));
 
 router.delete('/:id', UserCtrl.checkAuth, catchError(MaterialThemeCtrl.remove));
