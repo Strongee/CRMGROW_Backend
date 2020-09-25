@@ -5,11 +5,49 @@ head
   base(href='/')
   meta(name='viewport', content='width=device-width, initial-scale=1, minimun-scale=1.0, maximum-scale=1.0')  
   link(rel='shortcut icon', type='image/x-icon', href='./assets/icons/favicon.ico')
-  meta(property='og:title', content=`${(page.meta && page.meta.title) || page.title}`)
-  meta(property='og:description', content=`${page.meta.description || 'Description'}`)
+  meta(property='og:title', content=`${material.title}`)
+  meta(property='og:description', content=`${material.description}`)
   meta(property='og:image:width', content='600')
   meta(property='og:image:height', content='300')
-  meta(property='og:image', content=`${(page.meta && page.meta.image)}`)
-  style!= page.style
-body!= page.html
-  
+  meta(property='og:image', content=`${material.site_image || material.thumbnail || material.preview}`)
+body!= html_content
+
+#leadModal.modal.fade(role="dialog")
+  .modal-dialog
+    .modal-content.p-4.info-step
+      if setting.intro_video
+        div.quick-video-wrapper
+          video.intro_video(autoplay=true, loop=true, preload="metadata", playsinline=true, muted)
+            source(src=setting.intro_video, type="video/mp4")
+          button.volume-control
+            img(src='./theme/icons/unmute.png')
+      .modal-header.border-bottom-0
+        h3.modal-title Looking forward to your feedback!
+      .modal-body
+        form#info-form
+          if capture_field['first_name']
+            .form-group.custom-form
+              label.form-label Name
+              input.form-control(type="text", name="first_name", placeholder="John Smith", required=capture_field['first_name'] ? true : false )
+          if capture_field['email']
+            .form-group.custom-form
+              label.form-label Email
+              input.form-control(type="email", name="email", placeholder="Johnsmith@gmail.com", required=capture_field['email'] ? true : false)
+          if capture_field['cell_phone']
+            .form-group.custom-form
+              label.form-label Phone
+              input.form-control.phone-info(type="tel", name="cell_phone", placeholder="***-***-****", required=capture_field['cell_phone'] ? true : false)
+          input(type="hidden", name="user", value=`${user._id}`)
+          input(type="hidden", name=material_type, value=`${material._id}`)
+          p.privacy-link
+            | Please read our 
+            a(href='https://crmgrow.com/privacy.html') Privacy Policy
+            |  before submitting.
+          button.btn.btn-lg.btn-primary.submit-btn(type="submit") Submit
+    .modal-content.p-4.thank-content.text-center
+      .modal-header.border-bottom-0.pb-0
+        h3.modal-title.border-bottom-0.py-0 Thank you! Your info has been processed.
+      .modal-body
+        p Please check the button to view the site and find out how eXp can help you grow!
+      .modal-footer.border-top-0.pt-0
+        button.btn.btn-lg.d-block.text-white.w-100#thank-btn View Site

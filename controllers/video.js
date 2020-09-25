@@ -53,7 +53,7 @@ const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
 const ActivityHelper = require('../helpers/activity');
-const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const { uploadBase64Image, downloadFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -307,6 +307,8 @@ const play2 = async (req, res) => {
         capture_dialog = false;
       }
 
+      console.log('video_id', video_id);
+      console.log(' garbage.material_themes', garbage.material_themes);
       if (garbage.material_themes && garbage.material_themes[video_id]) {
         const theme_id = garbage.material_themes[video_id];
         material_theme = await MaterialTheme.findOne({
@@ -314,7 +316,12 @@ const play2 = async (req, res) => {
         }).catch((err) => {
           console.log('material theme err', err.message);
         });
-        html_content = material_theme.html_content;
+
+        const key = material_theme.html_content.slice(
+          urls.STORAGE_BASE.length + 1
+        );
+        const data = await downloadFile(key);
+        html_content = Buffer.from(data.Body).toString('utf8');
       }
 
       theme = garbage['material_theme'] || theme;

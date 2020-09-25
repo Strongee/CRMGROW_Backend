@@ -992,15 +992,15 @@ const requestTeam = async (req, res) => {
   let sender;
   if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
     const editor = await User.findOne({ _id: searchedUser });
-    sender = editor.email;
+    sender = editor;
   } else {
-    sender = team.owner.email;
+    sender = team.owner;
   }
 
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
   const msg = {
-    to: sender,
+    to: sender.email,
     from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
     templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
     dynamic_template_data: {
