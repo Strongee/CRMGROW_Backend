@@ -179,19 +179,18 @@ const signUp = async (req, res) => {
         hash,
       });
 
-      const garbage = new Garbage({
-        user: user.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      garbage.save().catch((err) => {
-        console.log('garbage save err', err.message);
-      });
-
       user
         .save()
         .then((_res) => {
+          const garbage = new Garbage({
+            user: _res.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+
+          garbage.save().catch((err) => {
+            console.log('garbage save err', err.message);
+          });
           // purchase proxy number
           getSignalWireNumber(_res.id);
 
@@ -471,19 +470,18 @@ const socialSignUp = async (req, res) => {
         created_at: new Date(),
       });
 
-      const garbage = new Garbage({
-        user: user.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      garbage.save().catch((err) => {
-        console.log('err', err);
-      });
-
       user
         .save()
         .then((_res) => {
+          const garbage = new Garbage({
+            user: _res.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+
+          garbage.save().catch((err) => {
+            console.log('err', err);
+          });
           // purchase proxy number
           getSignalWireNumber(_res.id);
 

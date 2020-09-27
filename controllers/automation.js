@@ -308,6 +308,7 @@ const remove = async (req, res) => {
 const search = async (req, res) => {
   const condition = req.body;
   const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
 
   const team_automations = [];
   const teams = await Team.find({ members: currentUser.id });
@@ -326,7 +327,7 @@ const search = async (req, res) => {
       {
         $or: [
           { user: currentUser.id },
-          { role: 'admin' },
+          { role: 'admin', company },
           { _id: { $in: team_automations } },
         ],
       },
