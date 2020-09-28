@@ -410,3 +410,13 @@ body.is_protected > *:not(.modal) {
 .toast.error {
   background-color: #ff5656cc;
 }
+
+.calendly{
+  max-height: 700px;
+  max-width: 700px;
+  width: 100%;
+  height: 700pc;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
