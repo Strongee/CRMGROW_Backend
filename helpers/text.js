@@ -162,18 +162,32 @@ const bulkVideo = async (data) => {
           body: video_content,
         })
         .then((message) => {
-          console.log('Message ID: ', message.sid);
-          Contact.updateOne(
-            { _id: contacts[i] },
-            {
-              $set: { last_activity: activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          resolve({
-            status: true,
-          });
+          if (message.status === 'delivered' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              video_content
+            );
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
+              console.log('err', err);
+            });
+            resolve();
+          } else {
+            console.log('video message send err1', message.error_message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
+            resolve({
+              contact: contacts[i],
+              error: message.error_message,
+              status: false,
+            });
+          }
         })
         .catch((err) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
@@ -333,18 +347,32 @@ const bulkPDF = async (data) => {
           body: pdf_content,
         })
         .then((message) => {
-          console.log('Message ID: ', message.sid);
-          Contact.updateOne(
-            { _id: contacts[i] },
-            {
-              $set: { last_activity: activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          resolve({
-            status: true,
-          });
+          if (message.status === 'delivered' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              pdf_content
+            );
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
+              console.log('err', err);
+            });
+            resolve();
+          } else {
+            console.log('video message send err1', message.error_message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
+            resolve({
+              contact: contacts[i],
+              error: message.error_message,
+              status: false,
+            });
+          }
         })
         .catch((err) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
@@ -503,18 +531,32 @@ const bulkImage = async (data) => {
           body: image_content,
         })
         .then((message) => {
-          console.log('Message ID: ', message.sid);
-          Contact.updateOne(
-            { _id: contacts[i] },
-            {
-              $set: { last_activity: activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          resolve({
-            status: true,
-          });
+          if (message.status === 'delivered' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              image_content
+            );
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
+              console.log('err', err);
+            });
+            resolve();
+          } else {
+            console.log('video message send err1', message.error_message);
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('err', err);
+            });
+            resolve({
+              contact: contacts[i],
+              error: message.error_message,
+              status: false,
+            });
+          }
         })
         .catch((err) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
