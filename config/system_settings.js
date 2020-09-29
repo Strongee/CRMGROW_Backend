@@ -3,6 +3,7 @@ const system_settings = {
     BASIC: '29',
     TEAM: '25',
   },
+  EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
     BASIC: 500,
     GMAIL: 500,
@@ -10,6 +11,7 @@ const system_settings = {
     OUTLOOK: 300,
     MICROSOFT: 1000,
   },
+  TEXT_ONE_TIME: 5,
   TEXT_MONTHLY_LIMIT: {
     BASIC: 250,
   },

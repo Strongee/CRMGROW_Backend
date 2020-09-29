@@ -896,6 +896,11 @@ const releaseSignalWireNumber = (phoneNumberSid) => {
     .then((incoming_phone_number) => console.log(incoming_phone_number.sid))
     .done();
 };
+
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 module.exports = {
   bulkVideo,
   bulkPDF,
@@ -905,4 +910,5 @@ module.exports = {
   getSignalWireNumber,
   matchUSPhoneNumber,
   releaseSignalWireNumber,
+  sleep,
 };

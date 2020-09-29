@@ -1084,6 +1084,10 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1123,14 +1127,15 @@ const bulkText = async (req, res) => {
   }
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_ONE_TIME} contacts at a time`,
       });
     }
 
     for (let i = 0; i < contacts.length; i++) {
+      await textHelper.sleep(1000);
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
           console.log('err', err);
@@ -1236,20 +1241,34 @@ const bulkText = async (req, res) => {
             body: pdf_content,
           })
           .then((message) => {
-            console.log('Message ID: ', message.sid);
-            console.info(
-              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-              pdf_content
-            );
-            Contact.updateOne(
-              { _id: contacts[i] },
-              {
-                $set: { last_activity: activity.id },
-              }
-            ).catch((err) => {
-              console.log('err', err);
-            });
-            resolve();
+            if (message.status === 'delivered' || message.status === 'sent') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                pdf_content
+              );
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+              resolve();
+            } else {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err: message.error_message,
+              });
+              resolve();
+            }
           })
           .catch((err) => {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -1382,10 +1401,10 @@ const bulkOutlook = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
     }
 
@@ -1631,6 +1650,10 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1680,10 +1703,10 @@ const bulkGmail = async (req, res) => {
   });
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
     }
 
@@ -1961,6 +1984,10 @@ const bulkGmail = async (req, res) => {
             error: 'no connected',
           });
         }
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
