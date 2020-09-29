@@ -2308,6 +2308,7 @@ const bulkText = async (req, res) => {
               });
               resolve();
             } else {
+              console.log('video message send err1', message.error_message);
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
@@ -2322,6 +2323,7 @@ const bulkText = async (req, res) => {
             }
           })
           .catch((err) => {
+            console.log('video message send err', err);
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
