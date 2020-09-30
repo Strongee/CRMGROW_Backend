@@ -851,7 +851,7 @@ const bulkText = async (req, res) => {
             body: image_content,
           })
           .then((message) => {
-            if (message.status === 'delivered' || message.status === 'sent') {
+            if (message.status !== 'undelivered') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
