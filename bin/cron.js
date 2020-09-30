@@ -1389,7 +1389,6 @@ const timesheet_check = new CronJob(
             };
             EmailHelper.bulkVideo(data)
               .then((res) => {
-                console.log('res*********', res);
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
                   timeline['updated_at'] = new Date();
