@@ -239,11 +239,16 @@ const play1 = async (req, res) => {
     let logo;
     let highlights = [];
     let brands = [];
+    let calendly;
     if (garbage) {
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     }
 
     return res.render('material_' + theme, {
@@ -253,6 +258,7 @@ const play1 = async (req, res) => {
       contact: activity['contacts'],
       activity: activity.id,
       social_link,
+      calendly,
       material_start,
       setting: {
         logo,
