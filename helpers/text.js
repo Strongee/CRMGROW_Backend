@@ -176,7 +176,9 @@ const bulkVideo = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve();
+            resolve({
+              status: true,
+            });
           } else {
             console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
@@ -361,7 +363,9 @@ const bulkPDF = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve();
+            resolve({
+              status: true,
+            });
           } else {
             console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
@@ -545,7 +549,9 @@ const bulkImage = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve();
+            resolve({
+              status: true,
+            });
           } else {
             console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
