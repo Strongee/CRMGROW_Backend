@@ -152,6 +152,7 @@ const convertUploadVideo = async (id) => {
 
   ffmpegConvert.stderr.on('data', function (data) {
     const content = new Buffer(data).toString();
+    console.log('**************video.id', video.id);
     fs.appendFile(
       VIDEO_CONVERT_LOG_PATH + video.id + '.txt',
       content,
@@ -179,6 +180,7 @@ const getConvertStatus = (video_path) => {
     VIDEO_CONVERT_LOG_PATH + video_path + '.txt',
     'utf8'
   );
+  console.log('content******************', content);
   let duration = 0;
   let time = 0;
   let progress = 0;
