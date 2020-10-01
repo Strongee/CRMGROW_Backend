@@ -33,6 +33,7 @@ const TeamSchema = new Schema(
   }
 );
 
+TeamSchema.index({ owner: 1, unique: true });
 const Team = mongoose.model('team', TeamSchema);
 
 module.exports = Team;

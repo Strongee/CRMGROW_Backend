@@ -72,6 +72,10 @@ const mail_contents = {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'CRMGROW Team join request: ',
   },
+  NOTIFICATION_REQUEST_TEAM_CALL: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Team member call join request: ',
+  },
   MAIL_SEND: 'mailservice@crmgrow.com',
   REPLY: 'support@crmgrow.com',
   VIDEO_TITLE: 'eXp Realty eXplained Videos',
