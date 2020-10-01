@@ -1,11 +1,4 @@
-const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
-const moment = require('moment');
-const path = require('path');
-const mime = require('mime-types');
-
-const OAuth2 = google.auth.OAuth2;
-const uuidv1 = require('uuid/v1');
 
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
@@ -17,14 +10,12 @@ const sgMail = require('@sendgrid/mail');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
-const EmailTracker = require('../models/email_tracker');
 const User = require('../models/user');
 const Video = require('../models/video');
 const ActivityHelper = require('./activity');
 const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
 const urls = require('../constants/urls');
-const video = require('./video');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,

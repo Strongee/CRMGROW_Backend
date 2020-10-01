@@ -84,10 +84,10 @@ const bulkGmail = async (req, res) => {
     });
   }
 
-  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+  if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
     });
   }
 
@@ -424,10 +424,10 @@ const bulkOutlook = async (req, res) => {
   });
   let accessToken;
 
-  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+  if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
     });
   }
 

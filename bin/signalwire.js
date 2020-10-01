@@ -1,9 +1,11 @@
 const { RelayClient, RestClient } = require('@signalwire/node');
 const request = require('request-promise');
+const { ENV_PATH } = require('../config/path');
+require('dotenv').config({ path: ENV_PATH });
 const api = require('../config/api');
 
-const client = new RestClient('YourProjectID', 'YourAuthToken', {
-  signalwireSpaceUrl: api.WORKSPACE_DOMAIN,
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
 
 const client1 = new RelayClient({
@@ -29,114 +31,8 @@ async function main() {
   client.connect();
 }
 
-const phone_numbers = [
-  '+1 (619) 731-0832',
-  '+1 (619) 731-0827',
-  '+1 (619) 731-0824',
-  '+1 (619) 731-0823',
-  '+1 (619) 731-0822',
-  '+1 (619) 731-0817',
-  '+1 (619) 731-0810',
-  '+1 (619) 731-0809',
-  '+1 (619) 731-0807',
-  '+1 (619) 731-0805',
-  '+1 (619) 731-0798',
-  '+1 (619) 731-0797',
-  '+1 (619) 731-0794',
-  '+1 (619) 731-0786',
-  '+1 (619) 731-0784',
-  '+1 (619) 731-0783',
-  '+1 (619) 731-0776',
-  '+1 (619) 731-0775',
-  '+1 (619) 731-0772',
-  '+1 (619) 731-0771',
-  '+1 (619) 731-0764',
-  '+1 (619) 731-0763',
-  '+1 (619) 731-0760',
-  '+1 (619) 731-0758',
-  '+1 (619) 731-0756',
-  '+1 (619) 731-0755',
-  '+1 (619) 731-0753',
-  '+1 (619) 731-0746',
-  '+1 (619) 731-0744',
-  '+1 (619) 731-0741',
-  '+1 (619) 731-0739',
-  '+1 (619) 731-0738',
-  '+1 (619) 731-0732',
-  '+1 (619) 731-0728',
-  '+1 (619) 731-0727',
-  '+1 (619) 731-0724',
-  '+1 (619) 731-0722',
-  '+1 (619) 731-0721',
-  '+1 (619) 731-0716',
-  '+1 (619) 731-0714',
-  '+1 (619) 731-0696',
-  '+1 (619) 731-0694',
-  '+1 (619) 731-0687',
-  '+1 (619) 731-0681',
-  '+1 (619) 731-0679',
-  '+1 (619) 731-0671',
-  '+1 (619) 731-0667',
-  '+1 (619) 731-0662',
-  '+1 (619) 731-0657',
-  '+1 (619) 728-7630',
-  '+1 (619) 728-7362',
-  '+1 (619) 728-7075',
-  '+1 (619) 728-7048',
-  '+1 (619) 728-7039',
-  '+1 (619) 728-7026',
-  '+1 (619) 728-7007',
-  '+1 (619) 728-6966',
-  '+1 (619) 728-6753',
-  '+1 (619) 728-6564',
-  '+1 (619) 728-6265',
-  '+1 (619) 728-4588',
-  '+1 (619) 728-4503',
-  '+1 (619) 722-9235',
-  '+1 (619) 722-5789',
-  '+1 (619) 713-9486',
-  '+1 (619) 678-2475',
-  '+1 (619) 663-5947',
-  '+1 (619) 625-6999',
-  '+1 (619) 625-6983',
-  '+1 (619) 597-7479',
-  '+1 (619) 569-2314',
-  '+1 (619) 552-2932',
-  '+1 (619) 552-2672',
-  '+1 (619) 468-5419',
-  '+1 (619) 468-4463',
-  '+1 (619) 452-0988',
-  '+1 (619) 452-0537',
-  '+1 (619) 438-0977',
-  '+1 (619) 413-4453',
-  '+1 (619) 377-3591',
-  '+1 (619) 375-3013',
-  '+1 (619) 374-3437',
-  '+1 (619) 363-7430',
-  '+1 (619) 363-6836',
-  '+1 (619) 363-6642',
-  '+1 (619) 354-7858',
-  '+1 (619) 354-2634',
-  '+1 (619) 354-2413',
-  '+1 (619) 354-1385',
-  '+1 (619) 345-3384',
-  '+1 (619) 345-0019',
-  '+1 (702) 899-5130',
-  '+1 (702) 874-4608',
-  '+1 (801) 624-6940',
-  '+1 (801) 658-2091',
-  '+1 (614) 423-5329',
-  '+1 (614) 426-8228',
-  '+1 (843) 273-6092',
-  '+1 (413) 749-4946',
-  '+1 (312) 761-9533',
-  '+1 (224) 259-2312',
-  '+1 (312) 668-0427',
-  '+1 (613) 706-5892',
-  '+1 (708) 271-9116',
-];
-
 const relasePhone = () => {
+  const phone_numbers = [];
   for (let i = 0; i < phone_numbers.length; i++) {
     client
       .incomingPhoneNumbers('IncomingPhoneNumberSid')
@@ -145,4 +41,71 @@ const relasePhone = () => {
       .done();
   }
 };
+
+const longNumber = () => {
+  client
+    .availablePhoneNumbers('US')
+    .tollFree.list()
+    .then((availablePhoneNumbers) => {
+      console.log(availablePhoneNumbers);
+    });
+};
 // main().catch(console.error);
+
+const buyNumber = async () => {
+  const number = '+18442631354';
+  const proxy_number = await request({
+    method: 'POST',
+    uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers`,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    auth: {
+      user: api.SIGNALWIRE.PROJECT_ID,
+      password: api.SIGNALWIRE.TOKEN,
+    },
+    body: {
+      number,
+    },
+    json: true,
+  }).catch((err) => {
+    console.log('phone number get err', err);
+  });
+  console.log('proxy_number', proxy_number);
+};
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const sendMessage = async () => {
+  const fromNumber = ['+17473342002', '+18442631354'];
+  const e164Phone = ['+15625480802', '+13124938446'];
+  const content1 = 'Hi, How are you?';
+  const content =
+    'Hi Garret,  Super here with Real Estate B-School. I also emailed you but thought I would text you as well. Check out the video below and email me back or text me at 704-610-4888 and let me know if you can make it. -Lars (yes this is really Lars!) Private Confidential Zoom Meeting with Super: https://app.crmgrow.com/video?video=5e2a05c94d04d37842cc8ff9&user=5f5eabe949f8956d8647e050';
+
+  const content2 =
+    'Hi Steven, It`s John Rurkowski.Please click and listen to my short video below and text me back at 727-459-7356 so we can set up a time to discuss it. Have a great Saturday. Hello from John Rurkowski: https://app.crmgrow.com/video1/5f6f28f90f0c3a6f7fd57aa9';
+  console.log('e164Phone', e164Phone);
+  for (let i = 0; i < 20; i++) {
+    await sleep(1000);
+    const j = i % 2;
+    client.messages
+      .create({
+        from: fromNumber[j],
+        to: e164Phone[0],
+        body: `${i} ` + content,
+      })
+      .then((message) => {
+        console.log('Message ID: ', message.sid);
+        console.info(`Send SMS: ${fromNumber} -> ${e164Phone} :`, content);
+      })
+      .catch((err) => {
+        console.log('message send err', err);
+      });
+  }
+};
+// longNumber();
+// buyNumber();
+sendMessage();

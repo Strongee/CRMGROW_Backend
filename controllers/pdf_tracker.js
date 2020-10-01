@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator/check');
 const sgMail = require('@sendgrid/mail');
 const webpush = require('web-push');
 const User = require('../models/user');

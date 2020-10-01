@@ -145,7 +145,7 @@ const getContact = (req, res) => {
 const createToken = (req, res) => {
   const { currentUser } = req;
   const token = jwt.sign(
-    { _id: currentUser.id, api_loggin: true },
+    { id: currentUser.id, api_loggin: true },
     api.JWT_SECRET
   );
   Garbage.updateOne(
