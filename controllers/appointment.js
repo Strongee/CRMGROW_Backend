@@ -40,11 +40,6 @@ const get = async (req, res) => {
 
       outlook.base.setAnchorMailbox(currentUser.connected_email);
 
-      // Set the preferred time zone
-      // outlook.base.setPreferredTimeZone(currentUser.time_zone);
-
-      // Set up our sync window from midnight on the current day to
-      // midnight 7 days from now.
       const endDate = moment(startDate).add(7, 'days');
       // The start and end date are passed as query parameters
       const params = {

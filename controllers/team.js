@@ -12,6 +12,7 @@ const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 const Contact = require('../models/contact');
 const Notification = require('../models/notification');
+const TeamCall = require('../models/team_call');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const getAll = (req, res) => {
@@ -1321,11 +1322,108 @@ const updateTeam = (req, res) => {
     });
 };
 
+const requestCall = async (req, res) => {
+  const { currentUser } = req;
+
+  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
+    console.log('team find error', err.message);
+  });
+
+  const owner = await User.findOne({ _id: team.owner }).catch((err) => {
+    console.log('team owner found err,', err.message);
+  });
+
+  if (owner && team) {
+    const team_call = new TeamCall({
+      user: currentUser.id,
+      ...req.body,
+    });
+
+    team_call
+      .save()
+      .then(() => {
+        /** **********
+         *  Send email notification to the inviated users
+         *  */
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+        const msg = {
+          to: owner.email,
+          from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
+          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
+          dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
+            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
+            owner_name: currentUser.user_name,
+            team_name: team.name,
+            VIEW_URL: urls.TEAM_ACCEPT_URL + team.id,
+          },
+        };
+        sgMail.send(msg).catch((err) => {
+          console.log('team call invitation email err', err);
+        });
+
+        /** **********
+         *  Creat dashboard notification to the inviated users
+         *  */
+
+        const notification = new Notification({
+          user: owner.id,
+          team: team.id,
+          criteria: 'team_call_invited',
+          content: `You've been invited to join a call by ${currentUser.user_name}.`,
+        });
+
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+
+        res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('team save err', err.message);
+        return res.status(400).json({
+          status: false,
+          error: err.message,
+        });
+      });
+  }
+};
+
+const getTeamCall = async (req, res) => {
+  const { currentUser } = req;
+
+  const team_calls = await TeamCall.find({
+    invite: currentUser.id,
+  });
+
+  return res.send({
+    status: true,
+    team_calls,
+  });
+};
+
+const getRequestedCall = async (req, res) => {
+  const { currentUser } = req;
+
+  const team_calls = await TeamCall.find({
+    user: currentUser.id,
+  });
+
+  return res.send({
+    status: true,
+    team_calls,
+  });
+};
+
 module.exports = {
   getAll,
   getTeam,
   getInvitedTeam,
   get,
+  getTeamCall,
+  getRequestedCall,
   create,
   update,
   remove,
@@ -1344,5 +1442,6 @@ module.exports = {
   removeAutomations,
   removeEmailTemplates,
   requestTeam,
+  requestCall,
   updateTeam,
 };

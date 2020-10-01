@@ -87,6 +87,23 @@ router.post(
 );
 router.post('/update', UserCtrl.checkAuth, catchError(TeamCtrl.updateTeam));
 
+// Team call for 3 way
+router.get(
+  '/call-invite',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getTeamCall)
+);
+router.get(
+  '/call-request',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getRequestedCall)
+);
+router.post(
+  '/request-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.requestCall)
+);
+
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));

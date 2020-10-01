@@ -2917,10 +2917,7 @@ const setupRecording = (io) => {
   const fileStreams = {};
   const fileStreamSizeStatus = {};
   io.sockets.on('connection', (socket) => {
-    console.log('CONNECT WITH FRONT APP');
-
     socket.on('initVideo', () => {
-      console.log('SOCKET INIT VIDEO');
       const videoId = uuidv1();
       const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
       fileStreams[videoId] = ws;
