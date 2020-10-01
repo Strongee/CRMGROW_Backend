@@ -125,6 +125,8 @@ router.get(
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
 
+router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
+
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));
 
