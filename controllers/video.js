@@ -2962,6 +2962,7 @@ const setupRecording = (io) => {
       }
     });
     socket.on('saveVideo', async (data) => {
+      console.log('SAVE VIDEO DATA');
       const videoId = data.videoId;
       fileStreams[videoId].close();
 
@@ -3017,6 +3018,7 @@ const setupRecording = (io) => {
             });
           })
           .catch((err) => {
+            console.log('Faield SAVE VIDEO', err);
             socket.emit('failedSaveVideo');
           });
       }
