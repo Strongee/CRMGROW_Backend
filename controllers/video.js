@@ -2786,15 +2786,11 @@ const makeBody = (to, from, subject, message) => {
 };
 
 const getConvertStatus = async (req, res) => {
-  // const video = await Video.findOne({_id: req.params.id}).catch(err=>{
-  //   console.log('video convert found video error', err.message)
-  // })
-  // const file_path = video['path']
   const { videos } = req.body;
   const result_array = {};
   for (let i = 0; i < videos.length; i++) {
     const video = videos[i];
-    const result = videoHelper.getConvertStatus(video);
+    const result = await videoHelper.getConvertStatus(video);
     result_array[video] = result;
   }
   return res.send(result_array);
@@ -3000,8 +2996,10 @@ const setupRecording = (io) => {
                 areaH,
               };
               // CROP AREA USING FFMPEG
+              videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id, area);
             } else {
+              videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id);
               // CONVERT FFMPEG
             }

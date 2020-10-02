@@ -15,7 +15,6 @@ const convertRecordVideo = async (id, area) => {
   const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  console.log('file_path', file_path);
   let args = [];
 
   if (area) {
@@ -86,6 +85,7 @@ const convertRecordVideo = async (id, area) => {
 
   ffmpegConvert.stderr.on('data', function (data) {
     const content = new Buffer(data).toString();
+
     fs.appendFile(
       VIDEO_CONVERT_LOG_PATH + video.id + '.txt',
       content,
@@ -152,7 +152,6 @@ const convertUploadVideo = async (id) => {
 
   ffmpegConvert.stderr.on('data', function (data) {
     const content = new Buffer(data).toString();
-    console.log('**************video.id', video.id);
     fs.appendFile(
       VIDEO_CONVERT_LOG_PATH + video.id + '.txt',
       content,
@@ -168,7 +167,7 @@ const convertUploadVideo = async (id) => {
   });
 };
 
-const getConvertStatus = (video_path) => {
+const getConvertStatus = async (video_path) => {
   if (!fs.existsSync(VIDEO_CONVERT_LOG_PATH + video_path + '.txt')) {
     return {
       id: video_path,
@@ -180,7 +179,6 @@ const getConvertStatus = (video_path) => {
     VIDEO_CONVERT_LOG_PATH + video_path + '.txt',
     'utf8'
   );
-  console.log('content******************', content);
   let duration = 0;
   let time = 0;
   let progress = 0;
@@ -230,9 +228,17 @@ const getConvertStatus = (video_path) => {
     const rawDuration = matches[1];
 
     let ar = rawDuration.split(':').reverse();
-    duration = parseFloat(ar[0]);
-    if (ar[1]) duration += parseInt(ar[1]) * 60;
-    if (ar[2]) duration += parseInt(ar[2]) * 60 * 60;
+    // eslint-disable-next-line use-isnan
+    if (ar[0] === 'N/A') {
+      const video = await Video.findOne({ _id: video_path }).catch((err) => {
+        console.log('video find err', err.message);
+      });
+      duration = video.duration;
+    } else {
+      duration = parseFloat(ar[0]);
+      if (ar[1]) duration += parseInt(ar[1]) * 60;
+      if (ar[2]) duration += parseInt(ar[2]) * 60 * 60;
+    }
 
     // get the time
     matches = content.match(/time=(.*?) bitrate/g);
@@ -280,8 +286,49 @@ const getConvertStatus = (video_path) => {
   return result;
 };
 
+const getDuration = async (id) => {
+  const video = await Video.findOne({ _id: id }).catch((err) => {
+    console.log('video convert find video error', err.message);
+  });
+
+  const file_path = video['path'];
+  const args = ['-i', file_path, '-f', 'null', '-'];
+
+  const ffmpegConvert = child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.stderr.on('data', (data) => {
+    const content = new Buffer(data).toString();
+    console.log('getting duraction data************', content);
+    const matches = content.match(/time=(.*?) bitrate/g);
+
+    if (matches && matches.length > 0) {
+      let rawTime = matches.pop();
+      // needed if there is more than one match
+      if (Array.isArray(rawTime)) {
+        rawTime = rawTime.pop().replace('time=', '').replace(' bitrate', '');
+      } else {
+        rawTime = rawTime.replace('time=', '').replace(' bitrate', '');
+      }
+      // convert rawTime from 00:00:00.00 to seconds.
+      const ar = rawTime.split(':').reverse();
+      let time = parseFloat(ar[0]);
+      if (ar[1]) time += parseInt(ar[1]) * 60;
+      if (ar[2]) time += parseInt(ar[2]) * 60 * 60;
+
+      Video.updateOne(
+        { _id: id },
+        {
+          $set: { duration: time },
+        }
+      ).catch((err) => {
+        console.log('video update err', err.message);
+      });
+    }
+  });
+};
+
 module.exports = {
   convertRecordVideo,
   convertUploadVideo,
   getConvertStatus,
+  getDuration,
 };
