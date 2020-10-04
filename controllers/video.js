@@ -2967,9 +2967,15 @@ const setupRecording = (io) => {
         socket.emit('failedSaveVideo');
       }
       if (token) {
+        const user = await User.findOne({ _id: decoded.id }).catch((err) => {
+          console.log('user find err', err.message);
+        });
         const video = new Video({
           url: urls.VIDEO_URL + videoId + `.webm`,
           path: TEMP_PATH + videoId + `.webm`,
+          title: `${moment().format('MMMM Do YYYY')} - ${
+            user.user_name
+          } Recording`,
           user: decoded.id,
           created_at: new Date(),
         });
@@ -2978,6 +2984,7 @@ const setupRecording = (io) => {
           .then((_video) => {
             socket.emit('savedVideo', { video: _video.id });
 
+            let area;
             if (data.mode === 'crop') {
               // Crop area
               const screen = data.screen;
@@ -2989,7 +2996,7 @@ const setupRecording = (io) => {
               const areaY = (data.area.startY * videoHeight) / screen.height;
               const areaW = (data.area.w * videoWidth) / screen.width;
               const areaH = (data.area.h * videoHeight) / screen.height;
-              const area = {
+              area = {
                 areaX,
                 areaY,
                 areaW,
@@ -3003,6 +3010,28 @@ const setupRecording = (io) => {
               videoHelper.convertRecordVideo(_video.id);
               // CONVERT FFMPEG
             }
+
+            const video_data = {
+              file_name: _video.id,
+              file_path: _video.path,
+              area,
+            };
+
+            videoHelper.generateThumbnail(video_data);
+            console.log('_video.path', _video.path);
+            generatePreview(video_data)
+              .then((res) => {
+                Video.updateOne(
+                  { _id: _video.id },
+                  { $set: { preview: res } }
+                ).catch((err) => {
+                  console.log('update preview err', err.message);
+                });
+              })
+              .catch((err) => {
+                console.log('generate preview err', err.message);
+              });
+
             Video.updateOne(
               { _id: _video.id },
               {

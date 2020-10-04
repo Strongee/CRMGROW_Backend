@@ -95,7 +95,8 @@ const api = {
     TOKEN: process.env.SIGNALWIRE_TOKEN,
     WORKSPACE: 'https://crmgrow.signalwire.com',
     WORKSPACE_DOMAIN: 'crmgrow.signalwire.com',
-    DEFAULT_NUMBER: '+13127391036',
+    DEFAULT_NUMBER2: '+13127391036',
+    DEFAULT_NUMBER: '+18442631354',
   },
   UNLAYER: {
     PROJECT_ID: process.env.UNLAYER_PROJECT_ID,
