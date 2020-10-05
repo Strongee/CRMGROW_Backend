@@ -13,6 +13,7 @@ const Activity = require('../models/activity');
 const Reminder = require('../models/reminder');
 const User = require('../models/user');
 const Contact = require('../models/contact');
+const graph = require('@microsoft/microsoft-graph-client');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -26,16 +27,143 @@ const oauth2 = require('simple-oauth2')(credentials);
 
 const get = async (req, res) => {
   const { currentUser } = req;
-  let data = [];
+  const promise_array = [];
+  const data = [];
 
   let startDate = req.params.date;
-  if (typeof startDate === 'undefined') {
+  if (!startDate) {
     startDate = moment().startOf('week');
   } else {
     startDate = moment(startDate).startOf('week');
   }
   if (currentUser.connect_calendar) {
     if (currentUser.connected_email_type === 'outlook') {
+      let accessToken;
+      const token = oauth2.accessToken.create({
+        refresh_token: currentUser.outlook_refresh_token,
+        expires_in: 0,
+      });
+
+      await new Promise((resolve, reject) => {
+        token.refresh(function (error, result) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result.token);
+          }
+        });
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
+        });
+
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
+      });
+
+      client
+        .api('/me/calendars')
+        .get()
+        .then(async (outlook_calendars) => {
+          console.log('calendars', outlook_calendars);
+          const calendars = outlook_calendars.value;
+
+          // Calendar sync works on the CalendarView endpoint
+          if (calendars.length > 0) {
+            for (let i = 0; i < calendars.length; i++) {
+              const calendar = calendars[i];
+              const promise = new Promise(async (resolve) => {
+                const outlook_events = await client
+                  .api(`/me/calendars/${calendar.id}/events`)
+                  .get();
+                console.log('outlook_events*************', outlook_events);
+                if (outlook_events && outlook_events.value) {
+                  const calendar_events = outlook_events.value;
+                  for (let i = 0; i < calendar_events.length; i++) {
+                    const guests = [];
+                    if (calendar_events[i].attendees) {
+                      const attendees = calendar_events[i].attendees;
+                      console.log('*************attendees', attendees);
+                      for (let j = 0; j < attendees.length; j++) {
+                        console.log('attendees****************', attendees[j]);
+                        const guest = attendees[j].emailAddress.address;
+                        guests.push(guest);
+                      }
+                    }
+                    const _outlook_calendar_data = {};
+                    _outlook_calendar_data.title = calendar_events[i].subject;
+                    if (calendar_events[i].body) {
+                      _outlook_calendar_data.description =
+                        calendar_events[i].body.content;
+                    } else {
+                      _outlook_calendar_data.description = '';
+                    }
+                    if (calendar_events[i].location) {
+                      _outlook_calendar_data.location =
+                        calendar_events[i].location.displayName;
+                    } else {
+                      _outlook_calendar_data.location = '';
+                    }
+                    if (calendar_events[i].start) {
+                      _outlook_calendar_data.due_start =
+                        calendar_events[i].start.dateTime;
+                      _outlook_calendar_data.time_zone =
+                        calendar_events[i].start.timezone;
+                      _outlook_calendar_data.due_start = moment
+                        .tz(
+                          _outlook_calendar_data.due_start,
+                          _outlook_calendar_data.time_zone
+                        )
+                        .toISOString();
+                    } else {
+                      _outlook_calendar_data.due_start = '';
+                    }
+                    if (calendar_events[i].end) {
+                      _outlook_calendar_data.due_end =
+                        calendar_events[i].end.datetime;
+                      _outlook_calendar_data.time_zone =
+                        calendar_events[i].end.timezone;
+                      _outlook_calendar_data.due_end = moment
+                        .tz(
+                          _outlook_calendar_data.due_end,
+                          _outlook_calendar_data.time_zone
+                        )
+                        .toISOString();
+                    } else {
+                      _outlook_calendar_data.due_end = '';
+                    }
+                    _outlook_calendar_data.guests = guests;
+                    _outlook_calendar_data.event_id = calendar_events[i].Id;
+                    data.push(_outlook_calendar_data);
+                  }
+                }
+                resolve();
+              });
+              promise_array.push(promise);
+            }
+            Promise.all(promise_array).then(() => {
+              return res.send({
+                status: true,
+                data,
+              });
+            });
+          }
+        })
+        .catch((err) => {
+          console.log('calendar event err', err);
+        });
+      /**
       outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
       outlook.base.setAnchorMailbox(currentUser.connected_email);
@@ -294,6 +422,7 @@ const get = async (req, res) => {
           });
         });
       });
+        */
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -305,24 +434,6 @@ const get = async (req, res) => {
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
       calendarList(oauth2Client, data, res, startDate);
     }
-  } else {
-    const endDate = moment(startDate).add(7, 'days');
-    data = await Appointment.find({
-      user: currentUser.id,
-      del: false,
-      updated_at: { $gte: startDate.toISOString(), $lt: endDate.toISOString() },
-    });
-
-    if (!data) {
-      return res.status(400).json({
-        status: false,
-        error: 'Activity doesn`t exist',
-      });
-    }
-    return res.send({
-      status: true,
-      data,
-    });
   }
 };
 
