@@ -1294,7 +1294,7 @@ const authorizeOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
   ];
 
