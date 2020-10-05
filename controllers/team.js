@@ -1482,6 +1482,11 @@ const getRequestedCall = async (req, res) => {
   });
 };
 
+const searchLeader = async (req, res) => {
+  const { currentUser } = req;
+  
+};
+
 module.exports = {
   getAll,
   getTeam,
@@ -1496,6 +1501,7 @@ module.exports = {
   acceptInviation,
   acceptRequest,
   searchUser,
+  searchLeader,
   shareVideos,
   sharePdfs,
   shareImages,
