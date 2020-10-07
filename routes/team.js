@@ -93,10 +93,11 @@ router.get(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getTeamCall)
 );
+router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
 router.get(
-  '/call-request',
+  '/call/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getRequestedCall)
+  catchError(TeamCtrl.getInquireCall)
 );
 router.post(
   '/request-call',

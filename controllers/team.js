@@ -26,7 +26,10 @@ const getAll = (req, res) => {
       { owner: currentUser.id },
     ],
   })
-    .populate([{ path: 'owner' }, { path: 'members' }])
+    .populate([
+      { path: 'owner', select: { _id: 1, user_name: 1, picture_profile: 1 } },
+      { path: 'members', select: { _id: 1, user_name: 1, picture_profile: 1 } },
+    ])
     .then((data) => {
       return res.send({
         status: true,
@@ -1456,35 +1459,34 @@ const acceptCall = async (req, res) => {
   }
 };
 
-const getTeamCall = async (req, res) => {
+const getInquireCall = async (req, res) => {
   const { currentUser } = req;
+  let id = 0;
 
-  const team_calls = await TeamCall.find({
-    invite: currentUser.id,
-  });
+  if (req.params.id) {
+    console.log('req.params.id', req.params.id);
+    id = parseInt(req.params.id);
+  }
+  const data = await TeamCall.find({
+    $or: [
+      { user: currentUser.id },
+      { invite: currentUser.id },
+      { guests: currentUser.id },
+    ],
+  })
+    .populate([
+      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'contacts' },
+    ])
+    .skip(id)
+    .limit(8);
 
   return res.send({
     status: true,
-    team_calls,
+    data,
   });
-};
-
-const getRequestedCall = async (req, res) => {
-  const { currentUser } = req;
-
-  const team_calls = await TeamCall.find({
-    user: currentUser.id,
-  });
-
-  return res.send({
-    status: true,
-    team_calls,
-  });
-};
-
-const searchLeader = async (req, res) => {
-  const { currentUser } = req;
-  
 };
 
 module.exports = {
@@ -1492,8 +1494,7 @@ module.exports = {
   getTeam,
   getInvitedTeam,
   get,
-  getTeamCall,
-  getRequestedCall,
+  getInquireCall,
   create,
   update,
   remove,
@@ -1501,7 +1502,6 @@ module.exports = {
   acceptInviation,
   acceptRequest,
   searchUser,
-  searchLeader,
   shareVideos,
   sharePdfs,
   shareImages,
