@@ -1390,7 +1390,7 @@ const requestCall = async (req, res) => {
         });
       }
 
-      res.send({
+      return res.send({
         status: true,
         data,
       });
@@ -1595,9 +1595,41 @@ const getPlannedCall = async (req, res) => {
   });
 };
 
-const updateCall = async(req, res) => {
-  
-}
+const updateCall = async (req, res) => {
+  const { currentUser } = req;
+  const team_call = await TeamCall.findOne({
+    user: currentUser.id,
+    _id: req.params.id,
+  });
+
+  if (!team_call) {
+    return res.status(400).json({
+      status: false,
+      error: 'Team call found err',
+    });
+  }
+  TeamCall.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      ...req.body,
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call update err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getTeam,

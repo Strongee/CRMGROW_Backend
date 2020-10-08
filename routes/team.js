@@ -129,6 +129,7 @@ router.post(
   catchError(TeamCtrl.rejectCall)
 );
 
+router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
