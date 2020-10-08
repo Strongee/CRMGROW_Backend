@@ -1294,7 +1294,7 @@ const authorizeOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -1578,6 +1578,7 @@ const authorizeGmail = async (req, res) => {
 
     // Email is in the preferred_username field
     user.connected_email = _res.data.email;
+    user.connect_calendar = true;
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);

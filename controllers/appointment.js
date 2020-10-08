@@ -491,7 +491,7 @@ const create = async (req, res) => {
     const _appointment = req.body;
     if (currentUser.connected_email_type === 'outlook') {
       const attendees = [];
-      if (!_appointment.guests) {
+      if (_appointment.guests) {
         for (let j = 0; j < _appointment.guests.length; j++) {
           const addendee = {
             emailAddress: {
