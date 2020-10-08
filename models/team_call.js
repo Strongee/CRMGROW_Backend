@@ -12,6 +12,7 @@ const TeamCallSchema = new Schema(
     invites: Array,
     subject: String,
     description: String,
+    duration: Number,
     location: String,
     status: { type: String, default: 'pending' },
     link: String,

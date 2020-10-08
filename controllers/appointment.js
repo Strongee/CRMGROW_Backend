@@ -487,6 +487,13 @@ const create = async (req, res) => {
 
   let event_id;
 
+  if (!req.body.contact) {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts required',
+    });
+  }
+
   if (currentUser.connect_calendar) {
     const _appointment = req.body;
     if (currentUser.connected_email_type === 'outlook') {

@@ -93,12 +93,25 @@ router.get(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getTeamCall)
 );
+
 router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
 router.get(
   '/call/:id',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getInquireCall)
 );
+
+router.get(
+  '/call-planned',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getPlannedCall)
+);
+router.get(
+  '/call-planned/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getPlannedCall)
+);
+
 router.post(
   '/request-call',
   UserCtrl.checkAuth,
