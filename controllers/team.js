@@ -1340,7 +1340,7 @@ const requestCall = async (req, res) => {
   let leader;
 
   if (req.body.leader) {
-    leader = await User.fineOne({ _id: req.body.leader }).catch((err) => {
+    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
       console.log('leader find err', err.message);
     });
   }
@@ -1366,7 +1366,7 @@ const requestCall = async (req, res) => {
             LOGO_URL: urls.LOGO_URL,
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
             user_name: currentUser.user_name,
-            VIEW_URL: urls.TEAM_ACCEPT_URL + team.id,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
           },
         };
         sgMail.send(msg).catch((err) => {
@@ -1438,7 +1438,7 @@ const acceptCall = async (req, res) => {
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
             invite: currentUser.user_name,
             user_name: user.user_name,
-            VIEW_URL: urls.TEAM_ACCEPT_URL,
+            VIEW_URL: urls.TEAM_CALLS,
           },
         };
         sgMail.send(msg).catch((err) => {
@@ -1504,7 +1504,7 @@ const rejectCall = async (req, res) => {
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
             invite: currentUser.user_name,
             user_name: user.user_name,
-            VIEW_URL: urls.TEAM_ACCEPT_URL,
+            VIEW_URL: urls.TEAM_ACCEPT_URL + team_call.id,
           },
         };
         sgMail.send(msg).catch((err) => {
