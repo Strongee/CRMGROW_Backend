@@ -117,7 +117,17 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.requestCall)
 );
-router.post('/join-call', UserCtrl.checkAuth, catchError(TeamCtrl.acceptCall));
+router.post(
+  '/accept-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.acceptCall)
+);
+
+router.post(
+  '/reject-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.rejectCall)
+);
 
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));

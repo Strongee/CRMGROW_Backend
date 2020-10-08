@@ -1337,49 +1337,49 @@ const updateTeam = (req, res) => {
 
 const requestCall = async (req, res) => {
   const { currentUser } = req;
+  let leader;
 
-  const team = await Team.findOne({ _id: req.params.id })
-    .populate('owner')
-    .catch((err) => {
-      console.log('team find error', err.message);
+  if (req.body.leader) {
+    leader = await User.fineOne({ _id: req.body.leader }).catch((err) => {
+      console.log('leader find err', err.message);
     });
+  }
 
-  if (team) {
-    const owner = team.owner;
-    const team_call = new TeamCall({
-      user: currentUser.id,
-      ...req.body,
-    });
+  const team_call = new TeamCall({
+    user: currentUser.id,
+    ...req.body,
+  });
 
-    team_call
-      .save()
-      .then(() => {
-        /** **********
-         *  Send email notification to the inviated users
-         *  */
-        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+  team_call
+    .save()
+    .then((data) => {
+      /** **********
+       *  Send email notification to the inviated users
+       *  */
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      if (leader) {
         const msg = {
-          to: owner.email,
+          to: leader.email,
           from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
           templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
           dynamic_template_data: {
             LOGO_URL: urls.LOGO_URL,
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-            owner_name: currentUser.user_name,
-            team_name: team.name,
+            user_name: currentUser.user_name,
             VIEW_URL: urls.TEAM_ACCEPT_URL + team.id,
           },
         };
         sgMail.send(msg).catch((err) => {
           console.log('team call invitation email err', err);
         });
+      }
 
-        /** **********
-         *  Creat dashboard notification to the inviated users
-         *  */
-
+      /** **********
+       *  Creat dashboard notification to the inviated users
+       *  */
+      if (leader) {
         const notification = new Notification({
-          user: owner.id,
+          user: leader.id,
           team_call: team_call.id,
           criteria: 'team_call_invited',
           content: `You've been invited to join a call by ${currentUser.user_name}.`,
@@ -1388,19 +1388,20 @@ const requestCall = async (req, res) => {
         notification.save().catch((err) => {
           console.log('notification save err', err.message);
         });
+      }
 
-        res.send({
-          status: true,
-        });
-      })
-      .catch((err) => {
-        console.log('team save err', err.message);
-        return res.status(400).json({
-          status: false,
-          error: err.message,
-        });
+      res.send({
+        status: true,
+        data,
       });
-  }
+    })
+    .catch((err) => {
+      console.log('team save err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
 };
 
 const acceptCall = async (req, res) => {
@@ -1420,7 +1421,73 @@ const acceptCall = async (req, res) => {
         _id: call_id,
       },
       {
-        status: 'accepted',
+        status: 'planned',
+      }
+    )
+      .then(() => {
+        /** **********
+         *  Send email notification to the inviated users
+         *  */
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+        const msg = {
+          to: user.email,
+          from: mail_contents.NO_REPLAY,
+          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
+          dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
+            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
+            invite: currentUser.user_name,
+            user_name: user.user_name,
+            VIEW_URL: urls.TEAM_ACCEPT_URL,
+          },
+        };
+        sgMail.send(msg).catch((err) => {
+          console.log('team call invitation email err', err);
+        });
+
+        /** **********
+         *  Creat dashboard notification to the inviated users
+         *  */
+
+        const notification = new Notification({
+          user: user.id,
+          team_call: call_id,
+          criteria: 'team_call_accepted',
+          content: `${currentUser.user_name} has accepted to join a call.`,
+        });
+
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('team update err', err.message);
+      });
+  }
+};
+
+const rejectCall = async (req, res) => {
+  const { currentUser } = req;
+  const { call_id } = req.body;
+
+  const team_call = await TeamCall.findOne({ _id: call_id })
+    .populate('user')
+    .catch((err) => {
+      console.log('call find error', err.message);
+    });
+
+  if (team_call) {
+    const user = team_call.user;
+    TeamCall.updateOne(
+      {
+        _id: call_id,
+      },
+      {
+        status: 'cancelled',
       }
     )
       .then(() => {
@@ -1503,7 +1570,6 @@ const getPlannedCall = async (req, res) => {
   const { currentUser } = req;
   let id = 0;
   if (req.params.id) {
-    console.log('req.params.id', req.params.id);
     id = parseInt(req.params.id);
   }
   const data = await TeamCall.find({
@@ -1529,6 +1595,9 @@ const getPlannedCall = async (req, res) => {
   });
 };
 
+const updateCall = async(req, res) => {
+  
+}
 module.exports = {
   getAll,
   getTeam,
@@ -1556,5 +1625,7 @@ module.exports = {
   requestTeam,
   requestCall,
   acceptCall,
+  rejectCall,
+  updateCall,
   updateTeam,
 };
