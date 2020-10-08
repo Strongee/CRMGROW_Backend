@@ -8,7 +8,7 @@ const TeamCallSchema = new Schema(
     leader: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
     guests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contacts' }],
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     invites: Array,
     subject: String,
     description: String,

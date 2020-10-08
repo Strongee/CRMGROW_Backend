@@ -1438,7 +1438,7 @@ const acceptCall = async (req, res) => {
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
             invite: currentUser.user_name,
             user_name: user.user_name,
-            VIEW_URL: urls.TEAM_CALLS,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
           },
         };
         sgMail.send(msg).catch((err) => {
@@ -1452,7 +1452,7 @@ const acceptCall = async (req, res) => {
         const notification = new Notification({
           user: user.id,
           team_call: call_id,
-          criteria: 'team_call_accepted',
+          criteria: 'team_call',
           content: `${currentUser.user_name} has accepted to join a call.`,
         });
 
@@ -1504,7 +1504,7 @@ const rejectCall = async (req, res) => {
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
             invite: currentUser.user_name,
             user_name: user.user_name,
-            VIEW_URL: urls.TEAM_ACCEPT_URL + team_call.id,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
           },
         };
         sgMail.send(msg).catch((err) => {
@@ -1518,8 +1518,8 @@ const rejectCall = async (req, res) => {
         const notification = new Notification({
           user: user.id,
           team_call: call_id,
-          criteria: 'team_call_accepted',
-          content: `${currentUser.user_name} has accepted to join a call.`,
+          criteria: 'team_call',
+          content: `${currentUser.user_name} has rejected to join a call.`,
         });
 
         notification.save().catch((err) => {
@@ -1543,6 +1543,16 @@ const getInquireCall = async (req, res) => {
   if (req.params.id) {
     id = parseInt(req.params.id);
   }
+
+  const total = await TeamCall.countDocuments({
+    $or: [
+      { user: currentUser.id },
+      { invite: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['pending', 'cancelled'] },
+  });
+
   const data = await TeamCall.find({
     $or: [
       { user: currentUser.id },
@@ -1563,6 +1573,7 @@ const getInquireCall = async (req, res) => {
   return res.send({
     status: true,
     data,
+    total,
   });
 };
 
@@ -1589,9 +1600,19 @@ const getPlannedCall = async (req, res) => {
     .skip(id)
     .limit(8);
 
+  const total = await TeamCall.countDocuments({
+    $or: [
+      { user: currentUser.id },
+      { invite: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['planned', 'finished'] },
+  });
+
   return res.send({
     status: true,
     data,
+    total,
   });
 };
 
