@@ -3018,7 +3018,6 @@ const setupRecording = (io) => {
             };
 
             videoHelper.generateThumbnail(video_data);
-            console.log('_video.path', _video.path);
             generatePreview(video_data)
               .then((res) => {
                 Video.updateOne(
