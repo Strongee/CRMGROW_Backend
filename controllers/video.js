@@ -1075,7 +1075,7 @@ const updateDefault = async (req, res) => {
 };
 
 const generatePreview = async (data) => {
-  const { file_name, file_path, custom_thumbnail } = data;
+  const { file_name, file_path, area, custom_thumbnail } = data;
 
   if (!fs.existsSync(GIF_PATH)) {
     fs.mkdirSync(GIF_PATH);
@@ -1120,6 +1120,8 @@ const generatePreview = async (data) => {
 
       let height = image.height;
       let width = image.width;
+      let posX = 0;
+      let posY = 0;
 
       if (height > width) {
         ctx.rect(
@@ -1130,21 +1132,31 @@ const generatePreview = async (data) => {
         );
         ctx.fillStyle = '#000000';
         ctx.fill();
+        posX = (system_settings.THUMBNAIL.WIDTH - width) / 2;
+        posY = 0;
         width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
         height = system_settings.THUMBNAIL.HEIGHT;
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+      }
+
+      if (area) {
+        const { areaX, areaY, areaW, areaH } = area;
         ctx.drawImage(
           image,
-          (system_settings.THUMBNAIL.WIDTH - width) / 2,
-          0,
+          areaX,
+          areaY,
+          areaW,
+          areaH,
+          posX,
+          posY,
           width,
           height
         );
       } else {
-        height = system_settings.THUMBNAIL.HEIGHT;
-        width = system_settings.THUMBNAIL.WIDTH;
-        ctx.drawImage(image, 0, 0, width, height);
+        ctx.drawImage(image, posX, posY, width, height);
       }
-
       // ctx.rect(70, 170, 200, 40);
       // ctx.globalAlpha = 0.7;
       // ctx.fillStyle = '#333';
