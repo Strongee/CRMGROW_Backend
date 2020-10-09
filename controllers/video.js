@@ -2932,7 +2932,6 @@ const setupRecording = (io) => {
       socket.emit('createdVideo', { video: videoId });
     });
     socket.on('pushVideoData', (data) => {
-      console.log('PUSH VIDEO DATA');
       const videoId = data.videoId;
       const blob = data.data;
       if (!fileStreams[videoId]) {
@@ -2944,11 +2943,6 @@ const setupRecording = (io) => {
         fileStreamSizeStatus[videoId] = stats.size;
       }
       if (data.sentSize === fileStreamSizeStatus[videoId]) {
-        console.log(
-          'already received : ',
-          data.sentSize,
-          fileStreamSizeStatus[videoId]
-        );
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -2959,14 +2953,12 @@ const setupRecording = (io) => {
           bufferSize += e.length;
         });
         fileStreamSizeStatus[videoId] += bufferSize;
-        console.log('Saved : ', data.sentSize, fileStreamSizeStatus[videoId]);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
       }
     });
     socket.on('saveVideo', async (data) => {
-      console.log('SAVE VIDEO DATA');
       const videoId = data.videoId;
       fileStreams[videoId].close();
 
@@ -2988,6 +2980,7 @@ const setupRecording = (io) => {
             user.user_name
           } Recording`,
           user: decoded.id,
+          recording: true,
           created_at: new Date(),
         });
         video
