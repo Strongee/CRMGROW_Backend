@@ -508,6 +508,23 @@ const create = async (req, res) => {
           attendees.push(addendee);
         }
       }
+      if (_appointment.contacts) {
+        const contacts = await Contact.find({
+          _id: _appointment.contacts,
+        }).catch((err) => {
+          console.log('appointment contacts find err', err.messages);
+        });
+        for (let j = 0; j < contacts.length; j++) {
+          if (contacts[j].email) {
+            const addendee = {
+              emailAddress: {
+                Address: contacts[j].email,
+              },
+            };
+            attendees.push(addendee);
+          }
+        }
+      }
       const newEvent = {
         subject: _appointment.title,
         body: {
@@ -579,60 +596,58 @@ const create = async (req, res) => {
       );
     }
 
-    const appointment = new Appointment({
-      ...req.body,
-      user: currentUser.id,
-      type: 0,
-      event_id,
-      updated_at: new Date(),
-      created_at: new Date(),
-    });
+    if (req.body.contacts) {
+      const contacts = req.body.contacts;
+      for (let i = 0; i < contacts.length; i++) {
+        const contact = contacts[i];
 
-    appointment
-      .save()
-      .then((_appointment) => {
-        const activity = new Activity({
-          content: 'added appointment',
-          contacts: _appointment.contact,
-          appointments: _appointment.id,
+        const appointment = new Appointment({
+          ...req.body,
+          contacts: contact,
           user: currentUser.id,
-          type: 'appointments',
+          type: 0,
+          event_id,
+          updated_at: new Date(),
+          created_at: new Date(),
         });
 
-        activity.save().then((_activity) => {
-          Contact.updateOne(
-            {
-              _id: _appointment.contact,
-            },
-            {
-              $set: { last_activity: _activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
+        appointment
+          .save()
+          .then((_appointment) => {
+            const activity = new Activity({
+              content: 'added appointment',
+              contacts: contact,
+              appointments: _appointment.id,
+              user: currentUser.id,
+              type: 'appointments',
+            });
+
+            activity.save().then((_activity) => {
+              Contact.updateOne(
+                {
+                  _id: contact,
+                },
+                {
+                  $set: { last_activity: _activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+            });
+          })
+          .catch((err) => {
+            console.log('appointment save err', err.message);
+            return res.status(500).send({
+              status: false,
+              error: err.message,
+            });
           });
-          const myJSON = JSON.stringify(_appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          return res.send({
-            status: true,
-            data,
-          });
-        });
-      })
-      .catch((e) => {
-        let errors;
-        if (e.errors) {
-          console.log('e.errors', e.errors);
-          errors = e.errors.map((err) => {
-            delete err.instance;
-            return err;
-          });
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e,
-        });
-      });
+      }
+    }
+    return res.send({
+      status: true,
+      event_id,
+    });
   } else {
     const appointment = new Appointment({
       ...req.body,
@@ -774,7 +789,7 @@ const create = async (req, res) => {
 const addGoogleCalendarById = async (auth, user, appointment) => {
   const calendar = google.calendar({ version: 'v3', auth });
   const attendees = [];
-  if (typeof appointment.guests !== 'undefined') {
+  if (appointment.guests) {
     for (let j = 0; j < appointment.guests.length; j++) {
       const addendee = {
         email: appointment.guests[j],
@@ -782,6 +797,22 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
       attendees.push(addendee);
     }
   }
+  if (appointment.contacts) {
+    const contacts = await Contact.find({
+      _id: appointment.contacts,
+    }).catch((err) => {
+      console.log('appointment contacts find err', err.messages);
+    });
+    for (let j = 0; j < contacts.length; j++) {
+      if (contacts[j].email) {
+        const addendee = {
+          email: contacts[j].email,
+        };
+        attendees.push(addendee);
+      }
+    }
+  }
+
   const event = {
     summary: appointment.title,
     location: appointment.location,
