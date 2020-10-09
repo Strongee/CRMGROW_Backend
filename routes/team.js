@@ -88,11 +88,6 @@ router.post(
 router.post('/update', UserCtrl.checkAuth, catchError(TeamCtrl.updateTeam));
 
 // Team call for 3 way
-router.get(
-  '/call-invite',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getTeamCall)
-);
 
 router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
 router.get(

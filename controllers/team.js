@@ -1547,7 +1547,7 @@ const getInquireCall = async (req, res) => {
   const total = await TeamCall.countDocuments({
     $or: [
       { user: currentUser.id },
-      { invite: currentUser.id },
+      { leader: currentUser.id },
       { guests: currentUser.id },
     ],
     status: { $in: ['pending', 'cancelled'] },
@@ -1556,7 +1556,7 @@ const getInquireCall = async (req, res) => {
   const data = await TeamCall.find({
     $or: [
       { user: currentUser.id },
-      { invite: currentUser.id },
+      { leader: currentUser.id },
       { guests: currentUser.id },
     ],
     status: { $in: ['pending', 'cancelled'] },
@@ -1586,7 +1586,7 @@ const getPlannedCall = async (req, res) => {
   const data = await TeamCall.find({
     $or: [
       { user: currentUser.id },
-      { invite: currentUser.id },
+      { leader: currentUser.id },
       { guests: currentUser.id },
     ],
     status: { $in: ['planned', 'finished'] },
@@ -1603,7 +1603,7 @@ const getPlannedCall = async (req, res) => {
   const total = await TeamCall.countDocuments({
     $or: [
       { user: currentUser.id },
-      { invite: currentUser.id },
+      { leader: currentUser.id },
       { guests: currentUser.id },
     ],
     status: { $in: ['planned', 'finished'] },
@@ -1619,7 +1619,7 @@ const getPlannedCall = async (req, res) => {
 const updateCall = async (req, res) => {
   const { currentUser } = req;
   const team_call = await TeamCall.findOne({
-    user: currentUser.id,
+    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
     _id: req.params.id,
   });
 
