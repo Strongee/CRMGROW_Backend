@@ -639,6 +639,7 @@ const create = async (req, res) => {
     }
     return res.send({
       status: true,
+      event_id,
     });
   } else {
     const appointment = new Appointment({
@@ -790,7 +791,11 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
     }
   }
   if (appointment.contacts) {
-    const contacts = appointment.contacts;
+    const contacts = await Contact.find({
+      _id: appointment.contacts,
+    }).catch((err) => {
+      console.log('appointment contacts find err', err.messages);
+    });
     for (let j = 0; j < contacts.length; j++) {
       if (contacts[j].email) {
         const addendee = {
