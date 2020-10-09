@@ -2204,7 +2204,7 @@ const bulkText = async (req, res) => {
       for (let j = 0; j < videos.length; j++) {
         const video = videos[j];
 
-        if (typeof video_content === 'undefined') {
+        if (!video_content) {
           video_content = '';
         }
 
@@ -2298,7 +2298,6 @@ const bulkText = async (req, res) => {
             body: video_content,
           })
           .then((message) => {
-            console.log('message', message);
             if (message.status !== 'undelivered') {
               console.log('Message ID: ', message.sid);
               console.info(
