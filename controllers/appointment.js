@@ -39,6 +39,7 @@ const getAll = async (req, res) => {
   } else {
     date = moment(date).startOf(mode);
   }
+
   if (currentUser.connect_calendar) {
     if (currentUser.connected_email_type === 'outlook') {
       let accessToken;
@@ -447,7 +448,7 @@ const getAll = async (req, res) => {
       const token = JSON.parse(currentUser.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
       const calendar_data = {
-        oauth2Client,
+        auth: oauth2Client,
         data,
         res,
         date,
