@@ -545,23 +545,23 @@ const create = async (req, res) => {
           attendees.push(addendee);
         }
       }
-      if (_appointment.contacts) {
-        const contacts = await Contact.find({
-          _id: _appointment.contacts,
-        }).catch((err) => {
-          console.log('appointment contacts find err', err.messages);
-        });
-        for (let j = 0; j < contacts.length; j++) {
-          if (contacts[j].email) {
-            const addendee = {
-              emailAddress: {
-                Address: contacts[j].email,
-              },
-            };
-            attendees.push(addendee);
-          }
-        }
-      }
+      // if (_appointment.contacts) {
+      //   const contacts = await Contact.find({
+      //     _id: _appointment.contacts,
+      //   }).catch((err) => {
+      //     console.log('appointment contacts find err', err.messages);
+      //   });
+      //   for (let j = 0; j < contacts.length; j++) {
+      //     if (contacts[j].email) {
+      //       const addendee = {
+      //         emailAddress: {
+      //           Address: contacts[j].email,
+      //         },
+      //       };
+      //       attendees.push(addendee);
+      //     }
+      //   }
+      // }
       const newEvent = {
         subject: _appointment.title,
         body: {
@@ -640,7 +640,7 @@ const create = async (req, res) => {
 
         const appointment = new Appointment({
           ...req.body,
-          contact,
+          contact: contact._id,
           user: currentUser.id,
           type: 0,
           event_id,
@@ -653,7 +653,7 @@ const create = async (req, res) => {
           .then((_appointment) => {
             const activity = new Activity({
               content: 'added appointment',
-              contacts: contact,
+              contacts: contact._id,
               appointments: _appointment.id,
               user: currentUser.id,
               type: 'appointments',
@@ -662,7 +662,7 @@ const create = async (req, res) => {
             activity.save().then((_activity) => {
               Contact.updateOne(
                 {
-                  _id: contact,
+                  _id: contact._id,
                 },
                 {
                   $set: { last_activity: _activity.id },
@@ -834,21 +834,21 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
       attendees.push(addendee);
     }
   }
-  if (appointment.contacts) {
-    const contacts = await Contact.find({
-      _id: appointment.contacts,
-    }).catch((err) => {
-      console.log('appointment contacts find err', err.messages);
-    });
-    for (let j = 0; j < contacts.length; j++) {
-      if (contacts[j].email) {
-        const addendee = {
-          email: contacts[j].email,
-        };
-        attendees.push(addendee);
-      }
-    }
-  }
+  // if (appointment.contacts) {
+  //   const contacts = await Contact.find({
+  //     _id: appointment.contacts,
+  //   }).catch((err) => {
+  //     console.log('appointment contacts find err', err.messages);
+  //   });
+  //   for (let j = 0; j < contacts.length; j++) {
+  //     if (contacts[j].email) {
+  //       const addendee = {
+  //         email: contacts[j].email,
+  //       };
+  //       attendees.push(addendee);
+  //     }
+  //   }
+  // }
 
   const event = {
     summary: appointment.title,
@@ -892,65 +892,105 @@ const edit = async (req, res) => {
     const _appointment = req.body;
     const event_id = req.params.id;
     if (currentUser.connected_email_type === 'outlook') {
+      let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
       });
 
-      new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
-            reject(error.message);
+            reject(error);
           } else {
             resolve(result.token);
           }
         });
-      }).then((token) => {
-        const accessToken = token.access_token;
-        const attendees = [];
-        if (typeof _appointment.guests !== 'undefined') {
-          for (let j = 0; j < _appointment.guests.length; j++) {
-            const addendee = {
-              EmailAddress: {
-                Address: _appointment.guests[j],
-              },
-            };
-            attendees.push(addendee);
-          }
-        }
-        const updatePayload = {
-          Subject: _appointment.title,
-          Body: {
-            ContentType: 'HTML',
-            Content: _appointment.description,
-          },
-          Location: {
-            DisplayName: _appointment.location,
-          },
-          Start: {
-            DateTime: _appointment.due_start,
-            TimeZone: `UTC${currentUser.time_zone}`,
-          },
-          End: {
-            DateTime: _appointment.due_end,
-            TimeZone: `UTC${currentUser.time_zone}`,
-          },
-          Attendees: attendees,
-        };
-
-        const updateEventParameters = {
-          token: accessToken,
-          eventId: event_id,
-          update: updatePayload,
-        };
-
-        outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-        outlook.calendar.updateEvent(updateEventParameters, function (error) {
-          if (error) {
-            console.log('err', error);
-          }
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
         });
+
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
       });
+
+      const attendees = [];
+      if (_appointment.guests) {
+        for (let j = 0; j < _appointment.guests.length; j++) {
+          const addendee = {
+            emailAddress: {
+              address: _appointment.guests[j],
+            },
+          };
+          attendees.push(addendee);
+        }
+      }
+      const event = {
+        subject: _appointment.title,
+        body: {
+          contentType: 'HTML',
+          content: _appointment.description,
+        },
+        location: {
+          displayName: _appointment.location,
+        },
+        start: {
+          dateTime: _appointment.due_start,
+          timeZone: `UTC${currentUser.time_zone}`,
+        },
+        end: {
+          dateTime: _appointment.due_end,
+          timeZone: `UTC${currentUser.time_zone}`,
+        },
+        attendees,
+      };
+
+      let res = await client.api(`/me/events/${event_id}`).update(event);
+
+      // const updatePayload = {
+      //   subject: _appointment.title,
+      //   body: {
+      //     contentType: 'HTML',
+      //     content: _appointment.description,
+      //   },
+      //   location: {
+      //     displayName: _appointment.location,
+      //   },
+      //   start: {
+      //     dateTime: _appointment.due_start,
+      //     timeZone: `UTC${currentUser.time_zone}`,
+      //   },
+      //   end: {
+      //     dateTime: _appointment.due_end,
+      //     timeZone: `UTC${currentUser.time_zone}`,
+      //   },
+      //   attendees,
+      // };
+
+      // const updateEventParameters = {
+      //   token: accessToken,
+      //   eventId: event_id,
+      //   update: updatePayload,
+      // };
+
+      // outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
+      // outlook.calendar.updateEvent(updateEventParameters, function (error) {
+      //   if (error) {
+      //     console.log('err', error);
+      //   }
+      // });
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -968,66 +1008,110 @@ const edit = async (req, res) => {
       );
     }
 
-    const appointment = await Appointment.findOne({
-      user: currentUser.id,
-      event_id: req.params.id,
-    });
-    if (appointment) {
-      for (const key in _appointment) {
-        appointment[key] = _appointment[key];
-      }
-
-      appointment.updated_at = new Date();
-
-      appointment.save();
-      const activity = new Activity({
-        content: 'updated appointment',
-        contacts: _appointment.contact,
-        appointments: appointment._id,
-        user: currentUser.id,
-        type: 'appointments',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      activity
-        .save()
-        .then((_activity) => {
-          Contact.updateOne(
-            { _id: _appointment.contact },
-            {
-              $set: { last_activity: _activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          const myJSON = JSON.stringify(_appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          res.send({
-            status: true,
-            data,
-          });
-        })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            console.log('e.errors', e.errors);
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
-          });
+    if (_appointment.contacts && _appointment.contacts.length > 0) {
+      for (let i = 0; i < _appointment.contacts.length; i++) {
+        const contact = _appointment.contacts[i];
+        const appointment = await Appointment.findOne({
+          user: currentUser.id,
+          event_id: req.params.id,
+          contact: contact._id,
+        }).catch((err) => {
+          console.log('appointment find err', err.message);
         });
-    } else {
-      res.send({
-        status: true,
+
+        if (appointment) {
+          Appointment.updateOne(
+            {
+              _id: appointment.id,
+            },
+            {
+              $set: {
+                ...req.body,
+              },
+            }
+          ).then(() => {
+            const activity = new Activity({
+              content: 'updated appointment',
+              contacts: _appointment.contacts,
+              appointments: appointment._id,
+              user: currentUser.id,
+              type: 'appointments',
+              created_at: new Date(),
+              updated_at: new Date(),
+            });
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  { _id: _appointment.contact },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('activity save err', err.message);
+              });
+          });
+        } else {
+          const appointment = new Appointment({
+            ...req.body,
+            contact: contact._id,
+            user: currentUser.id,
+            type: 0,
+            event_id: req.params.id,
+          });
+
+          appointment
+            .save()
+            .then((_appointment) => {
+              const activity = new Activity({
+                content: 'added appointment',
+                contacts: contact._id,
+                appointments: _appointment.id,
+                user: currentUser.id,
+                type: 'appointments',
+              });
+
+              activity.save().then((_activity) => {
+                Contact.updateOne(
+                  {
+                    _id: contact._id,
+                  },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            })
+            .catch((err) => {
+              console.log('appointment save err', err.message);
+              return res.status(500).send({
+                status: false,
+                error: err.message,
+              });
+            });
+        }
+      }
+    }
+    if (
+      _appointment.contacts.removed_contacts &&
+      _appointment.contacts.removed_contacts.length > 0
+    ) {
+      Appointment.deleteMany({
+        _id: { $in: _appointment.contacts.removed_contacts }
+      }).catch((err) => {
+        console.log('appointment delete err', err.message);
       });
     }
+
+    return res.send({
+      status: true,
+    });
   } else {
     const editData = req.body;
     const appointment = await Appointment.findOne({
@@ -1284,7 +1368,7 @@ const updateGoogleCalendarById = async (
 ) => {
   const calendar = google.calendar({ version: 'v3', auth });
   const attendees = [];
-  if (typeof appointment.guests !== 'undefined') {
+  if (appointment.guests) {
     for (let j = 0; j < appointment.guests.length; j++) {
       const addendee = {
         email: appointment.guests[j],
