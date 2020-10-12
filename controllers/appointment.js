@@ -25,16 +25,19 @@ const credentials = {
 
 const oauth2 = require('simple-oauth2')(credentials);
 
-const get = async (req, res) => {
+const getAll = async (req, res) => {
   const { currentUser } = req;
   const promise_array = [];
   const data = [];
 
-  let startDate = req.params.date;
-  if (!startDate) {
-    startDate = moment().startOf('week');
+  let { date, mode } = req.query;
+  if (!mode) {
+    mode = 'week';
+  }
+  if (!date) {
+    date = moment().startOf(mode);
   } else {
-    startDate = moment(startDate).startOf('week');
+    date = moment(date).startOf(mode);
   }
   if (currentUser.connect_calendar) {
     if (currentUser.connected_email_type === 'outlook') {
@@ -76,7 +79,6 @@ const get = async (req, res) => {
         .api('/me/calendars')
         .get()
         .then(async (outlook_calendars) => {
-          console.log('calendars', outlook_calendars);
           const calendars = outlook_calendars.value;
 
           // Calendar sync works on the CalendarView endpoint
@@ -85,7 +87,7 @@ const get = async (req, res) => {
               const calendar = calendars[i];
               const promise = new Promise(async (resolve) => {
                 const outlook_events = await client
-                  .api(`/me/calendars/${calendar.id}/events`)
+                  .api(`/me/calendars/${calendar.id}/events/instances?`)
                   .get();
                 if (outlook_events && outlook_events.value) {
                   const calendar_events = outlook_events.value;
@@ -444,18 +446,45 @@ const get = async (req, res) => {
 
       const token = JSON.parse(currentUser.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      calendarList(oauth2Client, data, res, startDate);
+      const calendar_data = {
+        oauth2Client,
+        data,
+        res,
+        date,
+        mode,
+      };
+      calendarList(calendar_data);
     }
   }
 };
 
-const calendarList = (auth, data, res, startDate) => {
-  const endDate = moment(startDate).add(7, 'days');
+const get = async (req, res) => {
+  const appointments = await Appointment.find({
+    contact: req.params.id,
+    del: false,
+  }).catch((err) => {
+    console.log('appointment find err', err.message);
+    return res.status(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  return res.send({
+    status: true,
+    data: appointments,
+  });
+};
+
+const calendarList = (calendar_data) => {
+  const { auth, data, res, date, mode } = calendar_data;
+  const endDate = moment(date).add(1, `${mode}s`);
+
   const calendar = google.calendar({ version: 'v3', auth });
   calendar.events.list(
     {
       calendarId: 'primary',
-      timeMin: startDate.toISOString(),
+      timeMin: date.toISOString(),
       timeMax: endDate.toISOString(),
       singleEvents: true,
       orderBy: 'startTime',
@@ -1102,9 +1131,16 @@ const edit = async (req, res) => {
       _appointment.contacts.removed_contacts &&
       _appointment.contacts.removed_contacts.length > 0
     ) {
-      Appointment.deleteMany({
-        _id: { $in: _appointment.contacts.removed_contacts }
-      }).catch((err) => {
+      Appointment.updateMany(
+        {
+          _id: { $in: _appointment.contacts.removed_contacts },
+        },
+        {
+          $set: {
+            del: true,
+          },
+        }
+      ).catch((err) => {
         console.log('appointment delete err', err.message);
       });
     }
@@ -1121,8 +1157,6 @@ const edit = async (req, res) => {
     for (const key in editData) {
       appointment[key] = editData[key];
     }
-
-    appointment.updated_at = new Date();
 
     await appointment
       .save()
@@ -1502,6 +1536,7 @@ const decline = async (req, res) => {
 };
 
 module.exports = {
+  getAll,
   get,
   create,
   edit,
