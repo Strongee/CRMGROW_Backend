@@ -91,7 +91,21 @@ const get = async (req, res) => {
                   const calendar_events = outlook_events.value;
                   for (let i = 0; i < calendar_events.length; i++) {
                     const guests = [];
-                    if (calendar_events[i].attendees) {
+                    const contacts = [];
+                    const appointments = await Appointment.find({
+                      event_id: calendar_events[i].id,
+                    })
+                      .select('contact')
+                      .populate({ path: 'contact', select: 'email' });
+
+                    appointments.map((appointment) => {
+                      contacts.push(appointment.contact);
+                    });
+
+                    if (
+                      calendar_events[i].attendees &&
+                      calendar_events[i].attendees.length > 0
+                    ) {
                       const attendees = calendar_events[i].attendees;
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
@@ -140,8 +154,9 @@ const get = async (req, res) => {
                     } else {
                       _outlook_calendar_data.due_end = '';
                     }
+                    _outlook_calendar_data.contacts = contacts;
                     _outlook_calendar_data.guests = guests;
-                    _outlook_calendar_data.event_id = calendar_events[i].Id;
+                    _outlook_calendar_data.event_id = calendar_events[i].id;
                     data.push(_outlook_calendar_data);
                   }
                 }
@@ -450,33 +465,62 @@ const calendarList = (auth, data, res, startDate) => {
         console.log(`The API returned an error: ${err}`);
       } else {
         const events = _res.data.items;
+        const promise_array = [];
         if (events.length) {
-          events.map((event) => {
-            const guests = [];
-            if (typeof event.attendees !== 'undefined') {
-              for (let j = 0; j < event.attendees.length; j++) {
-                const guest = event.attendees[j].email;
-                guests.push(guest);
+          events.map(async (event) => {
+            const promise = new Promise(async (resolve, reject) => {
+              const guests = [];
+              const contacts = [];
+              const appointments = await Appointment.find({
+                event_id: event.id,
+              })
+                .select('contact')
+                .populate({ path: 'contact', select: 'email' });
+
+              appointments.map((appointment) => {
+                contacts.push(appointment.contact);
+              });
+
+              if (event.attendees) {
+                for (let j = 0; j < event.attendees.length; j++) {
+                  const guest = event.attendees[j].email;
+                  guests.push(guest);
+                }
               }
-            }
-            const _gmail_calendar_data = {};
-            _gmail_calendar_data.title = event.summary;
-            _gmail_calendar_data.description = event.description;
-            _gmail_calendar_data.location = event.location;
-            _gmail_calendar_data.due_start = event.start.dateTime;
-            _gmail_calendar_data.due_end = event.end.dateTime;
-            _gmail_calendar_data.guests = guests;
-            _gmail_calendar_data.event_id = event.id;
-            _gmail_calendar_data.type = 2;
-            data.push(_gmail_calendar_data);
+              const _gmail_calendar_data = {};
+              _gmail_calendar_data.title = event.summary;
+              _gmail_calendar_data.description = event.description;
+              _gmail_calendar_data.location = event.location;
+              _gmail_calendar_data.due_start = event.start.dateTime;
+              _gmail_calendar_data.due_end = event.end.dateTime;
+              _gmail_calendar_data.guests = guests;
+              _gmail_calendar_data.event_id = event.id;
+              _gmail_calendar_data.contacts = contacts;
+              _gmail_calendar_data.type = 2;
+              data.push(_gmail_calendar_data);
+              resolve();
+            });
+            promise_array.push(promise);
           });
         } else {
           console.log('No upcoming events found.');
         }
-        res.send({
-          status: true,
-          data,
-        });
+        Promise.all(promise_array)
+          .then(() => {
+            return res.send({
+              status: true,
+              data,
+            });
+          })
+          .catch((err) => {
+            console.log('err', err);
+            if (err) {
+              return res.status(400).json({
+                status: false,
+                error: err,
+              });
+            }
+          });
       }
     }
   );
@@ -596,7 +640,7 @@ const create = async (req, res) => {
 
         const appointment = new Appointment({
           ...req.body,
-          contacts: contact,
+          contact,
           user: currentUser.id,
           type: 0,
           event_id,

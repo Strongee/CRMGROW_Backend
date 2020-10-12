@@ -12,7 +12,7 @@ const AppointmentSchema = new Schema(
     due_end: String,
     type: Number,
     del: { type: Boolean, default: false },
-    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     guests: Array,
     event_id: String,
     created_at: Date,
@@ -23,6 +23,7 @@ const AppointmentSchema = new Schema(
   }
 );
 
+AppointmentSchema.index({ event_id: 1 });
 const Appointment = mongoose.model('appointment', AppointmentSchema);
 
 module.exports = Appointment;
