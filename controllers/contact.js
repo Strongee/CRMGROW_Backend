@@ -3884,14 +3884,15 @@ const getSharedContact = async (req, res) => {
     $or: [
       {
         owner: currentUser.id,
-        members: _contact.user,
+        members: mongoose.Types.ObjectId(_contact.user[0]),
       },
       {
         editors: currentUser.id,
-        members: _contact.user,
+        members: mongoose.Types.ObjectId(_contact.user[0]),
       },
     ],
   });
+
   if (_contact && team) {
     const _activity_list = await Activity.find({
       user: currentUser.id,
