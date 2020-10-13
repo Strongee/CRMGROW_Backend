@@ -213,6 +213,13 @@ router.post(
 
 router.post('/filter', UserCtrl.checkAuth, catchError(ContactCtrl.filter));
 
+// Get a contact in team leader's view
+router.get(
+  '/team-shared/:id',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getSharedContact)
+);
+
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
