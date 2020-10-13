@@ -81,6 +81,10 @@ section.material-section
                 source(src=`${material.url}`, type=`video/mp4`)
             .watched-time
               | 00:00
+            if material.converted === 'progress'
+              div.convertStatus
+                div.progressBar.progress
+                  div.progress-bar.progress-bar-striped.progress-bar-animated.bg-secondary
         if material_type === 'image'
           .gallery-wrapper
             #galleria

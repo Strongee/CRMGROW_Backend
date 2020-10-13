@@ -116,6 +116,9 @@ router.post(
   catchError(VideoCtrl.getConvertStatus)
 );
 
+// Get Convert progress of a video
+router.post('/convert-status1', catchError(VideoCtrl.getConvertStatus));
+
 router.get(
   '/latest-sent/:id',
   UserCtrl.checkAuth,

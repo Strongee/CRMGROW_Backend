@@ -240,3 +240,39 @@ const hideInterested = () => {
 const updateInterested = () => {
   $(".widget-action.interesting .icon img").attr('src', './theme/icons/interest_icon.png');
 }
+
+const getConvertStatus = () => {
+  let material = $('#material').val();
+  $.ajax({
+    type: 'POST',
+    url: 'api/video/convert-status1',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: JSON.stringify({videos: [material]}),
+    success: function (data) {
+      let response = data;
+      if(response[material]) {
+        let progress = response[material]['progress'];
+        let progressBar = document.querySelector(".convertStatus .progress-bar");
+        if(progressBar) {
+          progressBar.style.width = progress + '%';
+        }
+        if(progress < 100) {
+          setTimeout(() => {
+            getConvertStatus();
+          }, 3000);
+        } else {
+          $('.convertStatus').remove();
+        }
+      }
+    },
+    error: function (data) {
+      
+    },
+  });
+}
+let convertStatus = document.querySelector(".convertStatus");
+if(convertStatus) {
+  getConvertStatus();
+}
