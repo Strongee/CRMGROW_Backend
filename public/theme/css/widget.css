@@ -420,3 +420,23 @@ body.is_protected > *:not(.modal) {
   margin-right: auto;
   display: block;
 }
+
+.convertStatus {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  background: #dcdcdcc2;
+  backdrop-filter: blur(5px);
+}
+.convertStatus .progressBar {
+  width: 80%;
+  height: 20px;
+  background: gainsboro;
+  border-radius: 15px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
