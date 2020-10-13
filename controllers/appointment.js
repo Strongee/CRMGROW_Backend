@@ -34,6 +34,7 @@ const getAll = async (req, res) => {
   if (!mode) {
     mode = 'week';
   }
+
   if (!date) {
     date = moment().startOf(mode);
   } else {
