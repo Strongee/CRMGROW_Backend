@@ -1075,7 +1075,7 @@ const updateDefault = async (req, res) => {
 };
 
 const generatePreview = async (data) => {
-  const { file_name, file_path, custom_thumbnail } = data;
+  const { file_name, file_path, area, custom_thumbnail } = data;
 
   if (!fs.existsSync(GIF_PATH)) {
     fs.mkdirSync(GIF_PATH);
@@ -1120,6 +1120,8 @@ const generatePreview = async (data) => {
 
       let height = image.height;
       let width = image.width;
+      let posX = 0;
+      let posY = 0;
 
       if (height > width) {
         ctx.rect(
@@ -1130,21 +1132,31 @@ const generatePreview = async (data) => {
         );
         ctx.fillStyle = '#000000';
         ctx.fill();
+        posX = (system_settings.THUMBNAIL.WIDTH - width) / 2;
+        posY = 0;
         width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
         height = system_settings.THUMBNAIL.HEIGHT;
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+      }
+
+      if (area) {
+        const { areaX, areaY, areaW, areaH } = area;
         ctx.drawImage(
           image,
-          (system_settings.THUMBNAIL.WIDTH - width) / 2,
-          0,
+          areaX,
+          areaY,
+          areaW,
+          areaH,
+          posX,
+          posY,
           width,
           height
         );
       } else {
-        height = system_settings.THUMBNAIL.HEIGHT;
-        width = system_settings.THUMBNAIL.WIDTH;
-        ctx.drawImage(image, 0, 0, width, height);
+        ctx.drawImage(image, posX, posY, width, height);
       }
-
       // ctx.rect(70, 170, 200, 40);
       // ctx.globalAlpha = 0.7;
       // ctx.fillStyle = '#333';
@@ -2204,7 +2216,7 @@ const bulkText = async (req, res) => {
       for (let j = 0; j < videos.length; j++) {
         const video = videos[j];
 
-        if (typeof video_content === 'undefined') {
+        if (!video_content) {
           video_content = '';
         }
 
@@ -2298,7 +2310,6 @@ const bulkText = async (req, res) => {
             body: video_content,
           })
           .then((message) => {
-            console.log('message', message);
             if (message.status !== 'undelivered') {
               console.log('Message ID: ', message.sid);
               console.info(
@@ -2786,15 +2797,11 @@ const makeBody = (to, from, subject, message) => {
 };
 
 const getConvertStatus = async (req, res) => {
-  // const video = await Video.findOne({_id: req.params.id}).catch(err=>{
-  //   console.log('video convert found video error', err.message)
-  // })
-  // const file_path = video['path']
   const { videos } = req.body;
   const result_array = {};
   for (let i = 0; i < videos.length; i++) {
     const video = videos[i];
-    const result = videoHelper.getConvertStatus(video);
+    const result = await videoHelper.getConvertStatus(video);
     result_array[video] = result;
   }
   return res.send(result_array);
@@ -2925,7 +2932,6 @@ const setupRecording = (io) => {
       socket.emit('createdVideo', { video: videoId });
     });
     socket.on('pushVideoData', (data) => {
-      console.log('PUSH VIDEO DATA');
       const videoId = data.videoId;
       const blob = data.data;
       if (!fileStreams[videoId]) {
@@ -2937,11 +2943,6 @@ const setupRecording = (io) => {
         fileStreamSizeStatus[videoId] = stats.size;
       }
       if (data.sentSize === fileStreamSizeStatus[videoId]) {
-        console.log(
-          'already received : ',
-          data.sentSize,
-          fileStreamSizeStatus[videoId]
-        );
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -2952,14 +2953,12 @@ const setupRecording = (io) => {
           bufferSize += e.length;
         });
         fileStreamSizeStatus[videoId] += bufferSize;
-        console.log('Saved : ', data.sentSize, fileStreamSizeStatus[videoId]);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
       }
     });
     socket.on('saveVideo', async (data) => {
-      console.log('SAVE VIDEO DATA');
       const videoId = data.videoId;
       fileStreams[videoId].close();
 
@@ -2971,10 +2970,17 @@ const setupRecording = (io) => {
         socket.emit('failedSaveVideo');
       }
       if (token) {
+        const user = await User.findOne({ _id: decoded.id }).catch((err) => {
+          console.log('user find err', err.message);
+        });
         const video = new Video({
           url: urls.VIDEO_URL + videoId + `.webm`,
           path: TEMP_PATH + videoId + `.webm`,
+          title: `${moment().format('MMMM Do YYYY')} - ${
+            user.user_name
+          } Recording`,
           user: decoded.id,
+          recording: true,
           created_at: new Date(),
         });
         video
@@ -2982,6 +2988,7 @@ const setupRecording = (io) => {
           .then((_video) => {
             socket.emit('savedVideo', { video: _video.id });
 
+            let area;
             if (data.mode === 'crop') {
               // Crop area
               const screen = data.screen;
@@ -2993,18 +3000,41 @@ const setupRecording = (io) => {
               const areaY = (data.area.startY * videoHeight) / screen.height;
               const areaW = (data.area.w * videoWidth) / screen.width;
               const areaH = (data.area.h * videoHeight) / screen.height;
-              const area = {
+              area = {
                 areaX,
                 areaY,
                 areaW,
                 areaH,
               };
               // CROP AREA USING FFMPEG
+              videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id, area);
             } else {
+              videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id);
               // CONVERT FFMPEG
             }
+
+            const video_data = {
+              file_name: _video.id,
+              file_path: _video.path,
+              area,
+            };
+
+            videoHelper.generateThumbnail(video_data);
+            generatePreview(video_data)
+              .then((res) => {
+                Video.updateOne(
+                  { _id: _video.id },
+                  { $set: { preview: res } }
+                ).catch((err) => {
+                  console.log('update preview err', err.message);
+                });
+              })
+              .catch((err) => {
+                console.log('generate preview err', err.message);
+              });
+
             Video.updateOne(
               { _id: _video.id },
               {

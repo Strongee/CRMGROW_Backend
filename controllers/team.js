@@ -26,7 +26,20 @@ const getAll = (req, res) => {
       { owner: currentUser.id },
     ],
   })
-    .populate([{ path: 'owner' }, { path: 'members' }])
+    .populate([
+      {
+        path: 'owner',
+        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+      },
+      {
+        path: 'members',
+        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+      },
+      {
+        path: 'editors',
+        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+      },
+    ])
     .then((data) => {
       return res.send({
         status: true,
@@ -1324,38 +1337,108 @@ const updateTeam = (req, res) => {
 
 const requestCall = async (req, res) => {
   const { currentUser } = req;
+  let leader;
 
-  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
-    console.log('team find error', err.message);
+  if (req.body.leader) {
+    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
+      console.log('leader find err', err.message);
+    });
+  }
+
+  const team_call = new TeamCall({
+    user: currentUser.id,
+    ...req.body,
   });
 
-  const owner = await User.findOne({ _id: team.owner }).catch((err) => {
-    console.log('team owner found err,', err.message);
-  });
+  team_call
+    .save()
+    .then((data) => {
+      /** **********
+       *  Send email notification to the inviated users
+       *  */
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      if (leader) {
+        const msg = {
+          to: leader.email,
+          from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
+          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
+          dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
+            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
+            user_name: currentUser.user_name,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
+          },
+        };
+        sgMail.send(msg).catch((err) => {
+          console.log('team call invitation email err', err);
+        });
+      }
 
-  if (owner && team) {
-    const team_call = new TeamCall({
-      user: currentUser.id,
-      ...req.body,
+      /** **********
+       *  Creat dashboard notification to the inviated users
+       *  */
+      if (leader) {
+        const notification = new Notification({
+          user: leader.id,
+          team_call: team_call.id,
+          criteria: 'team_call_invited',
+          content: `You've been invited to join a call by ${currentUser.user_name}.`,
+        });
+
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+      }
+
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('team save err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const acceptCall = async (req, res) => {
+  const { currentUser } = req;
+  const { call_id } = req.body;
+
+  const team_call = await TeamCall.findOne({ _id: call_id })
+    .populate('user')
+    .catch((err) => {
+      console.log('call find error', err.message);
     });
 
-    team_call
-      .save()
+  if (team_call) {
+    const user = team_call.user;
+    TeamCall.updateOne(
+      {
+        _id: call_id,
+      },
+      {
+        status: 'planned',
+      }
+    )
       .then(() => {
         /** **********
          *  Send email notification to the inviated users
          *  */
         sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
         const msg = {
-          to: owner.email,
-          from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
+          to: user.email,
+          from: mail_contents.NO_REPLAY,
           templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
           dynamic_template_data: {
             LOGO_URL: urls.LOGO_URL,
             subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-            owner_name: currentUser.user_name,
-            team_name: team.name,
-            VIEW_URL: urls.TEAM_ACCEPT_URL + team.id,
+            invite: currentUser.user_name,
+            user_name: user.user_name,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
           },
         };
         sgMail.send(msg).catch((err) => {
@@ -1367,54 +1450,205 @@ const requestCall = async (req, res) => {
          *  */
 
         const notification = new Notification({
-          user: owner.id,
-          team: team.id,
-          criteria: 'team_call_invited',
-          content: `You've been invited to join a call by ${currentUser.user_name}.`,
+          user: user.id,
+          team_call: call_id,
+          criteria: 'team_call',
+          content: `${currentUser.user_name} has accepted to join a call.`,
         });
 
         notification.save().catch((err) => {
           console.log('notification save err', err.message);
         });
 
-        res.send({
+        return res.send({
           status: true,
         });
       })
       .catch((err) => {
-        console.log('team save err', err.message);
-        return res.status(400).json({
-          status: false,
-          error: err.message,
-        });
+        console.log('team update err', err.message);
       });
   }
 };
 
-const getTeamCall = async (req, res) => {
+const rejectCall = async (req, res) => {
   const { currentUser } = req;
+  const { call_id } = req.body;
 
-  const team_calls = await TeamCall.find({
-    invite: currentUser.id,
+  const team_call = await TeamCall.findOne({ _id: call_id })
+    .populate('user')
+    .catch((err) => {
+      console.log('call find error', err.message);
+    });
+
+  if (team_call) {
+    const user = team_call.user;
+    TeamCall.updateOne(
+      {
+        _id: call_id,
+      },
+      {
+        status: 'cancelled',
+      }
+    )
+      .then(() => {
+        /** **********
+         *  Send email notification to the inviated users
+         *  */
+        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+        const msg = {
+          to: user.email,
+          from: mail_contents.NO_REPLAY,
+          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
+          dynamic_template_data: {
+            LOGO_URL: urls.LOGO_URL,
+            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
+            invite: currentUser.user_name,
+            user_name: user.user_name,
+            VIEW_URL: urls.TEAM_CALLS + team_call.id,
+          },
+        };
+        sgMail.send(msg).catch((err) => {
+          console.log('team call invitation email err', err);
+        });
+
+        /** **********
+         *  Creat dashboard notification to the inviated users
+         *  */
+
+        const notification = new Notification({
+          user: user.id,
+          team_call: call_id,
+          criteria: 'team_call',
+          content: `${currentUser.user_name} has rejected to join a call.`,
+        });
+
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('team update err', err.message);
+      });
+  }
+};
+
+const getInquireCall = async (req, res) => {
+  const { currentUser } = req;
+  let id = 0;
+
+  if (req.params.id) {
+    id = parseInt(req.params.id);
+  }
+
+  const total = await TeamCall.countDocuments({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['pending', 'cancelled'] },
   });
+
+  const data = await TeamCall.find({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['pending', 'cancelled'] },
+  })
+    .populate([
+      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'contacts' },
+    ])
+    .skip(id)
+    .limit(8);
 
   return res.send({
     status: true,
-    team_calls,
+    data,
+    total,
   });
 };
 
-const getRequestedCall = async (req, res) => {
+const getPlannedCall = async (req, res) => {
   const { currentUser } = req;
+  let id = 0;
+  if (req.params.id) {
+    id = parseInt(req.params.id);
+  }
+  const data = await TeamCall.find({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['planned', 'finished'] },
+  })
+    .populate([
+      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'contacts' },
+    ])
+    .skip(id)
+    .limit(8);
 
-  const team_calls = await TeamCall.find({
-    user: currentUser.id,
+  const total = await TeamCall.countDocuments({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      { guests: currentUser.id },
+    ],
+    status: { $in: ['planned', 'finished'] },
   });
 
   return res.send({
     status: true,
-    team_calls,
+    data,
+    total,
   });
+};
+
+const updateCall = async (req, res) => {
+  const { currentUser } = req;
+  const team_call = await TeamCall.findOne({
+    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+    _id: req.params.id,
+  });
+
+  if (!team_call) {
+    return res.status(400).json({
+      status: false,
+      error: 'Team call found err',
+    });
+  }
+  TeamCall.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      ...req.body,
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call update err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
 };
 
 module.exports = {
@@ -1422,8 +1656,8 @@ module.exports = {
   getTeam,
   getInvitedTeam,
   get,
-  getTeamCall,
-  getRequestedCall,
+  getInquireCall,
+  getPlannedCall,
   create,
   update,
   remove,
@@ -1443,5 +1677,8 @@ module.exports = {
   removeEmailTemplates,
   requestTeam,
   requestCall,
+  acceptCall,
+  rejectCall,
+  updateCall,
   updateTeam,
 };

@@ -2,9 +2,21 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const child_process = require('child_process');
 const uuidv1 = require('uuid/v1');
 const fs = require('fs');
+const AWS = require('aws-sdk');
+const api = require('../config/api');
 const Video = require('../models/video');
-const { VIDEO_CONVERT_LOG_PATH, TEMP_PATH } = require('../config/path');
+const {
+  VIDEO_CONVERT_LOG_PATH,
+  TEMP_PATH,
+  THUMBNAILS_PATH,
+} = require('../config/path');
 const urls = require('../constants/urls');
+
+const s3 = new AWS.S3({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
+});
 
 const convertRecordVideo = async (id, area) => {
   const video = await Video.findOne({ _id: id }).catch((err) => {
@@ -15,7 +27,6 @@ const convertRecordVideo = async (id, area) => {
   const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  console.log('file_path', file_path);
   let args = [];
 
   if (area) {
@@ -34,19 +45,6 @@ const convertRecordVideo = async (id, area) => {
       new_path,
     ];
   } else {
-    // args = [
-    //   '-i',
-    //   file_path,
-    //   '-c:v',
-    //   'libx264',
-    //   '-b:v',
-    //   '1.5M',
-    //   '-c:a',
-    //   'aac',
-    //   '-b:a',
-    //   '128k',
-    //   new_path,
-    // ];
     args = [
       '-i',
       file_path,
@@ -85,7 +83,8 @@ const convertRecordVideo = async (id, area) => {
   }
 
   ffmpegConvert.stderr.on('data', function (data) {
-    const content = new Buffer(data).toString();
+    const content = Buffer.from(data).toString();
+
     fs.appendFile(
       VIDEO_CONVERT_LOG_PATH + video.id + '.txt',
       content,
@@ -151,7 +150,7 @@ const convertUploadVideo = async (id) => {
   });
 
   ffmpegConvert.stderr.on('data', function (data) {
-    const content = new Buffer(data).toString();
+    const content = Buffer.from(data).toString();
     fs.appendFile(
       VIDEO_CONVERT_LOG_PATH + video.id + '.txt',
       content,
@@ -167,7 +166,7 @@ const convertUploadVideo = async (id) => {
   });
 };
 
-const getConvertStatus = (video_path) => {
+const getConvertStatus = async (video_path) => {
   if (!fs.existsSync(VIDEO_CONVERT_LOG_PATH + video_path + '.txt')) {
     return {
       id: video_path,
@@ -185,52 +184,21 @@ const getConvertStatus = (video_path) => {
   let result;
   let matches = content ? content.match(/Duration: (.*?), start:/) : [];
 
-  // get duration of source
-  // if( matches && matches.length>0){
-  //   let rawDuration = matches[1];
-  //   // convert rawDuration from 00:00:00.00 to seconds.
-  //   let ar = rawDuration.split(":").reverse();
-  //   duration = parseFloat(ar[0]);
-  //   if (ar[1]) duration += parseInt(ar[1]) * 60;
-  //   if (ar[2]) duration += parseInt(ar[2]) * 60 * 60;
-  // }
-  // // get the time
-  // matches = content.match(/time=(.*?) bitrate/g);
-
-  // if( matches && matches.length>0 ){
-  //   let rawTime = matches.pop();
-  //   rawTime = rawTime.replace('time=','').replace(' bitrate','');
-
-  //   // convert rawTime from 00:00:00.00 to seconds.
-  //   ar = rawTime.split(":").reverse();
-  //   time = parseFloat(ar[0]);
-  //   if (ar[1]) time += parseInt(ar[1]) * 60;
-  //   if (ar[2]) time += parseInt(ar[2]) * 60 * 60;
-
-  //   //calculate the progress
-  //   progress = Math.round((time/duration) * 100);
-  // }
-
-  // result.status = 200;
-  // result.duration = duration;
-  // result.current  = time;
-  // result.progress = progress;
-
-  // /* UPDATE YOUR PROGRESSBAR HERE with above values ... */
-
-  // if(progress==0){
-  //     // TODO err - giving up after 8 sec. no progress - handle progress errors here
-  //     console.log('{"status":-400, "error":"there is no progress while we tried to encode the video" }');
-  //     return;
-  // }
-
   if (matches && matches.length > 0) {
     const rawDuration = matches[1];
 
     let ar = rawDuration.split(':').reverse();
-    duration = parseFloat(ar[0]);
-    if (ar[1]) duration += parseInt(ar[1]) * 60;
-    if (ar[2]) duration += parseInt(ar[2]) * 60 * 60;
+    // eslint-disable-next-line use-isnan
+    if (ar[0] === 'N/A') {
+      const video = await Video.findOne({ _id: video_path }).catch((err) => {
+        console.log('video find err', err.message);
+      });
+      duration = video.duration;
+    } else {
+      duration = parseFloat(ar[0]);
+      if (ar[1]) duration += parseInt(ar[1]) * 60;
+      if (ar[2]) duration += parseInt(ar[2]) * 60 * 60;
+    }
 
     // get the time
     matches = content.match(/time=(.*?) bitrate/g);
@@ -278,8 +246,110 @@ const getConvertStatus = (video_path) => {
   return result;
 };
 
+const getDuration = async (id) => {
+  const video = await Video.findOne({ _id: id }).catch((err) => {
+    console.log('video convert find video error', err.message);
+  });
+
+  const file_path = video['path'];
+  const args = ['-i', file_path, '-f', 'null', '-'];
+
+  const ffmpegConvert = child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.stderr.on('data', (data) => {
+    const content = new Buffer(data).toString();
+    const matches = content.match(/time=(.*?) bitrate/g);
+
+    if (matches && matches.length > 0) {
+      let rawTime = matches.pop();
+      // needed if there is more than one match
+      if (Array.isArray(rawTime)) {
+        rawTime = rawTime.pop().replace('time=', '').replace(' bitrate', '');
+      } else {
+        rawTime = rawTime.replace('time=', '').replace(' bitrate', '');
+      }
+      // convert rawTime from 00:00:00.00 to seconds.
+      const ar = rawTime.split(':').reverse();
+      let time = parseFloat(ar[0]);
+      if (ar[1]) time += parseInt(ar[1]) * 60;
+      if (ar[2]) time += parseInt(ar[2]) * 60 * 60;
+
+      Video.updateOne(
+        { _id: id },
+        {
+          $set: { duration: time },
+        }
+      ).catch((err) => {
+        console.log('video update err', err.message);
+      });
+    }
+  });
+};
+
+const generateThumbnail = (data) => {
+  const { file_name, file_path, area } = data;
+  console.log('************generatedData', data);
+  const thumbnail_path = THUMBNAILS_PATH + file_name + '.png';
+  let args = [];
+  if (area) {
+    const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
+    args = [
+      '-i',
+      file_path,
+      '-ss',
+      '00:00:01',
+      '-filter:v',
+      crop,
+      '-vframes',
+      '1',
+      thumbnail_path,
+    ];
+  } else {
+    args = [
+      '-i',
+      file_path,
+      '-ss',
+      '00:00:01',
+      '-vframes',
+      '1',
+      thumbnail_path,
+    ];
+  }
+  const ffmpegConvert = child_process.spawn(ffmpegPath, args);
+  ffmpegConvert.on('close', function () {
+    fs.readFile(thumbnail_path, (err, data) => {
+      console.log('File read was successful***********', data);
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      const params = {
+        Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+        Key: 'thumbnail' + year + '/' + month + '/' + file_name,
+        Body: data,
+        ACL: 'public-read',
+      };
+      s3.upload(params, async (s3Err, upload) => {
+        if (s3Err) throw s3Err;
+        console.log('file_name', file_name);
+        console.log(`File uploaded successfully at ${upload.Location}`);
+        Video.updateOne(
+          { _id: file_name },
+          {
+            $set: {
+              thumbnail: upload.Location,
+            },
+          }
+        ).catch((err) => {
+          console.log('video update err', err.message);
+        });
+      });
+    });
+  });
+};
+
 module.exports = {
   convertRecordVideo,
   convertUploadVideo,
   getConvertStatus,
+  getDuration,
+  generateThumbnail,
 };

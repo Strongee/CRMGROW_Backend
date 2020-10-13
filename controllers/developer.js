@@ -63,6 +63,10 @@ const addContact = async (req, res) => {
 
         return res.send({
           status: true,
+          data: {
+            ..._contact,
+            label,
+          },
         });
       });
     })

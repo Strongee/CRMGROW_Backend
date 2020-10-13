@@ -44,6 +44,7 @@ if (process.env.NODE_ENV === 'production') {
     TEAM_URL: 'https://app.crmgrow.com/team/',
     TEAM_ACCEPT_URL: 'https://app.crmgrow.com/team/accept/',
     TEAM_ACCEPT_REQUEST_URL: 'https://app.crmgrow.com/team/accept-request',
+    TEAM_CALLS: 'https://app.crmgrow.com/team/calls/',
     BILLING_URL: 'https://app.crmgrow.com/profile/billing',
   };
 } else if (process.env.NODE_ENV === 'staging') {
@@ -92,6 +93,7 @@ if (process.env.NODE_ENV === 'production') {
     TEAM_URL: 'https://ecsbe.crmgrow.com/team/',
     TEAM_ACCEPT_URL: 'https://ecsbe.crmgrow.com/team/accept/',
     TEAM_ACCEPT_REQUEST_URL: 'https://ecsbe.crmgrow.com/team/accept-request',
+    TEAM_CALLS: 'https://ecsbe.crmgrow.com/team/calls/',
     BILLING_URL: 'https://ecsbe.crmgrow.com/profile/billing',
   };
 } else {
@@ -138,6 +140,7 @@ if (process.env.NODE_ENV === 'production') {
     TEAM_URL: 'http://localhost:4200/team/',
     TEAM_ACCEPT_URL: 'http://localhost:4200/team/accept/',
     TEAM_ACCEPT_REQUEST_URL: 'http://localhost:4200/team/accept-request',
+    TEAM_CALLS: 'http://localhost:4200/team/calls/',
     BILLING_URL: 'http://localhost:4200/profile/billing',
   };
 }

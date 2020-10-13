@@ -20,7 +20,6 @@ const ContactSchema = mongoose.Schema(
     auto_follow_up: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     source: String,
     brokerage: String,
-    tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],
     tags: Array,
     recruiting_stage: String,
     website: String,

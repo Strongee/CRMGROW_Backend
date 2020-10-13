@@ -937,6 +937,14 @@ const matchUSPhoneNumber = (phoneNumberString) => {
   return phoneNumber;
 };
 
+const getStatus = (id) => {
+  client
+    .messages(id)
+    .fetch()
+    .then((message) => console.log(message.status))
+    .done();
+};
+
 const releaseSignalWireNumber = (phoneNumberSid) => {
   client
     .incomingPhoneNumbers(phoneNumberSid)
@@ -956,6 +964,7 @@ module.exports = {
   resendVideo,
   getTwilioNumber,
   getSignalWireNumber,
+  getStatus,
   matchUSPhoneNumber,
   releaseSignalWireNumber,
   sleep,

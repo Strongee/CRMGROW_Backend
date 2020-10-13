@@ -88,22 +88,43 @@ router.post(
 router.post('/update', UserCtrl.checkAuth, catchError(TeamCtrl.updateTeam));
 
 // Team call for 3 way
+
+router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
 router.get(
-  '/call-invite',
+  '/call/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getTeamCall)
+  catchError(TeamCtrl.getInquireCall)
+);
+
+router.get(
+  '/call-planned',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getPlannedCall)
 );
 router.get(
-  '/call-request',
+  '/call-planned/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getRequestedCall)
+  catchError(TeamCtrl.getPlannedCall)
 );
+
 router.post(
   '/request-call',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.requestCall)
 );
+router.post(
+  '/accept-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.acceptCall)
+);
 
+router.post(
+  '/reject-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.rejectCall)
+);
+
+router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));

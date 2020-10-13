@@ -1264,7 +1264,7 @@ const syncOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -1294,7 +1294,7 @@ const authorizeOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -1317,7 +1317,7 @@ const authorizeOutlook = async (req, res) => {
         const token_parts = outlook_token.token.id_token.split('.');
 
         // Token content is in the second part, in urlsafe base64
-        const encoded_token = new Buffer(
+        const encoded_token = Buffer.from(
           token_parts[1].replace('-', '+').replace('_', '/'),
           'base64'
         );
@@ -1450,7 +1450,7 @@ const syncGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    // 'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/gmail.send',
   ];
@@ -1509,7 +1509,6 @@ const authorizeYahoo = async (req, res) => {
 
         const jwt = JSON.parse(decoded_token);
         // Email is in the preferred_username field
-        console.log('jwt******', jwt);
         user.email = jwt.preferred_username;
         user.social_id = jwt.oid;
         user.connected_email_type = 'yahoo';
@@ -1580,6 +1579,7 @@ const authorizeGmail = async (req, res) => {
 
     // Email is in the preferred_username field
     user.connected_email = _res.data.email;
+    user.connect_calendar = true;
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
