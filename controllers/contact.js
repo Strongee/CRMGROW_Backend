@@ -3895,7 +3895,6 @@ const getSharedContact = async (req, res) => {
 
   if (_contact && team) {
     const _activity_list = await Activity.find({
-      user: currentUser.id,
       contacts: req.params.id,
     }).sort({ updated_at: 1 });
     const _activity_detail_list = [];
