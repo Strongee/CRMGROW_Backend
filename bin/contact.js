@@ -11,7 +11,7 @@ mongoose
 // Fetch or read data from
 const migrate = async () => {
   const user = await User.findOne({
-    email: 'brent.wallgren@exprealty.com',
+    email: 'andrelafountain@gmail.com',
   }).catch((err) => {
     console.log('err', err);
   });
@@ -24,11 +24,20 @@ const migrate = async () => {
     for (let i = 0; i < contacts.length; i++) {
       const contact = contacts[i];
       const user_name = contact.first_name;
-      if (user_name) {
-        console.log('user_name', user_name);
-        contact['first_name'] = user_name.split(' ')[0];
-        contact['last_name'] = user_name.split(' ')[1];
-        contact.save().catch((err) => {
+      if (user_name.split(' ')[1]) {
+        const first_name = user_name.split(' ')[0];
+        const last_name = user_name.split(' ')[1];
+        Contact.updateOne(
+          {
+            _id: contact.id,
+          },
+          {
+            $set: {
+              first_name,
+              last_name,
+            },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       }
