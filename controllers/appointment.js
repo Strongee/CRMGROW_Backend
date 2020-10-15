@@ -562,12 +562,12 @@ const create = async (req, res) => {
 
   let event_id;
 
-  if (!req.body.contact) {
-    return res.status(400).json({
-      status: false,
-      error: 'Contacts required',
-    });
-  }
+  // if (!req.body.contacts) {
+  //   return res.status(400).json({
+  //     status: false,
+  //     error: 'Contacts required',
+  //   });
+  // }
 
   if (currentUser.connect_calendar) {
     const _appointment = req.body;
@@ -888,6 +888,11 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
   //   }
   // }
 
+  let recurrence;
+  // if (appointment.recurrence) {
+  //   recurrence = [`RRULE:FREQ=${appointment.recurrence};`];
+  // }
+  recurrence = [`RRULE:FREQ=DAILY;`];
   const event = {
     summary: appointment.title,
     location: appointment.location,
@@ -901,6 +906,7 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
       timeZone: `UTC${user.time_zone}`,
     },
     attendees,
+    recurrence,
   };
   return new Promise((resolve, reject) => {
     calendar.events.insert(
