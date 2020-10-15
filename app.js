@@ -40,6 +40,12 @@ app.get('/image/:id', catchError(ImageCtrl.play1));
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay));
 app.get('/unsubscribe', catchError(EmailCtrl.unSubscribePage));
 app.get('/redirect', catchError(EmailCtrl.clickEmailLink));
+app.get('/google-oauth-callback', (req, res) => {
+  res.render('google_oauth_callback');
+});
+app.get('/outlook-oauth-callback', (req, res) => {
+  res.render('outlook_oauth_callback');
+});
 
 app.get('/auth', (req, res) => {
   res.render('auth');
