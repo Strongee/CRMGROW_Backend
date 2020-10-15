@@ -41,7 +41,7 @@ const video_job = async () => {
       const file_path = video.path;
       if (file_path) {
         console.log('file_path', file_path);
-        const file_name = video.path.slice(36);
+        const file_name = video.path.slice(37);
 
         if (fs.existsSync(file_path)) {
           try {

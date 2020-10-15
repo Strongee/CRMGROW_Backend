@@ -27,6 +27,7 @@ const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
+const Team = require('../models/team');
 const LabelHelper = require('../helpers/label');
 const ActivityHelper = require('../helpers/activity');
 const urls = require('../constants/urls');
@@ -147,126 +148,135 @@ const get = async (req, res) => {
     console.log('contact found err', err.message);
   });
 
-  if (key === 'first_name') {
-    next_contact = await Contact.find({
-      user: currentUser.id,
-    })
-      .sort({ [key]: dir })
-      .skip(index + 1)
-      .limit(1);
-    if (index - 1 >= 0) {
-      prev_contact = await Contact.find({
+  if (_contact) {
+    if (key === 'first_name') {
+      next_contact = await Contact.find({
         user: currentUser.id,
       })
         .sort({ [key]: dir })
-        .skip(index - 1)
+        .skip(index + 1)
         .limit(1);
-    }
-  } else {
-    if (dir === 1) {
-      next_contact = await Contact.find({
-        [key]: { $gte: _contact[key] },
-        user: currentUser.id,
-        _id: { $ne: req.params.id },
-      })
-        .sort({ [key]: 1 })
-        .limit(1);
-      prev_contact = await Contact.find({
-        [key]: { $lte: _contact[key] },
-        user: currentUser.id,
-        _id: { $ne: req.params.id },
-      })
-        .sort({ [key]: -1 })
-        .limit(1);
+      if (index - 1 >= 0) {
+        prev_contact = await Contact.find({
+          user: currentUser.id,
+        })
+          .sort({ [key]: dir })
+          .skip(index - 1)
+          .limit(1);
+      }
     } else {
-      next_contact = await Contact.find({
-        [key]: { $lte: _contact[key] },
-        user: currentUser.id,
-        _id: { $ne: req.params.id },
-      })
-        .sort({ [key]: -1 })
-        .limit(1);
-      prev_contact = await Contact.find({
-        [key]: { $gte: _contact[key] },
-        user: currentUser.id,
-        _id: { $ne: req.params.id },
-      })
-        .sort({ [key]: 1 })
-        .limit(1);
+      if (dir === 1) {
+        next_contact = await Contact.find({
+          [key]: { $gte: _contact[key] },
+          user: currentUser.id,
+          _id: { $ne: req.params.id },
+        })
+          .sort({ [key]: 1 })
+          .limit(1);
+        prev_contact = await Contact.find({
+          [key]: { $lte: _contact[key] },
+          user: currentUser.id,
+          _id: { $ne: req.params.id },
+        })
+          .sort({ [key]: -1 })
+          .limit(1);
+      } else {
+        next_contact = await Contact.find({
+          [key]: { $lte: _contact[key] },
+          user: currentUser.id,
+          _id: { $ne: req.params.id },
+        })
+          .sort({ [key]: -1 })
+          .limit(1);
+        prev_contact = await Contact.find({
+          [key]: { $gte: _contact[key] },
+          user: currentUser.id,
+          _id: { $ne: req.params.id },
+        })
+          .sort({ [key]: 1 })
+          .limit(1);
+      }
     }
-  }
 
-  let next = null;
-  let prev = null;
-  if (next_contact && next_contact[0]) {
-    next = next_contact[0].id;
-  }
-  if (prev_contact && prev_contact[0]) {
-    prev = prev_contact[0].id;
-  }
+    let next = null;
+    let prev = null;
+    if (next_contact && next_contact[0]) {
+      next = next_contact[0].id;
+    }
+    if (prev_contact && prev_contact[0]) {
+      prev = prev_contact[0].id;
+    }
 
-  const _follow_up = await FollowUp.find({
-    user: currentUser.id,
-    contact: req.params.id,
-    status: { $ne: -1 },
-  }).sort({ due_date: 1 });
-  const _timelines = await TimeLine.find({
-    user: currentUser.id,
-    contact: req.params.id,
-    automation: { $ne: null },
-  })
-    .sort({ due_date: 1 })
-    .catch((err) => {
-      console.log('err', err);
-    });
-  let automation = {};
-  if (_timelines.length) {
-    automation = await Automation.findOne({ _id: _timelines[0]['automation'] })
-      .select({ title: 1 })
+    const _follow_up = await FollowUp.find({
+      user: currentUser.id,
+      contact: req.params.id,
+      status: { $ne: -1 },
+    }).sort({ due_date: 1 });
+    const _timelines = await TimeLine.find({
+      user: currentUser.id,
+      contact: req.params.id,
+      automation: { $ne: null },
+    })
+      .sort({ due_date: 1 })
       .catch((err) => {
         console.log('err', err);
       });
-  }
-  const _activity_list = await Activity.find({
-    user: currentUser.id,
-    contacts: req.params.id,
-  }).sort({ updated_at: 1 });
-  const _activity_detail_list = [];
+    let automation = {};
+    if (_timelines.length) {
+      automation = await Automation.findOne({
+        _id: _timelines[0]['automation'],
+      })
+        .select({ title: 1 })
+        .catch((err) => {
+          console.log('err', err);
+        });
+    }
+    const _activity_list = await Activity.find({
+      user: currentUser.id,
+      contacts: req.params.id,
+    }).sort({ updated_at: 1 });
+    const _activity_detail_list = [];
 
-  for (let i = 0; i < _activity_list.length; i++) {
-    const _activity_detail = await Activity.aggregate([
-      {
-        $lookup: {
-          from: _activity_list[i].type,
-          localField: _activity_list[i].type,
-          foreignField: '_id',
-          as: 'activity_detail',
+    for (let i = 0; i < _activity_list.length; i++) {
+      const _activity_detail = await Activity.aggregate([
+        {
+          $lookup: {
+            from: _activity_list[i].type,
+            localField: _activity_list[i].type,
+            foreignField: '_id',
+            as: 'activity_detail',
+          },
         },
-      },
-      {
-        $match: { _id: _activity_list[i]._id },
-      },
-    ]);
+        {
+          $match: { _id: _activity_list[i]._id },
+        },
+      ]);
 
-    _activity_detail_list.push(_activity_detail[0]);
+      _activity_detail_list.push(_activity_detail[0]);
+    }
+
+    const myJSON = JSON.stringify(_contact);
+    const contact = JSON.parse(myJSON);
+    const data = await Object.assign(
+      contact,
+      { follow_up: _follow_up },
+      { activity: _activity_detail_list },
+      { next },
+      { prev },
+      { time_lines: _timelines },
+      { automation }
+    );
+
+    return res.send({
+      status: true,
+      data,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contact not found',
+    });
   }
-
-  const myJSON = JSON.stringify(_contact);
-  const contact = JSON.parse(myJSON);
-  const data = await Object.assign(
-    contact,
-    { follow_up: _follow_up },
-    { activity: _activity_detail_list },
-    { next },
-    { prev },
-    { time_lines: _timelines },
-    { automation }
-  );
-
-  return res.send({
-    status: true,
-    data,
-  });
 };
 
 const create = async (req, res) => {
@@ -3848,6 +3858,83 @@ const resubscribe = async (req, res) => {
     });
 };
 
+const getSharedContact = async (req, res) => {
+  const { currentUser } = req;
+
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact',
+    });
+  }
+
+  const _contact = await Contact.findOne({
+    _id: req.params.id,
+  })
+    .select({
+      email: 0,
+      cell_phone: 0,
+    })
+    .populate('label')
+    .catch((err) => {
+      console.log('contact found err', err.message);
+    });
+
+  const team = await Team.findOne({
+    $or: [
+      {
+        owner: currentUser.id,
+        members: mongoose.Types.ObjectId(_contact.user[0]),
+      },
+      {
+        editors: currentUser.id,
+        members: mongoose.Types.ObjectId(_contact.user[0]),
+      },
+    ],
+  });
+
+  if (_contact && team) {
+    const _activity_list = await Activity.find({
+      contacts: req.params.id,
+    }).sort({ updated_at: 1 });
+    const _activity_detail_list = [];
+
+    for (let i = 0; i < _activity_list.length; i++) {
+      const _activity_detail = await Activity.aggregate([
+        {
+          $lookup: {
+            from: _activity_list[i].type,
+            localField: _activity_list[i].type,
+            foreignField: '_id',
+            as: 'activity_detail',
+          },
+        },
+        {
+          $match: { _id: _activity_list[i]._id },
+        },
+      ]);
+
+      _activity_detail_list.push(_activity_detail[0]);
+    }
+
+    const myJSON = JSON.stringify(_contact);
+    const contact = JSON.parse(myJSON);
+    const data = await Object.assign(contact, {
+      activity: _activity_detail_list,
+    });
+
+    return res.send({
+      status: true,
+      data,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contact not found',
+    });
+  }
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -3886,4 +3973,5 @@ module.exports = {
   filter,
   interestContact,
   interestSubmitContact,
+  getSharedContact,
 };
