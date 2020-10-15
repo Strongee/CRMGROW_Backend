@@ -453,29 +453,33 @@ const acceptInviation = async (req, res) => {
        *  */
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-      const msg = {
-        to: team.owner.email,
-        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your invitation to join ${team.name} in CRMGrow`,
-          team:
-            "<a href='" +
-            urls.TEAM_URL +
-            team.id +
-            "'><img src='" +
-            urls.DOMAIN_URL +
-            "assets/images/team.png'/></a>",
-        },
-      };
+      const owners = team.owner;
+      for (let i = 0; i < owners.length; i++) {
+        const owner = owners[i];
+        const msg = {
+          to: owner.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+          dynamic_template_data: {
+            subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+            activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your invitation to join ${team.name} in CRMGrow`,
+            team:
+              "<a href='" +
+              urls.TEAM_URL +
+              team.id +
+              "'><img src='" +
+              urls.DOMAIN_URL +
+              "assets/images/team.png'/></a>",
+          },
+        };
 
-      sgMail
-        .send(msg)
-        .then()
-        .catch((err) => {
-          console.log('send message err: ', err);
-        });
+        sgMail
+          .send(msg)
+          .then()
+          .catch((err) => {
+            console.log('send message err: ', err);
+          });
+      }
 
       /** **********
        *  Mark read true dashboard notification for accepted users
@@ -984,11 +988,11 @@ const searchUser = async (req, res) => {
 const requestTeam = async (req, res) => {
   const { currentUser } = req;
   const { searchedUser, team_id } = req.body;
-  const team = await Team.findById(team_id).populate('owner');
-  if (team.owner._id + '' === currentUser._id + '') {
+  const team = await Team.findById(team_id);
+  if (team.owner.indexOf(currentUser._id) !== -1) {
     return res.status(400).send({
       status: false,
-      error: 'You are a owner of this team.',
+      error: 'You are a owner already.',
     });
   }
   if (team.members.indexOf(currentUser._id) !== -1) {
@@ -1003,69 +1007,74 @@ const requestTeam = async (req, res) => {
     });
   }
 
-  let sender;
+  let senders;
   if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
     const editor = await User.findOne({ _id: searchedUser });
-    sender = editor;
+    senders = [editor];
+  } else if (searchedUser && team.owner.indexOf(searchedUser) !== -1) {
+    const owner = await User.findOne({ _id: searchUser });
+    senders = [owner];
   } else {
-    sender = team.owner;
+    const owner = await User.find({ _id: { $in: team.owner } });
+    senders = owner;
   }
 
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-  const msg = {
-    to: sender.email,
-    from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-    templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-    dynamic_template_data: {
-      subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-      activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has requested to join your ${team.name} in CRMGrow`,
-      team:
-        "<a href='" +
-        urls.TEAM_ACCEPT_REQUEST_URL +
-        `?team=${team.id}&user=${currentUser.id}` +
-        "'><img src='" +
-        urls.DOMAIN_URL +
-        "assets/images/accept.png'/></a>",
-    },
-  };
+  for (let i = 0; i < senders.length; i++) {
+    const sender = senders[i];
+    const msg = {
+      to: sender.email,
+      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+      templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+      dynamic_template_data: {
+        subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+        activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has requested to join your ${team.name} in CRMGrow`,
+        team:
+          "<a href='" +
+          urls.TEAM_ACCEPT_REQUEST_URL +
+          `?team=${team.id}&user=${currentUser.id}` +
+          "'><img src='" +
+          urls.DOMAIN_URL +
+          "assets/images/accept.png'/></a>",
+      },
+    };
 
-  sgMail
-    .send(msg)
-    .then(() => {
-      /** **********
-       *  Creat dashboard notification to the team owner
-       *  */
+    sgMail
+      .send(msg)
+      .then(() => {
+        /** **********
+         *  Creat dashboard notification to the team owner
+         *  */
 
-      const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
-      const notification = new Notification({
-        user: sender.id,
-        team: team.id,
-        criteria: 'team_requested',
-        content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
+        const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
+        const notification = new Notification({
+          user: sender.id,
+          team: team.id,
+          criteria: 'team_requested',
+          content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
+        });
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+      })
+      .catch((err) => {
+        console.log('send message err: ', err);
       });
-      notification.save().catch((err) => {
-        console.log('notification save err', err.message);
-      });
-    })
-    .catch((err) => {
-      console.log('send message err: ', err);
-    });
+  }
 
-  team.requests.push(currentUser._id);
-  team
-    .save()
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
+  if (team.requests.indexOf(currentUser._id) === -1) {
+    team.requests.push(currentUser._id);
+    team.save().catch((err) => {
       return res.status(500).send({
         status: false,
         error: err.message,
       });
     });
+  }
+  return res.send({
+    status: true,
+  });
 };
 
 const remove = async (req, res) => {
