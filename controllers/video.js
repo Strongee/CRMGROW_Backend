@@ -1680,7 +1680,7 @@ const bulkEmail = async (req, res) => {
           video_descriptions += video.description;
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}"/></a></td></tr>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
         activities.push(activity.id);
       }
@@ -1976,7 +1976,7 @@ const bulkGmail = async (req, res) => {
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
         activities.push(activity.id);
       }
@@ -2012,8 +2012,9 @@ const bulkGmail = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
         video_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +

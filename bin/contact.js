@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const Contact = require('../models/contact');
+const { ENV_PATH } = require('../config/path');
+
+require('dotenv').config({ path: ENV_PATH });
 const { DB_PORT } = require('../config/database');
 
 mongoose.set('useCreateIndex', true);
@@ -25,6 +28,7 @@ const migrate = async () => {
       const contact = contacts[i];
       const user_name = contact.first_name;
       if (user_name.split(' ')[1]) {
+        console.log('user name', user_name.split(' ')[1]);
         const first_name = user_name.split(' ')[0];
         const last_name = user_name.split(' ')[1];
         Contact.updateOne(
