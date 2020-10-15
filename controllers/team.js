@@ -1557,7 +1557,7 @@ const getInquireCall = async (req, res) => {
     $or: [
       { user: currentUser.id },
       { leader: currentUser.id },
-      { guests: currentUser.id },
+      // { guests: currentUser.id },
     ],
     status: { $in: ['pending', 'cancelled'] },
   });
@@ -1566,14 +1566,14 @@ const getInquireCall = async (req, res) => {
     $or: [
       { user: currentUser.id },
       { leader: currentUser.id },
-      { guests: currentUser.id },
+      // { guests: currentUser.id },
     ],
     status: { $in: ['pending', 'cancelled'] },
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
       { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
     ])
     .skip(id)
@@ -1596,14 +1596,14 @@ const getPlannedCall = async (req, res) => {
     $or: [
       { user: currentUser.id },
       { leader: currentUser.id },
-      { guests: currentUser.id },
+      // { guests: currentUser.id },
     ],
     status: { $in: ['planned', 'finished'] },
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
       { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
     ])
     .skip(id)
@@ -1613,7 +1613,7 @@ const getPlannedCall = async (req, res) => {
     $or: [
       { user: currentUser.id },
       { leader: currentUser.id },
-      { guests: currentUser.id },
+      // { guests: currentUser.id },
     ],
     status: { $in: ['planned', 'finished'] },
   });
