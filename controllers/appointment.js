@@ -1263,64 +1263,68 @@ const remove = async (req, res) => {
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
       await removeGoogleCalendarById(oauth2Client, event_id);
     }
-    const appointment = await Appointment.findOne({
+    const appointment = await Appointment.find({
       user: currentUser.id,
       event_id: req.params.id,
     });
 
-    if (appointment) {
-      appointment.del = true;
-      appointment.updated_at = new Date();
+    if (appointment && appointment.length > 0) {
+      Appointment.update(
+        {
+          user: currentUser.id,
+          event_id: req.params.id,
+        },
+        {
+          del: true,
+        }
+      );
+      // const activity = new Activity({
+      //   content: 'removed appointment',
+      //   contacts: appointment.contact,
+      //   appointments: appointment.id,
+      //   user: currentUser.id,
+      //   type: 'appointments',
+      //   created_at: new Date(),
+      //   updated_at: new Date(),
+      // });
 
-      appointment.save();
-      const activity = new Activity({
-        content: 'removed appointment',
-        contacts: appointment.contact,
-        appointments: appointment.id,
-        user: currentUser.id,
-        type: 'appointments',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      activity
-        .save()
-        .then((_activity) => {
-          Contact.updateOne(
-            { _id: appointment.contact },
-            {
-              $set: { last_activity: _activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          const myJSON = JSON.stringify(appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          res.send({
-            status: true,
-            data,
-          });
-        })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            console.log('e.errors', e.errors);
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
-          });
-        });
-    } else {
-      res.send({
-        status: true,
-      });
+      // activity
+      //   .save()
+      //   .then((_activity) => {
+      //     Contact.updateOne(
+      //       { _id: appointment.contact },
+      //       {
+      //         $set: { last_activity: _activity.id },
+      //       }
+      //     ).catch((err) => {
+      //       console.log('err', err);
+      //     });
+      //     const myJSON = JSON.stringify(appointment);
+      //     const data = JSON.parse(myJSON);
+      //     data.activity = _activity;
+      //     res.send({
+      //       status: true,
+      //       data,
+      //     });
+      //   })
+      //   .catch((e) => {
+      //     let errors;
+      //     if (e.errors) {
+      //       console.log('e.errors', e.errors);
+      //       errors = e.errors.map((err) => {
+      //         delete err.instance;
+      //         return err;
+      //       });
+      //     }
+      //     return res.status(500).send({
+      //       status: false,
+      //       error: errors || e,
+      //     });
+      //   });
     }
+    return res.send({
+      status: true,
+    });
   } else {
     const appointment = await Appointment.findOne({
       user: currentUser.id,
