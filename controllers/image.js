@@ -587,7 +587,7 @@ const bulkEmail = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true"/></a></td></tr>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
         activities.push(activity.id);
       }
@@ -1158,7 +1158,8 @@ const bulkGmail = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -1192,8 +1193,16 @@ const bulkGmail = async (req, res) => {
         );
       }
 
+      // const email_content =
+      //   '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+      //   image_content +
+      //   '<br/>Thank you,<br/>' +
+      //   currentUser.email_signature +
+      //   emailHelper.generateUnsubscribeLink(activity.id) +
+      //   '</body></html>';
+
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
         image_content +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
@@ -1517,7 +1526,8 @@ const bulkOutlook = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
         activities.push(activity.id);
       }
@@ -1552,18 +1562,20 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+      const email_content =
+        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        image_content +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
+
       const sendMail = {
         message: {
           subject: image_subject,
           body: {
             contentType: 'HTML',
-            content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
-              image_content +
-              '<br/>Thank you,<br/>' +
-              currentUser.email_signature +
-              emailHelper.generateUnsubscribeLink(activity.id) +
-              '</body></html>',
+            content: email_content,
           },
           toRecipients: [
             {

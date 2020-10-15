@@ -1384,7 +1384,9 @@ const getAll = async (req, res) => {
 
   Array.prototype.push.apply(_video_list, _video_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate('videos');
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('videos');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
@@ -2644,7 +2646,8 @@ const bulkOutlook = async (req, res) => {
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
         activities.push(activity.id);
       }
@@ -2679,18 +2682,21 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+      const email_content =
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+        video_content +
+        '</tbody></table>' +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
+
       const sendMail = {
         message: {
           subject: video_subject,
           body: {
             contentType: 'HTML',
-            content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
-              video_content +
-              '<br/>Thank you,<br/>' +
-              currentUser.email_signature +
-              emailHelper.generateUnsubscribeLink(activity.id) +
-              '</body></html>',
+            content: email_content,
           },
           toRecipients: [
             {
