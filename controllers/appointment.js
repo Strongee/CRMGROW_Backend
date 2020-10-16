@@ -93,6 +93,7 @@ const getAll = async (req, res) => {
                   .get();
                 if (outlook_events && outlook_events.value) {
                   const calendar_events = outlook_events.value;
+                  console.log('calendar_events', calendar_events);
                   for (let i = 0; i < calendar_events.length; i++) {
                     const guests = [];
                     const contacts = [];
