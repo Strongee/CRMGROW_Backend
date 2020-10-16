@@ -512,6 +512,7 @@ const calendarList = (calendar_data) => {
               (err, _res) => {
                 if (err) {
                   console.log(`The API returned an error: ${err}`);
+                  resolve();
                 } else {
                   const events = _res.data.items;
                   if (events.length) {
