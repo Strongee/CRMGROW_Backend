@@ -913,10 +913,10 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
   // }
 
   let recurrence;
-  // if (appointment.recurrence) {
-  //   recurrence = [`RRULE:FREQ=${appointment.recurrence};`];
-  // }
-  recurrence = [`RRULE:FREQ=DAILY;`];
+  if (appointment.recurrence) {
+    recurrence = [`RRULE:FREQ=${appointment.recurrence};`];
+  }
+
   const event = {
     summary: appointment.title,
     location: appointment.location,
@@ -1101,7 +1101,7 @@ const edit = async (req, res) => {
           ).then(() => {
             const activity = new Activity({
               content: 'updated appointment',
-              contacts: _appointment.contacts,
+              contacts: contact._id,
               appointments: appointment._id,
               user: currentUser.id,
               type: 'appointments',
@@ -1112,7 +1112,7 @@ const edit = async (req, res) => {
               .save()
               .then((_activity) => {
                 Contact.updateOne(
-                  { _id: _appointment.contact },
+                  { _id: contact._id },
                   {
                     $set: { last_activity: _activity.id },
                   }
@@ -1168,12 +1168,12 @@ const edit = async (req, res) => {
       }
     }
     if (
-      _appointment.contacts.removed_contacts &&
-      _appointment.contacts.removed_contacts.length > 0
+      _appointment.contacts.remove_contacts &&
+      _appointment.contacts.remove_contacts.length > 0
     ) {
       Appointment.updateMany(
         {
-          _id: { $in: _appointment.contacts.removed_contacts },
+          _id: { $in: _appointment.contacts.remove_contacts },
         },
         {
           $set: {
