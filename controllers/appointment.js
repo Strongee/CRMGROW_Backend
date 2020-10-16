@@ -488,7 +488,6 @@ const calendarList = (calendar_data) => {
       maxResults: 100,
     },
     function (err, result) {
-      console.log(result.data.items);
       if (err) {
         console.log(`The API returned an error: ${err}`);
         return res.status(400).json({
@@ -506,8 +505,8 @@ const calendarList = (calendar_data) => {
                 calendarId: calendars[i].id,
                 timeMin: date.toISOString(),
                 timeMax: endDate.toISOString(),
-                singleEvents: true,
-                orderBy: 'startTime',
+                singleEvents: false,
+                // orderBy: 'startTime',
               },
               async (err, _res) => {
                 if (err) {
@@ -548,6 +547,19 @@ const calendarList = (calendar_data) => {
                       _gmail_calendar_data.event_id = event.id;
                       _gmail_calendar_data.contacts = contacts;
                       _gmail_calendar_data.type = 2;
+                      if (event.recurrence) {
+                        if (event.recurrence[0].indexOf('DAILY') !== -1) {
+                          _gmail_calendar_data.recurrence = 'DAILY';
+                        } else if (
+                          event.recurrence[0].indexOf('WEEKLY') !== -1
+                        ) {
+                          _gmail_calendar_data.recurrence = 'WEEKLY';
+                        } else if (
+                          event.recurrence[0].indexOf('MONTHLY') !== -1
+                        ) {
+                          _gmail_calendar_data.recurrence = 'MONTHLY';
+                        }
+                      }
                       data.push(_gmail_calendar_data);
                     }
                     resolve();
@@ -947,7 +959,6 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
           );
           reject(err);
         }
-        console.log('event.data', event.data);
         resolve(event.data.id);
       }
     );
@@ -959,7 +970,8 @@ const edit = async (req, res) => {
 
   if (currentUser.connect_calendar) {
     const _appointment = req.body;
-    const event_id = req.params.id;
+    const event_id = _appointment.recurrence_id || req.params.id;
+
     if (currentUser.connected_email_type === 'outlook') {
       let accessToken;
       const token = oauth2.accessToken.create({
@@ -1250,7 +1262,7 @@ const remove = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.connect_calendar) {
-    const event_id = req.params.id;
+    const event_id = req.body.recurrance_id || req.params.id;
     if (currentUser.connected_email_type === 'outlook') {
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
