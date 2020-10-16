@@ -212,6 +212,11 @@ const get = async (req, res) => {
       contact: req.params.id,
       status: { $ne: -1 },
     }).sort({ due_date: 1 });
+    const _appointment = await Appointment.find({
+      user: currentUser.id,
+      contact: req.params.id,
+      status: { $ne: -1 },
+    }).sort({ due_date: 1 });
     const _timelines = await TimeLine.find({
       user: currentUser.id,
       contact: req.params.id,
@@ -260,6 +265,7 @@ const get = async (req, res) => {
     const data = await Object.assign(
       contact,
       { follow_up: _follow_up },
+      { appointment: _appointment },
       { activity: _activity_detail_list },
       { next },
       { prev },

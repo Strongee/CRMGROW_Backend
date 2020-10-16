@@ -1300,67 +1300,56 @@ const remove = async (req, res) => {
         });
       });
     }
-    const appointment = await Appointment.find({
+
+    Appointment.deleteMany({
       user: currentUser.id,
       event_id: req.params.id,
+    }).catch((err) => {
+      console.log('appointment update err', err.message);
     });
+    // const activity = new Activity({
+    //   content: 'removed appointment',
+    //   contacts: appointment.contact,
+    //   appointments: appointment.id,
+    //   user: currentUser.id,
+    //   type: 'appointments',
+    //   created_at: new Date(),
+    //   updated_at: new Date(),
+    // });
 
-    if (appointment && appointment.length > 0) {
-      Appointment.updateMany(
-        {
-          user: currentUser.id,
-          event_id: req.params.id,
-        },
-        {
-          del: true,
-        }
-      ).catch((err) => {
-        console.log('appointment update err', err.message);
-      });
-      // const activity = new Activity({
-      //   content: 'removed appointment',
-      //   contacts: appointment.contact,
-      //   appointments: appointment.id,
-      //   user: currentUser.id,
-      //   type: 'appointments',
-      //   created_at: new Date(),
-      //   updated_at: new Date(),
-      // });
-
-      // activity
-      //   .save()
-      //   .then((_activity) => {
-      //     Contact.updateOne(
-      //       { _id: appointment.contact },
-      //       {
-      //         $set: { last_activity: _activity.id },
-      //       }
-      //     ).catch((err) => {
-      //       console.log('err', err);
-      //     });
-      //     const myJSON = JSON.stringify(appointment);
-      //     const data = JSON.parse(myJSON);
-      //     data.activity = _activity;
-      //     res.send({
-      //       status: true,
-      //       data,
-      //     });
-      //   })
-      //   .catch((e) => {
-      //     let errors;
-      //     if (e.errors) {
-      //       console.log('e.errors', e.errors);
-      //       errors = e.errors.map((err) => {
-      //         delete err.instance;
-      //         return err;
-      //       });
-      //     }
-      //     return res.status(500).send({
-      //       status: false,
-      //       error: errors || e,
-      //     });
-      //   });
-    }
+    // activity
+    //   .save()
+    //   .then((_activity) => {
+    //     Contact.updateOne(
+    //       { _id: appointment.contact },
+    //       {
+    //         $set: { last_activity: _activity.id },
+    //       }
+    //     ).catch((err) => {
+    //       console.log('err', err);
+    //     });
+    //     const myJSON = JSON.stringify(appointment);
+    //     const data = JSON.parse(myJSON);
+    //     data.activity = _activity;
+    //     res.send({
+    //       status: true,
+    //       data,
+    //     });
+    //   })
+    //   .catch((e) => {
+    //     let errors;
+    //     if (e.errors) {
+    //       console.log('e.errors', e.errors);
+    //       errors = e.errors.map((err) => {
+    //         delete err.instance;
+    //         return err;
+    //       });
+    //     }
+    //     return res.status(500).send({
+    //       status: false,
+    //       error: errors || e,
+    //     });
+    //   });
     return res.send({
       status: true,
     });
