@@ -509,14 +509,15 @@ const calendarList = (calendar_data) => {
                 singleEvents: true,
                 orderBy: 'startTime',
               },
-              (err, _res) => {
+              async (err, _res) => {
                 if (err) {
                   console.log(`The API returned an error: ${err}`);
                   resolve();
                 } else {
                   const events = _res.data.items;
                   if (events.length) {
-                    events.map(async (event) => {
+                    for (let j = 0; j < events.length; j++) {
+                      const event = events[j];
                       const guests = [];
                       const contacts = [];
                       const appointments = await Appointment.find({
@@ -548,8 +549,8 @@ const calendarList = (calendar_data) => {
                       _gmail_calendar_data.contacts = contacts;
                       _gmail_calendar_data.type = 2;
                       data.push(_gmail_calendar_data);
-                      resolve();
-                    });
+                    }
+                    resolve();
                   } else {
                     console.log('No upcoming events found.');
                   }
