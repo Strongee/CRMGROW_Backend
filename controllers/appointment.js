@@ -483,58 +483,80 @@ const calendarList = (calendar_data) => {
   const endDate = moment(date).add(1, `${mode}s`);
 
   const calendar = google.calendar({ version: 'v3', auth });
-  calendar.events.list(
+  calendar.calendarList.list(
     {
-      calendarId: 'primary',
-      timeMin: date.toISOString(),
-      timeMax: endDate.toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime',
+      maxResults: 100,
     },
-    (err, _res) => {
+    function (err, result) {
+      console.log(result.data.items);
       if (err) {
         console.log(`The API returned an error: ${err}`);
-      } else {
-        const events = _res.data.items;
+        return res.status(400).json({
+          status: false,
+          error: err,
+        });
+      }
+      const calendars = result.data.items;
+      if (calendars) {
         const promise_array = [];
-        if (events.length) {
-          events.map(async (event) => {
-            const promise = new Promise(async (resolve, reject) => {
-              const guests = [];
-              const contacts = [];
-              const appointments = await Appointment.find({
-                event_id: event.id,
-              })
-                .select('contact')
-                .populate({ path: 'contact', select: 'email' });
+        for (let i = 0; i < calendars.length; i++) {
+          const promise = new Promise(async (resolve, reject) => {
+            calendar.events.list(
+              {
+                calendarId: calendars[i].id,
+                timeMin: date.toISOString(),
+                timeMax: endDate.toISOString(),
+                singleEvents: true,
+                orderBy: 'startTime',
+              },
+              (err, _res) => {
+                if (err) {
+                  console.log(`The API returned an error: ${err}`);
+                } else {
+                  const events = _res.data.items;
+                  if (events.length) {
+                    events.map(async (event) => {
+                      const guests = [];
+                      const contacts = [];
+                      const appointments = await Appointment.find({
+                        event_id: event.id,
+                      })
+                        .select('contact')
+                        .populate({ path: 'contact', select: 'email' });
 
-              appointments.map((appointment) => {
-                contacts.push(appointment.contact);
-              });
+                      appointments.map((appointment) => {
+                        contacts.push(appointment.contact);
+                      });
 
-              if (event.attendees) {
-                for (let j = 0; j < event.attendees.length; j++) {
-                  const guest = event.attendees[j].email;
-                  guests.push(guest);
+                      if (event.attendees) {
+                        for (let j = 0; j < event.attendees.length; j++) {
+                          const guest = event.attendees[j].email;
+                          guests.push(guest);
+                        }
+                      }
+                      const _gmail_calendar_data = {};
+                      _gmail_calendar_data.title = event.summary;
+                      _gmail_calendar_data.description = event.description;
+                      _gmail_calendar_data.location = event.location;
+                      _gmail_calendar_data.due_start = event.start.dateTime;
+                      _gmail_calendar_data.due_end = event.end.dateTime;
+                      _gmail_calendar_data.guests = guests;
+                      _gmail_calendar_data.recurrance_id =
+                        event.recurringEventId;
+                      _gmail_calendar_data.event_id = event.id;
+                      _gmail_calendar_data.contacts = contacts;
+                      _gmail_calendar_data.type = 2;
+                      data.push(_gmail_calendar_data);
+                      resolve();
+                    });
+                  } else {
+                    console.log('No upcoming events found.');
+                  }
                 }
               }
-              const _gmail_calendar_data = {};
-              _gmail_calendar_data.title = event.summary;
-              _gmail_calendar_data.description = event.description;
-              _gmail_calendar_data.location = event.location;
-              _gmail_calendar_data.due_start = event.start.dateTime;
-              _gmail_calendar_data.due_end = event.end.dateTime;
-              _gmail_calendar_data.guests = guests;
-              _gmail_calendar_data.event_id = event.id;
-              _gmail_calendar_data.contacts = contacts;
-              _gmail_calendar_data.type = 2;
-              data.push(_gmail_calendar_data);
-              resolve();
-            });
-            promise_array.push(promise);
+            );
           });
-        } else {
-          console.log('No upcoming events found.');
+          promise_array.push(promise);
         }
         Promise.all(promise_array)
           .then(() => {
@@ -923,6 +945,7 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
           );
           reject(err);
         }
+        console.log('event.data', event.data);
         resolve(event.data.id);
       }
     );
@@ -1267,7 +1290,13 @@ const remove = async (req, res) => {
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
-      await removeGoogleCalendarById(oauth2Client, event_id);
+      await removeGoogleCalendarById(oauth2Client, event_id).catch((err) => {
+        console.log('event remove err', err.message);
+        return res.status(400).json({
+          status: false,
+          error: err,
+        });
+      });
     }
     const appointment = await Appointment.find({
       user: currentUser.id,
@@ -1275,7 +1304,7 @@ const remove = async (req, res) => {
     });
 
     if (appointment && appointment.length > 0) {
-      Appointment.update(
+      Appointment.updateMany(
         {
           user: currentUser.id,
           event_id: req.params.id,
@@ -1283,7 +1312,9 @@ const remove = async (req, res) => {
         {
           del: true,
         }
-      );
+      ).catch((err) => {
+        console.log('appointment update err', err.message);
+      });
       // const activity = new Activity({
       //   content: 'removed appointment',
       //   contacts: appointment.contact,
@@ -1395,11 +1426,11 @@ const removeGoogleCalendarById = async (auth, event_id) => {
     eventId: event_id,
     sendNotifications: true,
   };
-  calendar.events.delete(params, function (err) {
-    if (err) {
-      console.log(`There was an error contacting the Calendar service: ${err}`);
-    }
-  });
+  // calendar.events.delete(params, function (err) {
+  //   if (err) {
+  //     console.log(`There was an error contacting the Calendar service: ${err}`);
+  //   }
+  // });
   return new Promise((resolve, reject) => {
     calendar.events.delete(params, function (err) {
       if (err) {
