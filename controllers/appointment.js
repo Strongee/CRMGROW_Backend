@@ -481,7 +481,6 @@ const get = async (req, res) => {
 const calendarList = (calendar_data) => {
   const { auth, data, res, date, mode } = calendar_data;
   const endDate = moment(date).add(1, `${mode}s`);
-
   const calendar = google.calendar({ version: 'v3', auth });
   calendar.calendarList.list(
     {
@@ -505,8 +504,7 @@ const calendarList = (calendar_data) => {
                 calendarId: calendars[i].id,
                 timeMin: date.toISOString(),
                 timeMax: endDate.toISOString(),
-                singleEvents: false,
-                // orderBy: 'startTime',
+                singleEvents: true,
               },
               async (err, _res) => {
                 if (err) {
@@ -514,6 +512,7 @@ const calendarList = (calendar_data) => {
                   resolve();
                 } else {
                   const events = _res.data.items;
+                  const recurrance_event = [];
                   if (events.length) {
                     for (let j = 0; j < events.length; j++) {
                       const event = events[j];
@@ -542,27 +541,64 @@ const calendarList = (calendar_data) => {
                       _gmail_calendar_data.due_start = event.start.dateTime;
                       _gmail_calendar_data.due_end = event.end.dateTime;
                       _gmail_calendar_data.guests = guests;
-                      _gmail_calendar_data.recurrance_id =
-                        event.recurringEventId;
+
+                      if (event.recurringEventId) {
+                        recurrance_event.push({
+                          id: event.recurringEventId,
+                          index: data.length,
+                        });
+                        _gmail_calendar_data.recurrance_id =
+                          event.recurringEventId;
+                      }
+
                       _gmail_calendar_data.event_id = event.id;
                       _gmail_calendar_data.contacts = contacts;
                       _gmail_calendar_data.type = 2;
-                      if (event.recurrence) {
-                        if (event.recurrence[0].indexOf('DAILY') !== -1) {
-                          _gmail_calendar_data.recurrence = 'DAILY';
-                        } else if (
-                          event.recurrence[0].indexOf('WEEKLY') !== -1
-                        ) {
-                          _gmail_calendar_data.recurrence = 'WEEKLY';
-                        } else if (
-                          event.recurrence[0].indexOf('MONTHLY') !== -1
-                        ) {
-                          _gmail_calendar_data.recurrence = 'MONTHLY';
-                        }
-                      }
                       data.push(_gmail_calendar_data);
                     }
-                    resolve();
+                    if (recurrance_event.length > 0) {
+                      calendar.events.list(
+                        {
+                          calendarId: calendars[i].id,
+                          timeMin: date.toISOString(),
+                          timeMax: endDate.toISOString(),
+                          singleEvents: false,
+                        },
+                        (err, _res) => {
+                          if (err) {
+                            console.log(`The API returned an error: ${err}`);
+                            resolve();
+                          }
+                          const events = _res.data.items;
+                          for (let j = 0; j < recurrance_event.length; j++) {
+                            events.map((event) => {
+                              if (event.id === recurrance_event[j].id) {
+                                if (event.recurrence) {
+                                  const index = recurrance_event[j].index;
+                                  if (
+                                    event.recurrence[0].indexOf('DAILY') !== -1
+                                  ) {
+                                    data[index].recurrence = 'DAILY';
+                                  } else if (
+                                    event.recurrence[0].indexOf('WEEKLY') !== -1
+                                  ) {
+                                    data[index].recurrence = 'WEEKLY';
+                                  } else if (
+                                    event.recurrence[0].indexOf('MONTHLY') !==
+                                    -1
+                                  ) {
+                                    data[index].recurrence = 'MONTHLY';
+                                  }
+                                }
+                              }
+                            });
+                          }
+                          resolve();
+                        }
+                      );
+                    } else {
+                      resolve();
+                    }
                   } else {
                     console.log('No upcoming events found.');
                   }
