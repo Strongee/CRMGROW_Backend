@@ -1321,7 +1321,7 @@ const remove = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.connect_calendar) {
-    const event_id = req.body.recurrance_id || req.params.id;
+    const { event_id, recurrance_id } = req.body;
     if (currentUser.connected_email_type === 'outlook') {
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
@@ -1357,13 +1357,14 @@ const remove = async (req, res) => {
         }
       });
     } else {
+      const remove_id = recurrance_id || event_id;
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
-      await removeGoogleCalendarById(oauth2Client, event_id).catch((err) => {
+      await removeGoogleCalendarById(oauth2Client, remove_id).catch((err) => {
         console.log('event remove err', err.message);
         return res.status(400).json({
           status: false,
@@ -1374,7 +1375,7 @@ const remove = async (req, res) => {
 
     Appointment.deleteMany({
       user: currentUser.id,
-      event_id: req.params.id,
+      event_id,
     }).catch((err) => {
       console.log('appointment update err', err.message);
     });
