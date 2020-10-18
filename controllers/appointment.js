@@ -97,12 +97,12 @@ const getAll = async (req, res) => {
               const calendar = calendars[i];
               const promise = new Promise(async (resolve) => {
                 const outlook_events = await client
-                  // .api(
-                  //   `/me/calendars/${calendar.id}/events/instances?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
-                  // )
                   .api(
-                    `/me/calendars/${calendar.id}/events/instances?`
+                    `/me/calendars/${calendar.id}/events/instances?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
                   )
+                  // .api(
+                  //   `/me/calendars/${calendar.id}/events/instances?`
+                  // )
                   .get()
                   .then((events) => {
                     console.log('events************', events);
