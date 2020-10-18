@@ -98,11 +98,15 @@ const getAll = async (req, res) => {
               const promise = new Promise(async (resolve) => {
                 const outlook_events = await client
                   .api(
-                    `/me/calendars/${calendar.id}/events/instances?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
+                    `/me/calendars/${calendar.id}/events`
                   )
                   // .api(
                   //   `/me/calendars/${calendar.id}/events/instances?`
                   // )
+                  
+                  .select(
+                    'subject,body,bodyPreview,organizer,attendees,start,end,location'
+                  )
                   .get()
                   .then((events) => {
                     console.log('events************', events);

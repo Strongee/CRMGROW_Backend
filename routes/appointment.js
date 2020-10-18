@@ -20,7 +20,7 @@ router.get('/accept', catchError(AppointmentCtrl.accept));
 router.get('/decline', catchError(AppointmentCtrl.decline));
 
 // Remove contact and its all related info (activity, followup) by id
-router.delete('/:id', UserCtrl.checkAuth, catchError(AppointmentCtrl.remove));
+router.post('/delete', UserCtrl.checkAuth, catchError(AppointmentCtrl.remove));
 
 router.get('/:id', UserCtrl.checkAuth, catchError(AppointmentCtrl.get));
 
