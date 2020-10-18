@@ -84,13 +84,33 @@ const getAll = async (req, res) => {
           const calendars = outlook_calendars.value;
 
           // Calendar sync works on the CalendarView endpoint
+          console.log('calendars**************', calendars);
           if (calendars.length > 0) {
+            const endDate = moment(date).add(1, `${mode}s`);
+            // The start and end date are passed as query parameters
+            const startDateTime = '2020-10-01T09:00:00.0000000';
+            const endDateTime = '2020-11-01T05:00:00.000000';
+
+            console.log('startDateTime', startDateTime);
+            console.log('endDateTime', endDateTime);
             for (let i = 0; i < calendars.length; i++) {
               const calendar = calendars[i];
               const promise = new Promise(async (resolve) => {
                 const outlook_events = await client
-                  .api(`/me/calendars/${calendar.id}/events/instances?`)
-                  .get();
+                  // .api(
+                  //   `/me/calendars/${calendar.id}/events/instances?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
+                  // )
+                  .api(
+                    `/me/calendars/${calendar.id}/events/instances?`
+                  )
+                  .get()
+                  .then((events) => {
+                    console.log('events************', events);
+                  })
+                  .catch((err) => {
+                    console.log('outlook calendar events get err', err);
+                  });
+                console.log('outlook_events', outlook_events);
                 if (outlook_events && outlook_events.value) {
                   const calendar_events = outlook_events.value;
                   console.log('calendar_events', calendar_events);
