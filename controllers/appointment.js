@@ -506,7 +506,6 @@ const calendarList = (calendar_data) => {
                 timeMin: date.toISOString(),
                 timeMax: endDate.toISOString(),
                 singleEvents: true,
-                
               },
               async (err, _res) => {
                 if (err) {
@@ -518,7 +517,6 @@ const calendarList = (calendar_data) => {
                   if (events.length) {
                     for (let j = 0; j < events.length; j++) {
                       const event = events[j];
-                      console.log('event****************', event);
                       const guests = [];
                       const contacts = [];
                       const appointments = await Appointment.find({
@@ -541,8 +539,10 @@ const calendarList = (calendar_data) => {
                       _gmail_calendar_data.title = event.summary;
                       _gmail_calendar_data.description = event.description;
                       _gmail_calendar_data.location = event.location;
-                      _gmail_calendar_data.due_start = event.start.dateTime;
-                      _gmail_calendar_data.due_end = event.end.dateTime;
+                      _gmail_calendar_data.due_start =
+                        event.start.dateTime || event.end.date;
+                      _gmail_calendar_data.due_end =
+                        event.end.dateTime || event.end.date;
                       _gmail_calendar_data.guests = guests;
 
                       if (event.recurringEventId) {
@@ -604,6 +604,7 @@ const calendarList = (calendar_data) => {
                     }
                   } else {
                     console.log('No upcoming events found.');
+                    resolve();
                   }
                 }
               }
@@ -634,7 +635,6 @@ const calendarList = (calendar_data) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-
   let event_id;
 
   // if (!req.body.contacts) {
