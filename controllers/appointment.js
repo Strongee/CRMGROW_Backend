@@ -506,6 +506,7 @@ const calendarList = (calendar_data) => {
                 timeMin: date.toISOString(),
                 timeMax: endDate.toISOString(),
                 singleEvents: true,
+                
               },
               async (err, _res) => {
                 if (err) {
@@ -517,6 +518,7 @@ const calendarList = (calendar_data) => {
                   if (events.length) {
                     for (let j = 0; j < events.length; j++) {
                       const event = events[j];
+                      console.log('event****************', event);
                       const guests = [];
                       const contacts = [];
                       const appointments = await Appointment.find({
