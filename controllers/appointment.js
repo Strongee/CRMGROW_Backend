@@ -1573,7 +1573,7 @@ const remove = async (req, res) => {
 
 const removeGoogleCalendarById = async (data) => {
   const { oauth2Client, calendar_id, remove_id } = data;
-  const calendar = google.calendar({ version: 'v3', auth });
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const params = {
     calendarId: calendar_id,
     eventId: remove_id,
@@ -1599,7 +1599,7 @@ const removeGoogleCalendarById = async (data) => {
 
 const updateGoogleCalendarById = async (data) => {
   const { oauth2Client, remove_id, appointment, time_zone } = data;
-  const calendar = google.calendar({ version: 'v3', auth });
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const attendees = [];
   if (appointment.guests) {
     for (let j = 0; j < appointment.guests.length; j++) {
@@ -1625,7 +1625,7 @@ const updateGoogleCalendarById = async (data) => {
   };
   const params = {
     calendarId: appointment.calendar_id,
-    eventId: event_id,
+    eventId: remove_id,
     resource: event,
     sendNotifications: true,
   };
