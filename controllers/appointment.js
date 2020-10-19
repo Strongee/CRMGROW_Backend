@@ -6,7 +6,7 @@ const sgMail = require('@sendgrid/mail');
 
 const api = require('../config/api');
 const urls = require('../constants/urls');
-const time_zone = require('../constants/time_zone');
+const { time_zone, days } = require('../constants/variable');
 const mail_contents = require('../constants/mail_contents');
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
@@ -77,52 +77,41 @@ const getAll = async (req, res) => {
         },
       });
 
+      const ctz = time_zone[currentUser.time_zone];
       client
         .api('/me/calendars')
+        .header('Prefer', `outlook.timezone="${ctz}"`)
         .get()
         .then(async (outlook_calendars) => {
           const calendars = outlook_calendars.value;
 
-          // Calendar sync works on the CalendarView endpoint
-          console.log('calendars**************', calendars);
           if (calendars.length > 0) {
             const endDate = moment(date).add(1, `${mode}s`);
             // The start and end date are passed as query parameters
-            const startDateTime = '2020-10-01T09:00:00.0000000';
-            const endDateTime = '2020-11-01T05:00:00.000000';
+            const startDateTime = date.toISOString();
+            const endDateTime = endDate.toISOString();
 
-            console.log('startDateTime', startDateTime);
-            console.log('endDateTime', endDateTime);
             for (let i = 0; i < calendars.length; i++) {
               const calendar = calendars[i];
               const promise = new Promise(async (resolve) => {
                 const outlook_events = await client
                   .api(
-                    `/me/calendars/${calendar.id}/events`
-                  )
-                  // .api(
-                  //   `/me/calendars/${calendar.id}/events/instances?`
-                  // )
-                  
-                  .select(
-                    'subject,body,bodyPreview,organizer,attendees,start,end,location'
+                    `/me/calendars/${calendar.id}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
                   )
                   .get()
-                  .then((events) => {
-                    console.log('events************', events);
-                  })
                   .catch((err) => {
                     console.log('outlook calendar events get err', err);
                   });
-                console.log('outlook_events', outlook_events);
                 if (outlook_events && outlook_events.value) {
+                  const recurrence_event = [];
                   const calendar_events = outlook_events.value;
-                  console.log('calendar_events', calendar_events);
-                  for (let i = 0; i < calendar_events.length; i++) {
+
+                  for (let j = 0; j < calendar_events.length; j++) {
                     const guests = [];
                     const contacts = [];
+                    const calendar_event = calendar_events[j];
                     const appointments = await Appointment.find({
-                      event_id: calendar_events[i].id,
+                      event_id: calendar_event.id,
                     })
                       .select('contact')
                       .populate({ path: 'contact', select: 'email' });
@@ -132,67 +121,114 @@ const getAll = async (req, res) => {
                     });
 
                     if (
-                      calendar_events[i].attendees &&
-                      calendar_events[i].attendees.length > 0
+                      calendar_event.attendees &&
+                      calendar_event.attendees.length > 0
                     ) {
-                      const attendees = calendar_events[i].attendees;
+                      const attendees = calendar_event.attendees;
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
                         guests.push(guest);
                       }
                     }
                     const _outlook_calendar_data = {};
-                    _outlook_calendar_data.title = calendar_events[i].subject;
-                    if (calendar_events[i].body) {
+                    _outlook_calendar_data.title = calendar_event.subject;
+                    if (calendar_event.body) {
                       _outlook_calendar_data.description =
-                        calendar_events[i].body.content;
+                        calendar_event.body.content;
                     } else {
                       _outlook_calendar_data.description = '';
                     }
-                    if (calendar_events[i].location) {
+                    if (calendar_event.location) {
                       _outlook_calendar_data.location =
-                        calendar_events[i].location.displayName;
+                        calendar_event.location.displayName;
                     } else {
                       _outlook_calendar_data.location = '';
                     }
-                    if (calendar_events[i].start) {
+                    if (calendar_event.start) {
                       _outlook_calendar_data.due_start =
-                        calendar_events[i].start.dateTime;
-                      _outlook_calendar_data.time_zone =
-                        calendar_events[i].start.timezone;
-                      _outlook_calendar_data.due_start = moment
-                        .tz(
-                          _outlook_calendar_data.due_start,
-                          _outlook_calendar_data.time_zone
-                        )
-                        .toISOString();
+                        calendar_event.start.dateTime;
+                      // _outlook_calendar_data.time_zone =
+                      //   calendar_event.start.timezone;
+                      // _outlook_calendar_data.due_start = moment
+                      //   .tz(
+                      //     _outlook_calendar_data.due_start,
+                      //     _outlook_calendar_data.time_zone
+                      //   )
+                      //   .toISOString();
                     } else {
                       _outlook_calendar_data.due_start = '';
                     }
-                    if (calendar_events[i].end) {
+                    if (calendar_event.end) {
                       _outlook_calendar_data.due_end =
-                        calendar_events[i].end.datetime;
-                      _outlook_calendar_data.time_zone =
-                        calendar_events[i].end.timezone;
-                      _outlook_calendar_data.due_end = moment
-                        .tz(
-                          _outlook_calendar_data.due_end,
-                          _outlook_calendar_data.time_zone
-                        )
-                        .toISOString();
+                        calendar_event.end.datetime;
+                      // _outlook_calendar_data.time_zone =
+                      //   calendar_event.end.timezone;
+                      // _outlook_calendar_data.due_end = moment
+                      //   .tz(
+                      //     _outlook_calendar_data.due_end,
+                      //     _outlook_calendar_data.time_zone
+                      //   )
+                      //   .toISOString();
                     } else {
                       _outlook_calendar_data.due_end = '';
                     }
                     _outlook_calendar_data.contacts = contacts;
                     _outlook_calendar_data.guests = guests;
-                    _outlook_calendar_data.event_id = calendar_events[i].id;
+                    _outlook_calendar_data.event_id = calendar_event.id;
+                    _outlook_calendar_data.calendar_id = calendar.id;
+                    if (calendar_event.seriesMasterId) {
+                      _outlook_calendar_data.recurrence_id =
+                        calendar_event.seriesMasterId;
+                      recurrence_event.push({
+                        id: calendar_event.seriesMasterId,
+                        index: data.length,
+                      });
+                    }
+
                     data.push(_outlook_calendar_data);
+                  }
+                  if (recurrence_event.length > 0) {
+                    for (let j = 0; j < recurrence_event.length; j++) {
+                      const master_id = recurrence_event[j].id;
+                      const master_event = await client
+                        .api(`/me/events/${master_id}`)
+                        .get()
+                        .catch((err) => {
+                          console.log('outlook calendar events get err', err);
+                        });
+                      if (master_event.recurrence) {
+                        const index = recurrence_event[j].index;
+                        if (
+                          master_event.recurrence.pattern &&
+                          master_event.recurrence.pattern.type.indexOf(
+                            'daily'
+                          ) !== -1
+                        ) {
+                          data[index].recurrence = 'DAILY';
+                        } else if (
+                          master_event.recurrence.pattern &&
+                          master_event.recurrence.pattern.type.indexOf(
+                            'weekly'
+                          ) !== -1
+                        ) {
+                          data[index].recurrence = 'WEEKLY';
+                        } else if (
+                          master_event.recurrence.pattern &&
+                          master_event.recurrence.pattern.type.indexOf(
+                            'monthly'
+                          ) !== -1
+                        ) {
+                          data[index].recurrence = 'MONTHLY';
+                        }
+                      }
+                    }
                   }
                 }
                 resolve();
               });
               promise_array.push(promise);
             }
+
             Promise.all(promise_array).then(() => {
               return res.send({
                 status: true,
@@ -537,7 +573,7 @@ const calendarList = (calendar_data) => {
                   resolve();
                 } else {
                   const events = _res.data.items;
-                  const recurrance_event = [];
+                  const recurrence_event = [];
                   if (events.length) {
                     for (let j = 0; j < events.length; j++) {
                       const event = events[j];
@@ -570,20 +606,21 @@ const calendarList = (calendar_data) => {
                       _gmail_calendar_data.guests = guests;
 
                       if (event.recurringEventId) {
-                        recurrance_event.push({
+                        recurrence_event.push({
                           id: event.recurringEventId,
                           index: data.length,
                         });
-                        _gmail_calendar_data.recurrance_id =
+                        _gmail_calendar_data.recurrence_id =
                           event.recurringEventId;
                       }
 
+                      _gmail_calendar_data.calendar_id = calendars[i].id;
                       _gmail_calendar_data.event_id = event.id;
                       _gmail_calendar_data.contacts = contacts;
                       _gmail_calendar_data.type = 2;
                       data.push(_gmail_calendar_data);
                     }
-                    if (recurrance_event.length > 0) {
+                    if (recurrence_event.length > 0) {
                       calendar.events.list(
                         {
                           calendarId: calendars[i].id,
@@ -597,11 +634,11 @@ const calendarList = (calendar_data) => {
                             resolve();
                           }
                           const events = _res.data.items;
-                          for (let j = 0; j < recurrance_event.length; j++) {
+                          for (let j = 0; j < recurrence_event.length; j++) {
                             events.map((event) => {
-                              if (event.id === recurrance_event[j].id) {
+                              if (event.id === recurrence_event[j].id) {
                                 if (event.recurrence) {
-                                  const index = recurrance_event[j].index;
+                                  const index = recurrence_event[j].index;
                                   if (
                                     event.recurrence[0].indexOf('DAILY') !== -1
                                   ) {
@@ -699,6 +736,42 @@ const create = async (req, res) => {
       //     }
       //   }
       // }
+      let recurrence;
+      if (_appointment.recurrence) {
+        let type;
+        let daysOfWeek;
+        let dayOfMonth;
+        switch (_appointment.recurrence) {
+          case 'DAILY':
+            type = 'daily';
+            break;
+          case 'WEEKLY':
+            type = 'weekly';
+            daysOfWeek = [days[moment(_appointment.due_start).day()]];
+            break;
+          case 'MONTHLY':
+            type = 'absoluteMonthly';
+            dayOfMonth = moment(_appointment.due_start).date();
+            break;
+          default:
+            console.log('no matching');
+        }
+
+        recurrence = {
+          pattern: {
+            type,
+            interval: 1,
+            daysOfWeek,
+            dayOfMonth,
+          },
+          range: {
+            type: 'noEnd',
+            startDate: moment(_appointment.due_start).format('YYYY-MM-DD'),
+          },
+        };
+      }
+
+      const ctz = time_zone[currentUser.time_zone];
       const newEvent = {
         subject: _appointment.title,
         body: {
@@ -710,13 +783,14 @@ const create = async (req, res) => {
         },
         start: {
           dateTime: _appointment.due_start,
-          timeZone: `UTC${currentUser.time_zone}`,
+          timeZone: ctz,
         },
         end: {
           dateTime: _appointment.due_end,
-          timeZone: `UTC${currentUser.time_zone}`,
+          timeZone: ctz,
         },
         attendees,
+        recurrence,
       };
 
       let accessToken;
@@ -1101,7 +1175,9 @@ const edit = async (req, res) => {
         attendees,
       };
 
-      let res = await client.api(`/me/events/${event_id}`).update(event);
+      let res = await client
+        .api(`/me/calendars/${calendar_id}/events/${event_id}`)
+        .update(event);
 
       // const updatePayload = {
       //   subject: _appointment.title,
@@ -1144,12 +1220,13 @@ const edit = async (req, res) => {
 
       const token = JSON.parse(currentUser.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      await updateGoogleCalendarById(
+      const data = {
         oauth2Client,
-        event_id,
-        _appointment,
-        currentUser.time_zone
-      );
+        remove_id: event_id,
+        appointment: _appointment,
+        time_zone: currentUser.time_zone,
+      };
+      await updateGoogleCalendarById(data);
     }
 
     if (_appointment.contacts && _appointment.contacts.length > 0) {
@@ -1325,18 +1402,19 @@ const remove = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.connect_calendar) {
-    const { event_id, recurrance_id } = req.body;
+    const { event_id, recurrence_id, calendar_id } = req.body;
+    const remove_id = recurrence_id || event_id;
     if (currentUser.connected_email_type === 'outlook') {
+      let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
       });
-      let accessToken;
 
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
-            reject(error.message);
+            reject(error);
           } else {
             resolve(result.token);
           }
@@ -1347,28 +1425,35 @@ const remove = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
         });
 
-      const deleteEventParameters = {
-        token: accessToken,
-        eventId: event_id,
-      };
-
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      outlook.calendar.deleteEvent(deleteEventParameters, function (error) {
-        if (error) {
-          console.log('err', error);
-        }
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
       });
+
+      let res = await client
+        .api(`/me/calendars/${calendar_id}/events/${remove_id}`)
+        .delete()
+        .catch((err) => {
+          console.log('remove err', err);
+        });
     } else {
-      const remove_id = recurrance_id || event_id;
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
-      await removeGoogleCalendarById(oauth2Client, remove_id).catch((err) => {
+      const data = { oauth2Client, calendar_id, remove_id };
+      await removeGoogleCalendarById(data).catch((err) => {
         console.log('event remove err', err.message);
         return res.status(400).json({
           status: false,
@@ -1486,11 +1571,12 @@ const remove = async (req, res) => {
   }
 };
 
-const removeGoogleCalendarById = async (auth, event_id) => {
+const removeGoogleCalendarById = async (data) => {
+  const { oauth2Client, calendar_id, remove_id } = data;
   const calendar = google.calendar({ version: 'v3', auth });
   const params = {
-    calendarId: 'primary',
-    eventId: event_id,
+    calendarId: calendar_id,
+    eventId: remove_id,
     sendNotifications: true,
   };
   // calendar.events.delete(params, function (err) {
@@ -1511,12 +1597,8 @@ const removeGoogleCalendarById = async (auth, event_id) => {
   });
 };
 
-const updateGoogleCalendarById = async (
-  auth,
-  event_id,
-  appointment,
-  time_zone
-) => {
+const updateGoogleCalendarById = async (data) => {
+  const { oauth2Client, remove_id, appointment, time_zone } = data;
   const calendar = google.calendar({ version: 'v3', auth });
   const attendees = [];
   if (appointment.guests) {
@@ -1542,7 +1624,7 @@ const updateGoogleCalendarById = async (
     attendees,
   };
   const params = {
-    calendarId: 'primary',
+    calendarId: appointment.calendar_id,
     eventId: event_id,
     resource: event,
     sendNotifications: true,

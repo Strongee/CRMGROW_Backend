@@ -8,4 +8,15 @@ const time_zone = {
   '-10:00': 'America/Atka',
 };
 
-module.exports = time_zone;
+const days = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wendsday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+
+module.exports.time_zone = time_zone;
+module.exports.days = days;
