@@ -1496,7 +1496,7 @@ const rejectCall = async (req, res) => {
         _id: call_id,
       },
       {
-        status: 'cancelled',
+        status: 'canceled',
       }
     )
       .then(() => {
