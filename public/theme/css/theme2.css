@@ -266,7 +266,7 @@ header .profile .contact-info span {
   }
 }
 @media screen and (max-width: 992px) {
-  .hightlights-slider.cs-container {
+  .highlights-slider.cs-container {
     padding-left: 30px!important;
     padding-right: 30px!important;
   }
@@ -275,7 +275,7 @@ header .profile .contact-info span {
   .highlight-item img {
     transform: scale(.9)!important;
   }
-  .hightlights-slider.cs-container {
+  .highlights-slider.cs-container {
     padding-left: 30px!important;
     padding-right: 30px!important;
   }
