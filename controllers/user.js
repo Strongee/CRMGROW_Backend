@@ -636,7 +636,7 @@ const signUpGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    // 'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/gmail.send',
   ];
@@ -667,7 +667,7 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite',
+    'https://graph.microsoft.com/calendars.readwrite',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -675,6 +675,7 @@ const signUpOutlook = async (req, res) => {
   const authorizationUri = oauth2.authCode.authorizeURL({
     redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
     scope: scopes.join(' '),
+    prompt: 'select_account',
   });
 
   if (!authorizationUri) {
@@ -1264,7 +1265,7 @@ const syncOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    'https://graph.microsoft.com/calendars.readwrite ',
+    'https://graph.microsoft.com/calendars.readwrite',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -1272,6 +1273,7 @@ const syncOutlook = async (req, res) => {
   const authorizationUri = oauth2.authCode.authorizeURL({
     redirect_uri: urls.OUTLOOK_AUTHORIZE_URL,
     scope: scopes.join(' '),
+    prompt: 'select_account',
   });
 
   if (!authorizationUri) {
