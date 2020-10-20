@@ -127,31 +127,31 @@ const getAll = async (req, res) => {
                       const attendees = calendar_event.attendees;
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
-                        let status = '';
+                        let response = '';
                         switch (attendees[j].status.response) {
                           case 'None':
-                            status = 'needsAction';
+                            response = 'needsAction';
                             break;
                           case 'Organizer':
-                            status = 'accepted';
+                            response = 'accepted';
                             break;
                           case 'Declined':
-                            status = 'declined';
+                            response = 'declined';
                             break;
                           case 'Accepted':
-                            status = 'accepted';
+                            response = 'accepted';
                             break;
                           case 'TentativelyAccepted':
-                            status = 'tentative';
+                            response = 'tentative';
                             break;
                           case 'NotResponded':
-                            status = 'needsAction';
+                            response = 'needsAction';
                             break;
                           default:
-                            status = 'needsAction';
+                            response = 'needsAction';
                             break;
                         }
-                        guests.push({ email: guest, status });
+                        guests.push({ email: guest, response });
                       }
                     }
                     const _outlook_calendar_data = {};
@@ -542,6 +542,11 @@ const getAll = async (req, res) => {
       };
       calendarList(calendar_data);
     }
+  } else {
+    return res.send({
+      status: true,
+      data: [],
+    });
   }
 };
 
