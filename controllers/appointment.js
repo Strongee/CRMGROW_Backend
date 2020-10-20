@@ -110,7 +110,6 @@ const getAll = async (req, res) => {
                     const guests = [];
                     const contacts = [];
                     const calendar_event = calendar_events[j];
-                    console.log('**********calendar_event', calendar_event);
                     const appointments = await Appointment.find({
                       event_id: calendar_event.id,
                     })
@@ -128,7 +127,31 @@ const getAll = async (req, res) => {
                       const attendees = calendar_event.attendees;
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
-                        guests.push(guest);
+                        let status = '';
+                        switch (attendees[j].status.response) {
+                          case 'None':
+                            status = 'needsAction';
+                            break;
+                          case 'Organizer':
+                            status = 'accepted';
+                            break;
+                          case 'Declined':
+                            status = 'declined';
+                            break;
+                          case 'Accepted':
+                            status = 'accepted';
+                            break;
+                          case 'TentativelyAccepted':
+                            status = 'tentative';
+                            break;
+                          case 'NotResponded':
+                            status = 'needsAction';
+                            break;
+                          default:
+                            status = 'needsAction';
+                            break;
+                        }
+                        guests.push({ email: guest, status });
                       }
                     }
                     const _outlook_calendar_data = {};
@@ -772,8 +795,6 @@ const create = async (req, res) => {
           },
         };
       }
-
-      console.log('_appointment.description********', _appointment.description);
 
       const ctz = time_zone[currentUser.time_zone];
       const newEvent = {
