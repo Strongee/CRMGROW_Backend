@@ -110,6 +110,7 @@ const getAll = async (req, res) => {
                     const guests = [];
                     const contacts = [];
                     const calendar_event = calendar_events[j];
+                    console.log('**********calendar_event', calendar_event);
                     const appointments = await Appointment.find({
                       event_id: calendar_event.id,
                     })
@@ -592,7 +593,8 @@ const calendarList = (calendar_data) => {
                       if (event.attendees) {
                         for (let j = 0; j < event.attendees.length; j++) {
                           const guest = event.attendees[j].email;
-                          guests.push(guest);
+                          const response = event.attendees[j].responseStatus;
+                          guests.push({ email: guest, response });
                         }
                       }
                       const _gmail_calendar_data = {};
@@ -770,6 +772,8 @@ const create = async (req, res) => {
           },
         };
       }
+
+      console.log('_appointment.description********', _appointment.description);
 
       const ctz = time_zone[currentUser.time_zone];
       const newEvent = {
@@ -1174,7 +1178,7 @@ const edit = async (req, res) => {
         },
         attendees,
       };
-
+      const { calendar_id } = _appointment;
       let res = await client
         .api(`/me/calendars/${calendar_id}/events/${event_id}`)
         .update(event);
