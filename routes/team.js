@@ -107,6 +107,17 @@ router.get(
   catchError(TeamCtrl.getPlannedCall)
 );
 
+router.get(
+  '/call-finished',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getFinishedCall)
+);
+router.get(
+  '/call-finished/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getFinishedCall)
+);
+
 router.post(
   '/request-call',
   UserCtrl.checkAuth,

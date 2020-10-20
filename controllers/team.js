@@ -1559,7 +1559,7 @@ const getInquireCall = async (req, res) => {
       { leader: currentUser.id },
       // { guests: currentUser.id },
     ],
-    status: { $in: ['pending', 'cancelled'] },
+    status: { $in: ['pending'] },
   });
 
   const data = await TeamCall.find({
@@ -1568,11 +1568,11 @@ const getInquireCall = async (req, res) => {
       { leader: currentUser.id },
       // { guests: currentUser.id },
     ],
-    status: { $in: ['pending', 'cancelled'] },
+    status: { $in: ['pending'] },
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } }, 
       // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
     ])
@@ -1598,7 +1598,7 @@ const getPlannedCall = async (req, res) => {
       { leader: currentUser.id },
       // { guests: currentUser.id },
     ],
-    status: { $in: ['planned', 'finished'] },
+    status: { $in: ['finished'] },
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
@@ -1615,7 +1615,46 @@ const getPlannedCall = async (req, res) => {
       { leader: currentUser.id },
       // { guests: currentUser.id },
     ],
-    status: { $in: ['planned', 'finished'] },
+    status: { $in: ['planned'] },
+  });
+
+  return res.send({
+    status: true,
+    data,
+    total,
+  });
+};
+
+const getFinishedCall = async (req, res) => {
+  const { currentUser } = req;
+  let id = 0;
+  if (req.params.id) {
+    id = parseInt(req.params.id);
+  }
+  const data = await TeamCall.find({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      // { guests: currentUser.id },
+    ],
+    status: { $in: ['finished', 'canceled'] },
+  })
+    .populate([
+      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'contacts' },
+    ])
+    .skip(id)
+    .limit(8);
+
+  const total = await TeamCall.countDocuments({
+    $or: [
+      { user: currentUser.id },
+      { leader: currentUser.id },
+      // { guests: currentUser.id },
+    ],
+    status: { $in: ['finished', 'canceled'] },
   });
 
   return res.send({
@@ -1667,6 +1706,7 @@ module.exports = {
   get,
   getInquireCall,
   getPlannedCall,
+  getFinishedCall,
   create,
   update,
   remove,
