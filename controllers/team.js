@@ -1598,7 +1598,7 @@ const getPlannedCall = async (req, res) => {
       { leader: currentUser.id },
       // { guests: currentUser.id },
     ],
-    status: { $in: ['finished'] },
+    status: { $in: ['planned'] },
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
