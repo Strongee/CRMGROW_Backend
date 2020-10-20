@@ -128,23 +128,24 @@ const getAll = async (req, res) => {
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
                         let response = '';
+                        console.log('attendees[j].status.response', attendees[j].status.response);
                         switch (attendees[j].status.response) {
-                          case 'None':
+                          case 'none':
                             response = 'needsAction';
                             break;
-                          case 'Organizer':
+                          case 'organizer':
                             response = 'accepted';
                             break;
-                          case 'Declined':
+                          case 'declined':
                             response = 'declined';
                             break;
-                          case 'Accepted':
+                          case 'accepted':
                             response = 'accepted';
                             break;
-                          case 'TentativelyAccepted':
+                          case 'tentativelyAccepted':
                             response = 'tentative';
                             break;
-                          case 'NotResponded':
+                          case 'notResponded':
                             response = 'needsAction';
                             break;
                           default:
