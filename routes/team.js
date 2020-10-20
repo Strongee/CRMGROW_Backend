@@ -123,6 +123,7 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.requestCall)
 );
+
 router.post(
   '/accept-call',
   UserCtrl.checkAuth,
@@ -136,6 +137,7 @@ router.post(
 );
 
 router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
+router.delete('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));

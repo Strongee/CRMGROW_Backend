@@ -1572,7 +1572,7 @@ const getInquireCall = async (req, res) => {
   })
     .populate([
       { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } }, 
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
       // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
     ])
@@ -1699,6 +1699,26 @@ const updateCall = async (req, res) => {
     });
 };
 
+const removeCall = async (req, res) => {
+  const { currentUser } = req;
+  TeamCall.deleteOne({
+    _id: req.params.id,
+    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call delte err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getTeam,
@@ -1729,5 +1749,6 @@ module.exports = {
   acceptCall,
   rejectCall,
   updateCall,
+  removeCall,
   updateTeam,
 };
