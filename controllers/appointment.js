@@ -184,7 +184,7 @@ const getAll = async (req, res) => {
                     }
                     if (calendar_event.end) {
                       _outlook_calendar_data.due_end =
-                        calendar_event.end.datetime;
+                        calendar_event.end.dateTime;
                       // _outlook_calendar_data.time_zone =
                       //   calendar_event.end.timezone;
                       // _outlook_calendar_data.due_end = moment
