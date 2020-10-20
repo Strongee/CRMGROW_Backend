@@ -138,6 +138,7 @@ router.post(
 
 router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
 router.delete('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
+router.delete('/call', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
