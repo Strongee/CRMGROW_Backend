@@ -251,7 +251,7 @@ const signUp = async (req, res) => {
 
                 Team.updateOne(
                   {
-                    _id: req.params.id,
+                    _id: team.id,
                   },
                   {
                     $set: {
@@ -263,29 +263,33 @@ const signUp = async (req, res) => {
                   .then(async () => {
                     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-                    const msg = {
-                      to: team.owner.email,
-                      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-                      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-                      dynamic_template_data: {
-                        subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
-                        activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
-                        team:
-                          "<a href='" +
-                          urls.TEAM_URL +
-                          team.id +
-                          "'><img src='" +
-                          urls.DOMAIN_URL +
-                          "assets/images/team.png'/></a>",
-                      },
-                    };
+                    const owners = team.owner;
+                    for (let i = 0; i < owners.length; i++) {
+                      const owner = owners[i];
+                      const msg = {
+                        to: owner.email,
+                        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                        dynamic_template_data: {
+                          subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                          team:
+                            "<a href='" +
+                            urls.TEAM_URL +
+                            team.id +
+                            "'><img src='" +
+                            urls.DOMAIN_URL +
+                            "assets/images/team.png'/></a>",
+                        },
+                      };
 
-                    sgMail
-                      .send(msg)
-                      .then()
-                      .catch((err) => {
-                        console.log('send message err: ', err);
-                      });
+                      sgMail
+                        .send(msg)
+                        .then()
+                        .catch((err) => {
+                          console.log('send message err: ', err);
+                        });
+                    }
                   })
                   .catch((err) => {
                     console.log('team update err: ', err.message);
@@ -541,7 +545,7 @@ const socialSignUp = async (req, res) => {
 
                 Team.updateOne(
                   {
-                    _id: req.params.id,
+                    _id: team.id,
                   },
                   {
                     $set: {
@@ -553,29 +557,33 @@ const socialSignUp = async (req, res) => {
                   .then(async () => {
                     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-                    const msg = {
-                      to: team.owner.email,
-                      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-                      templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-                      dynamic_template_data: {
-                        subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
-                        activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
-                        team:
-                          "<a href='" +
-                          urls.TEAM_URL +
-                          team.id +
-                          "'><img src='" +
-                          urls.DOMAIN_URL +
-                          "assets/images/team.png'/></a>",
-                      },
-                    };
+                    const owners = team.owner;
+                    for (let i = 0; i < owners.length; i++) {
+                      const owner = owners[i];
+                      const msg = {
+                        to: owner.email,
+                        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                        dynamic_template_data: {
+                          subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                          team:
+                            "<a href='" +
+                            urls.TEAM_URL +
+                            team.id +
+                            "'><img src='" +
+                            urls.DOMAIN_URL +
+                            "assets/images/team.png'/></a>",
+                        },
+                      };
 
-                    sgMail
-                      .send(msg)
-                      .then()
-                      .catch((err) => {
-                        console.log('send message err: ', err);
-                      });
+                      sgMail
+                        .send(msg)
+                        .then()
+                        .catch((err) => {
+                          console.log('send message err: ', err);
+                        });
+                    }
                   })
                   .catch((err) => {
                     console.log('team update err: ', err.message);
@@ -1452,7 +1460,7 @@ const syncGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    //'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/gmail.send',
   ];
