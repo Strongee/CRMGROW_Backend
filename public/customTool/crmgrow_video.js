@@ -8,15 +8,29 @@ unlayer.registerTool({
     renderer: {
       Viewer: unlayer.createViewer({
         render(values) {
-          return "<div>I am a custom tool Editor UI.</div>"
+          return `
+          <div style="height: 200px;
+            background: gainsboro;
+            padding: 10px;
+            border-radius: 5px;
+            border: 3px dashed gray;
+            margin: -10px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: blue;
+            padding: 40px 100px;">
+            MATERIAL(VIDEO, PDF, IMAGE) will be placed here.
+          </div>
+          `
         }
       }),
       exporters: {
         web: function(values) {
-          return "<div>I am a custom tool Exporter WEB.</div>"
+          return `<div class="material-wrapper">{{material_content}}</div>`
         },
         email: function(values) {
-          return "<div>I am a custom tool Email Exporter.</div>"
+          return `<div class="material-wrapper">{{material_content}}</div>`
         }
       },
       head: {
