@@ -11,15 +11,13 @@ unlayer.registerTool({
           return `
           <div style="height: 200px;
             background: gainsboro;
-            padding: 10px;
             border-radius: 5px;
             border: 3px dashed gray;
             margin: -10px;
             font-size: 20px;
             text-align: center;
-            font-weight: bold;
-            color: blue;
-            padding: 40px 100px;">
+            color: #848484;
+            padding: 40px 90px;">
             MATERIAL(VIDEO, PDF, IMAGE) will be placed here.
           </div>
           `
