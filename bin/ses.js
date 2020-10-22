@@ -1,18 +1,20 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const { ENV_PATH } = require('../config/path');
-const api = require('../config/api');
-
 require('dotenv').config({ path: ENV_PATH });
+const api = require('../config/api');
 
 AWS.config.update({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'TeamRequest';
+const templateName = 'TeamCallInvitation';
+
 const subjects = {
-  TeamRequest: `CRMGROW Team member call join request: {{user_name}}`,
+  TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
+  TeamRequest: `CRMGROW Team member join request: {{user_name}}`,
+  TeamCallInvitation: `{{user_name}} has accepted your call request`,
 };
 const htmls = {};
 fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (
@@ -22,7 +24,7 @@ fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (
   if (err) {
     return console.log(err);
   }
-  const updateParams = {
+  const createParams = {
     Template: {
       TemplateName: templateName,
       SubjectPart: subjects[templateName],
@@ -32,14 +34,14 @@ fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (
   };
 
   const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-    .createTemplate(updateParams)
+    .createTemplate(createParams)
     .promise();
 
   templatePromise
     .then((data) => {
-      console.log('Updated successfully', data);
+      console.log('Created successfully', data);
     })
     .catch((err) => {
-      console.log('Update is failed', err);
+      console.log('Create is failed', err);
     });
 });

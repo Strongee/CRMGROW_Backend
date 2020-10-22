@@ -54,9 +54,8 @@
             letter-spacing: 0;
             line-height: 32px;
         }
-        .accept {
+        .call {
             width: 90px;
-            height: 40px;
             border: 0;
             border-radius: 3px;
             color: #ffffff;
@@ -66,20 +65,10 @@
             font-weight: 600;
             letter-spacing: 0.5px;
             line-height: 22px;
-        }
-        .decline {
-            width: 90px;
-            height: 40px;
-            border: 0;
-            border-radius: 3px;
-            color: #ffffff;
-            background-color: #F1015E;
-            font-family: 'Nunito';
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            line-height: 22px;
-            margin-left: 15px;
+            display: block;
+            text-align: center;
+            padding: 8px 0px;
+            text-decoration: none;
         }
         .footer-text {
             color: #101336;
@@ -113,7 +102,7 @@
                                                             <tr>
                                                                 <td class="invite-user">
                                                                     <span>
-                                                                        Welcome {{owner_name}},
+                                                                        Welcome {{leader_name}},
                                                                     </span>
                                                                 </td>
                                                                 <td align="right" class="invite-time">
@@ -128,12 +117,12 @@
                                             </tr>
                                             <tr>
                                                 <td class="join-description">
-                                                    <span style="color: #0B04FF">{{user_name}}</span> is requesting to join <span style="color: #0000FF">{{team_name}}</span> team
+                                                    <span style="color: #0B04FF">{{user_name}}</span> is requesting to join <span style="color: #0000FF">{{team_call}}</span> call
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="request-title">
-                                                    TO ACCEPT OR DECLINE
+                                                    TO View
                                                 </td>
                                             </tr>
                                             <tr>
@@ -148,7 +137,7 @@
                                             </tr>
                                             <tr>
                                                 <td style="padding-top: 10px; padding-bottom: 35px;">
-                                                    <a href="{{accept_url}}" class="accept" >Accept</a><a href="{{decline_url}}" class="decline">Decline</a>
+                                                    <a href="{{call_url}}" class="call" >View</a>
                                                 </td>
                                             </tr>
                                         </tbody>

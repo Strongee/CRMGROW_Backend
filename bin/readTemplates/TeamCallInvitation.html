@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Request</title>
+    <title>Team Invitation</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
     <style>
         .email-container {
@@ -28,16 +28,16 @@
             letter-spacing: 0;
             line-height: 30px;
         }
-        .join-description {
+        .invitation-description {
             color: #101336;
             font-family: Arial;
             font-size: 24px;
             font-weight: bold;
             letter-spacing: 0;
-            line-height: 30px;
+            line-height: 32px;
             padding-bottom: 35px;
         }
-        .request-title {
+        .invitation-detail {
             opacity: 0.5;
             color: #101336;
             font-family: 'Nunito';
@@ -46,40 +46,43 @@
             letter-spacing: 0;
             line-height: 22px;
         }
-        .account-link {
+        .invitation-step {
             color: #101336;
             font-family: 'Nunito';
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             letter-spacing: 0;
-            line-height: 32px;
+            line-height: 24px;
+            padding-bottom: 2px;
         }
-        .accept {
+        .invitation-comment {
+            color: #101336;
+            font-family: Arial;
+            font-size: 14px;
+            letter-spacing: 0;
+            line-height: 18px; 
+            padding-bottom: 10px;
+        }
+        a {
+            color: #0000FF;
+            font-weight: bold;
+            font-family: Arial;
+            font-size: 14px;
+            letter-spacing: 0;
+            line-height: 18px;
+            text-decoration: none;
+        }
+        button {
             width: 90px;
             height: 40px;
             border: 0;
             border-radius: 3px;
+            background-color: #0000FF;
             color: #ffffff;
-            background-color: #00AE70;
             font-family: 'Nunito';
             font-size: 14px;
-            font-weight: 600;
             letter-spacing: 0.5px;
-            line-height: 22px;
-        }
-        .decline {
-            width: 90px;
-            height: 40px;
-            border: 0;
-            border-radius: 3px;
-            color: #ffffff;
-            background-color: #F1015E;
-            font-family: 'Nunito';
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            line-height: 22px;
-            margin-left: 15px;
+            line-height: 18px;
         }
         .footer-text {
             color: #101336;
@@ -99,7 +102,7 @@
                         <tbody>
                             <tr>
                                 <td align="center" style="padding-top: 56px; padding-bottom: 40px;">
-                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-40px.png" width="228" height="37">
+                                    <img src="./assets/img/crmgrow-logo-40px.png" width="228" height="37">
                                 </td>
                             </tr>
                             <tr>
@@ -107,18 +110,18 @@
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td style="padding-bottom: 10px;">
+                                                <td>
                                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                                         <tbody>
                                                             <tr>
                                                                 <td class="invite-user">
                                                                     <span>
-                                                                        Welcome {{owner_name}},
+                                                                        Welcome Garrett,
                                                                     </span>
                                                                 </td>
                                                                 <td align="right" class="invite-time">
                                                                     <span>
-                                                                        {{created_at}}
+                                                                        20:04 8 April 2020
                                                                     </span>
                                                                 </td>
                                                             </tr>
@@ -127,28 +130,43 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="join-description">
-                                                    <span style="color: #0B04FF">{{user_name}}</span> is requesting to join <span style="color: #0000FF">{{team_name}}</span> team
+                                                <td class="invitation-description">
+                                                    You have been added to <span style="color: #0000FF;">CRMmasters</span> team
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="request-title">
-                                                    TO ACCEPT OR DECLINE
+                                                <td class="invitation-detail">
+                                                    TO CHECK YOUR NEW TEAM
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="account-link">
-                                                    Go to your CRMgrow Account
+                                                <td class="invitation-step">
+                                                    1. Login to your CRMgrow account
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="account-link">
+                                                <td class="invitation-comment">
+                                                    <span style="opacity: 0.64;">Go to website or </span><a href="#">click here</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="invitation-step">
+                                                    2.Go to your Teams
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="invitation-comment">
+                                                    <span style="opacity: 0.64;">Main option on the left menu</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="invitation-step" style="padding-top: 10px; padding-bottom: 20px;">
                                                     or
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding-top: 10px; padding-bottom: 35px;">
-                                                    <a href="{{accept_url}}" class="accept" >Accept</a><a href="{{decline_url}}" class="decline">Decline</a>
+                                                <td style="padding-bottom: 28px;">
+                                                    <button>Click here</button>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -161,7 +179,7 @@
                                         <tbody>
                                             <tr>
                                                 <td style="padding-top: 40px; padding-bottom: 20px;">
-                                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-24px.png" width="142" height="23">
+                                                    <img src="./assets/img/crmgrow-logo-24px.png" width="142" height="23">
                                                 </td>
                                             </tr>
                                             <tr>
