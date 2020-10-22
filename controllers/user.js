@@ -812,6 +812,7 @@ const socialOutlook = async (req, res) => {
           connected_email_type: 'outlook',
           primary_connected: true,
           outlook_refresh_token,
+          connect_calendar: true,
           email_max_count,
         };
         return res.send({
@@ -1340,6 +1341,7 @@ const authorizeOutlook = async (req, res) => {
         user.social_id = jwt.oid;
         user.connected_email_type = 'outlook';
         user.primary_connected = true;
+        user.connect_calendar = true;
         if (
           user.connected_email.indexOf('@outlook.com') !== -1 ||
           user.connected_email.indexOf('@hotmail.com') !== -1
