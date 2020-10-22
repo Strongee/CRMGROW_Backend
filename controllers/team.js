@@ -1573,22 +1573,27 @@ const rejectCall = async (req, res) => {
         /** **********
          *  Send email notification to the inviated users
          *  */
-        sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-        const msg = {
-          to: user.email,
-          from: mail_contents.NO_REPLAY,
-          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
-          dynamic_template_data: {
-            LOGO_URL: urls.LOGO_URL,
-            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-            invite: currentUser.user_name,
-            user_name: user.user_name,
-            VIEW_URL: urls.TEAM_CALLS + team_call.id,
-          },
+        const templatedData = {
+          leader_name: currentUser.user_name,
+          created_at: moment().format('h:mm MMMM Do YYYY'),
+          team_call: team_call.subject,
+          user_name: user.user_name,
+          call_url: urls.TEAM_CALLS + team_call.id,
         };
-        sgMail.send(msg).catch((err) => {
-          console.log('team call invitation email err', err);
-        });
+
+        const params = {
+          Destination: {
+            ToAddresses: [user.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'TeamCallInquiryFailed',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+
+        ses.sendTemplatedEmail(params).promise();
 
         /** **********
          *  Creat dashboard notification to the inviated users
@@ -1653,6 +1658,22 @@ const getInquireCall = async (req, res) => {
     status: true,
     data,
     total,
+  });
+};
+
+const getDetailInquireCall = async (req, res) => {
+  const data = await TeamCall.findOne({
+    _id: req.params.id,
+  }).populate([
+    { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+    { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+    // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
+    { path: 'contacts' },
+  ]);
+
+  return res.send({
+    status: true,
+    data,
   });
 };
 
@@ -1797,6 +1818,7 @@ module.exports = {
   getInquireCall,
   getPlannedCall,
   getFinishedCall,
+  getDetailInquireCall,
   create,
   update,
   remove,

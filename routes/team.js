@@ -90,10 +90,17 @@ router.post('/update', UserCtrl.checkAuth, catchError(TeamCtrl.updateTeam));
 // Team call for 3 way
 
 router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
+
+router.get(
+  '/nth-call/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getInquireCall)
+);
+
 router.get(
   '/call/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getInquireCall)
+  catchError(TeamCtrl.getDetailInquireCall)
 );
 
 router.get(
