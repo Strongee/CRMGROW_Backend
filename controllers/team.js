@@ -2,6 +2,8 @@ const sgMail = require('@sendgrid/mail');
 const mongoose = require('mongoose');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
+const AWS = require('aws-sdk');
+const moment = require('moment');
 const api = require('../config/api');
 const Team = require('../models/team');
 const User = require('../models/user');
@@ -14,6 +16,13 @@ const Contact = require('../models/contact');
 const Notification = require('../models/notification');
 const TeamCall = require('../models/team_call');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const getAll = (req, res) => {
   const { currentUser } = req;
@@ -29,15 +38,33 @@ const getAll = (req, res) => {
     .populate([
       {
         path: 'owner',
-        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+        select: {
+          _id: 1,
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+        },
       },
       {
         path: 'members',
-        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+        select: {
+          _id: 1,
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+        },
       },
       {
         path: 'editors',
-        select: { _id: 1, user_name: 1, picture_profile: 1, email: 1 },
+        select: {
+          _id: 1,
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+        },
       },
     ])
     .then((data) => {
@@ -1367,20 +1394,41 @@ const requestCall = async (req, res) => {
        *  */
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       if (leader) {
-        const msg = {
-          to: leader.email,
-          from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
-          templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
-          dynamic_template_data: {
-            LOGO_URL: urls.LOGO_URL,
-            subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-            user_name: currentUser.user_name,
-            VIEW_URL: urls.TEAM_CALLS + team_call.id,
-          },
+        // const msg = {
+        //   to: leader.email,
+        //   from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
+        //   templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
+        //   dynamic_template_data: {
+        //     LOGO_URL: urls.LOGO_URL,
+        //     subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
+        //     user_name: currentUser.user_name,
+        //     VIEW_URL: urls.TEAM_CALLS + team_call.id,
+        //   },
+        // };
+        // sgMail.send(msg).catch((err) => {
+        //   console.log('team call invitation email err', err);
+        // });
+        const templatedData = {
+          leader_name: leader.user_name,
+          created_at: moment().format('h:mm MMMM Do YYYY'),
+          team_call: team_call.subject,
+          user_name: currentUser.user_name,
+          call_url: urls.TEAM_CALLS + team_call.id,
         };
-        sgMail.send(msg).catch((err) => {
-          console.log('team call invitation email err', err);
-        });
+
+        const params = {
+          Destination: {
+            ToAddresses: [leader.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'TeamCallRequest',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+
+        ses.sendTemplatedEmail(params).promise();
       }
 
       /** **********
