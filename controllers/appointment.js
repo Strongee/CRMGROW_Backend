@@ -90,7 +90,6 @@ const getAll = async (req, res) => {
             // The start and end date are passed as query parameters
             const startDateTime = date.toISOString();
             const endDateTime = endDate.toISOString();
-
             for (let i = 0; i < calendars.length; i++) {
               const calendar = calendars[i];
               const promise = new Promise(async (resolve) => {
