@@ -197,12 +197,12 @@ const getAll = async (req, res) => {
                     }
                     if (calendar_event.organizer) {
                       _outlook_calendar_data.organizer =
-                        calendar_event.organizer.address;
+                        calendar_event.organizer.emailAddress.address;
                       if (
-                        calendar_event.organizer.address ===
+                        calendar_event.organizer.emailAddress.address ===
                         currentUser.connected_email
                       ) {
-                        calendar_event.is_organizer = true;
+                        _outlook_calendar_data.is_organizer = true;
                       }
                     }
 
