@@ -195,6 +195,17 @@ const getAll = async (req, res) => {
                     } else {
                       _outlook_calendar_data.due_end = '';
                     }
+                    if (calendar_event.organizer) {
+                      _outlook_calendar_data.organizer =
+                        calendar_event.organizer.address;
+                      if (
+                        calendar_event.organizer.address ===
+                        currentUser.connected_email
+                      ) {
+                        calendar_event.is_organizer = true;
+                      }
+                    }
+
                     _outlook_calendar_data.contacts = contacts;
                     _outlook_calendar_data.guests = guests;
                     _outlook_calendar_data.event_id = calendar_event.id;
@@ -538,6 +549,7 @@ const getAll = async (req, res) => {
         res,
         date,
         mode,
+        user_name: currentUser.connected_email,
       };
       calendarList(calendar_data);
     }
@@ -568,7 +580,7 @@ const get = async (req, res) => {
 };
 
 const calendarList = (calendar_data) => {
-  const { auth, data, res, date, mode } = calendar_data;
+  const { user_email, auth, data, res, date, mode } = calendar_data;
   const endDate = moment(date).add(1, `${mode}s`);
   const calendar = google.calendar({ version: 'v3', auth });
   calendar.calendarList.list(
@@ -641,6 +653,13 @@ const calendarList = (calendar_data) => {
                         });
                         _gmail_calendar_data.recurrence_id =
                           event.recurringEventId;
+                      }
+
+                      if (event.organizer) {
+                        _gmail_calendar_data.organizer = event.organizer.email;
+                        if (event.organizer.email === user_email) {
+                          _gmail_calendar_data.is_organizer = true;
+                        }
                       }
 
                       _gmail_calendar_data.calendar_id = calendars[i].id;
