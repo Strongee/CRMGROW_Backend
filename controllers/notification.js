@@ -126,7 +126,7 @@ const getPage = async (req, res) => {
 
 const getDelivery = async (req, res) => {
   const { currentUser } = req;
-  const notification = await Notification.find({
+  const sms = await Notification.find({
     user: currentUser.id,
     criteria: 'bulk_sms',
   }).catch((err) => {
@@ -135,7 +135,9 @@ const getDelivery = async (req, res) => {
 
   return res.send({
     status: true,
-    notification,
+    notification: {
+      sms,
+    },
   });
 };
 
