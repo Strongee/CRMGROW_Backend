@@ -79,27 +79,32 @@ function sleep(ms) {
 }
 
 const sendMessage = async () => {
-  const fromNumber = ['+17473342002', '+18442631354'];
-  const e164Phone = ['+15625480802', '+13124938446'];
+  const fromNumber = ['+12489634941', '+18442631354'];
+  const e164Phone = ['+13124938446', '+13124938446'];
   const content1 = 'Hi, How are you?';
   const content =
-    'Hi Garret,  Super here with Real Estate B-School. I also emailed you but thought I would text you as well. Check out the video below and email me back or text me at 704-610-4888 and let me know if you can make it. -Lars (yes this is really Lars!) Private Confidential Zoom Meeting with Super: https://app.crmgrow.com/video?video=5e2a05c94d04d37842cc8ff9&user=5f5eabe949f8956d8647e050';
+    'Hi Super,  Garrett here with Real Estate B-School. I also emailed you but thought I would text you as well. Check out the video below and email me back or text me at 704-610-4888 and let me know if you can make it. -Lars (yes this is really Lars!) Private Confidential Zoom Meeting with Super: https://app.crmgrow.com/video?video=5e2a05c94d04d37842cc8ff9&user=5f5eabe949f8956d8647e050';
 
   const content2 =
     'Hi Steven, It`s John Rurkowski.Please click and listen to my short video below and text me back at 727-459-7356 so we can set up a time to discuss it. Have a great Saturday. Hello from John Rurkowski: https://app.crmgrow.com/video1/5f6f28f90f0c3a6f7fd57aa9';
-  console.log('e164Phone', e164Phone);
-  for (let i = 0; i < 20; i++) {
-    await sleep(1000);
+  console.log('e164Phone', e164Phone[0]);
+  for (let i = 0; i < 10; i++) {
+    // await sleep(1000);
     const j = i % 2;
     client.messages
       .create({
-        from: fromNumber[j],
+        from: fromNumber[0],
         to: e164Phone[0],
-        body: `${i} ` + content,
+        body: `${i} ` + content1,
       })
-      .then((message) => {
+      .then(async (message) => {
+        await sleep(1000);
         console.log('Message ID: ', message.sid);
-        console.info(`Send SMS: ${fromNumber} -> ${e164Phone} :`, content);
+        console.log('Message status: ', message.status);
+        console.info(
+          `Send SMS: ${fromNumber[0]} -> ${e164Phone[0]} ${i}:`,
+          content1
+        );
       })
       .catch((err) => {
         console.log('message send err', err);

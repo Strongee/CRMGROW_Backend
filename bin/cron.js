@@ -1798,6 +1798,58 @@ const timesheet_check = new CronJob(
             });
             break;
           }
+          case 'bulk_sms': {
+            const { message_sid, activities } = timeline.action;
+            TextHelper.getStatus(message_sid).then((res) => {
+              if (res.status === 'delivered') {
+                Activity.updateMany(
+                  {
+                    _id: { $in: activities },
+                  },
+                  {
+                    status: 'completed',
+                  }
+                ).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    status: 'delivered',
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                timeline['status'] = 'completed';
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+              } else if (
+                res.status === 'undelivered' ||
+                res.status === 'failed'
+              ) {
+                Activity.deleteMany({
+                  _id: { $in: activities },
+                }).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    status: 'undelivered',
+                    error_message: res.error_message,
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                timeline['status'] = 'completed';
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+              }
+            });
+            break;
+          }
         }
         if (timeline.ref) {
           const next_data = {
@@ -1805,6 +1857,12 @@ const timesheet_check = new CronJob(
             ref: timeline.ref,
           };
           TimeLineCtrl.activeNext(next_data);
+        } else if (timeline.status === 'completed') {
+          TimeLineCtrl.deleteOne({
+            _id: timeline.id,
+          }).catch((err) => {
+            console.log('timeline remove err', err.message);
+          });
         }
         if (timeline.condition && timeline.condition.answer === false) {
           const pair_timeline = await TimeLine.findOne({

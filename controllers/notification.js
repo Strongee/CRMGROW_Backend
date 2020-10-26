@@ -124,9 +124,25 @@ const getPage = async (req, res) => {
   });
 };
 
+const getDelivery = async (req, res) => {
+  const { currentUser } = req;
+  const notification = await Notification.find({
+    user: currentUser.id,
+    criteria: 'bulk_sms',
+  }).catch((err) => {
+    console.log('notification find err', err.message);
+  });
+
+  return res.send({
+    status: true,
+    notification,
+  });
+};
+
 module.exports = {
   get,
   getPage,
+  getDelivery,
   bulkRead,
   bulkUnread,
   bulkRemove,
