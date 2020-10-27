@@ -198,6 +198,10 @@ router.post('/social-login', catchError(UserCtrl.socialLogin));
 // Edit own profile
 router.post('/social-signup', catchError(UserCtrl.socialSignUp));
 
+router.get('/app-google-signin', catchError(UserCtrl.appGoogleSignIn));
+
+router.get('/app-outlook-signin', catchError(UserCtrl.appOutlookSignIn));
+
 // Connect Another Email Service
 router.get(
   '/another-con',
