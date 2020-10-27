@@ -36,6 +36,7 @@ const Team = require('../models/team');
 const User = require('../models/user');
 const TimeLine = require('../models/time_line');
 const EmailTemplate = require('../models/email_template');
+const Notification = require('../models/notification');
 const {
   THUMBNAILS_PATH,
   TEMP_PATH,
@@ -2313,12 +2314,49 @@ const bulkText = async (req, res) => {
             body: video_content,
           })
           .then((message) => {
-            if (message.status !== 'undelivered') {
+            if (message.status !== 'delivered') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                 video_content
               );
+
+              const now = moment();
+              const due_date = now.add(1, 'hours');
+              const timeline = new TimeLine({
+                user: currentUser.id,
+                status: 'active',
+                action: {
+                  type: 'bulk_sms',
+                  message_sid: message.sid,
+                  activities,
+                },
+                due_date,
+              });
+              timeline.save().catch((err) => {
+                console.log('time line save err', err.message);
+              });
+
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  status: 'pending',
+                }
+              ).catch((err) => {
+                console.log('activity err', err.message);
+              });
+
+              const notification = new Notification({
+                user: currentUser.id,
+                message_sid: message.sid,
+                activities,
+                criteria: 'bulk_sms',
+                status: 'pending',
+              });
+              notification.save().catch((err) => {
+                console.log('notification save err', err.message);
+              });
+
               Contact.updateOne(
                 { _id: contacts[i] },
                 {

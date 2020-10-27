@@ -1,3 +1,4 @@
+const nodemailer = require('nodemailer');
 const Garbage = require('../models/garbage');
 const { removeFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
@@ -141,9 +142,43 @@ const uploadIntroVideo = async (req, res) => {
   }
 };
 
+const connectSMTP = async (req, res) => {
+  const { currentUser } = req;
+  const { host_name, port, email, user_name, password, secure } = req.body;
+  const mailOptions = {
+    from: `${currentUser.user_name} <${email}>`,
+    to: 'amazingskill8001@gmail.com',
+    subject: 'test again',
+    text: 'Test',
+    html: '<p>Test</p>',
+  };
+
+  console.log('yahoo.....', currentUser.yahoo_refresh_token);
+  const transporter = nodemailer.createTransport({
+    host: `smtp.${host_name}`,
+    port: port || 587,
+    secureConnection: secure || port === 465,
+    auth: {
+      user: user_name,
+      pass: password,
+    },
+  });
+  transporter.sendMail(mailOptions, (err, data) => {
+    if (err) {
+      return console.log(err);
+    } else {
+      console.log(JSON.stringify(data));
+      res.send({
+        status: true,
+      });
+    }
+  });
+};
+
 module.exports = {
   get,
   create,
   edit,
+  connectSMTP,
   uploadIntroVideo,
 };

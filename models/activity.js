@@ -35,6 +35,7 @@ const ActivitySchema = new Schema(
     send_type: { type: Number, default: 0 },
     subject: String,
     description: String,
+    status: String,
     created_at: Date,
     updated_at: Date,
   },
@@ -43,6 +44,7 @@ const ActivitySchema = new Schema(
   }
 );
 
+ActivitySchema.index({ messsage_sid: 1 });
 ActivitySchema.index({ user: 1 });
 const Activity = mongoose.model('activity', ActivitySchema);
 

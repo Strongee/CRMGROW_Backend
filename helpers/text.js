@@ -938,11 +938,7 @@ const matchUSPhoneNumber = (phoneNumberString) => {
 };
 
 const getStatus = (id) => {
-  client
-    .messages(id)
-    .fetch()
-    .then((message) => console.log(message.status))
-    .done();
+  return client.messages(id).fetch();
 };
 
 const releaseSignalWireNumber = (phoneNumberSid) => {
