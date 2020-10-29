@@ -1531,10 +1531,12 @@ const acceptCall = async (req, res) => {
 
         const templatedData = {
           leader_name: currentUser.user_name,
-          created_at: moment().format('h:mm MMMM Do YYYY'),
-          team_call: team_call.subject,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
           user_name: user.user_name,
-          call_url: urls.TEAM_CALLS + team_call.id,
+          due_start: moment(team_call.due_start).format('h:mm MMMM Do, YYYY'),
+          organizer: user.user_name,
+          subject: team_call.subject,
+          description: team_call.description,
         };
 
         const params = {

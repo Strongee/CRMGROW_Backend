@@ -1837,7 +1837,8 @@ const timesheet_check = new CronJob(
                   { message_sid },
                   {
                     status: 'undelivered',
-                    error_message: res.error_message,
+                    description: res.error_message,
+                    content: 'Failed texting material',
                   }
                 ).catch((err) => {
                   console.log('notification update err', err.message);
