@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'TeamCallInquiryFailed';
+const templateName = 'TeamCallRequest';
 
 const subjects = {
   TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
@@ -35,7 +35,7 @@ fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (
   };
 
   const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-    .createTemplate(createParams)
+    .updateTemplate(createParams)
     .promise();
 
   templatePromise
