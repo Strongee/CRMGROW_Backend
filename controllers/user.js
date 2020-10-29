@@ -758,6 +758,70 @@ const socialGmail = async (req, res) => {
   });
 };
 
+const appGoogleSignIn = async (req, res) => {
+  const code = req.query.code;
+  console.log(code);
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.APP_SIGNIN_URL + 'google'
+  );
+
+  const { tokens } = await oauth2Client.getToken(code);
+  oauth2Client.setCredentials(tokens);
+
+  if (typeof tokens.refresh_token === 'undefined') {
+    return res.status(403).send({
+      status: false,
+    });
+  }
+
+  if (!tokens) {
+    return res.status(403).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2',
+  });
+
+  oauth2.userinfo.v2.me.get(async function (err, _res) {
+    // Email is in the preferred_username field
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
+      });
+    }
+    const social_id = _res.data.id;
+    const _user = await User.findOne({
+      social_id: new RegExp(social_id, 'i'),
+      del: false,
+    });
+    if (!_user) {
+      return res.status(401).json({
+        status: false,
+        error: 'No existing email or user',
+      });
+    }
+    // TODO: Include only email for now
+    // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+    //   expiresIn: '30d',
+    // });
+    const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+    return res.send({
+      status: true,
+      data: {
+        token,
+        user: _user.id,
+      },
+    });
+  });
+};
+
 const socialOutlook = async (req, res) => {
   const code = req.query.code;
   const scopes = [
@@ -822,6 +886,32 @@ const socialOutlook = async (req, res) => {
       }
     }
   );
+};
+
+const appOutlookSignIn = async (req, res) => {
+  const social_id = req.query.code;
+  const _user = await User.findOne({
+    social_id: new RegExp(social_id, 'i'),
+    del: false,
+  });
+  if (!_user) {
+    return res.status(401).json({
+      status: false,
+      error: 'No existing email or user',
+    });
+  }
+  // TODO: Include only email for now
+  // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+  //   expiresIn: '30d',
+  // });
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+  return res.send({
+    status: true,
+    data: {
+      token,
+      user: _user.id,
+    },
+  });
 };
 
 const login = async (req, res) => {
@@ -2259,6 +2349,8 @@ module.exports = {
   signUpOutlook,
   socialGmail,
   socialOutlook,
+  appGoogleSignIn,
+  appOutlookSignIn,
   getMe,
   editMe,
   getUser,
