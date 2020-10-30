@@ -9,6 +9,11 @@ const router = express.Router();
 router.post('/', UserCtrl.checkAuth, catchError(TeamCtrl.create));
 router.get('/load', UserCtrl.checkAuth, catchError(TeamCtrl.getAll));
 router.get(
+  '/load-leaders',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getLeaders)
+);
+router.get(
   '/load-invited',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getInvitedTeam)
