@@ -16,6 +16,7 @@ const Contact = require('../models/contact');
 const Notification = require('../models/notification');
 const TeamCall = require('../models/team_call');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const { getAvatarName } = require('../helpers/utility');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -1374,11 +1375,20 @@ const updateTeam = (req, res) => {
 const requestCall = async (req, res) => {
   const { currentUser } = req;
   let leader;
+  let contacts;
 
   if (req.body.leader) {
     leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
       console.log('leader find err', err.message);
     });
+  }
+
+  if (req.body.contacts && req.body.contacts.length > 0) {
+    contacts = await Contact.find({ _id: { $in: req.body.contacts } }).catch(
+      (err) => {
+        console.log('contact find err', err.message);
+      }
+    );
   }
 
   const team_call = new TeamCall({
@@ -1389,31 +1399,39 @@ const requestCall = async (req, res) => {
   team_call
     .save()
     .then((data) => {
-      /** **********
-       *  Send email notification to the inviated users
-       *  */
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       if (leader) {
-        // const msg = {
-        //   to: leader.email,
-        //   from: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.MAIL,
-        //   templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
-        //   dynamic_template_data: {
-        //     LOGO_URL: urls.LOGO_URL,
-        //     subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-        //     user_name: currentUser.user_name,
-        //     VIEW_URL: urls.TEAM_CALLS + team_call.id,
-        //   },
-        // };
-        // sgMail.send(msg).catch((err) => {
-        //   console.log('team call invitation email err', err);
-        // });
+        let guests = '';
+        if (contacts) {
+          for (let i = 0; i < contacts.length; i++) {
+            const first_name = contacts[i].first_name || '';
+            const last_name = contacts[i].last_name || '';
+            const data = {
+              first_name,
+              last_name,
+            };
+
+            const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+              data
+            )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+            guests += guest;
+          }
+        }
+
+        const organizer = `<tr><td><span class="icon-user">${getAvatarName({
+          full_name: currentUser.user_name,
+        })}</label></td><td style="padding-left: 5px;">${
+          currentUser.user_name
+        }</td></tr>`;
+
         const templatedData = {
+          user_name: currentUser.user_name,
           leader_name: leader.user_name,
           created_at: moment().format('h:mm MMMM Do, YYYY'),
-          team_call: team_call.subject,
-          user_name: currentUser.user_name,
+          subject: team_call.subject,
+          description: team_call.description || '',
+          organizer,
           call_url: urls.TEAM_CALLS + team_call.id,
+          guests,
         };
 
         const params = {
@@ -1428,7 +1446,16 @@ const requestCall = async (req, res) => {
 
         // Create the promise and SES service object
 
-        ses.sendTemplatedEmail(params).promise();
+        console.log('templatedData', templatedData);
+        ses
+          .sendTemplatedEmail(params)
+          .promise()
+          .then((response) => {
+            console.log('success', response.MessageId);
+          })
+          .catch((err) => {
+            console.log('ses send err', err);
+          });
       }
 
       /** **********
@@ -1504,10 +1531,12 @@ const acceptCall = async (req, res) => {
 
         const templatedData = {
           leader_name: currentUser.user_name,
-          created_at: moment().format('h:mm MMMM Do YYYY'),
-          team_call: team_call.subject,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
           user_name: user.user_name,
-          call_url: urls.TEAM_CALLS + team_call.id,
+          due_start: moment(team_call.due_start).format('h:mm MMMM Do, YYYY'),
+          organizer: user.user_name,
+          subject: team_call.subject,
+          description: team_call.description,
         };
 
         const params = {

@@ -19,6 +19,7 @@ const TeamCallSchema = new Schema(
     link: String,
     due_start: Date,
     due_end: Date,
+    proposed_at: Array,
     updated_at: Date,
     created_at: Date,
   },
