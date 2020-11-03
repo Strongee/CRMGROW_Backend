@@ -2322,7 +2322,7 @@ const bulkText = async (req, res) => {
               );
 
               const now = moment();
-              const due_date = now.add(1, 'hours');
+              const due_date = now.add(1, 'minutes');
               const timeline = new TimeLine({
                 user: currentUser.id,
                 status: 'active',

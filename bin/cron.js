@@ -1807,7 +1807,7 @@ const timesheet_check = new CronJob(
                     _id: { $in: activities },
                   },
                   {
-                    status: 'completed',
+                    $set: { status: 'completed' },
                   }
                 ).catch((err) => {
                   console.log('activity save err', err.message);
@@ -1820,9 +1820,10 @@ const timesheet_check = new CronJob(
                 ).catch((err) => {
                   console.log('notification update err', err.message);
                 });
-                timeline['status'] = 'completed';
-                timeline.save().catch((err) => {
-                  console.log('time line save err', err.message);
+                TimeLineCtrl.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
                 });
               } else if (
                 res.status === 'undelivered' ||
@@ -1845,9 +1846,10 @@ const timesheet_check = new CronJob(
                 ).catch((err) => {
                   console.log('notification update err', err.message);
                 });
-                timeline['status'] = 'completed';
-                timeline.save().catch((err) => {
-                  console.log('time line save err', err.message);
+                TimeLineCtrl.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
                 });
               }
             });
