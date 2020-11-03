@@ -2307,6 +2307,7 @@ const bulkText = async (req, res) => {
           resolve(); // Invalid phone number
         }
 
+        textHelper.sleep(1000);
         client.messages
           .create({
             from: fromNumber,
@@ -2349,6 +2350,7 @@ const bulkText = async (req, res) => {
               const notification = new Notification({
                 user: currentUser.id,
                 message_sid: message.sid,
+                contact: _contact.id,
                 activities,
                 criteria: 'bulk_sms',
                 status: 'pending',

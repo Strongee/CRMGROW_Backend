@@ -129,9 +129,11 @@ const getDelivery = async (req, res) => {
   const sms = await Notification.find({
     user: currentUser.id,
     criteria: 'bulk_sms',
-  }).catch((err) => {
-    console.log('notification find err', err.message);
-  });
+  })
+    .populate('contact')
+    .catch((err) => {
+      console.log('notification find err', err.message);
+    });
 
   return res.send({
     status: true,
