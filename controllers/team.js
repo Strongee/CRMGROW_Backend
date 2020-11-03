@@ -1839,8 +1839,63 @@ const removeCall = async (req, res) => {
     });
 };
 
+const getLeaders = (req, res) => {
+  const { currentUser } = req;
+  Team.find({
+    $or: [
+      {
+        members: currentUser.id,
+      },
+      { owner: currentUser.id },
+    ],
+  })
+    .populate([
+      {
+        path: 'owner',
+        select: {
+          _id: 1,
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+        },
+      },
+      {
+        path: 'editors',
+        select: {
+          _id: 1,
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+        },
+      },
+    ])
+    .then((data) => {
+      let users = [];
+      data.forEach((e) => {
+        if (users.length) {
+          users = [...e.editors, ...e.owner];
+        } else {
+          users = [...users, ...e.editors, ...e.owner];
+        }
+      });
+      return res.send({
+        status: true,
+        data: users,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
+  getLeaders,
   getTeam,
   getInvitedTeam,
   get,
