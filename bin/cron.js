@@ -1815,7 +1815,7 @@ const timesheet_check = new CronJob(
                 Notification.updateMany(
                   { message_sid },
                   {
-                    status: 'delivered',
+                    $set: { status: 'delivered' },
                   }
                 ).catch((err) => {
                   console.log('notification update err', err.message);
@@ -1836,9 +1836,11 @@ const timesheet_check = new CronJob(
                 Notification.updateMany(
                   { message_sid },
                   {
-                    status: 'undelivered',
-                    description: res.error_message,
-                    content: 'Failed texting material',
+                    $set: {
+                      status: 'undelivered',
+                      description: res.error_message,
+                      content: 'Failed texting material',
+                    },
                   }
                 ).catch((err) => {
                   console.log('notification update err', err.message);

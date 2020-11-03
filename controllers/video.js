@@ -2314,7 +2314,7 @@ const bulkText = async (req, res) => {
             body: video_content,
           })
           .then((message) => {
-            if (message.status !== 'delivered') {
+            if (message.status === 'pending' || message.status === 'sent') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -2340,7 +2340,7 @@ const bulkText = async (req, res) => {
               Activity.updateMany(
                 { _id: { $in: activities } },
                 {
-                  status: 'pending',
+                  $set: { status: 'pending' },
                 }
               ).catch((err) => {
                 console.log('activity err', err.message);
@@ -2356,7 +2356,13 @@ const bulkText = async (req, res) => {
               notification.save().catch((err) => {
                 console.log('notification save err', err.message);
               });
-
+              resolve();
+            } else if (message.status === 'delivered') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                video_content
+              );
               Contact.updateOne(
                 { _id: contacts[i] },
                 {
@@ -2367,7 +2373,6 @@ const bulkText = async (req, res) => {
               });
               resolve();
             } else {
-              console.log('video message send err1', message.error_message);
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });

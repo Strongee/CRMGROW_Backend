@@ -1709,112 +1709,105 @@ const authorizeGmail = async (req, res) => {
   });
 };
 
-const syncCalendar = async (req, res) => {
-  const user = req.currentUser;
+const syncGoogleCalendar = async (req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+  );
 
-  if (user.connected_email === undefined) {
+  // generate a url that asks permissions for Blogger and Google Calendar scopes
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/userinfo.email',
+  ];
+
+  const authorizationUri = oauth2Client.generateAuthUrl({
+    // 'online' (default) or 'offline' (gets refresh_token)
+    access_type: 'offline',
+
+    // If you only need one scope you can pass it as a string
+    scope: scopes,
+  });
+
+  if (!authorizationUri) {
     return res.status(400).json({
       status: false,
-      error: 'Conneted email doesn`t exist',
+      error: 'Client doesn`t exist',
     });
   }
 
-  if (user.connected_email_type === 'outlook') {
-    const _appointments = await Appointment.find({ user: user.id, del: false });
-    for (let i = 0; i < _appointments.length; i++) {
-      const attendees = [];
-      if (typeof _appointments[i].guests !== 'undefined') {
-        for (let j = 0; j < _appointments[i].guests.length; j++) {
-          const addendee = {
-            EmailAddress: {
-              Address: _appointments[i].guests[j],
-            },
-          };
-          attendees.push(addendee);
-        }
-      }
-      const newEvent = {
-        Subject: _appointments[i].title,
-        Body: {
-          ContentType: 'HTML',
-          Content: _appointments[i].description,
-        },
-        Location: {
-          DisplayName: _appointments[i].location,
-        },
-        Start: {
-          DateTime: _appointments[i].due_start,
-          TimeZone: 'UTC' + user.time_zone,
-        },
-        End: {
-          DateTime: _appointments[i].due_end,
-          TimeZone: 'UTC' + user.time_zone,
-        },
-        Attendees: attendees,
-      };
+  return res.send({
+    status: true,
+    data: authorizationUri,
+  });
+};
 
-      const token = oauth2.accessToken.create({
-        refresh_token: user.outlook_refresh_token,
-        expires_in: 0,
-      });
-      let accessToken;
-      await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
-          if (error) {
-            reject(error.message);
-          } else {
-            resolve(result.token);
-          }
-        });
-      })
-        .then((token) => {
-          accessToken = token.access_token;
-        })
-        .catch((error) => {
-          console.log('outlook token grant error', error);
-          return res.status(406).send({
-            status: false,
-            error: 'not connected',
-          });
-        });
+const authorizeGoogleCalendar = async (req, res) => {
+  const user = req.currentUser;
+  const code = req.query.code;
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+  );
 
-      const createEventParameters = {
-        token: accessToken,
-        event: newEvent,
-      };
+  const { tokens } = await oauth2Client.getToken(code);
+  oauth2Client.setCredentials(tokens);
 
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      outlook.calendar.createEvent(createEventParameters, function (
-        error,
-        event
-      ) {
-        if (error) {
-          console.log(
-            'There was an error contacting the Calendar service: ' + error
-          );
-          return;
-        }
-        _appointments[i].event_id = event.Id;
-        _appointments[i].save();
+  if (typeof tokens.refresh_token === 'undefined') {
+    return res.status(403).send({
+      status: false,
+    });
+  }
+
+  if (!tokens) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2',
+  });
+
+  oauth2.userinfo.v2.me.get((err, _res) => {
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
       });
     }
 
+    // Email is in the preferred_username field
     user.connect_calendar = true;
-    user.save();
+    if (user.calendar) {
+      const data = {
+        connected_email: _res.data.email,
+        google_refresh_token: JSON.stringify(tokens),
+        connected_email_type: 'gmail',
+      };
+      user.calendar.push(data);
+    }
 
-    return res.send({
-      status: true,
-    });
-  } else {
-    const oauth2Client = new google.auth.OAuth2(
-      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-      urls.GMAIL_AUTHORIZE_URL
-    );
-    const token = JSON.parse(user.google_refresh_token);
-    oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-    addGoogleCalendar(oauth2Client, user, res);
-  }
+    user
+      .save()
+      .then((_res) => {
+        res.send({
+          status: true,
+          data: user.connected_email,
+        });
+      })
+      .catch((err) => {
+        console.log('user save err', err.message);
+        return res.status(400).json({
+          status: false,
+          error: err.message,
+        });
+      });
+  });
 };
 
 const addGoogleCalendar = async (auth, user, res) => {
@@ -2367,7 +2360,8 @@ module.exports = {
   syncYahoo,
   authorizeYahoo,
   authorizeOtherEmailer,
-  syncCalendar,
+  syncGoogleCalendar,
+  authorizeGoogleCalendar,
   disconCalendar,
   dailyReport,
   desktopNotification,

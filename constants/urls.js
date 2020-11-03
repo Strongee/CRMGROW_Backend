@@ -9,6 +9,7 @@ if (process.env.NODE_ENV === 'production') {
     APP_SIGNIN_URL: 'https://app.crmgrow.com/social-oauth-callback/',
     OUTLOOK_AUTHORIZE_URL: 'https://app.crmgrow.com/profile/outlook',
     GMAIL_AUTHORIZE_URL: 'https://app.crmgrow.com/profile/gmail',
+    GOOGLE_CALENDAR_AUTHORIZE_URL: 'https://app.crmgrow.com/calendar/google',
     VIDEO_THUMBNAIL_URL: 'https://app.crmgrow.com/api/video/thumbnail/',
     PDF_PREVIEW_URL: 'https://app.crmgrow.com/api/pdf/preview/',
     IMAGE_PREVIEW_URL: 'https://app.crmgrow.com/api/image/preview/',

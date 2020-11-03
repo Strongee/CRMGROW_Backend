@@ -8,7 +8,7 @@ const get = async (req, res) => {
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: 'Note doesn`t exist',
+      error: 'Template doesn`t exist',
     });
   }
 

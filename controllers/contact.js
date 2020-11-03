@@ -239,6 +239,7 @@ const get = async (req, res) => {
     const _activity_list = await Activity.find({
       user: currentUser.id,
       contacts: req.params.id,
+      status: { $ne: 'pending' },
     }).sort({ updated_at: 1 });
     const _activity_detail_list = [];
 
