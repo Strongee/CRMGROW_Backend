@@ -154,10 +154,27 @@ const get = (req, res) => {
       { path: 'requests' },
     ])
     .then((data) => {
-      return res.send({
-        status: true,
-        data,
-      });
+      if (!data.join_link) {
+        const join_link = short.generate();
+        Team.updateOne(
+          { _id: req.params.id },
+          {
+            $set: { join_link },
+          }
+        ).catch((err) => {
+          console.log('team join link udpate err', err.message);
+        });
+
+        return res.send({
+          status: true,
+          data: { ...data, join_link },
+        });
+      } else {
+        return res.send({
+          status: true,
+          data,
+        });
+      }
     })
     .catch((err) => {
       return res.status(400).send({
