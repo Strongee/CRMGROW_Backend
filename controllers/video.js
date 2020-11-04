@@ -2315,8 +2315,7 @@ const bulkText = async (req, res) => {
             body: video_content,
           })
           .then((message) => {
-            console.log('message****', message);
-            if (message.status === 'pending' || message.status === 'sent') {
+            if (message.status === 'queued' || message.status === 'sent') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
