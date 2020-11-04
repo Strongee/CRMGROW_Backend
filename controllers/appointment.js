@@ -39,83 +39,75 @@ const getAll = async (req, res) => {
     date = moment(date).startOf(mode);
   }
 
-  if (currentUser.connect_calendar) {
-    if (currentUser.connected_email_type === 'outlook') {
-      if (currentUser.calendar_list) {
-        const { calendar_list } = currentUser;
+  if (currentUser.connect_calendar && currentUser.calendar_list) {
+    const { calendar_list } = currentUser;
 
-        for (let i = 0; i < calendar_list.length; i++) {
-          let accessToken;
-          const { connected_email, outlook_refresh_token } = calendar_list[i];
-          const token = oauth2.accessToken.create({
-            refresh_token: outlook_refresh_token,
-            expires_in: 0,
+    for (let i = 0; i < calendar_list.length; i++) {
+      const { connected_calendar_type } = calendar_list[i];
+      if (connected_calendar_type === 'outlook') {
+        let accessToken;
+        const { connected_email, outlook_refresh_token } = calendar_list[i];
+        const token = oauth2.accessToken.create({
+          refresh_token: outlook_refresh_token,
+          expires_in: 0,
+        });
+
+        await new Promise((resolve, reject) => {
+          token.refresh(function (error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result.token);
+            }
           });
-
-          await new Promise((resolve, reject) => {
-            token.refresh(function (error, result) {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result.token);
-              }
-            });
+        })
+          .then((token) => {
+            accessToken = token.access_token;
           })
-            .then((token) => {
-              accessToken = token.access_token;
-            })
-            .catch((error) => {
-              console.log('error', error);
-              return res.status(406).send({
-                status: false,
-                error: 'not connected',
-              });
+          .catch((error) => {
+            console.log('error', error);
+            return res.status(406).send({
+              status: false,
+              error: 'not connected',
             });
-
-          const client = graph.Client.init({
-            // Use the provided access token to authenticate
-            // requests
-            authProvider: (done) => {
-              done(null, accessToken);
-            },
           });
 
-          const ctz = time_zone[currentUser.time_zone];
-          const calendar_data = {
-            client,
-            ctz,
-            connected_email,
-            res,
-            date,
-            mode,
-          };
-          outlookCalendarList(calendar_data);
-        }
-      }
-    } else {
-      const oauth2Client = new google.auth.OAuth2(
-        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-        urls.GMAIL_AUTHORIZE_URL
-      );
+        const client = graph.Client.init({
+          // Use the provided access token to authenticate
+          // requests
+          authProvider: (done) => {
+            done(null, accessToken);
+          },
+        });
 
-      if (currentUser.calendar_list) {
-        const { calendar_list } = currentUser;
-
-        for (let i = 0; i < calendar_list.length; i++) {
-          const calendar = calendar_list[i];
-          const { google_refresh_token, connected_email } = calendar;
-          const token = JSON.parse(google_refresh_token);
-          oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-          const calendar_data = {
-            auth: oauth2Client,
-            res,
-            date,
-            mode,
-            connected_email,
-          };
-          googleCalendarList(calendar_data);
-        }
+        const ctz = time_zone[currentUser.time_zone];
+        const calendar_data = {
+          client,
+          ctz,
+          connected_email,
+          res,
+          date,
+          mode,
+        };
+        outlookCalendarList(calendar_data);
+      } else {
+        const oauth2Client = new google.auth.OAuth2(
+          api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+          api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+          urls.GMAIL_AUTHORIZE_URL
+        );
+        const calendar = calendar_list[i];
+        const { google_refresh_token, connected_email } = calendar;
+        const token = JSON.parse(google_refresh_token);
+        oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+        const calendar_data = {
+          auth: oauth2Client,
+          res,
+          date,
+          mode,
+          connected_email,
+        };
+        googleCalendarList(calendar_data);
       }
     }
   } else {

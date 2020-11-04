@@ -1468,7 +1468,7 @@ const authorizeOutlook = async (req, res) => {
         }
         user
           .save()
-          .then((_res) => {
+          .then(() => {
             res.send({
               status: true,
               data: user.connected_email,
