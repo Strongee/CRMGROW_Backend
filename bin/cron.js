@@ -1820,7 +1820,7 @@ const timesheet_check = new CronJob(
                 ).catch((err) => {
                   console.log('notification update err', err.message);
                 });
-                TimeLineCtrl.deleteOne({
+                TimeLine.deleteOne({
                   _id: timeline.id,
                 }).catch((err) => {
                   console.log('timeline remove err', err.message);
@@ -1846,7 +1846,7 @@ const timesheet_check = new CronJob(
                 ).catch((err) => {
                   console.log('notification update err', err.message);
                 });
-                TimeLineCtrl.deleteOne({
+                TimeLine.deleteOne({
                   _id: timeline.id,
                 }).catch((err) => {
                   console.log('timeline remove err', err.message);
@@ -1863,7 +1863,7 @@ const timesheet_check = new CronJob(
           };
           TimeLineCtrl.activeNext(next_data);
         } else if (timeline.status === 'completed') {
-          TimeLineCtrl.deleteOne({
+          TimeLine.deleteOne({
             _id: timeline.id,
           }).catch((err) => {
             console.log('timeline remove err', err.message);
