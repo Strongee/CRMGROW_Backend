@@ -1364,13 +1364,39 @@ const syncOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    'https://graph.microsoft.com/calendars.readwrite',
     'https://graph.microsoft.com/mail.send',
   ];
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
     redirect_uri: urls.OUTLOOK_AUTHORIZE_URL,
+    scope: scopes.join(' '),
+    prompt: 'select_account',
+  });
+
+  if (!authorizationUri) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+  return res.send({
+    status: true,
+    data: authorizationUri,
+  });
+};
+
+const syncOutlookCalendar = async (req, res) => {
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://graph.microsoft.com/calendars.readwrite',
+  ];
+
+  // Authorization uri definition
+  const authorizationUri = oauth2.authCode.authorizeURL({
+    redirect_uri: urls.OUTLOOK_CALENDAR_AUTHORIZE_URL,
     scope: scopes.join(' '),
     prompt: 'select_account',
   });
@@ -1431,7 +1457,6 @@ const authorizeOutlook = async (req, res) => {
         user.social_id = jwt.oid;
         user.connected_email_type = 'outlook';
         user.primary_connected = true;
-        user.connect_calendar = true;
         if (
           user.connected_email.indexOf('@outlook.com') !== -1 ||
           user.connected_email.indexOf('@hotmail.com') !== -1
@@ -1444,6 +1469,90 @@ const authorizeOutlook = async (req, res) => {
         user
           .save()
           .then((_res) => {
+            res.send({
+              status: true,
+              data: user.connected_email,
+            });
+          })
+          .catch((err) => {
+            return res.status(400).send({
+              status: false,
+              error: err.message,
+            });
+          });
+      }
+    }
+  );
+};
+
+const authorizeOutlookCalendar = async (req, res) => {
+  const user = req.currentUser;
+  const code = req.query.code;
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://graph.microsoft.com/calendars.readwrite ',
+  ];
+
+  oauth2.authCode.getToken(
+    {
+      code,
+      redirect_uri: urls.OUTLOOK_CALENDAR_AUTHORIZE_URL,
+      scope: scopes.join(' '),
+    },
+    function (error, result) {
+      if (error) {
+        console.log('err', error);
+        return res.status(500).send({
+          status: false,
+          error,
+        });
+      } else {
+        const outlook_token = oauth2.accessToken.create(result);
+        const outlook_refresh_token = outlook_token.token.refresh_token;
+        const token_parts = outlook_token.token.id_token.split('.');
+
+        // Token content is in the second part, in urlsafe base64
+        const encoded_token = Buffer.from(
+          token_parts[1].replace('-', '+').replace('_', '/'),
+          'base64'
+        );
+
+        const decoded_token = encoded_token.toString();
+
+        const jwt = JSON.parse(decoded_token);
+
+        // Email is in the preferred_username field
+        user.connect_calendar = true;
+        if (user.calendar_list) {
+          // const data = {
+          //   connected_email: _res.data.email,
+          //   google_refresh_token: JSON.stringify(tokens),
+          //   connected_calendar_type: 'google',
+          // };
+          // user.calendar_list.push(data);
+
+          user.calendar_list = [
+            {
+              connected_email: jwt.preferred_username,
+              outlook_refresh_token,
+              connected_calendar_type: 'outlook',
+            },
+          ];
+        } else {
+          user.calendar_list = [
+            {
+              connected_email: jwt.preferred_username,
+              outlook_refresh_token,
+              connected_calendar_type: 'outlook',
+            },
+          ];
+        }
+
+        user
+          .save()
+          .then(() => {
             res.send({
               status: true,
               data: user.connected_email,
@@ -1680,7 +1789,6 @@ const authorizeGmail = async (req, res) => {
 
     // Email is in the preferred_username field
     user.connected_email = _res.data.email;
-    user.connect_calendar = true;
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
@@ -1693,7 +1801,7 @@ const authorizeGmail = async (req, res) => {
 
     user
       .save()
-      .then((_res) => {
+      .then(() => {
         res.send({
           status: true,
           data: user.connected_email,
@@ -1755,7 +1863,7 @@ const authorizeGoogleCalendar = async (req, res) => {
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
 
-  if (typeof tokens.refresh_token === 'undefined') {
+  if (!tokens.refresh_token) {
     return res.status(403).send({
       status: false,
     });
@@ -1783,13 +1891,29 @@ const authorizeGoogleCalendar = async (req, res) => {
 
     // Email is in the preferred_username field
     user.connect_calendar = true;
-    if (user.calendar) {
-      const data = {
-        connected_email: _res.data.email,
-        google_refresh_token: JSON.stringify(tokens),
-        connected_email_type: 'gmail',
-      };
-      user.calendar.push(data);
+    if (user.calendar_list) {
+      // const data = {
+      //   connected_email: _res.data.email,
+      //   google_refresh_token: JSON.stringify(tokens),
+      //   connected_calendar_type: 'google',
+      // };
+      // user.calendar_list.push(data);
+
+      user.calendar_list = [
+        {
+          connected_email: _res.data.email,
+          google_refresh_token: JSON.stringify(tokens),
+          connected_calendar_type: 'google',
+        },
+      ];
+    } else {
+      user.calendar_list = [
+        {
+          connected_email: _res.data.email,
+          google_refresh_token: JSON.stringify(tokens),
+          connected_calendar_type: 'google',
+        },
+      ];
     }
 
     user
@@ -1797,7 +1921,7 @@ const authorizeGoogleCalendar = async (req, res) => {
       .then(() => {
         res.send({
           status: true,
-          data: user.connected_email,
+          data: _res.data.email,
         });
       })
       .catch((err) => {
@@ -2362,6 +2486,8 @@ module.exports = {
   authorizeOtherEmailer,
   syncGoogleCalendar,
   authorizeGoogleCalendar,
+  syncOutlookCalendar,
+  authorizeOutlookCalendar,
   disconCalendar,
   dailyReport,
   desktopNotification,

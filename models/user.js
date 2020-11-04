@@ -42,7 +42,7 @@ const UserSchema = new Schema(
     other_emailer: Object,
     connected_email_type: String,
     connect_calendar: { type: Boolean, default: false },
-    calendar: Array,
+    calendar_list: Array,
     connected_email: String,
     daily_report: { type: Boolean, default: false },
     weekly_report: { type: Boolean, default: true },

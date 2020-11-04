@@ -114,18 +114,36 @@ router.get(
   catchError(UserCtrl.authorizeYahoo)
 );
 
+/**
+ * Calendar
+ */
+
 // Synchronize calendar with connected outlook email
 router.get(
-  '/sync-calendar',
+  '/sync-google-calendar',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.syncCalendar)
+  catchError(UserCtrl.syncGoogleCalendar)
 );
 
 // Synchronize calendar with connected outlook email
 router.get(
-  '/discon-calendar',
+  '/sync-outlook-calendar',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.disconCalendar)
+  catchError(UserCtrl.syncOutlookCalendar)
+);
+
+// Synchronize calendar with connected outlook email
+router.get(
+  '/authorize-google-calendar',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.authorizeGoogleCalendar)
+);
+
+// Synchronize calendar with connected outlook email
+router.get(
+  '/authorize-outlook-calendar',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.authorizeOutlookCalendar)
 );
 
 // Daily Report
