@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 const AWS = require('aws-sdk');
+const short = require('short-uuid');
 const moment = require('moment');
 const api = require('../config/api');
 const Team = require('../models/team');
@@ -240,10 +241,13 @@ const create = async (req, res) => {
   if (teamReq.picture) {
     picture = await uploadBase64Image(teamReq.picture);
   }
+
+  const join_link = short.generate();
   const team = new Team({
     ...teamReq,
     picture,
     owner: currentUser.id,
+    join_link,
   });
 
   team

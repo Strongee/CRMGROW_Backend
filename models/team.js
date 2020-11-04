@@ -15,6 +15,7 @@ const TeamSchema = new Schema(
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     invites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     requests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    join_link: String,
     referrals: { type: Array, default: [] },
     editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
