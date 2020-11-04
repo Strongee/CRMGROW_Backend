@@ -41,7 +41,7 @@ const getAll = async (req, res) => {
     const auth = Buffer.from(api.REWARDFUL_API_KEY + ':').toString('base64');
     request({
       method: 'GET',
-      uri: `https://api.getrewardful.com/v1/referrals?affiliate_id=${currentUser.affiliate.id}&limit=100`,
+      uri: `https://api.getrewardful.com/v1/referrals?affiliate_id=${currentUser.affiliate.id}&limit=100&conversion_state[]=lead&conversion_state[]=conversion`,
       headers: {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
