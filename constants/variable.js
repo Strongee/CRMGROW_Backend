@@ -12,7 +12,7 @@ const days = [
   'Sunday',
   'Monday',
   'Tuesday',
-  'Wendsday',
+  'Wednesday',
   'Thursday',
   'Friday',
   'Saturday',
