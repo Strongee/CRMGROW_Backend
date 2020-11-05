@@ -636,6 +636,26 @@ const importCSV = async (req, res) => {
             //   let intlCode = (match[1] ? '+1 ' : '')
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
+            if (data['first_name'] && data['last_name']) {
+              const email_contact = await Contact.findOne({
+                first_name: data['first_name'],
+                last_name: data['last_name'],
+                user: currentUser.id,
+              }).catch((err) => {
+                console.log('contact found err', err.message);
+              });
+              if (email_contact) {
+                const field = {
+                  id: i,
+                  email: data['email'],
+                  err: 'Duplicated Full name',
+                };
+                failure.push(field);
+                resolve();
+                return;
+              }
+            }
+
             if (data['email']) {
               const email_contact = await Contact.findOne({
                 email: data['email'],
