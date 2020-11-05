@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const MailListSchema = new Schema(
+const CampaignSchema = new Schema(
   {
     title: String,
     contacts: Array,
@@ -19,4 +19,4 @@ const MailListSchema = new Schema(
   }
 );
 
-module.exports = mongoose.model('mail_list', MailListSchema);
+module.exports = mongoose.model('campaign', CampaignSchema);
