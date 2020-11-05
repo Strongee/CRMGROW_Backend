@@ -24,4 +24,10 @@ router.post(
   catchError(IntegrationCtrl.setEventCalendly)
 );
 
+router.post(
+  '/sync-smtp',
+  UserCtrl.checkAuth,
+  catchError(IntegrationCtrl.connectSMTP)
+);
+
 module.exports = router;

@@ -42,10 +42,5 @@ router.post(
   upload.single('video'),
   catchError(GarbageCtrl.uploadIntroVideo)
 );
-router.post(
-  '/sync-smtp',
-  UserCtrl.checkAuth,
-  catchError(GarbageCtrl.connectSMTP)
-);
 
 module.exports = router;

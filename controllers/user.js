@@ -1854,6 +1854,7 @@ const syncGoogleCalendar = async (req, res) => {
 const authorizeGoogleCalendar = async (req, res) => {
   const user = req.currentUser;
   const code = req.query.code;
+
   const oauth2Client = new google.auth.OAuth2(
     api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
