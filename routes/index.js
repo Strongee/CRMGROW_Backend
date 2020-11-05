@@ -32,6 +32,8 @@ const material = require('./material.js');
 const developer = require('./developer');
 const integration = require('./integration');
 const theme = require('./material_theme');
+const mail_list = require('./mail_list');
+const campaign = require('./campaign');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -72,6 +74,8 @@ router.use('/team', team);
 router.use('/material', material);
 router.use('/developer', developer);
 router.use('/integration', integration);
+router.use('/campaign', campaign);
+router.use('/mail-list', mail_list);
 router.use('/theme', theme);
 router.use('/admin', admin);
 
