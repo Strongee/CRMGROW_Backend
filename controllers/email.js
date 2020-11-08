@@ -909,13 +909,14 @@ const openTrack = async (req, res) => {
             ' at ' +
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+          // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
           client.messages
             .create({
               from: fromNumber,
               to: e164Phone,
-              body: title + '\n' + time + contact_link,
+              // body: title + '\n' + time + contact_link,
+              body: title + '\n' + time,
             })
             .catch((err) => console.error('send sms err', err));
         }
@@ -1536,13 +1537,14 @@ const receiveEmailSendGrid = async (req, res) => {
             ' at ' +
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+          // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
           client.messages
             .create({
               from: fromNumber,
               to: e164Phone,
-              body: title + '\n' + time + contact_link,
+              // body: title + '\n' + time + contact_link,
+              body: title + '\n' + time,
             })
             .catch((err) => console.error('send sms err: ', err));
         }
@@ -1805,13 +1807,14 @@ const receiveEmail = async (req, res) => {
               ' at ' +
               moment(opened).utcOffset(user.time_zone).format('h:mm a');
             const time = ' on ' + created_at + '\n ';
-            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+            // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
             client.messages
               .create({
                 from: fromNumber,
                 to: e164Phone,
-                body: title + '\n' + time + contact_link,
+                body: title + '\n' + time,
+                // body: title + '\n' + time + contact_link,
               })
               .catch((err) => console.error('send sms err: ', err));
           }
@@ -2113,13 +2116,14 @@ const unSubscribeEmail = async (req, res) => {
           ' at ' +
           moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + '\n' + time + contact_link,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time,
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2410,13 +2414,14 @@ const reSubscribeEmail = async (req, res) => {
           ' at ' +
           moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + '\n' + time + contact_link,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time,
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2696,13 +2701,14 @@ const clickEmailLink = async (req, res) => {
           ' at ' +
           moment(clicked).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + '\n' + time + contact_link,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time,
           })
           .catch((err) => console.error('send sms err: ', err));
       }

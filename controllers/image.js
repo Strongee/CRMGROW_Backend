@@ -777,6 +777,7 @@ const bulkText = async (req, res) => {
           user: currentUser.id,
           type: 'images',
           images: image._id,
+          send_type: 1,
           created_at: new Date(),
           updated_at: new Date(),
           description: image_content,

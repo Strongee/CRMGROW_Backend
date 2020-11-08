@@ -2240,8 +2240,6 @@ const bulkText = async (req, res) => {
           type: 'videos',
           send_type: 1,
           videos: video._id,
-          created_at: new Date(),
-          updated_at: new Date(),
           description: video_content,
         });
 
@@ -2312,7 +2310,7 @@ const bulkText = async (req, res) => {
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: video_content,
+            body: video_content + '\n\n' + textHelper.generateUnsubscription(),
           })
           .then((message) => {
             if (message.status === 'queued' || message.status === 'sent') {

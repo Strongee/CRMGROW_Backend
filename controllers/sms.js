@@ -207,22 +207,62 @@ const receive1 = async (req, res) => {
     });
 
     if (contact) {
-      const content =
-        contact.first_name +
-        ', please call/text ' +
-        currentUser.user_name +
-        ' back at: ' +
-        currentUser.cell_phone;
-
-      await client.messages
-        .create({
-          from: to,
-          to: from,
-          body: content,
-        })
-        .catch((err) => {
-          console.log('sms reply err', err);
+      if (text.toLowerCase() === 'stop') {
+        const activity = new Activity({
+          content: 'unsubscribed sms',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'email_trackers',
+          created_at: new Date(),
+          updated_at: new Date(),
         });
+
+        const _activity = await activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+            $push: { tags: { $each: ['unsubscribed'] } },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+        const content =
+          'You have successfully been unsubscribed. You will not receive any more messages from this number.';
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      } else {
+        const content =
+          contact.first_name +
+          ', please call/text ' +
+          currentUser.user_name +
+          ' back at: ' +
+          currentUser.cell_phone;
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      }
     }
   }
   return res.send({

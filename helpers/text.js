@@ -953,6 +953,10 @@ const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+const generateUnsubscription = () => {
+  return 'Reply STOP to unsubscribe.';
+};
+
 module.exports = {
   bulkVideo,
   bulkPDF,
@@ -962,6 +966,7 @@ module.exports = {
   getSignalWireNumber,
   getStatus,
   matchUSPhoneNumber,
+  generateUnsubscription,
   releaseSignalWireNumber,
   sleep,
 };

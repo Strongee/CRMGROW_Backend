@@ -146,13 +146,14 @@ const disconnectPDF = async (pdf_tracker_id) => {
           .utcOffset(currentUser.time_zone)
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
-      const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+      // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
       client.messages
         .create({
           from: fromNumber,
           to: e164Phone,
-          body: title + '\n' + body + '\n' + contact_link,
+          // body: title + '\n' + body + '\n' + contact_link,
+          body: title + '\n' + body,
         })
         .catch((err) => console.error(err));
     }
@@ -493,7 +494,7 @@ const disconnectVideo = async (video_tracker_id) => {
           contact.cell_phone +
           '\n' +
           '\n' +
-          ' Watched video:' +
+          ' Watched video: ' +
           video.title +
           '\n';
         const created_at =
@@ -505,14 +506,15 @@ const disconnectVideo = async (video_tracker_id) => {
             .utcOffset(currentUser.time_zone)
             .format('h:mm a');
         const body =
-          'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+          'watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + '\n' + body + '\n' + contact_link,
+            // body: title + '\n' + body + '\n' + contact_link,
+            body: title + '\n' + body,
           })
           .catch((err) => console.error(err));
       }
@@ -969,13 +971,14 @@ const disconnectImage = async (image_tracker_id) => {
           .utcOffset(currentUser.time_zone)
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
-      const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+      // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
       client.messages
         .create({
           from: fromNumber,
           to: e164Phone,
-          body: title + '\n' + body + '\n' + contact_link,
+          // body: title + '\n' + body + '\n' + contact_link,
+          body: title + '\n' + body,
         })
         .catch((err) => console.error(err));
     }
