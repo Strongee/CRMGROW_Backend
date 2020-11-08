@@ -1825,6 +1825,38 @@ const timesheet_check = new CronJob(
                 }).catch((err) => {
                   console.log('timeline remove err', err.message);
                 });
+              } else if (res.status === 'sent') {
+                const beginning_time = moment(timeline.due_date).add(
+                  10,
+                  'minutes'
+                );
+                const now = moment();
+                console.log('timeline.due_date', beginning_time);
+                if (beginning_time.isBefore(now)) {
+                  console.log('before');
+                  Activity.deleteMany({
+                    _id: { $in: activities },
+                  }).catch((err) => {
+                    console.log('activity save err', err.message);
+                  });
+                }
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    $set: {
+                      status: 'undelivered',
+                      description: res.error_message,
+                      content: 'Failed texting material',
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
               } else if (
                 res.status === 'undelivered' ||
                 res.status === 'failed'
