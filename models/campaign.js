@@ -7,9 +7,9 @@ const CampaignSchema = new Schema(
     title: String,
     contacts: Array,
     mail_list: { type: mongoose.Schema.Types.ObjectId, ref: 'mail_list' },
-    material_theme: {
+    email_template: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'material_theme',
+      ref: 'email_template',
     },
     created_at: Date,
     updated_at: Date,
