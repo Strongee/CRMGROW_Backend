@@ -92,6 +92,7 @@ const bulkVideo = async (data) => {
         contacts: contacts[i],
         user: currentUser.id,
         type: 'videos',
+        send_type: 1,
         videos: video._id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -281,6 +282,7 @@ const bulkPDF = async (data) => {
         contacts: contacts[i],
         user: currentUser.id,
         type: 'pdfs',
+        send_type: 1,
         pdfs: pdf._id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -467,6 +469,7 @@ const bulkImage = async (data) => {
         contacts: contacts[i],
         user: currentUser.id,
         type: 'images',
+        send_type: 1,
         images: image._id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -953,7 +956,7 @@ const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-const generateUnsubscription = () => {
+const generateUnsubscribeLink = () => {
   return 'Reply STOP to unsubscribe.';
 };
 
@@ -966,7 +969,7 @@ module.exports = {
   getSignalWireNumber,
   getStatus,
   matchUSPhoneNumber,
-  generateUnsubscription,
+  generateUnsubscribeLink,
   releaseSignalWireNumber,
   sleep,
 };

@@ -16,7 +16,6 @@ const NotificationSchema = new Schema(
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     message_sid: String,
-    error_message: String,
     status: String,
     description: String,
     content: String,
