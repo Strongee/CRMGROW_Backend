@@ -212,7 +212,7 @@ const receive1 = async (req, res) => {
           content: 'unsubscribed sms',
           contacts: contact.id,
           user: currentUser.id,
-          type: 'email_trackers',
+          type: 'sms_trackers',
           created_at: new Date(),
           updated_at: new Date(),
         });
