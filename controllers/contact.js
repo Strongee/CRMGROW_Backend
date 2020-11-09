@@ -897,15 +897,30 @@ const exportCSV = async (req, res) => {
 
 const search = async (req, res) => {
   const { currentUser } = req;
-  const search = req.body.search;
-  // const search = searchI.replace(/[&\/\\#, +()$~%-.'":*?<>{}]/g, '');
-  let phoneSearch = search;
-  if (/^[\\\d\(\)\s]+$/.test(search)) {
-    phoneSearch = phoneSearch.replace(/[\\\(\)\s]+/g, '');
-  }
-
+  const searchStr = req.body.search;
+  const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+  const phoneSearch = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');
   let contacts = [];
-  if (!search.split(' ')[1]) {
+  if (search.split(' ').length > 1) {
+    contacts = await Contact.find({
+      $or: [
+        {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          user: currentUser.id,
+        },
+      ],
+    })
+      .populate('last_activity')
+      .sort({ first_name: 1 });
+  } else {
     contacts = await Contact.find({
       $or: [
         {
@@ -922,24 +937,11 @@ const search = async (req, res) => {
         },
         {
           cell_phone: {
-            $regex: '.*' + phoneSearch.split(' ')[0] + '.*',
+            $regex: '.*' + phoneSearch + '.*',
             $options: 'i',
           },
           user: currentUser.id,
         },
-      ],
-    })
-      .populate('last_activity')
-      .sort({ first_name: 1 });
-  } else {
-    contacts = await Contact.find({
-      $or: [
-        {
-          first_name: { $regex: search.split(' ')[0], $options: 'i' },
-          last_name: { $regex: search.split(' ')[1], $options: 'i' },
-          user: currentUser.id,
-        },
-        { cell_phone: phoneSearch, user: currentUser.id },
       ],
     })
       .populate('last_activity')
@@ -2366,24 +2368,11 @@ const advanceSearch = async (req, res) => {
 
   if (searchStr) {
     var strQuery = {};
-    var phoneSearchStr = searchStr;
-    if (/^[\\\d\(\)\s]+$/.test(phoneSearchStr)) {
-      phoneSearchStr = phoneSearchStr.replace(/[\\\(\)\s]+/g, '');
-    }
-    if (!searchStr.split(' ')[1]) {
-      strQuery = {
-        $or: [
-          { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
-          { email: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
-          { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
-          {
-            cell_phone: { $regex: '.*' + phoneSearchStr + '.*', $options: 'i' },
-          },
-        ],
-      };
-    } else {
-      const firstStr = searchStr.split(' ')[0];
-      const secondStr = searchStr.split(' ')[1];
+    var search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+    var phoneSearchStr = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');
+    if (search.split(' ').length > 1) {
+      const firstStr = search.split(' ')[0];
+      const secondStr = search.split(' ')[1];
       strQuery = {
         $or: [
           {
@@ -2391,6 +2380,17 @@ const advanceSearch = async (req, res) => {
             last_name: { $regex: secondStr + '.*', $options: 'i' },
           },
           { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          {
+            cell_phone: { $regex: '.*' + phoneSearchStr + '.*', $options: 'i' },
+          },
+        ],
+      };
+    } else {
+      strQuery = {
+        $or: [
+          { first_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
+          { email: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
           { last_name: { $regex: '.*' + searchStr + '.*', $options: 'i' } },
           {
             cell_phone: { $regex: '.*' + phoneSearchStr + '.*', $options: 'i' },
