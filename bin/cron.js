@@ -396,7 +396,7 @@ const reminder_job = new CronJob(
                 content: follow_up.content,
                 detailed_contact:
                   "<a href='" +
-                  urls.TEAM_URL +
+                  urls.CONTACT_PAGE_URL +
                   contact.id +
                   "'><img src='" +
                   urls.DOMAIN_URL +
@@ -421,10 +421,11 @@ const reminder_job = new CronJob(
           const text_notification = garbage['text_notification'];
           if (text_notification['follow_up']) {
             const e164Phone = phone(user.cell_phone)[0];
-            let fromNumber = user['proxy_number'];
-            if (!fromNumber) {
-              fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-            }
+            // let fromNumber = user['proxy_number'];
+            // if (!fromNumber) {
+            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            // }
+            const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
             console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
             if (!e164Phone) {
               const error = {
@@ -570,10 +571,11 @@ const reminder_job = new CronJob(
           });
 
         const e164Phone = phone(user.cell_phone)[0];
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        }
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
         if (!e164Phone) {
           const error = {

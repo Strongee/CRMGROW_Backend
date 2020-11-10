@@ -119,11 +119,11 @@ const disconnectPDF = async (pdf_tracker_id) => {
 
       throw error; // Invalid phone number
     } else {
-      let fromNumber = currentUser['proxy_number'];
-      if (!fromNumber) {
-        fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-      }
-
+      // let fromNumber = currentUser['proxy_number'];
+      // if (!fromNumber) {
+      //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      // }
+      const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       const title =
         contact.first_name +
         ' ' +
@@ -146,14 +146,14 @@ const disconnectPDF = async (pdf_tracker_id) => {
           .utcOffset(currentUser.time_zone)
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
-      // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+      const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
       client.messages
         .create({
           from: fromNumber,
           to: e164Phone,
-          // body: title + '\n' + body + '\n' + contact_link,
-          body: title + '\n' + body,
+          body: title + '\n' + body + '\n' + contact_link,
+          // body: title + '\n' + body,
         })
         .catch((err) => console.error(err));
     }
@@ -479,10 +479,11 @@ const disconnectVideo = async (video_tracker_id) => {
         };
         throw error; // Invalid phone number
       } else {
-        let fromNumber = currentUser['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        }
+        // let fromNumber = currentUser['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
 
         const title =
           contact.first_name +
@@ -507,14 +508,14 @@ const disconnectVideo = async (video_tracker_id) => {
             .format('h:mm a');
         const body =
           'watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
-        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            // body: title + '\n' + body + '\n' + contact_link,
-            body: title + '\n' + body,
+            body: title + '\n' + body + '\n' + contact_link,
+            // body: title + '\n' + body,
           })
           .catch((err) => console.error(err));
       }
@@ -944,10 +945,11 @@ const disconnectImage = async (image_tracker_id) => {
 
       throw error; // Invalid phone number
     } else {
-      let fromNumber = currentUser['proxy_number'];
-      if (!fromNumber) {
-        fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-      }
+      // let fromNumber = currentUser['proxy_number'];
+      // if (!fromNumber) {
+      //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      // }
+      const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
 
       const title =
         contact.first_name +
@@ -971,14 +973,14 @@ const disconnectImage = async (image_tracker_id) => {
           .utcOffset(currentUser.time_zone)
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
-      // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+      const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
       client.messages
         .create({
           from: fromNumber,
           to: e164Phone,
-          // body: title + '\n' + body + '\n' + contact_link,
-          body: title + '\n' + body,
+          body: title + '\n' + body + '\n' + contact_link,
+          // body: title + '\n' + body,
         })
         .catch((err) => console.error(err));
     }
