@@ -4,6 +4,8 @@ const User = require('../models/user');
 const Contact = require('../models/contact');
 const Video = require('../models/video');
 const Activity = require('../models/activity');
+const TimeLine = require('../models/time_line');
+const Notification = require('../models/notification');
 const ActivityHelper = require('./activity');
 
 const api = require('../config/api');
@@ -12,6 +14,7 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const request = require('request-promise');
+const moment = require('moment');
 
 const urls = require('../constants/urls');
 const { RestClient } = require('@signalwire/node');
@@ -163,7 +166,51 @@ const bulkVideo = async (data) => {
           body: video_content,
         })
         .then((message) => {
-          if (message.status !== 'undelivered') {
+          if (message.status === 'queued' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              video_content
+            );
+
+            const now = moment();
+            const due_date = now.add(1, 'minutes');
+            const timeline = new TimeLine({
+              user: currentUser.id,
+              status: 'active',
+              action: {
+                type: 'bulk_sms',
+                message_sid: message.sid,
+                activities: [activity.id],
+              },
+              due_date,
+            });
+            timeline.save().catch((err) => {
+              console.log('time line save err', err.message);
+            });
+
+            Activity.updateOne(
+              { _id: activity.id },
+              {
+                $set: { status: 'pending' },
+              }
+            ).catch((err) => {
+              console.log('activity err', err.message);
+            });
+
+            const notification = new Notification({
+              user: currentUser.id,
+              message_sid: message.sid,
+              contact: _contact.id,
+              activities: [activity.id],
+              criteria: 'bulk_sms',
+              status: 'pending',
+            });
+            notification.save().catch((err) => {
+              console.log('notification save err', err.message);
+            });
+            resolve({ status: true });
+          } else if (message.status === 'delivered') {
             console.log('Message ID: ', message.sid);
             console.info(
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -177,11 +224,8 @@ const bulkVideo = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve({
-              status: true,
-            });
+            resolve({ status: true });
           } else {
-            console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });
@@ -351,7 +395,51 @@ const bulkPDF = async (data) => {
           body: pdf_content,
         })
         .then((message) => {
-          if (message.status !== 'undelivered') {
+          if (message.status === 'queued' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              pdf_content
+            );
+
+            const now = moment();
+            const due_date = now.add(1, 'minutes');
+            const timeline = new TimeLine({
+              user: currentUser.id,
+              status: 'active',
+              action: {
+                type: 'bulk_sms',
+                message_sid: message.sid,
+                activities: [activity.id],
+              },
+              due_date,
+            });
+            timeline.save().catch((err) => {
+              console.log('time line save err', err.message);
+            });
+
+            Activity.updateOne(
+              { _id: activity.id },
+              {
+                $set: { status: 'pending' },
+              }
+            ).catch((err) => {
+              console.log('activity err', err.message);
+            });
+
+            const notification = new Notification({
+              user: currentUser.id,
+              message_sid: message.sid,
+              contact: _contact.id,
+              activities: [activity.id],
+              criteria: 'bulk_sms',
+              status: 'pending',
+            });
+            notification.save().catch((err) => {
+              console.log('notification save err', err.message);
+            });
+            resolve({ status: true });
+          } else if (message.status === 'delivered') {
             console.log('Message ID: ', message.sid);
             console.info(
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -365,11 +453,8 @@ const bulkPDF = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve({
-              status: true,
-            });
+            resolve({ status: true });
           } else {
-            console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });
@@ -379,6 +464,35 @@ const bulkPDF = async (data) => {
               status: false,
             });
           }
+
+          // if (message.status !== 'undelivered') {
+          //   console.log('Message ID: ', message.sid);
+          //   console.info(
+          //     `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+          //     pdf_content
+          //   );
+          //   Contact.updateOne(
+          //     { _id: contacts[i] },
+          //     {
+          //       $set: { last_activity: activity.id },
+          //     }
+          //   ).catch((err) => {
+          //     console.log('err', err);
+          //   });
+          //   resolve({
+          //     status: true,
+          //   });
+          // } else {
+          //   console.log('video message send err1', message.error_message);
+          //   Activity.deleteOne({ _id: activity.id }).catch((err) => {
+          //     console.log('err', err);
+          //   });
+          //   resolve({
+          //     contact: contacts[i],
+          //     error: message.error_message,
+          //     status: false,
+          //   });
+          // }
         })
         .catch((err) => {
           Activity.deleteOne({ _id: activity.id }).catch((err) => {
@@ -538,7 +652,51 @@ const bulkImage = async (data) => {
           body: image_content,
         })
         .then((message) => {
-          if (message.status !== 'undelivered') {
+          if (message.status === 'queued' || message.status === 'sent') {
+            console.log('Message ID: ', message.sid);
+            console.info(
+              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+              image_content
+            );
+
+            const now = moment();
+            const due_date = now.add(1, 'minutes');
+            const timeline = new TimeLine({
+              user: currentUser.id,
+              status: 'active',
+              action: {
+                type: 'bulk_sms',
+                message_sid: message.sid,
+                activities: [activity.id],
+              },
+              due_date,
+            });
+            timeline.save().catch((err) => {
+              console.log('time line save err', err.message);
+            });
+
+            Activity.updateOne(
+              { _id: activity.id },
+              {
+                $set: { status: 'pending' },
+              }
+            ).catch((err) => {
+              console.log('activity err', err.message);
+            });
+
+            const notification = new Notification({
+              user: currentUser.id,
+              message_sid: message.sid,
+              contact: _contact.id,
+              activities: [activity.id],
+              criteria: 'bulk_sms',
+              status: 'pending',
+            });
+            notification.save().catch((err) => {
+              console.log('notification save err', err.message);
+            });
+            resolve({ status: true });
+          } else if (message.status === 'delivered') {
             console.log('Message ID: ', message.sid);
             console.info(
               `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -552,11 +710,8 @@ const bulkImage = async (data) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            resolve({
-              status: true,
-            });
+            resolve({ status: true });
           } else {
-            console.log('video message send err1', message.error_message);
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });

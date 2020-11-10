@@ -884,11 +884,12 @@ const openTrack = async (req, res) => {
 
           throw error; // Invalid phone number
         } else {
-          let fromNumber = user['proxy_number'];
-          if (!fromNumber) {
-            fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-          }
+          // let fromNumber = user['proxy_number'];
+          // if (!fromNumber) {
+          //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          // }
 
+          const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -1512,11 +1513,11 @@ const receiveEmailSendGrid = async (req, res) => {
 
           throw error; // Invalid phone number
         } else {
-          let fromNumber = user['proxy_number'];
-          if (!fromNumber) {
-            fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-          }
-
+          // let fromNumber = user['proxy_number'];
+          // if (!fromNumber) {
+          //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          // }
+          const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -1782,11 +1783,11 @@ const receiveEmail = async (req, res) => {
 
             throw error; // Invalid phone number
           } else {
-            let fromNumber = user['proxy_number'];
-            if (!fromNumber) {
-              fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-            }
-
+            // let fromNumber = user['proxy_number'];
+            // if (!fromNumber) {
+            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            // }
+            const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
             const title =
               contact.first_name +
               ' ' +
@@ -2093,11 +2094,12 @@ const unSubscribeEmail = async (req, res) => {
 
         throw error; // Invalid phone number
       } else {
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        }
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
 
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2391,11 +2393,12 @@ const reSubscribeEmail = async (req, res) => {
 
         throw error; // Invalid phone number
       } else {
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        }
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
 
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2678,10 +2681,11 @@ const clickEmailLink = async (req, res) => {
 
         throw error; // Invalid phone number
       } else {
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        }
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
 
         const title =
           contact.first_name +
