@@ -1,6 +1,7 @@
 const MailList = require('../models/mail_list');
 
 const getAll = async (req, res) => {
+  const { currentUser } = req;
   const data = await MailList.find({ user: currentUser.id }).catch((err) => {
     console.log('mail list find err', err.message);
   });
@@ -8,7 +9,7 @@ const getAll = async (req, res) => {
   return res.send({
     status: true,
     data,
-  })
+  });
 };
 
 const get = async (req, res) => {
