@@ -12,6 +12,8 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(MailListCtrl.create)
 );
-router.get('/', UserCtrl.checkAuth, catchError(MailListCtrl.get));
+
+router.get('/', UserCtrl.checkAuth, catchError(MailListCtrl.getAll));
+router.get('/:id', UserCtrl.checkAuth, catchError(MailListCtrl.get));
 
 module.exports = router;

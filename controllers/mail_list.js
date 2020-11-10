@@ -1,7 +1,18 @@
 const MailList = require('../models/mail_list');
 
+const getAll = async (req, res) => {
+  const data = await MailList.find({ user: currentUser.id }).catch((err) => {
+    console.log('mail list find err', err.message);
+  });
+
+  return res.send({
+    status: true,
+    data,
+  })
+};
+
 const get = async (req, res) => {
-  const data = await MailList.find({ _id: req.params.id });
+  const data = await MailList.findOne({ _id: req.params.id });
   if (!data) {
     return res.status(400).json({
       status: false,
@@ -43,5 +54,6 @@ const create = async (req, res) => {
 
 module.exports = {
   get,
+  getAll,
   create,
 };
