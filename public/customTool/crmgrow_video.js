@@ -56,6 +56,17 @@ unlayer.registerTool({
     icon: 'fa-photo-video',
     supportedDisplayModes: ['web', 'email'],
     options: {
+      fields: {
+        title: "Material Fields",
+        position: 1,
+        options: {
+          "materialField": {
+            "label": "Material Field",
+            "defaultValue": "player",
+            "widget": "material_content_selector"
+          }
+        }
+      },
       colors: {
         title: "Colors",
         position: 2,
@@ -132,6 +143,17 @@ unlayer.registerTool({
   icon: 'fa-user',
   supportedDisplayModes: ['web', 'email'],
   options: {
+    fields: {
+      title: "Your Information Fields",
+      position: 1,
+      options: {
+        "userField": {
+          "label": "Your Information",
+          "defaultValue": "name",
+          "widget": "user_information_selector"
+        }
+      }
+    },
     colors: {
       title: "Colors",
       position: 2,
