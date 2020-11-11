@@ -37,6 +37,8 @@ const system_settings = {
     HEIGHT: 220,
   },
   IMAP_PORT: 587,
+  ONBOARD_PRICING: 5000,
+  SCHEDULE_LINK: 'https://calendly.com/support-1196/crmgrow',
 };
 
 module.exports = system_settings;

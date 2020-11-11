@@ -84,6 +84,7 @@ const UserSchema = new Schema(
       attempt_count: { type: Number, default: 0 },
       period: { type: String, default: 'month' },
     },
+    paid_demo: Boolean,
     expired_at: Date,
     created_at: Date,
     updated_at: Date,

@@ -753,10 +753,22 @@ const paymentSucceed = async (req, res) => {
   }
 };
 
+const createCharge = async (data) => {
+  const { card_id, customer_id, amount, description } = data;
+  return stripe.charges.create({
+    amount,
+    currency: 'usd',
+    source: card_id,
+    customer: customer_id,
+    description,
+  });
+};
+
 module.exports = {
   get,
   create,
   update,
+  createCharge,
   cancelCustomer,
   paymentFailed,
   paymentSucceed,

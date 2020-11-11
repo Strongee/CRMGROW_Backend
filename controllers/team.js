@@ -1466,8 +1466,6 @@ const requestCall = async (req, res) => {
         };
 
         // Create the promise and SES service object
-
-        console.log('templatedData', templatedData);
         ses
           .sendTemplatedEmail(params)
           .promise()

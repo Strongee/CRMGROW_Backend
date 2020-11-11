@@ -27,6 +27,14 @@ const credentials = {
 };
 const oauth2 = require('simple-oauth2')(credentials);
 const nodemailer = require('nodemailer');
+const AWS = require('aws-sdk');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
@@ -1283,6 +1291,9 @@ const editMe = async (req, res) => {
   // TODO: should limit the editing fields here
   delete editData.password;
 
+  if (editData['email']) {
+    user['connected_email'] = editData['email'];
+  }
   for (const key in editData) {
     user[key] = editData[key];
   }
@@ -1365,6 +1376,7 @@ const syncOutlook = async (req, res) => {
     'offline_access',
     'email',
     'https://graph.microsoft.com/mail.send',
+    'https://graph.microsoft.com/Group.Read.All',
   ];
 
   // Authorization uri definition
@@ -1421,8 +1433,8 @@ const authorizeOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
+    'https://graph.microsoft.com/Group.Read.All',
   ];
 
   oauth2.authCode.getToken(
@@ -2456,6 +2468,50 @@ const searchPhone = async (req, res) => {
   }
 };
 
+const schedulePaidDemo = async (req, res) => {
+  const { currentUser } = req;
+  const payment = await Payment.findOne({
+    _id: currentUser.payment,
+  }).catch((err) => {
+    console.log('payment find err', err.message);
+  });
+
+  const data = {
+    card_id: payment.id,
+    customer_id: payment.id,
+    amount: system_settings.ONBOARD_PRICING,
+    description: 'Schedule one on one onboarding',
+  };
+
+  PaymentCtrl.createCharge(data).then((payment) => {
+    const templatedData = {
+      user_name: currentUser.user_name,
+      schedule_link: system_settings.schedule_link,
+    };
+
+    const params = {
+      Destination: {
+        ToAddresses: [leader.email],
+      },
+      Source: mail_contents.NO_REPLAY,
+      Template: 'TeamCallRequest',
+      TemplateData: JSON.stringify(templatedData),
+      ReplyToAddresses: [currentUser.email],
+    };
+
+    // Create the promise and SES service object
+    ses
+      .sendTemplatedEmail(params)
+      .promise()
+      .then((response) => {
+        console.log('success', response.MessageId);
+      })
+      .catch((err) => {
+        console.log('ses send err', err);
+      });
+  });
+};
+
 module.exports = {
   signUp,
   login,
@@ -2490,6 +2546,7 @@ module.exports = {
   syncOutlookCalendar,
   authorizeOutlookCalendar,
   disconCalendar,
+  schedulePaidDemo,
   dailyReport,
   desktopNotification,
   textNotification,
