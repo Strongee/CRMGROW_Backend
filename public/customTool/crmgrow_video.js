@@ -87,7 +87,7 @@ unlayer.registerTool({
               label: 'Arial',
               value: 'arial,helvetica,sans-serif'
             },
-            "widget": "font-family"
+            "widget": "font_family"
           }
         }
       }
@@ -163,7 +163,7 @@ unlayer.registerTool({
             label: 'Arial',
             value: 'arial,helvetica,sans-serif'
           },
-          "widget": "font-family"
+          "widget": "font_family"
         }
       }
     }
