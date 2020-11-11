@@ -1376,7 +1376,7 @@ const syncOutlook = async (req, res) => {
     'offline_access',
     'email',
     'https://graph.microsoft.com/mail.send',
-    'https://graph.microsoft.com/Group.Read.All',
+    // 'https://graph.microsoft.com/Group.Read.All',
   ];
 
   // Authorization uri definition
@@ -1434,7 +1434,7 @@ const authorizeOutlook = async (req, res) => {
     'offline_access',
     'email',
     'https://graph.microsoft.com/mail.send',
-    'https://graph.microsoft.com/Group.Read.All',
+    // 'https://graph.microsoft.com/Group.Read.All',
   ];
 
   oauth2.authCode.getToken(
