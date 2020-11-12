@@ -106,9 +106,46 @@ const getAll = async (req, res) => {
   });
 };
 
+const getTagsDetail = async (req, res) => {
+  const { currentUser } = req;
+  const data = await Contact.aggregate([
+    {
+      $match: { user: mongoose.Types.ObjectId(currentUser.id) },
+    },
+    {
+      $unwind: {
+        path: '$tags',
+      },
+    },
+    {
+      $group: {
+        _id: '$tags',
+        count: { $sum: 1 },
+        contacts: {
+          $push: {
+            first_name: '$$ROOT.first_name',
+            last_name: '$$ROOT.last_name',
+            _id: '$$ROOT._id',
+            email: '$$ROOT.email',
+          },
+        },
+      },
+    },
+    {
+      $sort: { _id: 1 },
+    },
+  ]);
+
+  res.send({
+    status: true,
+    data,
+  });
+};
+
 module.exports = {
   get,
   create,
   search,
   getAll,
+  getTagsDetail,
 };
