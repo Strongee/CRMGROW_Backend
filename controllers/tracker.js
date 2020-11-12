@@ -26,6 +26,7 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const { RestClient } = require('@signalwire/node');
+const { generateUnsubscribeLink } = require('../helpers/text');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -123,7 +124,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
       // if (!fromNumber) {
       //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       // }
-      const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
       const title =
         contact.first_name +
         ' ' +
@@ -152,7 +153,14 @@ const disconnectPDF = async (pdf_tracker_id) => {
         .create({
           from: fromNumber,
           to: e164Phone,
-          body: title + '\n' + body + '\n' + contact_link,
+          body:
+            title +
+            '\n' +
+            body +
+            '\n' +
+            contact_link +
+            '\n\n' +
+            generateUnsubscribeLink(),
           // body: title + '\n' + body,
         })
         .catch((err) => console.error(err));
@@ -483,7 +491,7 @@ const disconnectVideo = async (video_tracker_id) => {
         // if (!fromNumber) {
         //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         // }
-        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
 
         const title =
           contact.first_name +
@@ -514,7 +522,14 @@ const disconnectVideo = async (video_tracker_id) => {
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + '\n' + body + '\n' + contact_link,
+            body:
+              title +
+              '\n' +
+              body +
+              '\n' +
+              contact_link +
+              '\n\n' +
+              generateUnsubscribeLink(),
             // body: title + '\n' + body,
           })
           .catch((err) => console.error(err));
@@ -949,7 +964,7 @@ const disconnectImage = async (image_tracker_id) => {
       // if (!fromNumber) {
       //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
       // }
-      const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
 
       const title =
         contact.first_name +
@@ -979,7 +994,14 @@ const disconnectImage = async (image_tracker_id) => {
         .create({
           from: fromNumber,
           to: e164Phone,
-          body: title + '\n' + body + '\n' + contact_link,
+          body:
+            title +
+            '\n' +
+            body +
+            '\n' +
+            contact_link +
+            '\n\n' +
+            generateUnsubscribeLink(),
           // body: title + '\n' + body,
         })
         .catch((err) => console.error(err));

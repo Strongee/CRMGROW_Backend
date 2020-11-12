@@ -55,6 +55,7 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
 
 const emailHelper = require('../helpers/email');
 const ActivityHelper = require('../helpers/activity');
+const { generateUnsubscribeLink } = require('../helpers/text');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -889,7 +890,7 @@ const openTrack = async (req, res) => {
           //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           // }
 
-          const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -917,7 +918,7 @@ const openTrack = async (req, res) => {
               from: fromNumber,
               to: e164Phone,
               // body: title + '\n' + time + contact_link,
-              body: title + '\n' + time,
+              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
             })
             .catch((err) => console.error('send sms err', err));
         }
@@ -1517,7 +1518,7 @@ const receiveEmailSendGrid = async (req, res) => {
           // if (!fromNumber) {
           //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
           // }
-          const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -1545,7 +1546,7 @@ const receiveEmailSendGrid = async (req, res) => {
               from: fromNumber,
               to: e164Phone,
               // body: title + '\n' + time + contact_link,
-              body: title + '\n' + time,
+              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
             })
             .catch((err) => console.error('send sms err: ', err));
         }
@@ -1787,7 +1788,7 @@ const receiveEmail = async (req, res) => {
             // if (!fromNumber) {
             //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
             // }
-            const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
             const title =
               contact.first_name +
               ' ' +
@@ -1814,7 +1815,7 @@ const receiveEmail = async (req, res) => {
               .create({
                 from: fromNumber,
                 to: e164Phone,
-                body: title + '\n' + time,
+                body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
                 // body: title + '\n' + time + contact_link,
               })
               .catch((err) => console.error('send sms err: ', err));
@@ -2099,7 +2100,7 @@ const unSubscribeEmail = async (req, res) => {
         //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         // }
 
-        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2125,7 +2126,7 @@ const unSubscribeEmail = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2398,7 +2399,7 @@ const reSubscribeEmail = async (req, res) => {
         //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         // }
 
-        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2424,7 +2425,7 @@ const reSubscribeEmail = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2685,7 +2686,7 @@ const clickEmailLink = async (req, res) => {
         // if (!fromNumber) {
         //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         // }
-        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
 
         const title =
           contact.first_name +
@@ -2712,7 +2713,7 @@ const clickEmailLink = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }

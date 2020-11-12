@@ -449,14 +449,20 @@ const reminder_job = new CronJob(
               '\n' +
               '\n';
             const body = follow_up.content + '\n';
-            // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
             client.messages
               .create({
                 from: fromNumber,
                 to: e164Phone,
-                // body: title + body + '\n' + contact_link,
-                body: title + body,
+                body:
+                  title +
+                  body +
+                  '\n' +
+                  contact_link +
+                  '\n\n' +
+                  TextHelper.generateUnsubscribeLink(),
+                // body: title + body,
               })
               .then(() => {
                 console.log(
