@@ -72,6 +72,23 @@ const GarbageSchema = new Schema(
         ref: 'email_template',
       },
     },
+    auto_follow_up2: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 0 },
+      content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
+    },
+    auto_resend2: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 24 },
+      sms_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+      email_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+    },
     material_themes: { type: Object },
     access_token: String,
     highlights: { type: Array, default: [] },
