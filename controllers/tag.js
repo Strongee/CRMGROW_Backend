@@ -145,14 +145,28 @@ const getTagsDetail = async (req, res) => {
 const updateTag = async (req, res) => {
   const { currentUser } = req;
   const { oldTag, newTag } = req.body;
-  await Contact.updateMany(
+  await Contact.update(
+    { user: mongoose.Types.ObjectId(currentUser.id) },
+    { $set: { 'tags.$[element]': newTag } },
     {
-      user: mongoose.Types.ObjectId(currentUser.id),
-      tags: oldTag,
-    },
-    { $set: { 'tags.$[]': newTag } }
+      multi: true,
+      arrayFilters: [{ element: oldTag }],
+    }
   );
 
+  res.send({
+    status: true,
+  });
+};
+
+const deleteTag = async (req, res) => {
+  const { currentUser } = req;
+  const { tag } = req.body;
+  await Contact.update(
+    { user: mongoose.Types.ObjectId(currentUser.id) },
+    { $pull: { tags: tag } },
+    { multi: true }
+  );
   res.send({
     status: true,
   });
@@ -165,4 +179,5 @@ module.exports = {
   getAll,
   getTagsDetail,
   updateTag,
+  deleteTag,
 };
