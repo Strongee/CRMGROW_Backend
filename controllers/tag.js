@@ -142,10 +142,27 @@ const getTagsDetail = async (req, res) => {
   });
 };
 
+const updateTag = async (req, res) => {
+  const { currentUser } = req;
+  const { oldTag, newTag } = req.body;
+  await Contact.updateMany(
+    {
+      user: mongoose.Types.ObjectId(currentUser.id),
+      tags: oldTag,
+    },
+    { $set: { 'tags.$[]': newTag } }
+  );
+
+  res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   create,
   search,
   getAll,
   getTagsDetail,
+  updateTag,
 };
