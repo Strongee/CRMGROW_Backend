@@ -165,7 +165,7 @@ unlayer.registerTool({
               break;
             case 'title':
               html = `
-              <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}">
+              <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment};">
                 Material Title would be here.
               </div>
               `;
@@ -263,8 +263,7 @@ unlayer.registerTool({
               html = `
               <div style="
                 color: ${values.textColor};
-                background-color: ${values.backgroundColor};
-                font-family: ${values.font.value}; font-size: ${values.fontSize}px;" class="unlayer-material-title">
+                font-family: ${values.font.value}; font-size: ${values.fontSize}px; text-align: ${values.alignment};" class="unlayer-material-title">
                 Material Title would be here.
               </div>
               `;
@@ -274,7 +273,7 @@ unlayer.registerTool({
               <div style="
                 color: ${values.textColor};
                 background-color: ${values.backgroundColor};
-                font-family: ${values.font.value};" class="unlayer-material-description">
+                font-family: ${values.font.value}; text-align: ${values.alignment};" class="unlayer-material-description">
                 Material Description would be here.
               </div>
               `;
@@ -408,6 +407,8 @@ unlayer.registerTool({
             </div>
             `;
             break;
+          default:
+            html = '';
         }
         return html;
       }
@@ -451,12 +452,15 @@ unlayer.registerTool({
             </div>
             `;
             break;
+          default:
+            html = '';
         }
+        console.log("Web USER HTML", html, values);
         return html;
       },
       email: function(values) {
         let html = ''
-        switch(values.materialField) {
+        switch(values.userField) {
           case 'avatar':
             html = `
               <div class="your-avatar-field" style="height: ${values.blockSize}px; width: ${values.blockSize}px; border-radius: 50%; box-shadow: 3px 3px 10px #0004; overflow: hidden;">
@@ -492,7 +496,10 @@ unlayer.registerTool({
             </div>
             `;
             break;
+          default:
+            html = '';
         }
+        console.log("Email USER HTML", html, values);
         return html;
       }
     },

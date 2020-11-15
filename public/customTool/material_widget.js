@@ -2,9 +2,21 @@ const materialData = $("#material-detail").val() + '';
 const material = JSON.parse(materialData);
 const material_type = $("#material-type").val() + '';
 
-
+const userData = $("#user-detail").val() + '';
+const user = JSON.parse(userData);
+const socialData = $("#social-links").val() + '';
+const socials = JSON.parse(socialData);
 
 let materialHTML = ''
+let materialTitle = material.title;
+let materialDescription = material.description;
+let userAvatar = `<img src="${user.picture_profile}" style="width: 100%; height: 100%; object-fit: cover;"/>`;
+let userName = user.user_name;
+let userEmail = user.email;
+let userPhone = user.cell_phone;
+let userFacebook = socials.facebook;
+let userTwitter = socials.twitter;
+let userLinked = socials.linkedin;
 if(material_type === 'video') {
   if(material.type === 'youtube' || material.type === 'vimeo') {
     materialHTML = `
@@ -55,6 +67,14 @@ if(material_type === 'image') {
   `
 }
 
-$(".material-wrapper").html(materialHTML);
+$(".unlayer-material-viewer").html(materialHTML);
+$(".unlayer-material-viewer").addClass("material-wrapper");
+$(".unlayer-material-title").html(materialTitle);
+$(".unlayer-material-description").html(materialDescription);
+// $(".your-avatar-field").html(userAvatar);
+// $(".your-name-field").html(userName);
+// $(".your-phone-field").html(userPhone);
+// $(".your-email-field").html(userEmail);
+// $(".your-social-field").html(userFacebook + userTwitter + userLinked);
 
 

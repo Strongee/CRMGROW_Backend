@@ -21,6 +21,7 @@ head
   link(rel='stylesheet', type='text/css', href='./theme/plugins/pdf/font-awesome.css')
   //- Theme Main Style Import
   link(rel='stylesheet', href='./theme/css/theme3.css')
+  link(rel='stylesheet', href='./theme/css/custom_theme.css')
   //- Widget Styles Import
   link(rel='stylesheet', href='./theme/css/widget.css')
   //- Basic JS lib import
@@ -83,6 +84,8 @@ input#capture-dialog(type='hidden', value=`${capture_dialog}`)
 input#capture-delay(type='hidden', value=`${capture_delay}`)
 input#material-type(type='hidden' value=`${material_type}`)
 input#material-detail(type='hidden' value=`${JSON.stringify(material)}`)
+input#user-detail(type='hidden' value=`${JSON.stringify(user)}`)
+input#social-links(type='hidden' value=`${JSON.stringify(social_link)}`)
 script(type='text/javascript', src='./theme/core/widget_v2.js')
 script(type='text/javascript', src='./customTool/material_widget.js')
 if material_type === 'video'
