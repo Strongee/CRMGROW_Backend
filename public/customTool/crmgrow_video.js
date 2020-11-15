@@ -172,7 +172,7 @@ unlayer.registerTool({
               break;
             case 'description':
               html = `
-              <div style="color: ${values.textColor}; text-align: ${values.alignment}; font-family: ${values.font};">
+              <div style="color: ${values.textColor}; text-align: ${values.alignment}; font-family: ${values.font.value};">
                 Material Description would be here.
               </div>
               `;
@@ -207,21 +207,21 @@ unlayer.registerTool({
                   font-size: 18px;
                   text-align: center;
                   color: #848484;
-                  padding: 40px 90px;">
+                  padding: 40px 90px;" class="unlayer-material-viewer">
                   MATERIAL(VIDEO, PDF, IMAGE) Viewer will be placed here.
                 </div>
               `;
               break;
             case 'title':
               html = `
-              <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};">
+              <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="unlayer-material-title">
                 Material Title would be here.
               </div>
               `;
               break;
             case 'description':
               html = `
-              <div style="color: ${values.textColor}; text-align: ${values.alignment}; font-family: ${values.font};">
+              <div style="color: ${values.textColor}; text-align: ${values.alignment}; font-family: ${values.font.value};" class="unlayer-material-description">
                 Material Description would be here.
               </div>
               `;
@@ -235,7 +235,7 @@ unlayer.registerTool({
                 font-size: 20px;
                 text-align: center;
                 color: #848484;
-                padding: 40px 90px;">
+                padding: 40px 90px;" class="unlayer-material">
                 MATERIAL(VIDEO, PDF, IMAGE) will be placed here.
               </div>
               `
@@ -254,7 +254,7 @@ unlayer.registerTool({
                   font-size: 18px;
                   text-align: center;
                   color: #848484;
-                  padding: 40px 90px;" class="material-viewer">
+                  padding: 40px 90px;" class="unlayer-material-viewer">
                   MATERIAL(VIDEO, PDF, IMAGE) Viewer will be placed here.
                 </div>
               `;
@@ -264,8 +264,7 @@ unlayer.registerTool({
               <div style="
                 color: ${values.textColor};
                 background-color: ${values.backgroundColor};
-                font-family: ${values.font};
-                padding: 40px 90px;" class="material-title">
+                font-family: ${values.font.value}; font-size: ${values.fontSize}px;" class="unlayer-material-title">
                 Material Title would be here.
               </div>
               `;
@@ -275,8 +274,7 @@ unlayer.registerTool({
               <div style="
                 color: ${values.textColor};
                 background-color: ${values.backgroundColor};
-                font-family: ${values.font};
-                padding: 40px 90px;" class="material-description">
+                font-family: ${values.font.value};" class="unlayer-material-description">
                 Material Description would be here.
               </div>
               `;
@@ -290,7 +288,7 @@ unlayer.registerTool({
                 font-size: 20px;
                 text-align: center;
                 color: #848484;
-                padding: 40px 90px;" class="material-container">
+                padding: 40px 90px;" class="unlayer-material">
                 MATERIAL(VIDEO, PDF, IMAGE) will be placed here.
               </div>
               `
@@ -384,21 +382,21 @@ unlayer.registerTool({
             break;
           case 'name':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};">
               Your Name
             </div>
             `;
             break;
           case 'phone':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};">
               Your Phone Number
             </div>
             `;
             break;
           case 'email':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};">
               Your Email
             </div>
             `;
@@ -427,21 +425,21 @@ unlayer.registerTool({
             break;
           case 'name':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-name-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-name-field">
               Your Name
             </div>
             `;
             break;
           case 'phone':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-phone-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-phone-field">
               Your Phone Number
             </div>
             `;
             break;
           case 'email':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-email-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-email-field">
               Your Email
             </div>
             `;
@@ -468,21 +466,21 @@ unlayer.registerTool({
             break;
           case 'name':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-name-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-name-field">
               Your Name
             </div>
             `;
             break;
           case 'phone':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-phone-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-phone-field">
               Your Phone Number
             </div>
             `;
             break;
           case 'email':
             html = `
-            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font};" class="your-email-field">
+            <div style="color: ${values.textColor}; font-size: ${values.fontSize}px; text-align: ${values.alignment}; font-family: ${values.font.value};" class="your-email-field">
               Your Email
             </div>
             `;
