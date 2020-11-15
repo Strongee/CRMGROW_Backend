@@ -71,10 +71,10 @@ $(".unlayer-material-viewer").html(materialHTML);
 $(".unlayer-material-viewer").addClass("material-wrapper");
 $(".unlayer-material-title").html(materialTitle);
 $(".unlayer-material-description").html(materialDescription);
-// $(".your-avatar-field").html(userAvatar);
-// $(".your-name-field").html(userName);
-// $(".your-phone-field").html(userPhone);
-// $(".your-email-field").html(userEmail);
-// $(".your-social-field").html(userFacebook + userTwitter + userLinked);
+$(".your-avatar-field").html(userAvatar);
+$(".your-name-field").html(userName);
+$(".your-phone-field").html(userPhone);
+$(".your-email-field").html(userEmail);
+$(".your-social-field").html(userFacebook + userTwitter + userLinked);
 
 
