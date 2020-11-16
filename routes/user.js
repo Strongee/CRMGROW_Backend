@@ -239,7 +239,7 @@ router.post('/search-phone', catchError(UserCtrl.searchPhone));
 // Schedule a paid demo
 router.post(
   '/schedule-demo',
-  UserCtrl.checkAuth,
+  UserCtrl.checkAuth2,
   catchError(UserCtrl.schedulePaidDemo)
 );
 
