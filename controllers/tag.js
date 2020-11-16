@@ -106,9 +106,78 @@ const getAll = async (req, res) => {
   });
 };
 
+const getTagsDetail = async (req, res) => {
+  const { currentUser } = req;
+  const data = await Contact.aggregate([
+    {
+      $match: { user: mongoose.Types.ObjectId(currentUser.id) },
+    },
+    {
+      $unwind: {
+        path: '$tags',
+      },
+    },
+    {
+      $group: {
+        _id: '$tags',
+        count: { $sum: 1 },
+        contacts: {
+          $push: {
+            first_name: '$$ROOT.first_name',
+            last_name: '$$ROOT.last_name',
+            _id: '$$ROOT._id',
+            email: '$$ROOT.email',
+          },
+        },
+      },
+    },
+    {
+      $sort: { _id: 1 },
+    },
+  ]);
+
+  res.send({
+    status: true,
+    data,
+  });
+};
+
+const updateTag = async (req, res) => {
+  const { currentUser } = req;
+  const { oldTag, newTag } = req.body;
+  await Contact.update(
+    { user: mongoose.Types.ObjectId(currentUser.id) },
+    { $set: { 'tags.$[element]': newTag } },
+    {
+      multi: true,
+      arrayFilters: [{ element: oldTag }],
+    }
+  );
+
+  res.send({
+    status: true,
+  });
+};
+
+const deleteTag = async (req, res) => {
+  const { currentUser } = req;
+  const { tag } = req.body;
+  await Contact.update(
+    { user: mongoose.Types.ObjectId(currentUser.id) },
+    { $pull: { tags: tag } },
+    { multi: true }
+  );
+  res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   create,
   search,
   getAll,
+  getTagsDetail,
+  updateTag,
+  deleteTag,
 };
