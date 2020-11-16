@@ -31,13 +31,17 @@ async function main() {
   client.connect();
 }
 
-const relasePhone = () => {
-  const phone_numbers = [];
+const releasePhone = () => {
+  const phone_numbers = [
+    'e686f05f-3507-4e7a-8044-d6d2447d624e',
+    '5019b645-4cef-40e8-838a-2897742a6dbf',
+  ];
   for (let i = 0; i < phone_numbers.length; i++) {
     client
-      .incomingPhoneNumbers('IncomingPhoneNumberSid')
+      .incomingPhoneNumbers(phone_numbers[i])
       .remove()
-      .then((incoming_phone_number) => console.log(incoming_phone_number.sid))
+      .then(() => console.log(phone_numbers[i]))
+      .catch((err) => console.log(err))
       .done();
   }
 };
@@ -113,4 +117,5 @@ const sendMessage = async () => {
 };
 // longNumber();
 // buyNumber();
-sendMessage();
+// sendMessage();
+releasePhone();
