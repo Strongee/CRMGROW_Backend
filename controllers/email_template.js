@@ -1,4 +1,5 @@
 const EmailTemplate = require('../models/email_template');
+const Garbage = require('../models/garbage');
 const Team = require('../models/team');
 
 const get = async (req, res) => {
@@ -155,6 +156,40 @@ const remove = async (req, res) => {
         $pull: { email_templates: { $in: [req.params.id] } },
       }
     );
+  }
+
+  const garbage = await Garbage.findOne({ user: currentUser.id });
+  if (garbage) {
+    if (garbage.canned_message) {
+      const canned_message = garbage.canned_message;
+      if (canned_message.sms === req.params.id) {
+        return res.status(400).send({
+          status: false,
+          errror: 'Remove from default sms template in Canned message',
+        });
+      }
+      if (canned_message.email === req.params.id) {
+        return res.status(400).send({
+          status: false,
+          errror: 'Remove from default email template in Canned message',
+        });
+      }
+    }
+    if (garbage.auto_resend) {
+      const auto_resend = garbage.auto_resent;
+      if (auto_resend.sms_canned_message === req.params.id) {
+        return res.status(400).send({
+          status: false,
+          errror: 'Remove from auto-resend canned message',
+        });
+      }
+      if (auto_resend.email_canned_message === req.params.id) {
+        return res.status(400).send({
+          status: false,
+          error: 'Remove from auto-resend canned message',
+        });
+      }
+    }
   }
 
   EmailTemplate.deleteOne({ _id: id, user: currentUser.id })

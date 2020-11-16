@@ -237,7 +237,11 @@ router.post('/search-nickname', catchError(UserCtrl.searchNickName));
 router.post('/search-phone', catchError(UserCtrl.searchPhone));
 
 // Schedule a paid demo
-router.post('/schedule-demo', catchError(UserCtrl.schedulePaidDemo));
+router.post(
+  '/schedule-demo',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.schedulePaidDemo)
+);
 
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser));
