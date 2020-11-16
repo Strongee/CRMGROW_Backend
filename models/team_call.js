@@ -17,6 +17,7 @@ const TeamCallSchema = new Schema(
     note: String,
     status: { type: String, default: 'pending' },
     link: String,
+    schedule_link: String,
     proposed_at: Array,
     confirmed_at: Date,
     desired_at: Date,

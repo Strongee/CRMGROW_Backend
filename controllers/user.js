@@ -2486,17 +2486,16 @@ const schedulePaidDemo = async (req, res) => {
   PaymentCtrl.createCharge(data).then((payment) => {
     const templatedData = {
       user_name: currentUser.user_name,
-      schedule_link: system_settings.schedule_link,
+      schedule_link: system_settings.SCHEDULE_LINK,
     };
 
     const params = {
       Destination: {
-        ToAddresses: [leader.email],
+        ToAddresses: [currentUser.email],
       },
-      Source: mail_contents.NO_REPLAY,
-      Template: 'TeamCallRequest',
+      Source: mail_contents.REPLY,
+      Template: 'OnboardCall',
       TemplateData: JSON.stringify(templatedData),
-      ReplyToAddresses: [currentUser.email],
     };
 
     // Create the promise and SES service object

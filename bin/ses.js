@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'JoinTeam';
+const templateName = 'OnboardCall';
 
 const subjects = {
   TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
@@ -17,7 +17,7 @@ const subjects = {
   TeamCallInvitation: `{{user_name}} has accepted your call request`,
   TeamCallInquiryFailed: `{{user_name}} has rejected your call request`,
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,
-  JoinTeam: `One on one onboarding`,
+  OnboardCall: `One on one onboarding`,
 };
 const htmls = {};
 fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (

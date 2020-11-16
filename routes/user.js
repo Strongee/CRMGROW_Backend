@@ -236,6 +236,9 @@ router.post('/search-nickname', catchError(UserCtrl.searchNickName));
 // Search Phonenumber
 router.post('/search-phone', catchError(UserCtrl.searchPhone));
 
+// Schedule a paid demo
+router.post('/schedule-demo', catchError(UserCtrl.schedulePaidDemo));
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser));
 
