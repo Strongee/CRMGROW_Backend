@@ -2477,8 +2477,8 @@ const schedulePaidDemo = async (req, res) => {
   });
 
   const data = {
-    card_id: payment.id,
-    customer_id: payment.id,
+    card_id: payment.card_id,
+    customer_id: payment.customer_id,
     amount: system_settings.ONBOARD_PRICING,
     description: 'Schedule one on one onboarding',
   };
