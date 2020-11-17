@@ -2483,32 +2483,43 @@ const schedulePaidDemo = async (req, res) => {
     description: 'Schedule one on one onboarding',
   };
 
-  PaymentCtrl.createCharge(data).then((payment) => {
-    const templatedData = {
-      user_name: currentUser.user_name,
-      schedule_link: system_settings.SCHEDULE_LINK,
-    };
+  PaymentCtrl.createCharge(data)
+    .then(() => {
+      const templatedData = {
+        user_name: currentUser.user_name,
+        schedule_link: system_settings.SCHEDULE_LINK,
+      };
 
-    const params = {
-      Destination: {
-        ToAddresses: [currentUser.email],
-      },
-      Source: mail_contents.REPLY,
-      Template: 'OnboardCall',
-      TemplateData: JSON.stringify(templatedData),
-    };
+      const params = {
+        Destination: {
+          ToAddresses: [currentUser.email],
+        },
+        Source: mail_contents.REPLY,
+        Template: 'OnboardCall',
+        TemplateData: JSON.stringify(templatedData),
+      };
 
-    // Create the promise and SES service object
-    ses
-      .sendTemplatedEmail(params)
-      .promise()
-      .then((response) => {
-        console.log('success', response.MessageId);
-      })
-      .catch((err) => {
-        console.log('ses send err', err);
+      // Create the promise and SES service object
+      ses
+        .sendTemplatedEmail(params)
+        .promise()
+        .then((response) => {
+          console.log('success', response.MessageId);
+        })
+        .catch((err) => {
+          console.log('ses send err', err);
+        });
+      return res.send({
+        status: true,
       });
-  });
+    })
+    .catch((err) => {
+      console.log('card payment err', err);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
 };
 
 module.exports = {

@@ -11,6 +11,11 @@ var mailOptions = {
   html: '<b>This is some HTML</b>',
 };
 
+const hostName = 'mx0.thehandyteam.co';
+const user = 'user7zRv8Tbt4w68';
+const password = 'smtp77e30c03a7b0';
+const port = 2525;
+const ssl = 'None';
 // Send e-mail using SMTP
 mailOptions.subject = 'Nodemailer SMTP transporter';
 
