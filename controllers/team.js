@@ -167,7 +167,7 @@ const get = (req, res) => {
 
         return res.send({
           status: true,
-          data: { ...data, join_link },
+          data: { ...data._doc, join_link },
         });
       } else {
         return res.send({
