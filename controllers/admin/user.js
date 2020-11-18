@@ -497,7 +497,6 @@ const disableUser = async (req, res) => {
           {
             $set: { del: true, updated_at: new Date() },
             $unset: {
-              payment: true,
               proxy_number: true,
               proxy_number_id: true,
             },

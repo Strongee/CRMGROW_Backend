@@ -6,6 +6,7 @@ const Garbage = require('../models/garbage');
 const system_settings = require('../config/system_settings');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
+const Automation = require('../models/automation');
 
 const addContact = async (req, res) => {
   const { currentUser } = req;
@@ -164,6 +165,13 @@ const createToken = (req, res) => {
     status: true,
     token,
   });
+};
+
+const searchAutomation = async (req, res) => {
+  const { currentUser } = req;
+  Automation.find((
+    
+  ))
 };
 
 module.exports = {
