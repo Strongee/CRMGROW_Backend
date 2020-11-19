@@ -1,11 +1,13 @@
 const phone = require('phone');
-const mongoose = require('mongoose');
 const Contact = require('../models/contact');
-const Team = require('../models/team');
 const Activity = require('../models/activity');
 const Garbage = require('../models/garbage');
 const Automation = require('../models/automation');
 const Label = require('../models/label');
+const EmailTemplate = require('../models/email_template');
+const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const Image = require('../models/image');
 const LabelHelper = require('../helpers/label');
 const garbageHelper = require('../helpers/garbage.js');
 
@@ -199,6 +201,128 @@ const getAutomations = async (req, res) => {
   return res.send(automations);
 };
 
+const getEmailTemplates = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const email_templates = await EmailTemplate.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id },
+          {
+            role: 'admin',
+            company,
+          },
+          {
+            shared_members: currentUser.id,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        title: true,
+      },
+    },
+  ]);
+
+  console.log('email_templates', email_templates);
+
+  return res.send(email_templates);
+};
+
+const getVideos = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const videos = await Video.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id },
+          {
+            role: 'admin',
+            company,
+          },
+          {
+            shared_members: currentUser.id,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        title: true,
+      },
+    },
+  ]);
+
+  return res.send(videos);
+};
+
+const getPdfs = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const pdfs = await PDF.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id },
+          {
+            role: 'admin',
+            company,
+          },
+          {
+            shared_members: currentUser.id,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        title: true,
+      },
+    },
+  ]);
+
+  return res.send(pdfs);
+};
+
+const getImages = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const images = await Image.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id },
+          {
+            role: 'admin',
+            company,
+          },
+          {
+            shared_members: currentUser.id,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        title: true,
+      },
+    },
+  ]);
+
+  return res.send(images);
+};
+
 const getLabels = async (req, res) => {
   const { currentUser } = req;
   const garbage = await garbageHelper.get(currentUser);
@@ -255,12 +379,32 @@ const searchContact = async (req, res, next) => {
   next();
 };
 
+const addNewTag = async (req, res) => {
+  const { email, tag } = req.body;
+  Contact.updateOne(
+    { email },
+    {
+      $push: { tags: { $each: [tag] } },
+    }
+  ).catch((err) => {
+    console.log('err', err);
+  });
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   createToken,
   getContact,
   addContact,
+  addNewTag,
   updateContact,
   getAutomations,
+  getEmailTemplates,
   getLabels,
+  getVideos,
+  getPdfs,
+  getImages,
   searchContact,
 };
