@@ -167,13 +167,6 @@ const createToken = (req, res) => {
   });
 };
 
-const searchAutomation = async (req, res) => {
-  const { currentUser } = req;
-  Automation.find((
-    
-  ))
-};
-
 module.exports = {
   createToken,
   getContact,

@@ -92,6 +92,8 @@ const getAll = async (req, res) => {
 
     automation_array.push(automation_detail);
   }
+  console.log('automation_array********************', automation_array);
+
   return res.send({
     status: true,
     data: automation_array,
