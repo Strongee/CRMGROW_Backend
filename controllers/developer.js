@@ -1,12 +1,18 @@
 const phone = require('phone');
+const mongoose = require('mongoose');
 const Contact = require('../models/contact');
-const LabelHelper = require('../helpers/label');
+const Team = require('../models/team');
 const Activity = require('../models/activity');
 const Garbage = require('../models/garbage');
+const Automation = require('../models/automation');
+const Label = require('../models/label');
+const LabelHelper = require('../helpers/label');
+const garbageHelper = require('../helpers/garbage.js');
+
 const system_settings = require('../config/system_settings');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
-const Automation = require('../models/automation');
+const { activeNext } = require('./time_line');
 
 const addContact = async (req, res) => {
   const { currentUser } = req;
@@ -28,11 +34,6 @@ const addContact = async (req, res) => {
     });
   }
 
-  if (label) {
-    req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
-  } else {
-    delete req.body.label;
-  }
   if (cell_phone) {
     req.body.cell_phone = phone(cell_phone)[0];
   } else {
@@ -167,9 +168,99 @@ const createToken = (req, res) => {
   });
 };
 
+const getAutomations = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const automations = await Automation.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id, del: false },
+          {
+            role: 'admin',
+            company,
+            del: false,
+          },
+          {
+            shared_members: currentUser.id,
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        title: true,
+      },
+    },
+  ]);
+
+  return res.send(automations);
+};
+
+const getLabels = async (req, res) => {
+  const { currentUser } = req;
+  const garbage = await garbageHelper.get(currentUser);
+
+  if (!garbage) {
+    return res.status(400).send({
+      status: false,
+      error: `Couldn't get the Garbage`,
+    });
+  }
+
+  let editedLabels = [];
+  if (garbage && garbage['edited_label']) {
+    editedLabels = garbage['edited_label'];
+  }
+
+  // const company = currentUser.company || 'eXp Realty';
+  const labels = await Label.aggregate([
+    {
+      $match: {
+        $or: [
+          { user: currentUser.id },
+          {
+            role: 'admin',
+            _id: { $nin: editedLabels },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: false,
+        id: '$_id',
+        name: true,
+      },
+    },
+  ]);
+
+  res.send(labels);
+};
+
+const searchContact = async (req, res, next) => {
+  const { currentUser } = req;
+  const contact = await Contact.findOne({
+    email: req.body.email,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('contact find err', err.message);
+    return res.send('contact find err');
+  });
+
+  req.body.contact = contact.id;
+  req.params.id = contact.id;
+  next();
+};
+
 module.exports = {
   createToken,
   getContact,
   addContact,
   updateContact,
+  getAutomations,
+  getLabels,
+  searchContact,
 };

@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const VideoSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     title: String,
     company: { type: String },
     description: String,
@@ -37,6 +38,7 @@ const VideoSchema = new Schema(
   }
 );
 
+VideoSchema.index({ user: 1 });
 const Video = mongoose.model('video', VideoSchema);
 
 module.exports = Video;
