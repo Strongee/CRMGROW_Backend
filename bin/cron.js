@@ -475,9 +475,6 @@ const reminder_job = new CronJob(
                 );
               })
               .catch((err) => console.error('send sms err: ', err));
-            Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
-              console.log('reminder remove err', err.message);
-            });
           }
           const desktop_notification = garbage['desktop_notification'];
           if (desktop_notification['follow_up']) {
@@ -516,6 +513,9 @@ const reminder_job = new CronJob(
               .sendNotification(subscription, playload)
               .catch((err) => console.error(err));
           }
+          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+            console.log('reminder remove err', err.message);
+          });
         }
       } else {
         const appointment = await Appointment.findOne({
