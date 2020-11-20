@@ -466,11 +466,11 @@ const sendVideo = async (req, res) => {
 
 const sendPdf = async (req, res) => {
   const { currentUser } = req;
-  const { template_id, video_id, contact } = req.body;
+  const { template_id, pdf_id, contact } = req.body;
   const email_template = await EmailTemplate.findOne({
     _id: template_id,
   });
-  const video = await Video.findOne({ _id: video_id }).catch((err) => {
+  const pdf = await PDF.findOne({ _id: pdf_id }).catch((err) => {
     console.log('video find err', err.message);
   });
 
@@ -479,10 +479,10 @@ const sendPdf = async (req, res) => {
     user: currentUser.id,
     content,
     subject,
-    videos: [video],
+    pdfs: [pdf],
     contacts: [contact],
   };
-  EmailHelper.bulkVideo(data)
+  EmailHelper.bulkPDF(data)
     .then((result) => {
       if (result[0] && result[0].status === true) {
         return res.send({
@@ -503,7 +503,44 @@ const sendPdf = async (req, res) => {
     });
 };
 
-const sendImage = async (req, res) => {};
+const sendImage = async (req, res) => {
+  const { currentUser } = req;
+  const { template_id, image_id, contact } = req.body;
+  const email_template = await EmailTemplate.findOne({
+    _id: template_id,
+  });
+  const image = await Image.findOne({ _id: image_id }).catch((err) => {
+    console.log('video find err', err.message);
+  });
+
+  const { content, subject } = email_template;
+  const data = {
+    user: currentUser.id,
+    content,
+    subject,
+    images: [image],
+    contacts: [contact],
+  };
+  EmailHelper.bulkImage(data)
+    .then((result) => {
+      if (result[0] && result[0].status === true) {
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.status(400).send({
+          status: false,
+          error: 'Send error',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
 
 module.exports = {
   createToken,
