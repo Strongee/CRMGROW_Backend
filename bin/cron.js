@@ -338,7 +338,7 @@ const reminder_job = new CronJob(
     due_date.setMilliseconds(0);
 
     const reminder_array = await Reminder.find({
-      due_date: { $lte: due_date },
+      due_date: { $lt: due_date },
       del: false,
     }).catch((err) => {
       console.log(err);
@@ -475,10 +475,8 @@ const reminder_job = new CronJob(
                 );
               })
               .catch((err) => console.error('send sms err: ', err));
-            reminder['del'] = true;
-
-            reminder.save().catch((err) => {
-              console.log(err);
+            Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+              console.log('reminder remove err', err.message);
             });
           }
           const desktop_notification = garbage['desktop_notification'];

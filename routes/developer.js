@@ -4,7 +4,6 @@ const UserCtrl = require('../controllers/user');
 const DeveloperCtrl = require('../controllers/developer');
 const ContactCtrl = require('../controllers/contact');
 const FollowUpCtrl = require('../controllers/follow_up');
-const EmailTemplateCtrl = require('../controllers/email_template');
 const NoteCtrl = require('../controllers/note');
 const TimeLineCtrl = require('../controllers/time_line');
 const { catchError } = require('../controllers/error');
