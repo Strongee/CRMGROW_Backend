@@ -65,4 +65,22 @@ router.post(
   catchError(NoteCtrl.create)
 );
 router.post('/tag', UserCtrl.checkAuth, catchError(DeveloperCtrl.addNewTag));
+router.post(
+  '/send-video',
+  UserCtrl.checkAuth,
+  DeveloperCtrl.searchContact,
+  catchError(DeveloperCtrl.sendVideo)
+);
+router.post(
+  '/send-pdf',
+  UserCtrl.checkAuth,
+  DeveloperCtrl.searchContact,
+  catchError(DeveloperCtrl.sendPdf)
+);
+router.post(
+  '/send-image',
+  UserCtrl.checkAuth,
+  DeveloperCtrl.searchContact,
+  catchError(DeveloperCtrl.sendImage)
+);
 module.exports = router;

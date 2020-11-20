@@ -9,7 +9,8 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
 const LabelHelper = require('../helpers/label');
-const garbageHelper = require('../helpers/garbage.js');
+const garbageHelper = require('../helpers/garbage');
+const EmailHelper = require('../helpers/email');
 
 const system_settings = require('../config/system_settings');
 const jwt = require('jsonwebtoken');
@@ -240,10 +241,14 @@ const getVideos = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id },
+          {
+            user: currentUser.id,
+            del: false,
+          },
           {
             role: 'admin',
             company,
+            del: false,
           },
           {
             shared_members: currentUser.id,
@@ -270,10 +275,14 @@ const getPdfs = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id },
+          {
+            user: currentUser.id,
+            del: false,
+          },
           {
             role: 'admin',
             company,
+            del: false,
           },
           {
             shared_members: currentUser.id,
@@ -300,10 +309,14 @@ const getImages = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id },
+          {
+            user: currentUser.id,
+            del: false,
+          },
           {
             role: 'admin',
             company,
+            del: false,
           },
           {
             shared_members: currentUser.id,
@@ -366,13 +379,31 @@ const getLabels = async (req, res) => {
 
 const searchContact = async (req, res, next) => {
   const { currentUser } = req;
-  const contact = await Contact.findOne({
+  let contact;
+  const nameMatch = req.body.email.match(/^([^@]*)@/);
+  if (!nameMatch) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid email address',
+    });
+  }
+  contact = await Contact.findOne({
     email: req.body.email,
     user: currentUser.id,
   }).catch((err) => {
     console.log('contact find err', err.message);
     return res.send('contact find err');
   });
+  if (!contact) {
+    const name = nameMatch ? nameMatch[1] : req.body.email;
+    const new_contact = new Contact({
+      email: req.body.email,
+      first_name: name,
+    });
+    contact = await new_contact.save().catch((err) => {
+      console.log('new contact save err', err.message);
+    });
+  }
 
   req.body.contact = contact.id;
   req.params.id = contact.id;
@@ -394,6 +425,86 @@ const addNewTag = async (req, res) => {
   });
 };
 
+const sendVideo = async (req, res) => {
+  const { currentUser } = req;
+  const { template_id, video_id, contact } = req.body;
+  const email_template = await EmailTemplate.findOne({
+    _id: template_id,
+  });
+  const video = await Video.findOne({ _id: video_id }).catch((err) => {
+    console.log('video find err', err.message);
+  });
+
+  const { content, subject } = email_template;
+  const data = {
+    user: currentUser.id,
+    content,
+    subject,
+    videos: [video],
+    contacts: [contact],
+  };
+  EmailHelper.bulkVideo(data)
+    .then((result) => {
+      if (result[0] && result[0].status === true) {
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.status(400).send({
+          status: false,
+          error: 'Send error',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const sendPdf = async (req, res) => {
+  const { currentUser } = req;
+  const { template_id, video_id, contact } = req.body;
+  const email_template = await EmailTemplate.findOne({
+    _id: template_id,
+  });
+  const video = await Video.findOne({ _id: video_id }).catch((err) => {
+    console.log('video find err', err.message);
+  });
+
+  const { content, subject } = email_template;
+  const data = {
+    user: currentUser.id,
+    content,
+    subject,
+    videos: [video],
+    contacts: [contact],
+  };
+  EmailHelper.bulkVideo(data)
+    .then((result) => {
+      if (result[0] && result[0].status === true) {
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.status(400).send({
+          status: false,
+          error: 'Send error',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const sendImage = async (req, res) => {};
+
 module.exports = {
   createToken,
   getContact,
@@ -406,5 +517,8 @@ module.exports = {
   getVideos,
   getPdfs,
   getImages,
+  sendVideo,
+  sendPdf,
+  sendImage,
   searchContact,
 };
