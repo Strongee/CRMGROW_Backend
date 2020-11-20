@@ -2127,7 +2127,7 @@ const bulkImage = async (data) => {
   }
 
   let detail_content = 'sent image using email';
-  detail_content = Activity.automationLog(detail_content);
+  detail_content = ActivityHelper.automationLog(detail_content);
 
   if (!currentUser.primary_connected) {
     let promise;
