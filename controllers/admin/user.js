@@ -10,6 +10,7 @@ const Appointment = require('../../models/appointment');
 const Activity = require('../../models/activity');
 const Reminder = require('../../models/reminder');
 const FollowUp = require('../../models/follow_up');
+const TimeLine = require('../../models/time_line');
 const PaymentCtrl = require('../payment');
 const { isBlockedEmail } = require('../../helpers/email');
 const api = require('../../config/api');
@@ -461,6 +462,7 @@ const closeAccount = async (req, res) => {
     await Appointment.deleteMany({ user: user.id });
     await Reminder.deleteMany({ user: user.id });
     await Tag.deleteMany({ user: user.id });
+    await TimeLine.deleteMany({ user: user.id });
   }
 
   if (user.proxy_number_id) {
@@ -502,7 +504,14 @@ const disableUser = async (req, res) => {
             },
           }
         )
-          .then(() => {
+          .then(async () => {
+            await Contact.deleteMany({ user: user.id });
+            await Activity.deleteMany({ user: user.id });
+            await FollowUp.deleteMany({ user: user.id });
+            await Appointment.deleteMany({ user: user.id });
+            await Reminder.deleteMany({ user: user.id });
+            await Tag.deleteMany({ user: user.id });
+            await TimeLine.deleteMany({ user: user.id });
             return res.send({
               status: true,
             });
