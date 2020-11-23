@@ -516,6 +516,10 @@ const reminder_job = new CronJob(
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);
           });
+        } else {
+          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+            console.log('reminder remove err', err.message);
+          });
         }
       } else {
         const appointment = await Appointment.findOne({
