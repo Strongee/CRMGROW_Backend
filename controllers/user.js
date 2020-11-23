@@ -200,7 +200,7 @@ const signUp = async (req, res) => {
             console.log('garbage save err', err.message);
           });
           // purchase proxy number
-          getSignalWireNumber(_res.id);
+          // getSignalWireNumber(_res.id);
 
           // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -2481,6 +2481,14 @@ const schedulePaidDemo = async (req, res) => {
 
   PaymentCtrl.createCharge(data)
     .then(() => {
+      User.updateOne(
+        { _id: currentUser.id },
+        {
+          $set: { paid_demo: true },
+        }
+      ).catch((err) => {
+        console.log('user paid demo update err', err.message);
+      });
       const templatedData = {
         user_name: currentUser.user_name,
         schedule_link: system_settings.SCHEDULE_LINK,
