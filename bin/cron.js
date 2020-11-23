@@ -1559,25 +1559,35 @@ const timesheet_check = new CronJob(
             };
             EmailHelper.resendVideo(data)
               .then((res) => {
-                if (res[0] && res[0].status === true) {
-                  timeline['status'] = 'completed';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                } else {
-                  timeline['status'] = 'error';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                }
+                // if (res[0] && res[0].status === true) {
+                //   timeline['status'] = 'completed';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // } else {
+                //   timeline['status'] = 'error';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // }
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
               })
               .catch((err) => {
-                timeline['status'] = 'error';
-                timeline['updated_at'] = new Date();
-                timeline.save().catch((err) => {
-                  console.log('err', err);
+                // timeline['status'] = 'error';
+                // timeline['updated_at'] = new Date();
+                // timeline.save().catch((err) => {
+                //   console.log('err', err);
+                // });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
                 });
               });
             break;
@@ -1592,25 +1602,35 @@ const timesheet_check = new CronJob(
             };
             TextHelper.resendVideo(data)
               .then((res) => {
-                if (res[0] && res[0].status === true) {
-                  timeline['status'] = 'completed';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                } else {
-                  timeline['status'] = 'error';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                }
+                // if (res[0] && res[0].status === true) {
+                //   timeline['status'] = 'completed';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // } else {
+                //   timeline['status'] = 'error';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // }
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
               })
               .catch((err) => {
-                timeline['status'] = 'error';
-                timeline['updated_at'] = new Date();
-                timeline.save().catch((err) => {
-                  console.log('err', err);
+                // timeline['status'] = 'error';
+                // timeline['updated_at'] = new Date();
+                // timeline.save().catch((err) => {
+                //   console.log('err', err);
+                // });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
                 });
               });
             break;
