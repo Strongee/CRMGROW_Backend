@@ -38,7 +38,7 @@ const system_settings = {
   },
   IMAP_PORT: 587,
   ONBOARD_PRICING: 5000,
-  SCHEDULE_LINK: 'https://calendly.com/support-1196/crmgrow',
+  SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
 };
 
 module.exports = system_settings;

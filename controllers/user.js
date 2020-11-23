@@ -200,7 +200,7 @@ const signUp = async (req, res) => {
             console.log('garbage save err', err.message);
           });
           // purchase proxy number
-          // getSignalWireNumber(_res.id);
+          getSignalWireNumber(_res.id);
 
           // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -2475,6 +2475,7 @@ const schedulePaidDemo = async (req, res) => {
   const data = {
     card_id: payment.card_id,
     customer_id: payment.customer_id,
+    receipt_email: currentUser.email,
     amount: system_settings.ONBOARD_PRICING,
     description: 'Schedule one on one onboarding',
   };
