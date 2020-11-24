@@ -1,4 +1,5 @@
 const phone = require('phone');
+const mongoose = require('mongoose');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const Garbage = require('../models/garbage');
@@ -359,7 +360,7 @@ const getLabels = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id },
+          { user: mongoose.Types.ObjectId(currentUser.id) },
           {
             role: 'admin',
             _id: { $nin: editedLabels },
