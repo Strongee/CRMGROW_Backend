@@ -179,7 +179,7 @@ const getAutomations = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id, del: false },
+          { user: mongoose.Types.ObjectId(currentUser.id), del: false },
           {
             role: 'admin',
             company,
@@ -210,7 +210,7 @@ const getEmailTemplates = async (req, res) => {
     {
       $match: {
         $or: [
-          { user: currentUser.id },
+          { user: mongoose.Types.ObjectId(currentUser.id) },
           {
             role: 'admin',
             company,
@@ -230,8 +230,6 @@ const getEmailTemplates = async (req, res) => {
     },
   ]);
 
-  console.log('email_templates', email_templates);
-
   return res.send(email_templates);
 };
 
@@ -243,7 +241,7 @@ const getVideos = async (req, res) => {
       $match: {
         $or: [
           {
-            user: currentUser.id,
+            user: mongoose.Types.ObjectId(currentUser.id),
             del: false,
           },
           {
@@ -277,7 +275,7 @@ const getPdfs = async (req, res) => {
       $match: {
         $or: [
           {
-            user: currentUser.id,
+            user: mongoose.Types.ObjectId(currentUser.id),
             del: false,
           },
           {
@@ -311,7 +309,7 @@ const getImages = async (req, res) => {
       $match: {
         $or: [
           {
-            user: currentUser.id,
+            user: mongoose.Types.ObjectId(currentUser.id),
             del: false,
           },
           {
@@ -348,8 +346,6 @@ const getLabels = async (req, res) => {
     });
   }
 
-  console.log('currentUser', currentUser);
-
   let editedLabels = [];
   if (garbage && garbage['edited_label']) {
     editedLabels = garbage['edited_label'];
@@ -377,7 +373,6 @@ const getLabels = async (req, res) => {
     },
   ]);
 
-  console.log('labels**************', labels);
   res.send(labels);
 };
 
