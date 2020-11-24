@@ -347,6 +347,8 @@ const getLabels = async (req, res) => {
     });
   }
 
+  console.log('currentUser', currentUser);
+
   let editedLabels = [];
   if (garbage && garbage['edited_label']) {
     editedLabels = garbage['edited_label'];
@@ -374,6 +376,7 @@ const getLabels = async (req, res) => {
     },
   ]);
 
+  console.log('labels**************', labels);
   res.send(labels);
 };
 
