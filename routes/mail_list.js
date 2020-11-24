@@ -13,6 +13,12 @@ router.post(
   catchError(MailListCtrl.create)
 );
 
+router.post(
+  '/add-contacts',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(MailListCtrl.addContacts)
+);
 router.get('/', UserCtrl.checkAuth, catchError(MailListCtrl.getAll));
 router.get('/:id', UserCtrl.checkAuth, catchError(MailListCtrl.get));
 

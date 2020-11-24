@@ -2,9 +2,11 @@ const MailList = require('../models/mail_list');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
-  const data = await MailList.find({ user: currentUser.id }).catch((err) => {
-    console.log('mail list find err', err.message);
-  });
+  const data = await MailList.find({ user: currentUser.id })
+    .select({ title: 1 })
+    .catch((err) => {
+      console.log('mail list find err', err.message);
+    });
 
   return res.send({
     status: true,
@@ -46,15 +48,34 @@ const create = async (req, res) => {
     })
     .catch((err) => {
       console.log('err', err.message);
-      return res.status(400).json({
+      return res.status(500).json({
         status: false,
         error: err.message || 'Internal server error',
       });
     });
 };
 
+const addContacts = async (req, res) => {
+  const { mail_list, contacts } = req.body;
+  MailList.updateOne(
+    {
+      _id: mail_list,
+    },
+    {
+      $push: { contacts: { $each: contacts } },
+    }
+  ).catch((err) => {
+    console.log('mail list update err', err.message);
+    res.status(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+};
+
 module.exports = {
   get,
   getAll,
   create,
+  addContacts,
 };

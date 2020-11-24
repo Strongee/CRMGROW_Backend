@@ -1,4 +1,7 @@
 const Campaign = require('../models/campaign');
+const MailList = require('../models/mail_list');
+const system_settings = require('../config/system_settings');
+const user = require('./user');
 
 const get = async (req, res) => {
   const data = await Campaign.find({ _id: req.params.id });
@@ -18,8 +21,13 @@ const get = async (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
 
+  const mail_list = await MailList.findOne({
+    _id: req.body.mail_list,
+  });
+
   const campaign = new Campaign({
     ...req.body,
+    contacts: mail_list.contacts,
     user: currentUser.id,
     updated_at: new Date(),
     created_at: new Date(),
@@ -27,9 +35,12 @@ const create = async (req, res) => {
 
   campaign
     .save()
-    .then(() => {
+    .then((data) => {
+      let camgaign = 150;
+      if (user.connn)
       return res.send({
         status: true,
+        data,
       });
     })
     .catch((err) => {

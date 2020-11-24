@@ -1463,14 +1463,15 @@ const authorizeOutlook = async (req, res) => {
         // Email is in the preferred_username field
         user.connected_email = jwt.preferred_username;
         user.social_id = jwt.oid;
-        user.connected_email_type = 'outlook';
         user.primary_connected = true;
         if (
           user.connected_email.indexOf('@outlook.com') !== -1 ||
           user.connected_email.indexOf('@hotmail.com') !== -1
         ) {
+          user.connected_email_type = 'outlook';
           user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
         } else {
+          user.connected_email_type = 'microsoft';
           user.email_info.max_count =
             system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
         }
@@ -1800,10 +1801,12 @@ const authorizeGmail = async (req, res) => {
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
-    user.connected_email_type = 'gmail';
+
     if (_res.data.hd) {
+      user.connected_email_type = 'gsuit';
       user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
     } else {
+      user.connected_email_type = 'gmail';
       user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
     }
 
