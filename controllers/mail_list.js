@@ -73,9 +73,34 @@ const addContacts = async (req, res) => {
   });
 };
 
+const removeContacts = async (req, res) => {
+  const { mail_list, contacts } = req.body;
+  MailList.updateOne(
+    {
+      _id: mail_list,
+    },
+    {
+      $pull: { contacts: { $in: contacts } },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('mail list update err', err.message);
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   get,
   getAll,
   create,
   addContacts,
+  removeContacts,
 };

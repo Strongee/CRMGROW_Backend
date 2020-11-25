@@ -36,8 +36,17 @@ const create = async (req, res) => {
   campaign
     .save()
     .then((data) => {
-      let camgaign = 150;
-      if (user.connn)
+      let campaign = 150;
+
+      /**
+       * Email Campaign daily limit startup count
+       */
+
+      if (currentUser.connected_email_type === 'gsuit') {
+        campaign = system_settings.CAMPAIGN_MAIL_START.GSUIT;
+      }
+
+      
       return res.send({
         status: true,
         data,

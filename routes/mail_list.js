@@ -19,6 +19,12 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(MailListCtrl.addContacts)
 );
+
+router.post(
+  '/remove-contacts',
+  UserCtrl.checkAuth,
+  catchError(MailListCtrl.removeContacts)
+);
 router.get('/', UserCtrl.checkAuth, catchError(MailListCtrl.getAll));
 router.get('/:id', UserCtrl.checkAuth, catchError(MailListCtrl.get));
 
