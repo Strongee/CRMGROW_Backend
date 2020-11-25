@@ -25,6 +25,11 @@ router.post(
   UserCtrl.checkAuth,
   catchError(MailListCtrl.removeContacts)
 );
+router.post(
+  '/move-top',
+  UserCtrl.checkAuth,
+  catchError(MailListCtrl.moveTopContacts)
+);
 router.get('/', UserCtrl.checkAuth, catchError(MailListCtrl.getAll));
 router.get('/:id', UserCtrl.checkAuth, catchError(MailListCtrl.get));
 

@@ -97,10 +97,15 @@ const removeContacts = async (req, res) => {
     });
 };
 
+const moveTopContacts = async (req, res) => {
+
+};
+
 module.exports = {
   get,
   getAll,
   create,
   addContacts,
   removeContacts,
+  moveTopContacts,
 };
