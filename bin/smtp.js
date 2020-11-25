@@ -24,9 +24,13 @@ const smtpConnect = () => {
     port: 465,
     host: process.env.AWS_REGION,
     secure: true,
+    // auth: {
+    //   user: process.env.AWS_ACCESS_KEY_ID,
+    //   pass: process.env.AWS_SECRET_ACCESS_KEY,
+    // },
     auth: {
-      user: process.env.AWS_ACCESS_KEY_ID,
-      pass: process.env.AWS_SECRET_ACCESS_KEY,
+      user: access_key,
+      pass: secret_key,
     },
     debug: true,
   });

@@ -44,6 +44,7 @@ const create = async (req, res) => {
     .then(() => {
       return res.send({
         status: true,
+        data: mail_list,
       });
     })
     .catch((err) => {

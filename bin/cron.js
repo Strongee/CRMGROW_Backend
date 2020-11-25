@@ -27,8 +27,10 @@ const Video = require('../models/video');
 const Note = require('../models/note');
 const Notification = require('../models/notification');
 const TimeLine = require('../models/time_line');
-const TimeLineCtrl = require('../controllers/time_line');
 const Garbage = require('../models/garbage');
+const CampaignJob = require('../models/campaign_job');
+const TimeLineCtrl = require('../controllers/time_line');
+
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
@@ -1974,12 +1976,29 @@ const reset_daily_limit = new CronJob(
   'US/Central'
 );
 
+const campaign_job = new CronJob(
+  '0 * * * *',
+  async () => {
+    const due_date = new Date();
+    const campaign_jobs = await CampaignJob.find({
+      status: 'active',
+      due_date: { $lte: due_date },
+    });
+  },
+  function () {
+    console.log('Reminder Job finished.');
+  },
+  false,
+  'US/Central'
+);
+
 signup_job.start();
 reminder_job.start();
 weekly_report.start();
 upload_video_job.start();
 convert_video_job.start();
 payment_check.start();
+campaign_job.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();
