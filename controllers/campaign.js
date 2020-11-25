@@ -1,7 +1,8 @@
 const Campaign = require('../models/campaign');
+const CampaignJob = require('../models/campaign_job');
 const MailList = require('../models/mail_list');
+
 const system_settings = require('../config/system_settings');
-const user = require('./user');
 
 const get = async (req, res) => {
   const data = await Campaign.find({ _id: req.params.id });
@@ -25,7 +26,7 @@ const create = async (req, res) => {
     _id: req.body.mail_list,
   });
 
-  const campaign = new Campaign({
+  const new_campaign = new Campaign({
     ...req.body,
     contacts: mail_list.contacts,
     user: currentUser.id,
@@ -33,23 +34,40 @@ const create = async (req, res) => {
     created_at: new Date(),
   });
 
-  campaign
+  new_campaign
     .save()
-    .then((data) => {
-      let campaign = 150;
+    .then((campaign) => {
+      let daily_limit = 150;
 
       /**
        * Email Campaign daily limit startup count
        */
 
+      let contacts = mail_list.contacts;
       if (currentUser.connected_email_type === 'gsuit') {
-        campaign = system_settings.CAMPAIGN_MAIL_START.GSUIT;
+        daily_limit = system_settings.CAMPAIGN_MAIL_START.GSUIT;
       }
 
-      
+      daily_limit =
+        contacts.length > daily_limit ? daily_limit : contacts.length;
+
+      while (contacts.length > 0) {
+        for (let i = 0; i < daily_limit; i += 15) {
+          const due_date = req.body.due_start;
+          const campaign_job = new CampaignJob({
+            contacts: contacts.slice(i, i + 14),
+            campaign: campaign.id,
+            due_date,
+          });
+          campaign_job.save().catch((err) => {
+            console.log('campaign job save err', err.message)
+          });
+        }
+      }
+
       return res.send({
         status: true,
-        data,
+        data: campaign,
       });
     })
     .catch((err) => {

@@ -44,7 +44,14 @@ const system_settings = {
     GSUIT: 500,
     OUTLOOK: 150,
     MICROSOFT: 500,
-    AWS: 500,
+    AWS: 5000,
+  },
+  CAMPAIGN_MAIL_LIMIT: {
+    GMAIL: 400,
+    GSUIT: 1500,
+    OUTLOOK: 250,
+    MICROSOFT: 1000,
+    AWS: 5000,
   },
 };
 

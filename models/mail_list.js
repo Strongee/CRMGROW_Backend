@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const MailListSchema = new Schema(
   {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     contacts: Array,
     created_at: Date,

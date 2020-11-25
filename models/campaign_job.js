@@ -6,9 +6,8 @@ const CampaignJobSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     campaign: { type: mongoose.Schema.Types.ObjectId, ref: 'campaign' },
-    contact: String,
+    contacts: Array,
     due_date: Date,
-    period: Number,
     action: Object,
     ref: String,
     parent_ref: String,
@@ -22,6 +21,6 @@ const CampaignJobSchema = new Schema(
 
 CampaignJobSchema.index({ status: 1, due_date: 1 });
 
-const TimeLine = mongoose.model('campaign_job', CampaignJobSchema);
+const CampaignJob = mongoose.model('campaign_job', CampaignJobSchema);
 
-module.exports = TimeLine;
+module.exports = CampaignJob;
