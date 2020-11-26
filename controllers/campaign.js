@@ -6,7 +6,24 @@ const MailList = require('../models/mail_list');
 const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
-  const data = await Campaign.find({ _id: req.params.id });
+  const data = await Campaign.findOne({ _id: req.params.id });
+  if (!data) {
+    return res.status(400).json({
+      status: false,
+      error: 'Campaign doesn`t exist',
+    });
+  }
+
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+
+  const data = await Campaign.find({ user: currentUser.id });
   if (!data) {
     return res.status(400).json({
       status: false,
@@ -55,8 +72,11 @@ const create = async (req, res) => {
       daily_limit =
         contacts.length > daily_limit ? daily_limit : contacts.length;
 
+      console.log('daily_limit*******************', daily_limit);
+      console.log('contacts***********', contacts);
       let day_delay = 0;
       while (contacts.length > 0) {
+        console.log('contacts111', contacts);
         let minute_delay = 0;
         const due_date = moment(req.body.due_start).add(day_delay, 'days');
         day_delay += 1;
@@ -92,6 +112,7 @@ const create = async (req, res) => {
 };
 
 module.exports = {
+  getAll,
   get,
   create,
 };
