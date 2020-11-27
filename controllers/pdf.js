@@ -7,7 +7,7 @@ const uuidv1 = require('uuid/v1');
 const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
-const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
 const Garbage = require('../models/garbage');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
@@ -2020,6 +2020,32 @@ const bulkGmail = async (req, res) => {
   }
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const pdfs = await PDF.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: pdfs,
+  });
+};
+
 module.exports = {
   play,
   play1,
@@ -2027,6 +2053,7 @@ module.exports = {
   updateDetail,
   updateDefault,
   get,
+  getEasyLoad,
   getAll,
   getPreview,
   sendPDF,

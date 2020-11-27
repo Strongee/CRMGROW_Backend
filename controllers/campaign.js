@@ -23,7 +23,12 @@ const get = async (req, res) => {
 const getAll = async (req, res) => {
   const { currentUser } = req;
 
-  const data = await Campaign.find({ user: currentUser.id });
+  const data = await Campaign.find({ user: currentUser.id }).catch((err) => {
+    return res.status(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
   if (!data) {
     return res.status(400).json({
       status: false,

@@ -50,11 +50,14 @@ router.put('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.updateDetail));
 // Upload a preview and detail info
 router.get('/preview/:name', catchError(ImageCtrl.getPreview));
 
-// Get a pdf
-router.get('/:id', catchError(ImageCtrl.get));
+// Get all pdf
+router.get('/easy-load', UserCtrl.checkAuth, catchError(ImageCtrl.getEasyLoad));
 
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(ImageCtrl.getAll));
+
+// Get a pdf
+router.get('/:id', catchError(ImageCtrl.get));
 
 // Send PDF
 router.post(

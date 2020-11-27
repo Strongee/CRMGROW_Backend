@@ -125,6 +125,9 @@ router.get(
   catchError(VideoCtrl.getContactsByLatestSent)
 );
 
+// Get easy load video
+router.get('/easy-load', UserCtrl.checkAuth, catchError(VideoCtrl.getEasyLoad));
+
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
 

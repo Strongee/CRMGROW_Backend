@@ -7,6 +7,7 @@ const uuidv1 = require('uuid/v1');
 const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
+const mongoose = require('mongoose');
 
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
@@ -1655,12 +1656,39 @@ const bulkOutlook = async (req, res) => {
   }
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const images = await Image.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: images,
+  });
+};
+
 module.exports = {
   play,
   play1,
   create,
   updateDetail,
   get,
+  getEasyLoad,
   getAll,
   getPreview,
   bulkEmail,
