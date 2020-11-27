@@ -72,11 +72,8 @@ const create = async (req, res) => {
       daily_limit =
         contacts.length > daily_limit ? daily_limit : contacts.length;
 
-      console.log('daily_limit*******************', daily_limit);
-      console.log('contacts***********', contacts);
       let day_delay = 0;
       while (contacts.length > 0) {
-        console.log('contacts111', contacts);
         let minute_delay = 0;
         const due_date = moment(req.body.due_start).add(day_delay, 'days');
         day_delay += 1;
@@ -85,7 +82,7 @@ const create = async (req, res) => {
           minute_delay += 1;
           const campaign_job = new CampaignJob({
             user: currentUser.id,
-            contacts: contacts.slice(i, i + 14),
+            contacts: contacts.slice(0, 15),
             status: 'active',
             campaign: campaign.id,
             due_date: due_date_time,
