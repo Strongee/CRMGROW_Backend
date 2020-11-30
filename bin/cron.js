@@ -525,6 +525,8 @@ const reminder_job = new CronJob(
           });
         }
       } else {
+        console.log('reminder*****', reminder);
+        /**
         const appointment = await Appointment.findOne({
           _id: reminder.appointment,
         }).catch((err) => {
@@ -632,6 +634,7 @@ const reminder_job = new CronJob(
         reminder.save().catch((err) => {
           console.log(err);
         });
+         */
       }
     }
   },
