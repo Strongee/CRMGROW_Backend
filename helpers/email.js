@@ -241,7 +241,10 @@ const bulkEmail = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -442,7 +445,10 @@ const bulkEmail = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -904,7 +910,10 @@ const bulkVideo = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -1159,7 +1168,10 @@ const bulkVideo = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -1633,7 +1645,10 @@ const bulkPDF = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -1867,7 +1882,10 @@ const bulkPDF = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     let promise;
 
     const token = oauth2.accessToken.create({
@@ -2330,7 +2348,10 @@ const bulkImage = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     let promise;
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
@@ -2565,7 +2586,10 @@ const bulkImage = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -3033,7 +3057,10 @@ const resendVideo = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -3285,7 +3312,10 @@ const resendVideo = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -3535,7 +3565,7 @@ const resendVideo = async (data) => {
   }
 };
 
-const bulkMaterial = async (req, res) => {}
+const bulkMaterial = async (req, res) => {};
 
 const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);

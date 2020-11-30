@@ -2007,7 +2007,6 @@ const campaign_job = new CronJob(
           content: email_template.content,
           subject: email_template.subject,
         };
-        
       }
     }
   },
