@@ -3535,6 +3535,8 @@ const resendVideo = async (data) => {
   }
 };
 
+const bulkMaterial = async (req, res) => {}
+
 const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);
   $('a[href]').each((index, elem) => {
@@ -3561,6 +3563,7 @@ module.exports = {
   bulkVideo,
   bulkPDF,
   bulkImage,
+  bulkMaterial,
   resendVideo,
   addLinkTracking,
   generateUnsubscribeLink,

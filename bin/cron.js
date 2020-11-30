@@ -29,6 +29,7 @@ const Notification = require('../models/notification');
 const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const CampaignJob = require('../models/campaign_job');
+const EmailTemplate = require('../models/email_template');
 const TimeLineCtrl = require('../controllers/time_line');
 
 const api = require('../config/api');
@@ -203,7 +204,7 @@ const weekly_report = new CronJob({
   cronTime: '00 21 * * Sun',
   onTick: async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-    await User.find({ weekly_report: true })
+    await User.find({ weekly_report: true, del: false })
       .then(async (users) => {
         const today = new Date();
         const day = today.getDay();
@@ -1983,7 +1984,32 @@ const campaign_job = new CronJob(
     const campaign_jobs = await CampaignJob.find({
       status: 'active',
       due_date: { $lte: due_date },
+    }).populate({
+      path: 'campaign',
+      select: {
+        email_template: 1,
+        video: 1,
+        pdf: 1,
+        image: 1,
+      },
     });
+
+    if (campaign_jobs && campaign_jobs.length > 0) {
+      for (let i = 0; i < campaign_jobs.length; i++) {
+        const campaign_job = campaign_jobs[i];
+        const campaign = campaign_job.email_template;
+        const email_template = await EmailTemplate.findOne({
+          _id: campaign.email_template,
+        });
+
+        const data = {
+          user: campaign_job.user,
+          content: email_template.content,
+          subject: email_template.subject,
+        };
+        
+      }
+    }
   },
   function () {
     console.log('Reminder Job finished.');
