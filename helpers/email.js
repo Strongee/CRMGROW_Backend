@@ -809,7 +809,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -1051,7 +1052,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -1325,7 +1327,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -1557,7 +1560,8 @@ const bulkPDF = async (data) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
       }
 
@@ -1778,7 +1782,8 @@ const bulkPDF = async (data) => {
           }
 
           // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+          // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+          const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           pdf_objects += pdf_object;
         }
 
@@ -2034,7 +2039,8 @@ const bulkPDF = async (data) => {
         }
 
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
       }
 
@@ -2252,7 +2258,8 @@ const bulkImage = async (data) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -2496,7 +2503,8 @@ const bulkImage = async (data) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -2718,7 +2726,8 @@ const bulkImage = async (data) => {
             image_descriptions += image.description;
           }
           // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+          // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+          const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           image_objects += image_object;
         }
 
@@ -2959,7 +2968,8 @@ const resendVideo = async (data) => {
 
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -3181,7 +3191,8 @@ const resendVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -3452,7 +3463,8 @@ const resendVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 

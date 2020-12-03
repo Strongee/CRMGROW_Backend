@@ -5,7 +5,7 @@ var nodemailer = require('nodemailer');
 var dotenv = require('dotenv').config();
 
 var mailOptions = {
-  from: 'support@crmgrow.com',
+  from: 'amazingskill8001@gmail.com',
   to: 'super@crmgrow.com',
   text: 'This is some text',
   html: '<b>This is some HTML</b>',
@@ -25,14 +25,14 @@ const smtpConnect = () => {
     port,
     host: process.env.AWS_REGION || hostName,
     secure: false,
-    // auth: {
-    //   user: process.env.AWS_ACCESS_KEY_ID,
-    //   pass: process.env.AWS_SECRET_ACCESS_KEY,
-    // },
     auth: {
-      user,
-      pass: password,
+      user: process.env.AWS_ACCESS_KEY_ID,
+      pass: process.env.AWS_SECRET_ACCESS_KEY,
     },
+    // auth: {
+    //   user,
+    //   pass: password,
+    // },
     debug: true,
   });
 
