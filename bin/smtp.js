@@ -5,12 +5,13 @@ var nodemailer = require('nodemailer');
 var dotenv = require('dotenv').config();
 
 var mailOptions = {
-  from: 'example@email.com',
-  to: 'other@email.com',
+  from: 'amazingskill8001@gmail.com',
+  to: 'super@crmgrow.com',
   text: 'This is some text',
   html: '<b>This is some HTML</b>',
 };
 
+const sesHostName = 'email-smtp.us-west-2.amazonaws.com';
 const hostName = 'mx0.thehandyteam.co';
 const user = 'user7zRv8Tbt4w68';
 const password = 'smtp77e30c03a7b0';
@@ -21,13 +22,17 @@ mailOptions.subject = 'Nodemailer SMTP transporter';
 
 const smtpConnect = () => {
   var smtpTransporter = nodemailer.createTransport({
-    port: 465,
-    host: process.env.AWS_REGION,
-    secure: true,
+    port,
+    host: process.env.AWS_REGION || hostName,
+    secure: false,
     auth: {
       user: process.env.AWS_ACCESS_KEY_ID,
       pass: process.env.AWS_SECRET_ACCESS_KEY,
     },
+    // auth: {
+    //   user,
+    //   pass: password,
+    // },
     debug: true,
   });
 
@@ -39,3 +44,5 @@ const smtpConnect = () => {
     }
   });
 };
+
+smtpConnect();

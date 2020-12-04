@@ -3,6 +3,7 @@ const request = require('request-promise');
 const { ENV_PATH } = require('../config/path');
 require('dotenv').config({ path: ENV_PATH });
 const api = require('../config/api');
+const TextHelper = require('../helpers/text');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -115,7 +116,16 @@ const sendMessage = async () => {
       });
   }
 };
+
+const receivedStatus = async () => {
+  const message_sid = '37153dcc-8ab2-4915-aad0-8e576d6a33d5';
+
+  TextHelper.getStatus(message_sid).then((res) => {
+    console.log('res', res);
+  });
+};
 // longNumber();
 // buyNumber();
 // sendMessage();
-releasePhone();
+// releasePhone();
+receivedStatus();

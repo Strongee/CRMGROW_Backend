@@ -30,6 +30,12 @@ router.post(
   catchError(AutomationCtrl.getStatus)
 );
 
+router.get(
+  '/easy-load',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getEasyLoad)
+);
+
 router.get('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
 
 // Default Video Edit

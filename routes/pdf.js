@@ -50,11 +50,14 @@ router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail));
 // Upload a preview and detail info
 router.get('/preview/:name', catchError(PDFCtrl.getPreview));
 
-// Get a pdf
-router.get('/:id', catchError(PDFCtrl.get));
+// Get easy load video
+router.get('/easy-load', UserCtrl.checkAuth, catchError(PDFCtrl.getEasyLoad));
 
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll));
+
+// Get a pdf
+router.get('/:id', catchError(PDFCtrl.get));
 
 // Default PDF Edit
 router.post(

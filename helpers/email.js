@@ -241,7 +241,10 @@ const bulkEmail = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -442,7 +445,10 @@ const bulkEmail = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -803,7 +809,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -904,7 +911,10 @@ const bulkVideo = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -1042,7 +1052,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -1159,7 +1170,10 @@ const bulkVideo = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -1313,7 +1327,8 @@ const bulkVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -1545,7 +1560,8 @@ const bulkPDF = async (data) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
       }
 
@@ -1633,7 +1649,10 @@ const bulkPDF = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -1763,7 +1782,8 @@ const bulkPDF = async (data) => {
           }
 
           // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-          const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+          // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+          const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           pdf_objects += pdf_object;
         }
 
@@ -1867,7 +1887,10 @@ const bulkPDF = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     let promise;
 
     const token = oauth2.accessToken.create({
@@ -2016,7 +2039,8 @@ const bulkPDF = async (data) => {
         }
 
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><a href="${pdf_link}"><img src="${pdf.preview}-resize"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
       }
 
@@ -2127,7 +2151,7 @@ const bulkImage = async (data) => {
   }
 
   let detail_content = 'sent image using email';
-  detail_content = Activity.automationLog(detail_content);
+  detail_content = ActivityHelper.automationLog(detail_content);
 
   if (!currentUser.primary_connected) {
     let promise;
@@ -2234,7 +2258,8 @@ const bulkImage = async (data) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -2330,7 +2355,10 @@ const bulkImage = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     let promise;
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
@@ -2475,7 +2503,8 @@ const bulkImage = async (data) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -2565,7 +2594,10 @@ const bulkImage = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     let promise;
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -2694,7 +2726,8 @@ const bulkImage = async (data) => {
             image_descriptions += image.description;
           }
           // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`
-          const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+          // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}-resize"/></a><br/></p>`;
+          const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           image_objects += image_object;
         }
 
@@ -2935,7 +2968,8 @@ const resendVideo = async (data) => {
 
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -3033,7 +3067,10 @@ const resendVideo = async (data) => {
     }
 
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'gmail') {
+  } else if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -3154,7 +3191,8 @@ const resendVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -3285,7 +3323,10 @@ const resendVideo = async (data) => {
       promise_array.push(promise);
     }
     return Promise.all(promise_array);
-  } else if (currentUser.connected_email_type === 'outlook') {
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
     const promise_array = [];
     let promise;
 
@@ -3422,7 +3463,8 @@ const resendVideo = async (data) => {
           }
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
           // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           video_objects += video_object;
         }
 
@@ -3535,6 +3577,8 @@ const resendVideo = async (data) => {
   }
 };
 
+const bulkMaterial = async (req, res) => {};
+
 const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);
   $('a[href]').each((index, elem) => {
@@ -3561,6 +3605,7 @@ module.exports = {
   bulkVideo,
   bulkPDF,
   bulkImage,
+  bulkMaterial,
   resendVideo,
   addLinkTracking,
   generateUnsubscribeLink,

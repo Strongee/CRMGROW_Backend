@@ -306,6 +306,12 @@ const create = async (req, res) => {
     });
   }
 
+  if (req.body.cell_phone) {
+    req.body.cell_phone = phone(req.body.cell_phone)[0];
+  } else {
+    delete req.body.cell_phone;
+  }
+
   /**
    *  Email / Phone unique validation
    * 
@@ -478,18 +484,16 @@ const edit = async (req, res) => {
       contact[key] = editData[key];
     }
 
-    if (typeof req.body.cell_phone !== 'undefined') {
-      const cell_phone = req.body.cell_phone;
+    if (!req.body.cell_phone) {
       // let cleaned = ('' + cell_phone).replace(/\D/g, '')
       // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
       // if (match) {
       //   let intlCode = (match[1] ? '+1 ' : '')
       //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
       // }
+      const cell_phone = phone(req.body.cell_phone)[0];
       contact['cell_phone'] = cell_phone;
     }
-
-    contact['updated_at'] = new Date();
 
     contact
       .save()
@@ -1002,8 +1006,8 @@ const searchEasy = async (req, res) => {
     data = await Contact.find({
       $or: [
         {
-          first_name: search.split(' ')[0],
-          last_name: search.split(' ')[1],
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          last_name: { $regex: search.split(' ')[1] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {

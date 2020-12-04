@@ -1140,10 +1140,6 @@ const checkAuth = async (req, res, next) => {
       req.guest_loggin = true;
     }
 
-    if (decoded.api_loggin) {
-      req.api_loggin = true;
-    }
-
     if (
       req.currentUser.primary_connected ||
       req.currentUser.connected_email_type === 'email'
@@ -1467,14 +1463,15 @@ const authorizeOutlook = async (req, res) => {
         // Email is in the preferred_username field
         user.connected_email = jwt.preferred_username;
         user.social_id = jwt.oid;
-        user.connected_email_type = 'outlook';
         user.primary_connected = true;
         if (
           user.connected_email.indexOf('@outlook.com') !== -1 ||
           user.connected_email.indexOf('@hotmail.com') !== -1
         ) {
+          user.connected_email_type = 'outlook';
           user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
         } else {
+          user.connected_email_type = 'microsoft';
           user.email_info.max_count =
             system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
         }
@@ -1804,10 +1801,12 @@ const authorizeGmail = async (req, res) => {
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
-    user.connected_email_type = 'gmail';
+
     if (_res.data.hd) {
+      user.connected_email_type = 'gsuit';
       user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
     } else {
+      user.connected_email_type = 'gmail';
       user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
     }
 
@@ -2479,12 +2478,21 @@ const schedulePaidDemo = async (req, res) => {
   const data = {
     card_id: payment.card_id,
     customer_id: payment.customer_id,
+    receipt_email: currentUser.email,
     amount: system_settings.ONBOARD_PRICING,
     description: 'Schedule one on one onboarding',
   };
 
   PaymentCtrl.createCharge(data)
     .then(() => {
+      User.updateOne(
+        { _id: currentUser.id },
+        {
+          $set: { paid_demo: true },
+        }
+      ).catch((err) => {
+        console.log('user paid demo update err', err.message);
+      });
       const templatedData = {
         user_name: currentUser.user_name,
         schedule_link: system_settings.SCHEDULE_LINK,

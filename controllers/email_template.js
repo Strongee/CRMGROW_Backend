@@ -1,3 +1,5 @@
+
+const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');
 const Team = require('../models/team');
@@ -306,10 +308,33 @@ const loadOwn = async (req, res) => {
   });
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const email_templates = await EmailTemplate.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+      },
+      {
+        role: 'admin',
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: email_templates,
+  });
+};
+
 module.exports = {
   create,
   get,
   getAll,
+  getEasyLoad,
   update,
   remove,
   getTemplates,

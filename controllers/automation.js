@@ -92,6 +92,7 @@ const getAll = async (req, res) => {
 
     automation_array.push(automation_detail);
   }
+
   return res.send({
     status: true,
     data: automation_array,
@@ -430,11 +431,34 @@ const loadOwn = async (req, res) => {
   });
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const automations = await Automation.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+      },
+      {
+        role: 'admin',
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: automations,
+  });
+};
+
 module.exports = {
   get,
   getAll,
   getStatus,
   getPage,
+  getEasyLoad,
   create,
   update,
   remove,

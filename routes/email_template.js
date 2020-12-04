@@ -8,6 +8,11 @@ const router = express.Router();
 
 router.get('/', UserCtrl.checkAuth, catchError(TemplateCtrl.getAll));
 router.post('/create', UserCtrl.checkAuth, catchError(TemplateCtrl.create));
+router.get(
+  '/easy-load',
+  UserCtrl.checkAuth,
+  catchError(TemplateCtrl.getEasyLoad)
+);
 router.get('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.get));
 router.put('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.update));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TemplateCtrl.remove));

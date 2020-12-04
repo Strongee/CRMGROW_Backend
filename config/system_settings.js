@@ -7,9 +7,9 @@ const system_settings = {
   EMAIL_DAILY_LIMIT: {
     BASIC: 500,
     GMAIL: 500,
-    GSUIT: 2000,
+    GSUIT: 1500,
     OUTLOOK: 300,
-    MICROSOFT: 1000,
+    MICROSOFT: 2000,
   },
   TEXT_ONE_TIME: 5,
   TEXT_MONTHLY_LIMIT: {
@@ -38,7 +38,21 @@ const system_settings = {
   },
   IMAP_PORT: 587,
   ONBOARD_PRICING: 5000,
-  SCHEDULE_LINK: 'https://calendly.com/support-1196/crmgrow',
+  SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
+  CAMPAIGN_MAIL_START: {
+    GMAIL: 150,
+    GSUIT: 500,
+    OUTLOOK: 150,
+    MICROSOFT: 500,
+    AWS: 5000,
+  },
+  CAMPAIGN_MAIL_LIMIT: {
+    GMAIL: 400,
+    GSUIT: 1500,
+    OUTLOOK: 250,
+    MICROSOFT: 1000,
+    AWS: 5000,
+  },
 };
 
 module.exports = system_settings;

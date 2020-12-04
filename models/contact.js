@@ -6,6 +6,7 @@ const ContactSchema = mongoose.Schema(
     last_name: { type: String, default: '' },
     email: { type: String, default: '' },
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     address: String,
     city: String,

@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const CampaignSchema = new Schema(
   {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
     contacts: Array,
     mail_list: { type: mongoose.Schema.Types.ObjectId, ref: 'mail_list' },
@@ -11,6 +12,10 @@ const CampaignSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'email_template',
     },
+    due_start: Date,
+    videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
+    pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
+    images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
     created_at: Date,
     updated_at: Date,
   },
