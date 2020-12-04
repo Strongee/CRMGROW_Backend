@@ -56,6 +56,7 @@ const getTemplates = async (req, res) => {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+
   const company = currentUser.company || 'eXp Realty';
 
   const email_templates = await EmailTemplate.find({
@@ -176,7 +177,7 @@ const remove = async (req, res) => {
       }
     }
     if (garbage.auto_resend) {
-      const auto_resend = garbage.auto_resent;
+      const auto_resend = garbage.auto_resend;
       if (auto_resend.sms_canned_message === req.params.id) {
         return res.status(400).send({
           status: false,
