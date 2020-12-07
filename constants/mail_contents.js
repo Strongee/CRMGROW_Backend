@@ -82,6 +82,7 @@ const mail_contents = {
   VIDEO_TITLE: 'eXp Realty eXplained Videos',
   PDF_TITLE: 'eXp Realty eXplained PDFs',
   IMAGE_TITLE: 'eXp Realty eXplained Images',
+  MATERIAL_TITLE: 'eXp Realty eXplained Materials',
 };
 
 module.exports = mail_contents;

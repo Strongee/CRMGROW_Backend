@@ -6,7 +6,29 @@ const MailList = require('../models/mail_list');
 const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
-  const data = await Campaign.find({ _id: req.params.id });
+  const data = await Campaign.findOne({ _id: req.params.id });
+  if (!data) {
+    return res.status(400).json({
+      status: false,
+      error: 'Campaign doesn`t exist',
+    });
+  }
+
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+
+  const data = await Campaign.find({ user: currentUser.id }).catch((err) => {
+    return res.status(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
   if (!data) {
     return res.status(400).json({
       status: false,
@@ -46,10 +68,19 @@ const create = async (req, res) => {
 
       const contacts = mail_list.contacts;
 
-      if (currentUser.connected_email_type === 'gmail') {
-        daily_limit = system_settings.CAMPAIGN_MAIL_START.GMAIl;
-      } else if (currentUser.connected_email_type === 'gsuit') {
-        daily_limit = system_settings.CAMPAIGN_MAIL_START.GSUIT;
+      switch (currentUser.connected_email_type) {
+        case 'gmail':
+          daily_limit = system_settings.CAMPAIGN_MAIL_START.GMAIl;
+          break;
+        case 'gsuit':
+          daily_limit = system_settings.CAMPAIGN_MAIL_START.GSUIT;
+          break;
+        case 'outlook':
+          daily_limit = system_settings.CAMPAIGN_MAIL_START.OUTLOOK;
+          break;
+        case 'microsoft':
+          daily_limit = system_settings.CAMPAIGN_MAIL_START.MICROSOFT;
+          break;
       }
 
       daily_limit =
@@ -65,7 +96,7 @@ const create = async (req, res) => {
           minute_delay += 1;
           const campaign_job = new CampaignJob({
             user: currentUser.id,
-            contacts: contacts.slice(i, i + 14),
+            contacts: contacts.slice(0, 15),
             status: 'active',
             campaign: campaign.id,
             due_date: due_date_time,
@@ -92,6 +123,7 @@ const create = async (req, res) => {
 };
 
 module.exports = {
+  getAll,
   get,
   create,
 };

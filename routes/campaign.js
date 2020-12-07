@@ -12,6 +12,8 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(CampaignCtrl.create)
 );
-router.get('/', UserCtrl.checkAuth, catchError(CampaignCtrl.get));
+
+router.get('/', UserCtrl.checkAuth, catchError(CampaignCtrl.getAll));
+router.get('/:id', UserCtrl.checkAuth, catchError(CampaignCtrl.get));
 
 module.exports = router;

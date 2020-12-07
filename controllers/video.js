@@ -3108,6 +3108,32 @@ const setupRecording = (io) => {
   });
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const videos = await Video.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: videos,
+  });
+};
+
 module.exports = {
   play,
   play1,
@@ -3120,6 +3146,7 @@ module.exports = {
   updateDefault,
   get,
   getThumbnail,
+  getEasyLoad,
   getAll,
   getConvertStatus,
   bulkEmail,

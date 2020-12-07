@@ -641,20 +641,21 @@ const importCSV = async (req, res) => {
             //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
             // }
             if (data['first_name'] && data['last_name']) {
-              const email_contact = await Contact.findOne({
+              const name_contact = await Contact.findOne({
                 first_name: data['first_name'],
                 last_name: data['last_name'],
                 user: currentUser.id,
               }).catch((err) => {
                 console.log('contact found err', err.message);
               });
-              if (email_contact) {
+              if (name_contact) {
                 const field = {
                   id: i,
                   email: data['email'],
                   err: 'Duplicated Full name',
                 };
                 failure.push(field);
+                failure.push(name_contact);
                 resolve();
                 return;
               }
@@ -674,6 +675,7 @@ const importCSV = async (req, res) => {
                   err: 'Duplicated Email',
                 };
                 failure.push(field);
+                failure.push(email_contact);
                 resolve();
                 return;
               }
@@ -692,6 +694,7 @@ const importCSV = async (req, res) => {
                   err: 'Duplicated Phone',
                 };
                 failure.push(field);
+                failure.push(phone_contact);
                 resolve();
                 return;
               }

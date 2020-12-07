@@ -1,3 +1,5 @@
+
+const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');
 const Team = require('../models/team');
@@ -56,6 +58,7 @@ const getTemplates = async (req, res) => {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+
   const company = currentUser.company || 'eXp Realty';
 
   const email_templates = await EmailTemplate.find({
@@ -176,7 +179,7 @@ const remove = async (req, res) => {
       }
     }
     if (garbage.auto_resend) {
-      const auto_resend = garbage.auto_resent;
+      const auto_resend = garbage.auto_resend;
       if (auto_resend.sms_canned_message === req.params.id) {
         return res.status(400).send({
           status: false,
@@ -305,10 +308,33 @@ const loadOwn = async (req, res) => {
   });
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const email_templates = await EmailTemplate.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+      },
+      {
+        role: 'admin',
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: email_templates,
+  });
+};
+
 module.exports = {
   create,
   get,
   getAll,
+  getEasyLoad,
   update,
   remove,
   getTemplates,

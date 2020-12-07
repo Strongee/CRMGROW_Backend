@@ -1,3 +1,5 @@
+const _ = require('lodash');
+
 const MailList = require('../models/mail_list');
 
 const getAll = async (req, res) => {
@@ -58,20 +60,37 @@ const create = async (req, res) => {
 
 const addContacts = async (req, res) => {
   const { mail_list, contacts } = req.body;
+
+  const list = await MailList.findOne({
+    _id: mail_list,
+  }).catch((err) => {
+    console.log('contact found err', err.message);
+  });
+
+  const contacts_list = list.contacts;
+  const new_list = _.unionBy(contacts_list, contacts, 'email');
+
   MailList.updateOne(
     {
       _id: mail_list,
     },
     {
-      $push: { contacts: { $each: contacts } },
+      $set: { contacts: new_list },
     }
-  ).catch((err) => {
-    console.log('mail list update err', err.message);
-    res.status(500).json({
-      status: false,
-      error: err.message,
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+        data: new_list,
+      });
+    })
+    .catch((err) => {
+      console.log('mail list update err', err.message);
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
     });
-  });
 };
 
 const removeContacts = async (req, res) => {
@@ -98,9 +117,7 @@ const removeContacts = async (req, res) => {
     });
 };
 
-const moveTopContacts = async (req, res) => {
-
-};
+const moveTopContacts = async (req, res) => {};
 
 module.exports = {
   get,
