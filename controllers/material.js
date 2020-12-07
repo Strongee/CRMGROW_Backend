@@ -159,7 +159,7 @@ const bulkEmail = async (req, res) => {
 
       if (video_ids && video_ids.length > 0) {
         let video_titles = '';
-        let video_objects = '';
+        const video_objects = '';
         const videos = await Video.find({ _id: { $in: video_ids } }).catch(
           (err) => {
             console.log('video find error', err.message);
@@ -186,6 +186,7 @@ const bulkEmail = async (req, res) => {
 
         for (let j = 0; j < videos.length; j++) {
           const video = videos[j];
+
           const video_activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -203,16 +204,16 @@ const bulkEmail = async (req, res) => {
             preview = video['thumbnail'];
           }
 
-          const activity = await video_activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('err', err);
-            });
+          video_activity.save().catch((err) => {
+            console.log('activity save err', err.message);
+          });
 
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-          const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          video_objects += video_object;
+          // const html_preview = `<a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
+          email_content.replace(new RegExp(`{{${video.id}}}`, 'g'), video_link);
+
+          // const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
+          // video_objects += video_object;
           activities.push(activity.id);
         }
         email_content = email_content + '<br/>' + video_objects;
@@ -220,7 +221,7 @@ const bulkEmail = async (req, res) => {
 
       if (pdf_ids && pdf_ids.length > 0) {
         let pdf_titles = '';
-        let pdf_objects = '';
+        const pdf_objects = '';
         const pdfs = await PDF.find({ _id: { $in: pdf_ids } }).catch((err) => {
           console.log('pdf find error', err.message);
         });
@@ -251,7 +252,6 @@ const bulkEmail = async (req, res) => {
             type: 'pdfs',
             pdfs: pdf.id,
             subject: email_subject,
-            description: email_content,
           });
 
           const activity = await pdf_activity
@@ -262,8 +262,11 @@ const bulkEmail = async (req, res) => {
             });
 
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
-          const pdf_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          pdf_objects += pdf_object;
+          // const html_preview = `<a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
+          email_content.replace(new RegExp(`{{${pdf.id}}}`, 'g'), pdf_link);
+
+          // const pdf_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
+          // pdf_objects += pdf_object;
           activities.push(activity.id);
         }
         email_content = email_content + '<br/>' + pdf_objects;
@@ -271,7 +274,7 @@ const bulkEmail = async (req, res) => {
 
       if (image_ids && image_ids.length > 0) {
         let image_titles = '';
-        let image_objects = '';
+        const image_objects = '';
         const images = await Image.find({ _id: { $in: image_ids } }).catch(
           (err) => {
             console.log('image find error', err.message);
@@ -315,8 +318,11 @@ const bulkEmail = async (req, res) => {
             });
 
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
-          const image_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          image_objects += image_object;
+          // const html_preview = `<a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
+          email_content.replace(new RegExp(`{${image.id}}`, 'g'), image_link);
+
+          // const image_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
+          // image_objects += image_object;
           activities.push(activity.id);
         }
         email_content = email_content + '<br/>' + image_objects;
@@ -327,13 +333,21 @@ const bulkEmail = async (req, res) => {
         activity_content = ActivityHelper.assistantLog(activity_content);
       }
 
+      const new_email = new Email({
+        user: currentUser.id,
+        subject: email_subject,
+        content: email_content,
+        cc,
+        bcc,
+        contacts: contacts[i],
+      });
+
       const email_activity = new Activity({
         content: activity_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'emails',
         subject: email_subject,
-        description: email_content,
       });
 
       const activity = await email_activity

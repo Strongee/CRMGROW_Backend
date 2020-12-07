@@ -8,6 +8,7 @@ const EmailSchema = new Schema(
     event: String,
     subject: String,
     content: String,
+    type: String,
     to: Array,
     cc: Array,
     bcc: Array,
