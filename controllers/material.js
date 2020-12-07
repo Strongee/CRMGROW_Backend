@@ -187,14 +187,13 @@ const bulkEmail = async (req, res) => {
         for (let j = 0; j < videos.length; j++) {
           const video = videos[j];
 
-          const video_activity = new Activity({
+          const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'videos',
             videos: video.id,
-            subject: email_subject,
-            description: email_content,
+            subject: video.title,
           });
 
           let preview;
@@ -204,7 +203,7 @@ const bulkEmail = async (req, res) => {
             preview = video['thumbnail'];
           }
 
-          video_activity.save().catch((err) => {
+          activity.save().catch((err) => {
             console.log('activity save err', err.message);
           });
 
@@ -216,7 +215,7 @@ const bulkEmail = async (req, res) => {
           // video_objects += video_object;
           activities.push(activity.id);
         }
-        email_content = email_content + '<br/>' + video_objects;
+        // email_content = email_content + '<br/>' + video_objects;
       }
 
       if (pdf_ids && pdf_ids.length > 0) {
@@ -245,7 +244,7 @@ const bulkEmail = async (req, res) => {
         }
         for (let j = 0; j < pdfs.length; j++) {
           const pdf = pdfs[j];
-          const pdf_activity = new Activity({
+          const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
             user: currentUser.id,
@@ -254,12 +253,9 @@ const bulkEmail = async (req, res) => {
             subject: email_subject,
           });
 
-          const activity = await pdf_activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('activity save err', err.message);
-            });
+          activity.save().catch((err) => {
+            console.log('activity save err', err.message);
+          });
 
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
           // const html_preview = `<a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
@@ -269,7 +265,7 @@ const bulkEmail = async (req, res) => {
           // pdf_objects += pdf_object;
           activities.push(activity.id);
         }
-        email_content = email_content + '<br/>' + pdf_objects;
+        // email_content = email_content + '<br/>' + pdf_objects;
       }
 
       if (image_ids && image_ids.length > 0) {
@@ -300,22 +296,18 @@ const bulkEmail = async (req, res) => {
         }
         for (let j = 0; j < images.length; j++) {
           const image = images[j];
-          const image_activity = new Activity({
+          const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
             images: image.id,
             subject: email_subject,
-            description: email_content,
           });
 
-          const activity = await image_activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('activity image err', err.message);
-            });
+          activity.save().catch((err) => {
+            console.log('activity image err', err.message);
+          });
 
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
           // const html_preview = `<a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
@@ -325,7 +317,7 @@ const bulkEmail = async (req, res) => {
           // image_objects += image_object;
           activities.push(activity.id);
         }
-        email_content = email_content + '<br/>' + image_objects;
+        // email_content = email_content + '<br/>' + image_objects;
       }
 
       let activity_content = 'sent email';
@@ -333,7 +325,7 @@ const bulkEmail = async (req, res) => {
         activity_content = ActivityHelper.assistantLog(activity_content);
       }
 
-      const new_email = new Email({
+      const email = new Email({
         user: currentUser.id,
         subject: email_subject,
         content: email_content,
@@ -342,20 +334,25 @@ const bulkEmail = async (req, res) => {
         contacts: contacts[i],
       });
 
-      const email_activity = new Activity({
+      email.save().catch((err) => {
+        console.log('email save err', err.message);
+      });
+
+      const activity = new Activity({
         content: activity_content,
         contacts: contacts[i],
         user: currentUser.id,
         type: 'emails',
         subject: email_subject,
+        emails: email.id,
+        videos: video_ids,
+        pdfs: pdf_ids,
+        images: image_ids,
       });
 
-      const activity = await email_activity
-        .save()
-        .then()
-        .catch((err) => {
-          console.log('err', err.message);
-        });
+      activity.save().catch((err) => {
+        console.log('email send err', err.message);
+      });
 
       if (cc.length > 0 || bcc.length > 0) {
         html_content =
@@ -428,6 +425,16 @@ const bulkEmail = async (req, res) => {
             })
               .then(async () => {
                 email_count += 1;
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { emails: email.id },
+                  }
+                ).catch((err) => {
+                  console.log('activity update err', err.message);
+                });
+
                 Contact.updateOne(
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
@@ -441,9 +448,14 @@ const bulkEmail = async (req, res) => {
               })
               .catch((err) => {
                 console.log('gmail video send err', err.message);
+
+                Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                  console.log('activity delete err', err.message);
+                });
+
                 Activity.deleteMany({ _id: { $in: activities } }).catch(
                   (err) => {
-                    console.log('err', err.message);
+                    console.log('activity delete err', err.message);
                   }
                 );
                 if (err.statusCode === 403) {
@@ -478,8 +490,13 @@ const bulkEmail = async (req, res) => {
               });
           } catch (err) {
             console.log('gmail video send err', err.message);
+
+            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('err', err.message);
+              console.log('activieis delete err', err.message);
             });
             resolve({
               status: false,
@@ -601,11 +618,24 @@ const bulkEmail = async (req, res) => {
                 console.log('err', err);
               });
 
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  $set: { emails: email.id },
+                }
+              ).catch((err) => {
+                console.log('activity update err', err.message);
+              });
+
               resolve({
                 status: true,
               });
             })
             .catch((err) => {
+              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+                console.log('activity delete err', err.message);
+              });
+
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('error', err.message);
               });
