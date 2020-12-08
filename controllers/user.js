@@ -2275,7 +2275,10 @@ const forgotPassword = async (req, res) => {
       error: 'no_email_or_user_name',
     });
   }
-  const _user = await User.findOne({ email });
+  const _user = await User.findOne({
+    email: new RegExp(email, 'i'),
+    del: false,
+  });
 
   if (!_user) {
     return res.status(400).json({
