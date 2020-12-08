@@ -28,6 +28,7 @@ const VideoSchema = new Schema(
     },
     default_edited: { type: Boolean, default: false },
     default_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
+    has_parent: { type: Boolean, default: false },
     priority: { type: Number, default: 1000 },
     del: { type: Boolean, default: false },
     created_at: Date,

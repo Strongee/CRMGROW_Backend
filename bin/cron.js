@@ -68,6 +68,13 @@ const s3 = new AWS.S3({
   region: api.AWS.AWS_S3_REGION,
 });
 
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
+
 const daily_report = new CronJob(
   '0 21 * * 1-6',
   async () => {
@@ -650,7 +657,7 @@ const signup_job = new CronJob(
   async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-    const subscribers = await User.find({ welcome_email: false }).catch(
+    const subscribers = await User.find({ welcome_email: false, del: false }).catch(
       (err) => {
         console.log('err', err);
       }
@@ -663,27 +670,46 @@ const signup_job = new CronJob(
         const now = new Date().getTime();
         const offset = now - created_at;
         if (offset >= 30 * 60 * 1000 && offset < 60 * 60 * 1000) {
-          const msg = {
-            to: subscriber.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
-            dynamic_template_data: {
-              first_name: subscriber.user_name,
-            },
+          // const msg = {
+          //   to: subscriber.email,
+          //   from: mail_contents.WELCOME_SIGNUP.MAIL,
+          //   templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
+          //   dynamic_template_data: {
+          //     first_name: subscriber.user_name,
+          //   },
+          // };
+          // sgMail
+          //   .send(msg)
+          //   .then((res) => {
+          //     console.log('mailres.errorcode', res[0].statusCode);
+          //     if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
+          //       console.log('Successful send to ' + msg.to);
+          //     } else {
+          //       console.log('email sending err', msg.to + res[0].statusCode);
+          //     }
+          //   })
+          //   .catch((err) => {
+          //     console.log('err', err);
+          //   });
+
+          const templatedData = {
+            user_name: subscriber.user_name,
+            created_at: moment().format('h:mm MMMM Do, YYYY'),
+            webinar_link: system_settings.WEBINAR_LINK,
           };
-          sgMail
-            .send(msg)
-            .then((res) => {
-              console.log('mailres.errorcode', res[0].statusCode);
-              if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-                console.log('Successful send to ' + msg.to);
-              } else {
-                console.log('email sending err', msg.to + res[0].statusCode);
-              }
-            })
-            .catch((err) => {
-              console.log('err', err);
-            });
+
+          const params = {
+            Destination: {
+              ToAddresses: [subscriber.email],
+            },
+            Source: mail_contents.REPLY,
+            Template: 'WebinarInvitation',
+            TemplateData: JSON.stringify(templatedData),
+          };
+
+          // Create the promise and SES service object
+
+          ses.sendTemplatedEmail(params).promise();
 
           const notification = new Notification({
             user: subscribers[i].id,
