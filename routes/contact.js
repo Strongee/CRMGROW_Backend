@@ -141,6 +141,13 @@ router.get(
   catchError(ContactCtrl.loadDuplication)
 );
 
+// Get All Contacts
+router.get(
+  '/get-all',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getAllContacts)
+);
+
 // Get Contacts data with ID array
 router.post('/get', UserCtrl.checkAuth, catchError(ContactCtrl.getByIds));
 
