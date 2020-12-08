@@ -2875,6 +2875,22 @@ const selectAllContacts = async (req, res) => {
   });
 };
 
+const getAllContacts = async (req, res) => {
+  const { currentUser } = req;
+
+  const contacts = await Contact.find({ user: currentUser.id }).select({
+    _id: 1,
+    first_name: 1,
+    last_name: 1,
+    email: 1,
+    cell_phone: 1,
+  });
+  return res.send({
+    status: true,
+    data: contacts,
+  });
+};
+
 const checkEmail = async (req, res) => {
   const { currentUser } = req;
   const { email } = req.body;
@@ -3996,6 +4012,7 @@ module.exports = {
   loadFollows,
   loadTimelines,
   selectAllContacts,
+  getAllContacts,
   checkEmail,
   checkPhone,
   loadDuplication,
