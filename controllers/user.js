@@ -1129,9 +1129,11 @@ const checkAuth = async (req, res, next) => {
     // err
   }
 
-  req.currentUser = await User.findOne({ _id: decoded.id }).catch((err) => {
-    console.log('err', err);
-  });
+  req.currentUser = await User.findOne({ _id: decoded.id, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
 
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email);
