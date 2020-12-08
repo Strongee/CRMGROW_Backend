@@ -44,6 +44,8 @@ router.post(
   catchError(PDFCtrl.create)
 );
 
+// PDF Creating new one from existing one
+router.post('/create', UserCtrl.checkAuth, catchError(PDFCtrl.createPDF));
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail));
 

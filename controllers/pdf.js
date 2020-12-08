@@ -2046,10 +2046,46 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const createPDF = async (req, res) => {
+  let preview;
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      preview = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+    } catch (error) {
+      console.error('Upload PDF Preview Image', error);
+    }
+  }
+
+  const pdf = new PDF({
+    ...req.body,
+    preview,
+    user: req.currentUser.id,
+  });
+
+  const _pdf = await pdf
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  res.send({
+    status: true,
+    data: _pdf,
+  });
+};
+
 module.exports = {
   play,
   play1,
   create,
+  createPDF,
   updateDetail,
   updateDefault,
   get,

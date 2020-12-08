@@ -1682,10 +1682,46 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const createImage = async (req, res) => {
+  let preview;
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      preview = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+    } catch (error) {
+      console.error('Upload PDF Preview Image', error);
+    }
+  }
+
+  const image = new Image({
+    ...req.body,
+    preview,
+    user: req.currentUser.id,
+  });
+
+  const _image = await image
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  res.send({
+    status: true,
+    data: _image,
+  });
+};
+
 module.exports = {
   play,
   play1,
   create,
+  createImage,
   updateDetail,
   get,
   getEasyLoad,
