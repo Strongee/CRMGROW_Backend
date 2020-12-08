@@ -1868,7 +1868,6 @@ const timesheet_check = new CronJob(
                   'minutes'
                 );
                 const now = moment();
-                console.log('timeline.due_date', beginning_time);
                 if (beginning_time.isBefore(now)) {
                   console.log('before');
                   Activity.deleteMany({

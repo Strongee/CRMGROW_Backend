@@ -3583,9 +3583,11 @@ const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);
   $('a[href]').each((index, elem) => {
     const url = $(elem).attr('href');
-    const attached_link =
-      urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
-    $(elem).attr('href', attached_link);
+    if (url.indexOf('app.crmgrow.com') === -1) {
+      const attached_link =
+        urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
+      $(elem).attr('href', attached_link);
+    }
   });
   return $.html();
 };

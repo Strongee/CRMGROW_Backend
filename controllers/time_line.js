@@ -210,7 +210,7 @@ const activeNext = async (data) => {
 
 const runTimeline = async (id) => {
   const timelines = await TimeLine.find({ _id: id }).catch((err) => {
-    console.log('err', err);
+    console.log('timeline run find err', err);
   });
   for (let i = 0; i < timelines.length; i++) {
     const timeline = timelines[i];
@@ -765,7 +765,7 @@ const recreate = async (req, res) => {
 
 const disableNext = async (id) => {
   let timeline = await TimeLine.findOne({ _id: id }).catch((err) => {
-    console.log('err', err);
+    console.log('time line disable find err', err.message);
   });
   if (timeline) {
     timeline.status = 'disabled';
@@ -800,7 +800,7 @@ const disableNext = async (id) => {
 
 const activeTimeline = async (id) => {
   const timeline = await TimeLine.findOne({ _id: id }).catch((err) => {
-    console.log('err', err);
+    console.log('active timeline err', err.message);
   });
 
   if (timeline) {
