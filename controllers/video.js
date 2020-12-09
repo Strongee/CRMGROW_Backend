@@ -493,6 +493,22 @@ const createVideo = async (req, res) => {
     created_at: new Date(),
   });
 
+  if (req.body.shared_video) {
+    Video.updateOne(
+      {
+        _id: req.body.shared_video,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_video: video.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('video update err', err.message);
+    });
+  }
+
   const _video = await video
     .save()
     .then()
@@ -1454,6 +1470,19 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
+      } else if (video['has_shared']) {
+        Video.updateOne(
+          {
+            _id: video.shared_video,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_video: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default video remove err', err.message);
+        });
       } else {
         const url = video.url;
         if (url.indexOf('teamgrow.s3') > 0) {
@@ -1489,10 +1518,11 @@ const remove = async (req, res) => {
         });
       }
 
-      video['del'] = true;
-      video.save().catch((err) => {
-        console.log('err', err.message);
-      });
+      Video.updateOne({ _id: req.params.id }, { $set: { del: true } }).catch(
+        (err) => {
+          console.log('err', err.message);
+        }
+      );
       return res.send({
         status: true,
       });
