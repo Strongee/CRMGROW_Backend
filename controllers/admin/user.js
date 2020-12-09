@@ -538,6 +538,43 @@ const disableUser = async (req, res) => {
           error: `User's Payment infomation is not correct. Please cancel in stripe manually`,
         });
       });
+  } else {
+    User.updateOne(
+      { _id: req.params.id },
+      {
+        $set: { del: true, updated_at: new Date() },
+        $unset: {
+          proxy_number: true,
+          proxy_number_id: true,
+        },
+      }
+    )
+      .then(async () => {
+        await Contact.deleteMany({ user: user.id });
+        await Activity.deleteMany({ user: user.id });
+        await FollowUp.deleteMany({ user: user.id });
+        await Appointment.deleteMany({ user: user.id });
+        await Reminder.deleteMany({ user: user.id });
+        await Tag.deleteMany({ user: user.id });
+        await TimeLine.deleteMany({ user: user.id });
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res
+          .status(500)
+          .send({
+            status: false,
+            error: err,
+          })
+          .catch((err) => {
+            return res.status(500).send({
+              status: false,
+              error: err,
+            });
+          });
+      });
   }
 };
 

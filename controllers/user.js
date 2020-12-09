@@ -1022,18 +1022,18 @@ const login = async (req, res) => {
       hash !== _user.hash &&
       req.body.password !== system_settings.PASSWORD.ADMIN
     ) {
-      if (_user.primary_connected && _user.social_id) {
-        return res.send({
-          status: false,
-          code: 'SOCIAL_SIGN_' + _user.connected_email_type,
-        });
-      }
       return res.status(401).json({
         status: false,
         error: 'Invalid email or password!',
       });
     }
   } else if (req.body.password !== system_settings.PASSWORD.ADMIN) {
+    if (_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type,
+      });
+    }
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
