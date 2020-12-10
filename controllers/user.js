@@ -660,7 +660,7 @@ const signUpGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
+    prompt: 'consent',
     // If you only need one scope you can pass it as a string
     scope: scopes,
   });
@@ -1680,8 +1680,8 @@ const syncGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
     // If you only need one scope you can pass it as a string
+    prompt: 'consent',
     scope: scopes,
   });
 
