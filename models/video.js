@@ -28,6 +28,8 @@ const VideoSchema = new Schema(
     },
     default_edited: { type: Boolean, default: false },
     default_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
+    has_shared: { type: Boolean, default: false },
+    shared_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     priority: { type: Number, default: 1000 },
     del: { type: Boolean, default: false },
     created_at: Date,

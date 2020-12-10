@@ -436,6 +436,8 @@ const create = async (req, res) => {
 
 const createVideo = async (req, res) => {
   let preview;
+  const { currentUser } = req;
+
   if (req.body.thumbnail) {
     // Thumbnail
 
@@ -489,9 +491,40 @@ const createVideo = async (req, res) => {
   const video = new Video({
     ...req.body,
     preview,
-    user: req.currentUser.id,
+    user: currentUser.id,
     created_at: new Date(),
   });
+
+  if (req.body.shared_video) {
+    Video.updateOne(
+      {
+        _id: req.body.shared_video,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_video: video.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('video update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_video']) {
+      garbage['edited_video'].push(req.body.default_video);
+    } else {
+      garbage['edited_video'] = [req.body.default_video];
+    }
+  }
 
   const _video = await video
     .save()
@@ -1454,6 +1487,19 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
+      } else if (video['has_shared']) {
+        Video.updateOne(
+          {
+            _id: video.shared_video,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_video: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default video remove err', err.message);
+        });
       } else {
         const url = video.url;
         if (url.indexOf('teamgrow.s3') > 0) {
@@ -1489,10 +1535,11 @@ const remove = async (req, res) => {
         });
       }
 
-      video['del'] = true;
-      video.save().catch((err) => {
-        console.log('err', err.message);
-      });
+      Video.updateOne({ _id: req.params.id }, { $set: { del: true } }).catch(
+        (err) => {
+          console.log('err', err.message);
+        }
+      );
       return res.send({
         status: true,
       });

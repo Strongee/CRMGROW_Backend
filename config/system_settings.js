@@ -53,6 +53,8 @@ const system_settings = {
     MICROSOFT: 1000,
     AWS: 5000,
   },
+  WEBINAR_LINK:
+    'https://zoom.us/meeting/register/tJUlcuyhrTgjGNUusD4B2Mtd9F_IbKCFlj_e',
 };
 
 module.exports = system_settings;

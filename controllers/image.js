@@ -51,6 +51,7 @@ const Team = require('../models/team');
 const Garbage = require('../models/garbage');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+const garbageHelper = require('../helpers/garbage.js');
 const ActivityHelper = require('../helpers/activity');
 
 const credentials = {
@@ -410,17 +411,42 @@ const remove = async (req, res) => {
     });
     if (image) {
       const urls = image.url;
-      for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        s3.deleteObject(
+
+      if (image['default_edited']) {
+        Garbage.updateOne(
+          { user: currentUser.id },
           {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
-            console.log('err', err);
+            $pull: { edited_image: { $in: [image.default_image] } },
           }
-        );
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else if (image['has_shared']) {
+        Image.updateOne(
+          {
+            _id: image.shared_image,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_image: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else {
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        }
       }
 
       if (image.role === 'team') {
@@ -1682,11 +1708,218 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const createImage = async (req, res) => {
+  let preview;
+  const { currentUser } = req;
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      preview = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+    } catch (error) {
+      console.error('Upload PDF Preview Image', error);
+    }
+  }
+
+  const image = new Image({
+    ...req.body,
+    preview,
+    user: currentUser.id,
+  });
+
+  if (req.body.shared_image) {
+    Image.updateOne(
+      {
+        _id: req.body.shared_image,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_image: image.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('image update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_pdf']) {
+      garbage['edited_pdf'].push(req.body.default_pdf);
+    } else {
+      garbage['edited_pdf'] = [req.body.default_pdf];
+    }
+  }
+
+  const _image = await image
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  res.send({
+    status: true,
+    data: _image,
+  });
+};
+
+const updateDefault = async (req, res) => {
+  const { image, id } = req.body;
+  let preview_path;
+  const { currentUser } = req;
+
+  const defaultImage = await Image.findOne({ _id: id, role: 'admin' }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+  if (!defaultImage) {
+    return res.status(400).json({
+      status: false,
+      error: 'This Default Image does not exist',
+    });
+  }
+  // Update Garbage
+  const garbage = await garbageHelper.get(currentUser);
+  if (!garbage) {
+    return res.status(400).send({
+      status: false,
+      error: `Couldn't get the Garbage`,
+    });
+  }
+
+  if (garbage['edited_image']) {
+    garbage['edited_image'].push(id);
+  } else {
+    garbage['edited_image'] = [id];
+  }
+
+  await garbage.save().catch((err) => {
+    return res.status(400).json({
+      status: false,
+      error: 'Update Garbage Error.',
+    });
+  });
+
+  for (const key in image) {
+    defaultImage[key] = image[key];
+  }
+
+  if (image.preview) {
+    // base 64 image
+    const file_name = uuidv1();
+
+    if (!fs.existsSync(PREVIEW_PATH)) {
+      fs.mkdirSync(PREVIEW_PATH);
+    }
+
+    preview_path = base64Img.imgSync(image.preview, PREVIEW_PATH, file_name);
+    if (fs.existsSync(preview_path)) {
+      fs.readFile(preview_path, (err, data) => {
+        if (err) {
+          console.log('File read error', err.message || err.msg);
+        } else {
+          console.log('File read done successful', data);
+          const today = new Date();
+          const year = today.getYear();
+          const month = today.getMonth();
+          const params = {
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'preview' + year + '/' + month + '/' + file_name,
+            Body: data,
+            ACL: 'public-read',
+          };
+          s3.upload(params, async (s3Err, upload) => {
+            if (s3Err) {
+              console.log('upload s3 error', s3Err);
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`);
+
+              preview_path = upload.Location;
+              if (preview_path) {
+                defaultImage['preview'] = preview_path;
+              }
+
+              defaultImage['updated_at'] = new Date();
+              const defaultImageJSON = JSON.parse(JSON.stringify(defaultImage));
+              delete defaultImageJSON['_id'];
+              delete defaultImageJSON['role'];
+
+              const newImage = new Image({
+                ...defaultImageJSON,
+                user: currentUser._id,
+                default_image: id,
+                default_edited: true,
+              });
+
+              const _image = await newImage
+                .save()
+                .then()
+                .catch((err) => {
+                  console.log('image new creating err', err.message);
+                });
+
+              return res.send({
+                status: true,
+                data: _image,
+              });
+            }
+          });
+        }
+      });
+    } else {
+      console.log('preview writting server error');
+      return res.status(400).json({
+        status: false,
+        error: 'preview writing server error.',
+      });
+    }
+  } else {
+    defaultImage['updated_at'] = new Date();
+    const defaultPdfJSON = JSON.parse(JSON.stringify(defaultImage));
+    delete defaultPdfJSON['_id'];
+    delete defaultPdfJSON['role'];
+
+    const newImage = new Image({
+      ...defaultPdfJSON,
+      user: currentUser._id,
+      default_pdf: id,
+      default_edited: true,
+    });
+
+    const _image = await newImage
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('image save err', err);
+      });
+
+    return res.send({
+      status: true,
+      data: _image,
+    });
+  }
+};
+
 module.exports = {
   play,
   play1,
   create,
+  createImage,
   updateDetail,
+  updateDefault,
   get,
   getEasyLoad,
   getAll,

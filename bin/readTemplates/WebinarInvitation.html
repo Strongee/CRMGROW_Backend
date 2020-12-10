@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Invitation</title>
+    <title>Reset Password</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
     <style>
         .email-container {
@@ -28,63 +28,39 @@
             letter-spacing: 0;
             line-height: 30px;
         }
-        .invitation-description {
+        .title {
             color: #101336;
             font-family: Arial;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             letter-spacing: 0;
             line-height: 32px;
-            padding-bottom: 35px;
-            margin-top: 10px;
-            display: block;
-        }
-        .invitation-detail {
-            opacity: 0.5;
-            color: #101336;
-            font-family: 'Nunito';
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0;
-            line-height: 22px;
-        }
-        .invitation-step {
-            color: #101336;
-            font-family: 'Nunito';
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 0;
-            line-height: 24px;
-            padding-bottom: 2px;
-        }
-        .invitation-comment {
-            color: #101336;
-            font-family: Arial;
-            font-size: 14px;
-            letter-spacing: 0;
-            line-height: 18px; 
             padding-bottom: 10px;
         }
-        a {
-            color: #0000FF;
-            font-weight: bold;
-            font-family: Arial;
-            font-size: 14px;
+        .description {
+            color: #101336;
+            font-family: 'Nunito';
+            font-size: 16px;
             letter-spacing: 0;
-            line-height: 18px;
-            text-decoration: none;
+            line-height: 24px;
+            padding-bottom: 20px;
         }
-        button {
-            width: 90px;
-            height: 40px;
+        .button-join {
+            display: block;
+            width: 250px;
+            padding: 10px;
             border: 0;
             border-radius: 3px;
-            background-color: #0000FF;
-            color: #ffffff;
+            background-color: #0A2EF4;
+            color: #FFFFFF;
             font-family: 'Nunito';
             font-size: 14px;
+            font-weight: 500;
             letter-spacing: 0.5px;
-            line-height: 18px;
+            line-height: 22px;
+            text-align: center;
+            color: white;
+            text-decoration: none;
         }
         .footer-text {
             color: #101336;
@@ -104,7 +80,7 @@
                         <tbody>
                             <tr>
                                 <td align="center" style="padding-top: 56px; padding-bottom: 40px;">
-                                    <img src="./assets/img/crmgrow-logo-40px.png" width="228" height="37">
+                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-40px.png" width="228" height="37">
                                 </td>
                             </tr>
                             <tr>
@@ -112,18 +88,18 @@
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td>
+                                                <td style="padding-bottom: 10px;">
                                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                                         <tbody>
                                                             <tr>
                                                                 <td class="invite-user">
                                                                     <span>
-                                                                        Welcome Garrett,
+                                                                        Hi {{user_name}},
                                                                     </span>
                                                                 </td>
                                                                 <td align="right" class="invite-time">
                                                                     <span>
-                                                                        20:04 8 April 2020
+                                                                        {{created_at}}
                                                                     </span>
                                                                 </td>
                                                             </tr>
@@ -132,43 +108,19 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="invitation-description">
-                                                    You have been added to <span style="color: #0000FF;">CRMmasters</span> team
+                                                <td class="title">
+                                                   You have been invited Live "how to use" crmgrow webinar
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="invitation-detail">
-                                                    TO CHECK YOUR NEW TEAM
+                                                <td class="description">
+                                                    Thank you for signing up for CRMGROW, your business and support is appreciated!
+                                                    Every Tuesday & Thursday at 3pm CST we host a deep dive live demo, where one of our experts goes through how to use the software, best practices, and Q&A. Please register to join by,
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="invitation-step">
-                                                    1. Login to your CRMgrow account
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="invitation-comment">
-                                                    <span style="opacity: 0.64;">Go to website or </span><a href="#">click here</a>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="invitation-step">
-                                                    2.Go to your Teams
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="invitation-comment">
-                                                    <span style="opacity: 0.64;">Main option on the left menu</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="invitation-step" style="padding-top: 10px; padding-bottom: 20px;">
-                                                    or
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding-bottom: 28px;">
-                                                    <button>Click here</button>
+                                                <td style="padding-bottom:40px;">
+                                                    <a href="{{webinar_link}}" class="button-join">Join</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -181,16 +133,16 @@
                                         <tbody>
                                             <tr>
                                                 <td style="padding-top: 40px; padding-bottom: 20px;">
-                                                    <img src="./assets/img/crmgrow-logo-24px.png" width="142" height="23">
+                                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-24px.png" width="142" height="23">
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <!-- <tr>
                                                 <td style="padding-bottom: 16px;">
                                                     <p class="footer-text">
                                                         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                                                     </p>
                                                 </td>
-                                            </tr>
+                                            </tr> -->
                                             <tr>
                                                 <td style="padding-bottom: 51px;">
                                                     <p class="footer-text">

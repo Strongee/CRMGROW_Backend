@@ -44,6 +44,9 @@ router.post(
   catchError(ImageCtrl.create)
 );
 
+// Image Creating new one from existing one
+router.post('/create', UserCtrl.checkAuth, catchError(ImageCtrl.createImage));
+
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.updateDetail));
 

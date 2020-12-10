@@ -1022,18 +1022,18 @@ const login = async (req, res) => {
       hash !== _user.hash &&
       req.body.password !== system_settings.PASSWORD.ADMIN
     ) {
-      if (_user.primary_connected && _user.social_id) {
-        return res.send({
-          status: false,
-          code: 'SOCIAL_SIGN_' + _user.connected_email_type,
-        });
-      }
       return res.status(401).json({
         status: false,
         error: 'Invalid email or password!',
       });
     }
   } else if (req.body.password !== system_settings.PASSWORD.ADMIN) {
+    if (_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type,
+      });
+    }
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
@@ -1129,9 +1129,11 @@ const checkAuth = async (req, res, next) => {
     // err
   }
 
-  req.currentUser = await User.findOne({ _id: decoded.id }).catch((err) => {
-    console.log('err', err);
-  });
+  req.currentUser = await User.findOne({ _id: decoded.id, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
 
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email);
@@ -2273,7 +2275,10 @@ const forgotPassword = async (req, res) => {
       error: 'no_email_or_user_name',
     });
   }
-  const _user = await User.findOne({ email });
+  const _user = await User.findOne({
+    email: new RegExp(email, 'i'),
+    del: false,
+  });
 
   if (!_user) {
     return res.status(400).json({

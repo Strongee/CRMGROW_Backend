@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'OnboardCall';
+const templateName = 'WebinarInvitation';
 
 const subjects = {
   TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
@@ -18,33 +18,35 @@ const subjects = {
   TeamCallInquiryFailed: `{{user_name}} has rejected your call request`,
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,
   OnboardCall: `One on one onboarding`,
+  WebinarInvitation: `Live "how to use" crmgrow webinar`,
 };
 const htmls = {};
-fs.readFile(`./readTemplates/${templateName}.html`, 'utf8', function (
-  err,
-  data
-) {
-  if (err) {
-    return console.log(err);
+fs.readFile(
+  `./readTemplates/${templateName}.html`,
+  'utf8',
+  function (err, data) {
+    if (err) {
+      return console.log(err);
+    }
+    const createParams = {
+      Template: {
+        TemplateName: templateName,
+        SubjectPart: subjects[templateName],
+        TextPart: subjects[templateName],
+        HtmlPart: data,
+      },
+    };
+
+    const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
+      .updateTemplate(createParams)
+      .promise();
+
+    templatePromise
+      .then((data) => {
+        console.log('Created successfully', data);
+      })
+      .catch((err) => {
+        console.log('Create is failed', err);
+      });
   }
-  const createParams = {
-    Template: {
-      TemplateName: templateName,
-      SubjectPart: subjects[templateName],
-      TextPart: subjects[templateName],
-      HtmlPart: data,
-    },
-  };
-
-  const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-    .createTemplate(createParams)
-    .promise();
-
-  templatePromise
-    .then((data) => {
-      console.log('Created successfully', data);
-    })
-    .catch((err) => {
-      console.log('Create is failed', err);
-    });
-});
+);
