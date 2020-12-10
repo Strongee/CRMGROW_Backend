@@ -10,7 +10,6 @@ const socials = JSON.parse(socialData);
 let materialHTML = ''
 let materialTitle = material.title;
 let materialDescription = material.description;
-let userAvatar = `<img src="${user.picture_profile}" style="width: 100%; height: 100%; object-fit: cover;"/>`;
 let userName = user.user_name;
 let userEmail = user.email;
 let userPhone = user.cell_phone;
@@ -67,14 +66,29 @@ if(material_type === 'image') {
   `
 }
 
-$(".unlayer-material-viewer").html(materialHTML);
-$(".unlayer-material-viewer").addClass("material-wrapper");
+$(".unlayer-material-player").html(materialHTML);
+$(".unlayer-material-player").addClass("material-wrapper");
 $(".unlayer-material-title").html(materialTitle);
 $(".unlayer-material-description").html(materialDescription);
-$(".your-avatar-field").html(userAvatar);
-$(".your-name-field").html(userName);
-$(".your-phone-field").html(userPhone);
-$(".your-email-field").html(userEmail);
-$(".your-social-field").html(userFacebook + userTwitter + userLinked);
+$(".unlayer_user_avatar").setAttr('src', user.picture_profile);
+$(".unlayer_user_name").html(userName);
+$(".unlayer_user_phone").html(userPhone);
+$(".unlayer_user_email").html(userEmail);
+$(".unlayer_user_learn").setAttr('href', user.learn_more);
+if (userFacebook) {
+  $('.unlayer_user_socials .fb').setAttr('href', userFacebook);
+} else {
+  $('.unlayer_user_socials .fb').addClass('d-none');
+}
+if (userTwitter) {
+  $('.unlayer_user_socials .tw').setAttr('href', userTwitter);
+} else {
+  $('.unlayer_user_socials .tw').addClass('d-none');
+}
+if (userLinked) {
+  $('.unlayer_user_socials .ln').setAttr('href', userLinked);
+} else {
+  $('.unlayer_user_socials .ln').addClass('d-none'); 
+}
 
 
