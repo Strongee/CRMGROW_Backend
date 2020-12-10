@@ -987,7 +987,7 @@ unlayer.registerTool({
         options: {
           "materialField": {
             "label": "Material Field",
-            "defaultValue": "player",
+            "defaultValue": "block",
             "widget": "material_content_selector"
           }
         }
