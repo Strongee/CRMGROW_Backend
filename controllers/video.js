@@ -436,6 +436,8 @@ const create = async (req, res) => {
 
 const createVideo = async (req, res) => {
   let preview;
+  const { currentUser } = req;
+
   if (req.body.thumbnail) {
     // Thumbnail
 
@@ -489,7 +491,7 @@ const createVideo = async (req, res) => {
   const video = new Video({
     ...req.body,
     preview,
-    user: req.currentUser.id,
+    user: currentUser.id,
     created_at: new Date(),
   });
 
@@ -507,6 +509,21 @@ const createVideo = async (req, res) => {
     ).catch((err) => {
       console.log('video update err', err.message);
     });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_video']) {
+      garbage['edited_video'].push(req.body.default_video);
+    } else {
+      garbage['edited_video'] = [req.body.default_video];
+    }
   }
 
   const _video = await video
