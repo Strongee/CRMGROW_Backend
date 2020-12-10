@@ -38,7 +38,7 @@ fs.readFile(
     };
 
     const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-      .createTemplate(createParams)
+      .updateTemplate(createParams)
       .promise();
 
     templatePromise

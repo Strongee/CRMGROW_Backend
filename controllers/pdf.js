@@ -763,6 +763,19 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default pdf remove err', err.message);
         });
+      } else if (pdf['has_shared']) {
+        PDF.updateOne(
+          {
+            _id: pdf.shared_pdf,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_pdf: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default pdf remove err', err.message);
+        });
       } else {
         const url = pdf.url;
         if (url.indexOf('teamgrow.s3') > 0) {
@@ -2048,6 +2061,7 @@ const getEasyLoad = async (req, res) => {
 
 const createPDF = async (req, res) => {
   let preview;
+  const { currentUser } = req;
   if (req.body.preview) {
     try {
       const today = new Date();
@@ -2067,6 +2081,37 @@ const createPDF = async (req, res) => {
     preview,
     user: req.currentUser.id,
   });
+
+  if (req.body.shared_pdf) {
+    PDF.updateOne(
+      {
+        _id: req.body.shared_pdf,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_pdf: pdf.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('pdf update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_pdf']) {
+      garbage['edited_pdf'].push(req.body.default_pdf);
+    } else {
+      garbage['edited_pdf'] = [req.body.default_pdf];
+    }
+  }
 
   const _pdf = await pdf
     .save()

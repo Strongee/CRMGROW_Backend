@@ -411,17 +411,42 @@ const remove = async (req, res) => {
     });
     if (image) {
       const urls = image.url;
-      for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        s3.deleteObject(
+
+      if (image['default_edited']) {
+        Garbage.updateOne(
+          { user: currentUser.id },
           {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
-            console.log('err', err);
+            $pull: { edited_image: { $in: [image.default_image] } },
           }
-        );
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else if (image['has_shared']) {
+        Image.updateOne(
+          {
+            _id: image.shared_image,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_image: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else {
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        }
       }
 
       if (image.role === 'team') {
@@ -1685,6 +1710,7 @@ const getEasyLoad = async (req, res) => {
 
 const createImage = async (req, res) => {
   let preview;
+  const { currentUser } = req;
   if (req.body.preview) {
     try {
       const today = new Date();
@@ -1702,8 +1728,39 @@ const createImage = async (req, res) => {
   const image = new Image({
     ...req.body,
     preview,
-    user: req.currentUser.id,
+    user: currentUser.id,
   });
+
+  if (req.body.shared_image) {
+    Image.updateOne(
+      {
+        _id: req.body.shared_image,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_image: image.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('image update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_pdf']) {
+      garbage['edited_pdf'].push(req.body.default_pdf);
+    } else {
+      garbage['edited_pdf'] = [req.body.default_pdf];
+    }
+  }
 
   const _image = await image
     .save()
