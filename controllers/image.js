@@ -1721,7 +1721,7 @@ const createImage = async (req, res) => {
         'preview' + year + '/' + month
       );
     } catch (error) {
-      console.error('Upload PDF Preview Image', error);
+      console.error('Upload Preview Image', error);
     }
   }
 
@@ -1755,10 +1755,10 @@ const createImage = async (req, res) => {
       });
     }
 
-    if (garbage['edited_pdf']) {
-      garbage['edited_pdf'].push(req.body.default_pdf);
+    if (garbage['edited_image']) {
+      garbage['edited_image'].push(req.body.default_image);
     } else {
-      garbage['edited_pdf'] = [req.body.default_pdf];
+      garbage['edited_image'] = [req.body.default_image];
     }
   }
 
