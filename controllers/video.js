@@ -491,6 +491,7 @@ const createVideo = async (req, res) => {
   const video = new Video({
     ...req.body,
     preview,
+    converted: 'completed',
     user: currentUser.id,
     created_at: new Date(),
   });
