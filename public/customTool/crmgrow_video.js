@@ -362,7 +362,7 @@ function getProfileLayoutHTML(values) {
   if( values.layoutFields ) { hideFields = values.layoutFields.split(','); }
   var hideFieldStatus = {};
   hideFields.forEach(e => {
-    hideFieldStatus[e] = false;
+    hideFieldStatus[e] = true;
   });
   switch (layout) {
     case 'profile_layout_1':
@@ -987,7 +987,7 @@ unlayer.registerTool({
         options: {
           "materialField": {
             "label": "Material Field",
-            "defaultValue": "player",
+            "defaultValue": "block",
             "widget": "material_content_selector"
           }
         }
