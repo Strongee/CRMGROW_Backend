@@ -484,16 +484,16 @@ const edit = async (req, res) => {
       contact[key] = editData[key];
     }
 
-    if (!req.body.cell_phone) {
-      // let cleaned = ('' + cell_phone).replace(/\D/g, '')
-      // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-      // if (match) {
-      //   let intlCode = (match[1] ? '+1 ' : '')
-      //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-      // }
-      const cell_phone = phone(req.body.cell_phone)[0];
-      contact['cell_phone'] = cell_phone;
-    }
+    // if (req.body.cell_phone) {
+    //   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
+    //   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+    //   // if (match) {
+    //   //   let intlCode = (match[1] ? '+1 ' : '')
+    //   //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+    //   // }
+    //   const cell_phone = phone(req.body.cell_phone)[0];
+    //   contact['cell_phone'] = cell_phone;
+    // }
 
     contact
       .save()
