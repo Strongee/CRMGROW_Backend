@@ -649,13 +649,17 @@ const importCSV = async (req, res) => {
                 console.log('contact found err', err.message);
               });
               if (name_contact) {
-                const field = {
-                  id: i,
-                  email: data['email'],
-                  err: 'Duplicated Full name',
-                };
-                failure.push(field);
-                failure.push(name_contact);
+                failure.push({ message: 'duplicate', data });
+
+                let existing = false;
+                failure.some((item) => {
+                  if (item._id === name_contact) {
+                    existing = true;
+                  }
+                });
+                if (!existing) {
+                  failure.push({ message: 'duplicate', data: name_contact });
+                }
                 resolve();
                 return;
               }
@@ -669,13 +673,17 @@ const importCSV = async (req, res) => {
                 console.log('contact found err', err.message);
               });
               if (email_contact) {
-                const field = {
-                  id: i,
-                  email: data['email'],
-                  err: 'Duplicated Email',
-                };
-                failure.push(field);
-                failure.push(email_contact);
+                failure.push({ message: 'duplicate', data });
+
+                let existing = false;
+                failure.some((item) => {
+                  if (item._id === email_contact) {
+                    existing = true;
+                  }
+                });
+                if (!existing) {
+                  failure.push({ message: 'duplicate', data: email_contact });
+                }
                 resolve();
                 return;
               }
@@ -688,13 +696,17 @@ const importCSV = async (req, res) => {
                 console.log('contact found err', err.message);
               });
               if (phone_contact) {
-                const field = {
-                  id: i,
-                  cell_phone: data['cell_phone'],
-                  err: 'Duplicated Phone',
-                };
-                failure.push(field);
-                failure.push(phone_contact);
+                failure.push({ message: 'duplicate', data });
+
+                let existing = false;
+                failure.some((item) => {
+                  if (item._id === phone_contact) {
+                    existing = true;
+                  }
+                });
+                if (!existing) {
+                  failure.push({ message: 'duplicate', data: phone_contact });
+                }
                 resolve();
                 return;
               }
@@ -703,13 +715,13 @@ const importCSV = async (req, res) => {
             count += 1;
 
             if (contact_info['is_limit'] && max_upload_count < count) {
-              const field = {
-                id: i,
-                email: data['email'],
-                cell_phone: data['phone'],
-                err: 'Exceed upload max contacts',
-              };
-              failure.push(field);
+              // const field = {
+              //   id: i,
+              //   email: data['email'],
+              //   cell_phone: data['phone'],
+              //   err: 'Exceed upload max contacts',
+              // };
+              failure.push({ message: 'upload_max', data });
               resolve();
               return;
             }
