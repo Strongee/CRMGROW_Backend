@@ -53,8 +53,6 @@ const create = async (req, res) => {
     ...req.body,
     contacts: mail_list.contacts,
     user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   new_campaign

@@ -7,7 +7,7 @@ const CampaignJobSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     campaign: { type: mongoose.Schema.Types.ObjectId, ref: 'campaign' },
     status: String,
-    contacts: Array,
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     due_date: Date,
     action: Object,
     ref: String,

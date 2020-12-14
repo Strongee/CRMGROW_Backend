@@ -6,7 +6,7 @@ const MailListSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
-    contacts: Array,
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     created_at: Date,
     updated_at: Date,
   },

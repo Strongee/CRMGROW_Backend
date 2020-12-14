@@ -108,7 +108,7 @@ const setEventCalendly = async (req, res) => {
 
 const connectSMTP = async (req, res) => {
   const { currentUser } = req;
-  const { host_name, port, email, user_name, password, secure } = req.body;
+  const { host, port, email, user, pass, secure } = req.body;
   const mailOptions = {
     from: `${currentUser.user_name} <${email}>`,
     to: 'amazingskill8001@gmail.com',
@@ -117,22 +117,38 @@ const connectSMTP = async (req, res) => {
     html: '<p>Test</p>',
   };
 
-  console.log('yahoo.....', currentUser.yahoo_refresh_token);
-  const transporter = nodemailer.createTransport({
-    host: `smtp.${host_name}`,
-    port: port || 587,
-    secureConnection: secure || port === 465,
+  const smtpTransporter = nodemailer.createTransport({
+    port,
+    host,
+    secure,
     auth: {
-      user: user_name,
-      pass: password,
+      user,
+      pass,
     },
+    debug: true,
   });
-  transporter.sendMail(mailOptions, (err, data) => {
-    if (err) {
-      return console.log(err);
+
+  // verify connection configuration
+  smtpTransporter.verify(function (error, success) {
+    if (error) {
+      console.log(error);
+      return res.status(400).json({
+        status: false,
+        error,
+      });
     } else {
-      console.log(JSON.stringify(data));
-      res.send({
+      console.log('Server is ready to take our messages');
+      Garbage.updateOne(
+        {
+          user: currentUser.id,
+        },
+        {
+          $set: { smtp: { ...req.body } },
+        }
+      ).catch((err) => {
+        console.log('garbage update err', err.message);
+      });
+      return res.send({
         status: true,
       });
     }
