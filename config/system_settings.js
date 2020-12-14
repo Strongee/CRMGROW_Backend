@@ -41,6 +41,7 @@ const system_settings = {
   ONBOARD_PRICING_1_HOUR: 9500,
   SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
   CAMPAIGN_MAIL_START: {
+    SMTP: 500,
     GMAIL: 150,
     GSUIT: 500,
     OUTLOOK: 150,
