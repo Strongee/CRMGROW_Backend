@@ -2480,12 +2480,19 @@ const schedulePaidDemo = async (req, res) => {
     console.log('payment find err', err.message);
   });
 
+  let amount;
+  if (req.body.demo === 1) {
+    amount = system_settings.ONBOARD_PRICING_30_MINS;
+  } else if (req.body.demo === 2) {
+    amount = system_settings.ONBOARD_PRICING_1_HOUR;
+  }
+
   const data = {
     card_id: payment.card_id,
     customer_id: payment.customer_id,
     receipt_email: currentUser.email,
-    amount: system_settings.ONBOARD_PRICING,
-    description: 'Schedule one on one onboarding',
+    amount,
+    description: 'Schedule one on one onboarding 30mins',
   };
 
   PaymentCtrl.createCharge(data)
