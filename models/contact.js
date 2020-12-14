@@ -16,7 +16,7 @@ const ContactSchema = mongoose.Schema(
     //   type: String,
     // },
     label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
-    seconary_email: { type: String, default: '' },
+    secondary_email: { type: String, default: '' },
     cell_phone: { type: String, default: '' },
     secondary_phone: { type: String, default: ''},
     country: { type: String, default: '' },

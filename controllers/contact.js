@@ -630,11 +630,11 @@ const importCSV = async (req, res) => {
           if (data['email'] === '') {
             data['email'] = null;
           }
-          if (data['phone'] === '') {
-            data['phone'] = null;
+          if (data['cell_phone'] === '') {
+            data['cell_phone'] = null;
           }
-          if (data['first_name'] || data['email'] || data['phone']) {
-            let cell_phone
+          if (data['first_name'] || data['email'] || data['cell_phone']) {
+            let cell_phone;
             // let cleaned = ('' + cell_phone).replace(/\D/g, '')
             // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
             // if (match) {
