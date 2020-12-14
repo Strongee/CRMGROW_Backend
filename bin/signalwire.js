@@ -118,7 +118,8 @@ const sendMessage = async () => {
 };
 
 const receivedStatus = async () => {
-  const message_sid = '37153dcc-8ab2-4915-aad0-8e576d6a33d5';
+  // const message_sid = '37153dcc-8ab2-4915-aad0-8e576d6a33d5';
+  const message_sid = '9de94c5b-6c87-4143-aec0-7a28260d6e18';
 
   TextHelper.getStatus(message_sid).then((res) => {
     console.log('res', res);

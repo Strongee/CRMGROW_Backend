@@ -657,11 +657,12 @@ const signup_job = new CronJob(
   async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-    const subscribers = await User.find({ welcome_email: false, del: false }).catch(
-      (err) => {
-        console.log('err', err);
-      }
-    );
+    const subscribers = await User.find({
+      welcome_email: false,
+      del: false,
+    }).catch((err) => {
+      console.log('err', err);
+    });
 
     if (subscribers) {
       for (let i = 0; i < subscribers.length; i++) {
@@ -1907,7 +1908,9 @@ const timesheet_check = new CronJob(
                   {
                     $set: {
                       status: 'undelivered',
-                      description: res.error_message,
+                      description:
+                        res.errorMessage ||
+                        'Could`t get delivery result from carrier',
                       content: 'Failed texting material',
                     },
                   }
@@ -1933,7 +1936,7 @@ const timesheet_check = new CronJob(
                   {
                     $set: {
                       status: 'undelivered',
-                      description: res.error_message,
+                      description: res.errorMessage,
                       content: 'Failed texting material',
                     },
                   }
