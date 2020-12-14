@@ -1,3 +1,4 @@
+const User = require('../models/user');
 const Garbage = require('../models/garbage');
 const request = require('request-promise');
 const nodemailer = require('nodemailer');
@@ -141,6 +142,18 @@ const connectSMTP = async (req, res) => {
       ).catch((err) => {
         console.log('garbage update err', err.message);
       });
+
+      User.updateOne(
+        { _id: currentUser.id },
+        {
+          $set: {
+            smtp_connected: true,
+          },
+        }
+      ).catch((err) => {
+        console.log('smtp update err', err.message);
+      });
+
       return res.send({
         status: true,
       });
