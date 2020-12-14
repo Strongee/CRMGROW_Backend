@@ -4001,6 +4001,127 @@ const getSharedContact = async (req, res) => {
   }
 };
 
+const contactMerge = async (req, res) => {
+  const { primary_contact, secondary_contact } = req.body;
+  const editData = { ...req.body };
+
+  delete editData.primary_contact;
+  delete editData.secondary_contact;
+
+  if (editData.activity_merge) {
+    switch (editData.activity_merge) {
+      case 'both': {
+        Activity.updateMany(
+          {
+            contacts: secondary_contact,
+          },
+          {
+            $set: { contacts: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('activity update err', err.message);
+        });
+        break;
+      }
+      case 'primary': {
+        Activity.deleteMany({
+          contacts: secondary_contact,
+        }).catch((err) => {
+          console.log('activity remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        Activity.deleteMany({
+          contacts: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('activity remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  if (editData.followup_merge) {
+    switch (editData.followup_merge) {
+      case 'both': {
+        FollowUp.updateMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('activity update err', err.message);
+        });
+        break;
+      }
+      case 'primary': {
+        FollowUp.deleteMany({
+          contact: secondary_contact,
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        FollowUp.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  if (editData.followup_merge) {
+    switch (editData.followup_merge) {
+      case 'both': {
+        FollowUp.updateMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('activity update err', err.message);
+        });
+        break;
+      }
+      case 'primary': {
+        FollowUp.deleteMany({
+          contact: secondary_contact,
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        FollowUp.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  Contact.updateOne(
+    {
+      _id: primary_contact,
+    },
+    {
+      $set: editData,
+    }
+  ).catch((err) => {
+    console.log('contact update err', err.message);
+  });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4041,4 +4162,5 @@ module.exports = {
   interestContact,
   interestSubmitContact,
   getSharedContact,
+  contactMerge,
 };
