@@ -2033,11 +2033,12 @@ const campaign_job = new CronJob(
           _id: campaign.email_template,
         });
 
+        const { user, contacts } = campaign_job;
         const data = {
-          user: campaign_job.user,
+          user,
           content: email_template.content,
           subject: email_template.subject,
-
+          contacts,
         };
       }
     }

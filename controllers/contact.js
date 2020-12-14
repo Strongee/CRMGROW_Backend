@@ -3075,15 +3075,38 @@ const bulkCreate = async (req, res) => {
       count += 1;
       if (max_count < count) {
         const field = {
-          id: i,
-          email: data['email'],
-          cell_phone: data['cell_phone'],
-          err: 'Exceed upload max contacts',
+          data,
+          message: 'Exceed upload max contacts',
         };
         failure.push(field);
         resolve();
         return;
       }
+
+      if (data['email']) {
+        const email_contact = await Contact.findOne({
+          email: data['email'],
+          user: currentUser.id,
+        }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        if (email_contact) {
+          failure.push({ message: 'duplicate', data });
+
+          let existing = false;
+          failure.some((item) => {
+            if (item.data._id == email_contact.id) {
+              existing = true;
+            }
+          });
+          if (!existing) {
+            failure.push({ message: 'duplicate', data: email_contact });
+          }
+          resolve();
+          return;
+        }
+      }
+
       const contact = new Contact({
         ...data,
         user: currentUser.id,
