@@ -104,6 +104,7 @@ const UserSchema = new Schema(
       link: String,
       paypal: String,
     },
+    smtp_connected: Boolean,
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

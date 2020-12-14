@@ -230,7 +230,7 @@ router.get(
 router.post(
   '/contact-merge',
   UserCtrl.checkAuth,
-  catchError(ContactCtrl.mergeContacts)
+  catchError(ContactCtrl.contactMerge)
 );
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));

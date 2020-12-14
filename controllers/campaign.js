@@ -66,19 +66,23 @@ const create = async (req, res) => {
 
       const contacts = mail_list.contacts;
 
-      switch (currentUser.connected_email_type) {
-        case 'gmail':
-          daily_limit = system_settings.CAMPAIGN_MAIL_START.GMAIl;
-          break;
-        case 'gsuit':
-          daily_limit = system_settings.CAMPAIGN_MAIL_START.GSUIT;
-          break;
-        case 'outlook':
-          daily_limit = system_settings.CAMPAIGN_MAIL_START.OUTLOOK;
-          break;
-        case 'microsoft':
-          daily_limit = system_settings.CAMPAIGN_MAIL_START.MICROSOFT;
-          break;
+      if (currentUser.smtp_connected) {
+        daily_limit = system_settings.CAMPAIGN_MAIL_START.SMTP;
+      } else {
+        switch (currentUser.connected_email_type) {
+          case 'gmail':
+            daily_limit = system_settings.CAMPAIGN_MAIL_START.GMAIl;
+            break;
+          case 'gsuit':
+            daily_limit = system_settings.CAMPAIGN_MAIL_START.GSUIT;
+            break;
+          case 'outlook':
+            daily_limit = system_settings.CAMPAIGN_MAIL_START.OUTLOOK;
+            break;
+          case 'microsoft':
+            daily_limit = system_settings.CAMPAIGN_MAIL_START.MICROSOFT;
+            break;
+        }
       }
 
       daily_limit =
