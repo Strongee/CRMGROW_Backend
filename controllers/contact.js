@@ -4016,13 +4016,39 @@ const contactMerge = async (req, res) => {
             contacts: secondary_contact,
           },
           {
-            $set: { contacts: primary_contact },
+            $set: { contacts: mongoose.Types.ObjectId(primary_contact) },
           }
         ).catch((err) => {
           console.log('activity update err', err.message);
         });
+
+        VideoTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        PDFTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        ImageTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        EmailTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        Email.updateMany(
+          { contacts: secondary_contact },
+          { $set: { contacts: mongoose.Types.ObjectId(primary_contact) } }
+        );
         break;
       }
+
       case 'primary': {
         Activity.deleteMany({
           contacts: secondary_contact,
@@ -4122,16 +4148,24 @@ const contactMerge = async (req, res) => {
     }
   }
 
-  Contact.updateOne(
+  Contact.findOneAndUpdate(
     {
       _id: primary_contact,
     },
     {
       $set: editData,
-    }
-  ).catch((err) => {
-    console.log('contact update err', err.message);
-  });
+    },
+    { new: true }
+  )
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('contact update err', err.message);
+    });
 };
 
 module.exports = {
