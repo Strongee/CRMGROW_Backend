@@ -108,14 +108,7 @@ const setEventCalendly = async (req, res) => {
 
 const connectSMTP = async (req, res) => {
   const { currentUser } = req;
-  const { host, port, email, user, pass, secure } = req.body;
-  const mailOptions = {
-    from: `${currentUser.user_name} <${email}>`,
-    to: 'amazingskill8001@gmail.com',
-    subject: 'test again',
-    text: 'Test',
-    html: '<p>Test</p>',
-  };
+  const { host, port, user, pass, secure } = req.body;
 
   const smtpTransporter = nodemailer.createTransport({
     port,
