@@ -4053,33 +4053,9 @@ const contactMerge = async (req, res) => {
             $set: { contact: primary_contact },
           }
         ).catch((err) => {
-          console.log('activity update err', err.message);
+          console.log('follwup update err', err.message);
         });
-        break;
-      }
-      case 'primary': {
-        FollowUp.deleteMany({
-          contact: secondary_contact,
-        }).catch((err) => {
-          console.log('followup remove err', err.message);
-        });
-        break;
-      }
-      case 'remove': {
-        FollowUp.deleteMany({
-          contact: { $in: [primary_contact, secondary_contact] },
-        }).catch((err) => {
-          console.log('followup remove err', err.message);
-        });
-        break;
-      }
-    }
-  }
-
-  if (editData.followup_merge) {
-    switch (editData.followup_merge) {
-      case 'both': {
-        FollowUp.updateMany(
+        Reminder.updateMany(
           {
             contact: secondary_contact,
           },
@@ -4087,7 +4063,7 @@ const contactMerge = async (req, res) => {
             $set: { contact: primary_contact },
           }
         ).catch((err) => {
-          console.log('activity update err', err.message);
+          console.log('reminder update err', err.message);
         });
         break;
       }
@@ -4097,6 +4073,16 @@ const contactMerge = async (req, res) => {
         }).catch((err) => {
           console.log('followup remove err', err.message);
         });
+        Reminder.deleteMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('reminder update err', err.message);
+        });
         break;
       }
       case 'remove': {
@@ -4104,6 +4090,32 @@ const contactMerge = async (req, res) => {
           contact: { $in: [primary_contact, secondary_contact] },
         }).catch((err) => {
           console.log('followup remove err', err.message);
+        });
+        Reminder.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('reminder remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  if (editData.automation_merge) {
+    switch (editData.automation_merge) {
+      case 'primary': {
+        TimeLine.deleteMany({
+          contact: secondary_contact,
+        }).catch((err) => {
+          console.log('timeline remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        TimeLine.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('timeline remove err', err.message);
         });
         break;
       }

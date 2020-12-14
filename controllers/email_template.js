@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');

@@ -227,6 +227,11 @@ router.get(
   catchError(ContactCtrl.getSharedContact)
 );
 
+router.post(
+  '/contact-merge',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.mergeContacts)
+);
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
