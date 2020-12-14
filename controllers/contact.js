@@ -653,7 +653,7 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item._id === name_contact.id) {
+                  if (item.data && item.data._id === name_contact.id) {
                     existing = true;
                   }
                 });
@@ -677,7 +677,7 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item._id === email_contact.id) {
+                  if (item.data && item.data._id === email_contact.id) {
                     existing = true;
                   }
                 });
@@ -700,7 +700,7 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item._id === phone_contact.id) {
+                  if (item.data && item.data._id === phone_contact.id) {
                     existing = true;
                   }
                 });
