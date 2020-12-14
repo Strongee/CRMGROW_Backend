@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 const { validationResult } = require('express-validator/check');
 const mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
@@ -633,7 +634,7 @@ const importCSV = async (req, res) => {
             data['phone'] = null;
           }
           if (data['first_name'] || data['email'] || data['phone']) {
-            const cell_phone = data['phone'];
+            let cell_phone
             // let cleaned = ('' + cell_phone).replace(/\D/g, '')
             // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
             // if (match) {
@@ -653,12 +654,12 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item.data && item.data._id === name_contact.id) {
+                  if (item.data._id == name_contact.id) {
                     existing = true;
                   }
                 });
                 if (!existing) {
-                  failure.push({ message: 'duplicate', data: name_contact });
+                  failure.push({ message: 'duplicate*', data: name_contact });
                 }
                 resolve();
                 return;
@@ -677,7 +678,7 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item.data && item.data._id === email_contact.id) {
+                  if (item.data._id == email_contact.id) {
                     existing = true;
                   }
                 });
@@ -689,8 +690,11 @@ const importCSV = async (req, res) => {
               }
             }
             if (data['cell_phone']) {
+              cell_phone = phone(data['cell_phone'])[0];
+            }
+            if (cell_phone) {
               const phone_contact = await Contact.findOne({
-                cell_phone: data['cell_phone'],
+                cell_phone,
                 user: currentUser.id,
               }).catch((err) => {
                 console.log('contact found err', err.message);
@@ -700,7 +704,7 @@ const importCSV = async (req, res) => {
 
                 let existing = false;
                 failure.some((item) => {
-                  if (item.data && item.data._id === phone_contact.id) {
+                  if (item.data._id == phone_contact.id) {
                     existing = true;
                   }
                 });
