@@ -659,7 +659,15 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  failure.push({ message: 'duplicate*', data: name_contact });
+                  failure.push({
+                    message: 'duplicate',
+                    data: {
+                      ...name_contact,
+                      label: name_contact.label
+                        ? name_contact.label.name
+                        : undefined,
+                    },
+                  });
                 }
                 resolve();
                 return;
@@ -670,9 +678,11 @@ const importCSV = async (req, res) => {
               const email_contact = await Contact.findOne({
                 email: data['email'],
                 user: currentUser.id,
-              }).catch((err) => {
-                console.log('contact found err', err.message);
-              });
+              })
+                .populate('label')
+                .catch((err) => {
+                  console.log('contact found err', err.message);
+                });
               if (email_contact) {
                 failure.push({ message: 'duplicate', data });
 
@@ -683,7 +693,15 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  failure.push({ message: 'duplicate', data: email_contact });
+                  failure.push({
+                    message: 'duplicate',
+                    data: {
+                      ...email_contact,
+                      label: email_contact.label
+                        ? email_contact.label.name
+                        : undefined,
+                    },
+                  });
                 }
                 resolve();
                 return;
@@ -709,7 +727,15 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  failure.push({ message: 'duplicate', data: phone_contact });
+                  failure.push({
+                    message: 'duplicate',
+                    data: {
+                      ...phone_contact,
+                      label: phone_contact.label
+                        ? phone_contact.label.name
+                        : undefined,
+                    },
+                  });
                 }
                 resolve();
                 return;
@@ -738,7 +764,6 @@ const importCSV = async (req, res) => {
             if (data['label'] !== '' && typeof data['label'] !== 'undefined') {
               for (let i = 0; i < labels.length; i++) {
                 if (capitalize(labels[i].name) === capitalize(data['label'])) {
-                  console.log('label id', labels[i]._id);
                   label = labels[i]._id;
                   break;
                 }
@@ -784,38 +809,44 @@ const importCSV = async (req, res) => {
                   .catch((err) => {
                     console.log('err', err);
                   });
-                if (data['note'] && data['note'] !== '') {
-                  const note = new Note({
-                    content: data['note'],
-                    contact: _contact.id,
-                    user: currentUser.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  });
-                  note.save().then((_note) => {
-                    const _activity = new Activity({
-                      content: note_content,
-                      contacts: _contact.id,
+                if (data['notes'] && data['notes'].length > 0) {
+                  for (let i = 0; i < data['notes'].length; i++) {
+                    const { content, title } = data['notes'][i];
+                    const note = new Note({
+                      content,
+                      title,
+                      contact: _contact.id,
                       user: currentUser.id,
-                      type: 'notes',
-                      notes: _note.id,
                       created_at: new Date(),
                       updated_at: new Date(),
                     });
-                    _activity
-                      .save()
-                      .then((__activity) => {
-                        Contact.updateOne(
-                          { _id: _contact.id },
-                          { $set: { last_activity: __activity.id } }
-                        ).catch((err) => {
-                          console.log('err', err);
-                        });
-                      })
-                      .catch((err) => {
-                        console.log('error', err);
+
+                    note.save().then((_note) => {
+                      const _activity = new Activity({
+                        content: note_content,
+                        contacts: _contact.id,
+                        user: currentUser.id,
+                        type: 'notes',
+                        notes: _note.id,
+                        created_at: new Date(),
+                        updated_at: new Date(),
                       });
-                  });
+
+                      _activity
+                        .save()
+                        .then((__activity) => {
+                          Contact.updateOne(
+                            { _id: _contact.id },
+                            { $set: { last_activity: __activity.id } }
+                          ).catch((err) => {
+                            console.log('err', err);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('error', err);
+                        });
+                    });
+                  }
                 }
                 resolve();
               })
@@ -4191,6 +4222,45 @@ const contactMerge = async (req, res) => {
     });
 };
 
+const updateContact = async (req, res) => {
+  const { label, cell_phone } = req.body;
+  const { currentUser } = req;
+
+  if (label) {
+    req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
+  } else {
+    delete req.body.label;
+  }
+  if (cell_phone) {
+    req.body.cell_phone = phone(cell_phone)[0];
+  } else {
+    delete req.body.cell_phone;
+  }
+  Contact.updateOne(
+    {
+      _id: req.body.id,
+      user: currentUser.id,
+    },
+    {
+      $set: {
+        ...req.body,
+      },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('contact update err', err.message);
+      return res.send({
+        status: false,
+        error: 'Internal server error',
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4232,4 +4302,5 @@ module.exports = {
   interestSubmitContact,
   getSharedContact,
   contactMerge,
+  updateContact,
 };

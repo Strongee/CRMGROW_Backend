@@ -6,6 +6,7 @@ const NoteSchema = new Schema(
   {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     content: String,
+    title: String,
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     updated_at: Date,
     created_at: Date,

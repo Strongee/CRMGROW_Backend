@@ -232,6 +232,13 @@ router.post(
   UserCtrl.checkAuth,
   catchError(ContactCtrl.contactMerge)
 );
+
+router.post(
+  '/update-contact',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.updateContact)
+);
+
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
