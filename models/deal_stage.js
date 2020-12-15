@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const DealSchema = new Schema(
+const DealStageSchema = new Schema(
   {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     title: String,
-    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    deals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'deal' }],
     updated_at: Date,
     created_at: Date,
   },
@@ -15,6 +15,6 @@ const DealSchema = new Schema(
   }
 );
 
-const Deal = mongoose.model('deal', DealSchema);
+const DealStage = mongoose.model('deal_stage', DealStageSchema);
 
-module.exports = Deal;
+module.exports = DealStage;
