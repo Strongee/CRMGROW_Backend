@@ -3089,7 +3089,7 @@ const bulkCreate = async (req, res) => {
 
   for (let i = 0; i < contacts.length; i++) {
     const promise = new Promise(async (resolve, reject) => {
-      const data = contacts[i];
+      const data = { ...contacts[i] };
       count += 1;
       if (max_count < count) {
         const field = {
@@ -3123,6 +3123,15 @@ const bulkCreate = async (req, res) => {
           resolve();
           return;
         }
+      }
+
+      if (data['label']) {
+        data['label'] = await LabelHelper.convertLabel(
+          currentUser.id,
+          data['label']
+        );
+      } else {
+        delete data.label;
       }
 
       const contact = new Contact({
