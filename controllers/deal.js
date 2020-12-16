@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Deal = require('../models/deal');
 const DealStage = require('../models/deal_stage');
 const Activity = require('../models/activity');
@@ -98,47 +99,47 @@ const moveDeal = async (req, res) => {
   });
 
   try {
-    await Deal.updateOne(
-      { _id: deal_stage_id },
+    await DealStage.updateOne(
+      { _id: deal.deal_stage },
       {
         $pull: {
-          jobs: { $in: [mongoose.Types.ObjectId(job_id)]},
+          deals: { $in: [mongoose.Types.ObjectId(deal_id)] },
         },
       },
       { new: true }
     ).catch((err) => {
-      console.log('source sprint update error', err.message);
-      throw err.message || 'Source sprint update error';
+      console.log('source deal stage update error', err.message);
+      throw err.message || 'Source deal stage update error';
     });
 
-    await Job.updateOne(
-      { _id: job_id },
+    await Deal.updateOne(
+      { _id: deal_id },
       {
         $set: {
-          sprint: sprint_id,
+          deal_stage: deal_stage_id,
         },
       }
     ).catch((err) => {
-      console.log('Job update error', err.message);
-      throw err.message || 'Job update error';
+      console.log('deal update error', err.message);
+      throw err.message || 'deal update error';
     });
 
-    if (!sprint_id) {
-      sprint_id = job.sprint;
+    if (!deal_stage_id) {
+      deal_stage_id = deal.deal_stage;
     }
-    await Sprint.updateOne(
-      { _id: sprint_id },
+    await DealStage.updateOne(
+      { _id: deal_stage_id },
       {
         $push: {
           jobs: {
-            $each: [job_id],
+            $each: [deal_id],
             $position: position,
           },
         },
       }
     ).catch((err) => {
-      console.log('destination sprint update error', err.message);
-      throw err.message || 'Destination sprint update error';
+      console.log('destination deal stage update error', err.message);
+      throw err.message || 'Destination deal stage update error';
     });
     return res.send();
   } catch (error) {
