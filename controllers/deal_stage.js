@@ -7,7 +7,9 @@ const ActivityHelper = require('../helpers/activity');
 const getAll = async (req, res) => {
   const { currentUser } = req;
 
-  const data = await DealStage.find({ user: currentUser.id }).populate('deals');
+  const data = await DealStage.find({ user: currentUser.id })
+    .populate('deals')
+    .sort({ priority: 1 });
 
   if (!data) {
     return res.status(400).json({

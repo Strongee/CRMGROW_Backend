@@ -7,6 +7,7 @@ const DealStageSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     role: String,
     title: String,
+    priority: Number,
     deals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'deal' }],
     updated_at: Date,
     created_at: Date,
