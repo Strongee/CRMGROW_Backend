@@ -661,9 +661,6 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  if (name_contact.label) {
-                    name_contact.label = name_contact.label.name;
-                  }
                   failure.push({
                     message: 'duplicate',
                     data: name_contact,
@@ -693,11 +690,6 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  if (email_contact.label) {
-                    console.log('email_contact.label', email_contact.label);
-                    email_contact.label = email_contact.label.name;
-                  }
-                  console.log('email_contact', email_contact);
                   failure.push({
                     message: 'duplicate',
                     data: email_contact,
@@ -727,9 +719,6 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
-                  if (phone_contact.label) {
-                    phone_contact.label = phone_contact.label.name;
-                  }
                   failure.push({
                     message: 'duplicate',
                     data: phone_contact,
@@ -4131,7 +4120,7 @@ const contactMerge = async (req, res) => {
             $set: { contact: primary_contact },
           }
         ).catch((err) => {
-          console.log('follwup update err', err.message);
+          console.log('followup update err', err.message);
         });
         Reminder.updateMany(
           {
@@ -4234,6 +4223,51 @@ const updateContact = async (req, res) => {
   } else {
     delete req.body.cell_phone;
   }
+  if (req.body.notes && req.body.notes.length > 0) {
+    let note_content = 'added note';
+    if (req.guest_loggin) {
+      note_content = ActivityHelper.assistantLog(note_content);
+    }
+
+    for (let i = 0; i < req.body.notes.length; i++) {
+      const { content, title } = req.body['notes'][i];
+      const note = new Note({
+        content,
+        title,
+        contact: req.body.id,
+        user: currentUser.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      note.save().then((_note) => {
+        const _activity = new Activity({
+          content: note_content,
+          contacts: req.body.id,
+          user: currentUser.id,
+          type: 'notes',
+          notes: _note.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        _activity
+          .save()
+          .then((__activity) => {
+            Contact.updateOne(
+              { _id: req.body.id },
+              { $set: { last_activity: __activity.id } }
+            ).catch((err) => {
+              console.log('err', err);
+            });
+          })
+          .catch((err) => {
+            console.log('error', err);
+          });
+      });
+    }
+  }
+
   Contact.updateOne(
     {
       _id: req.body.id,

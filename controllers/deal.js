@@ -88,7 +88,66 @@ const create = async (req, res) => {
     });
 };
 
+const moveDeal = async (req, res) => {
+  const { deal_id, position } = req.body;
+  let { deal_stage_id } = req.body;
+
+  const deal = await Deal.findOne({ _id: deal_id }).catch((err) => {
+    console.log('deal found error', err.message);
+    return res.status(500).send(err.message || 'Deal found error');
+  });
+
+  try {
+    await Deal.updateOne(
+      { _id: deal_stage_id },
+      {
+        $pull: {
+          jobs: { $in: [mongoose.Types.ObjectId(job_id)]},
+        },
+      },
+      { new: true }
+    ).catch((err) => {
+      console.log('source sprint update error', err.message);
+      throw err.message || 'Source sprint update error';
+    });
+
+    await Job.updateOne(
+      { _id: job_id },
+      {
+        $set: {
+          sprint: sprint_id,
+        },
+      }
+    ).catch((err) => {
+      console.log('Job update error', err.message);
+      throw err.message || 'Job update error';
+    });
+
+    if (!sprint_id) {
+      sprint_id = job.sprint;
+    }
+    await Sprint.updateOne(
+      { _id: sprint_id },
+      {
+        $push: {
+          jobs: {
+            $each: [job_id],
+            $position: position,
+          },
+        },
+      }
+    ).catch((err) => {
+      console.log('destination sprint update error', err.message);
+      throw err.message || 'Destination sprint update error';
+    });
+    return res.send();
+  } catch (error) {
+    return res.status(500).send(error);
+  }
+};
+
 module.exports = {
   getAll,
   create,
+  moveDeal,
 };
