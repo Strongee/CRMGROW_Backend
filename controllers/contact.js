@@ -646,9 +646,11 @@ const importCSV = async (req, res) => {
                 first_name: data['first_name'],
                 last_name: data['last_name'],
                 user: currentUser.id,
-              }).catch((err) => {
-                console.log('contact found err', err.message);
-              });
+              })
+                .populate('label')
+                .catch((err) => {
+                  console.log('contact found err', err.message);
+                });
               if (name_contact) {
                 failure.push({ message: 'duplicate', data });
 
@@ -692,8 +694,10 @@ const importCSV = async (req, res) => {
                 });
                 if (!existing) {
                   if (email_contact.label) {
+                    console.log('email_contact.label', email_contact.label);
                     email_contact.label = email_contact.label.name;
                   }
+                  console.log('email_contact', email_contact);
                   failure.push({
                     message: 'duplicate',
                     data: email_contact,
