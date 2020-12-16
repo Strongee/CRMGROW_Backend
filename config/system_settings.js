@@ -37,8 +37,10 @@ const system_settings = {
     HEIGHT: 220,
   },
   IMAP_PORT: 587,
-  ONBOARD_PRICING: 5000,
-  SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
+  ONBOARD_PRICING_30_MINS: 5000,
+  ONBOARD_PRICING_1_HOUR: 9500,
+  SCHEDULE_LINK_30_MINS: 'https://calendly.com/coachwithdaniel/crm-grow-30',
+  SCHEDULE_LINK_1_HOUR: 'https://calendly.com/coachwithdaniel/crm-grow',
   CAMPAIGN_MAIL_START: {
     GMAIL: 150,
     GSUIT: 500,

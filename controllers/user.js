@@ -2481,10 +2481,17 @@ const schedulePaidDemo = async (req, res) => {
   });
 
   let amount;
+  let description;
+  let schedule_link;
+
   if (req.body.demo === 1) {
     amount = system_settings.ONBOARD_PRICING_30_MINS;
+    description = 'Schedule one on one onboarding 30mins';
+    schedule_link = system_settings.SCHEDULE_LINK_30_MINS;
   } else if (req.body.demo === 2) {
     amount = system_settings.ONBOARD_PRICING_1_HOUR;
+    description = 'Schedule one on one onboarding 1 hour';
+    schedule_link = system_settings.SCHEDULE_LINK_1_HOUR;
   }
 
   const data = {
@@ -2492,7 +2499,7 @@ const schedulePaidDemo = async (req, res) => {
     customer_id: payment.customer_id,
     receipt_email: currentUser.email,
     amount,
-    description: 'Schedule one on one onboarding 30mins',
+    description,
   };
 
   PaymentCtrl.createCharge(data)
@@ -2510,7 +2517,7 @@ const schedulePaidDemo = async (req, res) => {
       });
       const templatedData = {
         user_name: currentUser.user_name,
-        schedule_link: system_settings.SCHEDULE_LINK,
+        schedule_link,
       };
 
       const params = {
