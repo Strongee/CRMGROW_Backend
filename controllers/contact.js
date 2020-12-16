@@ -659,14 +659,12 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
+                  if (name_contact.label) {
+                    name_contact.label = name_contact.label.name;
+                  }
                   failure.push({
                     message: 'duplicate',
-                    data: {
-                      ...name_contact,
-                      label: name_contact.label
-                        ? name_contact.label.name
-                        : undefined,
-                    },
+                    data: name_contact,
                   });
                 }
                 resolve();
@@ -693,14 +691,12 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
+                  if (email_contact.label) {
+                    email_contact.label = email_contact.label.name;
+                  }
                   failure.push({
                     message: 'duplicate',
-                    data: {
-                      ...email_contact,
-                      label: email_contact.label
-                        ? email_contact.label.name
-                        : undefined,
-                    },
+                    data: email_contact,
                   });
                 }
                 resolve();
@@ -727,14 +723,12 @@ const importCSV = async (req, res) => {
                   }
                 });
                 if (!existing) {
+                  if (phone_contact.label) {
+                    phone_contact.label = phone_contact.label.name;
+                  }
                   failure.push({
                     message: 'duplicate',
-                    data: {
-                      ...phone_contact,
-                      label: phone_contact.label
-                        ? phone_contact.label.name
-                        : undefined,
-                    },
+                    data: phone_contact,
                   });
                 }
                 resolve();
