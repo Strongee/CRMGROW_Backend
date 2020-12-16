@@ -7,10 +7,9 @@ const ActivityHelper = require('../helpers/activity');
 const getAll = async (req, res) => {
   const { currentUser } = req;
 
-  const deal_stages = await DealStage.find({ user: currentUser.id });
-  const deals = await Deal.find({ user: currentUser.id });
+  const data = await DealStage.find({ user: currentUser.id }).populate('deals');
 
-  if (!deal_stages) {
+  if (!data) {
     return res.status(400).json({
       status: false,
       error: 'Deals doesn`t exist',
@@ -19,8 +18,7 @@ const getAll = async (req, res) => {
 
   return res.send({
     status: true,
-    deal_stages,
-    deals,
+    data,
   });
 };
 
