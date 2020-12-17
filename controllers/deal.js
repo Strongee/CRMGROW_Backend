@@ -131,7 +131,7 @@ const moveDeal = async (req, res) => {
       { _id: deal_stage_id },
       {
         $push: {
-          jobs: {
+          deals: {
             $each: [deal_id],
             $position: position,
           },
