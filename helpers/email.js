@@ -12,6 +12,8 @@ const Contact = require('../models/contact');
 const Email = require('../models/email');
 const User = require('../models/user');
 const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const Image = require('../models/image');
 const ActivityHelper = require('./activity');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
@@ -3578,12 +3580,15 @@ const resendVideo = async (data) => {
   }
 };
 
-const bulkMaterial = async (req, res) => {};
-
 const addLinkTracking = (content, activity) => {
   const $ = cheerio.load(content);
   $('a[href]').each((index, elem) => {
-    const url = $(elem).attr('href');
+    let url = $(elem).attr('href');
+
+    const pattern = /^((http|https|ftp):\/\/)/;
+    if (!pattern.test(url)) {
+      url = 'http://' + url;
+    }
     if (url.indexOf('app.crmgrow.com') === -1) {
       const attached_link =
         urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
@@ -3602,9 +3607,9 @@ const generateOpenTrackLink = (id) => {
   return `<img src='${urls.TRACK_URL}${id}'/>`;
 };
 
-const sendEmail = async (req, res) => {
-  const { currentUser } = req;
+const sendEmail = async (data) => {
   const {
+    user,
     contacts,
     video_ids,
     pdf_ids,
@@ -3613,8 +3618,13 @@ const sendEmail = async (req, res) => {
     subject,
     cc,
     bcc,
+    mode,
     attachments,
-  } = req.body;
+  } = data;
+
+  const currentUser = await User.findOne({ _id: user }).catch((err) => {
+    console.log('user find err', err.message);
+  });
 
   let email_count = currentUser['email_info']['count'] || 0;
   const max_email_count =
@@ -3736,8 +3746,17 @@ const sendEmail = async (req, res) => {
         );
 
         let activity_content = 'sent video using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
+
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
         }
 
         if (videos.length >= 2) {
@@ -4362,7 +4381,6 @@ module.exports = {
   bulkVideo,
   bulkPDF,
   bulkImage,
-  bulkMaterial,
   resendVideo,
   addLinkTracking,
   generateUnsubscribeLink,

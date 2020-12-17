@@ -620,7 +620,6 @@ const importCSV = async (req, res) => {
         add_content = ActivityHelper.assistantLog(add_content);
         note_content = ActivityHelper.assistantLog(note_content);
       }
-
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
@@ -796,9 +795,11 @@ const importCSV = async (req, res) => {
                   .catch((err) => {
                     console.log('err', err);
                   });
+
                 if (data['notes'] && data['notes'].length > 0) {
-                  for (let i = 0; i < data['notes'].length; i++) {
-                    const { content, title } = data['notes'][i];
+                  const notes = JSON.parse(data['notes']);
+                  for (let i = 0; i < notes.length; i++) {
+                    const { content, title } = notes[i];
                     const note = new Note({
                       content,
                       title,

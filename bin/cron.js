@@ -2039,7 +2039,13 @@ const campaign_job = new CronJob(
           content: email_template.content,
           subject: email_template.subject,
           contacts,
+          video_ids: campaign.videos,
+          pdf_ids: campaign.pdfs,
+          image_ids: campaign.images,
         };
+        EmailHelper.sendEmail(data).catch((err) => {
+          console.log('err', err.message);
+        });
       }
     }
   },
