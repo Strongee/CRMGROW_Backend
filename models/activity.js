@@ -46,6 +46,7 @@ const ActivitySchema = new Schema(
 
 ActivitySchema.index({ messsage_sid: 1 });
 ActivitySchema.index({ user: 1 });
+ActivitySchema.index({ contacts: 1 });
 const Activity = mongoose.model('activity', ActivitySchema);
 
 module.exports = Activity;
