@@ -47,6 +47,7 @@ const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
+const PaidDemo = require('../models/paid_demo');
 
 const { getSignalWireNumber } = require('../helpers/text');
 
@@ -2515,40 +2516,52 @@ const schedulePaidDemo = async (req, res) => {
       ).catch((err) => {
         console.log('user paid demo update err', err.message);
       });
-      const templatedData = {
-        user_name: currentUser.user_name,
-        schedule_link,
-      };
+      const new_demo = new PaidDemo({
+        user: currentUser.id,
+        demo_mode: req.body.demo,
+      });
 
-      const params = {
-        Destination: {
-          ToAddresses: [currentUser.email],
-        },
-        Source: mail_contents.REPLY,
-        Template: 'OnboardCall',
-        TemplateData: JSON.stringify(templatedData),
-      };
+      new_demo
+        .save()
+        .then(() => {
+          const templatedData = {
+            user_name: currentUser.user_name,
+            schedule_link,
+          };
 
-      // Create the promise and SES service object
-      ses
-        .sendTemplatedEmail(params)
-        .promise()
-        .then((response) => {
-          console.log('success', response.MessageId);
+          const params = {
+            Destination: {
+              ToAddresses: [currentUser.email],
+            },
+            Source: mail_contents.REPLY,
+            Template: 'OnboardCall',
+            TemplateData: JSON.stringify(templatedData),
+          };
+
+          // Create the promise and SES service object
+          ses
+            .sendTemplatedEmail(params)
+            .promise()
+            .then((response) => {
+              console.log('success', response.MessageId);
+            })
+            .catch((err) => {
+              console.log('ses send err', err);
+            });
+          return res.send({
+            status: true,
+          });
         })
         .catch((err) => {
-          console.log('ses send err', err);
+          console.log('card payment err', err);
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
         });
-      return res.send({
-        status: true,
-      });
     })
-    .catch((err) => {
-      console.log('card payment err', err);
-      return res.status(400).json({
-        status: false,
-        error: err.message,
-      });
+    .catch((_err) => {
+      console.log('new demo err', _err.message);
     });
 };
 
