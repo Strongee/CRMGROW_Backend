@@ -50,7 +50,38 @@ const create = async (req, res) => {
     });
 };
 
+const remove = async (req, res) => {
+  const { currentUser } = req;
+
+  const deal_stage = await DealStage.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('deal stage err', err.message);
+  });
+
+  if (!deal_stage) {
+    return res.status(400).json({
+      status: false,
+      error: 'Permission invalid',
+    });
+  }
+
+  Deal.deleteMany({
+    _id: { $in: deal_stage.deals },
+  }).catch((err) => {
+    console.log('remove deal', err.message);
+  });
+
+  DealStage.deleteOne({
+    _id: req.params.id,
+  }).catch((err) => {
+    console.log('deal stage remove err', err.message);
+  });
+};
+
 module.exports = {
   getAll,
   create,
+  remove,
 };

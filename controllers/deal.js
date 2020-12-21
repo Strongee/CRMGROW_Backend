@@ -147,8 +147,47 @@ const moveDeal = async (req, res) => {
   }
 };
 
+const remove = async (req, res) => {
+  const { currentUser } = req;
+
+  const deal = await Deal.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('deal find err', err.message);
+  });
+
+  if (!deal) {
+    return res.status(400).json({
+      status: false,
+      error: 'Permission invalid',
+    });
+  }
+
+  Deal.deleteOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('remove deal', err.message);
+  });
+
+  DealStage.updateOne(
+    {
+      _id: deal.deal_stage,
+    },
+    {
+      $pull: {
+        deals: { $in: [mongoose.Types.ObjectId(req.params.id)] },
+      },
+    }
+  ).catch((err) => {
+    console.log('remove deal', err.message);
+  });
+};
+
 module.exports = {
   getAll,
   create,
   moveDeal,
+  remove,
 };

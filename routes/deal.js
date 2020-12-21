@@ -13,6 +13,7 @@ router.post(
   catchError(DealCtrl.create)
 );
 router.get('/', UserCtrl.checkAuth, catchError(DealCtrl.getAll));
+router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
 router.post(
   '/move-deal',
   UserCtrl.checkAuth,
