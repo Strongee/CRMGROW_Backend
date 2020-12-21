@@ -454,6 +454,7 @@ const removeContact = async (user_id, id) => {
 
   await Contact.deleteOne({ _id: id });
   await Activity.deleteMany({ contacts: id });
+  await Note.deleteMany({ contact: id });
   await FollowUp.deleteMany({ contact: id });
   await Appointment.deleteMany({ contact: id });
   await Reminder.deleteMany({ contact: id });
