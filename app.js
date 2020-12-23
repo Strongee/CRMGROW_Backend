@@ -51,9 +51,4 @@ app.get('/auth', (req, res) => {
   res.render('auth');
 });
 
-app.use('/api', indexRouter);
-app.get('*', catchError(PageCtrl.display), (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-});
-
 module.exports = app;
