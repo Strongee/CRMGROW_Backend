@@ -27,6 +27,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/video', catchError(VideoCtrl.play));
 app.get('/video1/:id', catchError(VideoCtrl.play1));
 app.get('/video2', catchError(VideoCtrl.play2));
