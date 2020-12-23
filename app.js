@@ -50,4 +50,6 @@ app.get('/auth', (req, res) => {
   res.render('auth');
 });
 
+app.use('/api', indexRouter);
+
 module.exports = app;
