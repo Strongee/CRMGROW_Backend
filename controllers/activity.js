@@ -159,9 +159,37 @@ const removeAll = async (req, res) => {
     });
 };
 
+const load = async (req, res) => {
+  const { currentUser } = req;
+  const { skip, size } = req.body;
+  const count = await Activity.countDocuments({ user: currentUser.id });
+  let activity;
+  if (!skip) {
+    activity = await Activity.find({ user: currentUser.id })
+      .sort({ updated_at: -1 })
+      .populate('contacts')
+      .limit(size);
+  } else {
+    activity = await Activity.find({ user: currentUser.id })
+      .sort({ updated_at: -1 })
+      .populate('contacts')
+      .skip(skip)
+      .limit(size);
+  }
+
+  return res.send({
+    status: true,
+    data: {
+      activity,
+      count,
+    },
+  });
+};
+
 module.exports = {
   get,
   create,
+  load,
   removeBulk,
   removeAll,
   contactActivity,

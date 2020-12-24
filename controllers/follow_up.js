@@ -687,11 +687,60 @@ const bulkCreate = async (req, res) => {
   });
 };
 
+const load = async (req, res) => {
+  const { currentUser } = req;
+  const { skip, pageSize, searchOption } = req.body;
+  const {
+    type,
+    status,
+    contact,
+    label,
+    start_date,
+    end_date,
+    str,
+  } = searchOption;
+
+  const query = { user: currentUser._id };
+  type ? (query.type = type) : false;
+  if (typeof status !== 'undefined') {
+    query.status = status;
+  }
+  contact ? (query.contact = contact) : false;
+  if (start_date) {
+    query.due_date = { $gte: start_date };
+  }
+  if (end_date) {
+    if (query.due_date) {
+      query.due_date.$lt = end_date;
+    } else {
+      query.due_date = { $lte: start_date };
+    }
+  }
+  if (str) {
+    query.content = { $regex: '.*' + str + '.*' };
+  }
+
+  const count = await FollowUp.countDocuments(query);
+  const _follow_ups = await FollowUp.find(query)
+    .skip(skip)
+    .limit(pageSize)
+    .populate({ path: 'contact' });
+
+  return res.send({
+    status: true,
+    data: {
+      count,
+      tasks: _follow_ups,
+    },
+  });
+};
+
 module.exports = {
   get,
   create,
   edit,
   getByDate,
+  load,
   updateChecked,
   updateArchived,
   bulkUpdate,
