@@ -8,6 +8,7 @@ const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const mongoose = require('mongoose');
+const moment = require('moment');
 const Garbage = require('../models/garbage');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
@@ -30,6 +31,8 @@ const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Team = require('../models/team');
+const TimeLine = require('../models/time_line');
+const Notification = require('../models/notification');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -1255,7 +1258,51 @@ const bulkText = async (req, res) => {
             body: pdf_content,
           })
           .then((message) => {
-            if (message.status !== 'undelivered') {
+            if (message.status === 'queued' || message.status === 'sent') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                pdf_content
+              );
+
+              const now = moment();
+              const due_date = now.add(1, 'minutes');
+              const timeline = new TimeLine({
+                user: currentUser.id,
+                status: 'active',
+                action: {
+                  type: 'bulk_sms',
+                  message_sid: message.sid,
+                  activities,
+                },
+                due_date,
+              });
+              timeline.save().catch((err) => {
+                console.log('time line save err', err.message);
+              });
+
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  $set: { status: 'pending' },
+                }
+              ).catch((err) => {
+                console.log('activity err', err.message);
+              });
+
+              const notification = new Notification({
+                user: currentUser.id,
+                message_sid: message.sid,
+                contact: _contact.id,
+                activities,
+                criteria: 'bulk_sms',
+                status: 'pending',
+              });
+              notification.save().catch((err) => {
+                console.log('notification save err', err.message);
+              });
+              resolve();
+            } else if (message.status === 'delivered') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
