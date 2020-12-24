@@ -5,6 +5,9 @@ const base64Img = require('base64-img');
 const mime = require('mime-types');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
+const moment = require('moment');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -28,6 +31,12 @@ const Video = require('../models/video');
 const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
 const Contact = require('../models/contact');
+const MaterialTheme = require('../models/material_theme');
+const Team = require('../models/team');
+const User = require('../models/user');
+const TimeLine = require('../models/time_line');
+const EmailTemplate = require('../models/email_template');
+const Notification = require('../models/notification');
 const {
   THUMBNAILS_PATH,
   TEMP_PATH,
@@ -40,16 +49,12 @@ const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 
-const accountSid = api.TWILIO.TWILIO_SID;
-const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
-const twilio = require('twilio')(accountSid, authToken);
-
-const User = require('../models/user');
 const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
 const videoHelper = require('../helpers/video');
-const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
+const ActivityHelper = require('../helpers/activity');
+const { uploadBase64Image, downloadFile } = require('../helpers/fileUpload');
 
 const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -65,10 +70,16 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
 
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
+  const team_id = req.query.team;
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
     console.log('err', err.message);
   });
@@ -77,6 +88,30 @@ const play = async (req, res) => {
       console.log('err', err.message);
     }
   );
+  let team;
+  if (team_id) {
+    team = await Team.findOne({ _id: team_id }).catch((err) => {
+      console.log('err', err.message);
+    });
+    if (team) {
+      // let theme = 'theme2';
+      // let highlights = team['highlights'];
+      // let brands = team['brands'];
+      // return res.render('lead_video_' + theme, {
+      //   video,
+      //   user,
+      //   capture_dialog,
+      //   capture_delay,
+      //   capture_field: capture_field || {},
+      //   social_link,
+      //   setting: {
+      //     logo: team.picture,
+      //     highlights,
+      //     brands,
+      //   },
+      // });
+    }
+  }
 
   let capture_dialog = true;
   let capture_delay = 0;
@@ -92,18 +127,25 @@ const play = async (req, res) => {
     let highlights = [];
     let brands = [];
     let intro_video = '';
+    let calendly;
     if (garbage) {
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       const capture_videos = garbage['capture_videos'];
+
       if (capture_videos.indexOf(video_id) === -1) {
         capture_dialog = false;
       }
+
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
       intro_video = garbage['intro_video'];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     } else {
       capture_dialog = false;
     }
@@ -127,14 +169,15 @@ const play = async (req, res) => {
         social_link.linkedin = 'http://' + social_link.linkedin;
       }
     }
-
-    return res.render('lead_video_' + theme, {
-      video,
+    return res.render('lead_material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
       social_link,
+      calendly,
       setting: {
         logo,
         highlights,
@@ -184,6 +227,11 @@ const play1 = async (req, res) => {
       }
     }
 
+    let material_start = 0;
+
+    if (activity.material_last) {
+      material_start = activity.material_last;
+    }
     const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
       console.log('err', err);
     });
@@ -192,19 +240,27 @@ const play1 = async (req, res) => {
     let logo;
     let highlights = [];
     let brands = [];
+    let calendly;
     if (garbage) {
       theme = garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     }
 
-    return res.render('video_' + theme, {
-      video,
+    return res.render('material_' + theme, {
+      material: video,
+      material_type: 'video',
       user,
       contact: activity['contacts'],
       activity: activity.id,
       social_link,
+      calendly,
+      material_start,
       setting: {
         logo,
         highlights,
@@ -213,6 +269,119 @@ const play1 = async (req, res) => {
     });
   } else {
     return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
+};
+
+const play2 = async (req, res) => {
+  const video_id = req.query.video;
+  const sender_id = req.query.user;
+  const video = await Video.findOne({ _id: video_id, del: false }).catch(
+    (err) => {
+      console.log('err', err.message);
+    }
+  );
+  const user = await User.findOne({ _id: sender_id, del: false }).catch(
+    (err) => {
+      console.log('err', err.message);
+    }
+  );
+
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    let calendly;
+    let material_theme;
+    let html_content;
+    if (garbage) {
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_videos = garbage['capture_videos'];
+
+      if (capture_videos.indexOf(video_id) === -1) {
+        capture_dialog = false;
+      }
+
+      console.log('video_id', video_id);
+      console.log(' garbage.material_themes', garbage.material_themes);
+      if (garbage.material_themes && garbage.material_themes[video_id]) {
+        const theme_id = garbage.material_themes[video_id];
+        material_theme = await MaterialTheme.findOne({
+          _id: theme_id,
+        }).catch((err) => {
+          console.log('material theme err', err.message);
+        });
+
+        const key = material_theme.html_content.slice(
+          urls.STORAGE_BASE.length + 1
+        );
+        const data = await downloadFile(key);
+        html_content = Buffer.from(data.Body).toString('utf8');
+      }
+
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
+    } else {
+      capture_dialog = false;
+    }
+
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
+
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
+    }
+
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    return res.render('page1', {
+      material: video,
+      material_type: 'video',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      social_link,
+      calendly,
+      html_content,
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
+    });
+  } else {
+    res.send(
       'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
     );
   }
@@ -266,11 +435,97 @@ const create = async (req, res) => {
 };
 
 const createVideo = async (req, res) => {
+  let preview;
+  const { currentUser } = req;
+
+  if (req.body.thumbnail) {
+    // Thumbnail
+
+    const play = await loadImage(PLAY_BUTTON_PATH);
+
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
+    const ctx = canvas.getContext('2d');
+    const image = await loadImage(req.body.thumbnail);
+
+    let height = image.height;
+    let width = image.width;
+    if (height > width) {
+      ctx.rect(
+        0,
+        0,
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+      height = system_settings.THUMBNAIL.HEIGHT;
+      ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+    } else {
+      height = system_settings.THUMBNAIL.HEIGHT;
+      width = system_settings.THUMBNAIL.WIDTH;
+      ctx.drawImage(image, 0, 0, width, height);
+    }
+
+    ctx.drawImage(play, 10, 150);
+
+    const buf = canvas.toBuffer();
+    const file_name = uuidv1();
+    const today = new Date();
+    const year = today.getYear();
+    const month = today.getMonth();
+    const params = {
+      Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+      Key: 'preview' + year + '/' + month + '/' + file_name,
+      Body: buf,
+      ACL: 'public-read',
+    };
+
+    const { Location, Key } = await s3.upload(params).promise();
+    preview = Location;
+  }
+
   const video = new Video({
     ...req.body,
-    user: req.currentUser.id,
+    preview,
+    converted: 'completed',
+    user: currentUser.id,
     created_at: new Date(),
   });
+
+  if (req.body.shared_video) {
+    Video.updateOne(
+      {
+        _id: req.body.shared_video,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_video: video.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('video update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_video']) {
+      garbage['edited_video'].push(req.body.default_video);
+    } else {
+      garbage['edited_video'] = [req.body.default_video];
+    }
+  }
 
   const _video = await video
     .save()
@@ -348,47 +603,55 @@ const update = async (req, res) => {
     );
     if (fs.existsSync(thumbnail_path)) {
       // Thumbnail
-      if (req.body.thumbnail) {
-        const play = await loadImage(PLAY_BUTTON_PATH);
+      const play = await loadImage(PLAY_BUTTON_PATH);
 
-        const canvas = createCanvas(250, 140);
-        const ctx = canvas.getContext('2d');
-        const image = await loadImage(thumbnail_path);
+      const canvas = createCanvas(
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      const ctx = canvas.getContext('2d');
+      const image = await loadImage(thumbnail_path);
 
-        let height = image.height;
-        let width = image.width;
-        if (height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-        } else {
-          height = 140;
-          width = 250;
-          ctx.drawImage(image, 0, 0, width, height);
-        }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
+      let height = image.height;
+      let width = image.width;
+      if (height > width) {
+        ctx.rect(
+          0,
+          0,
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
+        ctx.fillStyle = '#000000';
         ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
-        const buf = canvas.toBuffer();
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
 
-        if (!fs.existsSync(GIF_PATH)) {
-          fs.mkdirSync(GIF_PATH);
-        }
-        for (let i = 0; i < 20; i++) {
-          if (i < 10) {
-            fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-          } else {
-            fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-          }
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
+
+      const buf = canvas.toBuffer();
+
+      if (!fs.existsSync(GIF_PATH)) {
+        fs.mkdirSync(GIF_PATH);
+      }
+      for (let i = 0; i < 20; i++) {
+        if (i < 10) {
+          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
+        } else {
+          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
         }
       }
 
@@ -430,7 +693,7 @@ const update = async (req, res) => {
 
     regeneratePreview(data)
       .then((res) => {
-        Video.updateMany(
+        Video.updateOne(
           { _id: req.params.id },
           { $set: { preview: res } }
         ).catch((err) => {
@@ -517,47 +780,60 @@ const updateDetail = async (req, res) => {
       THUMBNAILS_PATH,
       file_name
     );
-    if (fs.existsSync(thumbnail_path)) {
+    if (fs.existsSync(thumbnail_path) && req.body.custom_thumbnail) {
       // Thumbnail
-      if (req.body.custom_thumbnail) {
-        custom_thumbnail = true;
-        const play = await loadImage(PLAY_BUTTON_PATH);
+      custom_thumbnail = true;
+      const play = await loadImage(PLAY_BUTTON_PATH);
 
-        const canvas = createCanvas(250, 140);
-        const ctx = canvas.getContext('2d');
-        const image = await loadImage(thumbnail_path);
+      const canvas = createCanvas(
+        system_settings.THUMBNAIL.WIDTH,
+        system_settings.THUMBNAIL.HEIGHT
+      );
+      const ctx = canvas.getContext('2d');
+      const image = await loadImage(thumbnail_path);
 
-        let height = image.height;
-        let width = image.width;
-        if (height > width) {
-          ctx.rect(0, 0, 250, 140);
-          ctx.fillStyle = '#000000';
-          ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
-        } else {
-          height = 140;
-          width = 250;
-          ctx.drawImage(image, 0, 0, width, height);
-        }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
+      let height = image.height;
+      let width = image.width;
+      if (height > width) {
+        ctx.rect(
+          0,
+          0,
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
+        ctx.fillStyle = '#000000';
         ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
-        const buf = canvas.toBuffer();
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
+        ctx.drawImage(
+          image,
+          (system_settings.THUMBNAIL.WIDTH - width) / 2,
+          0,
+          width,
+          height
+        );
+      } else {
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
+        ctx.drawImage(image, 0, 0, width, height);
+      }
 
-        for (let i = 0; i < 20; i++) {
-          if (i < 10) {
-            fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-          } else {
-            fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-          }
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
+      const buf = canvas.toBuffer();
+
+      for (let i = 0; i < 20; i++) {
+        if (i < 10) {
+          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
+        } else {
+          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
         }
       }
 
@@ -601,7 +877,7 @@ const updateDetail = async (req, res) => {
 
     generatePreview(data)
       .then((res) => {
-        Video.updateMany(
+        Video.updateOne(
           { _id: req.params.id },
           { $set: { preview: res } }
         ).catch((err) => {
@@ -834,7 +1110,7 @@ const updateDefault = async (req, res) => {
 };
 
 const generatePreview = async (data) => {
-  const { file_name, file_path, custom_thumbnail } = data;
+  const { file_name, file_path, area, custom_thumbnail } = data;
 
   if (!fs.existsSync(GIF_PATH)) {
     fs.mkdirSync(GIF_PATH);
@@ -842,7 +1118,7 @@ const generatePreview = async (data) => {
 
   return new Promise(async (resolve, reject) => {
     const offsets = [];
-    for (let i = 0; i < 4000; i += 100) {
+    for (let i = 1000; i < 5000; i += 100) {
       offsets.push(i);
     }
 
@@ -856,9 +1132,15 @@ const generatePreview = async (data) => {
 
     const play = await loadImage(PLAY_BUTTON_PATH);
 
-    const canvas = createCanvas(250, 140);
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
+    const encoder = new GIFEncoder(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
 
     for (let i = 1; i < 40; i++) {
       const image = await loadImage(
@@ -873,29 +1155,52 @@ const generatePreview = async (data) => {
 
       let height = image.height;
       let width = image.width;
+      let posX = 0;
+      let posY = 0;
 
       if (height > width) {
-        ctx.rect(0, 0, 250, 140);
+        ctx.rect(
+          0,
+          0,
+          system_settings.THUMBNAIL.WIDTH,
+          system_settings.THUMBNAIL.HEIGHT
+        );
         ctx.fillStyle = '#000000';
         ctx.fill();
-        width = (140 * width) / height;
-        height = 140;
-        ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+        posX = (system_settings.THUMBNAIL.WIDTH - width) / 2;
+        posY = 0;
+        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+        height = system_settings.THUMBNAIL.HEIGHT;
       } else {
-        height = 140;
-        width = 250;
-        ctx.drawImage(image, 0, 0, width, height);
+        height = system_settings.THUMBNAIL.HEIGHT;
+        width = system_settings.THUMBNAIL.WIDTH;
       }
 
-      ctx.rect(60, 100, 150, 30);
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-      ctx.font = '20px Impact';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Play video', 70, 120);
-      ctx.drawImage(play, 10, 95, 40, 40);
+      if (area) {
+        const { areaX, areaY, areaW, areaH } = area;
+        ctx.drawImage(
+          image,
+          areaX,
+          areaY,
+          areaW,
+          areaH,
+          posX,
+          posY,
+          width,
+          height
+        );
+      } else {
+        ctx.drawImage(image, posX, posY, width, height);
+      }
+      // ctx.rect(70, 170, 200, 40);
+      // ctx.globalAlpha = 0.7;
+      // ctx.fillStyle = '#333';
+      // ctx.fill();
+      // ctx.globalAlpha = 1.0;
+      // ctx.font = '24px Arial';
+      // ctx.fillStyle = '#ffffff';
+      // ctx.fillText('Play video', 80, 200);
+      ctx.drawImage(play, 10, 150);
 
       const buf = canvas.toBuffer();
 
@@ -957,9 +1262,15 @@ const regeneratePreview = async (data) => {
   return new Promise(async (resolve, reject) => {
     const play = await loadImage(PLAY_BUTTON_PATH);
 
-    const canvas = createCanvas(250, 140);
+    const canvas = createCanvas(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(250, 140);
+    const encoder = new GIFEncoder(
+      system_settings.THUMBNAIL.WIDTH,
+      system_settings.THUMBNAIL.HEIGHT
+    );
 
     if (fs.existsSync(GIF_PATH + `screenshot-${file_name}-1.jpg`)) {
       for (let i = 1; i < 40; i++) {
@@ -970,26 +1281,38 @@ const regeneratePreview = async (data) => {
         let height = image.height;
         let width = image.width;
         if (height > width) {
-          ctx.rect(0, 0, 250, 140);
+          ctx.rect(
+            0,
+            0,
+            system_settings.THUMBNAIL.WIDTH,
+            system_settings.THUMBNAIL.HEIGHT
+          );
           ctx.fillStyle = '#000000';
           ctx.fill();
-          width = (140 * width) / height;
-          height = 140;
-          ctx.drawImage(image, (250 - width) / 2, 0, width, height);
+          width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
+          height = system_settings.THUMBNAIL.HEIGHT;
+          ctx.drawImage(
+            image,
+            (system_settings.THUMBNAIL.WIDTH - width) / 2,
+            0,
+            width,
+            height
+          );
         } else {
-          height = 140;
-          width = 250;
+          height = system_settings.THUMBNAIL.HEIGHT;
+          width = system_settings.THUMBNAIL.WIDTH;
           ctx.drawImage(image, 0, 0, width, height);
         }
-        ctx.rect(60, 100, 150, 30);
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.font = '20px Impact';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Play video', 70, 120);
-        ctx.drawImage(play, 10, 95, 40, 40);
+        // ctx.rect(70, 170, 200, 40);
+        // ctx.globalAlpha = 0.7;
+        // ctx.fillStyle = '#333';
+        // ctx.fill();
+        // ctx.globalAlpha = 1.0;
+        // ctx.font = '24px Arial';
+        // ctx.fillStyle = '#ffffff';
+        // ctx.fillText('Play video', 80, 200);
+        ctx.drawImage(play, 10, 150);
+
         const buf = canvas.toBuffer();
         fs.writeFileSync(GIF_PATH + `${file_name}-${i + 19}.png`, buf);
       }
@@ -1093,7 +1416,19 @@ const getAll = async (req, res) => {
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
+
   Array.prototype.push.apply(_video_list, _video_admin);
+
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('videos');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_video_list, team.videos);
+    }
+  }
 
   if (!_video_list) {
     return res.status(400).json({
@@ -1145,10 +1480,23 @@ const remove = async (req, res) => {
 
     if (video) {
       if (video['default_edited']) {
-        Garbage.updateMany(
+        Garbage.updateOne(
           { user: currentUser.id },
           {
             $pull: { edited_video: { $in: [video.default_video] } },
+          }
+        ).catch((err) => {
+          console.log('default video remove err', err.message);
+        });
+      } else if (video['has_shared']) {
+        Video.updateOne(
+          {
+            _id: video.shared_video,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_video: true },
+            has_shared: false,
           }
         ).catch((err) => {
           console.log('default video remove err', err.message);
@@ -1177,17 +1525,29 @@ const remove = async (req, res) => {
         }
       }
 
-      video['del'] = true;
-      video.save().catch((err) => {
-        console.log('err', err.message);
-      });
+      if (video.role === 'team') {
+        Team.updateOne(
+          { videos: req.params.id },
+          {
+            $pull: { videos: { $in: [req.params.id] } },
+          }
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
+      }
+
+      Video.updateOne({ _id: req.params.id }, { $set: { del: true } }).catch(
+        (err) => {
+          console.log('err', err.message);
+        }
+      );
       return res.send({
         status: true,
       });
     } else {
       res.status(400).send({
         status: false,
-        error: 'There is no video.',
+        error: 'Invalid permission.',
       });
     }
   } catch (e) {
@@ -1251,6 +1611,11 @@ const bulkEmail = async (req, res) => {
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
 
@@ -1300,6 +1665,7 @@ const bulkEmail = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
@@ -1335,7 +1701,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -1365,9 +1731,9 @@ const bulkEmail = async (req, res) => {
           video_descriptions += video.description;
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-        // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (subject === '') {
@@ -1406,8 +1772,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: video_subject,
         html:
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +
@@ -1423,7 +1790,7 @@ const bulkEmail = async (req, res) => {
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               email_count += 1;
               console.log('status', _res[0].statusCode);
-              Contact.updateMany(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 {
                   $set: { last_activity: activity.id },
@@ -1431,10 +1798,17 @@ const bulkEmail = async (req, res) => {
               ).catch((err) => {
                 console.log('contact update err', err.message);
               });
+
+              const garbage = await Garbage.findOne({ user: currentUser.id });
+              const auto_resend = garbage.auto_resend;
+              if (auto_resend['enabled']) {
+                const data = { activities, auto_resend };
+                autoResend(data);
+              }
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -1447,8 +1821,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             error.push({
@@ -1510,10 +1884,10 @@ const bulkGmail = async (req, res) => {
   );
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
     }
 
@@ -1528,9 +1902,15 @@ const bulkGmail = async (req, res) => {
     });
 
     let email_count = currentUser['email_info']['count'] || 0;
+    let no_connected = false;
     const max_email_count =
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let promise;
@@ -1581,6 +1961,7 @@ const bulkGmail = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
@@ -1615,7 +1996,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -1646,8 +2027,9 @@ const bulkGmail = async (req, res) => {
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_subject === '') {
@@ -1681,8 +2063,9 @@ const bulkGmail = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
         video_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
@@ -1740,22 +2123,38 @@ const bulkGmail = async (req, res) => {
             },
             body,
           })
-            .then(() => {
+            .then(async () => {
               email_count += 1;
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
                 console.log('err', err);
               });
+
+              const garbage = await Garbage.findOne({ user: currentUser.id });
+              const auto_resend = garbage.auto_resend;
+              if (auto_resend['enabled']) {
+                const data = { activities, auto_resend };
+                autoResend(data);
+              }
               resolve();
             })
             .catch((err) => {
               console.log('gmail video send err', err.message);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
-              if (err.statusCode === 400) {
+              if (err.statusCode === 403) {
+                no_connected = true;
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    email: _contact.email,
+                  },
+                  err: 'No Connected Gmail',
+                });
+              } else if (err.statusCode === 400) {
                 error.push({
                   contact: {
                     first_name: _contact.first_name,
@@ -1772,18 +2171,12 @@ const bulkGmail = async (req, res) => {
                   err: 'Recipient address required',
                 });
               }
-              if (err.statusCode === 403) {
-                return res.status(406).send({
-                  status: false,
-                  error: 'not connected',
-                });
-              }
               resolve();
             });
         } catch (err) {
           console.log('gmail video send err', err.message);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('err', err.message);
           });
           error.push({
             contact: {
@@ -1805,6 +2198,12 @@ const bulkGmail = async (req, res) => {
           console.log('current user save err', err.message);
         });
 
+        if (no_connected) {
+          return res.status(406).send({
+            status: false,
+            error: 'no connected',
+          });
+        }
         if (error.length > 0) {
           return res.status(405).send({
             status: false,
@@ -1840,29 +2239,36 @@ const bulkText = async (req, res) => {
 
   const videos = await Video.find({ _id: { $in: videoIds } });
 
+  let detail_content = 'sent video using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_ONE_TIME} contacts at a time`,
       });
     }
 
     for (let i = 0; i < contacts.length; i++) {
+      await textHelper.sleep(1000);
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
-          console.log('err', err);
+          console.log('contact update err', err.messgae);
         }
       );
       let video_titles = '';
       let video_descriptions = '';
       let video_objects = '';
       let video_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < videos.length; j++) {
         const video = videos[j];
 
-        if (typeof video_content === 'undefined') {
+        if (!video_content) {
           video_content = '';
         }
 
@@ -1876,13 +2282,12 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
+          send_type: 1,
           videos: video._id,
-          created_at: new Date(),
-          updated_at: new Date(),
           description: video_content,
         });
 
@@ -1904,6 +2309,7 @@ const bulkText = async (req, res) => {
         }
         const video_object = `\n${video.title}:\n\n${video_link}\n`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_content.search(/{video_object}/gi) !== -1) {
@@ -1929,13 +2335,13 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
-        fromNumber = await textHelper.getTwilioNumber(currentUser.id);
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
       }
       const promise = new Promise((resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('activity delete err', err.message);
           });
           error.push({
             contact: {
@@ -1946,26 +2352,91 @@ const bulkText = async (req, res) => {
           });
           resolve(); // Invalid phone number
         }
-        twilio.messages
-          .create({ from: fromNumber, body: video_content, to: e164Phone })
-          .then(() => {
-            console.info(
-              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-              video_content
-            );
-            Contact.updateOne(
-              { _id: contacts[i] },
-              {
-                $set: { last_activity: activity.id },
-              }
-            ).catch((err) => {
-              console.log('err', err);
-            });
-            resolve();
+
+        textHelper.sleep(1000);
+        client.messages
+          .create({
+            from: fromNumber,
+            to: e164Phone,
+            body: video_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+          })
+          .then((message) => {
+            if (message.status === 'queued' || message.status === 'sent') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                video_content
+              );
+
+              const now = moment();
+              const due_date = now.add(1, 'minutes');
+              const timeline = new TimeLine({
+                user: currentUser.id,
+                status: 'active',
+                action: {
+                  type: 'bulk_sms',
+                  message_sid: message.sid,
+                  activities,
+                },
+                due_date,
+              });
+              timeline.save().catch((err) => {
+                console.log('time line save err', err.message);
+              });
+
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  $set: { status: 'pending' },
+                }
+              ).catch((err) => {
+                console.log('activity err', err.message);
+              });
+
+              const notification = new Notification({
+                user: currentUser.id,
+                message_sid: message.sid,
+                contact: _contact.id,
+                activities,
+                criteria: 'bulk_sms',
+                status: 'pending',
+              });
+              notification.save().catch((err) => {
+                console.log('notification save err', err.message);
+              });
+              resolve();
+            } else if (message.status === 'delivered') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                video_content
+              );
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+              resolve();
+            } else {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err: message.error_message,
+              });
+              resolve();
+            }
           })
           .catch((err) => {
-            console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            console.log('video message send err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             error.push({
@@ -2100,7 +2571,7 @@ const bulkOutlook = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
         error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
@@ -2115,6 +2586,11 @@ const bulkOutlook = async (req, res) => {
     const max_email_count =
       currentUser['email_info']['max_count'] ||
       system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent video using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
@@ -2193,7 +2669,9 @@ const bulkOutlook = async (req, res) => {
       let video_objects = '';
       let video_subject = subject;
       let video_content = content;
+      const activities = [];
       let activity;
+
       for (let j = 0; j < videos.length; j++) {
         const video = await Video.findOne({ _id: videos[j] }).catch((err) => {
           console.log('video found err', err.message);
@@ -2228,7 +2706,7 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent video using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'videos',
@@ -2259,8 +2737,10 @@ const bulkOutlook = async (req, res) => {
         }
         const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
         // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-        const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
+        const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         video_objects += video_object;
+        activities.push(activity.id);
       }
 
       if (video_subject === '') {
@@ -2293,18 +2773,21 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+      const email_content =
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+        video_content +
+        '</tbody></table>' +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
+
       const sendMail = {
         message: {
           subject: video_subject,
           body: {
             contentType: 'HTML',
-            content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
-              video_content +
-              '<br/>Thank you,<br/>' +
-              currentUser.email_signature +
-              emailHelper.generateUnsubscribeLink(activity.id) +
-              '</body></html>',
+            content: email_content,
           },
           toRecipients: [
             {
@@ -2321,17 +2804,27 @@ const bulkOutlook = async (req, res) => {
         client
           .api('/me/sendMail')
           .post(sendMail)
-          .then(() => {
+          .then(async () => {
             email_count += 1;
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
+
+            const garbage = await Garbage.findOne({ user: currentUser.id });
+            const auto_resend = garbage.auto_resend;
+            if (auto_resend['enabled']) {
+              const data = { activities, auto_resend };
+              autoResend(data);
+            }
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err.message);
             });
             console.log('err', err.message);
@@ -2402,23 +2895,297 @@ const makeBody = (to, from, subject, message) => {
 };
 
 const getConvertStatus = async (req, res) => {
-  // const video = await Video.findOne({_id: req.params.id}).catch(err=>{
-  //   console.log('video convert found video error', err.message)
-  // })
-  // const file_path = video['path']
   const { videos } = req.body;
   const result_array = {};
   for (let i = 0; i < videos.length; i++) {
     const video = videos[i];
-    const result = videoHelper.getConvertStatus(video);
+    const result = await videoHelper.getConvertStatus(video);
     result_array[video] = result;
   }
   return res.send(result_array);
 };
 
+const getContactsByLatestSent = async (req, res) => {
+  const { currentUser } = req;
+
+  const activities = await Activity.aggregate([
+    {
+      $match: {
+        user: mongoose.Types.ObjectId(currentUser._id),
+        videos: mongoose.Types.ObjectId(req.params.id),
+        type: 'videos',
+      },
+    },
+    {
+      $group: {
+        _id: '$contacts',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+    {
+      $lookup: {
+        from: 'contacts',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'contacts',
+      },
+    },
+  ]).limit(8);
+  return res.send({
+    status: true,
+    activities,
+  });
+};
+
+const autoResend = async (data) => {
+  const { activities, auto_resend } = data;
+  let time_line;
+  const now = moment();
+  const due_date = now.add(auto_resend.period, 'hours');
+  due_date.set({ second: 0, millisecond: 0 });
+
+  for (let i = 0; i < activities.length; i++) {
+    const activity = await Activity.findOne({ _id: activities[i] }).catch(
+      (err) => {
+        console.log('activity find err', err.message);
+      }
+    );
+    if (activity.send_type === 0) {
+      time_line = await TimeLine.findOne({
+        'action.type': 'resend_email_video',
+        'action.activity': activity.id,
+        status: 'active',
+      });
+      if (time_line) {
+        time_line.due_date = due_date;
+      } else {
+        const canned_message = await EmailTemplate.findOne({
+          _id: auto_resend.email_canned_message,
+        });
+        time_line = new TimeLine({
+          user: activity.user,
+          contact: activity.contacts,
+          action: {
+            type: 'resend_email_video',
+            activity: activity.id,
+            content: canned_message.content,
+            subject: canned_message.subject,
+            video: activity.videos,
+          },
+          watched_video: activity.videos,
+          'condition.case': 'watched_video',
+          'condition.answer': false,
+          status: 'active',
+          due_date,
+        });
+      }
+    } else {
+      time_line = await TimeLine.findOne({
+        'action.type': 'resend_text_video',
+        'action.activity': activity.id,
+        status: 'active',
+      });
+      if (time_line) {
+        time_line.due_date = due_date;
+      } else {
+        const canned_message = await EmailTemplate.findOne({
+          _id: auto_resend.sms_canned_message,
+        });
+        time_line = new TimeLine({
+          user: activity.user,
+          contact: activity.contacts,
+          action: {
+            type: 'resend_text_video',
+            activity: activity.id,
+            content: canned_message.content,
+            subject: canned_message.subject,
+            video: activity.videos,
+          },
+          watched_video: activity.videos,
+          'condition.case': 'watched_video',
+          'condition.answer': false,
+          status: 'active',
+          due_date,
+        });
+      }
+    }
+
+    time_line.save().catch((err) => {
+      console.log('time line save err', err);
+    });
+  }
+};
+
+const setupRecording = (io) => {
+  const fileStreams = {};
+  const fileStreamSizeStatus = {};
+  io.sockets.on('connection', (socket) => {
+    socket.on('initVideo', () => {
+      const videoId = uuidv1();
+      const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
+      fileStreams[videoId] = ws;
+      fileStreamSizeStatus[videoId] = 0;
+      socket.emit('createdVideo', { video: videoId });
+    });
+    socket.on('pushVideoData', (data) => {
+      const videoId = data.videoId;
+      const blob = data.data;
+      if (!fileStreams[videoId]) {
+        fileStreams[videoId] = fs.createWriteStream(
+          TEMP_PATH + videoId + `.webm`,
+          { flags: 'a' }
+        );
+        const stats = fs.statSync(TEMP_PATH + videoId + `.webm`);
+        fileStreamSizeStatus[videoId] = stats.size;
+      }
+      if (data.sentSize === fileStreamSizeStatus[videoId]) {
+        socket.emit('receivedVideoData', {
+          receivedSize: fileStreamSizeStatus[videoId],
+        });
+      } else {
+        let bufferSize = 0;
+        blob.forEach((e) => {
+          fileStreams[videoId].write(e);
+          bufferSize += e.length;
+        });
+        fileStreamSizeStatus[videoId] += bufferSize;
+        socket.emit('receivedVideoData', {
+          receivedSize: fileStreamSizeStatus[videoId],
+        });
+      }
+    });
+    socket.on('saveVideo', async (data) => {
+      const videoId = data.videoId;
+      fileStreams[videoId].close();
+
+      const token = data.token;
+      let decoded;
+      try {
+        decoded = jwt.verify(token, api.JWT_SECRET);
+      } catch (err) {
+        socket.emit('failedSaveVideo');
+      }
+      if (token) {
+        const user = await User.findOne({ _id: decoded.id }).catch((err) => {
+          console.log('user find err', err.message);
+        });
+        const video = new Video({
+          url: urls.VIDEO_URL + videoId + `.webm`,
+          path: TEMP_PATH + videoId + `.webm`,
+          title: `${moment().format('MMMM Do YYYY')} - ${
+            user.user_name
+          } Recording`,
+          user: decoded.id,
+          recording: true,
+          created_at: new Date(),
+        });
+        video
+          .save()
+          .then((_video) => {
+            socket.emit('savedVideo', { video: _video.id });
+
+            let area;
+            if (data.mode === 'crop') {
+              // Crop area
+              const screen = data.screen;
+              const videoWidth = 1440;
+              const videoHeight = Math.floor(
+                (videoWidth * screen.height) / screen.width
+              );
+              const areaX = (data.area.startX * videoWidth) / screen.width;
+              const areaY = (data.area.startY * videoHeight) / screen.height;
+              const areaW = (data.area.w * videoWidth) / screen.width;
+              const areaH = (data.area.h * videoHeight) / screen.height;
+              area = {
+                areaX,
+                areaY,
+                areaW,
+                areaH,
+              };
+              // CROP AREA USING FFMPEG
+              videoHelper.getDuration(_video.id);
+              videoHelper.convertRecordVideo(_video.id, area);
+            } else {
+              videoHelper.getDuration(_video.id);
+              videoHelper.convertRecordVideo(_video.id);
+              // CONVERT FFMPEG
+            }
+
+            const video_data = {
+              file_name: _video.id,
+              file_path: _video.path,
+              area,
+            };
+
+            videoHelper.generateThumbnail(video_data);
+            generatePreview(video_data)
+              .then((res) => {
+                Video.updateOne(
+                  { _id: _video.id },
+                  { $set: { preview: res } }
+                ).catch((err) => {
+                  console.log('update preview err', err.message);
+                });
+              })
+              .catch((err) => {
+                console.log('generate preview err', err.message);
+              });
+
+            Video.updateOne(
+              { _id: _video.id },
+              {
+                converted: 'progress',
+              }
+            ).catch((err) => {
+              console.log('video update err', err.message);
+            });
+          })
+          .catch((err) => {
+            console.log('Faield SAVE VIDEO', err);
+            socket.emit('failedSaveVideo');
+          });
+      }
+    });
+    socket.on('cancelRecord', (data) => {
+      const videoId = data.videoId;
+      fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      socket.emit('removedVideo');
+    });
+  });
+};
+
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const videos = await Video.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: videos,
+  });
+};
+
 module.exports = {
   play,
   play1,
+  play2,
   embedPlay,
   pipe,
   create,
@@ -2427,14 +3194,18 @@ module.exports = {
   updateDefault,
   get,
   getThumbnail,
+  getEasyLoad,
   getAll,
   getConvertStatus,
   bulkEmail,
   bulkText,
   remove,
   getHistory,
+  getContactsByLatestSent,
   createVideo,
   createSmsContent,
   bulkGmail,
   bulkOutlook,
+  autoResend,
+  setupRecording,
 };

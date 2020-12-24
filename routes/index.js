@@ -27,6 +27,15 @@ const guest = require('./guest');
 const label = require('./label');
 const assets = require('./assets');
 const affiliate = require('./affiliate');
+const team = require('./team');
+const material = require('./material.js');
+const developer = require('./developer');
+const integration = require('./integration');
+const theme = require('./material_theme');
+const mail_list = require('./mail_list');
+const campaign = require('./campaign');
+const deal = require('./deal');
+const deal_stage = require('./deal_stage');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -63,7 +72,15 @@ router.use('/guest', guest);
 router.use('/label', label);
 router.use('/assets', assets);
 router.use('/affiliate', affiliate);
+router.use('/team', team);
+router.use('/material', material);
+router.use('/developer', developer);
+router.use('/integration', integration);
+router.use('/campaign', campaign);
+router.use('/mail-list', mail_list);
+router.use('/theme', theme);
+router.use('/deal', deal);
+router.use('/deal-stage', deal_stage);
 router.use('/admin', admin);
-router.use('/label', label)
 
 module.exports = router;

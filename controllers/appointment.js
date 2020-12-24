@@ -6,13 +6,14 @@ const sgMail = require('@sendgrid/mail');
 
 const api = require('../config/api');
 const urls = require('../constants/urls');
-const time_zone = require('../constants/time_zone');
+const { time_zone, days } = require('../constants/variable');
 const mail_contents = require('../constants/mail_contents');
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
-const Reminder = require('../models/reminder');
+// const Reminder = require('../models/reminder');
 const User = require('../models/user');
 const Contact = require('../models/contact');
+const graph = require('@microsoft/microsoft-graph-client');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -24,417 +25,589 @@ const credentials = {
 
 const oauth2 = require('simple-oauth2')(credentials);
 
-const get = async (req, res) => {
+const getAll = async (req, res) => {
   const { currentUser } = req;
-  let data = [];
 
-  let startDate = req.params.date;
-  if (typeof startDate === 'undefined') {
-    startDate = moment().startOf('week');
-  } else {
-    startDate = moment(startDate).startOf('week');
+  let { date, mode } = req.query;
+  if (!mode) {
+    mode = 'week';
   }
-  if (currentUser.connect_calendar) {
-    if (currentUser.connected_email_type === 'outlook') {
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
 
-      outlook.base.setAnchorMailbox(currentUser.connected_email);
+  if (!date) {
+    date = moment().startOf(mode);
+  } else {
+    date = moment(date).startOf(mode);
+  }
 
-      // Set the preferred time zone
-      // outlook.base.setPreferredTimeZone(currentUser.time_zone);
+  if (currentUser.connect_calendar && currentUser.calendar_list) {
+    const { calendar_list } = currentUser;
 
-      // Set up our sync window from midnight on the current day to
-      // midnight 7 days from now.
-      const endDate = moment(startDate).add(7, 'days');
-      // The start and end date are passed as query parameters
-      const params = {
-        startDateTime: startDate.toISOString(),
-        endDateTime: endDate.toISOString(),
-      };
-
-      // Set the required headers for sync
-      const headers = {
-        Prefer: [
-          // Enables sync functionality
-          'odata.track-changes',
-        ],
-      };
-
-      const token = oauth2.accessToken.create({
-        refresh_token: currentUser.outlook_refresh_token,
-        expires_in: 0,
-      });
-      let accessToken;
-      await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
-          if (error) {
-            reject(error.message);
-          } else {
-            resolve(result.token);
-          }
+    for (let i = 0; i < calendar_list.length; i++) {
+      const { connected_calendar_type } = calendar_list[i];
+      if (connected_calendar_type === 'outlook') {
+        let accessToken;
+        const { connected_email, outlook_refresh_token } = calendar_list[i];
+        const token = oauth2.accessToken.create({
+          refresh_token: outlook_refresh_token,
+          expires_in: 0,
         });
-      })
-        .then((token) => {
-          accessToken = token.access_token;
+
+        await new Promise((resolve, reject) => {
+          token.refresh(function (error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result.token);
+            }
+          });
         })
-        .catch((error) => {
-          console.log('error', error);
+          .then((token) => {
+            accessToken = token.access_token;
+          })
+          .catch((error) => {
+            console.log('error', error);
+            return res.status(406).send({
+              status: false,
+              error: 'not connected',
+            });
+          });
+
+        const client = graph.Client.init({
+          // Use the provided access token to authenticate
+          // requests
+          authProvider: (done) => {
+            done(null, accessToken);
+          },
         });
 
-      // Calendar sync works on the CalendarView endpoint
-      let requestUrl = `${outlook.base.apiEndpoint()}/Me/calendars`;
-
-      let apiOptions = {
-        url: requestUrl,
-        token: accessToken,
-      };
-
-      outlook.base.makeApiCall(apiOptions, async function (error, response) {
-        if (error) {
-          console.log('err', JSON.stringify(error));
-          return res.status(400).json({
-            status: false,
-            error,
-          });
-        }
-        if (response.statusCode !== 200) {
-          console.log(`API Call returned ${JSON.stringify(response)}`);
-          return res.status(500).send({
-            status: false,
-            error: response.statusCode,
-          });
-        }
-        const calendar = response.body.value;
-
-        // Calendar sync works on the CalendarView endpoint
-        if (calendar.length > 0) {
-          for (let i = 0; i < calendar.length; i++) {
-            requestUrl = `${outlook.base.apiEndpoint()}/Me/calendars/${
-              calendar[i].Id
-            }/CalendarView`;
-
-            apiOptions = {
-              url: requestUrl,
-              token: accessToken,
-              headers,
-              query: params,
-            };
-
-            await new Promise((resolve, reject) => {
-              outlook.base.makeApiCall(apiOptions, function (error, response) {
-                if (error) {
-                  console.log('err', JSON.stringify(error));
-                  return res.status(400).json({
-                    status: false,
-                    error,
-                  });
-                }
-                if (response.statusCode !== 200) {
-                  console.log(`API Call returned ${JSON.stringify(response)}`);
-                  return res.status(500).send({
-                    status: false,
-                    error: response.statusCode,
-                  });
-                }
-                const _outlook_calendar_data_list = response.body.value;
-                for (let i = 0; i < _outlook_calendar_data_list.length; i++) {
-                  const guests = [];
-                  if (
-                    typeof _outlook_calendar_data_list[i].Attendees !==
-                    'undefined'
-                  ) {
-                    for (
-                      let j = 0;
-                      j < _outlook_calendar_data_list[i].Attendees.length;
-                      j++
-                    ) {
-                      const guest =
-                        _outlook_calendar_data_list[i].Attendees[j].EmailAddress
-                          .Address;
-                      guests.push(guest);
-                    }
-                  }
-                  const _outlook_calendar_data = {};
-                  _outlook_calendar_data.title =
-                    _outlook_calendar_data_list[i].Subject;
-                  if (
-                    typeof _outlook_calendar_data_list[i].Body !== 'undefined'
-                  ) {
-                    _outlook_calendar_data.description =
-                      _outlook_calendar_data_list[i].Body.Content;
-                  } else {
-                    _outlook_calendar_data.description = '';
-                  }
-                  if (
-                    typeof _outlook_calendar_data_list[i].Location !==
-                    'undefined'
-                  ) {
-                    _outlook_calendar_data.location =
-                      _outlook_calendar_data_list[i].Location.DisplayName;
-                  } else {
-                    _outlook_calendar_data.location = '';
-                  }
-                  if (
-                    typeof _outlook_calendar_data_list[i].Start !== 'undefined'
-                  ) {
-                    _outlook_calendar_data.due_start =
-                      _outlook_calendar_data_list[i].Start.DateTime;
-                    _outlook_calendar_data.time_zone =
-                      _outlook_calendar_data_list[i].Start.TimeZone;
-                    _outlook_calendar_data.due_start = moment
-                      .tz(
-                        _outlook_calendar_data.due_start,
-                        _outlook_calendar_data.time_zone
-                      )
-                      .toISOString();
-                  } else {
-                    _outlook_calendar_data.due_start = '';
-                  }
-                  if (
-                    typeof _outlook_calendar_data_list[i].End !== 'undefined'
-                  ) {
-                    _outlook_calendar_data.due_end =
-                      _outlook_calendar_data_list[i].End.DateTime;
-                    _outlook_calendar_data.time_zone =
-                      _outlook_calendar_data_list[i].End.TimeZone;
-                    _outlook_calendar_data.due_end = moment
-                      .tz(
-                        _outlook_calendar_data.due_end,
-                        _outlook_calendar_data.time_zone
-                      )
-                      .toISOString();
-                  } else {
-                    _outlook_calendar_data.due_end = '';
-                  }
-                  _outlook_calendar_data.guests = guests;
-                  _outlook_calendar_data.event_id =
-                    _outlook_calendar_data_list[i].Id;
-                  data.push(_outlook_calendar_data);
-                }
-                resolve();
-              });
-            });
-          }
-          return res.send({
-            status: true,
-            data,
-          });
-        }
-        requestUrl = `${outlook.base.apiEndpoint()}/Me/CalendarView`;
-        apiOptions = {
-          url: requestUrl,
-          token: accessToken,
-          headers,
-          query: params,
+        const ctz = time_zone[currentUser.time_zone];
+        const calendar_data = {
+          client,
+          ctz,
+          connected_email,
+          res,
+          date,
+          mode,
         };
-
-        outlook.base.makeApiCall(apiOptions, function (error, response) {
-          if (error) {
-            console.log('err', JSON.stringify(error));
-            return res.status(400).json({
-              status: false,
-              error,
-            });
-          }
-          if (response.statusCode !== 200) {
-            console.log(`API Call returned ${JSON.stringify(response)}`);
-            return res.status(500).send({
-              status: false,
-              error: response.statusCode,
-            });
-          }
-          const _outlook_calendar_data_list = response.body.value;
-          for (let i = 0; i < _outlook_calendar_data_list.length; i++) {
-            const guests = [];
-            if (
-              typeof _outlook_calendar_data_list[i].Attendees !== 'undefined'
-            ) {
-              for (
-                let j = 0;
-                j < _outlook_calendar_data_list[i].Attendees.length;
-                j++
-              ) {
-                const guest =
-                  _outlook_calendar_data_list[i].Attendees[j].EmailAddress
-                    .Address;
-                guests.push(guest);
-              }
-            }
-            const _outlook_calendar_data = {};
-            _outlook_calendar_data.title =
-              _outlook_calendar_data_list[i].Subject;
-            if (typeof _outlook_calendar_data_list[i].Body !== 'undefined') {
-              _outlook_calendar_data.description =
-                _outlook_calendar_data_list[i].Body.Content;
-            } else {
-              _outlook_calendar_data.description = '';
-            }
-            if (
-              typeof _outlook_calendar_data_list[i].Location !== 'undefined'
-            ) {
-              _outlook_calendar_data.location =
-                _outlook_calendar_data_list[i].Location.DisplayName;
-            } else {
-              _outlook_calendar_data.location = '';
-            }
-            if (typeof _outlook_calendar_data_list[i].Start !== 'undefined') {
-              _outlook_calendar_data.due_start =
-                _outlook_calendar_data_list[i].Start.DateTime;
-            } else {
-              _outlook_calendar_data.due_start = '';
-            }
-            if (typeof _outlook_calendar_data_list[i].End !== 'undefined') {
-              _outlook_calendar_data.due_end =
-                _outlook_calendar_data_list[i].End.DateTime;
-            } else {
-              _outlook_calendar_data.due_end = '';
-            }
-            _outlook_calendar_data.guests = guests;
-            _outlook_calendar_data.event_id = _outlook_calendar_data_list[i].Id;
-            data.push(_outlook_calendar_data);
-          }
-          return res.send({
-            status: true,
-            data,
-          });
-        });
-      });
-    } else {
-      const oauth2Client = new google.auth.OAuth2(
-        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-        urls.GMAIL_AUTHORIZE_URL
-      );
-
-      const token = JSON.parse(currentUser.google_refresh_token);
-      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      calendarList(oauth2Client, data, res, startDate);
+        outlookCalendarList(calendar_data);
+      } else {
+        const oauth2Client = new google.auth.OAuth2(
+          api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+          api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+          urls.GMAIL_AUTHORIZE_URL
+        );
+        const calendar = calendar_list[i];
+        const { google_refresh_token, connected_email } = calendar;
+        const token = JSON.parse(google_refresh_token);
+        oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+        const calendar_data = {
+          auth: oauth2Client,
+          res,
+          date,
+          mode,
+          connected_email,
+        };
+        googleCalendarList(calendar_data);
+      }
     }
   } else {
-    const endDate = moment(startDate).add(7, 'days');
-    data = await Appointment.find({
-      user: currentUser.id,
-      del: false,
-      updated_at: { $gte: startDate.toISOString(), $lt: endDate.toISOString() },
-    });
-
-    if (!data) {
-      return res.status(400).json({
-        status: false,
-        error: 'Activity doesn`t exist',
-      });
-    }
     return res.send({
       status: true,
-      data,
+      data: [],
     });
   }
 };
 
-const calendarList = (auth, data, res, startDate) => {
-  const endDate = moment(startDate).add(7, 'days');
+const get = async (req, res) => {
+  const appointments = await Appointment.find({
+    contact: req.params.id,
+    del: false,
+  }).catch((err) => {
+    console.log('appointment find err', err.message);
+    return res.status(500).json({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  return res.send({
+    status: true,
+    data: appointments,
+  });
+};
+
+const googleCalendarList = (calendar_data) => {
+  const { connected_email, auth, res, date, mode } = calendar_data;
+  const data = [];
+  const endDate = moment(date).add(1, `${mode}s`);
   const calendar = google.calendar({ version: 'v3', auth });
-  calendar.events.list(
+  calendar.calendarList.list(
     {
-      calendarId: 'primary',
-      timeMin: startDate.toISOString(),
-      timeMax: endDate.toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime',
+      maxResults: 100,
     },
-    (err, _res) => {
+    function (err, result) {
       if (err) {
         console.log(`The API returned an error: ${err}`);
-      } else {
-        const events = _res.data.items;
-        if (events.length) {
-          events.map((event) => {
-            const guests = [];
-            if (typeof event.attendees !== 'undefined') {
-              for (let j = 0; j < event.attendees.length; j++) {
-                const guest = event.attendees[j].email;
-                guests.push(guest);
-              }
-            }
-            const _gmail_calendar_data = {};
-            _gmail_calendar_data.title = event.summary;
-            _gmail_calendar_data.description = event.description;
-            _gmail_calendar_data.location = event.location;
-            _gmail_calendar_data.due_start = event.start.dateTime;
-            _gmail_calendar_data.due_end = event.end.dateTime;
-            _gmail_calendar_data.guests = guests;
-            _gmail_calendar_data.event_id = event.id;
-            _gmail_calendar_data.type = 2;
-            data.push(_gmail_calendar_data);
-          });
-        } else {
-          console.log('No upcoming events found.');
-        }
-        res.send({
-          status: true,
-          data,
+        return res.status(400).json({
+          status: false,
+          error: err,
         });
+      }
+      const calendars = result.data.items;
+      if (calendars) {
+        const promise_array = [];
+        for (let i = 0; i < calendars.length; i++) {
+          const promise = new Promise(async (resolve, reject) => {
+            calendar.events.list(
+              {
+                calendarId: calendars[i].id,
+                timeMin: date.toISOString(),
+                timeMax: endDate.toISOString(),
+                singleEvents: true,
+              },
+              async (err, _res) => {
+                if (err) {
+                  console.log(`The API returned an error: ${err}`);
+                  resolve();
+                } else {
+                  const events = _res.data.items;
+                  const recurrence_event = [];
+                  if (events.length) {
+                    for (let j = 0; j < events.length; j++) {
+                      const event = events[j];
+                      const guests = [];
+                      const contacts = [];
+                      const appointments = await Appointment.find({
+                        event_id: event.id,
+                      })
+                        .select('contact')
+                        .populate({ path: 'contact', select: 'email' });
+
+                      appointments.map((appointment) => {
+                        contacts.push(appointment.contact);
+                      });
+
+                      if (event.attendees) {
+                        for (let j = 0; j < event.attendees.length; j++) {
+                          const guest = event.attendees[j].email;
+                          const response = event.attendees[j].responseStatus;
+                          guests.push({ email: guest, response });
+                        }
+                      }
+                      const _gmail_calendar_data = {};
+                      _gmail_calendar_data.title = event.summary;
+                      _gmail_calendar_data.description = event.description;
+                      _gmail_calendar_data.location = event.location;
+                      _gmail_calendar_data.due_start =
+                        event.start.dateTime || event.end.date;
+                      _gmail_calendar_data.due_end =
+                        event.end.dateTime || event.end.date;
+                      _gmail_calendar_data.guests = guests;
+
+                      if (event.recurringEventId) {
+                        recurrence_event.push({
+                          id: event.recurringEventId,
+                          index: data.length,
+                        });
+                        _gmail_calendar_data.recurrence_id =
+                          event.recurringEventId;
+                      }
+
+                      if (event.organizer) {
+                        _gmail_calendar_data.organizer = event.organizer.email;
+                        if (event.organizer.email === connected_email) {
+                          _gmail_calendar_data.is_organizer = true;
+                        }
+                      }
+
+                      _gmail_calendar_data.calendar_id = calendars[i].id;
+                      _gmail_calendar_data.event_id = event.id;
+                      _gmail_calendar_data.contacts = contacts;
+                      _gmail_calendar_data.type = 2;
+                      data.push(_gmail_calendar_data);
+                    }
+                    if (recurrence_event.length > 0) {
+                      calendar.events.list(
+                        {
+                          calendarId: calendars[i].id,
+                          timeMin: date.toISOString(),
+                          timeMax: endDate.toISOString(),
+                          singleEvents: false,
+                        },
+                        (err, _res) => {
+                          if (err) {
+                            console.log(`The API returned an error: ${err}`);
+                            resolve();
+                          }
+                          const events = _res.data.items;
+                          for (let j = 0; j < recurrence_event.length; j++) {
+                            events.map((event) => {
+                              if (event.id === recurrence_event[j].id) {
+                                if (event.recurrence) {
+                                  const index = recurrence_event[j].index;
+                                  if (
+                                    event.recurrence[0].indexOf('DAILY') !== -1
+                                  ) {
+                                    data[index].recurrence = 'DAILY';
+                                  } else if (
+                                    event.recurrence[0].indexOf('WEEKLY') !== -1
+                                  ) {
+                                    data[index].recurrence = 'WEEKLY';
+                                  } else if (
+                                    event.recurrence[0].indexOf('MONTHLY') !==
+                                    -1
+                                  ) {
+                                    data[index].recurrence = 'MONTHLY';
+                                  }
+                                }
+                              }
+                            });
+                          }
+                          resolve();
+                        }
+                      );
+                    } else {
+                      resolve();
+                    }
+                  } else {
+                    console.log('No upcoming events found.');
+                    resolve();
+                  }
+                }
+              }
+            );
+          });
+          promise_array.push(promise);
+        }
+        Promise.all(promise_array)
+          .then(() => {
+            return res.send({
+              status: true,
+              data,
+            });
+          })
+          .catch((err) => {
+            console.log('err', err);
+            if (err) {
+              return res.status(400).json({
+                status: false,
+                error: err,
+              });
+            }
+          });
       }
     }
   );
 };
 
+const outlookCalendarList = (calendar_data) => {
+  const { client, ctz, connected_email, res, date, mode } = calendar_data;
+  const data = [];
+  const promise_array = [];
+
+  client
+    .api('/me/calendars')
+    .header('Prefer', `outlook.timezone="${ctz}"`)
+    .get()
+    .then(async (outlook_calendars) => {
+      const calendars = outlook_calendars.value;
+
+      if (calendars.length > 0) {
+        const endDate = moment(date).add(1, `${mode}s`);
+        // The start and end date are passed as query parameters
+        const startDateTime = date.toISOString();
+        const endDateTime = endDate.toISOString();
+        for (let i = 0; i < calendars.length; i++) {
+          const calendar = calendars[i];
+          const promise = new Promise(async (resolve) => {
+            const outlook_events = await client
+              .api(
+                `/me/calendars/${calendar.id}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
+              )
+              .get()
+              .catch((err) => {
+                console.log('outlook calendar events get err', err);
+              });
+            if (outlook_events && outlook_events.value) {
+              const recurrence_event = [];
+              const calendar_events = outlook_events.value;
+
+              for (let j = 0; j < calendar_events.length; j++) {
+                const guests = [];
+                const contacts = [];
+                const calendar_event = calendar_events[j];
+                const appointments = await Appointment.find({
+                  event_id: calendar_event.id,
+                })
+                  .select('contact')
+                  .populate({ path: 'contact', select: 'email' });
+
+                appointments.map((appointment) => {
+                  contacts.push(appointment.contact);
+                });
+
+                if (
+                  calendar_event.attendees &&
+                  calendar_event.attendees.length > 0
+                ) {
+                  const attendees = calendar_event.attendees;
+                  for (let j = 0; j < attendees.length; j++) {
+                    const guest = attendees[j].emailAddress.address;
+                    let response = '';
+                    switch (attendees[j].status.response) {
+                      case 'none':
+                        response = 'needsAction';
+                        break;
+                      case 'organizer':
+                        response = 'accepted';
+                        break;
+                      case 'declined':
+                        response = 'declined';
+                        break;
+                      case 'accepted':
+                        response = 'accepted';
+                        break;
+                      case 'tentativelyAccepted':
+                        response = 'tentative';
+                        break;
+                      case 'notResponded':
+                        response = 'needsAction';
+                        break;
+                      default:
+                        response = 'needsAction';
+                        break;
+                    }
+                    guests.push({ email: guest, response });
+                  }
+                }
+                const _outlook_calendar_data = {};
+                _outlook_calendar_data.title = calendar_event.subject;
+                if (calendar_event.body) {
+                  _outlook_calendar_data.description =
+                    calendar_event.body.content;
+                } else {
+                  _outlook_calendar_data.description = '';
+                }
+                if (calendar_event.location) {
+                  _outlook_calendar_data.location =
+                    calendar_event.location.displayName;
+                } else {
+                  _outlook_calendar_data.location = '';
+                }
+                if (calendar_event.start) {
+                  _outlook_calendar_data.due_start =
+                    calendar_event.start.dateTime;
+                  // _outlook_calendar_data.time_zone =
+                  //   calendar_event.start.timezone;
+                  // _outlook_calendar_data.due_start = moment
+                  //   .tz(
+                  //     _outlook_calendar_data.due_start,
+                  //     _outlook_calendar_data.time_zone
+                  //   )
+                  //   .toISOString();
+                } else {
+                  _outlook_calendar_data.due_start = '';
+                }
+                if (calendar_event.end) {
+                  _outlook_calendar_data.due_end = calendar_event.end.dateTime;
+                  // _outlook_calendar_data.time_zone =
+                  //   calendar_event.end.timezone;
+                  // _outlook_calendar_data.due_end = moment
+                  //   .tz(
+                  //     _outlook_calendar_data.due_end,
+                  //     _outlook_calendar_data.time_zone
+                  //   )
+                  //   .toISOString();
+                } else {
+                  _outlook_calendar_data.due_end = '';
+                }
+                if (calendar_event.organizer) {
+                  _outlook_calendar_data.organizer =
+                    calendar_event.organizer.emailAddress.address;
+                  if (
+                    calendar_event.organizer.emailAddress.address ===
+                    connected_email
+                  ) {
+                    _outlook_calendar_data.is_organizer = true;
+                  }
+                }
+
+                _outlook_calendar_data.contacts = contacts;
+                _outlook_calendar_data.guests = guests;
+                _outlook_calendar_data.event_id = calendar_event.id;
+                _outlook_calendar_data.calendar_id = calendar.id;
+                if (calendar_event.seriesMasterId) {
+                  _outlook_calendar_data.recurrence_id =
+                    calendar_event.seriesMasterId;
+                  recurrence_event.push({
+                    id: calendar_event.seriesMasterId,
+                    index: data.length,
+                  });
+                }
+
+                data.push(_outlook_calendar_data);
+              }
+              if (recurrence_event.length > 0) {
+                for (let j = 0; j < recurrence_event.length; j++) {
+                  const master_id = recurrence_event[j].id;
+                  const master_event = await client
+                    .api(`/me/events/${master_id}`)
+                    .get()
+                    .catch((err) => {
+                      console.log('outlook calendar events get err', err);
+                    });
+                  if (master_event.recurrence) {
+                    const index = recurrence_event[j].index;
+                    if (
+                      master_event.recurrence.pattern &&
+                      master_event.recurrence.pattern.type.indexOf('daily') !==
+                        -1
+                    ) {
+                      data[index].recurrence = 'DAILY';
+                    } else if (
+                      master_event.recurrence.pattern &&
+                      master_event.recurrence.pattern.type.indexOf('weekly') !==
+                        -1
+                    ) {
+                      data[index].recurrence = 'WEEKLY';
+                    } else if (
+                      master_event.recurrence.pattern &&
+                      master_event.recurrence.pattern.type.indexOf(
+                        'monthly'
+                      ) !== -1
+                    ) {
+                      data[index].recurrence = 'MONTHLY';
+                    }
+                  }
+                }
+              }
+            }
+            resolve();
+          });
+          promise_array.push(promise);
+        }
+
+        Promise.all(promise_array).then(() => {
+          return res.send({
+            status: true,
+            data,
+          });
+        });
+      }
+    })
+    .catch((err) => {
+      console.log('calendar event err', err);
+    });
+};
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
-
   let event_id;
+
+  // if (!req.body.contacts) {
+  //   return res.status(400).json({
+  //     status: false,
+  //     error: 'Contacts required',
+  //   });
+  // }
 
   if (currentUser.connect_calendar) {
     const _appointment = req.body;
     if (currentUser.connected_email_type === 'outlook') {
       const attendees = [];
-      if (typeof _appointment.guests !== 'undefined') {
+      if (_appointment.guests) {
         for (let j = 0; j < _appointment.guests.length; j++) {
           const addendee = {
-            EmailAddress: {
+            emailAddress: {
               Address: _appointment.guests[j],
             },
           };
           attendees.push(addendee);
         }
       }
+      // if (_appointment.contacts) {
+      //   const contacts = await Contact.find({
+      //     _id: _appointment.contacts,
+      //   }).catch((err) => {
+      //     console.log('appointment contacts find err', err.messages);
+      //   });
+      //   for (let j = 0; j < contacts.length; j++) {
+      //     if (contacts[j].email) {
+      //       const addendee = {
+      //         emailAddress: {
+      //           Address: contacts[j].email,
+      //         },
+      //       };
+      //       attendees.push(addendee);
+      //     }
+      //   }
+      // }
+      let recurrence;
+      if (_appointment.recurrence) {
+        let type;
+        let daysOfWeek;
+        let dayOfMonth;
+        switch (_appointment.recurrence) {
+          case 'DAILY':
+            type = 'daily';
+            break;
+          case 'WEEKLY':
+            type = 'weekly';
+            daysOfWeek = [days[moment(_appointment.due_start).day()]];
+            break;
+          case 'MONTHLY':
+            type = 'absoluteMonthly';
+            dayOfMonth = moment(_appointment.due_start).date();
+            break;
+          default:
+            console.log('no matching');
+        }
+
+        recurrence = {
+          pattern: {
+            type,
+            interval: 1,
+            daysOfWeek,
+            dayOfMonth,
+          },
+          range: {
+            type: 'noEnd',
+            startDate: moment(_appointment.due_start).format('YYYY-MM-DD'),
+          },
+        };
+      }
+
+      const ctz = time_zone[currentUser.time_zone];
       const newEvent = {
-        Subject: _appointment.title,
-        Body: {
-          ContentType: 'HTML',
-          Content: _appointment.description,
+        subject: _appointment.title,
+        body: {
+          contentType: 'HTML',
+          content: _appointment.description,
         },
-        Location: {
-          DisplayName: _appointment.location,
+        location: {
+          displayName: _appointment.location,
         },
-        Start: {
-          DateTime: _appointment.due_start,
-          TimeZone: `UTC${currentUser.time_zone}`,
+        start: {
+          dateTime: _appointment.due_start,
+          timeZone: ctz,
         },
-        End: {
-          DateTime: _appointment.due_end,
-          TimeZone: `UTC${currentUser.time_zone}`,
+        end: {
+          dateTime: _appointment.due_end,
+          timeZone: ctz,
         },
-        Attendees: attendees,
+        attendees,
+        recurrence,
       };
 
+      let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
       });
-      let accessToken;
 
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
-            reject(error.message);
+            reject(error);
           } else {
             resolve(result.token);
           }
@@ -445,33 +618,22 @@ const create = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
         });
 
-      const createEventParameters = {
-        token: accessToken,
-        event: newEvent,
-      };
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
+      });
 
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-
-      await new Promise((resolve, reject) => {
-        outlook.calendar.createEvent(createEventParameters, function (
-          error,
-          event
-        ) {
-          if (error) {
-            console.log('err', error);
-            reject(error);
-          }
-          resolve(event.Id);
-        });
-      })
-        .then((eventId) => {
-          event_id = eventId;
-        })
-        .catch((error) => {
-          console.log('error', error);
-        });
+      let res = await client.api('/me/events').post(newEvent);
+      event_id = res.id;
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -487,196 +649,70 @@ const create = async (req, res) => {
       );
     }
 
-    const appointment = new Appointment({
-      ...req.body,
-      user: currentUser.id,
-      type: 0,
-      event_id,
-      updated_at: new Date(),
-      created_at: new Date(),
-    });
+    if (req.body.contacts) {
+      const contacts = req.body.contacts;
+      for (let i = 0; i < contacts.length; i++) {
+        const contact = contacts[i];
 
-    appointment
-      .save()
-      .then((_appointment) => {
-        const activity = new Activity({
-          content: 'added appointment',
-          contacts: _appointment.contact,
-          appointments: _appointment.id,
+        const appointment = new Appointment({
+          ...req.body,
+          contact: contact._id,
           user: currentUser.id,
-          type: 'appointments',
-          created_at: new Date(),
+          type: 0,
+          event_id,
           updated_at: new Date(),
+          created_at: new Date(),
         });
 
-        activity.save().then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
-            console.log('err', err);
-          });
-          const myJSON = JSON.stringify(_appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          return res.send({
-            status: true,
-            data,
-          });
-        });
-      })
-      .catch((e) => {
-        let errors;
-        if (e.errors) {
-          console.log('e.errors', e.errors);
-          errors = e.errors.map((err) => {
-            delete err.instance;
-            return err;
-          });
-        }
-        return res.status(500).send({
-          status: false,
-          error: errors || e,
-        });
-      });
-  } else {
-    const appointment = new Appointment({
-      ...req.body,
-      user: currentUser.id,
-      type: 0,
-      updated_at: new Date(),
-      created_at: new Date(),
-    });
+        appointment
+          .save()
+          .then((_appointment) => {
+            const activity = new Activity({
+              content: 'added appointment',
+              contacts: contact._id,
+              appointments: _appointment.id,
+              user: currentUser.id,
+              type: 'appointments',
+            });
 
-    const _appointment = await appointment
-      .save()
-      .then()
-      .catch((err) => {
-        console.log('err', err);
-        return res.status(500).send({
-          status: false,
-          error: 'internal_server_error',
-        });
-      });
-
-    const due_date = new Date(_appointment.due_start);
-    const due_start = new Date(_appointment.due_start)
-      .toISOString()
-      .replace(/-|:|\.\d\d\d/g, '');
-    const due_end = new Date(
-      new Date(_appointment.due_start).setDate(due_date.getDate() + 1)
-    )
-      .toISOString()
-      .replace(/-|:|\.\d\d\d/g, '');
-    const ctz = time_zone[currentUser.time_zone];
-
-    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-
-    for (let i = 0; i < _appointment.guests.length; i++) {
-      Promise((resolve, reject) => {
-        const msg = {
-          to: _appointment.guests[i],
-          from: currentUser.email,
-          templateId: api.SENDGRID.SENDGRID_APPOITMENT_TEMPLATE,
-          dynamic_template_data: {
-            event_title: _appointment.title,
-            description: _appointment.description,
-            event_time: `${moment(_appointment.due_start)
-              .utcOffset(currentUser.time_zone)
-              .format('dddd, MMMM Do YYYY HH:mm')} - ${moment(
-              _appointment.due_end
-            )
-              .utcOffset(currentUser.time_zone)
-              .format('HH:mm')} UTC ${currentUser.time_zone}`,
-            event_address: _appointment.location,
-            organizer: currentUser.user_name,
-            add_google_calendar: `<a href='${
-              urls.GOOGLE_CALENDAR_URL
-            }${encodeURI(
-              `text=${
-                _appointment.title
-              }&dates=${due_start}/${due_end}&ctz=${ctz}&details=${
-                _appointment.description
-              }&location=${
-                _appointment.location
-              }&add=${_appointment.guests.slice(1)}`
-            )}  style='border: 1px solid #dadce0;font-size: .875rem;letter-spacing: .25px;background: none;border-radius: 4px;color: #5f6368;cursor: pointer;font-weight: 500;height: 36px;text-decoration: none;display: inline-block;padding: 5px 5px;'>Add to my google calendar</a>`,
-            accept_invitation: `<a href='${urls.ACCEPT_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}' style='border: 1px solid #dadce0;font-size: .875rem;letter-spacing: .25px;background: none;border-radius: 4px;color: #5f6368;cursor: pointer;font-weight: 500;height: 36px;text-decoration: none;display: inline-block;padding: 5px 5px;'>Accept</a>`,
-            decline_invitation: `<a href='${urls.DECLINE_INVITATION_URL}contact=${_appointment.guests[i]}&appointment=${_appointment.id}' style='border: 1px solid #dadce0;font-size: .875rem;letter-spacing: .25px;background: none;border-radius: 4px;color: #5f6368;cursor: pointer;font-weight: 500;height: 36px;text-decoration: none;display: inline-block;padding: 5px 5px;'>Decline</a>`,
-            email_signature: currentUser.email_signature,
-          },
-        };
-        sgMail
-          .send(msg)
-          .then((_res) => {
-            console.log('mailres.errorcode', _res[0].statusCode);
-            if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-              console.log('status', _res[0].statusCode);
-              resolve();
-            }
+            activity.save().then((_activity) => {
+              Contact.updateOne(
+                {
+                  _id: contact._id,
+                },
+                {
+                  $set: { last_activity: _activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+            });
           })
           .catch((err) => {
-            console.error('err', err);
-            resolve();
+            console.log('appointment save err', err.message);
+            return res.status(500).send({
+              status: false,
+              error: err.message,
+            });
           });
-      });
+      }
     }
-
-    const mins = new Date(_appointment.due_start).getMinutes() - 30;
-    const rdue_date = new Date(_appointment.due_start).setMinutes(mins);
-    const reminder = new Reminder({
-      contact: _appointment.contact,
-      due_date: rdue_date,
-      type: 'appointment',
-      user: currentUser.id,
-      appointment: _appointment.id,
-      created_at: new Date(),
-      updated_at: new Date(),
+    return res.send({
+      status: true,
+      event_id,
     });
-
-    reminder.save().catch((err) => {
-      console.log('error', err);
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'You must connect gmail/outlook',
     });
-
-    const activity = new Activity({
-      content: 'added appointment',
-      contacts: _appointment.contact,
-      appointments: _appointment.id,
-      user: currentUser.id,
-      type: 'appointments',
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
-    activity
-      .save()
-      .then((_activity) => {
-        Contact.findByIdAndUpdate(_appointment.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
-          console.log('err', err);
-        });
-        const myJSON = JSON.stringify(_appointment);
-        const data = JSON.parse(myJSON);
-        data.activity = _activity;
-        return res.send({
-          status: true,
-          data,
-        });
-      })
-      .catch((err) => {
-        console.log('err', err);
-        return res.status(500).send({
-          status: false,
-          error: 'internal_server_error',
-        });
-      });
   }
 };
 
 const addGoogleCalendarById = async (auth, user, appointment) => {
   const calendar = google.calendar({ version: 'v3', auth });
   const attendees = [];
-  if (typeof appointment.guests !== 'undefined') {
+  if (appointment.guests) {
     for (let j = 0; j < appointment.guests.length; j++) {
       const addendee = {
         email: appointment.guests[j],
@@ -684,6 +720,27 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
       attendees.push(addendee);
     }
   }
+  // if (appointment.contacts) {
+  //   const contacts = await Contact.find({
+  //     _id: appointment.contacts,
+  //   }).catch((err) => {
+  //     console.log('appointment contacts find err', err.messages);
+  //   });
+  //   for (let j = 0; j < contacts.length; j++) {
+  //     if (contacts[j].email) {
+  //       const addendee = {
+  //         email: contacts[j].email,
+  //       };
+  //       attendees.push(addendee);
+  //     }
+  //   }
+  // }
+
+  let recurrence;
+  if (appointment.recurrence) {
+    recurrence = [`RRULE:FREQ=${appointment.recurrence};`];
+  }
+
   const event = {
     summary: appointment.title,
     location: appointment.location,
@@ -697,6 +754,7 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
       timeZone: `UTC${user.time_zone}`,
     },
     attendees,
+    recurrence,
   };
   return new Promise((resolve, reject) => {
     calendar.events.insert(
@@ -724,67 +782,110 @@ const edit = async (req, res) => {
 
   if (currentUser.connect_calendar) {
     const _appointment = req.body;
-    const event_id = req.params.id;
+    const event_id = _appointment.recurrence_id || req.params.id;
+
     if (currentUser.connected_email_type === 'outlook') {
+      let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
       });
 
-      new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
-            reject(error.message);
+            reject(error);
           } else {
             resolve(result.token);
           }
         });
-      }).then((token) => {
-        const accessToken = token.access_token;
-        const attendees = [];
-        if (typeof _appointment.guests !== 'undefined') {
-          for (let j = 0; j < _appointment.guests.length; j++) {
-            const addendee = {
-              EmailAddress: {
-                Address: _appointment.guests[j],
-              },
-            };
-            attendees.push(addendee);
-          }
-        }
-        const updatePayload = {
-          Subject: _appointment.title,
-          Body: {
-            ContentType: 'HTML',
-            Content: _appointment.description,
-          },
-          Location: {
-            DisplayName: _appointment.location,
-          },
-          Start: {
-            DateTime: _appointment.due_start,
-            TimeZone: `UTC${currentUser.time_zone}`,
-          },
-          End: {
-            DateTime: _appointment.due_end,
-            TimeZone: `UTC${currentUser.time_zone}`,
-          },
-          Attendees: attendees,
-        };
-
-        const updateEventParameters = {
-          token: accessToken,
-          eventId: event_id,
-          update: updatePayload,
-        };
-
-        outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-        outlook.calendar.updateEvent(updateEventParameters, function (error) {
-          if (error) {
-            console.log('err', error);
-          }
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
         });
+
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
       });
+
+      const attendees = [];
+      if (_appointment.guests) {
+        for (let j = 0; j < _appointment.guests.length; j++) {
+          const addendee = {
+            emailAddress: {
+              address: _appointment.guests[j],
+            },
+          };
+          attendees.push(addendee);
+        }
+      }
+      const event = {
+        subject: _appointment.title,
+        body: {
+          contentType: 'HTML',
+          content: _appointment.description,
+        },
+        location: {
+          displayName: _appointment.location,
+        },
+        start: {
+          dateTime: _appointment.due_start,
+          timeZone: `UTC${currentUser.time_zone}`,
+        },
+        end: {
+          dateTime: _appointment.due_end,
+          timeZone: `UTC${currentUser.time_zone}`,
+        },
+        attendees,
+      };
+      const { calendar_id } = _appointment;
+      let res = await client
+        .api(`/me/calendars/${calendar_id}/events/${event_id}`)
+        .update(event);
+
+      // const updatePayload = {
+      //   subject: _appointment.title,
+      //   body: {
+      //     contentType: 'HTML',
+      //     content: _appointment.description,
+      //   },
+      //   location: {
+      //     displayName: _appointment.location,
+      //   },
+      //   start: {
+      //     dateTime: _appointment.due_start,
+      //     timeZone: `UTC${currentUser.time_zone}`,
+      //   },
+      //   end: {
+      //     dateTime: _appointment.due_end,
+      //     timeZone: `UTC${currentUser.time_zone}`,
+      //   },
+      //   attendees,
+      // };
+
+      // const updateEventParameters = {
+      //   token: accessToken,
+      //   eventId: event_id,
+      //   update: updatePayload,
+      // };
+
+      // outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
+      // outlook.calendar.updateEvent(updateEventParameters, function (error) {
+      //   if (error) {
+      //     console.log('err', error);
+      //   }
+      // });
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -794,71 +895,126 @@ const edit = async (req, res) => {
 
       const token = JSON.parse(currentUser.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      await updateGoogleCalendarById(
+      const data = {
         oauth2Client,
-        event_id,
-        _appointment,
-        currentUser.time_zone
-      );
+        remove_id: event_id,
+        appointment: _appointment,
+        time_zone: currentUser.time_zone,
+      };
+      await updateGoogleCalendarById(data);
     }
 
-    const appointment = await Appointment.findOne({
-      user: currentUser.id,
-      event_id: req.params.id,
-    });
-    if (appointment) {
-      for (const key in _appointment) {
-        appointment[key] = _appointment[key];
-      }
-
-      appointment.updated_at = new Date();
-
-      appointment.save();
-      const activity = new Activity({
-        content: 'updated appointment',
-        contacts: _appointment.contact,
-        appointments: appointment._id,
-        user: currentUser.id,
-        type: 'appointments',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      activity
-        .save()
-        .then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
-            console.log('err', err);
-          });
-          const myJSON = JSON.stringify(_appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          res.send({
-            status: true,
-            data,
-          });
-        })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            console.log('e.errors', e.errors);
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
-          });
+    if (_appointment.contacts && _appointment.contacts.length > 0) {
+      for (let i = 0; i < _appointment.contacts.length; i++) {
+        const contact = _appointment.contacts[i];
+        const appointment = await Appointment.findOne({
+          user: currentUser.id,
+          event_id: req.params.id,
+          contact: contact._id,
+        }).catch((err) => {
+          console.log('appointment find err', err.message);
         });
-    } else {
-      res.send({
-        status: true,
+
+        if (appointment) {
+          Appointment.updateOne(
+            {
+              _id: appointment.id,
+            },
+            {
+              $set: {
+                ...req.body,
+              },
+            }
+          ).then(() => {
+            const activity = new Activity({
+              content: 'updated appointment',
+              contacts: contact._id,
+              appointments: appointment._id,
+              user: currentUser.id,
+              type: 'appointments',
+              created_at: new Date(),
+              updated_at: new Date(),
+            });
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  { _id: contact._id },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('activity save err', err.message);
+              });
+          });
+        } else {
+          const appointment = new Appointment({
+            ...req.body,
+            contact: contact._id,
+            user: currentUser.id,
+            type: 0,
+            event_id: req.params.id,
+          });
+
+          appointment
+            .save()
+            .then((_appointment) => {
+              const activity = new Activity({
+                content: 'added appointment',
+                contacts: contact._id,
+                appointments: _appointment.id,
+                user: currentUser.id,
+                type: 'appointments',
+              });
+
+              activity.save().then((_activity) => {
+                Contact.updateOne(
+                  {
+                    _id: contact._id,
+                  },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            })
+            .catch((err) => {
+              console.log('appointment save err', err.message);
+              return res.status(500).send({
+                status: false,
+                error: err.message,
+              });
+            });
+        }
+      }
+    }
+    if (
+      _appointment.contacts.remove_contacts &&
+      _appointment.contacts.remove_contacts.length > 0
+    ) {
+      Appointment.updateMany(
+        {
+          _id: { $in: _appointment.contacts.remove_contacts },
+        },
+        {
+          $set: {
+            del: true,
+          },
+        }
+      ).catch((err) => {
+        console.log('appointment delete err', err.message);
       });
     }
+
+    return res.send({
+      status: true,
+    });
   } else {
     const editData = req.body;
     const appointment = await Appointment.findOne({
@@ -868,8 +1024,6 @@ const edit = async (req, res) => {
     for (const key in editData) {
       appointment[key] = editData[key];
     }
-
-    appointment.updated_at = new Date();
 
     await appointment
       .save()
@@ -885,9 +1039,12 @@ const edit = async (req, res) => {
         });
 
         activity.save().then((_activity) => {
-          Contact.findByIdAndUpdate(_appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: _appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(_appointment);
@@ -920,18 +1077,19 @@ const remove = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.connect_calendar) {
-    const event_id = req.params.id;
+    const { event_id, recurrence_id, calendar_id } = req.body;
+    const remove_id = recurrence_id || event_id;
     if (currentUser.connected_email_type === 'outlook') {
+      let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
       });
-      let accessToken;
 
       await new Promise((resolve, reject) => {
         token.refresh(function (error, result) {
           if (error) {
-            reject(error.message);
+            reject(error);
           } else {
             resolve(result.token);
           }
@@ -942,19 +1100,26 @@ const remove = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
         });
 
-      const deleteEventParameters = {
-        token: accessToken,
-        eventId: event_id,
-      };
-
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      outlook.calendar.deleteEvent(deleteEventParameters, function (error) {
-        if (error) {
-          console.log('err', error);
-        }
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
       });
+
+      let res = await client
+        .api(`/me/calendars/${calendar_id}/events/${remove_id}`)
+        .delete()
+        .catch((err) => {
+          console.log('remove err', err);
+        });
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -962,63 +1127,68 @@ const remove = async (req, res) => {
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
-      await removeGoogleCalendarById(oauth2Client, event_id);
-    }
-    const appointment = await Appointment.findOne({
-      user: currentUser.id,
-      event_id: req.params.id,
-    });
-
-    if (appointment) {
-      appointment.del = true;
-      appointment.updated_at = new Date();
-
-      appointment.save();
-      const activity = new Activity({
-        content: 'removed appointment',
-        contacts: appointment.contact,
-        appointments: appointment.id,
-        user: currentUser.id,
-        type: 'appointments',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      activity
-        .save()
-        .then((_activity) => {
-          Contact.findByIdAndUpdate(appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
-            console.log('err', err);
-          });
-          const myJSON = JSON.stringify(appointment);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
-          res.send({
-            status: true,
-            data,
-          });
-        })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            console.log('e.errors', e.errors);
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
-          return res.status(500).send({
-            status: false,
-            error: errors || e,
-          });
+      const data = { oauth2Client, calendar_id, remove_id };
+      await removeGoogleCalendarById(data).catch((err) => {
+        console.log('event remove err', err.message);
+        return res.status(400).json({
+          status: false,
+          error: err,
         });
-    } else {
-      res.send({
-        status: true,
       });
     }
+
+    Appointment.deleteMany({
+      user: currentUser.id,
+      event_id,
+    }).catch((err) => {
+      console.log('appointment update err', err.message);
+    });
+    // const activity = new Activity({
+    //   content: 'removed appointment',
+    //   contacts: appointment.contact,
+    //   appointments: appointment.id,
+    //   user: currentUser.id,
+    //   type: 'appointments',
+    //   created_at: new Date(),
+    //   updated_at: new Date(),
+    // });
+
+    // activity
+    //   .save()
+    //   .then((_activity) => {
+    //     Contact.updateOne(
+    //       { _id: appointment.contact },
+    //       {
+    //         $set: { last_activity: _activity.id },
+    //       }
+    //     ).catch((err) => {
+    //       console.log('err', err);
+    //     });
+    //     const myJSON = JSON.stringify(appointment);
+    //     const data = JSON.parse(myJSON);
+    //     data.activity = _activity;
+    //     res.send({
+    //       status: true,
+    //       data,
+    //     });
+    //   })
+    //   .catch((e) => {
+    //     let errors;
+    //     if (e.errors) {
+    //       console.log('e.errors', e.errors);
+    //       errors = e.errors.map((err) => {
+    //         delete err.instance;
+    //         return err;
+    //       });
+    //     }
+    //     return res.status(500).send({
+    //       status: false,
+    //       error: errors || e,
+    //     });
+    //   });
+    return res.send({
+      status: true,
+    });
   } else {
     const appointment = await Appointment.findOne({
       user: currentUser.id,
@@ -1042,9 +1212,12 @@ const remove = async (req, res) => {
       activity
         .save()
         .then((_activity) => {
-          Contact.findByIdAndUpdate(appointment.contact, {
-            $set: { last_activity: _activity.id },
-          }).catch((err) => {
+          Contact.updateOne(
+            { _id: appointment.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           const myJSON = JSON.stringify(appointment);
@@ -1073,18 +1246,19 @@ const remove = async (req, res) => {
   }
 };
 
-const removeGoogleCalendarById = async (auth, event_id) => {
-  const calendar = google.calendar({ version: 'v3', auth });
+const removeGoogleCalendarById = async (data) => {
+  const { oauth2Client, calendar_id, remove_id } = data;
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const params = {
-    calendarId: 'primary',
-    eventId: event_id,
+    calendarId: calendar_id,
+    eventId: remove_id,
     sendNotifications: true,
   };
-  calendar.events.delete(params, function (err) {
-    if (err) {
-      console.log(`There was an error contacting the Calendar service: ${err}`);
-    }
-  });
+  // calendar.events.delete(params, function (err) {
+  //   if (err) {
+  //     console.log(`There was an error contacting the Calendar service: ${err}`);
+  //   }
+  // });
   return new Promise((resolve, reject) => {
     calendar.events.delete(params, function (err) {
       if (err) {
@@ -1098,15 +1272,11 @@ const removeGoogleCalendarById = async (auth, event_id) => {
   });
 };
 
-const updateGoogleCalendarById = async (
-  auth,
-  event_id,
-  appointment,
-  time_zone
-) => {
-  const calendar = google.calendar({ version: 'v3', auth });
+const updateGoogleCalendarById = async (data) => {
+  const { oauth2Client, remove_id, appointment, time_zone } = data;
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const attendees = [];
-  if (typeof appointment.guests !== 'undefined') {
+  if (appointment.guests) {
     for (let j = 0; j < appointment.guests.length; j++) {
       const addendee = {
         email: appointment.guests[j],
@@ -1129,8 +1299,8 @@ const updateGoogleCalendarById = async (
     attendees,
   };
   const params = {
-    calendarId: 'primary',
-    eventId: event_id,
+    calendarId: appointment.calendar_id,
+    eventId: remove_id,
     resource: event,
     sendNotifications: true,
   };
@@ -1240,6 +1410,7 @@ const decline = async (req, res) => {
 };
 
 module.exports = {
+  getAll,
   get,
   create,
   edit,

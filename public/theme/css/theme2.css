@@ -23,7 +23,7 @@ header {
   text-align: center;
   padding: 13px 0px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   position: sticky;
   top: 0px;
 }
@@ -266,7 +266,7 @@ header .profile .contact-info span {
   }
 }
 @media screen and (max-width: 992px) {
-  .hightlights-slider.cs-container {
+  .highlights-slider.cs-container {
     padding-left: 30px!important;
     padding-right: 30px!important;
   }
@@ -275,7 +275,7 @@ header .profile .contact-info span {
   .highlight-item img {
     transform: scale(.9)!important;
   }
-  .hightlights-slider.cs-container {
+  .highlights-slider.cs-container {
     padding-left: 30px!important;
     padding-right: 30px!important;
   }
@@ -358,6 +358,14 @@ header .profile .contact-info span {
   height: 100%;
 }
 
+.video-player-wrapper > video {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+
 footer {
   background: #f8f8f8;
   font-size: 10px;
@@ -415,4 +423,145 @@ footer {
   height: 180px;
   margin: auto;
   border-radius: 5px;
+}
+
+
+/* Image Material Container */
+.material-wrapper .gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -o-object-fit: conver;
+  border-radius: 8px;
+  max-height: 40vh;
+}
+.material-wrapper  .gallery {
+  display: grid;
+  grid-gap: 10px;
+}
+.material-wrapper  .gallery.full-grid {
+  grid-template-columns: auto auto auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-4 {
+  grid-template-columns: auto auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-3 {
+  grid-template-columns: auto auto auto;
+}
+.material-wrapper  .gallery.col-grid-2 {
+  grid-template-columns: auto auto;
+}
+@media screen and (max-width: 768px) {
+  .material-wrapper  .gallery.full-grid {
+    grid-template-columns: auto auto auto auto;
+  }
+}
+@media screen and (max-width: 500px) {
+  .material-wrapper  .gallery.full-grid {
+    grid-template-columns: auto auto auto;
+  }
+  .material-wrapper  .gallery.col-grid-4 {
+    grid-template-columns: auto auto auto;
+  }
+}
+
+/* PDF Material Container */
+#pdf-container img {
+  /* width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-height: 440px;
+  background: #f8f8f8;
+  border-radius: 5px; */
+  /* position: absolute;
+  width: 80%;
+  max-width: 280px;
+  bottom: 47px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 5px; */
+  width: 100%;
+  border-radius: 5px;
+  max-width: 560px;
+  max-height: 400px;
+  object-fit: contain;
+}
+#pdf-container {
+  cursor: pointer;
+  position: relative;
+  width: 100%;
+/* height: 320px; */
+  text-align: center;
+  background-image: url(../icons/wall.jpg);
+  max-width: 560px;
+  margin: auto;
+}
+#pdf-container::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  /* background-image: url('../icons/shelf_wood.png'); */
+  background-repeat: no-repeat;
+  background-position: top;
+  max-width: 500px;
+  height: 50px;
+  background-size: contain;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+div#pdf-container::before {
+   /* content: "Please click to open the book";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+  color: #8888;
+  font-size: 32px;
+  text-align: center;
+  z-index: 2;
+  max-width: 300px;
+  top: 0px;
+  line-height: 1.2; */
+  content: "Please click to open the book";
+  position: absolute;
+  right: 0px;
+  font-weight: bold;
+  color: #fff8;
+  font-size: 15px;
+  text-align: center;
+  z-index: 2;
+  max-width: 300px;
+  line-height: 1.2;
+  background: #5555;
+  padding: 15px 16px;
+  border-radius: 14px;
+  border-top-right-radius: 0px;
+}
+
+
+.gallery-wrapper {
+  padding-top: calc(60% + 60px);
+  position: relative;
+}
+#galleria {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+#galleria .galleria-theme-classic {
+  background-color: gainsboro;
+}
+#galleria .galleria-thumbnails {
+  margin: auto;
+}
+#galleria .galleria-counter {
+  opacity: 1!important;
+  background: #000a!important;
+  padding: 5px!important;
 }

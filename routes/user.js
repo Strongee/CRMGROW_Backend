@@ -47,7 +47,7 @@ router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout));
 router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe));
 
 // Edit own profile
-router.put('/me', UserCtrl.checkAuth, catchError(UserCtrl.editMe));
+router.put('/me', UserCtrl.checkAuthGuest, catchError(UserCtrl.editMe));
 
 // New Password by old one
 router.post(
@@ -93,6 +93,13 @@ router.get(
   catchError(UserCtrl.authorizeOutlook)
 );
 
+// Synchorinze other mailer
+router.post(
+  '/authorize-mailer',
+  UserCtrl.checkAuth2,
+  catchError(UserCtrl.authorizeOtherEmailer)
+);
+
 // Gmail authorized
 router.get(
   '/authorize-gmail',
@@ -107,18 +114,36 @@ router.get(
   catchError(UserCtrl.authorizeYahoo)
 );
 
+/**
+ * Calendar
+ */
+
 // Synchronize calendar with connected outlook email
 router.get(
-  '/sync-calendar',
+  '/sync-google-calendar',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.syncCalendar)
+  catchError(UserCtrl.syncGoogleCalendar)
 );
 
 // Synchronize calendar with connected outlook email
 router.get(
-  '/discon-calendar',
+  '/sync-outlook-calendar',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.disconCalendar)
+  catchError(UserCtrl.syncOutlookCalendar)
+);
+
+// Synchronize calendar with connected outlook email
+router.get(
+  '/authorize-google-calendar',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.authorizeGoogleCalendar)
+);
+
+// Synchronize calendar with connected outlook email
+router.get(
+  '/authorize-outlook-calendar',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.authorizeOutlookCalendar)
 );
 
 // Daily Report
@@ -191,6 +216,10 @@ router.post('/social-login', catchError(UserCtrl.socialLogin));
 // Edit own profile
 router.post('/social-signup', catchError(UserCtrl.socialSignUp));
 
+router.get('/app-google-signin', catchError(UserCtrl.appGoogleSignIn));
+
+router.get('/app-outlook-signin', catchError(UserCtrl.appOutlookSignIn));
+
 // Connect Another Email Service
 router.get(
   '/another-con',
@@ -206,6 +235,13 @@ router.post('/search-nickname', catchError(UserCtrl.searchNickName));
 
 // Search Phonenumber
 router.post('/search-phone', catchError(UserCtrl.searchPhone));
+
+// Schedule a paid demo
+router.post(
+  '/schedule-demo',
+  UserCtrl.checkAuth2,
+  catchError(UserCtrl.schedulePaidDemo)
+);
 
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser));

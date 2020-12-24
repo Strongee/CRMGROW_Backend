@@ -1,7 +1,9 @@
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
+const urls = require('../constants/urls');
 const Payment = require('../models/payment');
 const User = require('../models/user');
+const Notification = require('../models/notification');
 
 const stripeKey = api.STRIPE.SECRET_KEY;
 
@@ -45,8 +47,8 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { email, token, referral } = payment_data;
-    createCustomer(email, referral).then((customer) => {
+    const { user_name, email, token, referral } = payment_data;
+    createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
         { source: token.id },
@@ -106,7 +108,7 @@ const update = async (req, res) => {
   const { token } = req.body;
   const { currentUser } = req;
   if (!currentUser.payment) {
-    createCustomer(currentUser.email)
+    createCustomer(currentUser.user_name, currentUser.email)
       .then(async (customer) => {
         stripe.customers.createSource(
           customer.id,
@@ -182,7 +184,7 @@ const update = async (req, res) => {
     );
 
     if (!payment) {
-      createCustomer(currentUser.email)
+      createCustomer(currentUser.user_name, currentUser.email)
         .then(async (customer) => {
           stripe.customers.createSource(
             customer.id,
@@ -255,7 +257,7 @@ const update = async (req, res) => {
       ) {
         if (err || customer['deleted']) {
           console.log('customer retrieve error', err);
-          createCustomer(currentUser.email)
+          createCustomer(currentUser.user_name, currentUser.email)
             .then(async (customer) => {
               stripe.customers.createSource(
                 customer.id,
@@ -531,10 +533,11 @@ const updateCustomerEmail = async (customer_id, email) => {
   });
 };
 
-const createCustomer = async (email, referral) => {
+const createCustomer = async (user_name, email, referral) => {
   return new Promise((resolve, reject) => {
     stripe.customers.create(
       {
+        name: user_name,
         email,
         metadata: { referral },
       },
@@ -640,16 +643,13 @@ const cancelCustomer = async (id) => {
     console.log('err', err);
   });
   return new Promise((resolve, reject) => {
-    cancelSubscription(payment.subscription)
+    cancelSubscription(payment.subscription).catch((err) => {
+      console.log('err', err);
+    });
+
+    deleteCustomer(payment.customer_id)
       .then(() => {
-        deleteCustomer(payment.customer_id)
-          .then(() => {
-            resolve();
-          })
-          .catch((err) => {
-            console.log('err', err);
-            reject();
-          });
+        resolve();
       })
       .catch((err) => {
         console.log('err', err);
@@ -690,6 +690,17 @@ const paymentFailed = async (req, res) => {
     console.log('err', err.message);
   });
 
+  const notification = new Notification({
+    type: 'personal',
+    criteria: 'subscription_failed',
+    content: `Your payment for your crmgrow account has failed. Please update cc card info at <a href="${urls.BILLING_URL}" style="color:black;">billing page</a>`,
+    user: user.id,
+  });
+
+  notification.save().catch((err) => {
+    console.log('err', err.message);
+  });
+
   return res.send({
     status: true,
   });
@@ -721,6 +732,15 @@ const paymentSucceed = async (req, res) => {
     user.save().catch((err) => {
       console.log('user save err', err.message);
     });
+
+    Notification.deleteMany({
+      type: 'personal',
+      criteria: 'subscription_failed',
+      user: user.id,
+    }).catch((err) => {
+      console.log('notification delete error', err.message);
+    });
+
     return res.send({
       status: true,
     });
@@ -733,10 +753,22 @@ const paymentSucceed = async (req, res) => {
   }
 };
 
+const createCharge = async (data) => {
+  const { card_id, customer_id, amount, description } = data;
+  return stripe.charges.create({
+    amount,
+    currency: 'usd',
+    source: card_id,
+    customer: customer_id,
+    description,
+  });
+};
+
 module.exports = {
   get,
   create,
   update,
+  createCharge,
   cancelCustomer,
   paymentFailed,
   paymentSucceed,

@@ -1,4 +1,5 @@
 const moment = require('moment');
+const mongoose = require('mongoose');
 const TimeLine = require('../models/time_line');
 const Automation = require('../models/automation');
 const Contact = require('../models/contact');
@@ -6,12 +7,19 @@ const Note = require('../models/note');
 const Activity = require('../models/activity');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
+const Garbage = require('../models/garbage');
+const Notification = require('../models/notification');
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
+const ActivityHelper = require('../helpers/activity');
+const notifications = require('../constants/notification');
+const urls = require('../constants/urls');
+const system_settings = require('../config/system_settings');
 
 const create = async (req, res) => {
   const { currentUser } = req;
   const { contacts, automation_id } = req.body;
+  const error = [];
   const _automation = await Automation.findOne({ _id: automation_id }).catch(
     (err) => {
       console.log('err', err);
@@ -24,9 +32,56 @@ const create = async (req, res) => {
 
   if (_automation) {
     const { automations } = _automation;
-    for (let i = 0; i < automations.length; i++) {
-      const automation = automations[i];
-      for (let j = 0; j < contacts.length; j++) {
+
+    for (let i = 0; i < contacts.length; i++) {
+      const old_timeline = await TimeLine.findOne({
+        contact: contacts[i],
+        automation: { $ne: null },
+      });
+
+      if (old_timeline) {
+        const contact = await Contact.findOne({ _id: contacts[i] });
+        error.push({
+          contact: {
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          err: 'A contact has been already assigned automation',
+        });
+        continue;
+      }
+
+      const count = await TimeLine.aggregate([
+        {
+          $match: {
+            user: mongoose.Types.ObjectId(currentUser._id),
+          },
+        },
+        {
+          $group: {
+            _id: { contact: '$contact' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $count: 'total',
+        },
+      ]);
+
+      if (count[0] && count[0]['total'] > system_settings.AUTOMATION) {
+        const contact = await Contact.findOne({ _id: contacts[i] });
+        error.push({
+          contact: {
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          err: 'Exceed automation max contacts',
+        });
+        continue;
+      }
+
+      for (let j = 0; j < automations.length; j++) {
+        const automation = automations[j];
         let time_line;
         if (automation.status === 'active') {
           const { period } = automation;
@@ -42,7 +97,7 @@ const create = async (req, res) => {
             ref: automation.id,
             parent_ref: automation.parent,
             user: currentUser.id,
-            contact: contacts[j],
+            contact: contacts[i],
             automation: automation_id,
             due_date,
             created_at: new Date(),
@@ -50,12 +105,12 @@ const create = async (req, res) => {
           });
           _time_line
             .save()
-            .then((timeline) => {
+            .then(async (timeline) => {
               if (timeline.period === 0) {
                 try {
                   runTimeline(timeline.id);
                   const data = {
-                    contact: contacts[j],
+                    contact: contacts[i],
                     ref: timeline.ref,
                   };
                   activeNext(data);
@@ -73,7 +128,7 @@ const create = async (req, res) => {
             ref: automation.id,
             parent_ref: automation.parent,
             user: currentUser.id,
-            contact: contacts[j],
+            contact: contacts[i],
             automation: automation_id,
             created_at: new Date(),
             updated_at: new Date(),
@@ -83,6 +138,12 @@ const create = async (req, res) => {
           });
         }
       }
+    }
+    if (error.length > 0) {
+      return res.status(405).json({
+        status: false,
+        error,
+      });
     }
     return res.send({
       status: true,
@@ -102,20 +163,46 @@ const activeNext = async (data) => {
     status: 'pending',
     parent_ref: ref,
   });
-  if (timelines) {
+  if (timelines && timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       const timeline = timelines[i];
-      const { period } = timeline;
-      const now = moment();
-      // let tens = parseInt(now.minutes() / 10)
-      // now.set({ minute: tens*10, second: 0, millisecond: 0 })
-      now.set({ second: 0, millisecond: 0 });
-      const due_date = now.add(period, 'hours');
-      due_date.set({ second: 0, millisecond: 0 });
-      timeline.status = 'active';
-      timeline.due_date = due_date;
+      if (timeline.condition && timeline.condition.answer === true) {
+        timeline.status = 'checking';
+      } else {
+        const { period } = timeline;
+        const now = moment();
+        now.set({ second: 0, millisecond: 0 });
+        const due_date = now.add(period, 'hours');
+        due_date.set({ second: 0, millisecond: 0 });
+        timeline.status = 'active';
+        timeline.due_date = due_date;
+      }
       timeline.save().catch((err) => {
-        console.log('err', err);
+        console.log('err', err.message);
+      });
+    }
+  } else {
+    TimeLine.deleteMany({
+      contact,
+      automation: { $ne: null },
+    }).catch((err) => {
+      console.log('timeline delete error', err.message);
+    });
+
+    const _contact = await Contact.findOne({
+      _id: contact,
+    });
+
+    if (_contact) {
+      const notification = new Notification({
+        user: _contact.user,
+        criteria: 'automation_completed',
+        contact,
+        content: notifications.automation_completed.content,
+        description: `Click <a href="${urls.CONTACT_PAGE_URL}${contact}">here</a> to check it out`,
+      });
+      notification.save().catch((err) => {
+        console.log('notification save err', err.message);
       });
     }
   }
@@ -123,7 +210,7 @@ const activeNext = async (data) => {
 
 const runTimeline = async (id) => {
   const timelines = await TimeLine.find({ _id: id }).catch((err) => {
-    console.log('err', err);
+    console.log('timeline run find err', err);
   });
   for (let i = 0; i < timelines.length; i++) {
     const timeline = timelines[i];
@@ -157,10 +244,20 @@ const runTimeline = async (id) => {
 
         followUp
           .save()
-          .then((_followup) => {
-            const mins = new Date(_followup.due_date).getMinutes() - 30;
-            const reminder_due_date = new Date(_followup.due_date).setMinutes(
-              mins
+          .then(async (_followup) => {
+            const garbage = await Garbage.findOne({
+              user: timeline.user,
+            }).catch((err) => {
+              console.log('err', err);
+            });
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+            const startdate = moment(_followup.due_date);
+            const reminder_due_date = startdate.subtract(
+              reminder_before,
+              'mins'
             );
             const reminder = new Reminder({
               contact: timeline.contact,
@@ -176,8 +273,11 @@ const runTimeline = async (id) => {
               console.log('error', err);
             });
 
+            let detail_content = 'added follow up';
+            detail_content = ActivityHelper.automationLog(detail_content);
+
             const activity = new Activity({
-              content: 'added follow up',
+              content: detail_content,
               contacts: _followup.contact,
               user: timeline.user,
               type: 'follow_ups',
@@ -194,15 +294,30 @@ const runTimeline = async (id) => {
                 timeline.save().catch((err) => {
                   console.log('err', err);
                 });
-                Contact.findByIdAndUpdate(_followup.contact, {
-                  $set: { last_activity: _activity.id },
-                }).catch((err) => {
+                Contact.updateOne(
+                  { _id: _followup.contact },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
                   console.log('err', err);
                 });
               })
               .catch((err) => {
                 console.log('follow error', err);
               });
+
+            TimeLine.updateMany(
+              {
+                contact: timeline.contact,
+                'action.ref_id': timeline.ref,
+              },
+              {
+                $set: { 'action.follow_up': _followup.id },
+              }
+            ).catch((err) => {
+              console.log('follow error', err.message);
+            });
           })
           .catch((err) => {
             timeline.status = 'error';
@@ -214,6 +329,18 @@ const runTimeline = async (id) => {
           });
         break;
       }
+      case 'update_follow_up': {
+        let follow_due_date;
+        if (action.due_date) {
+          follow_due_date = action.due_date;
+        } else {
+          const now = moment();
+          now.set({ second: 0, millisecond: 0 });
+          follow_due_date = now.add(action.due_duration, 'hours');
+          follow_due_date.set({ second: 0, millisecond: 0 });
+        }
+        break;
+      }
       case 'note': {
         const note = new Note({
           content: action.content,
@@ -223,11 +350,14 @@ const runTimeline = async (id) => {
           created_at: new Date(),
         });
 
+        let detail_content = 'added note';
+        detail_content = ActivityHelper.automationLog(detail_content);
+
         note
           .save()
           .then((_note) => {
             const activity = new Activity({
-              content: 'added note',
+              content: detail_content,
               contacts: _note.contact,
               user: timeline.user,
               type: 'notes',
@@ -237,9 +367,12 @@ const runTimeline = async (id) => {
             });
 
             activity.save().then((_activity) => {
-              Contact.findByIdAndUpdate(_note.contact, {
-                $set: { last_activity: _activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: _note.contact },
+                {
+                  $set: { last_activity: _activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               timeline.status = 'completed';
@@ -275,6 +408,12 @@ const runTimeline = async (id) => {
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
+              const activity_data = {
+                activity: res[0].activity,
+                contact: timeline.contact,
+                parent_ref: timeline.ref,
+              };
+              setEmailTrackTimeline(activity_data);
             } else {
               timeline.status = 'error';
               timeline.updated_at = new Date();
@@ -460,6 +599,56 @@ const runTimeline = async (id) => {
             console.log('err', err);
           });
         break;
+      case 'update_contact': {
+        switch (action.command) {
+          case 'update_label':
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $set: { label: mongoose.Types.ObjectId(action.content) },
+              }
+            ).catch((err) => {
+              console.log('label set err', err.message);
+            });
+            break;
+          case 'push_tag': {
+            const tags = action.content.map((tag) => tag.value);
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $push: { tags: { $each: tags } },
+              }
+            ).catch((err) => {
+              console.log('tag update err', err.message);
+            });
+            break;
+          }
+          case 'pull_tag': {
+            const tags = action.content.map((tag) => tag.value);
+            Contact.updateOne(
+              {
+                _id: timeline.contact,
+              },
+              {
+                $pull: { tags: { $in: tags } },
+              }
+            ).catch((err) => {
+              console.log('tag update err', err.message);
+            });
+            break;
+          }
+        }
+        timeline['status'] = 'completed';
+        timeline['updated_at'] = new Date();
+        timeline.save().catch((err) => {
+          console.log('time line err', err.message);
+        });
+        break;
+      }
     }
   }
 };
@@ -467,25 +656,31 @@ const runTimeline = async (id) => {
 const cancel = (req, res) => {
   const { contact } = req.params;
 
-  TimeLine.deleteMany({ contact }).then(
-    (data) => {
+  TimeLine.deleteMany({
+    contact,
+    automation: { $ne: null },
+  })
+    .then(() => {
       return res.send({
         status: true,
       });
-    },
-    (err) => {
+    })
+    .catch((err) => {
       return res.status(500).send({
         status: false,
         error: err,
       });
-    }
-  );
+    });
 };
 
 const recreate = async (req, res) => {
   const { currentUser } = req;
   const { contact, automation_id } = req.body;
-  await TimeLine.deleteMany({ contact }).catch((err) => {
+
+  await TimeLine.deleteMany({
+    contact,
+    automation: { $ne: null },
+  }).catch((err) => {
     return res.status(500).send({
       status: false,
       error: err,
@@ -570,7 +765,7 @@ const recreate = async (req, res) => {
 
 const disableNext = async (id) => {
   let timeline = await TimeLine.findOne({ _id: id }).catch((err) => {
-    console.log('err', err);
+    console.log('time line disable find err', err.message);
   });
   if (timeline) {
     timeline.status = 'disabled';
@@ -596,11 +791,46 @@ const disableNext = async (id) => {
         timeline.status = 'disabled';
         timeline.updated_at = new Date();
         timeline.save().catch((err) => {
-          console.log('err', err);
+          console.log('err', err.message);
         });
       }
     } while (timelines.length > 0 || timeline);
   }
+};
+
+const activeTimeline = async (id) => {
+  const timeline = await TimeLine.findOne({ _id: id }).catch((err) => {
+    console.log('active timeline err', err.message);
+  });
+
+  if (timeline) {
+    const now = moment();
+    const { period } = timeline;
+    now.set({ second: 0, millisecond: 0 });
+    const due_date = now.add(period, 'hours');
+    due_date.set({ second: 0, millisecond: 0 });
+    timeline.status = 'active';
+    timeline.due_date = due_date;
+    timeline.save().catch((err) => {
+      console.log('err', err.message);
+    });
+  }
+};
+
+const setEmailTrackTimeline = async (data) => {
+  const { activity, contact, parent_ref } = data;
+  TimeLine.updateMany(
+    {
+      contact,
+      parent_ref,
+      'condition.case': 'opened_email',
+    },
+    {
+      $set: { opened_email: activity },
+    }
+  ).catch((err) => {
+    console.log('err', err);
+  });
 };
 
 module.exports = {
@@ -609,5 +839,7 @@ module.exports = {
   activeNext,
   disableNext,
   runTimeline,
+  activeTimeline,
+  setEmailTrackTimeline,
   cancel,
 };

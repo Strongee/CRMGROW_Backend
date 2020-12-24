@@ -1,7 +1,7 @@
-const { validationResult } = require('express-validator/check');
 const Note = require('../models/note');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
+const ActivityHelper = require('../helpers/activity');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -24,13 +24,6 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   const note = new Note({
     ...req.body,
@@ -42,8 +35,13 @@ const create = async (req, res) => {
   note
     .save()
     .then((_note) => {
+      let detail_content = 'added note';
+      if (req.guest_loggin) {
+        detail_content = ActivityHelper.assistantLog(detail_content);
+      }
+
       const activity = new Activity({
-        content: 'added note',
+        content: detail_content,
         contacts: _note.contact,
         user: currentUser.id,
         type: 'notes',
@@ -53,7 +51,7 @@ const create = async (req, res) => {
       });
 
       activity.save().then((_activity) => {
-        Contact.updateMany(
+        Contact.updateOne(
           { _id: _note.contact },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
@@ -78,15 +76,13 @@ const create = async (req, res) => {
 
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
+  const { contacts, content } = req.body;
+
+  let detail_content = 'added note';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
-  const { contacts, content } = req.body;
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
 
@@ -100,7 +96,7 @@ const bulkCreate = async (req, res) => {
       .save()
       .then((_note) => {
         const activity = new Activity({
-          content: 'added note',
+          content: detail_content,
           contacts: _note.contact,
           user: currentUser.id,
           type: 'notes',
@@ -110,9 +106,12 @@ const bulkCreate = async (req, res) => {
         activity
           .save()
           .then((_activity) => {
-            Contact.findByIdAndUpdate(_note.contact, {
-              $set: { last_activity: _activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: _note.contact },
+              {
+                $set: { last_activity: _activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             const myJSON = JSON.stringify(_note);

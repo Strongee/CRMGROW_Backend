@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check');
 const PhoneLog = require('../models/phone_log');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
+const ActivityHelper = require('../helpers/activity');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -23,12 +24,10 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
+
+  let detail_content = 'added phone log';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   const phone_log = new PhoneLog({
@@ -42,7 +41,7 @@ const create = async (req, res) => {
     .save()
     .then((_phone_log) => {
       const activity = new Activity({
-        content: 'added phone log',
+        content: detail_content,
         contacts: _phone_log.contact,
         user: currentUser.id,
         type: 'phone_logs',
@@ -52,9 +51,12 @@ const create = async (req, res) => {
       });
 
       activity.save().then((_activity) => {
-        Contact.findByIdAndUpdate(_phone_log.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: _phone_log.contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
         const myJSON = JSON.stringify(_phone_log);

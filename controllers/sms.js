@@ -13,6 +13,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const send = async (req, res) => {
   const { currentUser } = req;
   const { text } = req.body;
@@ -108,7 +114,7 @@ const receive = async (req, res) => {
   const from = req.body['From'];
   const to = req.body['To'];
 
-  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+  const currentUser = await User.findOne({ twilio_number: to }).catch((err) => {
     console.log('current user found err sms', err.message);
   });
 
@@ -175,10 +181,93 @@ const receive = async (req, res) => {
     // })
 
     // activity.save()
-    return res.send({
-      status: true,
-    });
   }
+  return res.send({
+    status: true,
+  });
+};
+
+const receive1 = async (req, res) => {
+  const text = req.body['Body'];
+  const from = req.body['From'];
+  const to = req.body['To'];
+
+  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+    console.log('current user found err sms', err.message);
+  });
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
+
+    const contact = await Contact.findOne({
+      cell_phone: phoneNumber,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact found err sms reply', err);
+    });
+
+    if (contact) {
+      if (text.toLowerCase() === 'stop') {
+        const activity = new Activity({
+          content: 'unsubscribed sms',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'sms_trackers',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        const _activity = await activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+            $push: { tags: { $each: ['unsubscribed'] } },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+        const content =
+          'You have successfully been unsubscribed. You will not receive any more messages from this number.';
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      } else {
+        const content =
+          contact.first_name +
+          ', please call/text ' +
+          currentUser.user_name +
+          ' back at: ' +
+          currentUser.cell_phone;
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      }
+    }
+  }
+  return res.send({
+    status: true,
+  });
 };
 
 const get = async (req, res) => {
@@ -204,4 +293,5 @@ module.exports = {
   get,
   send,
   receive,
+  receive1,
 };

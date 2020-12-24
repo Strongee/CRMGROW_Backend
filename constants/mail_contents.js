@@ -28,6 +28,14 @@ const mail_contents = {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'CRMGROW email opened: ',
   },
+  NOTIFICATION_UNSUBSCRIPTION: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW email unsubscribed: ',
+  },
+  NOTIFICATION_CLICKED_EMAIL: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW email clicked the link: ',
+  },
   DAILY_REPORT: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'Daily report: ',
@@ -48,18 +56,33 @@ const mail_contents = {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'Appointment notification',
   },
-  NOTIFICATION_UNSUBSCRIPTION: {
-    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
-    SUBJECT: 'CRMGROW email unsubscribed: ',
-  },
   INVITE_GUEST: {
     MAIL: 'CRMGROW <no-reply@crmgrow.com>',
     SUBJECT: 'CRMGROW Invitation: ',
   },
+  NOTIFICATION_INVITE_TEAM_MEMBER: {
+    MAIL: 'CRMGROW <support@crmgrow.com>',
+    SUBJECT: 'CRMGROW Invitation: ',
+  },
+  NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Team join invitation: ',
+  },
+  NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Team join request: ',
+  },
+  NOTIFICATION_REQUEST_TEAM_CALL: {
+    MAIL: 'CRMGROW <no-reply@crmgrow.com>',
+    SUBJECT: 'CRMGROW Team member call join request: ',
+  },
   MAIL_SEND: 'mailservice@crmgrow.com',
+  NO_REPLAY: 'CRMGROW <no-reply@crmgrow.com>',
+  REPLY: 'support@crmgrow.com',
   VIDEO_TITLE: 'eXp Realty eXplained Videos',
   PDF_TITLE: 'eXp Realty eXplained PDFs',
   IMAGE_TITLE: 'eXp Realty eXplained Images',
+  MATERIAL_TITLE: 'eXp Realty eXplained Materials',
 };
 
 module.exports = mail_contents;

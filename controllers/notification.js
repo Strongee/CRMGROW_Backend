@@ -2,35 +2,152 @@ const Notification = require('../models/notification');
 
 const get = async (req, res) => {
   const { currentUser } = req;
-  const data = [];
-  if (currentUser.subscription.is_failed) {
-    const payment_notification = await Notification.findOne({
-      type: 'urgent',
-      criteria: 'subscription_failed',
-    });
-    data.push({
-      type: 'urgent',
-      content: payment_notification['content'],
-    });
-  }
+  const { limit } = req.query;
+  const personal_notifications = await Notification.find({
+    user: currentUser.id,
+    is_read: false,
+  }).limit(parseInt(limit));
 
-  const notifications = await Notification.find({ type: 'static', del: false });
+  const system_notifications = await Notification.find({
+    type: 'global',
+    del: false,
+  }).sort({ updated_at: -1 });
 
-  if (notifications) {
-    for (let i = 0; i < notifications.length; i++) {
-      const notification = notifications[i];
-      data.push({
-        type: 'static',
-        content: notification['content'],
-      });
-    }
-  }
   res.send({
     status: true,
-    data,
+    personal_notifications,
+    system_notifications,
+  });
+};
+
+const bulkRead = (req, res) => {
+  const { ids } = req.body;
+  const { currentUser } = req;
+  Notification.updateMany(
+    {
+      _id: { $in: ids },
+      user: currentUser.id,
+    },
+    {
+      $set: { is_read: true },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const bulkUnread = (req, res) => {
+  const { ids } = req.body;
+  const { currentUser } = req;
+  Notification.updateMany(
+    {
+      _id: { $in: ids },
+      type: 'personal',
+      user: currentUser.id,
+    },
+    { is_read: false }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const bulkRemove = (req, res) => {
+  const { ids } = req.body;
+  const { currentUser } = req;
+  Notification.deleteMany({
+    _id: { $in: ids },
+    user: currentUser.id,
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const getPage = async (req, res) => {
+  const { currentUser } = req;
+  const { page } = req.params;
+
+  const notifications = await Notification.find({
+    $or: [
+      {
+        user: currentUser.id,
+        is_read: false,
+      },
+      {
+        type: 'global',
+        del: false,
+      },
+    ],
+  })
+    .skip((page - 1) * 15)
+    .limit(15);
+
+  const total = await Notification.countDocuments({
+    $or: [
+      {
+        user: currentUser.id,
+      },
+      { type: 'global' },
+    ],
+  });
+
+  return res.json({
+    status: true,
+    notifications,
+    total,
+  });
+};
+
+const getDelivery = async (req, res) => {
+  const { currentUser } = req;
+  const sms = await Notification.find({
+    user: currentUser.id,
+    criteria: 'bulk_sms',
+  })
+    .populate('contact')
+    .catch((err) => {
+      console.log('notification find err', err.message);
+    });
+
+  return res.send({
+    status: true,
+    notification: {
+      sms,
+    },
   });
 };
 
 module.exports = {
   get,
+  getPage,
+  getDelivery,
+  bulkRead,
+  bulkUnread,
+  bulkRemove,
 };

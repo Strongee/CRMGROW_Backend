@@ -31,13 +31,6 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
 
   const activity = new Activity({
     ...req.body,
@@ -107,9 +100,14 @@ const removeBulk = async (req, res) => {
       ).catch((err) => {
         console.log('err', err);
       });
-      Contact.findByIdAndUpdate(contact, {
-        $set: { last_activity: lastActivity.id },
-      })
+      Contact.updateOne(
+        {
+          _id: contact,
+        },
+        {
+          $set: { last_activity: lastActivity.id },
+        }
+      )
         .then((data) => {
           return res.send({
             status: true,
@@ -138,10 +136,13 @@ const removeAll = async (req, res) => {
       }).catch((err) => {
         console.log('err', err);
       });
-      Contact.findByIdAndUpdate(contact, {
-        $set: { last_activity: contactActivity.id },
-      })
-        .then((data) => {
+      Contact.updateOne(
+        { _id: contact },
+        {
+          $set: { last_activity: contactActivity.id },
+        }
+      )
+        .then(() => {
           return res.send({
             status: true,
             data: contactActivity,

@@ -3,6 +3,7 @@ const Automation = require('../models/automation');
 const TimeLine = require('../models/time_line');
 const Contact = require('../models/contact');
 const Video = require('../models/video');
+const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
 
 const get = (req, res) => {
@@ -21,6 +22,81 @@ const get = (req, res) => {
         error: err.message || 'Automation reading is failed.',
       });
     });
+};
+
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const automations = await Automation.find({
+    user: currentUser.id,
+    del: false,
+  });
+
+  const _automation_admin = await Automation.find({
+    role: 'admin',
+    company,
+    del: false,
+  });
+
+  Array.prototype.push.apply(automations, _automation_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate(
+    'automations'
+  );
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(automations, team.automations);
+    }
+  }
+
+  if (!automations) {
+    return res.status(400).json({
+      status: false,
+      error: 'Automation doesn`t exist',
+    });
+  }
+  const automation_array = [];
+
+  for (let i = 0; i < automations.length; i++) {
+    const automation = automations[i];
+    const contacts = await TimeLine.aggregate([
+      {
+        $match: {
+          $and: [
+            {
+              user: mongoose.Types.ObjectId(currentUser._id),
+              automation: mongoose.Types.ObjectId(automation._id),
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: { contact: '$contact' },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.contact',
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+    const myJSON = JSON.stringify(automation);
+    const data = JSON.parse(myJSON);
+    const automation_detail = await Object.assign(data, { contacts });
+
+    automation_array.push(automation_detail);
+  }
+
+  return res.send({
+    status: true,
+    data: automation_array,
+  });
 };
 
 const getStatus = async (req, res) => {
@@ -61,8 +137,24 @@ const getPage = async (req, res) => {
   //     editedAutomations = garbage['edited_automation']
   // }
 
+  const team_automations = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.automations) {
+        Array.prototype.push.apply(team_automations, team.automations);
+      }
+    }
+  }
+
   const automations = await Automation.find({
-    $or: [{ user: currentUser.id }, { role: 'admin' }],
+    $or: [
+      { user: currentUser.id },
+      { role: 'admin' },
+      { _id: { $in: team_automations } },
+    ],
   })
     .skip((page - 1) * 10)
     .limit(10);
@@ -97,6 +189,7 @@ const getPage = async (req, res) => {
     const myJSON = JSON.stringify(automation);
     const data = JSON.parse(myJSON);
     const automation_detail = await Object.assign(data, { contacts });
+
     automation_array.push(automation_detail);
   }
 
@@ -162,8 +255,7 @@ const update = async (req, res) => {
       error: `Automation doesn't exist`,
     });
   }
-  Automation.find({ _id: id })
-    .update({ $set: data })
+  Automation.updateOne({ _id: id }, { $set: data })
     .then(() => {
       res.send({
         status: true,
@@ -178,26 +270,67 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  const { id } = req.params;
+  const { currentUser } = req;
+  const automation = await Automation.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
 
-  await Automation.deleteOne({ _id: req.params.id }).catch((err) => {
-    res.status(400).send({
+  if (!automation) {
+    return res.status(400).send({
       status: false,
+      error: 'Invalid permission.',
     });
-  });
+  }
 
-  res.send({
-    status: false,
-  });
+  if (automation.role === 'team') {
+    Team.updateOne(
+      { automations: req.params.id },
+      {
+        $pull: { automations: { $in: [req.params.id] } },
+      }
+    );
+  }
+
+  Automation.deleteOne({ _id: req.params.id })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message || 'Automation Removing is failed.',
+      });
+    });
 };
 
 const search = async (req, res) => {
   const condition = req.body;
   const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+
+  const team_automations = [];
+  const teams = await Team.find({ members: currentUser.id });
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      if (team.automations) {
+        Array.prototype.push.apply(team_automations, team.automations);
+      }
+    }
+  }
+
   Automation.find({
     $and: [
       {
-        $or: [{ user: currentUser.id }, { role: 'admin' }],
+        $or: [
+          { user: currentUser.id },
+          { role: 'admin', company },
+          { _id: { $in: team_automations } },
+        ],
       },
       {
         title: { $regex: `.*${condition.search}.*`, $options: 'i' },
@@ -284,13 +417,52 @@ const updateDefault = async (req, res) => {
   });
 };
 
+const loadOwn = async (req, res) => {
+  console.log('Load OWN');
+  const { currentUser } = req;
+
+  const automations = await Automation.find({
+    $and: [{ user: currentUser.id }, { role: { $ne: 'admin' } }],
+  });
+
+  return res.json({
+    status: true,
+    data: automations,
+  });
+};
+
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const automations = await Automation.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+      },
+      {
+        role: 'admin',
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: automations,
+  });
+};
+
 module.exports = {
   get,
+  getAll,
   getStatus,
   getPage,
+  getEasyLoad,
   create,
   update,
   remove,
   updateDefault,
   search,
+  loadOwn,
 };

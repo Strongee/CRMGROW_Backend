@@ -15,15 +15,15 @@ mongoose
   .catch((err) => console.error('Could not connect to mongo DB', err));
 // Fetch or read data from
 const LABEL_SETS = [
-  { New: '5ed6b6c26a8f3a3a407516b8' },
-  { Team: '5ed6b6c26a8f3a3a407516ba' },
-  { Cold: '5ed6b6c26a8f3a3a407516b9' },
-  { Warm: '5ed6b6c26a8f3a3a407516bb' },
-  { Trash: '5ed6b6c26a8f3a3a407516bd' },
-  { Hot: '5ed6b6c26a8f3a3a407516bc' },
-  { 'App set': '5ed6c0ea138bc03cfeb8a8fb' },
-  { 'Appt Missed': '5ed6c0ea138bc03cfeb8a8fc' },
-  { Lead: '5ed6c0ea138bc03cfeb8a8fd' },
+  { New: '5f16d58d0af09220208b6e09' },
+  { Team: '5f16d58d0af09220208b6e0b' },
+  { Cold: '5f16d58d0af09220208b6e0a' },
+  { Warm: '5f16d58d0af09220208b6e0c' },
+  { Trash: '5f16d58d0af09220208b6e0e' },
+  { Hot: '5f16d58d0af09220208b6e0d' },
+  { 'App set': '5f16d58d0af09220208b6e0f' },
+  { 'Appt Missed': '5f16d58d0af09220208b6e10' },
+  { Lead: '5f16d58d0af09220208b6e11' },
 ];
 const create = async () => {
   const newLabel = new Label({
@@ -188,34 +188,34 @@ const migrate = async () => {
         let label;
         switch (contact.label) {
           case 'New':
-            label = '5ed6b6c26a8f3a3a407516b8';
+            label = '5f16d58d0af09220208b6e09';
             break;
           case 'Team':
-            label = '5ed6b6c26a8f3a3a407516ba';
+            label = '5f16d58d0af09220208b6e0b';
             break;
           case 'Cold':
-            label = '5ed6b6c26a8f3a3a407516b9';
+            label = '5f16d58d0af09220208b6e0a';
             break;
           case 'Warm':
-            label = '5ed6b6c26a8f3a3a407516bb';
+            label = '5f16d58d0af09220208b6e0c';
             break;
           case 'Hot':
-            label = '5ed6b6c26a8f3a3a407516bc';
+            label = '5f16d58d0af09220208b6e0d';
             break;
           case 'Trash':
-            label = '5ed6b6c26a8f3a3a407516bd';
+            label = '5f16d58d0af09220208b6e0e';
             break;
           case 'Appt set':
-            label = '5ed6c0ea138bc03cfeb8a8fb';
+            label = '5f16d58d0af09220208b6e0f';
             break;
           case 'Appt Set':
-            label = '5ed6c0ea138bc03cfeb8a8fb';
+            label = '5f16d58d0af09220208b6e0f';
             break;
           case 'Appt Missed':
-            label = '5ed6c0ea138bc03cfeb8a8fc';
+            label = '5f16d58d0af09220208b6e10';
             break;
           case 'Lead':
-            label = '5ed6c0ea138bc03cfeb8a8fd';
+            label = '5f16d58d0af09220208b6e11';
             break;
           default:
             console.log(`No defined, ${contact.label}.`);
@@ -234,3 +234,4 @@ const migrate = async () => {
   }
 };
 migrate();
+// create();

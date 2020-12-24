@@ -43,13 +43,6 @@ const create = async (data) => {
 
 const createbyDesktop = async (req, res) => {
   const query = { ...req.query };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
   const video_tracker = new VideoTracker({
     ...query,
     updated_at: new Date(),
@@ -246,9 +239,12 @@ const disconnect = async (video_tracker_id) => {
   activity
     .save()
     .then((_activity) => {
-      Contact.findByIdAndUpdate(query.contact, {
-        $set: { last_activity: _activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: query.contact },
+        {
+          $set: { last_activity: _activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
     })

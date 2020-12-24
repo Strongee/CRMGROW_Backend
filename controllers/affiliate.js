@@ -13,6 +13,7 @@ const get = async (req, res) => {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
+      json: true,
     })
       .then((response) => {
         return res.send({
@@ -23,13 +24,13 @@ const get = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details[0],
+          err: err.details,
         });
       });
   } else {
-    res.status(400).json({
-      status: false,
-      err: `Can't find affilate id`,
+    res.send({
+      status: true,
+      data: {},
     });
   }
 };
@@ -40,11 +41,12 @@ const getAll = async (req, res) => {
     const auth = Buffer.from(api.REWARDFUL_API_KEY + ':').toString('base64');
     request({
       method: 'GET',
-      uri: `https://api.getrewardful.com/v1/referrals?affiliate_id=${currentUser.affiliate.id}`,
+      uri: `https://api.getrewardful.com/v1/referrals?affiliate_id=${currentUser.affiliate.id}&limit=100&conversion_state[]=lead&conversion_state[]=conversion`,
       headers: {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
+      json: true,
     })
       .then((response) => {
         const visitors = response.data;
@@ -57,7 +59,8 @@ const getAll = async (req, res) => {
         }
         return res.send({
           status: true,
-          data: customers,
+          data: response.data,
+          pagination: response.pagination,
         });
       })
       .catch((err) => {
@@ -87,14 +90,15 @@ const create = async (req, res) => {
     },
     body: {
       first_name: currentUser.user_name.split(' ')[0],
-      last_name: currentUser.user_name.split(' ')[1],
+      last_name:
+        currentUser.user_name.split(' ')[1] ||
+        currentUser.user_name.split(' ')[0],
       email: currentUser.email,
       paypal,
     },
     json: true,
   })
     .then((response) => {
-      console.log('response', response);
       const affiliate = {
         id: response.id,
         link: response.links[0].url,
@@ -106,12 +110,14 @@ const create = async (req, res) => {
 
       res.send({
         status: true,
+        data: response,
       });
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).json({
         status: false,
-        err: err.details[0],
+        err: err.error.details[0],
       });
     });
 };
@@ -130,9 +136,9 @@ const update = async (req, res) => {
       },
       body: {
         first_name: currentUser.user_name.split(' ')[0],
-        last_name: currentUser.user_name.split(' ')[1],
+        last_name: currentUser.user_name.split(' ')[1] || ' ',
         email: currentUser.email,
-        paypal,
+        paypal_email: paypal,
       },
       json: true,
     })
@@ -148,13 +154,13 @@ const update = async (req, res) => {
 
         res.send({
           status: true,
-          data: response.links[0].url,
+          data: response,
         });
       })
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details[0],
+          err: err.error.details[0],
         });
       });
   } else {

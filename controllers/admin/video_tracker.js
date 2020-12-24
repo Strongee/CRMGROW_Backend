@@ -27,7 +27,6 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const query = { ...req.query };
-  console.log('req.query', query);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({

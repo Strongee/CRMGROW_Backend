@@ -27,11 +27,15 @@ const Video = require('../models/video');
 const Note = require('../models/note');
 const Notification = require('../models/notification');
 const TimeLine = require('../models/time_line');
-const TimeLineCtrl = require('../controllers/time_line');
 const Garbage = require('../models/garbage');
+const CampaignJob = require('../models/campaign_job');
+const EmailTemplate = require('../models/email_template');
+const TimeLineCtrl = require('../controllers/time_line');
+
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
+const notifications = require('../constants/notification');
 const mail_contents = require('../constants/mail_contents');
 const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
 
@@ -39,9 +43,16 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const FileHelper = require('../helpers/file');
+const ActivityHelper = require('../helpers/activity');
 
 const { DB_PORT } = require('../config/database');
 
@@ -55,6 +66,13 @@ const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_S3_REGION,
+});
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
 });
 
 const daily_report = new CronJob(
@@ -193,7 +211,7 @@ const weekly_report = new CronJob({
   cronTime: '00 21 * * Sun',
   onTick: async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-    await User.find({ weekly_report: true })
+    await User.find({ weekly_report: true, del: false })
       .then(async (users) => {
         const today = new Date();
         const day = today.getDay();
@@ -330,7 +348,7 @@ const reminder_job = new CronJob(
     due_date.setMilliseconds(0);
 
     const reminder_array = await Reminder.find({
-      due_date,
+      due_date: { $lte: due_date },
       del: false,
     }).catch((err) => {
       console.log(err);
@@ -360,11 +378,11 @@ const reminder_job = new CronJob(
           const contact = await Contact.findOne({
             _id: follow_up.contact,
           }).catch((err) => {
-            console.log('err: ', err);
+            console.log('err: ', err.message);
           });
           const garbage = await Garbage.findOne({ user: user.id }).catch(
             (err) => {
-              console.log('err: ', err);
+              console.log('err: ', err.message);
             }
           );
           const email_notification = garbage['email_notification'];
@@ -413,7 +431,11 @@ const reminder_job = new CronJob(
           const text_notification = garbage['text_notification'];
           if (text_notification['follow_up']) {
             const e164Phone = phone(user.cell_phone)[0];
-            const fromNumber = api.TWILIO.TWILIO_NUMBER;
+            // let fromNumber = user['proxy_number'];
+            // if (!fromNumber) {
+            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            // }
+            const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
             console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
             if (!e164Phone) {
               const error = {
@@ -438,11 +460,19 @@ const reminder_job = new CronJob(
               '\n';
             const body = follow_up.content + '\n';
             const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
+
+            client.messages
               .create({
                 from: fromNumber,
-                body: title + body + '\n' + contact_link,
                 to: e164Phone,
+                body:
+                  title +
+                  body +
+                  '\n' +
+                  contact_link +
+                  '\n\n' +
+                  TextHelper.generateUnsubscribeLink(),
+                // body: title + body,
               })
               .then(() => {
                 console.log(
@@ -454,15 +484,7 @@ const reminder_job = new CronJob(
                   `UTC timezone ${moment(follow_up.due_date).toISOString()}`
                 );
               })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
-
-            reminder['del'] = true;
-
-            reminder.save().catch((err) => {
-              console.log(err);
-            });
+              .catch((err) => console.error('send sms err: ', err));
           }
           const desktop_notification = garbage['desktop_notification'];
           if (desktop_notification['follow_up']) {
@@ -501,8 +523,17 @@ const reminder_job = new CronJob(
               .sendNotification(subscription, playload)
               .catch((err) => console.error(err));
           }
+          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+            console.log('reminder remove err', err.message);
+          });
+        } else {
+          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+            console.log('reminder remove err', err.message);
+          });
         }
       } else {
+        console.log('reminder*****', reminder);
+        /**
         const appointment = await Appointment.findOne({
           _id: reminder.appointment,
         }).catch((err) => {
@@ -560,7 +591,11 @@ const reminder_job = new CronJob(
           });
 
         const e164Phone = phone(user.cell_phone)[0];
-        const fromNumber = api.TWILIO.TWILIO_NUMBER;
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
         console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
         if (!e164Phone) {
           const error = {
@@ -585,28 +620,28 @@ const reminder_job = new CronJob(
           '\n';
         const body = appointment.content + '\n';
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + body + '\n' + contact_link,
             to: e164Phone,
+            body: title + body + '\n' + contact_link,
           })
           .then(() => {
             console.log(
               `Reminder at: ${moment(appointment.due_date)
                 .utcOffset(user.time_zone)
-                .format('h:mm a')}`
+                .format('MMMM Do YYYY h:mm a')}`
             );
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
 
         reminder['del'] = true;
 
         reminder.save().catch((err) => {
           console.log(err);
         });
+         */
       }
     }
   },
@@ -622,11 +657,12 @@ const signup_job = new CronJob(
   async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-    const subscribers = await User.find({ welcome_email: false }).catch(
-      (err) => {
-        console.log('err', err);
-      }
-    );
+    const subscribers = await User.find({
+      welcome_email: false,
+      del: false,
+    }).catch((err) => {
+      console.log('err', err);
+    });
 
     if (subscribers) {
       for (let i = 0; i < subscribers.length; i++) {
@@ -635,27 +671,56 @@ const signup_job = new CronJob(
         const now = new Date().getTime();
         const offset = now - created_at;
         if (offset >= 30 * 60 * 1000 && offset < 60 * 60 * 1000) {
-          const msg = {
-            to: subscriber.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
-            dynamic_template_data: {
-              first_name: subscriber.user_name,
-            },
+          // const msg = {
+          //   to: subscriber.email,
+          //   from: mail_contents.WELCOME_SIGNUP.MAIL,
+          //   templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_REACH,
+          //   dynamic_template_data: {
+          //     first_name: subscriber.user_name,
+          //   },
+          // };
+          // sgMail
+          //   .send(msg)
+          //   .then((res) => {
+          //     console.log('mailres.errorcode', res[0].statusCode);
+          //     if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
+          //       console.log('Successful send to ' + msg.to);
+          //     } else {
+          //       console.log('email sending err', msg.to + res[0].statusCode);
+          //     }
+          //   })
+          //   .catch((err) => {
+          //     console.log('err', err);
+          //   });
+
+          const templatedData = {
+            user_name: subscriber.user_name,
+            created_at: moment().format('h:mm MMMM Do, YYYY'),
+            webinar_link: system_settings.WEBINAR_LINK,
           };
-          sgMail
-            .send(msg)
-            .then((res) => {
-              console.log('mailres.errorcode', res[0].statusCode);
-              if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-                console.log('Successful send to ' + msg.to);
-              } else {
-                console.log('email sending err', msg.to + res[0].statusCode);
-              }
-            })
-            .catch((err) => {
-              console.log('err', err);
-            });
+
+          const params = {
+            Destination: {
+              ToAddresses: [subscriber.email],
+            },
+            Source: mail_contents.REPLY,
+            Template: 'WebinarInvitation',
+            TemplateData: JSON.stringify(templatedData),
+          };
+
+          // Create the promise and SES service object
+
+          ses.sendTemplatedEmail(params).promise();
+
+          const notification = new Notification({
+            user: subscribers[i].id,
+            criteria: 'webniar',
+            content: notifications.webinar.content,
+            description: notifications.webinar.description,
+          });
+          notification.save().catch((err) => {
+            console.log('notification save err', err.message);
+          });
         }
         if (offset >= 24 * 60 * 60 * 1000 && offset < 24.5 * 60 * 60 * 1000) {
           const msg = {
@@ -1023,7 +1088,7 @@ const upload_video_job = new CronJob(
         const video = videos[i];
         const file_path = video.path;
         if (file_path) {
-          const file_name = video.path.slice(23);
+          const file_name = video.path.slice(37);
 
           if (fs.existsSync(file_path)) {
             try {
@@ -1126,10 +1191,6 @@ const timesheet_check = new CronJob(
         if (!action) {
           continue;
         }
-        if (timeline.condition && timeline.condition.answer === true) {
-          TimeLineCtrl.disableNext(timeline.id);
-          continue;
-        }
         switch (action.type) {
           case 'follow_up': {
             let follow_due_date;
@@ -1185,8 +1246,10 @@ const timesheet_check = new CronJob(
                   console.log('error', err);
                 });
 
+                let detail_content = 'added follow up';
+                detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({
-                  content: 'added follow up',
+                  content: detail_content,
                   contacts: _followup.contact,
                   user: timeline.user,
                   type: 'follow_ups',
@@ -1203,12 +1266,28 @@ const timesheet_check = new CronJob(
                     timeline.save().catch((err) => {
                       console.log('err', err);
                     });
-                    Contact.updateMany(
+                    Contact.updateOne(
                       { _id: _followup.contact },
                       { $set: { last_activity: _activity.id } }
                     ).catch((err) => {
                       console.log('contact update err', err.message);
                     });
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+
+                TimeLine.updateMany(
+                  {
+                    contact: timeline.contact,
+                    'action.ref_id': timeline.ref,
+                  },
+                  {
+                    $set: { 'action.follow_up': _followup.id },
+                  }
+                )
+                  .then(() => {
+                    console.log('follow up updated');
                   })
                   .catch((err) => {
                     console.log('follow error', err.message);
@@ -1236,8 +1315,11 @@ const timesheet_check = new CronJob(
             note
               .save()
               .then((_note) => {
+                let detail_content = 'added note';
+                detail_content = ActivityHelper.automationLog(detail_content);
+
                 const activity = new Activity({
-                  content: 'added note',
+                  content: detail_content,
                   contacts: _note.contact,
                   user: timeline.user,
                   type: 'notes',
@@ -1247,9 +1329,12 @@ const timesheet_check = new CronJob(
                 });
 
                 activity.save().then((_activity) => {
-                  Contact.findByIdAndUpdate(_note.contact, {
-                    $set: { last_activity: _activity.id },
-                  }).catch((err) => {
+                  Contact.updateOne(
+                    { _id: _note.contact },
+                    {
+                      $set: { last_activity: _activity.id },
+                    }
+                  ).catch((err) => {
                     console.log('err', err);
                   });
                   timeline['status'] = 'completed';
@@ -1285,6 +1370,12 @@ const timesheet_check = new CronJob(
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
+                  const activity_data = {
+                    activity: res[0].activity,
+                    contact: timeline.contact,
+                    parent_ref: timeline.ref,
+                  };
+                  TimeLineCtrl.setEmailTrackTimeline(activity_data);
                 } else {
                   timeline['status'] = 'error';
                   timeline['updated_at'] = new Date();
@@ -1490,12 +1581,401 @@ const timesheet_check = new CronJob(
                 });
               });
             break;
+          case 'resend_email_video':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            EmailHelper.resendVideo(data)
+              .then((res) => {
+                // if (res[0] && res[0].status === true) {
+                //   timeline['status'] = 'completed';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // } else {
+                //   timeline['status'] = 'error';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // }
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              })
+              .catch((err) => {
+                // timeline['status'] = 'error';
+                // timeline['updated_at'] = new Date();
+                // timeline.save().catch((err) => {
+                //   console.log('err', err);
+                // });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              });
+            break;
+          case 'resend_text_video':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            TextHelper.resendVideo(data)
+              .then((res) => {
+                // if (res[0] && res[0].status === true) {
+                //   timeline['status'] = 'completed';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // } else {
+                //   timeline['status'] = 'error';
+                //   timeline['updated_at'] = new Date();
+                //   timeline.save().catch((err) => {
+                //     console.log('err', err);
+                //   });
+                // }
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              })
+              .catch((err) => {
+                // timeline['status'] = 'error';
+                // timeline['updated_at'] = new Date();
+                // timeline.save().catch((err) => {
+                //   console.log('err', err);
+                // });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              });
+            break;
+          case 'update_contact': {
+            switch (action.command) {
+              case 'update_label':
+                Contact.updateOne(
+                  {
+                    _id: timeline.contact,
+                  },
+                  {
+                    $set: { label: mongoose.Types.ObjectId(action.content) },
+                  }
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
+                break;
+              case 'push_tag': {
+                const tags = action.content.map((tag) => tag.value);
+                Contact.updateOne(
+                  {
+                    _id: timeline.contact,
+                  },
+                  {
+                    $push: { tags: { $each: tags } },
+                  }
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
+                break;
+              }
+              case 'pull_tag': {
+                const tags = action.content.map((tag) => tag.value);
+                Contact.updateOne(
+                  {
+                    _id: timeline.contact,
+                  },
+                  {
+                    $pull: { tags: { $in: tags } },
+                  }
+                ).catch((err) => {
+                  console.log('err', err.message);
+                });
+                break;
+              }
+            }
+            timeline['status'] = 'completed';
+            timeline['updated_at'] = new Date();
+            timeline.save().catch((err) => {
+              console.log('time line err', err.message);
+            });
+            break;
+          }
+          case 'update_follow_up': {
+            switch (action.command) {
+              case 'update_follow_up': {
+                let follow_due_date;
+                let content;
+                let update_data;
+                if (action.due_date) {
+                  follow_due_date = action.due_date;
+                }
+                if (action.due_duration) {
+                  const now = moment();
+                  now.set({ second: 0, millisecond: 0 });
+                  follow_due_date = now.add(action.due_duration, 'hours');
+                  follow_due_date.set({ second: 0, millisecond: 0 });
+                }
+                if (follow_due_date) {
+                  update_data = {
+                    follow_due_date,
+                  };
+                }
+                if (action.content) {
+                  content = action.content;
+                  update_data = { ...update_data, content };
+                }
+                FollowUp.updateOne(
+                  {
+                    _id: action.follow_up,
+                  },
+                  update_data
+                )
+                  .then(async () => {
+                    if (follow_due_date) {
+                      const garbage = await Garbage.findOne({
+                        user: timeline.user,
+                      }).catch((err) => {
+                        console.log('err', err.message);
+                      });
+                      let reminder_before = 30;
+                      if (garbage) {
+                        reminder_before = garbage.reminder_before;
+                      }
+                      const startdate = moment(follow_due_date);
+                      const reminder_due_date = startdate.subtract(
+                        reminder_before,
+                        'mins'
+                      );
+
+                      Reminder.updateOne(
+                        {
+                          follow_up: action.follow_up,
+                        },
+                        {
+                          due_date: reminder_due_date,
+                        }
+                      ).catch((err) => {
+                        console.log('reminder delete err', err.message);
+                      });
+
+                      let detail_content = 'updated follow up';
+                      detail_content = ActivityHelper.automationLog(
+                        detail_content
+                      );
+                      const activity = new Activity({
+                        content: detail_content,
+                        contacts: timeline.contact,
+                        user: timeline.user,
+                        type: 'follow_ups',
+                        follow_ups: action.follow_up,
+                      });
+
+                      activity
+                        .save()
+                        .then((_activity) => {
+                          Contact.updateOne(
+                            { _id: timeline.contact },
+                            { $set: { last_activity: _activity.id } }
+                          ).catch((err) => {
+                            console.log('contact update err', err.message);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('follow error', err.message);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('update follow up cron err', err.message);
+                  });
+                break;
+              }
+              case 'complete_follow_up': {
+                FollowUp.updateOne(
+                  {
+                    _id: action.follow_up,
+                  },
+                  {
+                    status: 1,
+                  }
+                )
+                  .then(() => {
+                    Reminder.deleteOne({
+                      follow_up: action.follow_up,
+                    }).catch((err) => {
+                      console.log('reminder delete err', err.message);
+                    });
+
+                    let detail_content = 'completed follow up';
+                    detail_content = ActivityHelper.automationLog(
+                      detail_content
+                    );
+                    const activity = new Activity({
+                      content: detail_content,
+                      contacts: timeline.contact,
+                      user: timeline.user,
+                      type: 'follow_ups',
+                      follow_ups: action.follow_up,
+                    });
+
+                    activity
+                      .save()
+                      .then((_activity) => {
+                        Contact.updateOne(
+                          { _id: timeline.contact },
+                          { $set: { last_activity: _activity.id } }
+                        ).catch((err) => {
+                          console.log('contact update err', err.message);
+                        });
+                      })
+                      .catch((err) => {
+                        console.log('follow error', err.message);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log('update follow up cron err', err.message);
+                  });
+                break;
+              }
+            }
+            timeline['status'] = 'completed';
+            timeline['updated_at'] = new Date();
+            timeline.save().catch((err) => {
+              console.log('time line err', err.message);
+            });
+            break;
+          }
+          case 'bulk_sms': {
+            const { message_sid, activities } = timeline.action;
+            TextHelper.getStatus(message_sid).then((res) => {
+              if (res.status === 'delivered') {
+                Activity.updateMany(
+                  {
+                    _id: { $in: activities },
+                  },
+                  {
+                    $set: { status: 'completed' },
+                  }
+                ).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    $set: { status: 'delivered' },
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              } else if (res.status === 'sent') {
+                const beginning_time = moment(timeline.due_date).add(
+                  10,
+                  'minutes'
+                );
+                const now = moment();
+                if (beginning_time.isBefore(now)) {
+                  console.log('before');
+                  Activity.deleteMany({
+                    _id: { $in: activities },
+                  }).catch((err) => {
+                    console.log('activity save err', err.message);
+                  });
+                }
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    $set: {
+                      status: 'undelivered',
+                      description:
+                        res.errorMessage ||
+                        'Could`t get delivery result from carrier',
+                      content: 'Failed texting material',
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              } else if (
+                res.status === 'undelivered' ||
+                res.status === 'failed'
+              ) {
+                Activity.deleteMany({
+                  _id: { $in: activities },
+                }).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+                Notification.updateMany(
+                  { message_sid },
+                  {
+                    $set: {
+                      status: 'undelivered',
+                      description: res.errorMessage,
+                      content: 'Failed texting material',
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('notification update err', err.message);
+                });
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              }
+            });
+            break;
+          }
         }
-        const next_data = {
-          contact: timeline.contact,
-          ref: timeline.ref,
-        };
-        TimeLineCtrl.activeNext(next_data);
+        if (timeline.ref) {
+          const next_data = {
+            contact: timeline.contact,
+            ref: timeline.ref,
+          };
+          TimeLineCtrl.activeNext(next_data);
+        } else if (timeline.status === 'completed') {
+          TimeLine.deleteOne({
+            _id: timeline.id,
+          }).catch((err) => {
+            console.log('timeline remove err', err.message);
+          });
+        }
+        if (timeline.condition && timeline.condition.answer === false) {
+          const pair_timeline = await TimeLine.findOne({
+            parent_ref: timeline.parent_ref,
+            contact: timeline.contact,
+            'condition.answer': true,
+          });
+          if (pair_timeline) {
+            TimeLineCtrl.disableNext(pair_timeline.id);
+          }
+        }
       }
     }
   },
@@ -1528,12 +2008,61 @@ const reset_daily_limit = new CronJob(
   'US/Central'
 );
 
+const campaign_job = new CronJob(
+  '0 * * * *',
+  async () => {
+    const due_date = new Date();
+    const campaign_jobs = await CampaignJob.find({
+      status: 'active',
+      due_date: { $lte: due_date },
+    }).populate({
+      path: 'campaign',
+      select: {
+        email_template: 1,
+        video: 1,
+        pdf: 1,
+        image: 1,
+      },
+    });
+
+    if (campaign_jobs && campaign_jobs.length > 0) {
+      for (let i = 0; i < campaign_jobs.length; i++) {
+        const campaign_job = campaign_jobs[i];
+        const campaign = campaign_job.email_template;
+        const email_template = await EmailTemplate.findOne({
+          _id: campaign.email_template,
+        });
+
+        const { user, contacts } = campaign_job;
+        const data = {
+          user,
+          content: email_template.content,
+          subject: email_template.subject,
+          contacts,
+          video_ids: campaign.videos,
+          pdf_ids: campaign.pdfs,
+          image_ids: campaign.images,
+        };
+        EmailHelper.sendEmail(data).catch((err) => {
+          console.log('err', err.message);
+        });
+      }
+    }
+  },
+  function () {
+    console.log('Reminder Job finished.');
+  },
+  false,
+  'US/Central'
+);
+
 signup_job.start();
 reminder_job.start();
 weekly_report.start();
 upload_video_job.start();
 convert_video_job.start();
 payment_check.start();
+campaign_job.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();

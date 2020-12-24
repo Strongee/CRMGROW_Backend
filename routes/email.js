@@ -32,5 +32,9 @@ router.get('/track1/:id', catchError(EmailCtrl.openTrack));
 router.get('/opened/:id', catchError(EmailCtrl.receiveEmail));
 router.get('/unsubscribe/:id', catchError(EmailCtrl.unSubscribeEmail));
 router.get('/resubscribe/:id', catchError(EmailCtrl.reSubscribeEmail));
-
+router.post(
+  '/share-platform',
+  UserCtrl.checkAuth,
+  catchError(EmailCtrl.sharePlatform)
+);
 module.exports = router;

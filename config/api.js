@@ -4,6 +4,7 @@ const api = {
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_S3_REGION: process.env.AWS_S3_REGION,
     AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
+    AWS_SES_REGION: process.env.AWS_SES_REGION,
   },
   OUTLOOK_CLIENT: {
     OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
@@ -65,6 +66,12 @@ const api = {
       'd-a829cc5764184be695de903030681eb5',
     SENDGRID_INVITE_GUEST:
       process.env.SENDGRID_INVITE_GUEST || 'd-5c8deb9857ec46a08b65ac484bbd9c92',
+    NOTIFICATION_INVITE_TEAM_MEMBER:
+      process.env.NOTIFICATION_INVITE_TEAM_MEMBER ||
+      'd-b7cdf4b01448440f80ba0d2a88ac3310',
+    TEAM_ACCEPT_NOTIFICATION:
+      process.env.TEAM_ACCEPT_NOTIFICATION ||
+      'd-c8561720ef7a4b87bed4bfbffd38f00e',
   },
   TWILIO: {
     TWILIO_SID: process.env.TWILIO_SID,
@@ -84,6 +91,19 @@ const api = {
   },
   EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
   REWARDFUL_API_KEY: process.env.REWARDFUL_API_KEY,
+  SIGNALWIRE: {
+    PROJECT_ID: process.env.SIGNALWIRE_PROJECT_ID,
+    TOKEN: process.env.SIGNALWIRE_TOKEN,
+    WORKSPACE: 'https://crmgrow.signalwire.com',
+    WORKSPACE_DOMAIN: 'crmgrow.signalwire.com',
+    SYSTEM_NUMBER: '+18445193609',
+    EMAIL_NUMBER: '+18445176437',
+    DEFAULT_NUMBER2: '+13127391036',
+    DEFAULT_NUMBER: '+18442631354',
+  },
+  UNLAYER: {
+    PROJECT_ID: process.env.UNLAYER_PROJECT_ID,
+  },
 };
 
 module.exports = api;

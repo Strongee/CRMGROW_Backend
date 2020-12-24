@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
+const system_settings = require('../config/system_settings');
 
 const GarbageSchema = new Schema(
   {
@@ -34,7 +35,7 @@ const GarbageSchema = new Schema(
     },
     text_notification: {
       material: { type: Boolean, default: true },
-      email: { type: Boolean, default: true },
+      email: { type: Boolean, default: false },
       follow_up: { type: Boolean, default: false },
       lead_capture: { type: Boolean, default: false },
       unsubscription: { type: Boolean, default: false },
@@ -44,6 +45,8 @@ const GarbageSchema = new Schema(
     capture_dialog: { type: Boolean, default: false },
     capture_delay: { type: Number, default: 0 },
     capture_videos: { type: Array, default: [] },
+    capture_images: { type: Array, default: [] },
+    capture_pdfs: { type: Array, default: [] },
     capture_field: {
       email: { type: Boolean, default: true },
       cell_phone: { type: Boolean, default: true },
@@ -54,12 +57,57 @@ const GarbageSchema = new Schema(
     material_theme: { type: String, default: 'theme2' },
     auto_follow_up: {
       enabled: { type: Boolean, default: false },
-      period: Number,
-      content: String,
+      period: { type: Number, default: 0 },
+      content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
     },
+    auto_resend: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 24 },
+      sms_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+      email_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+    },
+    auto_follow_up2: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 0 },
+      content: { type: String, default: system_settings.AUTO_FOLLOW_UP },
+    },
+    auto_resend2: {
+      enabled: { type: Boolean, default: false },
+      period: { type: Number, default: 24 },
+      sms_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+      email_canned_message: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'email_template',
+      },
+    },
+    material_themes: { type: Object },
+    access_token: String,
     highlights: { type: Array, default: [] },
     brands: { type: Array, default: [] },
     intro_video: { type: String },
+    additional_fields: { type: Array, default: [] },
+    calendly: {
+      id: String,
+      token: String,
+      email: String,
+      link: String,
+    },
+    smtp: {
+      host: String,
+      user: String,
+      password: String,
+      secure: Boolean,
+      port: Number,
+    },
     created_at: Date,
     updated_at: Date,
   },
@@ -68,6 +116,7 @@ const GarbageSchema = new Schema(
   }
 );
 
+GarbageSchema.index({ user: 1, unique: true });
 const Garbage = mongoose.model('garbage', GarbageSchema);
 
 module.exports = Garbage;

@@ -44,4 +44,29 @@ const migrate = async () => {
     }
   }
 };
-migrate();
+
+const twilio = async () => {
+  const users = await User.find({
+    del: false,
+  }).catch((err) => {
+    console.log('err', err);
+  });
+
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    if (user.proxy_number) {
+      const number = user.proxy_number;
+      user['twilio_number'] = number;
+      user
+        .save()
+        .then(() => {
+          console.log(number);
+        })
+        .catch((err) => {
+          console.err('err', err.message);
+        });
+    }
+  }
+};
+
+twilio();

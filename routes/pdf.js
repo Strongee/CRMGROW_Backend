@@ -27,7 +27,7 @@ const storage = multerS3({
     const today = new Date();
     const year = today.getYear();
     const month = today.getMonth();
-    cb(null, 'pdf ' + year + '/' + month + '/' + file.originalname);
+    cb(null, 'pdf' + year + '/' + month + '/' + file.originalname);
   },
 });
 
@@ -44,17 +44,22 @@ router.post(
   catchError(PDFCtrl.create)
 );
 
+// PDF Creating new one from existing one
+router.post('/create', UserCtrl.checkAuth, catchError(PDFCtrl.createPDF));
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail));
 
 // Upload a preview and detail info
 router.get('/preview/:name', catchError(PDFCtrl.getPreview));
 
-// Get a pdf
-router.get('/:id', catchError(PDFCtrl.get));
+// Get easy load video
+router.get('/easy-load', UserCtrl.checkAuth, catchError(PDFCtrl.getEasyLoad));
 
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll));
+
+// Get a pdf
+router.get('/:id', catchError(PDFCtrl.get));
 
 // Default PDF Edit
 router.post(

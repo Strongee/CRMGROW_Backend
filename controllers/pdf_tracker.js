@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator/check');
 const sgMail = require('@sendgrid/mail');
 const webpush = require('web-push');
 const User = require('../models/user');
@@ -43,13 +42,7 @@ const create = async (data) => {
 
 const createbyDesktop = async (req, res) => {
   const query = { ...req.query };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      error: errors.array(),
-    });
-  }
+
   const pdf_tracker = new PDFTracker({
     ...query,
     updated_at: new Date(),
@@ -148,9 +141,12 @@ const createbyDesktop = async (req, res) => {
     activity
       .save()
       .then((_activity) => {
-        Contact.findByIdAndUpdate(query.contact, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: query.contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       })
@@ -257,9 +253,12 @@ const disconnect = async (pdf_tracker_id) => {
   });
 
   activity.save().then((_activity) => {
-    Contact.findByIdAndUpdate(query.contact, {
-      $set: { last_activity: _activity.id },
-    }).catch((err) => {
+    Contact.updateOne(
+      { _id: query.contact },
+      {
+        $set: { last_activity: _activity.id },
+      }
+    ).catch((err) => {
       console.log('err', err);
     });
     const myJSON = JSON.stringify(query);
@@ -288,7 +287,6 @@ const setup = (io) => {
 
     socket.on('update', (duration) => {
       const { pdf_tracker } = socket;
-      console.log('udpate', pdf_tracker._id);
       update(duration, pdf_tracker._id);
     });
 

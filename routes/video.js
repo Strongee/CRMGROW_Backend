@@ -58,9 +58,6 @@ router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update));
 // Upload a thumbnail and detail info
 router.get('/thumbnail/:name', catchError(VideoCtrl.getThumbnail));
 
-// Get all video
-router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
-
 // Bulk videos
 router.post(
   '/bulk-email',
@@ -118,6 +115,23 @@ router.post(
   UserCtrl.checkAuth,
   catchError(VideoCtrl.getConvertStatus)
 );
+
+// Get Convert progress of a video
+router.post('/convert-status1', catchError(VideoCtrl.getConvertStatus));
+
+router.get(
+  '/latest-sent/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.getContactsByLatestSent)
+);
+
+// Get easy load video
+router.get('/easy-load', UserCtrl.checkAuth, catchError(VideoCtrl.getEasyLoad));
+
+// Get all video
+router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
+
+router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
 
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));

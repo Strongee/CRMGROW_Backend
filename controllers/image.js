@@ -7,6 +7,7 @@ const uuidv1 = require('uuid/v1');
 const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
+const mongoose = require('mongoose');
 
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
@@ -46,9 +47,12 @@ const Image = require('../models/image');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
-
+const Team = require('../models/team');
+const Garbage = require('../models/garbage');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+const garbageHelper = require('../helpers/garbage.js');
+const ActivityHelper = require('../helpers/activity');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -70,22 +74,79 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const play = async (req, res) => {
   const image_id = req.query.image;
   const sender_id = req.query.user;
   const image = await Image.findOne({ _id: image_id });
-  const sender = await User.findOne({ _id: sender_id, del: false });
+  const user = await User.findOne({ _id: sender_id, del: false });
 
-  if (sender) {
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    if (garbage) {
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_images = garbage['capture_images'] || [];
+      if (capture_images.indexOf(image_id) === -1) {
+        capture_dialog = false;
+      }
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+    } else {
+      capture_dialog = false;
+    }
+    let social_link = {};
     const pattern = /^((http|https|ftp):\/\/)/;
 
-    if (!pattern.test(sender.learn_more)) {
-      sender.learn_more = 'http://' + sender.learn_more;
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
+    }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
     }
 
-    res.render('image', {
-      image,
-      user: sender,
+    res.render('lead_material_' + theme, {
+      material: image,
+      material_type: 'image',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      social_link: {},
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
     });
   } else {
     res.send(
@@ -109,19 +170,51 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const pattern = /^((http|https|ftp):\/\/)/;
+    const image = activity['images'];
 
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
     if (!pattern.test(user.learn_more)) {
       user.learn_more = 'http://' + user.learn_more;
     }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    if (garbage) {
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+    }
 
-    const image = activity['images'];
-
-    res.render('image1', {
-      image,
+    res.render('material_' + theme, {
+      material: image,
+      material_type: 'image',
       user,
       contact: activity['contacts'],
       activity: activity.id,
+      social_link,
+      setting: {
+        logo,
+        highlights,
+        brands,
+      },
     });
   }
 };
@@ -245,10 +338,25 @@ const getAll = async (req, res) => {
     user: currentUser.id,
     del: false,
   }).sort({ created_at: 1 });
-  const _image_admin = await Image.find({ role: 'admin', del: false }).sort({
+
+  const company = currentUser.company || 'eXp Realty';
+  const _image_admin = await Image.find({
+    role: 'admin',
+    del: false,
+    company,
+  }).sort({
     created_at: 1,
   });
   Array.prototype.push.apply(_image_list, _image_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('images');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_image_list, team.images);
+    }
+  }
 
   if (!_image_list) {
     return res.status(400).json({
@@ -303,17 +411,53 @@ const remove = async (req, res) => {
     });
     if (image) {
       const urls = image.url;
-      for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        s3.deleteObject(
+
+      if (image['default_edited']) {
+        Garbage.updateOne(
+          { user: currentUser.id },
           {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
-            console.log('err', err);
+            $pull: { edited_image: { $in: [image.default_image] } },
           }
-        );
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else if (image['has_shared']) {
+        Image.updateOne(
+          {
+            _id: image.shared_image,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_image: true },
+            has_shared: false,
+          }
+        ).catch((err) => {
+          console.log('default image remove err', err.message);
+        });
+      } else {
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        }
+      }
+
+      if (image.role === 'team') {
+        Team.updateOne(
+          { images: req.params.id },
+          {
+            $pull: { images: { $in: [req.params.id] } },
+          }
+        ).catch((err) => {
+          console.log('team update err', err);
+        });
       }
 
       image['del'] = true;
@@ -351,6 +495,16 @@ const bulkEmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let image_titles = '';
@@ -358,6 +512,7 @@ const bulkEmail = async (req, res) => {
       let image_objects = '';
       let image_subject = subject;
       let image_content = content;
+      const activities = [];
       let activity;
 
       let _contact = await Contact.findOne({
@@ -378,6 +533,22 @@ const bulkEmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -411,7 +582,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -443,8 +614,9 @@ const bulkEmail = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
+        activities.push(activity.id);
       }
 
       if (image_subject === '') {
@@ -483,8 +655,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: image_subject,
         html:
-          '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           image_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +
@@ -500,16 +673,20 @@ const bulkEmail = async (req, res) => {
           .then((_res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+              email_count += 1;
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -523,8 +700,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             console.error(err);
@@ -544,6 +721,10 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -575,15 +756,21 @@ const bulkText = async (req, res) => {
   const promise_array = [];
   const error = [];
 
+  let detail_content = 'sent image using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_ONE_TIME} contacts at a time`,
       });
     }
 
     for (let i = 0; i < contacts.length; i++) {
+      await textHelper.sleep(1000);
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
           console.log('err', err);
@@ -593,6 +780,7 @@ const bulkText = async (req, res) => {
       let image_descriptions = '';
       let image_objects = '';
       let image_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < images.length; j++) {
         const image = images[j];
@@ -611,11 +799,12 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
           images: image._id,
+          send_type: 1,
           created_at: new Date(),
           updated_at: new Date(),
           description: image_content,
@@ -639,6 +828,7 @@ const bulkText = async (req, res) => {
         }
         const image_object = `\n${image.title}:\n\n${image_link}\n`;
         image_objects += image_object;
+        activities.push(activity);
       }
 
       if (image_content.search(/{image_object}/gi) !== -1) {
@@ -664,15 +854,13 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
-        fromNumber = await textHelper.getTwilioNumber(currentUser.id);
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
       }
-
-      const promise = new Promise((resolve, reject) => {
+      const promise = new Promise(async (resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];
-
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('activity delete err', err.message);
           });
           error.push({
             contact: {
@@ -683,23 +871,45 @@ const bulkText = async (req, res) => {
           });
           resolve(); // Invalid phone number
         }
-        twilio.messages
-          .create({ from: fromNumber, body: image_content, to: e164Phone })
-          .then(() => {
-            console.info(
-              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-              image_content
-            );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
-              console.log('err', err);
-            });
-            resolve();
+
+        client.messages
+          .create({
+            from: fromNumber,
+            to: e164Phone,
+            body: image_content,
+          })
+          .then((message) => {
+            if (message.status !== 'undelivered') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                image_content
+              );
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+              resolve();
+            } else {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err: message.error_message,
+              });
+              resolve();
+            }
           })
           .catch((err) => {
-            console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             error.push({
@@ -848,11 +1058,22 @@ const bulkGmail = async (req, res) => {
   });
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
+    }
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    let no_connected = false;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -862,6 +1083,7 @@ const bulkGmail = async (req, res) => {
       let image_subject = subject;
       let image_content = content;
       let activity;
+      const activities = [];
       let promise;
       let _contact = await Contact.findOne({
         _id: contacts[i],
@@ -881,6 +1103,22 @@ const bulkGmail = async (req, res) => {
               email: _contact.email,
             },
             err: 'contact email not found or unsubscribed',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -914,7 +1152,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
@@ -932,6 +1170,8 @@ const bulkGmail = async (req, res) => {
             console.log('err', err);
           });
 
+        activities.push(activity.id);
+
         const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
 
         if (images.length >= 2) {
@@ -946,7 +1186,8 @@ const bulkGmail = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
       }
 
@@ -980,8 +1221,16 @@ const bulkGmail = async (req, res) => {
         );
       }
 
+      // const email_content =
+      //   '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+      //   image_content +
+      //   '<br/>Thank you,<br/>' +
+      //   currentUser.email_signature +
+      //   emailHelper.generateUnsubscribeLink(activity.id) +
+      //   '</body></html>';
+
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
         image_content +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
@@ -1038,39 +1287,61 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
                 console.log('err', err);
               });
+              email_count += 1;
               resolve();
             })
             .catch((err) => {
               console.log('gmail send err', err);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
-              error.push({
-                contact: {
-                  first_name: _contact.first_name,
-                  email: _contact.email,
-                },
-                err,
-              });
+
+              if (err.statusCode === 403) {
+                no_connected = true;
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    email: _contact.email,
+                  },
+                  err: 'No Connected Gmail',
+                });
+              } else if (err.statusCode === 400) {
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    email: _contact.email,
+                  },
+                  err: err.message,
+                });
+              } else {
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    email: _contact.email,
+                  },
+                  err: 'Recipient address required',
+                });
+              }
               resolve();
             });
         } catch (err) {
           console.log('err', err);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('err', err.message);
           });
+
           error.push({
             contact: {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err,
+            err: err.message || 'Unknown Error',
           });
           resolve();
         }
@@ -1081,6 +1352,16 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+        if (no_connected) {
+          return res.status(406).send({
+            status: false,
+            error: 'no connected',
+          });
+        }
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1113,16 +1394,28 @@ const bulkOutlook = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
     }
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
     });
+
+    let detail_content = 'sent image using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
@@ -1179,11 +1472,29 @@ const bulkOutlook = async (req, res) => {
         promise_array.push(promise);
         continue;
       }
+
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let image_titles = '';
       let image_descriptions = '';
       let image_objects = '';
       let image_subject = subject;
       let image_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < images.length; j++) {
         const image = images[j];
@@ -1211,14 +1522,14 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent image using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'images',
           images: image._id,
           created_at: new Date(),
           updated_at: new Date(),
-          subject,
+          subject: image_subject,
           description: image_content,
         });
 
@@ -1243,8 +1554,10 @@ const bulkOutlook = async (req, res) => {
           image_descriptions += image.description;
         }
         // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/>${image.description}<br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`
-        const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        // const image_object = `<p style="max-width:800px;margin-top:0px;"><b>${image.title}:</b><br/><br/><a href="${image_link}"><img src="${image.preview}?resize=true"/></a><br/></p>`;
+        const image_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         image_objects += image_object;
+        activities.push(activity.id);
       }
 
       if (image_subject === '') {
@@ -1277,18 +1590,20 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+      const email_content =
+        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        image_content +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
+
       const sendMail = {
         message: {
           subject: image_subject,
           body: {
             contentType: 'HTML',
-            content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
-              image_content +
-              '<br/>Thank you,<br/>' +
-              currentUser.email_signature +
-              emailHelper.generateUnsubscribeLink(activity.id) +
-              '</body></html>',
+            content: email_content,
           },
           toRecipients: [
             {
@@ -1306,16 +1621,20 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            email_count += 1;
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('err', err);
             error.push({
@@ -1333,6 +1652,11 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1358,12 +1682,246 @@ const bulkOutlook = async (req, res) => {
   }
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const images = await Image.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: images,
+  });
+};
+
+const createImage = async (req, res) => {
+  let preview;
+  const { currentUser } = req;
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      preview = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+    } catch (error) {
+      console.error('Upload Preview Image', error);
+    }
+  }
+
+  const image = new Image({
+    ...req.body,
+    preview,
+    user: currentUser.id,
+  });
+
+  if (req.body.shared_image) {
+    Image.updateOne(
+      {
+        _id: req.body.shared_image,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_image: image.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('image update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_image']) {
+      garbage['edited_image'].push(req.body.default_image);
+    } else {
+      garbage['edited_image'] = [req.body.default_image];
+    }
+  }
+
+  const _image = await image
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  res.send({
+    status: true,
+    data: _image,
+  });
+};
+
+const updateDefault = async (req, res) => {
+  const { image, id } = req.body;
+  let preview_path;
+  const { currentUser } = req;
+
+  const defaultImage = await Image.findOne({ _id: id, role: 'admin' }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+  if (!defaultImage) {
+    return res.status(400).json({
+      status: false,
+      error: 'This Default Image does not exist',
+    });
+  }
+  // Update Garbage
+  const garbage = await garbageHelper.get(currentUser);
+  if (!garbage) {
+    return res.status(400).send({
+      status: false,
+      error: `Couldn't get the Garbage`,
+    });
+  }
+
+  if (garbage['edited_image']) {
+    garbage['edited_image'].push(id);
+  } else {
+    garbage['edited_image'] = [id];
+  }
+
+  await garbage.save().catch((err) => {
+    return res.status(400).json({
+      status: false,
+      error: 'Update Garbage Error.',
+    });
+  });
+
+  for (const key in image) {
+    defaultImage[key] = image[key];
+  }
+
+  if (image.preview) {
+    // base 64 image
+    const file_name = uuidv1();
+
+    if (!fs.existsSync(PREVIEW_PATH)) {
+      fs.mkdirSync(PREVIEW_PATH);
+    }
+
+    preview_path = base64Img.imgSync(image.preview, PREVIEW_PATH, file_name);
+    if (fs.existsSync(preview_path)) {
+      fs.readFile(preview_path, (err, data) => {
+        if (err) {
+          console.log('File read error', err.message || err.msg);
+        } else {
+          console.log('File read done successful', data);
+          const today = new Date();
+          const year = today.getYear();
+          const month = today.getMonth();
+          const params = {
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
+            Key: 'preview' + year + '/' + month + '/' + file_name,
+            Body: data,
+            ACL: 'public-read',
+          };
+          s3.upload(params, async (s3Err, upload) => {
+            if (s3Err) {
+              console.log('upload s3 error', s3Err);
+            } else {
+              console.log(`File uploaded successfully at ${upload.Location}`);
+
+              preview_path = upload.Location;
+              if (preview_path) {
+                defaultImage['preview'] = preview_path;
+              }
+
+              defaultImage['updated_at'] = new Date();
+              const defaultImageJSON = JSON.parse(JSON.stringify(defaultImage));
+              delete defaultImageJSON['_id'];
+              delete defaultImageJSON['role'];
+
+              const newImage = new Image({
+                ...defaultImageJSON,
+                user: currentUser._id,
+                default_image: id,
+                default_edited: true,
+              });
+
+              const _image = await newImage
+                .save()
+                .then()
+                .catch((err) => {
+                  console.log('image new creating err', err.message);
+                });
+
+              return res.send({
+                status: true,
+                data: _image,
+              });
+            }
+          });
+        }
+      });
+    } else {
+      console.log('preview writting server error');
+      return res.status(400).json({
+        status: false,
+        error: 'preview writing server error.',
+      });
+    }
+  } else {
+    defaultImage['updated_at'] = new Date();
+    const defaultPdfJSON = JSON.parse(JSON.stringify(defaultImage));
+    delete defaultPdfJSON['_id'];
+    delete defaultPdfJSON['role'];
+
+    const newImage = new Image({
+      ...defaultPdfJSON,
+      user: currentUser._id,
+      default_pdf: id,
+      default_edited: true,
+    });
+
+    const _image = await newImage
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('image save err', err);
+      });
+
+    return res.send({
+      status: true,
+      data: _image,
+    });
+  }
+};
+
 module.exports = {
   play,
   play1,
   create,
+  createImage,
   updateDetail,
+  updateDefault,
   get,
+  getEasyLoad,
   getAll,
   getPreview,
   bulkEmail,

@@ -12,6 +12,7 @@ const TimeLineSchema = new Schema(
     action: Object,
     ref: String,
     parent_ref: String,
+    activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     automation: { type: mongoose.Schema.Types.ObjectId, ref: 'automation' },
     condition: {
       case: String,
@@ -20,6 +21,7 @@ const TimeLineSchema = new Schema(
     watched_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     watched_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     watched_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
+    opened_email: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     created_at: Date,
     updated_at: Date,
   },
@@ -27,6 +29,10 @@ const TimeLineSchema = new Schema(
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   }
 );
+
+TimeLineSchema.index({ status: 1, due_date: 1 });
+TimeLineSchema.index({ contact: 1, parent_ref: 1, status: 1 });
+TimeLineSchema.index({ user: 1 });
 
 const TimeLine = mongoose.model('time_line', TimeLineSchema);
 

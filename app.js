@@ -27,25 +27,29 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(express.static('../frontend/dist'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/video', catchError(VideoCtrl.play));
 app.get('/video1/:id', catchError(VideoCtrl.play1));
+app.get('/video2', catchError(VideoCtrl.play2));
 app.get('/pdf', catchError(PDFCtrl.play));
 app.get('/pdf1/:id', catchError(PDFCtrl.play1));
 app.get('/image', catchError(ImageCtrl.play));
 app.get('/image/:id', catchError(ImageCtrl.play1));
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay));
-app.get('/unsubscribe/:id', catchError(EmailCtrl.unSubscribeEmail));
+app.get('/unsubscribe', catchError(EmailCtrl.unSubscribePage));
+app.get('/redirect', catchError(EmailCtrl.clickEmailLink));
+app.get('/social-oauth/:social', (req, res) => {
+  res.render('social_oauth', { type: req.params.social });
+});
+app.get('/social-oauth-callback/:social', (req, res) => {
+  res.render('social_oauth_callback', { type: req.params.social });
+});
 
 app.get('/auth', (req, res) => {
   res.render('auth');
 });
 
 app.use('/api', indexRouter);
-app.get('*', catchError(PageCtrl.display), (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-});
 
 module.exports = app;

@@ -26,6 +26,15 @@ const credentials = {
   tokenPath: '/oauth2/v2.0/token',
 };
 const oauth2 = require('simple-oauth2')(credentials);
+const nodemailer = require('nodemailer');
+const AWS = require('aws-sdk');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
@@ -37,6 +46,9 @@ const Contact = require('../models/contact');
 const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
+const Team = require('../models/team');
+
+const { getSignalWireNumber } = require('../helpers/text');
 
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -61,7 +73,7 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { email, token, referral } = req.body;
+  const { user_name, email, token, referral } = req.body;
 
   // if (isBlockedEmail(email)) {
   //   res.status(400).send({
@@ -72,6 +84,7 @@ const signUp = async (req, res) => {
   // }
 
   const payment_data = {
+    user_name,
     email,
     token,
     referral,
@@ -172,23 +185,24 @@ const signUp = async (req, res) => {
         payment: payment.id,
         salt,
         hash,
-        updated_at: new Date(),
-        created_at: new Date(),
-      });
-
-      const garbage = new Garbage({
-        user: user.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      garbage.save().catch((err) => {
-        console.log('err', err);
       });
 
       user
         .save()
         .then((_res) => {
+          const garbage = new Garbage({
+            user: _res.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+
+          garbage.save().catch((err) => {
+            console.log('garbage save err', err.message);
+          });
+          // purchase proxy number
+          getSignalWireNumber(_res.id);
+
+          // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
@@ -224,9 +238,86 @@ const signUp = async (req, res) => {
             console.log('err', err);
           });
 
-          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
-            expiresIn: '30d',
-          });
+          // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
+          //   expiresIn: '30d',
+          // });
+
+          Team.find({ referrals: email })
+            .populate('owner')
+            .then((teams) => {
+              for (let i = 0; i < teams.length; i++) {
+                const team = teams[i];
+                const members = team.members;
+                const referrals = team.referrals;
+                if (members.indexOf(_res.id) === -1) {
+                  members.push(_res.id);
+                }
+                if (referrals.indexOf(email) !== -1) {
+                  const pos = referrals.indexOf(email);
+                  referrals.splice(pos, 1);
+                }
+
+                Team.updateOne(
+                  {
+                    _id: team.id,
+                  },
+                  {
+                    $set: {
+                      members,
+                      referrals,
+                    },
+                  }
+                )
+                  .then(async () => {
+                    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+                    const owners = team.owner;
+                    for (let i = 0; i < owners.length; i++) {
+                      const owner = owners[i];
+                      const msg = {
+                        to: owner.email,
+                        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                        dynamic_template_data: {
+                          subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                          team:
+                            "<a href='" +
+                            urls.TEAM_URL +
+                            team.id +
+                            "'><img src='" +
+                            urls.DOMAIN_URL +
+                            "assets/images/team.png'/></a>",
+                        },
+                      };
+
+                      sgMail
+                        .send(msg)
+                        .then()
+                        .catch((err) => {
+                          console.log('send message err: ', err);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('team update err: ', err.message);
+                  });
+              }
+            })
+            .catch((err) => {
+              console.log('err', err);
+              res.status(400).send({
+                status: false,
+                error: err,
+              });
+            });
+
+          const token = jwt.sign(
+            {
+              id: _res.id,
+            },
+            api.JWT_SECRET
+          );
 
           const myJSON = JSON.stringify(_res);
           const user = JSON.parse(myJSON);
@@ -257,8 +348,8 @@ const signUp = async (req, res) => {
         });
     })
     .catch((err) => {
-      console.log('err', err);
-      res.status(400).send({
+      console.log('signup payment create err', err);
+      res.status(500).send({
         status: false,
         error: err,
       });
@@ -302,7 +393,7 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { email, token, bill_amount } = req.body;
+  const { user_name, email, token, referral } = req.body;
 
   // if(!token) {
   //   const user = new User({
@@ -375,9 +466,10 @@ const socialSignUp = async (req, res) => {
   // }
 
   const payment_data = {
+    user_name,
     email,
     token,
-    bill_amount,
+    referral,
   };
 
   PaymentCtrl.create(payment_data)
@@ -390,19 +482,22 @@ const socialSignUp = async (req, res) => {
         created_at: new Date(),
       });
 
-      const garbage = new Garbage({
-        user: user.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      garbage.save().catch((err) => {
-        console.log('err', err);
-      });
-
       user
         .save()
         .then((_res) => {
+          const garbage = new Garbage({
+            user: _res.id,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+
+          garbage.save().catch((err) => {
+            console.log('err', err);
+          });
+          // purchase proxy number
+          getSignalWireNumber(_res.id);
+
+          // send welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           let msg = {
             to: _res.email,
@@ -437,9 +532,81 @@ const socialSignUp = async (req, res) => {
             console.log('err', err);
           });
 
-          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
-            expiresIn: '30d',
-          });
+          // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
+          //   expiresIn: '30d',
+          // });
+
+          Team.find({ referrals: email })
+            .populate('owner')
+            .then((teams) => {
+              for (let i = 0; i < teams.length; i++) {
+                const team = teams[i];
+                const members = team.members;
+                const referrals = team.referrals;
+                if (members.indexOf(_res.id) === -1) {
+                  members.push(_res.id);
+                }
+                if (referrals.indexOf(email) !== -1) {
+                  const pos = referrals.indexOf(email);
+                  referrals.splice(pos, 1);
+                }
+
+                Team.updateOne(
+                  {
+                    _id: team.id,
+                  },
+                  {
+                    $set: {
+                      members,
+                      referrals,
+                    },
+                  }
+                )
+                  .then(async () => {
+                    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+                    const owners = team.owner;
+                    for (let i = 0; i < owners.length; i++) {
+                      const owner = owners[i];
+                      const msg = {
+                        to: owner.email,
+                        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+                        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+                        dynamic_template_data: {
+                          subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name}`,
+                          activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${_res.user_name} has accepted invitation to join ${team.name} in CRMGrow`,
+                          team:
+                            "<a href='" +
+                            urls.TEAM_URL +
+                            team.id +
+                            "'><img src='" +
+                            urls.DOMAIN_URL +
+                            "assets/images/team.png'/></a>",
+                        },
+                      };
+
+                      sgMail
+                        .send(msg)
+                        .then()
+                        .catch((err) => {
+                          console.log('send message err: ', err);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('team update err: ', err.message);
+                  });
+              }
+            })
+            .catch((err) => {
+              console.log('err', err);
+              res.status(400).send({
+                status: false,
+                error: err,
+              });
+            });
+
+          const token = jwt.sign({ id: _res.id }, api.JWT_SECRET);
 
           const myJSON = JSON.stringify(_res);
           const user = JSON.parse(myJSON);
@@ -485,7 +652,7 @@ const signUpGmail = async (req, res) => {
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
-    // 'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/gmail.send',
   ];
@@ -493,7 +660,7 @@ const signUpGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
+    prompt: 'consent',
     // If you only need one scope you can pass it as a string
     scope: scopes,
   });
@@ -516,7 +683,7 @@ const signUpOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite',
+    'https://graph.microsoft.com/calendars.readwrite',
     'https://graph.microsoft.com/mail.send',
   ];
 
@@ -524,6 +691,7 @@ const signUpOutlook = async (req, res) => {
   const authorizationUri = oauth2.authCode.authorizeURL({
     redirect_uri: urls.SOCIAL_SIGNUP_URL + 'outlook',
     scope: scopes.join(' '),
+    prompt: 'select_account',
   });
 
   if (!authorizationUri) {
@@ -576,18 +744,88 @@ const socialGmail = async (req, res) => {
       });
     }
 
-    console.log(_res);
+    let email_max_count;
+    if (_res.data.hd) {
+      email_max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
+    } else {
+      email_max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
+    }
 
     const data = {
       email: _res.data.email,
       social_id: _res.data.id,
       connected_email_type: 'gmail',
+      email_max_count,
       primary_connected: true,
       google_refresh_token: JSON.stringify(tokens),
     };
     return res.send({
       status: true,
       data,
+    });
+  });
+};
+
+const appGoogleSignIn = async (req, res) => {
+  const code = req.query.code;
+  console.log(code);
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.APP_SIGNIN_URL + 'google'
+  );
+
+  const { tokens } = await oauth2Client.getToken(code);
+  oauth2Client.setCredentials(tokens);
+
+  if (typeof tokens.refresh_token === 'undefined') {
+    return res.status(403).send({
+      status: false,
+    });
+  }
+
+  if (!tokens) {
+    return res.status(403).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2',
+  });
+
+  oauth2.userinfo.v2.me.get(async function (err, _res) {
+    // Email is in the preferred_username field
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
+      });
+    }
+    const social_id = _res.data.id;
+    const _user = await User.findOne({
+      social_id: new RegExp(social_id, 'i'),
+      del: false,
+    });
+    if (!_user) {
+      return res.status(401).json({
+        status: false,
+        error: 'No existing email or user',
+      });
+    }
+    // TODO: Include only email for now
+    // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+    //   expiresIn: '30d',
+    // });
+    const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+    return res.send({
+      status: true,
+      data: {
+        token,
+        user: _user.id,
+      },
     });
   });
 };
@@ -631,12 +869,23 @@ const socialOutlook = async (req, res) => {
 
         const jwt = JSON.parse(decoded_token);
 
+        let email_max_count;
+        if (
+          jwt.preferred_username.indexOf('@outlook.com') !== -1 ||
+          jwt.preferred_username.indexOf('@hotmail.com') !== -1
+        ) {
+          email_max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
+        } else {
+          email_max_count = system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
+        }
         const data = {
           email: jwt.preferred_username,
           social_id: jwt.oid,
           connected_email_type: 'outlook',
           primary_connected: true,
           outlook_refresh_token,
+          connect_calendar: true,
+          email_max_count,
         };
         return res.send({
           status: true,
@@ -645,6 +894,32 @@ const socialOutlook = async (req, res) => {
       }
     }
   );
+};
+
+const appOutlookSignIn = async (req, res) => {
+  const social_id = req.query.code;
+  const _user = await User.findOne({
+    social_id: new RegExp(social_id, 'i'),
+    del: false,
+  });
+  if (!_user) {
+    return res.status(401).json({
+      status: false,
+      error: 'No existing email or user',
+    });
+  }
+  // TODO: Include only email for now
+  // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+  //   expiresIn: '30d',
+  // });
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+  return res.send({
+    status: true,
+    data: {
+      token,
+      user: _user.id,
+    },
+  });
 };
 
 const login = async (req, res) => {
@@ -708,9 +983,13 @@ const login = async (req, res) => {
     });
     // TODO: Include only email for now
     if (_user) {
-      const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
-        expiresIn: '30d',
-      });
+      // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+      //   expiresIn: '30d',
+      // });
+      const token = jwt.sign(
+        { id: _user.id, guest_loggin: true },
+        api.JWT_SECRET
+      );
       const myJSON = JSON.stringify(_user);
       const user = JSON.parse(myJSON);
 
@@ -743,18 +1022,18 @@ const login = async (req, res) => {
       hash !== _user.hash &&
       req.body.password !== system_settings.PASSWORD.ADMIN
     ) {
-      if (_user.primary_connected && _user.social_id) {
-        return res.send({
-          status: false,
-          code: 'SOCIAL_SIGN_' + _user.connected_email_type,
-        });
-      }
       return res.status(401).json({
         status: false,
         error: 'Invalid email or password!',
       });
     }
   } else if (req.body.password !== system_settings.PASSWORD.ADMIN) {
+    if (_user.primary_connected && _user.social_id) {
+      return res.send({
+        status: false,
+        code: 'SOCIAL_SIGN_' + _user.connected_email_type,
+      });
+    }
     return res.status(401).json({
       status: false,
       error: 'Please try to loggin using social email loggin',
@@ -770,9 +1049,10 @@ const login = async (req, res) => {
     console.log('err', err.message);
   });
   // TODO: Include only email for now
-  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+  // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+  //   expiresIn: '30d',
+  // });
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
 
@@ -817,9 +1097,10 @@ const socialLogin = async (req, res) => {
     });
   }
   // TODO: Include only email for now
-  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+  // const token = jwt.sign({ id: _user.id }, api.JWT_SECRET, {
+  //   expiresIn: '30d',
+  // });
+  const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
 
@@ -848,12 +1129,68 @@ const checkAuth = async (req, res, next) => {
     // err
   }
 
+  req.currentUser = await User.findOne({ _id: decoded.id, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+
+  if (req.currentUser) {
+    console.info('Auth Success:', req.currentUser.email);
+
+    if (decoded.guest_loggin) {
+      req.guest_loggin = true;
+    }
+
+    if (
+      req.currentUser.primary_connected ||
+      req.currentUser.connected_email_type === 'email'
+    ) {
+      next();
+    } else {
+      res.status(402).send({
+        status: false,
+        error: 'not connected',
+      });
+    }
+  } else {
+    console.error('Valid JWT but no user:', decoded);
+    res.status(401).send({
+      status: false,
+      error: 'invalid_user',
+    });
+  }
+};
+
+const checkAuthGuest = async (req, res, next) => {
+  const token = req.get('Authorization');
+  let decoded;
+  try {
+    decoded = jwt.verify(token, api.JWT_SECRET);
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  } catch (err) {
+    console.log('check verify error', err.message || err.msg);
+
+    return res.status(401).send({
+      status: false,
+      error: err.message,
+    });
+    // err
+  }
+
   req.currentUser = await User.findOne({ _id: decoded.id }).catch((err) => {
     console.log('err', err);
   });
 
   if (req.currentUser) {
     console.info('Auth Success:', req.currentUser.email);
+
+    if (decoded.guest_loggin) {
+      res.status(400).send({
+        status: false,
+        error: 'you have no access for this action',
+      });
+    }
 
     if (
       req.currentUser.primary_connected ||
@@ -952,6 +1289,9 @@ const editMe = async (req, res) => {
   // TODO: should limit the editing fields here
   delete editData.password;
 
+  if (editData['email']) {
+    user['connected_email'] = editData['email'];
+  }
   for (const key in editData) {
     user[key] = editData[key];
   }
@@ -1033,14 +1373,42 @@ const syncOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
+    // 'https://graph.microsoft.com/Group.Read.All',
   ];
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
     redirect_uri: urls.OUTLOOK_AUTHORIZE_URL,
     scope: scopes.join(' '),
+    prompt: 'select_account',
+  });
+
+  if (!authorizationUri) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+  return res.send({
+    status: true,
+    data: authorizationUri,
+  });
+};
+
+const syncOutlookCalendar = async (req, res) => {
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://graph.microsoft.com/calendars.readwrite',
+  ];
+
+  // Authorization uri definition
+  const authorizationUri = oauth2.authCode.authorizeURL({
+    redirect_uri: urls.OUTLOOK_CALENDAR_AUTHORIZE_URL,
+    scope: scopes.join(' '),
+    prompt: 'select_account',
   });
 
   if (!authorizationUri) {
@@ -1063,8 +1431,8 @@ const authorizeOutlook = async (req, res) => {
     'profile',
     'offline_access',
     'email',
-    // 'https://graph.microsoft.com/calendars.readwrite ',
     'https://graph.microsoft.com/mail.send',
+    // 'https://graph.microsoft.com/Group.Read.All',
   ];
 
   oauth2.authCode.getToken(
@@ -1086,7 +1454,7 @@ const authorizeOutlook = async (req, res) => {
         const token_parts = outlook_token.token.id_token.split('.');
 
         // Token content is in the second part, in urlsafe base64
-        const encoded_token = new Buffer(
+        const encoded_token = Buffer.from(
           token_parts[1].replace('-', '+').replace('_', '/'),
           'base64'
         );
@@ -1097,14 +1465,24 @@ const authorizeOutlook = async (req, res) => {
         // Email is in the preferred_username field
         user.connected_email = jwt.preferred_username;
         user.social_id = jwt.oid;
-        user.connected_email_type = 'outlook';
         user.primary_connected = true;
+        if (
+          user.connected_email.indexOf('@outlook.com') !== -1 ||
+          user.connected_email.indexOf('@hotmail.com') !== -1
+        ) {
+          user.connected_email_type = 'outlook';
+          user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
+        } else {
+          user.connected_email_type = 'microsoft';
+          user.email_info.max_count =
+            system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
+        }
         user
           .save()
-          .then((_res) => {
+          .then(() => {
             res.send({
               status: true,
-              data: user.email,
+              data: user.connected_email,
             });
           })
           .catch((err) => {
@@ -1116,6 +1494,152 @@ const authorizeOutlook = async (req, res) => {
       }
     }
   );
+};
+
+const authorizeOutlookCalendar = async (req, res) => {
+  const user = req.currentUser;
+  const code = req.query.code;
+  const scopes = [
+    'openid',
+    'profile',
+    'offline_access',
+    'https://graph.microsoft.com/calendars.readwrite ',
+  ];
+
+  oauth2.authCode.getToken(
+    {
+      code,
+      redirect_uri: urls.OUTLOOK_CALENDAR_AUTHORIZE_URL,
+      scope: scopes.join(' '),
+    },
+    function (error, result) {
+      if (error) {
+        console.log('err', error);
+        return res.status(500).send({
+          status: false,
+          error,
+        });
+      } else {
+        const outlook_token = oauth2.accessToken.create(result);
+        const outlook_refresh_token = outlook_token.token.refresh_token;
+        const token_parts = outlook_token.token.id_token.split('.');
+
+        // Token content is in the second part, in urlsafe base64
+        const encoded_token = Buffer.from(
+          token_parts[1].replace('-', '+').replace('_', '/'),
+          'base64'
+        );
+
+        const decoded_token = encoded_token.toString();
+
+        const jwt = JSON.parse(decoded_token);
+
+        // Email is in the preferred_username field
+        user.connect_calendar = true;
+        if (user.calendar_list) {
+          // const data = {
+          //   connected_email: _res.data.email,
+          //   google_refresh_token: JSON.stringify(tokens),
+          //   connected_calendar_type: 'google',
+          // };
+          // user.calendar_list.push(data);
+
+          user.calendar_list = [
+            {
+              connected_email: jwt.preferred_username,
+              outlook_refresh_token,
+              connected_calendar_type: 'outlook',
+            },
+          ];
+        } else {
+          user.calendar_list = [
+            {
+              connected_email: jwt.preferred_username,
+              outlook_refresh_token,
+              connected_calendar_type: 'outlook',
+            },
+          ];
+        }
+
+        user
+          .save()
+          .then(() => {
+            res.send({
+              status: true,
+              data: user.connected_email,
+            });
+          })
+          .catch((err) => {
+            return res.status(400).send({
+              status: false,
+              error: err.message,
+            });
+          });
+      }
+    }
+  );
+};
+
+const authorizeOtherEmailer = async (req, res) => {
+  const { currentUser } = req;
+  const { user, pass, host, port, secure } = req.body;
+
+  // create reusable transporter object using the default SMTP transport
+  const transporter = nodemailer.createTransport({
+    host,
+    port: port || system_settings.IMAP_PORT,
+    secure, // true for 465, false for other ports
+    auth: {
+      user, // generated ethereal user
+      pass, // generated ethereal password
+    },
+  });
+
+  // send mail with defined transport object
+  transporter
+    .sendMail({
+      from: `${currentUser.user_name} <${user}>`,
+      to: currentUser.email, // list of receivers
+      subject: 'Hello ✔', // Subject line
+      text: 'Hello world?', // plain text body
+      html: '<b>Hello world?</b>', // html body
+    })
+    .then((res) => {
+      if (res.messageId) {
+        User.updateOne(
+          {
+            _id: currentUser.id,
+          },
+          {
+            $set: {
+              other_emailer: {
+                user,
+                pass,
+                host,
+                port,
+                secure,
+              },
+            },
+          }
+        ).catch((err) => {
+          console.log('user update error', err.message);
+        });
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.status(400).json({
+          status: false,
+          error: res.error || 'Something went wrong',
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        error: err.message || 'Internal server error',
+      });
+    });
 };
 
 const syncYahoo = async (req, res) => {
@@ -1156,8 +1680,8 @@ const syncGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
     // If you only need one scope you can pass it as a string
+    prompt: 'consent',
     scope: scopes,
   });
 
@@ -1192,7 +1716,6 @@ const authorizeYahoo = async (req, res) => {
           error,
         });
       } else {
-        console.log('result', result);
         const yahoo_token = yahooOauth2.accessToken.create(result);
         user.yahoo_refresh_token = yahoo_token.token.refresh_token;
         const token_parts = yahoo_token.token.id_token.split('.');
@@ -1207,7 +1730,6 @@ const authorizeYahoo = async (req, res) => {
 
         const jwt = JSON.parse(decoded_token);
         // Email is in the preferred_username field
-        console.log('jwt******', jwt);
         user.email = jwt.preferred_username;
         user.social_id = jwt.oid;
         user.connected_email_type = 'yahoo';
@@ -1268,19 +1790,34 @@ const authorizeGmail = async (req, res) => {
     version: 'v2',
   });
 
-  oauth2.userinfo.v2.me.get(function (err, _res) {
+  oauth2.userinfo.v2.me.get((err, _res) => {
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
+      });
+    }
+
     // Email is in the preferred_username field
     user.connected_email = _res.data.email;
-    user.connected_email_type = 'gmail';
     user.primary_connected = true;
     user.social_id = _res.data.id;
     user.google_refresh_token = JSON.stringify(tokens);
+
+    if (_res.data.hd) {
+      user.connected_email_type = 'gsuit';
+      user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
+    } else {
+      user.connected_email_type = 'gmail';
+      user.email_info.max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
+    }
+
     user
       .save()
-      .then((_res) => {
+      .then(() => {
         res.send({
           status: true,
-          data: user.email,
+          data: user.connected_email,
         });
       })
       .catch((err) => {
@@ -1293,112 +1830,122 @@ const authorizeGmail = async (req, res) => {
   });
 };
 
-const syncCalendar = async (req, res) => {
-  const user = req.currentUser;
+const syncGoogleCalendar = async (req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+  );
 
-  if (user.connected_email === undefined) {
+  // generate a url that asks permissions for Blogger and Google Calendar scopes
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/userinfo.email',
+  ];
+
+  const authorizationUri = oauth2Client.generateAuthUrl({
+    // 'online' (default) or 'offline' (gets refresh_token)
+    access_type: 'offline',
+
+    // If you only need one scope you can pass it as a string
+    scope: scopes,
+  });
+
+  if (!authorizationUri) {
     return res.status(400).json({
       status: false,
-      error: 'Conneted email doesn`t exist',
+      error: 'Client doesn`t exist',
     });
   }
 
-  if (user.connected_email_type === 'outlook') {
-    const _appointments = await Appointment.find({ user: user.id, del: false });
-    for (let i = 0; i < _appointments.length; i++) {
-      const attendees = [];
-      if (typeof _appointments[i].guests !== 'undefined') {
-        for (let j = 0; j < _appointments[i].guests.length; j++) {
-          const addendee = {
-            EmailAddress: {
-              Address: _appointments[i].guests[j],
-            },
-          };
-          attendees.push(addendee);
-        }
-      }
-      const newEvent = {
-        Subject: _appointments[i].title,
-        Body: {
-          ContentType: 'HTML',
-          Content: _appointments[i].description,
-        },
-        Location: {
-          DisplayName: _appointments[i].location,
-        },
-        Start: {
-          DateTime: _appointments[i].due_start,
-          TimeZone: 'UTC' + user.time_zone,
-        },
-        End: {
-          DateTime: _appointments[i].due_end,
-          TimeZone: 'UTC' + user.time_zone,
-        },
-        Attendees: attendees,
-      };
+  return res.send({
+    status: true,
+    data: authorizationUri,
+  });
+};
 
-      const token = oauth2.accessToken.create({
-        refresh_token: user.outlook_refresh_token,
-        expires_in: 0,
-      });
-      let accessToken;
-      await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
-          if (error) {
-            reject(error.message);
-          } else {
-            resolve(result.token);
-          }
-        });
-      })
-        .then((token) => {
-          accessToken = token.access_token;
-        })
-        .catch((error) => {
-          console.log('outlook token grant error', error);
-          return res.status(406).send({
-            status: false,
-            error: 'not connected',
-          });
-        });
+const authorizeGoogleCalendar = async (req, res) => {
+  const user = req.currentUser;
+  const code = req.query.code;
 
-      const createEventParameters = {
-        token: accessToken,
-        event: newEvent,
-      };
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+  );
 
-      outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      outlook.calendar.createEvent(createEventParameters, function (
-        error,
-        event
-      ) {
-        if (error) {
-          console.log(
-            'There was an error contacting the Calendar service: ' + error
-          );
-          return;
-        }
-        _appointments[i].event_id = event.Id;
-        _appointments[i].save();
+  const { tokens } = await oauth2Client.getToken(code);
+  oauth2Client.setCredentials(tokens);
+
+  if (!tokens.refresh_token) {
+    return res.status(403).send({
+      status: false,
+    });
+  }
+
+  if (!tokens) {
+    return res.status(400).json({
+      status: false,
+      error: 'Client doesn`t exist',
+    });
+  }
+
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: 'v2',
+  });
+
+  oauth2.userinfo.v2.me.get((err, _res) => {
+    if (err) {
+      return res.status(403).send({
+        status: false,
+        error: err.message || 'Getting user profile error occured.',
       });
     }
 
+    // Email is in the preferred_username field
     user.connect_calendar = true;
-    user.save();
+    if (user.calendar_list) {
+      // const data = {
+      //   connected_email: _res.data.email,
+      //   google_refresh_token: JSON.stringify(tokens),
+      //   connected_calendar_type: 'google',
+      // };
+      // user.calendar_list.push(data);
 
-    return res.send({
-      status: true,
-    });
-  } else {
-    const oauth2Client = new google.auth.OAuth2(
-      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-      urls.GMAIL_AUTHORIZE_URL
-    );
-    const token = JSON.parse(user.google_refresh_token);
-    oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-    addGoogleCalendar(oauth2Client, user, res);
-  }
+      user.calendar_list = [
+        {
+          connected_email: _res.data.email,
+          google_refresh_token: JSON.stringify(tokens),
+          connected_calendar_type: 'google',
+        },
+      ];
+    } else {
+      user.calendar_list = [
+        {
+          connected_email: _res.data.email,
+          google_refresh_token: JSON.stringify(tokens),
+          connected_calendar_type: 'google',
+        },
+      ];
+    }
+
+    user
+      .save()
+      .then(() => {
+        res.send({
+          status: true,
+          data: _res.data.email,
+        });
+      })
+      .catch((err) => {
+        console.log('user save err', err.message);
+        return res.status(400).json({
+          status: false,
+          error: err.message,
+        });
+      });
+  });
 };
 
 const addGoogleCalendar = async (auth, user, res) => {
@@ -1728,7 +2275,10 @@ const forgotPassword = async (req, res) => {
       error: 'no_email_or_user_name',
     });
   }
-  const _user = await User.findOne({ email });
+  const _user = await User.findOne({
+    email: new RegExp(email, 'i'),
+    del: false,
+  });
 
   if (!_user) {
     return res.status(400).json({
@@ -1766,7 +2316,9 @@ const forgotPassword = async (req, res) => {
       subject: mail_contents.RESET_PASSWORD.SUBJECT,
       html,
     };
-    sgMail.send(msg);
+    sgMail.send(msg).catch((err) => {
+      console.log('err', err);
+    });
 
     res.send({
       status: true,
@@ -1920,6 +2472,76 @@ const searchPhone = async (req, res) => {
   }
 };
 
+const schedulePaidDemo = async (req, res) => {
+  const { currentUser } = req;
+  const payment = await Payment.findOne({
+    _id: currentUser.payment,
+  }).catch((err) => {
+    console.log('payment find err', err.message);
+  });
+
+  let amount;
+  if (req.body.demo === 1) {
+    amount = system_settings.ONBOARD_PRICING_30_MINS;
+  } else if (req.body.demo === 2) {
+    amount = system_settings.ONBOARD_PRICING_1_HOUR;
+  }
+
+  const data = {
+    card_id: payment.card_id,
+    customer_id: payment.customer_id,
+    receipt_email: currentUser.email,
+    amount,
+    description: 'Schedule one on one onboarding 30mins',
+  };
+
+  PaymentCtrl.createCharge(data)
+    .then(() => {
+      User.updateOne(
+        { _id: currentUser.id },
+        {
+          $set: { paid_demo: true },
+        }
+      ).catch((err) => {
+        console.log('user paid demo update err', err.message);
+      });
+      const templatedData = {
+        user_name: currentUser.user_name,
+        schedule_link: system_settings.SCHEDULE_LINK,
+      };
+
+      const params = {
+        Destination: {
+          ToAddresses: [currentUser.email],
+        },
+        Source: mail_contents.REPLY,
+        Template: 'OnboardCall',
+        TemplateData: JSON.stringify(templatedData),
+      };
+
+      // Create the promise and SES service object
+      ses
+        .sendTemplatedEmail(params)
+        .promise()
+        .then((response) => {
+          console.log('success', response.MessageId);
+        })
+        .catch((err) => {
+          console.log('ses send err', err);
+        });
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('card payment err', err);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   signUp,
   login,
@@ -1931,6 +2553,8 @@ module.exports = {
   signUpOutlook,
   socialGmail,
   socialOutlook,
+  appGoogleSignIn,
+  appOutlookSignIn,
   getMe,
   editMe,
   getUser,
@@ -1946,8 +2570,13 @@ module.exports = {
   authorizeGmail,
   syncYahoo,
   authorizeYahoo,
-  syncCalendar,
+  authorizeOtherEmailer,
+  syncGoogleCalendar,
+  authorizeGoogleCalendar,
+  syncOutlookCalendar,
+  authorizeOutlookCalendar,
   disconCalendar,
+  schedulePaidDemo,
   dailyReport,
   desktopNotification,
   textNotification,
@@ -1959,6 +2588,7 @@ module.exports = {
   weeklyReport,
   checkAuth,
   checkAuth2,
+  checkAuthGuest,
   checkSuspended,
   checkLastLogin,
   closeAccount,

@@ -27,7 +27,7 @@ const storage = multerS3({
     const today = new Date();
     const year = today.getYear();
     const month = today.getMonth();
-    cb(null, 'image ' + year + '/' + month + '/' + file.originalname);
+    cb(null, 'image' + year + '/' + month + '/' + file.originalname);
   },
 });
 
@@ -35,7 +35,7 @@ const upload = multer({
   storage,
 });
 
-// Upload a pdf
+// Upload a image
 router.post(
   '/',
   UserCtrl.checkAuth,
@@ -44,19 +44,25 @@ router.post(
   catchError(ImageCtrl.create)
 );
 
+// Image Creating new one from existing one
+router.post('/create', UserCtrl.checkAuth, catchError(ImageCtrl.createImage));
+
 // Upload a preview and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.updateDetail));
 
 // Upload a preview and detail info
 router.get('/preview/:name', catchError(ImageCtrl.getPreview));
 
-// Get a pdf
-router.get('/:id', catchError(ImageCtrl.get));
+// Get all image
+router.get('/easy-load', UserCtrl.checkAuth, catchError(ImageCtrl.getEasyLoad));
 
-// Get all pdf
+// Get all image
 router.get('/', UserCtrl.checkAuth, catchError(ImageCtrl.getAll));
 
-// Send PDF
+// Get a image
+router.get('/:id', catchError(ImageCtrl.get));
+
+// Send image
 router.post(
   '/send',
   UserCtrl.checkAuth,
@@ -64,7 +70,7 @@ router.post(
   catchError(ImageCtrl.sendImage)
 );
 
-// Send Video on text
+// Send image on text
 router.post(
   '/send-text',
   UserCtrl.checkAuth,
@@ -72,7 +78,7 @@ router.post(
   catchError(ImageCtrl.sendText)
 );
 
-// Bulk videos
+// Bulk email images
 router.post(
   '/bulk-email',
   UserCtrl.checkAuth,
@@ -95,7 +101,7 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(ImageCtrl.createSmsContent)
 );
-// Bulk videos
+// Bulk images
 router.post(
   '/bulk-outlook',
   UserCtrl.checkAuth,
@@ -103,7 +109,7 @@ router.post(
   catchError(ImageCtrl.bulkOutlook)
 );
 
-// Bulk videos
+// Bulk images
 router.post(
   '/bulk-gmail',
   UserCtrl.checkAuth,
@@ -111,7 +117,15 @@ router.post(
   catchError(ImageCtrl.bulkGmail)
 );
 
-// Delete a pdf
+// Default Image Edit
+router.post(
+  '/update-admin',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(ImageCtrl.updateDefault)
+);
+
+// Delete a image
 router.delete('/:id', UserCtrl.checkAuth, catchError(ImageCtrl.remove));
 
 module.exports = router;

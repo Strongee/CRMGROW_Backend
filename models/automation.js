@@ -5,8 +5,11 @@ const Schema = mongoose.Schema;
 const AutomationSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     title: String,
+    company: { type: String },
     automations: Array,
+    role: String,
     del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,
@@ -16,6 +19,7 @@ const AutomationSchema = new Schema(
   }
 );
 
+AutomationSchema.index({ user: 1 });
 const Automation = mongoose.model('automation', AutomationSchema);
 
 module.exports = Automation;

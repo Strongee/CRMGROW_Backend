@@ -41,6 +41,8 @@ router.post(
 );
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
+router.post('/interest', catchError(ContactCtrl.interestSubmitContact));
+router.post('/interest-submit', catchError(ContactCtrl.interestContact));
 
 // Import contact list as file
 router.post(
@@ -126,6 +128,9 @@ router.get(
 // Get Source data
 router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources));
 
+// Get City data
+router.get('/cities', UserCtrl.checkAuth2, catchError(ContactCtrl.getCities));
+
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById));
 
@@ -134,6 +139,13 @@ router.get(
   '/load-duplication',
   UserCtrl.checkAuth,
   catchError(ContactCtrl.loadDuplication)
+);
+
+// Get All Contacts
+router.get(
+  '/get-all',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getAllContacts)
 );
 
 // Get Contacts data with ID array
@@ -198,6 +210,33 @@ router.post(
   '/bulk-create',
   UserCtrl.checkAuth,
   catchError(ContactCtrl.bulkCreate)
+);
+
+router.post(
+  '/resubscribe',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.resubscribe)
+);
+
+router.post('/filter', UserCtrl.checkAuth, catchError(ContactCtrl.filter));
+
+// Get a contact in team leader's view
+router.get(
+  '/team-shared/:id',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getSharedContact)
+);
+
+router.post(
+  '/contact-merge',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.contactMerge)
+);
+
+router.post(
+  '/update-contact',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.updateContact)
 );
 
 // Get a pull contact info for profile page

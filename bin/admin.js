@@ -14,10 +14,13 @@ const system_settings = require('../config/system_settings');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Activity = require('../models/activity');
+const FollowUp = require('../models/follow_up');
+const Labels = require('../constants/label');
 
 const addContacts = async () => {
   const admin = await User.findOne({
     email: system_settings.ADMIN_ACCOUNT,
+    role: 'admin',
   }).catch((err) => {
     console.log('err', err);
   });
@@ -29,14 +32,46 @@ const addContacts = async () => {
       const user = users[i];
       let contact;
       let label;
-      const old_user = await Contact.findOne({
+      let old_user;
+      old_user = await Contact.findOne({
         source: user.id,
         user: admin.id,
       }).catch((err) => {
         console.log('err', err);
       });
+
       if (!old_user) {
-        console.log('old_user', user.email);
+        old_user = await Contact.findOne({
+          email: user.email,
+          user: admin.id,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+        if (old_user) {
+          let tags;
+          if (user.payment) {
+            tags = ['active', user.company];
+          } else {
+            tags = ['free', user.company];
+          }
+          Contact.updateOne(
+            {
+              _id: user.id,
+            },
+            {
+              $set: {
+                source: user.id,
+                tags,
+                label: Labels[1].id,
+              },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+        }
+      }
+
+      if (!old_user) {
         const week_ago = new Date();
         const month_ago = new Date();
         const two_month_ago = new Date();
@@ -48,16 +83,16 @@ const addContacts = async () => {
           const created = new Date(user.created_at);
 
           if (created.getTime() > week_ago.getTime()) {
-            label = 'New';
+            label = Labels[1].id;
           } else if (last_logged.getTime() > week_ago.getTime()) {
-            label = 'Hot';
+            label = Labels[5].id;
           } else if (last_logged.getTime() > month_ago.getTime()) {
-            label = 'Warm';
+            label = Labels[4].id;
           } else {
-            label = 'Cold';
+            label = Labels[2].id;
           }
         } else {
-          label = 'Cold';
+          label = Labels[2].id;
         }
         if (user.payment) {
           if (user.subscription && user.subscription.is_suspended) {
@@ -148,11 +183,12 @@ const addContacts = async () => {
 };
 
 const updateContacts = async () => {
-  const admin = await User.findOne({ email: 'support@crmgrow.com' }).catch(
-    (err) => {
-      console.log('admin account found', err.message);
-    }
-  );
+  const admin = await User.findOne({
+    email: 'support@crmgrow.com',
+    role: 'admin',
+  }).catch((err) => {
+    console.log('admin account found', err.message);
+  });
 
   const adminContacts = await Contact.find({ user: admin.id }).catch((err) => {
     console.log('admin contact found err', err.message);
@@ -160,9 +196,37 @@ const updateContacts = async () => {
   for (let i = 0; i < adminContacts.length; i++) {
     let label;
     const adminContact = adminContacts[i];
-    if (adminContact.tags && adminContact.tags.include('unsubscribed')) {
-      Contact.deleteOne({ _id: adminContact.id }).catch((err) => {
+    /**
+    if (adminContact.tags && adminContact.tags.indexOf('unsubscribed') !== -1) {
+      Contact.deleteOne({
+        _id: adminContact.id,
+        user: admin.id,
+      }).catch((err) => {
         console.log('err', err.message);
+      });
+
+      Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+      FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+      continue;
+    }
+     */
+
+    if (adminContact.label === Labels[6].id) {
+      Contact.deleteOne({
+        _id: adminContact.id,
+        user: admin.id,
+      }).catch((err) => {
+        console.log('err', err.message);
+      });
+      Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+      FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+        console.log('activity remove error', err.message);
       });
       continue;
     }
@@ -176,8 +240,17 @@ const updateContacts = async () => {
       });
 
       if (!user) {
-        Contact.deleteMany({ source: adminContact.source }).catch((err) => {
+        Contact.deleteOne({
+          _id: adminContact.id,
+          user: admin.id,
+        }).catch((err) => {
           console.log('err', err.message);
+        });
+        Activity.deleteMany({ contacts: adminContact.id }).catch((err) => {
+          console.log('activity remove error', err.message);
+        });
+        FollowUp.deleteMany({ contact: adminContact.id }).catch((err) => {
+          console.log('activity remove error', err.message);
         });
         continue;
       }
@@ -196,16 +269,21 @@ const updateContacts = async () => {
         const created = new Date(user.created_at);
 
         if (created.getTime() > week_ago.getTime()) {
-          label = 'New';
+          // New
+          label = Labels[1].id;
         } else if (last_logged.getTime() > week_ago.getTime()) {
-          label = 'Hot';
+          //  Hot
+          label = Labels[5].id;
         } else if (last_logged.getTime() > month_ago.getTime()) {
-          label = 'Warm';
+          //  Warm
+          label = Labels[4].id;
         } else {
-          label = 'Cold';
+          //  Cold
+          label = Labels[2].id;
         }
       } else {
-        label = 'Cold';
+        //  Cold
+        label = Labels[2].id;
       }
       if (user.payment) {
         if (user.subscription && user.subscription.is_suspended) {
@@ -254,12 +332,13 @@ const updateContacts = async () => {
         };
       }
 
-      Contact.updateMany(
-        { source: adminContact.source },
-        { $set: update_data }
-      ).catch((err) => {
-        console.log('contact update error', err.message);
-      });
+      Contact.updateMany({ source: adminContact.source }, { $set: update_data })
+        .then(() => {
+          console.log('updated email', adminContact.email);
+        })
+        .catch((err) => {
+          console.log('contact update error', err.message);
+        });
     }
   }
 };
@@ -282,7 +361,7 @@ const sourceUpdate = async () => {
     }).catch((err) => {
       console.log('admin user maching contact err ', err.message);
     });
-    Contact.updateMany(
+    Contact.updateOne(
       { _id: adminContact.id },
       { $set: { source: user.id } }
     ).catch((err) => {
@@ -315,3 +394,20 @@ update_contact.start();
 add_contact.start();
 // addContacts()
 // sourceUpdate()
+// updateContacts();
+const clean = async () => {
+  const admin = await User.findOne({
+    email: 'support@crmgrow.com',
+    role: 'admin',
+  }).catch((err) => {
+    console.log('admin account found', err.message);
+  });
+  Activity.deleteMany({ user: admin.id }).catch((err) => {
+    console.log('activity remove error', err.message);
+  });
+  FollowUp.deleteMany({ user: admin.id }).catch((err) => {
+    console.log('activity remove error', err.message);
+  });
+};
+
+// clean();

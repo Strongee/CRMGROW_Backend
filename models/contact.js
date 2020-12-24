@@ -6,22 +6,26 @@ const ContactSchema = mongoose.Schema(
     last_name: { type: String, default: '' },
     email: { type: String, default: '' },
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     address: String,
     city: String,
     state: String,
     zip: String,
-    label: {
-      type: String,
-    },
-    // label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
+    // label: {
+    //   type: String,
+    // },
+    label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
+    secondary_email: { type: String, default: '' },
     cell_phone: { type: String, default: '' },
+    secondary_phone: { type: String, default: '' },
     country: { type: String, default: '' },
+    auto_follow_up: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     source: String,
     brokerage: String,
-    tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'tag' }],
     tags: Array,
     recruiting_stage: String,
+    website: String,
     created_at: Date,
     updated_at: Date,
   },
@@ -50,7 +54,7 @@ ContactSchema.pre('save', function (next) {
 });
 
 const Countries = { 'UNITED STATES': 'US', 'UNITED STATE': 'US', CANADA: 'CA' };
-const Labels = [
+const LABEL = [
   '',
   'New',
   'Cold',
@@ -58,8 +62,8 @@ const Labels = [
   'Warm',
   'Hot',
   'Trash',
-  'Appt set',
-  'Appt missed',
+  'Appt Set',
+  'Appt Missed',
   'Lead',
 ];
 const States = [
@@ -141,5 +145,6 @@ const capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
+ContactSchema.index({ user: 1 });
 const Contact = mongoose.model('contact', ContactSchema);
 module.exports = Contact;

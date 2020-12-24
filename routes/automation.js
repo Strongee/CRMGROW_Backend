@@ -6,6 +6,8 @@ const { catchError } = require('../controllers/error');
 
 const router = express.Router();
 
+router.get('/', UserCtrl.checkAuth, catchError(AutomationCtrl.getAll));
+
 router.post('/search', UserCtrl.checkAuth, catchError(AutomationCtrl.search));
 
 router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create));
@@ -13,6 +15,8 @@ router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create));
 router.put('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.update));
 
 router.delete('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.remove));
+
+router.get('/list/own', UserCtrl.checkAuth, catchError(AutomationCtrl.loadOwn));
 
 router.get(
   '/list/:page',
@@ -24,6 +28,12 @@ router.post(
   '/detail/:id',
   UserCtrl.checkAuth,
   catchError(AutomationCtrl.getStatus)
+);
+
+router.get(
+  '/easy-load',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getEasyLoad)
 );
 
 router.get('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.get));

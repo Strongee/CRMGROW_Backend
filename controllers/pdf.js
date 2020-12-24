@@ -7,7 +7,7 @@ const uuidv1 = require('uuid/v1');
 const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
-const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
 const Garbage = require('../models/garbage');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
@@ -29,10 +29,17 @@ const PDF = require('../models/pdf');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
+const Team = require('../models/team');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
 
 const s3 = new AWS.S3({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -70,22 +77,73 @@ const makeBody = (to, from, subject, message) => {
 };
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
+const ActivityHelper = require('../helpers/activity');
 
 const play = async (req, res) => {
   const pdf_id = req.query.pdf;
   const sender_id = req.query.user;
   const pdf = await PDF.findOne({ _id: pdf_id });
-  const sender = await User.findOne({ _id: sender_id, del: false });
+  const user = await User.findOne({ _id: sender_id, del: false });
 
-  if (sender) {
-    const pattern = /^((http|https|ftp):\/\/)/;
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
 
-    if (!pattern.test(sender.learn_more)) {
-      sender.learn_more = 'http://' + sender.learn_more;
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    if (garbage) {
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_pdfs = garbage['capture_pdfs'] || [];
+      if (capture_pdfs.indexOf(pdf_id) === -1) {
+        capture_dialog = false;
+      }
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+    } else {
+      capture_dialog = false;
     }
-    res.render('pdf', {
-      pdf,
-      user: sender,
+    let social_link = {};
+    const pattern = /^((http|https|ftp):\/\/)/;
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
+    }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    res.render('lead_material_' + theme, {
+      material: pdf,
+      material_type: 'pdf',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      social_link: {},
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
     });
   } else {
     res.send(
@@ -109,19 +167,51 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const pattern = /^((http|https|ftp):\/\/)/;
+    const pdf = activity['pdfs'];
 
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
     if (!pattern.test(user.learn_more)) {
       user.learn_more = 'http://' + user.learn_more;
     }
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+    const garbage = await Garbage.findOne({ user: data._id }).catch((err) => {
+      console.log('err', err);
+    });
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    if (garbage) {
+      theme = garbage['material_theme'] || theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+    }
 
-    const pdf = activity['pdfs'];
-
-    res.render('pdf1', {
-      pdf,
+    res.render('material_' + theme, {
+      material: pdf,
+      material_type: 'pdf',
       user,
       contact: activity['contacts'],
       activity: activity.id,
+      social_link,
+      setting: {
+        logo,
+        highlights,
+        brands,
+      },
     });
   }
 };
@@ -337,12 +427,6 @@ const updateDefault = async (req, res) => {
       data: _pdf,
     });
   }
-  pdf.save().then((_pdf) => {
-    return res.send({
-      status: true,
-      data: _pdf,
-    });
-  });
 };
 
 const get = async (req, res) => {
@@ -394,7 +478,7 @@ const getAll = async (req, res) => {
     editedPDFs = garbage['edited_pdf'];
   }
 
-  // const company = currentUser.company || 'eXp Realty';
+  const company = currentUser.company || 'eXp Realty';
   const _pdf_list = await PDF.find({ user: currentUser.id, del: false }).sort({
     created_at: 1,
   });
@@ -402,10 +486,20 @@ const getAll = async (req, res) => {
     role: 'admin',
     del: false,
     _id: { $nin: editedPDFs },
+    company,
   }).sort({
     created_at: 1,
   });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
+
+  const teams = await Team.find({ members: currentUser.id }).populate('pdfs');
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_pdf_list, team.pdfs);
+    }
+  }
 
   if (!_pdf_list) {
     return res.status(400).json({
@@ -485,9 +579,12 @@ const sendPDF = async (req, res) => {
         .catch((err) => {
           console.log('err', err);
         });
-      Contact.findByIdAndUpdate(contacts[i], {
-        $set: { last_activity: activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: contacts[i] },
+        {
+          $set: { last_activity: activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -572,9 +669,12 @@ const sendText = async (req, res) => {
         .catch((err) => {
           console.log('err', err);
         });
-      Contact.findByIdAndUpdate(contacts[i], {
-        $set: { last_activity: activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: contacts[i] },
+        {
+          $set: { last_activity: activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
 
@@ -655,10 +755,23 @@ const remove = async (req, res) => {
 
     if (pdf) {
       if (pdf['default_edited']) {
-        Garbage.updateMany(
+        Garbage.updateOne(
           { user: currentUser.id },
           {
             $pull: { edited_pdf: { $in: [pdf.default_pdf] } },
+          }
+        ).catch((err) => {
+          console.log('default pdf remove err', err.message);
+        });
+      } else if (pdf['has_shared']) {
+        PDF.updateOne(
+          {
+            _id: pdf.shared_pdf,
+            user: currentUser.id,
+          },
+          {
+            $unset: { shared_pdf: true },
+            has_shared: false,
           }
         ).catch((err) => {
           console.log('default pdf remove err', err.message);
@@ -676,20 +789,32 @@ const remove = async (req, res) => {
               console.log('err', err);
             }
           );
-
-          pdf['del'] = true;
-          pdf.save();
-
-          res.send({
-            status: true,
-          });
-        } else {
-          res.status(404).send({
-            status: false,
-            error: 'invalid permission',
-          });
         }
       }
+
+      if (pdf.role === 'team') {
+        Team.updateOne(
+          { pdfs: req.params.id },
+          {
+            $pull: { pdfs: { $in: [req.params.id] } },
+          }
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
+      }
+
+      pdf['del'] = true;
+      pdf.save();
+
+      res.send({
+        status: true,
+      });
+    } else {
+      res.status(404).send({
+        status: false,
+        error: 'invalid permission',
+      });
+      return;
     }
   } catch (e) {
     console.error(e);
@@ -752,6 +877,16 @@ const bulkEmail = async (req, res) => {
       });
     }
 
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let promise;
       let _contact = await Contact.findOne({
@@ -779,11 +914,28 @@ const bulkEmail = async (req, res) => {
         continue;
       }
 
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -811,7 +963,7 @@ const bulkEmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -843,8 +995,9 @@ const bulkEmail = async (req, res) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (pdf_subject === '') {
@@ -877,8 +1030,9 @@ const bulkEmail = async (req, res) => {
         replyTo: currentUser.connected_email,
         subject: pdf_subject,
         html:
-          '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           pdf_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           emailHelper.generateUnsubscribeLink(activity.id) +
@@ -895,15 +1049,21 @@ const bulkEmail = async (req, res) => {
             console.log('mailres.errorcode', _res[0].statusCode);
             if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
               console.log('status', _res[0].statusCode);
-              Contact.findByIdAndUpdate(contacts[i], {
-                $set: { last_activity: activity.id },
-              }).catch((err) => {
+              email_count += 1;
+              Contact.updateOne(
+                {
+                  _id: contacts[i],
+                },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
                 console.log('err', err);
               });
               resolve();
             } else {
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err.message);
               });
               console.log('email sending err', msg.to + res[0].statusCode);
               error.push({
@@ -917,8 +1077,8 @@ const bulkEmail = async (req, res) => {
             }
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('err', err);
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('err', err.message);
             });
             console.log('email sending err', msg.to);
             console.error(err);
@@ -937,6 +1097,10 @@ const bulkEmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -970,15 +1134,21 @@ const bulkText = async (req, res) => {
   const promise_array = [];
   const error = [];
 
+  let detail_content = 'sent pdf using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.TEXT_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.TEXT_ONE_TIME} contacts at a time`,
       });
     }
 
     for (let i = 0; i < contacts.length; i++) {
+      await textHelper.sleep(1000);
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
           console.log('err', err);
@@ -988,6 +1158,7 @@ const bulkText = async (req, res) => {
       let pdf_descriptions = '';
       let pdf_objects = '';
       let pdf_content = content;
+      const activities = [];
       let activity;
 
       for (let j = 0; j < pdfs.length; j++) {
@@ -1007,11 +1178,12 @@ const bulkText = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using sms',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
           pdfs: pdf._id,
+          send_type: 1,
           created_at: new Date(),
           updated_at: new Date(),
           description: pdf_content,
@@ -1035,6 +1207,7 @@ const bulkText = async (req, res) => {
         }
         const pdf_object = `\n${pdf.title}:\n\n${pdf_link}\n`;
         pdf_objects += pdf_object;
+        activities.push(activity);
       }
 
       if (pdf_content.search(/{pdf_object}/gi) !== -1) {
@@ -1057,15 +1230,13 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
 
       if (!fromNumber) {
-        fromNumber = await textHelper.getTwilioNumber(currentUser.id);
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
       }
-
       const promise = new Promise((resolve, reject) => {
         const e164Phone = phone(_contact.cell_phone)[0];
-        console.log('e164Phone', e164Phone);
         if (!e164Phone) {
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('err', err);
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+            console.log('activity delete err', err.message);
           });
           error.push({
             contact: {
@@ -1076,23 +1247,45 @@ const bulkText = async (req, res) => {
           });
           resolve(); // Invalid phone number
         }
-        twilio.messages
-          .create({ from: fromNumber, body: pdf_content, to: e164Phone })
-          .then(() => {
-            console.info(
-              `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-              pdf_content
-            );
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
-              console.log('err', err);
-            });
-            resolve();
+
+        client.messages
+          .create({
+            from: fromNumber,
+            to: e164Phone,
+            body: pdf_content,
+          })
+          .then((message) => {
+            if (message.status !== 'undelivered') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                pdf_content
+              );
+              Contact.updateOne(
+                { _id: contacts[i] },
+                {
+                  $set: { last_activity: activity.id },
+                }
+              ).catch((err) => {
+                console.log('err', err);
+              });
+              resolve();
+            } else {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err: message.error_message,
+              });
+              resolve();
+            }
           })
           .catch((err) => {
-            console.log('err', err);
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             error.push({
@@ -1222,24 +1415,34 @@ const bulkOutlook = async (req, res) => {
   const error = [];
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
     }
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
     });
 
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       let accessToken;
       let promise;
 
       await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
+        token.refresh((error, result) => {
           if (error) {
             reject(error.message);
           } else {
@@ -1291,11 +1494,28 @@ const bulkOutlook = async (req, res) => {
         continue;
       }
 
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -1323,7 +1543,7 @@ const bulkOutlook = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -1355,8 +1575,10 @@ const bulkOutlook = async (req, res) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (subject === '') {
@@ -1383,18 +1605,20 @@ const bulkOutlook = async (req, res) => {
         );
       }
 
+      const email_content =
+        '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        pdf_content +
+        '<br/>Thank you,<br/>' +
+        currentUser.email_signature +
+        emailHelper.generateUnsubscribeLink(activity.id) +
+        '</body></html>';
+
       const sendMail = {
         message: {
           subject: pdf_subject,
           body: {
             contentType: 'HTML',
-            content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
-              pdf_content +
-              '<br/>Thank you,<br/>' +
-              currentUser.email_signature +
-              emailHelper.generateUnsubscribeLink(activity.id) +
-              '</body></html>',
+            content: email_content,
           },
           toRecipients: [
             {
@@ -1412,15 +1636,19 @@ const bulkOutlook = async (req, res) => {
           .api('/me/sendMail')
           .post(sendMail)
           .then(() => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('err', err);
             });
+            email_count += 1;
             resolve();
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('err', err);
             });
             console.log('err', err);
@@ -1439,6 +1667,10 @@ const bulkOutlook = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1488,11 +1720,22 @@ const bulkGmail = async (req, res) => {
   });
 
   if (contacts) {
-    if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+    if (contacts.length > system_settings.EMAIL_ONE_TIME) {
       return res.status(400).json({
         status: false,
-        error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+        error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
       });
+    }
+
+    let email_count = currentUser['email_info']['count'] || 0;
+    let no_connected = false;
+    const max_email_count =
+      currentUser['email_info']['max_count'] ||
+      system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+    let detail_content = 'sent pdf using email';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -1522,11 +1765,28 @@ const bulkGmail = async (req, res) => {
         continue;
       }
 
+      const email_info = currentUser['email_info'];
+      if (email_info['is_limit'] && email_count > max_email_count) {
+        promise = new Promise((resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              email: _contact.email,
+            },
+            err: 'email daily limit exceed!',
+          });
+          resolve();
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
       let pdf_titles = '';
       let pdf_descriptions = '';
       let pdf_objects = '';
       let pdf_subject = subject;
       let pdf_content = content;
+      const activities = [];
       let activity;
       for (let j = 0; j < pdfs.length; j++) {
         const pdf = pdfs[j];
@@ -1554,7 +1814,7 @@ const bulkGmail = async (req, res) => {
           .replace(/{contact_phone}/gi, _contact.cell_phone);
 
         const _activity = new Activity({
-          content: 'sent pdf using email',
+          content: detail_content,
           contacts: contacts[i],
           user: currentUser.id,
           type: 'pdfs',
@@ -1586,8 +1846,10 @@ const bulkGmail = async (req, res) => {
           pdf_descriptions += pdf.description;
         }
         // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/>${pdf.description}<br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`
-        const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        // const pdf_object = `<p style="max-width:800px;margin-top:0px;"><b>${pdf.title}:</b><br/><br/><a href="${pdf_link}"><img src="${pdf.preview}?resize=true"/></a><br/></p>`;
+        const pdf_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
         pdf_objects += pdf_object;
+        activities.push(activity.id);
       }
 
       if (pdf_subject === '') {
@@ -1672,17 +1934,18 @@ const bulkGmail = async (req, res) => {
             body,
           })
             .then(() => {
-              Contact.update(
+              Contact.updateOne(
                 { _id: contacts[i] },
                 { $set: { last_activity: activity.id } }
               ).catch((err) => {
                 console.log('err', err);
               });
+              email_count += 1;
               resolve();
             })
             .catch((err) => {
               console.log('gmail pdf send err', err);
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
               error.push({
@@ -1696,16 +1959,35 @@ const bulkGmail = async (req, res) => {
             });
         } catch (err) {
           console.log('err', err);
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
+          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
             console.log('err', err);
           });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              email: _contact.email,
-            },
-            err,
-          });
+          if (err.statusCode === 403) {
+            no_connected = true;
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'No Connected Gmail',
+            });
+          } else if (err.statusCode === 400) {
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: err.message,
+            });
+          } else {
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                email: _contact.email,
+              },
+              err: 'Recipient address required',
+            });
+          }
           resolve();
         }
       });
@@ -1714,6 +1996,16 @@ const bulkGmail = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        if (no_connected) {
+          return res.status(406).send({
+            status: false,
+            error: 'no connected',
+          });
+        }
+        currentUser['email_info']['count'] = email_count;
+        currentUser.save().catch((err) => {
+          console.log('current user save err', err.message);
+        });
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1741,13 +2033,108 @@ const bulkGmail = async (req, res) => {
   }
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const company = currentUser.company || 'eXp Realty';
+  const pdfs = await PDF.find({
+    $or: [
+      {
+        user: mongoose.Types.ObjectId(currentUser.id),
+        del: false,
+      },
+      {
+        role: 'admin',
+        company,
+        del: false,
+      },
+      {
+        shared_members: currentUser.id,
+      },
+    ],
+  });
+
+  return res.send({
+    status: true,
+    data: pdfs,
+  });
+};
+
+const createPDF = async (req, res) => {
+  let preview;
+  const { currentUser } = req;
+  if (req.body.preview) {
+    try {
+      const today = new Date();
+      const year = today.getYear();
+      const month = today.getMonth();
+      preview = await uploadBase64Image(
+        req.body.preview,
+        'preview' + year + '/' + month
+      );
+    } catch (error) {
+      console.error('Upload PDF Preview Image', error);
+    }
+  }
+
+  const pdf = new PDF({
+    ...req.body,
+    preview,
+    user: req.currentUser.id,
+  });
+
+  if (req.body.shared_pdf) {
+    PDF.updateOne(
+      {
+        _id: req.body.shared_pdf,
+      },
+      {
+        $set: {
+          has_shared: true,
+          shared_pdf: pdf.id,
+        },
+      }
+    ).catch((err) => {
+      console.log('pdf update err', err.message);
+    });
+  } else if (req.body.default_edited) {
+    // Update Garbage
+    const garbage = await garbageHelper.get(currentUser);
+    if (!garbage) {
+      return res.status(400).send({
+        status: false,
+        error: `Couldn't get the Garbage`,
+      });
+    }
+
+    if (garbage['edited_pdf']) {
+      garbage['edited_pdf'].push(req.body.default_pdf);
+    } else {
+      garbage['edited_pdf'] = [req.body.default_pdf];
+    }
+  }
+
+  const _pdf = await pdf
+    .save()
+    .then()
+    .catch((err) => {
+      console.log('err', err);
+    });
+
+  res.send({
+    status: true,
+    data: _pdf,
+  });
+};
+
 module.exports = {
   play,
   play1,
   create,
+  createPDF,
   updateDetail,
   updateDefault,
   get,
+  getEasyLoad,
   getAll,
   getPreview,
   sendPDF,

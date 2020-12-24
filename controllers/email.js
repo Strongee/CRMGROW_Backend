@@ -23,6 +23,8 @@ const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const User = require('../models/user');
 const Garbage = require('../models/garbage');
+const TimeLine = require('../models/time_line');
+const TimeLineCtrl = require('./time_line');
 
 const mail_contents = require('../constants/mail_contents');
 const api = require('../config/api');
@@ -45,7 +47,15 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+
 const emailHelper = require('../helpers/email');
+const ActivityHelper = require('../helpers/activity');
+const { generateUnsubscribeLink } = require('../helpers/text');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -75,11 +85,22 @@ const bulkGmail = async (req, res) => {
     });
   }
 
-  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+  if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
     });
+  }
+
+  let email_count = currentUser['email_info']['count'] || 0;
+  let no_connected = false;
+  const max_email_count =
+    currentUser['email_info']['max_count'] ||
+    system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {
@@ -105,6 +126,22 @@ const bulkGmail = async (req, res) => {
             email: _contact.email,
           },
           err: 'contact email not found or unsubscribed',
+        });
+        resolve();
+      });
+      promise_array.push(promise);
+      continue;
+    }
+
+    const email_info = currentUser['email_info'];
+    if (email_info['is_limit'] && email_count > max_email_count) {
+      promise = new Promise((resolve, reject) => {
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'email daily limit exceed!',
         });
         resolve();
       });
@@ -148,7 +185,7 @@ const bulkGmail = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -167,21 +204,25 @@ const bulkGmail = async (req, res) => {
     let html_content;
     if (cc.length > 0 || bcc.length > 0) {
       html_content =
-        '<html><head><title>Email</title></head><body><p>' +
+        '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
-        '</p><br/><br/>' +
+        '</td></tr><tr><td>' +
         currentUser.email_signature +
+        '</td></tr><tr><td>' +
         emailHelper.generateUnsubscribeLink(activity.id) +
-        '</body></html>';
+        '</td></tr></tbody></body></html>';
     } else {
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
-        '<html><head><title>Email</title></head><body><p>' +
+        '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
+        '</td></tr><tr><td>' +
         emailHelper.generateOpenTrackLink(activity.id) +
-        '</p><br/><br/>' +
+        '</td></tr><tr><td>' +
         currentUser.email_signature +
+        '</td></tr><tr><td>' +
         emailHelper.generateUnsubscribeLink(activity.id) +
-        '</body></html>';
+        '</td></tr></tbody></body></html>';
     }
 
     const attachment_array = [];
@@ -220,9 +261,13 @@ const bulkGmail = async (req, res) => {
           body,
         })
           .then(async () => {
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            })
+            email_count += 1;
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            )
               .then(() => {
                 resolve();
               })
@@ -235,13 +280,33 @@ const bulkGmail = async (req, res) => {
             Activity.deleteOne({ _id: activity.id }).catch((err) => {
               console.log('err', err);
             });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              err: err.message,
-            });
+
+            if (err.statusCode === 403) {
+              no_connected = true;
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: 'No Connected Gmail',
+              });
+            } else if (err.statusCode === 400) {
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: err.message,
+              });
+            } else {
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  email: _contact.email,
+                },
+                err: 'Recipient address required',
+              });
+            }
             resolve();
           });
       } catch (err) {
@@ -249,12 +314,13 @@ const bulkGmail = async (req, res) => {
         Activity.deleteOne({ _id: activity.id }).catch((err) => {
           console.log('err', err);
         });
+
         error.push({
           contact: {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: err.messagae,
+          err: err.message || 'Unknown Error',
         });
         resolve();
       }
@@ -266,6 +332,17 @@ const bulkGmail = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
+      if (no_connected) {
+        return res.status(406).send({
+          status: false,
+          error: 'no connected',
+        });
+      }
+
       if (error.length > 0) {
         return res.status(405).json({
           status: false,
@@ -348,11 +425,21 @@ const bulkOutlook = async (req, res) => {
   });
   let accessToken;
 
-  if (contacts.length > system_settings.EMAIL_DAILY_LIMIT.BASIC) {
+  if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
       status: false,
-      error: `You can send max ${system_settings.EMAIL_DAILY_LIMIT.BASIC} contacts at a time`,
+      error: `You can send max ${system_settings.EMAIL_ONE_TIME} contacts at a time`,
     });
+  }
+
+  let email_count = currentUser['email_info']['count'] || 0;
+  const max_email_count =
+    currentUser['email_info']['max_count'] ||
+    system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
   }
 
   for (let i = 0; i < contacts.length; i++) {
@@ -411,6 +498,22 @@ const bulkOutlook = async (req, res) => {
       continue;
     }
 
+    const email_info = currentUser['email_info'];
+    if (email_info['is_limit'] && email_count > max_email_count) {
+      promise = new Promise((resolve, reject) => {
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'email daily limit exceed!',
+        });
+        resolve();
+      });
+      promise_array.push(promise);
+      continue;
+    }
+
     email_subject = email_subject
       .replace(/{user_name}/gi, currentUser.user_name)
       .replace(/{user_email}/gi, currentUser.connected_email)
@@ -447,7 +550,7 @@ const bulkOutlook = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -499,6 +602,8 @@ const bulkOutlook = async (req, res) => {
         emailHelper.generateUnsubscribeLink(activity.id) +
         '</body></html>';
     } else {
+      // Add click tracking
+      email_content = emailHelper.addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><p>' +
         email_content +
@@ -541,9 +646,13 @@ const bulkOutlook = async (req, res) => {
         .api('/me/sendMail')
         .post(sendMail)
         .then(() => {
-          Contact.findByIdAndUpdate(contacts[i], {
-            $set: { last_activity: activity.id },
-          }).catch((err) => {
+          email_count += 1;
+          Contact.updateOne(
+            { _id: contacts[i] },
+            {
+              $set: { last_activity: activity.id },
+            }
+          ).catch((err) => {
             console.log('err', err);
           });
           resolve();
@@ -576,6 +685,10 @@ const bulkOutlook = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
       if (error.length > 0) {
         return res.status(405).json({
           status: false,
@@ -601,9 +714,11 @@ const openTrack = async (req, res) => {
   const _email = await Email.findOne({ message_id }).catch((err) => {
     console.log('err', err);
   });
-  const user = await User.findOne({ _id: _email.user }).catch((err) => {
-    console.log('err', err);
-  });
+  const user = await User.findOne({ _id: _email.user, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
 
   const contact = await Contact.findOne({ _id: _email.contacts }).catch(
     (err) => {
@@ -670,7 +785,7 @@ const openTrack = async (req, res) => {
           console.log('err', err);
         });
 
-      Contact.update(
+      Contact.updateOne(
         { _id: contact.id },
         { $set: { last_activity: _activity.id } }
       ).catch((err) => {
@@ -770,44 +885,12 @@ const openTrack = async (req, res) => {
 
           throw error; // Invalid phone number
         } else {
-          let fromNumber = user['proxy_number'];
-          if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
+          // let fromNumber = user['proxy_number'];
+          // if (!fromNumber) {
+          //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          // }
 
-            const data = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number === 'undefined') {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers('US')
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number !== 'undefined') {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log('proxy_number', proxy_number);
-              user['proxy_number'] = proxy_number.phoneNumber;
-              fromNumber = user['proxy_number'];
-              user.save().catch((err) => {
-                console.log('err', err);
-              });
-            } else {
-              fromNumber = api.TWILIO.TWILIO_NUMBER;
-            }
-          }
-
+          const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -828,16 +911,16 @@ const openTrack = async (req, res) => {
             ' at ' +
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
+          // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+          client.messages
             .create({
               from: fromNumber,
-              body: title + '\n' + time + contact_link,
               to: e164Phone,
+              // body: title + '\n' + time + contact_link,
+              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
             })
-            .catch((err) => {
-              console.log('send sms err: ', err);
-            });
+            .catch((err) => console.error('send sms err', err));
         }
       }
     }
@@ -855,6 +938,16 @@ const bulkEmail = async (req, res) => {
 
   const promise_array = [];
   const error = [];
+
+  let email_count = currentUser['email_info']['count'] || 0;
+  const max_email_count =
+    currentUser['email_info']['max_count'] ||
+    system_settings.EMAIL_DAILY_LIMIT.BASIC;
+
+  let detail_content = 'sent email';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
 
   for (let i = 0; i < contacts.length; i++) {
     let email_content = content;
@@ -879,6 +972,22 @@ const bulkEmail = async (req, res) => {
             email: _contact.email,
           },
           err: 'contact email not found or unsubscribed',
+        });
+        resolve();
+      });
+      promise_array.push(promise);
+      continue;
+    }
+
+    const email_info = currentUser['email_info'];
+    if (email_info['is_limit'] && email_count > max_email_count) {
+      promise = new Promise((resolve, reject) => {
+        error.push({
+          contact: {
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          err: 'email daily limit exceed!',
         });
         resolve();
       });
@@ -922,7 +1031,7 @@ const bulkEmail = async (req, res) => {
       });
 
     const _activity = new Activity({
-      content: 'sent email',
+      content: detail_content,
       contacts: contacts[i],
       user: currentUser.id,
       type: 'emails',
@@ -957,16 +1066,20 @@ const bulkEmail = async (req, res) => {
         .send(msg)
         .then(async (_res) => {
           if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-            Email.updateMany(
+            Email.updateOne(
               { _id: _email.id },
               { $set: { message_id: _res[0].headers['x-message-id'] } }
             ).catch((err) => {
               console.log('email update err', err);
             });
 
-            Contact.findByIdAndUpdate(contacts[i], {
-              $set: { last_activity: activity.id },
-            }).catch((err) => {
+            email_count += 1;
+            Contact.updateOne(
+              { _id: contacts[i] },
+              {
+                $set: { last_activity: activity.id },
+              }
+            ).catch((err) => {
               console.log('contact err', err);
             });
             resolve();
@@ -1004,6 +1117,10 @@ const bulkEmail = async (req, res) => {
   }
   Promise.all(promise_array)
     .then(() => {
+      currentUser['email_info']['count'] = email_count;
+      currentUser.save().catch((err) => {
+        console.log('current user save err', err.message);
+      });
       if (error.length > 0) {
         return res.status(405).json({
           status: false,
@@ -1065,9 +1182,11 @@ const receiveEmailSendGrid = async (req, res) => {
     console.log('err', err);
   });
   if (_email) {
-    const user = await User.findOne({ _id: _email.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: _email.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     let contact;
     if (user) {
@@ -1091,16 +1210,19 @@ const receiveEmailSendGrid = async (req, res) => {
           console.log('err', err);
         });
 
-        const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
-        const old_activity = await EmailTracker.findOne({
-          activity: email_activity.id,
-          type: 'open',
-          created_at: { $gte: reopened },
-        }).catch((err) => {
-          console.log('err', err.message);
-        });
+        let old_activity;
+        if (email_activity) {
+          const reopened = new Date(time_stamp * 1000 - 60 * 60 * 1000);
+          old_activity = await EmailTracker.findOne({
+            activity: email_activity.id,
+            type: 'open',
+            created_at: { $gte: reopened },
+          }).catch((err) => {
+            console.log('err', err.message);
+          });
+        }
 
-        if (!old_activity) {
+        if (!old_activity && email_activity) {
           const email_tracker = new EmailTracker({
             user: user.id,
             contact: contact.id,
@@ -1135,12 +1257,51 @@ const receiveEmailSendGrid = async (req, res) => {
               console.log('err', err);
             });
 
-          Contact.update(
+          Contact.updateOne(
             { _id: contact.id },
             { $set: { last_activity: _activity.id } }
           ).catch((err) => {
             console.log('err', err);
           });
+
+          /**
+           * Automation checking
+           */
+          const timelines = await TimeLine.find({
+            contact: contact.id,
+            status: 'active',
+            opened_email: req.params.id,
+            'condition.case': 'opened_email',
+            'condition.answer': true,
+          }).catch((err) => {
+            console.log('err', err);
+          });
+
+          if (timelines.length > 0) {
+            for (let i = 0; i < timelines.length; i++) {
+              try {
+                const timeline = timelines[i];
+                TimeLineCtrl.activeTimeline(timeline.id);
+              } catch (err) {
+                console.log('err', err.message);
+              }
+            }
+          }
+          const unopened_timelines = await TimeLine.find({
+            contact: contact.id,
+            status: 'active',
+            opened_email: req.params.id,
+            'condition.case': 'opened_email',
+            'condition.answer': false,
+          }).catch((err) => {
+            console.log('err', err);
+          });
+          if (unopened_timelines.length > 0) {
+            for (let i = 0; i < unopened_timelines.length; i++) {
+              const timeline = unopened_timelines[i];
+              TimeLineCtrl.disableNext(timeline.id);
+            }
+          }
         } else {
           return;
         }
@@ -1199,9 +1360,12 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.findByIdAndUpdate(contact.id, {
-          $set: { last_activity: _activity.id },
-        }).catch((err) => {
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
           console.log('err', err);
         });
       }
@@ -1247,7 +1411,7 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
-        Contact.update(
+        Contact.updateOne(
           { _id: contact.id },
           {
             $set: { last_activity: _activity.id },
@@ -1350,44 +1514,11 @@ const receiveEmailSendGrid = async (req, res) => {
 
           throw error; // Invalid phone number
         } else {
-          let fromNumber = user['proxy_number'];
-          if (!fromNumber) {
-            const areaCode = user.cell_phone.substring(1, 4);
-
-            const data = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode,
-            });
-
-            let number = data[0];
-
-            if (typeof number === 'undefined') {
-              const areaCode1 = user.cell_phone.substring(1, 3);
-
-              const data1 = await twilio
-                .availablePhoneNumbers('US')
-                .local.list({
-                  areaCode: areaCode1,
-                });
-              number = data1[0];
-            }
-
-            if (typeof number !== 'undefined') {
-              const proxy_number = await twilio.incomingPhoneNumbers.create({
-                phoneNumber: number.phoneNumber,
-                smsUrl: urls.SMS_RECEIVE_URL,
-              });
-
-              console.log('proxy_number', proxy_number);
-              user['proxy_number'] = proxy_number.phoneNumber;
-              fromNumber = user['proxy_number'];
-              user.save().catch((err) => {
-                console.log('err', err);
-              });
-            } else {
-              fromNumber = system_settings.TWILIO.TWILIO_NUMBER;
-            }
-          }
-
+          // let fromNumber = user['proxy_number'];
+          // if (!fromNumber) {
+          //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+          // }
+          const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
           const title =
             contact.first_name +
             ' ' +
@@ -1408,16 +1539,16 @@ const receiveEmailSendGrid = async (req, res) => {
             ' at ' +
             moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
-          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-          twilio.messages
+          // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+          client.messages
             .create({
               from: fromNumber,
-              body: title + '\n' + time + contact_link,
               to: e164Phone,
+              // body: title + '\n' + time + contact_link,
+              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
             })
-            .catch((err) => {
-              console.log('send sms err: ', err);
-            });
+            .catch((err) => console.error('send sms err: ', err));
         }
       }
     }
@@ -1436,9 +1567,11 @@ const receiveEmail = async (req, res) => {
   );
 
   if (activity) {
-    const user = await User.findOne({ _id: activity.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     const contact = await Contact.findOne({ _id: activity.contacts }).catch(
       (err) => {
@@ -1448,26 +1581,15 @@ const receiveEmail = async (req, res) => {
 
     const opened = new Date();
     if (contact && user) {
-      const _email = await Email.findOne({ _id: activity.emails }).catch(
-        (err) => {
-          console.log('email finding err', err);
-        }
-      );
       const created_at = moment(opened)
         .utcOffset(user.time_zone)
         .format('h:mm a');
       const action = 'opened';
-      const email_activity = await Activity.findOne({
-        contacts: contact.id,
-        emails: _email.id,
-      }).catch((err) => {
-        console.log('err', err);
-      });
 
       let reopened = moment();
       reopened = reopened.subtract(1, 'hours');
       const old_activity = await EmailTracker.findOne({
-        activity: email_activity.id,
+        activity: req.params.id,
         type: 'open',
         created_at: { $gte: reopened },
       }).catch((err) => {
@@ -1478,9 +1600,9 @@ const receiveEmail = async (req, res) => {
         const email_tracker = new EmailTracker({
           user: user.id,
           contact: contact.id,
-          email: _email.id,
+          email: activity.emails,
           type: 'open',
-          activity: email_activity.id,
+          activity: req.params.id,
           updated_at: opened,
           created_at: opened,
         });
@@ -1492,37 +1614,83 @@ const receiveEmail = async (req, res) => {
             console.log('err', err);
           });
 
-        const activity = new Activity({
+        const opened_activity = new Activity({
           content: 'opened email',
           contacts: contact.id,
           user: user.id,
           type: 'email_trackers',
-          emails: _email.id,
+          emails: activity.emails,
           email_trackers: _email_tracker.id,
           created_at: new Date(),
           updated_at: new Date(),
         });
 
-        const _activity = await activity
+        const _activity = await opened_activity
           .save()
           .then()
           .catch((err) => {
             console.log('err', err);
           });
 
-        Contact.update(
+        Contact.updateOne(
           { _id: contact.id },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
           console.log('err', err);
         });
 
+        /**
+         * Automation checking
+         */
+        const timelines = await TimeLine.find({
+          contact: contact.id,
+          status: 'checking',
+          opened_email: req.params.id,
+          'condition.case': 'opened_email',
+          'condition.answer': true,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+
+        if (timelines.length > 0) {
+          for (let i = 0; i < timelines.length; i++) {
+            try {
+              const timeline = timelines[i];
+              TimeLineCtrl.activeTimeline(timeline.id);
+            } catch (err) {
+              console.log('err', err.message);
+            }
+          }
+        }
+        const unopened_timelines = await TimeLine.find({
+          contact: contact.id,
+          status: 'active',
+          opened_email: req.params.id,
+          'condition.case': 'opened_email',
+          'condition.answer': false,
+        }).catch((err) => {
+          console.log('err', err);
+        });
+        if (unopened_timelines.length > 0) {
+          for (let i = 0; i < unopened_timelines.length; i++) {
+            const timeline = unopened_timelines[i];
+            TimeLineCtrl.disableNext(timeline.id);
+          }
+        }
+        /**
+         * Notification
+         */
         const garbage = await Garbage.findOne({ user: user.id }).catch(
           (err) => {
             console.log('err', err);
           }
         );
         const email_notification = garbage['email_notification'];
+        const _email = await Email.findOne({ _id: activity.emails }).catch(
+          (err) => {
+            console.log('email finding err', err);
+          }
+        );
 
         if (email_notification['email']) {
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -1531,7 +1699,7 @@ const receiveEmail = async (req, res) => {
             from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
             templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
             dynamic_template_data: {
-              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT}- ${contact.first_name} ${contact.last_name} at ${created_at}`,
+              subject: `${mail_contents.NOTIFICATION_OPENED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
               first_name: contact.first_name,
               last_name: contact.last_name,
               phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -1616,44 +1784,11 @@ const receiveEmail = async (req, res) => {
 
             throw error; // Invalid phone number
           } else {
-            let fromNumber = user['proxy_number'];
-            if (!fromNumber) {
-              const areaCode = user.cell_phone.substring(1, 4);
-
-              const data = await twilio.availablePhoneNumbers('US').local.list({
-                areaCode,
-              });
-
-              let number = data[0];
-
-              if (typeof number === 'undefined') {
-                const areaCode1 = user.cell_phone.substring(1, 3);
-
-                const data1 = await twilio
-                  .availablePhoneNumbers('US')
-                  .local.list({
-                    areaCode: areaCode1,
-                  });
-                number = data1[0];
-              }
-
-              if (typeof number !== 'undefined') {
-                const proxy_number = await twilio.incomingPhoneNumbers.create({
-                  phoneNumber: number.phoneNumber,
-                  smsUrl: urls.SMS_RECEIVE_URL,
-                });
-
-                console.log('proxy_number', proxy_number);
-                user['proxy_number'] = proxy_number.phoneNumber;
-                fromNumber = user['proxy_number'];
-                user.save().catch((err) => {
-                  console.log('err', err);
-                });
-              } else {
-                fromNumber = api.TWILIO.TWILIO_NUMBER;
-              }
-            }
-
+            // let fromNumber = user['proxy_number'];
+            // if (!fromNumber) {
+            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            // }
+            const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
             const title =
               contact.first_name +
               ' ' +
@@ -1674,16 +1809,16 @@ const receiveEmail = async (req, res) => {
               ' at ' +
               moment(opened).utcOffset(user.time_zone).format('h:mm a');
             const time = ' on ' + created_at + '\n ';
-            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-            twilio.messages
+            // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+            client.messages
               .create({
                 from: fromNumber,
-                body: title + '\n' + time + contact_link,
                 to: e164Phone,
+                body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+                // body: title + '\n' + time + contact_link,
               })
-              .catch((err) => {
-                console.log('send sms err: ', err);
-              });
+              .catch((err) => console.error('send sms err: ', err));
           }
         }
       }
@@ -1695,6 +1830,10 @@ const receiveEmail = async (req, res) => {
   res.sendFile(TRAKER_PATH);
 };
 
+const unSubscribePage = async (req, res) => {
+  return res.render('unsubscribe');
+};
+
 const unSubscribeEmail = async (req, res) => {
   const activity = await Activity.findOne({ _id: req.params.id }).catch(
     (err) => {
@@ -1704,9 +1843,11 @@ const unSubscribeEmail = async (req, res) => {
 
   let _activity;
   if (activity) {
-    const user = await User.findOne({ _id: activity.user }).catch((err) => {
-      console.log('err', err);
-    });
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
 
     const contact = await Contact.findOne({ _id: activity.contacts }).catch(
       (err) => {
@@ -1850,7 +1991,7 @@ const unSubscribeEmail = async (req, res) => {
       .catch((err) => {
         console.log('err', err);
       });
-    Contact.update(
+    Contact.updateOne(
       { _id: contact.id },
       {
         $set: { last_activity: last_activity.id },
@@ -1954,42 +2095,12 @@ const unSubscribeEmail = async (req, res) => {
 
         throw error; // Invalid phone number
       } else {
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          const areaCode = user.cell_phone.substring(1, 4);
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
 
-          const data = await twilio.availablePhoneNumbers('US').local.list({
-            areaCode,
-          });
-
-          let number = data[0];
-
-          if (typeof number === 'undefined') {
-            const areaCode1 = user.cell_phone.substring(1, 3);
-
-            const data1 = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode: areaCode1,
-            });
-            number = data1[0];
-          }
-
-          if (typeof number !== 'undefined') {
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl: urls.SMS_RECEIVE_URL,
-            });
-
-            console.log('proxy_number', proxy_number);
-            user['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = user['proxy_number'];
-            user.save().catch((err) => {
-              console.log('err', err);
-            });
-          } else {
-            fromNumber = api.TWILIO.TWILIO_NUMBER;
-          }
-        }
-
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2008,16 +2119,16 @@ const unSubscribeEmail = async (req, res) => {
           ' at ' +
           moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + time + contact_link,
             to: e164Phone,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
       }
     }
   }
@@ -2179,7 +2290,7 @@ const reSubscribeEmail = async (req, res) => {
       .catch((err) => {
         console.log('err', err.message);
       });
-    Contact.update(
+    Contact.updateOne(
       { _id: contact.id },
       {
         $set: { last_activity: last_activity.id },
@@ -2283,42 +2394,12 @@ const reSubscribeEmail = async (req, res) => {
 
         throw error; // Invalid phone number
       } else {
-        let fromNumber = user['proxy_number'];
-        if (!fromNumber) {
-          const areaCode = user.cell_phone.substring(1, 4);
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
 
-          const data = await twilio.availablePhoneNumbers('US').local.list({
-            areaCode,
-          });
-
-          let number = data[0];
-
-          if (typeof number === 'undefined') {
-            const areaCode1 = user.cell_phone.substring(1, 3);
-
-            const data1 = await twilio.availablePhoneNumbers('US').local.list({
-              areaCode: areaCode1,
-            });
-            number = data1[0];
-          }
-
-          if (typeof number !== 'undefined') {
-            const proxy_number = await twilio.incomingPhoneNumbers.create({
-              phoneNumber: number.phoneNumber,
-              smsUrl: urls.SMS_RECEIVE_URL,
-            });
-
-            console.log('proxy_number', proxy_number);
-            user['proxy_number'] = proxy_number.phoneNumber;
-            fromNumber = user['proxy_number'];
-            user.save().catch((err) => {
-              console.log('err', err);
-            });
-          } else {
-            fromNumber = api.TWILIO.TWILIO_NUMBER;
-          }
-        }
-
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
         const title =
           contact.first_name +
           ' ' +
@@ -2337,20 +2418,310 @@ const reSubscribeEmail = async (req, res) => {
           ' at ' +
           moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
-        const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-        twilio.messages
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + time + contact_link,
             to: e164Phone,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
           })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
+          .catch((err) => console.error('send sms err: ', err));
       }
     }
   }
   res.send('You successfully resubscribed CRMGrow email');
+};
+
+const sharePlatform = async (req, res) => {
+  sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+  const { currentUser } = req;
+  const { contacts, content, subject } = req.body;
+
+  const promise_array = [];
+  const error = [];
+
+  for (let i = 0; i < contacts.length; i++) {
+    let email_content = content;
+    let email_subject = subject;
+    const _contact = contacts[i];
+
+    email_subject = email_subject
+      .replace(/{user_name}/gi, currentUser.user_name)
+      .replace(/{user_email}/gi, currentUser.connected_email)
+      .replace(/{user_phone}/gi, currentUser.cell_phone)
+      .replace(/{contact_first_name}/gi, _contact.first_name || '')
+      .replace(/{contact_last_name}/gi, _contact.last_name || '')
+      .replace(/{contact_email}/gi, _contact.email);
+
+    email_content = email_content
+      .replace(/{user_name}/gi, currentUser.user_name)
+      .replace(/{user_email}/gi, currentUser.connected_email)
+      .replace(/{user_phone}/gi, currentUser.cell_phone)
+      .replace(/{contact_first_name}/gi, _contact.first_name || '')
+      .replace(/{contact_last_name}/gi, _contact.last_name || '')
+      .replace(/{contact_email}/gi, _contact.email);
+
+    const msg = {
+      from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+      to: _contact.email,
+      replyTo: currentUser.connected_email,
+      subject: email_subject,
+      html: email_content + '<br/><br/>' + currentUser.email_signature,
+      text: email_content,
+    };
+
+    const promise = new Promise((resolve, reject) => {
+      sgMail
+        .send(msg)
+        .then(async (_res) => {
+          if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+            resolve();
+          } else {
+            error.push({
+              contact: {
+                first_name: _contact.name,
+                email: _contact.email,
+              },
+              err: _res[0].statusCode,
+            });
+            resolve();
+          }
+        })
+        .catch((err) => {
+          error.push({
+            contact: {
+              first_name: _contact.name,
+              email: _contact.email,
+            },
+            err,
+          });
+          resolve();
+        });
+    });
+    promise_array.push(promise);
+  }
+  Promise.all(promise_array)
+    .then(() => {
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
+const clickEmailLink = async (req, res) => {
+  const { url, activity_id } = req.query;
+  const activity = await Activity.findOne({ _id: activity_id }).catch((err) => {
+    console.log('activity finding err', err.message);
+  });
+
+  let _activity;
+  if (activity) {
+    const user = await User.findOne({ _id: activity.user, del: false }).catch(
+      (err) => {
+        console.log('user found err', err.message);
+      }
+    );
+
+    const contact = await Contact.findOne({ _id: activity.contacts }).catch(
+      (err) => {
+        console.log('contact found err', err.message);
+      }
+    );
+
+    const action = 'clicked the link on';
+
+    if (user && contact) {
+      const email_tracker = new EmailTracker({
+        user: user.id,
+        contact: contact.id,
+        email: activity.emails,
+        type: 'click',
+        activity: activity.id,
+      });
+
+      const _email_tracker = await email_tracker
+        .save()
+        .then()
+        .catch((err) => {
+          console.log('email tracker save error', err.message);
+        });
+
+      _activity = new Activity({
+        content: 'clicked the link on email',
+        contacts: contact.id,
+        user: user.id,
+        type: 'email_trackers',
+        emails: activity.emails,
+        email_trackers: _email_tracker.id,
+      });
+    }
+
+    const last_activity = await _activity
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('activity save err', err.message);
+      });
+
+    Contact.updateOne(
+      { _id: contact.id },
+      {
+        $set: { last_activity: last_activity.id },
+      }
+    ).catch((err) => {
+      console.log('contact update err', err.message);
+    });
+
+    const clicked = new Date();
+    const created_at = moment(clicked)
+      .utcOffset(user.time_zone)
+      .format('h:mm a');
+
+    const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
+      console.log('garbage found err', err.message);
+    });
+
+    const email_notification = garbage['email_notification'];
+
+    if (email_notification['email']) {
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      const msg = {
+        to: user.email,
+        from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
+        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+        dynamic_template_data: {
+          subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+          activity:
+            contact.first_name + ' ' + action + ' email at ' + created_at,
+          detailed_activity:
+            "<a href='" +
+            urls.CONTACT_PAGE_URL +
+            contact.id +
+            "'><img src='" +
+            urls.DOMAIN_URL +
+            "assets/images/contact.png'/></a>",
+        },
+      };
+      sgMail.send(msg).catch((err) => console.error(err));
+    }
+
+    const desktop_notification = garbage['desktop_notification'];
+
+    if (desktop_notification['email']) {
+      webpush.setVapidDetails(
+        'mailto:support@crmgrow.com',
+        api.VAPID.PUBLIC_VAPID_KEY,
+        api.VAPID.PRIVATE_VAPID_KEY
+      );
+
+      const subscription = JSON.parse(user.desktop_notification_subscription);
+      const title =
+        contact.first_name +
+        ' ' +
+        contact.last_name +
+        ' - ' +
+        contact.email +
+        ' ' +
+        action +
+        ' email';
+      const created_at =
+        moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        ' at ' +
+        moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+      const body =
+        contact.first_name +
+        ' ' +
+        contact.last_name +
+        ' - ' +
+        contact.email +
+        ' ' +
+        action +
+        ' email: ' +
+        ' on ' +
+        created_at;
+      const playload = JSON.stringify({
+        notification: {
+          title,
+          body,
+          icon: '/fav.ico',
+          badge: '/fav.ico',
+        },
+      });
+      webpush
+        .sendNotification(subscription, playload)
+        .catch((err) => console.error(err));
+    }
+    const text_notification = garbage['text_notification'];
+    if (text_notification['email']) {
+      const e164Phone = phone(user.cell_phone)[0];
+
+      if (!e164Phone) {
+        const error = {
+          error: 'Invalid Phone Number',
+        };
+
+        throw error; // Invalid phone number
+      } else {
+        // let fromNumber = user['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
+
+        const title =
+          contact.first_name +
+          ' ' +
+          contact.last_name +
+          '\n' +
+          contact.email +
+          '\n' +
+          contact.cell_phone +
+          '\n' +
+          '\n' +
+          action +
+          ' email:' +
+          '\n';
+        const created_at =
+          moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+          ' at ' +
+          moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+        const time = ' on ' + created_at + '\n ';
+        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+
+        client.messages
+          .create({
+            from: fromNumber,
+            to: e164Phone,
+            // body: title + '\n' + time + contact_link,
+            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+          })
+          .catch((err) => console.error('send sms err: ', err));
+      }
+    }
+  }
+  res.render('redirect', {
+    url,
+  });
 };
 
 module.exports = {
@@ -2363,6 +2734,9 @@ module.exports = {
   bulkEmail,
   receiveEmailSendGrid,
   receiveEmail,
+  clickEmailLink,
   unSubscribeEmail,
+  unSubscribePage,
   reSubscribeEmail,
+  sharePlatform,
 };

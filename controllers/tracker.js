@@ -15,6 +15,8 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
+const EmailTemplate = require('../models/email_template');
+const ActivityHelper = require('../helpers/activity');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -23,6 +25,12 @@ const api = require('../config/api');
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+const { RestClient } = require('@signalwire/node');
+const { generateUnsubscribeLink } = require('../helpers/text');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
 
 const createPDF = async (data) => {
   const pdf_tracker = new PDFTracker({
@@ -112,11 +120,11 @@ const disconnectPDF = async (pdf_tracker_id) => {
 
       throw error; // Invalid phone number
     } else {
-      let fromNumber = currentUser['proxy_number'];
-      if (!fromNumber) {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
-      }
-
+      // let fromNumber = currentUser['proxy_number'];
+      // if (!fromNumber) {
+      //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      // }
+      const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
       const title =
         contact.first_name +
         ' ' +
@@ -140,15 +148,22 @@ const disconnectPDF = async (pdf_tracker_id) => {
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-      twilio.messages
+
+      client.messages
         .create({
           from: fromNumber,
-          body: title + '\n' + body + '\n' + contact_link,
           to: e164Phone,
+          body:
+            title +
+            '\n' +
+            body +
+            '\n' +
+            contact_link +
+            '\n\n' +
+            generateUnsubscribeLink(),
+          // body: title + '\n' + body,
         })
-        .catch((err) => {
-          console.log('send sms err: ', err);
-        });
+        .catch((err) => console.error(err));
     }
   }
 
@@ -193,7 +208,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
 
   const timelines = await TimeLine.find({
     contact: contact.id,
-    status: 'active',
+    status: 'checking',
     watched_pdf: query['pdf'],
     'condition.case': 'watched_pdf',
     'condition.answer': true,
@@ -201,22 +216,35 @@ const disconnectPDF = async (pdf_tracker_id) => {
     console.log('err', err);
   });
 
+  // if (timelines.length > 0) {
+  //   for (let i = 0; i < timelines.length; i++) {
+  //     try {
+  //       const timeline = timelines[i];
+  //       TimeLineCtrl.runTimeline(timeline.id);
+  //       timeline['status'] = 'completed';
+  //       timeline.save().catch((err) => {
+  //         console.log('err', err);
+  //       });
+  //       const data = {
+  //         contact: contact.id,
+  //         ref: timeline.ref,
+  //       };
+  //       if (timeline.ref) {
+  //         TimeLineCtrl.activeNext(data);
+  //       }
+  //     } catch (err) {
+  //       console.log('err', err);
+  //     }
+  //   }
+  // }
+
   if (timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       try {
         const timeline = timelines[i];
-        TimeLineCtrl.runTimeline(timeline.id);
-        timeline['status'] = 'completed';
-        timeline.save().catch((err) => {
-          console.log('err', err);
-        });
-        const data = {
-          contact: contact.id,
-          ref: timeline.ref,
-        };
-        TimeLineCtrl.activeNext(data);
+        TimeLineCtrl.activeTimeline(timeline.id);
       } catch (err) {
-        console.log('err', err);
+        console.log('err', err.message);
       }
     }
   }
@@ -237,7 +265,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
   }
 
   const activity = new Activity({
-    content: contact.first_name + ' reviewed pdf',
+    content: 'reviewed pdf',
     contacts: query.contact,
     user: currentUser.id,
     type: 'pdf_trackers',
@@ -250,9 +278,12 @@ const disconnectPDF = async (pdf_tracker_id) => {
   activity
     .save()
     .then((_activity) => {
-      Contact.findByIdAndUpdate(query.contact, {
-        $set: { last_activity: _activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: query.contact },
+        {
+          $set: { last_activity: _activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err.message);
       });
     })
@@ -284,6 +315,7 @@ const disconnectVideo = async (video_tracker_id) => {
   const contact = await Contact.findOne({ _id: query['contact'] });
   const video = await Video.findOne({ _id: query['video'] });
   const garbage = await Garbage.findOne({ user: query['user'] });
+  let full_watched;
 
   if (currentUser && contact) {
     const activity = new Activity({
@@ -297,10 +329,30 @@ const disconnectVideo = async (video_tracker_id) => {
       updated_at: new Date(),
     });
 
+    if (query.material_last) {
+      if (query.material_last * 1000 > video.duration - 10000) {
+        full_watched = true;
+      }
+      Activity.updateOne(
+        {
+          _id: query.activity,
+        },
+        {
+          material_last: query.material_last,
+          full_watched,
+        },
+        {
+          timestamps: false,
+        }
+      ).catch((err) => {
+        console.log('activty material_last update err', err.message);
+      });
+    }
+
     activity
       .save()
       .then((_activity) => {
-        Contact.updateMany(
+        Contact.updateOne(
           { _id: query.contact },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
@@ -313,24 +365,19 @@ const disconnectVideo = async (video_tracker_id) => {
 
     const timelines = await TimeLine.find({
       contact: contact.id,
-      status: 'active',
+      status: 'checking',
       watched_video: query['video'],
       'condition.case': 'watched_video',
       'condition.answer': true,
     }).catch((err) => {
-      console.log('err', err);
+      console.log('err', err.message);
     });
 
     if (timelines.length > 0) {
       for (let i = 0; i < timelines.length; i++) {
         try {
           const timeline = timelines[i];
-          TimeLineCtrl.runTimeline(timeline.id);
-          const data = {
-            contact: contact.id,
-            ref: timeline.ref,
-          };
-          TimeLineCtrl.activeNext(data);
+          TimeLineCtrl.activeTimeline(timeline.id);
         } catch (err) {
           console.log('err', err.message);
         }
@@ -440,10 +487,11 @@ const disconnectVideo = async (video_tracker_id) => {
         };
         throw error; // Invalid phone number
       } else {
-        let fromNumber = currentUser['proxy_number'];
-        if (!fromNumber) {
-          fromNumber = api.TWILIO.TWILIO_NUMBER;
-        }
+        // let fromNumber = currentUser['proxy_number'];
+        // if (!fromNumber) {
+        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        // }
+        const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
 
         const title =
           contact.first_name +
@@ -455,7 +503,7 @@ const disconnectVideo = async (video_tracker_id) => {
           contact.cell_phone +
           '\n' +
           '\n' +
-          ' Watched video:' +
+          ' Watched video: ' +
           video.title +
           '\n';
         const created_at =
@@ -467,14 +515,22 @@ const disconnectVideo = async (video_tracker_id) => {
             .utcOffset(currentUser.time_zone)
             .format('h:mm a');
         const body =
-          'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
+          'watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
-        twilio.messages
+        client.messages
           .create({
             from: fromNumber,
-            body: title + '\n' + body + '\n' + contact_link,
             to: e164Phone,
+            body:
+              title +
+              '\n' +
+              body +
+              '\n' +
+              contact_link +
+              '\n\n' +
+              generateUnsubscribeLink(),
+            // body: title + '\n' + body,
           })
           .catch((err) => console.error(err));
       }
@@ -494,7 +550,7 @@ const disconnectVideo = async (video_tracker_id) => {
         from: mail_contents.NOTIFICATION_WATCHED_VIDEO.MAIL,
         templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
         dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT}- ${contact.first_name} ${contact.last_name} - ${created_at}`,
+          subject: `${mail_contents.NOTIFICATION_WATCHED_VIDEO.SUBJECT} ${contact.first_name} ${contact.last_name} - ${created_at}`,
           first_name: contact.first_name,
           last_name: contact.last_name,
           phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
@@ -526,60 +582,211 @@ const disconnectVideo = async (video_tracker_id) => {
       const now = moment();
       now.set({ second: 0, millisecond: 0 });
       const follow_due_date = now.add(auto_follow_up.period, 'hours');
-
-      const follow_up = new FollowUp({
-        user: currentUser.id,
-        contact: contact.id,
-        content: auto_follow_up['content'],
-        due_date: follow_due_date,
-      });
-
-      follow_up
-        .save()
-        .then(async (_followup) => {
-          let reminder_before = 30;
-          if (garbage) {
-            reminder_before = garbage.reminder_before;
+      let follow_up = null;
+      if (contact.auto_follow_up) {
+        follow_up = await FollowUp.findOne({ _id: contact.auto_follow_up });
+      }
+      if (follow_up) {
+        FollowUp.updateOne(
+          {
+            _id: contact.auto_follow_up,
+          },
+          {
+            $set: { due_date: follow_due_date },
           }
-
-          const startdate = moment(_followup.due_date);
-          const reminder_due_date = startdate.subtract(reminder_before, 'mins');
-
-          const reminder = new Reminder({
-            contact: contact.id,
-            due_date: reminder_due_date,
-            type: 'follow_up',
-            user: currentUser.id,
-            follow_up: _followup.id,
-          });
-
-          reminder.save().catch((err) => {
-            console.log('reminder save error', err.message);
-          });
-
-          const activity = new Activity({
-            content: 'added follow up',
-            contacts: contact.id,
-            user: currentUser.id,
-            type: 'follow_ups',
-            follow_ups: _followup.id,
-          });
-          activity.save().catch((err) => {
-            console.log('follow error', err.message);
-          });
-        })
-        .catch((err) => {
+        ).catch((err) => {
           console.log('follow error', err.message);
         });
+
+        let reminder_before = 30;
+        if (garbage) {
+          reminder_before = garbage.reminder_before;
+        }
+
+        const startdate = moment(follow_due_date);
+        const reminder_due_date = startdate.subtract(reminder_before, 'mins');
+
+        Reminder.updateOne(
+          {
+            follow_up: contact.auto_follow_up,
+          },
+          {
+            $set: {
+              due_date: reminder_due_date,
+            },
+          }
+        ).catch((err) => {
+          console.log('reminder update error', err.message);
+        });
+
+        let detail_content = 'updated follow up';
+        detail_content = ActivityHelper.autoSettingLog(detail_content);
+
+        const activity = new Activity({
+          content: detail_content,
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'follow_ups',
+          follow_ups: contact.auto_follow_up,
+        });
+
+        activity.save().catch((err) => {
+          console.log('follow save error', err.message);
+        });
+      } else {
+        const follow_up = new FollowUp({
+          user: currentUser.id,
+          contact: contact.id,
+          content: auto_follow_up['content'],
+          due_date: follow_due_date,
+        });
+
+        follow_up
+          .save()
+          .then(async (_followup) => {
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+
+            const startdate = moment(_followup.due_date);
+            const reminder_due_date = startdate.subtract(
+              reminder_before,
+              'mins'
+            );
+
+            const reminder = new Reminder({
+              contact: contact.id,
+              due_date: reminder_due_date,
+              type: 'follow_up',
+              user: currentUser.id,
+              follow_up: _followup.id,
+            });
+
+            reminder.save().catch((err) => {
+              console.log('reminder save error', err.message);
+            });
+
+            Contact.updateOne(
+              {
+                _id: contact.id,
+              },
+              {
+                $set: {
+                  auto_follow_up: _followup.id,
+                },
+              }
+            ).catch((err) => {
+              console.log('contact update error', err.message);
+            });
+
+            let detail_content = 'added follow up';
+            detail_content = ActivityHelper.autoSettingLog(detail_content);
+
+            const activity = new Activity({
+              content: detail_content,
+              contacts: contact.id,
+              user: currentUser.id,
+              type: 'follow_ups',
+              follow_ups: _followup.id,
+            });
+
+            activity.save().catch((err) => {
+              console.log('follow error', err.message);
+            });
+          })
+          .catch((err) => {
+            console.log('follow error', err.message);
+          });
+      }
+    }
+
+    const auto_resend = garbage.auto_resend;
+    if (auto_resend['enabled']) {
+      if (query.material_last * 1000 < video.duration - 10000) {
+        const _activity = await Activity.findOne({ _id: query.activity }).catch(
+          (err) => {
+            console.log('activity found err', err.message);
+          }
+        );
+        if (_activity && !_activity.full_watched) {
+          let time_line;
+          const now = moment();
+          const due_date = now.add(auto_resend.period, 'hours');
+          due_date.set({ second: 0, millisecond: 0 });
+
+          if (_activity.send_type === 0) {
+            time_line = await TimeLine.findOne({
+              'action.type': 'resend_email_video',
+              'action.activity': _activity.id,
+              status: 'active',
+            });
+            if (time_line) {
+              time_line.due_date = due_date;
+            } else {
+              const canned_message = await EmailTemplate.findOne({
+                _id: auto_resend.email_canned_message,
+              });
+              time_line = new TimeLine({
+                user: currentUser.id,
+                contact: contact.id,
+                action: {
+                  type: 'resend_email_video',
+                  activity: _activity.id,
+                  content: canned_message.content,
+                  subject: canned_message.subject,
+                  video: video.id,
+                },
+                status: 'active',
+                due_date,
+              });
+            }
+          } else {
+            time_line = await TimeLine.findOne({
+              'action.type': 'resend_text_video',
+              'action.activity': _activity.id,
+              status: 'active',
+            });
+            if (time_line) {
+              time_line.due_date = due_date;
+            } else {
+              const canned_message = await EmailTemplate.findOne({
+                _id: auto_resend.sms_canned_message,
+              });
+              time_line = new TimeLine({
+                user: currentUser.id,
+                contact: contact.id,
+                action: {
+                  type: 'resend_text_video',
+                  activity: _activity.id,
+                  content: canned_message.content,
+                  video: video.id,
+                },
+                status: 'active',
+                due_date,
+              });
+            }
+          }
+
+          time_line.save().catch((err) => {
+            console.log('time line save err', err);
+          });
+        }
+      }
     }
   }
 };
 
-const updateVideo = async (duration, video_tracker_id) => {
-  const video_tracker = await VideoTracker.findOne({ _id: video_tracker_id });
-  video_tracker['duration'] = duration;
-  video_tracker['updated_at'] = new Date();
-  video_tracker.save();
+const updateVideo = async (duration, material_last, video_tracker_id) => {
+  await VideoTracker.updateOne(
+    { _id: video_tracker_id },
+    {
+      $set: {
+        duration,
+        material_last,
+      },
+    }
+  );
 };
 
 const createImage = async (data) => {
@@ -613,9 +820,12 @@ const disconnectImage = async (image_tracker_id) => {
   activity
     .save()
     .then((_activity) => {
-      Contact.findByIdAndUpdate(query.contact, {
-        $set: { last_activity: _activity.id },
-      }).catch((err) => {
+      Contact.updateOne(
+        { _id: query.contact },
+        {
+          $set: { last_activity: _activity.id },
+        }
+      ).catch((err) => {
         console.log('err', err);
       });
     })
@@ -625,7 +835,7 @@ const disconnectImage = async (image_tracker_id) => {
 
   const timelines = await TimeLine.find({
     contact: contact.id,
-    status: 'active',
+    status: 'checking',
     watched_image: query['image'],
     'condition.case': 'watched_image',
     'condition.answer': true,
@@ -633,22 +843,35 @@ const disconnectImage = async (image_tracker_id) => {
     console.log('err', err);
   });
 
+  // if (timelines.length > 0) {
+  //   for (let i = 0; i < timelines.length; i++) {
+  //     try {
+  //       const timeline = timelines[i];
+  //       TimeLineCtrl.runTimeline(timeline.id);
+  //       timeline['status'] = 'completed';
+  //       timeline.save().catch((err) => {
+  //         console.log('err', err);
+  //       });
+  //       const data = {
+  //         contact: contact.id,
+  //         ref: timeline.ref,
+  //       };
+  //       if (timeline.ref) {
+  //         TimeLineCtrl.activeNext(data);
+  //       }
+  //     } catch (err) {
+  //       console.log('err', err);
+  //     }
+  //   }
+  // }
+
   if (timelines.length > 0) {
     for (let i = 0; i < timelines.length; i++) {
       try {
         const timeline = timelines[i];
-        TimeLineCtrl.runTimeline(timeline.id);
-        timeline['status'] = 'completed';
-        timeline.save().catch((err) => {
-          console.log('err', err);
-        });
-        const data = {
-          contact: contact.id,
-          ref: timeline.ref,
-        };
-        TimeLineCtrl.activeNext(data);
+        TimeLineCtrl.activeTimeline(timeline.id);
       } catch (err) {
-        console.log('err', err);
+        console.log('err', err.message);
       }
     }
   }
@@ -737,10 +960,11 @@ const disconnectImage = async (image_tracker_id) => {
 
       throw error; // Invalid phone number
     } else {
-      let fromNumber = currentUser['proxy_number'];
-      if (!fromNumber) {
-        fromNumber = api.TWILIO.TWILIO_NUMBER;
-      }
+      // let fromNumber = currentUser['proxy_number'];
+      // if (!fromNumber) {
+      //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      // }
+      const fromNumber = api.SIGNALWIRE.SYSTEM_NUMBER;
 
       const title =
         contact.first_name +
@@ -765,15 +989,22 @@ const disconnectImage = async (image_tracker_id) => {
           .format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
-      twilio.messages
+
+      client.messages
         .create({
           from: fromNumber,
-          body: title + '\n' + body + '\n' + contact_link,
           to: e164Phone,
+          body:
+            title +
+            '\n' +
+            body +
+            '\n' +
+            contact_link +
+            '\n\n' +
+            generateUnsubscribeLink(),
+          // body: title + '\n' + body,
         })
-        .catch((err) => {
-          console.log('send sms err: ', err);
-        });
+        .catch((err) => console.error(err));
     }
   }
 
@@ -851,10 +1082,11 @@ const setup = (io) => {
       });
     });
 
-    socket.on('update_video', (duration) => {
+    socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
       if (typeof video_tracker !== 'undefined') {
-        updateVideo(duration, video_tracker._id)
+        const { duration, material_last } = data;
+        updateVideo(duration, material_last, video_tracker._id)
           .then(() => {})
           .catch((err) => {
             console.log('err', err);

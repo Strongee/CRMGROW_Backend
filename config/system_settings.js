@@ -3,9 +3,15 @@ const system_settings = {
     BASIC: '29',
     TEAM: '25',
   },
+  EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
-    BASIC: 300,
+    BASIC: 500,
+    GMAIL: 500,
+    GSUIT: 1500,
+    OUTLOOK: 300,
+    MICROSOFT: 2000,
   },
+  TEXT_ONE_TIME: 5,
   TEXT_MONTHLY_LIMIT: {
     BASIC: 250,
   },
@@ -23,7 +29,34 @@ const system_settings = {
     DEFAULT: 'eXp Realty',
   },
   ADMIN_ACCOUNT: 'support@crmgrow.com',
-  LEAD: 'Lead',
+  LEAD: '5f16d58d0af09220208b6e11',
+  AUTO_FOLLOW_UP: 'has reviewed material',
+  AUTOMATION: 2000,
+  THUMBNAIL: {
+    WIDTH: 400,
+    HEIGHT: 220,
+  },
+  IMAP_PORT: 587,
+  ONBOARD_PRICING_30_MINS: 5000,
+  ONBOARD_PRICING_1_HOUR: 9500,
+  SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
+  CAMPAIGN_MAIL_START: {
+    SMTP: 500,
+    GMAIL: 150,
+    GSUIT: 500,
+    OUTLOOK: 150,
+    MICROSOFT: 500,
+    AWS: 5000,
+  },
+  CAMPAIGN_MAIL_LIMIT: {
+    GMAIL: 400,
+    GSUIT: 1500,
+    OUTLOOK: 250,
+    MICROSOFT: 1000,
+    AWS: 5000,
+  },
+  WEBINAR_LINK:
+    'https://zoom.us/meeting/register/tJUlcuyhrTgjGNUusD4B2Mtd9F_IbKCFlj_e',
 };
 
 module.exports = system_settings;
