@@ -682,7 +682,7 @@ const bulkUpdate = async (req, res) => {
 
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
-  const { contacts, content, due_date } = req.body;
+  const { contacts, content, due_date, type } = req.body;
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
     (err) => {
@@ -703,6 +703,7 @@ const bulkCreate = async (req, res) => {
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
     const followUp = new FollowUp({
+      type,
       content,
       due_date,
       contact,
@@ -780,17 +781,17 @@ const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, pageSize, searchOption } = req.body;
   const {
-    type,
+    types,
     status,
     contact,
-    label,
+    labels,
     start_date,
     end_date,
     str,
   } = searchOption;
 
   const query = { user: currentUser._id };
-  type ? (query.type = type) : false;
+  types && types.length ? (query.type = { $in: types }) : false;
   if (typeof status !== 'undefined') {
     query.status = status;
   }
@@ -802,15 +803,17 @@ const load = async (req, res) => {
     if (query.due_date) {
       query.due_date.$lt = end_date;
     } else {
-      query.due_date = { $lte: start_date };
+      query.due_date = { $lte: end_date };
     }
   }
   if (str) {
     query.content = { $regex: '.*' + str + '.*' };
   }
 
+  console.log(query);
   const count = await FollowUp.countDocuments(query);
   const _follow_ups = await FollowUp.find(query)
+    .sort({ due_date: -1 })
     .skip(skip)
     .limit(pageSize)
     .populate({ path: 'contact' });
