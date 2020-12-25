@@ -27,5 +27,6 @@ router.post(
 );
 router.post('/create', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkCreate));
 router.post('/update', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkUpdate));
+router.post('/load', UserCtrl.checkAuth, catchError(FollowUpCtrl.load));
 
 module.exports = router;
