@@ -2952,7 +2952,7 @@ const autoResend = async (data) => {
         console.log('activity find err', err.message);
       }
     );
-    if (activity.send_type === 0) {
+    if (!activity.send_type) {
       time_line = await TimeLine.findOne({
         'action.type': 'resend_email_video',
         'action.activity': activity.id,

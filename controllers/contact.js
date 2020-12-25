@@ -589,6 +589,7 @@ const importCSV = async (req, res) => {
   const file = req.file;
   const { currentUser } = req;
   const failure = [];
+  const duplicate_contacts_ids = [];
   let count = 0;
   let max_upload_count = 0;
   const contact_info = currentUser.contact_info;
@@ -615,6 +616,7 @@ const importCSV = async (req, res) => {
     })
     .on('end', () => {
       const promise_array = [];
+
       let add_content = 'added contact';
       let note_content = 'added note';
       if (req.guest_loggin) {
@@ -635,40 +637,84 @@ const importCSV = async (req, res) => {
           }
           if (data['first_name'] || data['email'] || data['cell_phone']) {
             let cell_phone;
-            // let cleaned = ('' + cell_phone).replace(/\D/g, '')
-            // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-            // if (match) {
-            //   let intlCode = (match[1] ? '+1 ' : '')
-            //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-            // }
+            const query = [];
+
             if (data['first_name'] && data['last_name']) {
-              const name_contact = await Contact.findOne({
+              query.push({
+                user: currentUser.id,
                 first_name: data['first_name'],
                 last_name: data['last_name'],
-                user: currentUser.id,
-              })
-                .populate('label')
-                .catch((err) => {
-                  console.log('contact found err', err.message);
-                });
-              if (name_contact) {
-                failure.push({ message: 'duplicate', data });
+              });
+            }
 
-                let existing = false;
-                failure.some((item) => {
-                  if (item.data._id == name_contact.id) {
-                    existing = true;
-                  }
+            if (data['email']) {
+              query.push({
+                user: currentUser.id,
+                email: data['email'],
+              });
+            }
+
+            if (data['cell_phone']) {
+              cell_phone = phone(data['cell_phone'])[0];
+              if (cell_phone) {
+                query.push({
+                  user: currentUser.id,
+                  cell_phone,
                 });
-                if (!existing) {
-                  failure.push({
-                    message: 'duplicate',
-                    data: name_contact,
-                  });
-                }
-                resolve();
-                return;
               }
+            }
+
+            console.log('query', query);
+            const duplicate_contacts = await Contact.find({
+              _id: { $nin: duplicate_contacts_ids },
+              $or: query,
+            })
+              .populate('label')
+              .catch((err) => {
+                console.log('contact find err', err.message);
+              });
+
+            if (duplicate_contacts && duplicate_contacts.length > 0) {
+              duplicate_contacts.forEach((contact) => {
+                duplicate_contacts_ids.push(contact.id);
+                failure.push({
+                  message: 'duplicate',
+                  data: contact,
+                });
+              });
+
+              failure.push({ message: 'duplicate', data });
+              resolve();
+              return;
+            }
+            console.log('duplicate_contacts_ids', duplicate_contacts_ids);
+            /**
+            const name_contact = await Contact.find({
+              first_name: data['first_name'],
+              last_name: data['last_name'],
+              user: currentUser.id,
+            })
+              .populate('label')
+              .catch((err) => {
+                console.log('contact found err', err.message);
+              });
+            if (name_contact && name_contact.length > 0) {
+              failure.push({ message: 'duplicate', data });
+
+              let existing = false;
+              failure.some((item) => {
+                if (item.data._id == name_contact.id) {
+                  existing = true;
+                }
+              });
+              if (!existing) {
+                failure.push({
+                  message: 'duplicate',
+                  data: name_contact,
+                });
+              }
+              resolve();
+              return;
             }
 
             if (data['email']) {
@@ -728,6 +774,7 @@ const importCSV = async (req, res) => {
                 return;
               }
             }
+            * */
 
             count += 1;
 

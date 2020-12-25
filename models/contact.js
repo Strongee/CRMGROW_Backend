@@ -145,6 +145,9 @@ const capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
+ContactSchema.index({ user: 1, first_name: 1, last_name: 1 });
+ContactSchema.index({ user: 1, email: 1 });
+ContactSchema.index({ user: 1, cell_phone: 1 });
 ContactSchema.index({ user: 1 });
 const Contact = mongoose.model('contact', ContactSchema);
 module.exports = Contact;
