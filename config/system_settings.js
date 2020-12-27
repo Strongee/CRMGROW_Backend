@@ -57,6 +57,7 @@ const system_settings = {
   },
   WEBINAR_LINK:
     'https://zoom.us/meeting/register/tJUlcuyhrTgjGNUusD4B2Mtd9F_IbKCFlj_e',
+  TIME_ZONE: 'America/New York',
 };
 
 module.exports = system_settings;

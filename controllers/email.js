@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const path = require('path');
 const mime = require('mime-types');
 
@@ -1581,9 +1581,10 @@ const receiveEmail = async (req, res) => {
 
     const opened = new Date();
     if (contact && user) {
-      const created_at = moment(opened)
-        .utcOffset(user.time_zone)
-        .format('h:mm a');
+      const time_zone = user.time_zone_info
+        ? user.time_zone_info.tz_name
+        : system_settings.TIME_ZONE;
+      const created_at = moment(opened).tz(time_zone).format('h:mm a');
       const action = 'opened';
 
       let reopened = moment();
