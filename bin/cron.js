@@ -386,6 +386,13 @@ const reminder_job = new CronJob(
             }
           );
           const email_notification = garbage['email_notification'];
+          const time_zone = user.time_zone_info
+            ? JSON.parse(user.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+          const due_date = moment(follow_up.due_date)
+            .tz(time_zone)
+            .format('h:mm a');
+
           if (email_notification['follow_up']) {
             const msg = {
               to: user.email,
@@ -400,9 +407,7 @@ const reminder_job = new CronJob(
                   contact.email +
                   ' - ' +
                   contact.cell_phone,
-                due_date: moment(follow_up.due_date)
-                  .utcOffset(user.time_zone)
-                  .format('h:mm a'),
+                due_date,
                 content: follow_up.content,
                 detailed_contact:
                   "<a href='" +
@@ -445,9 +450,7 @@ const reminder_job = new CronJob(
             }
 
             const title =
-              `Follow up task due today at ${moment(follow_up.due_date)
-                .utcOffset(user.time_zone)
-                .format('h:mm a')} with contact name:` +
+              `Follow up task due today at ${due_date} with contact name:` +
               '\n' +
               '\n' +
               contact.first_name +
@@ -475,14 +478,7 @@ const reminder_job = new CronJob(
                 // body: title + body,
               })
               .then(() => {
-                console.log(
-                  `Reminder at: ${moment(follow_up.due_date)
-                    .utcOffset(user.time_zone)
-                    .format('MMMM Do YYYY h:mm a')}`
-                );
-                console.log(
-                  `UTC timezone ${moment(follow_up.due_date).toISOString()}`
-                );
+                console.log(`Reminder at: ${due_date}`);
               })
               .catch((err) => console.error('send sms err: ', err));
           }
@@ -499,9 +495,7 @@ const reminder_job = new CronJob(
             );
             const title = `CRMGrow follow up reminder`;
             const body =
-              `Follow up task due today at ${moment(follow_up.due_date)
-                .utcOffset(user.time_zone)
-                .format('h:mm a')} with contact name:` +
+              `Follow up task due today at ${due_date} with contact name:` +
               '\n' +
               contact.first_name +
               contact.last_name +
@@ -532,7 +526,6 @@ const reminder_job = new CronJob(
           });
         }
       } else {
-        console.log('reminder*****', reminder);
         /**
         const appointment = await Appointment.findOne({
           _id: reminder.appointment,
@@ -657,11 +650,12 @@ const signup_job = new CronJob(
   async () => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-    const subscribers = await User.find({ welcome_email: false, del: false }).catch(
-      (err) => {
-        console.log('err', err);
-      }
-    );
+    const subscribers = await User.find({
+      welcome_email: false,
+      del: false,
+    }).catch((err) => {
+      console.log('err', err);
+    });
 
     if (subscribers) {
       for (let i = 0; i < subscribers.length; i++) {
