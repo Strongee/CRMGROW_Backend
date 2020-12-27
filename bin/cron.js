@@ -2045,7 +2045,7 @@ weekly_report.start();
 upload_video_job.start();
 convert_video_job.start();
 payment_check.start();
-campaign_job.start();
+// campaign_job.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();
