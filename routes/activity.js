@@ -18,6 +18,7 @@ router.post(
   catchError(ActivityCtrl.contactActivity)
 );
 router.post('/', UserCtrl.checkAuth, catchError(ActivityCtrl.create));
+router.post('/get', UserCtrl.checkAuth, catchError(ActivityCtrl.load));
 router.get('/', UserCtrl.checkAuth, catchError(ActivityCtrl.get));
 router.get(
   '/:id',
