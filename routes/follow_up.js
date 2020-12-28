@@ -28,5 +28,10 @@ router.post(
 router.post('/create', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkCreate));
 router.post('/update', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkUpdate));
 router.post('/load', UserCtrl.checkAuth, catchError(FollowUpCtrl.load));
+router.post(
+  '/select-all',
+  UserCtrl.checkAuth,
+  catchError(FollowUpCtrl.selectAll)
+);
 
 module.exports = router;

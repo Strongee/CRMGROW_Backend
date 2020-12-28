@@ -788,6 +788,7 @@ const load = async (req, res) => {
     start_date,
     end_date,
     str,
+    sortDir,
   } = searchOption;
 
   const query = { user: currentUser._id };
@@ -809,11 +810,17 @@ const load = async (req, res) => {
   if (str) {
     query.content = { $regex: '.*' + str + '.*' };
   }
-
-  console.log(query);
+  if (labels && labels.length) {
+    const contacts = await Contact.find({
+      user: currentUser._id,
+      label: { $in: labels },
+    }).select('_id');
+    const contact_ids = contacts.map((e) => e._id);
+    query.contact = { $in: contact_ids };
+  }
   const count = await FollowUp.countDocuments(query);
   const _follow_ups = await FollowUp.find(query)
-    .sort({ due_date: -1 })
+    .sort({ due_date: sortDir })
     .skip(skip)
     .limit(pageSize)
     .populate({ path: 'contact' });
@@ -827,12 +834,63 @@ const load = async (req, res) => {
   });
 };
 
+const selectAll = async (req, res) => {
+  const { currentUser } = req;
+  const {
+    types,
+    status,
+    contact,
+    labels,
+    start_date,
+    end_date,
+    str,
+    sortDir,
+  } = req.body;
+
+  const query = { user: currentUser._id };
+  types && types.length ? (query.type = { $in: types }) : false;
+  if (typeof status !== 'undefined') {
+    query.status = status;
+  }
+  contact ? (query.contact = contact) : false;
+  if (start_date) {
+    query.due_date = { $gte: start_date };
+  }
+  if (end_date) {
+    if (query.due_date) {
+      query.due_date.$lt = end_date;
+    } else {
+      query.due_date = { $lte: end_date };
+    }
+  }
+  if (str) {
+    query.content = { $regex: '.*' + str + '.*' };
+  }
+  if (labels && labels.length) {
+    const contacts = await Contact.find({
+      user: currentUser._id,
+      label: { $in: labels },
+    }).select('_id');
+    const contact_ids = contacts.map((e) => e._id);
+    query.contact = { $in: contact_ids };
+  }
+
+  const _follow_ups = await FollowUp.find(query).select('_id');
+  const _ids = _follow_ups.map((e) => e._id);
+
+  return res.send({
+    status: true,
+    data: _ids,
+  });
+};
+
 module.exports = {
   get,
   create,
   edit,
   getByDate,
   load,
+  selectAll,
   updateChecked,
   updateArchived,
   bulkUpdate,

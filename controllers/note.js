@@ -139,8 +139,32 @@ const bulkCreate = async (req, res) => {
   });
 };
 
+const remove = async (req, res) => {
+  const { currentUser } = req;
+  const id = req.params.id;
+
+  await Note.deleteOne({ user: currentUser._id, _id: id });
+  return res.send({
+    status: true,
+  });
+};
+
+const update = async (req, res) => {
+  const { currentUser } = req;
+  const id = req.params.id;
+  const data = req.body;
+
+  await Note.updateOne({ user: currentUser._id, _id: id }, { $set: data });
+
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   create,
   bulkCreate,
+  remove,
+  update,
 };
