@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const CronJob = require('cron').CronJob;
 const fs = require('fs');
 const uuidv1 = require('uuid/v1');
@@ -361,7 +361,7 @@ const reminder_job = new CronJob(
           _id: reminder.follow_up,
           status: 0,
         }).catch((err) => {
-          console.log('err: ', err);
+          console.log('followup find err: ', err.message);
         });
 
         if (follow_up) {
@@ -387,6 +387,10 @@ const reminder_job = new CronJob(
           );
           const email_notification = garbage['email_notification'];
           if (email_notification['follow_up']) {
+            const time_zone = user.time_zone_info
+              ? user.time_zone_info.tz_name
+              : system_settings.TIME_ZONE;
+
             const msg = {
               to: user.email,
               from: mail_contents.FOLLOWUP_REMINDER.MAIL,
@@ -401,7 +405,7 @@ const reminder_job = new CronJob(
                   ' - ' +
                   contact.cell_phone,
                 due_date: moment(follow_up.due_date)
-                  .utcOffset(user.time_zone)
+                  .tz(time_zone)
                   .format('h:mm a'),
                 content: follow_up.content,
                 detailed_contact:

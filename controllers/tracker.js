@@ -715,7 +715,7 @@ const disconnectVideo = async (video_tracker_id) => {
           const due_date = now.add(auto_resend.period, 'hours');
           due_date.set({ second: 0, millisecond: 0 });
 
-          if (_activity.send_type === 0) {
+          if (!_activity.send_type) {
             time_line = await TimeLine.findOne({
               'action.type': 'resend_email_video',
               'action.activity': _activity.id,
