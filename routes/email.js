@@ -28,7 +28,7 @@ router.post('/bulk-yahoo', UserCtrl.checkAuth, catchError(EmailCtrl.bulkYahoo));
 router.get('/gmail/:id', UserCtrl.checkAuth, catchError(EmailCtrl.getGmail));
 router.get('/list-gmail', UserCtrl.checkAuth, catchError(EmailCtrl.listGmail));
 router.post('/receive', catchError(EmailCtrl.receiveEmailSendGrid));
-router.get('/track1/:id', catchError(EmailCtrl.openTrack));
+// router.get('/track1/:id', catchError(EmailCtrl.openTrack));
 router.get('/opened/:id', catchError(EmailCtrl.receiveEmail));
 router.get('/unsubscribe/:id', catchError(EmailCtrl.unSubscribeEmail));
 router.get('/resubscribe/:id', catchError(EmailCtrl.reSubscribeEmail));

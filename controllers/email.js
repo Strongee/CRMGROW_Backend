@@ -1197,9 +1197,13 @@ const receiveEmailSendGrid = async (req, res) => {
 
     if (contact && user) {
       const opened = new Date(time_stamp * 1000);
-      const created_at = moment(opened)
-        .utcOffset(user.time_zone)
-        .format('h:mm a');
+      // const created_at = moment(opened)
+      //   .utcOffset(user.time_zone)
+      //   .format('h:mm a');
+      const time_zone = user.time_zone_info
+        ? JSON.parse(user.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
+      const created_at = moment(opened).tz(time_zone).format('h:mm a');
       let action = '';
       if (event === 'open') {
         action = 'opened';
@@ -1475,10 +1479,10 @@ const receiveEmailSendGrid = async (req, res) => {
           ' ' +
           action +
           ' email';
-        const created_at =
-          moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-          ' at ' +
-          moment(opened).utcOffset(user.time_zone).format('h:mm a');
+        // const created_at =
+        //   moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        //   ' at ' +
+        //   moment(opened).utcOffset(user.time_zone).format('h:mm a');
         const body =
           contact.first_name +
           ' ' +
@@ -1534,10 +1538,10 @@ const receiveEmailSendGrid = async (req, res) => {
             '\n' +
             _email.subject +
             '\n';
-          const created_at =
-            moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-            ' at ' +
-            moment(opened).utcOffset(user.time_zone).format('h:mm a');
+          // const created_at =
+          //   moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+          //   ' at ' +
+          //   moment(opened).utcOffset(user.time_zone).format('h:mm a');
           const time = ' on ' + created_at + '\n ';
           // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
@@ -1805,10 +1809,10 @@ const receiveEmail = async (req, res) => {
               '\n' +
               _email.subject +
               '\n';
-            const created_at =
-              moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment(opened).utcOffset(user.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment(opened).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment(opened).utcOffset(user.time_zone).format('h:mm a');
             const time = ' on ' + created_at + '\n ';
             // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
@@ -2003,9 +2007,14 @@ const unSubscribeEmail = async (req, res) => {
     });
 
     const unsubscribed = new Date();
-    const created_at = moment(unsubscribed)
-      .utcOffset(user.time_zone)
-      .format('h:mm a');
+    // const created_at = moment(unsubscribed)
+    //   .utcOffset(user.time_zone)
+    //   .format('h:mm a');
+
+    const time_zone = user.time_zone_info
+      ? JSON.parse(user.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+    const created_at = moment(unsubscribed).tz(time_zone).format('h:mm a');
 
     const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
       console.log('err', err);
@@ -2058,10 +2067,10 @@ const unSubscribeEmail = async (req, res) => {
         ' ' +
         action +
         ' email';
-      const created_at =
-        moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-        ' at ' +
-        moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
+      // const created_at =
+      //   moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+      //   ' at ' +
+      //   moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
       const body =
         contact.first_name +
         ' ' +
@@ -2115,10 +2124,10 @@ const unSubscribeEmail = async (req, res) => {
           action +
           ' email:' +
           '\n';
-        const created_at =
-          moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-          ' at ' +
-          moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
+        // const created_at =
+        //   moment(unsubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        //   ' at ' +
+        //   moment(unsubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
         // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
@@ -2215,8 +2224,6 @@ const reSubscribeEmail = async (req, res) => {
             type: 'video_trackers',
             videos: activity.videos,
             video_trackers: _video_tracker.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
           break;
         }
@@ -2227,8 +2234,6 @@ const reSubscribeEmail = async (req, res) => {
             pdf: activity.pdfs,
             type: 'resubscribe',
             activity: activity.id,
-            updated_at: new Date(),
-            created_at: new Date(),
           });
 
           const _pdf_tracker = await pdf_tracker
@@ -2245,8 +2250,6 @@ const reSubscribeEmail = async (req, res) => {
             type: 'pdf_trackers',
             pdfs: activity.pdfs,
             pdf_trackers: _pdf_tracker.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
           break;
         }
@@ -2257,8 +2260,6 @@ const reSubscribeEmail = async (req, res) => {
             image: activity.images,
             type: 'resubscribe',
             activity: activity.id,
-            updated_at: new Date(),
-            created_at: new Date(),
           });
 
           const _image_tracker = await image_tracker
@@ -2275,8 +2276,6 @@ const reSubscribeEmail = async (req, res) => {
             type: 'image_trackers',
             images: activity.images,
             image_trackers: _image_tracker.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
           break;
         }
@@ -2302,9 +2301,10 @@ const reSubscribeEmail = async (req, res) => {
     });
 
     const resubscribed = new Date();
-    const created_at = moment(resubscribed)
-      .utcOffset(user.time_zone)
-      .format('h:mm a');
+    const time_zone = user.time_zone_info
+      ? JSON.parse(user.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+    const created_at = moment(resubscribed).tz(time_zone).format('h:mm a');
 
     const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
       console.log('err', err);
@@ -2357,10 +2357,10 @@ const reSubscribeEmail = async (req, res) => {
         ' ' +
         action +
         ' email';
-      const created_at =
-        moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-        ' at ' +
-        moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
+      // const created_at =
+      //   moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+      //   ' at ' +
+      //   moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
       const body =
         contact.first_name +
         ' ' +
@@ -2414,10 +2414,10 @@ const reSubscribeEmail = async (req, res) => {
           action +
           ' email:' +
           '\n';
-        const created_at =
-          moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-          ' at ' +
-          moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
+        // const created_at =
+        //   moment(resubscribed).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        //   ' at ' +
+        //   moment(resubscribed).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
         // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
