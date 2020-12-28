@@ -2590,9 +2590,14 @@ const clickEmailLink = async (req, res) => {
     });
 
     const clicked = new Date();
-    const created_at = moment(clicked)
-      .utcOffset(user.time_zone)
-      .format('h:mm a');
+    // const created_at = moment(clicked)
+    //   .utcOffset(user.time_zone)
+    //   .format('h:mm a');
+
+    const time_zone = user.time_zone_info
+      ? JSON.parse(user.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+    const created_at = moment(clicked).tz(time_zone).format('h:mm a');
 
     const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
       console.log('garbage found err', err.message);
@@ -2645,10 +2650,10 @@ const clickEmailLink = async (req, res) => {
         ' ' +
         action +
         ' email';
-      const created_at =
-        moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-        ' at ' +
-        moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+      // const created_at =
+      //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+      //   ' at ' +
+      //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
       const body =
         contact.first_name +
         ' ' +
@@ -2702,10 +2707,10 @@ const clickEmailLink = async (req, res) => {
           action +
           ' email:' +
           '\n';
-        const created_at =
-          moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-          ' at ' +
-          moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+        // const created_at =
+        //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+        //   ' at ' +
+        //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
         const time = ' on ' + created_at + '\n ';
         // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
