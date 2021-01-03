@@ -653,8 +653,18 @@ const bulkEmail = async (req, res) => {
         promise_array.push(promise);
       }
     }
-    return Promise.all(promise_array);
   }
+  Promise.all(promise_array)
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(400).json({
+        status: false,
+      });
+    });
 };
 
 const socialShare = async (req, res) => {
