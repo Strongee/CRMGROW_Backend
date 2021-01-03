@@ -202,7 +202,7 @@ const edit = async (req, res) => {
               $set: { last_activity: _activity.id },
             }
           ).catch((err) => {
-            console.log('err', err);
+            console.log('activity save err', err.message);
           });
           return res.send({
             status: true,
