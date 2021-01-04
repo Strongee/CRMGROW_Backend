@@ -32,6 +32,7 @@ if (process.env.NODE_ENV === 'production') {
       'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
     CONTACT_CSV_URL:
       'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
+    IMPORT_CSV_URL: 'https://app.crmgrow.com/import-csv',
     // INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
     INTRO_VIDEO_URL:
       'https://app.crmgrow.com/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc',
@@ -49,6 +50,9 @@ if (process.env.NODE_ENV === 'production') {
     TEAM_ACCEPT_REQUEST_URL: 'https://app.crmgrow.com/team/accept-request',
     TEAM_CALLS: 'https://app.crmgrow.com/team/calls/',
     BILLING_URL: 'https://app.crmgrow.com/profile/billing',
+    FACEBOOK_URL: 'https://www.facebook.com/crmgrow',
+    TERMS_SERVICE_URL: 'https://crmgrow.com/terms_of_service.html',
+    PRIVACY_URL: 'https://crmgrow.com/privacy.html',
   };
 } else if (process.env.NODE_ENV === 'staging') {
   urls = {

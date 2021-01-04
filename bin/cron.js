@@ -2077,11 +2077,14 @@ const campaign_job = new CronJob(
           pdf_ids: campaign.pdfs,
           image_ids: campaign.images,
         };
-        EmailHelper.sendEmail(data).then((res) => {
 
-        }).catch((err) => {
-          console.log('err', err.message);
-        });
+        EmailHelper.sendEmail(data)
+          .then((res) => {
+            
+          })
+          .catch((err) => {
+            console.log('err', err.message);
+          });
       }
     }
   },
