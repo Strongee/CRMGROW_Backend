@@ -11,14 +11,14 @@ const ActivitySchema = new Schema(
     follow_ups: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     notes: { type: mongoose.Schema.Types.ObjectId, ref: 'note' },
     phone_logs: { type: mongoose.Schema.Types.ObjectId, ref: 'phone_log' },
-    videos: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
+    videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
     video_trackers: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'video_tracker',
     },
-    pdfs: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
+    pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     pdf_trackers: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf_tracker' },
-    images: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
+    images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
     image_trackers: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'image_tracker',
