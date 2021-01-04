@@ -1962,8 +1962,29 @@ const timesheet_check = new CronJob(
               user: timeline.user,
             };
             EmailHelper.sendEmail(data)
-              .then((res) => {})
-              .catch((err) => {});
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            break;
           }
         }
         if (timeline.ref) {
@@ -2056,7 +2077,9 @@ const campaign_job = new CronJob(
           pdf_ids: campaign.pdfs,
           image_ids: campaign.images,
         };
-        EmailHelper.sendEmail(data).catch((err) => {
+        EmailHelper.sendEmail(data).then((res) => {
+
+        }).catch((err) => {
           console.log('err', err.message);
         });
       }
