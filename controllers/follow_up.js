@@ -586,7 +586,7 @@ const updateChecked = async (req, res) => {
 };
 
 const bulkUpdate = async (req, res) => {
-  const { ids, content, due_date } = req.body;
+  const { ids, content, due_date, type } = req.body;
 
   const { currentUser } = req;
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
@@ -617,6 +617,9 @@ const bulkUpdate = async (req, res) => {
       const query = {};
       if (content) {
         query['content'] = content;
+      }
+      if (type) {
+        query['type'] = type;
       }
       if (due_date) {
         query['due_date'] = due_date;
@@ -875,12 +878,15 @@ const selectAll = async (req, res) => {
     query.contact = { $in: contact_ids };
   }
 
-  const _follow_ups = await FollowUp.find(query).select('_id');
-  const _ids = _follow_ups.map((e) => e._id);
+  const _follow_ups = await FollowUp.find(query).select({ _id: 1, status: 1 });
+  const selected_follows = _follow_ups.map((e) => ({
+    _id: e._id,
+    status: e.status,
+  }));
 
   return res.send({
     status: true,
-    data: _ids,
+    data: selected_follows,
   });
 };
 
