@@ -22,6 +22,7 @@ const {
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
+const TimeLine = require('../models/time_line');
 
 const credentials = {
   clientID: api.OUTLOOK_CLIENT.OUTLOOK_CLIENT_ID,
@@ -44,6 +45,7 @@ const bulkEmail = async (req, res) => {
     subject,
     cc,
     bcc,
+    scheduled_time,
     attachments,
   } = req.body;
 
@@ -100,6 +102,28 @@ const bulkEmail = async (req, res) => {
         promise_array.push(promise);
         continue;
       }
+    }
+
+    if (scheduled_time) {
+      const time_line = new TimeLine({
+        user: currentUser.id,
+        action: {
+          video_ids,
+          pdf_ids,
+          image_ids,
+          content,
+          subject,
+          cc,
+          bcc,
+        },
+        contact: contacts[i],
+        due_date: scheduled_time,
+        status: 'pending',
+      });
+      time_line.save().catch((err) => {
+        console.log('material sendemail timeline save err', err.message);
+      });
+      continue;
     }
 
     const email_info = currentUser['email_info'];

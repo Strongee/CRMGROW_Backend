@@ -1900,7 +1900,6 @@ const timesheet_check = new CronJob(
                 );
                 const now = moment();
                 if (beginning_time.isBefore(now)) {
-                  console.log('before');
                   Activity.deleteMany({
                     _id: { $in: activities },
                   }).catch((err) => {
@@ -1955,6 +1954,16 @@ const timesheet_check = new CronJob(
               }
             });
             break;
+          }
+          case 'send_email': {
+            const data = {
+              ...timeline.action,
+              contacts: [timeline.contact],
+              user: timeline.user,
+            };
+            EmailHelper.sendEmail(data)
+              .then((res) => {})
+              .catch((err) => {});
           }
         }
         if (timeline.ref) {
@@ -2066,7 +2075,7 @@ weekly_report.start();
 upload_video_job.start();
 convert_video_job.start();
 payment_check.start();
-campaign_job.start();
+// campaign_job.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();

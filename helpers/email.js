@@ -3634,7 +3634,6 @@ const sendEmail = async (data) => {
   const promise_array = [];
   const activities = [];
   let html_content = '';
-  let no_connected = false;
 
   for (let i = 0; i < contacts.length; i++) {
     let promise;
@@ -3814,8 +3813,17 @@ const sendEmail = async (data) => {
         });
 
         let activity_content = 'sent pdf using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
+
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
         }
 
         if (pdfs.length >= 2) {
@@ -3866,8 +3874,17 @@ const sendEmail = async (data) => {
         );
 
         let activity_content = 'sent image using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
+
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
         }
 
         if (images.length >= 2) {
@@ -3909,8 +3926,17 @@ const sendEmail = async (data) => {
       }
 
       let activity_content = 'sent email';
-      if (req.guest_loggin) {
-        activity_content = ActivityHelper.assistantLog(activity_content);
+
+      switch (mode) {
+        case 'automation':
+          activity_content = ActivityHelper.automationLog(activity_content);
+          break;
+        case 'campaign':
+          activity_content = ActivityHelper.campaignLog(activity_content);
+          break;
+        case 'api':
+          activity_content = ActivityHelper.apiLog(activity_content);
+          break;
       }
 
       const email = new Email({
@@ -4047,7 +4073,7 @@ const sendEmail = async (data) => {
                   }
                 );
                 if (err.statusCode === 403) {
-                  no_connected = true;
+                  // no_connected = true;
                   resolve({
                     status: false,
                     contact: {
@@ -4122,11 +4148,23 @@ const sendEmail = async (data) => {
           })
           .catch((error) => {
             console.log('error', error);
-            return res.status(406).send({
-              status: false,
-              error: 'not connected',
+            promise = new Promise(async (resolve, reject) => {
+              resolve({
+                status: false,
+                contact: {
+                  first_name: contact.first_name,
+                  email: contact.email,
+                },
+                error: 'not connected',
+              });
             });
+
+            promise_array.push(promise);
           });
+
+        if (promise_array.length > 0) {
+          return Promise.all(promise_array);
+        }
 
         const client = graph.Client.init({
           authProvider: (done) => {
@@ -4241,8 +4279,8 @@ const sendEmail = async (data) => {
         promise_array.push(promise);
       }
     }
-    return Promise.all(promise_array);
   }
+  return Promise.all(promise_array);
 };
 
 const socialShare = async (req, res) => {
