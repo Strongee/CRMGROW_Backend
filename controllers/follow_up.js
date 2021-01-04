@@ -184,7 +184,7 @@ const edit = async (req, res) => {
 
       const activity = new Activity({
         content: detail_content,
-        contacts: req.params.id,
+        contacts: req.body.contact,
         user: currentUser.id,
         type: 'follow_ups',
         follow_ups: _follow_up.id,
@@ -196,7 +196,7 @@ const edit = async (req, res) => {
         .save()
         .then((_activity) => {
           Contact.updateOne(
-            { _id: req.params.id },
+            { _id: req.body.contact },
             {
               $set: { last_activity: _activity.id },
             }
