@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'WebinarInvitation';
+const templateName = 'Welcome';
 
 const subjects = {
   TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
@@ -19,6 +19,7 @@ const subjects = {
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,
   OnboardCall: `One on one onboarding`,
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
+  Welcome: 'Welcome CRMGrow',
 };
 const htmls = {};
 fs.readFile(
@@ -38,7 +39,7 @@ fs.readFile(
     };
 
     const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-      .updateTemplate(createParams)
+      .createTemplate(createParams)
       .promise();
 
     templatePromise

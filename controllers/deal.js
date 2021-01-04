@@ -183,11 +183,37 @@ const remove = async (req, res) => {
   ).catch((err) => {
     console.log('remove deal', err.message);
   });
+
+  return res.send({
+    status: true,
+  });
+};
+
+const edit = async (req, res) => {
+  const { currentUser } = req;
+
+  Deal.updateOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('deal update err', err.message);
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
 };
 
 module.exports = {
   getAll,
   create,
   moveDeal,
+  edit,
   remove,
 };
