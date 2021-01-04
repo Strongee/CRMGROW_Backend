@@ -14,6 +14,7 @@ router.post(
 );
 router.get('/', UserCtrl.checkAuth, catchError(DealCtrl.getAll));
 router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
+router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.post(
   '/move-deal',
   UserCtrl.checkAuth,

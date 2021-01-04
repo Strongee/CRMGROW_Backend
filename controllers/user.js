@@ -28,6 +28,7 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials);
 const nodemailer = require('nodemailer');
 const AWS = require('aws-sdk');
+const moment = require('moment-timezone');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -2542,11 +2543,42 @@ const schedulePaidDemo = async (req, res) => {
     });
 };
 
+const sendWelcomeEmail = async (data) => {
+  const { email, user_name, password, time_zone } = data;
+  const templatedData = {
+    user_name,
+    created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+    webinar_url: system_settings.WEBINAR_LINK,
+    import_url: urls.IMPORT_CSV_URL,
+    template_url: urls.CONTACT_CSV_URL,
+    facebook_url: urls.FACEBOOK_URL,
+    login_url: urls.LOGIN_URL,
+    terms_url: urls.TERMS_SERVICE_URL,
+    privacy_url: urls.PRIVACY_URL,
+    email,
+    password,
+  };
+
+  const params = {
+    Destination: {
+      ToAddresses: [email],
+    },
+    Source: mail_contents.REPLY,
+    Template: 'Welcome',
+    TemplateData: JSON.stringify(templatedData),
+  };
+
+  // Create the promise and SES service object
+
+  ses.sendTemplatedEmail(params).promise();
+};
+
 module.exports = {
   signUp,
   login,
   logout,
   checkUser,
+  sendWelcomeEmail,
   socialSignUp,
   socialLogin,
   signUpGmail,

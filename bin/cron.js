@@ -1900,7 +1900,6 @@ const timesheet_check = new CronJob(
                 );
                 const now = moment();
                 if (beginning_time.isBefore(now)) {
-                  console.log('before');
                   Activity.deleteMany({
                     _id: { $in: activities },
                   }).catch((err) => {
@@ -1954,6 +1953,37 @@ const timesheet_check = new CronJob(
                 });
               }
             });
+            break;
+          }
+          case 'send_email': {
+            const data = {
+              ...timeline.action,
+              contacts: [timeline.contact],
+              user: timeline.user,
+            };
+            EmailHelper.sendEmail(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
             break;
           }
         }
@@ -2047,9 +2077,14 @@ const campaign_job = new CronJob(
           pdf_ids: campaign.pdfs,
           image_ids: campaign.images,
         };
-        EmailHelper.sendEmail(data).catch((err) => {
-          console.log('err', err.message);
-        });
+
+        EmailHelper.sendEmail(data)
+          .then((res) => {
+            
+          })
+          .catch((err) => {
+            console.log('err', err.message);
+          });
       }
     }
   },
@@ -2066,7 +2101,7 @@ weekly_report.start();
 upload_video_job.start();
 convert_video_job.start();
 payment_check.start();
-campaign_job.start();
+// campaign_job.start();
 // logger_check.start()
 notification_check.start();
 timesheet_check.start();

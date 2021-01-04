@@ -22,7 +22,7 @@ const system_settings = {
     BASIC: 15,
   },
   PASSWORD: {
-    USER: process.env.DEFAULT_PASS || 'admin123',
+    USER: process.env.DEFAULT_PASS || 'user123',
     ADMIN: process.env.ADMIN_DEFAULT_PASS || 'admin123',
   },
   COMPANY: {
