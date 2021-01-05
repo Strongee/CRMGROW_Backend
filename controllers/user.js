@@ -8,6 +8,7 @@ const outlook = require('node-outlook');
 
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
+const webPush = require('web-push');
 
 const yahooCredentials = {
   clientID: api.YAHOO_CLIENT.YAHOO_CLIENT_ID1,
@@ -2573,6 +2574,42 @@ const sendWelcomeEmail = async (data) => {
   ses.sendTemplatedEmail(params).promise();
 };
 
+const pushNotification = async (req, res) => {
+  const user = await User.findOne({ _id: req.params.id, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+  const subscription = JSON.parse(user['desktop_notification_subscription']);
+  webPush.setVapidDetails(
+    'mailto:support@crmgrow.com',
+    api.VAPID.PUBLIC_VAPID_KEY,
+    api.VAPID.PRIVATE_VAPID_KEY
+  );
+  const playload = JSON.stringify({
+    notification: {
+      title: 'Notification Title',
+      body: 'Notification Description',
+      icon: '/fav.ico',
+      badge: '/fav.ico',
+    },
+  });
+  webPush
+    .sendNotification(subscription, playload)
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.send({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   signUp,
   login,
@@ -2625,4 +2662,5 @@ module.exports = {
   checkLastLogin,
   closeAccount,
   connectAnotherEmail,
+  pushNotification,
 };

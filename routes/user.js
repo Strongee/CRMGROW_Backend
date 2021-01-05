@@ -243,6 +243,8 @@ router.post(
   catchError(UserCtrl.schedulePaidDemo)
 );
 
+router.get('/push-notification/:id', catchError(UserCtrl.pushNotification));
+
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser));
 
