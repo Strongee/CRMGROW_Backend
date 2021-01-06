@@ -19,6 +19,7 @@ const TrackerSchema = new Schema(
   }
 );
 
+TrackerSchema.index({ video: 1 });
 const VideoTracker = mongoose.model('video_tracker', TrackerSchema);
 
 module.exports = VideoTracker;
