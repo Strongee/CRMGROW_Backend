@@ -1588,7 +1588,7 @@ const getAnalytics = async (req, res) => {
   ]);
 
   if (!sent_activity) {
-    return res.status(404).send({
+    return res.status(400).send({
       status: false,
       error: 'Activity not found',
     });
