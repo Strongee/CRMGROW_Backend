@@ -1562,6 +1562,7 @@ const remove = async (req, res) => {
 const getAnalytics = async (req, res) => {
   const { currentUser } = req;
 
+  const video = await Video.findOne({ _id: req.params.id });
   const sent_activity = await Activity.countDocuments({
     videos: req.params.id,
     user: currentUser.id,
@@ -1587,15 +1588,10 @@ const getAnalytics = async (req, res) => {
     },
   ]);
 
-  if (!sent_activity) {
-    return res.status(400).send({
-      status: false,
-      error: 'Activity not found',
-    });
-  }
   return res.send({
     status: true,
     data: {
+      video,
       sent_activity,
       watched_activity,
       watched_contacts,
