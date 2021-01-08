@@ -203,8 +203,12 @@ const edit = async (req, res) => {
           ).catch((err) => {
             console.log('err', err);
           });
+          const myJSON = JSON.stringify(follow_up);
+          const data = JSON.parse(myJSON);
+          data.activity = _activity;
           return res.send({
             status: true,
+            data,
           });
         })
         .catch((e) => {
@@ -218,6 +222,85 @@ const edit = async (req, res) => {
     .catch((err) => {
       console.log('err', err);
     });
+};
+
+const completed = async (req, res) => {
+  const { currentUser } = req;
+  const { follow_up } = req.body;
+  if (follow_up) {
+    let detail_content = 'completed follow up';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
+    try {
+      const _follow_up = await FollowUp.findOne({ _id: follow_up }).catch(
+        (err) => {
+          console.log('err', err);
+        }
+      );
+
+      _follow_up.status = 1;
+      _follow_up.save().catch((err) => {
+        console.log('err', err);
+      });
+
+      Reminder.deleteOne({
+        follow_up,
+      }).catch((err) => {
+        console.log('err', err);
+      });
+
+      const activity = new Activity({
+        content: detail_content,
+        contacts: _follow_up.contact,
+        user: currentUser.id,
+        type: 'follow_ups',
+        follow_ups: follow_up,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      activity
+        .save()
+        .then((_activity) => {
+          Contact.updateOne(
+            { _id: _follow_up.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+          const myJSON = JSON.stringify(_follow_up);
+          const data = JSON.parse(myJSON);
+          data.activity = _activity;
+          return res.send({
+            status: true,
+            data,
+          });
+        })
+        .catch((e) => {
+          console.log('follow error', e);
+          return res.status(400).send({
+            status: false,
+            error: e,
+          });
+        });
+    } catch (err) {
+      console.log('err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    }
+  } else {
+    console.log('FollowUp doesn`t exist');
+    return res.status(400).json({
+      status: false,
+      error: 'FollowUp doesn`t exist',
+    });
+  }
 };
 
 const getByDate = async (req, res) => {
@@ -894,6 +977,7 @@ module.exports = {
   get,
   create,
   edit,
+  completed,
   getByDate,
   load,
   selectAll,
