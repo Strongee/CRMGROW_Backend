@@ -886,7 +886,7 @@ const socialOutlook = async (req, res) => {
           connected_email_type: 'outlook',
           primary_connected: true,
           outlook_refresh_token,
-          connect_calendar: true,
+          calendar_connected: true,
           email_max_count,
         };
         return res.send({
@@ -1537,7 +1537,7 @@ const authorizeOutlookCalendar = async (req, res) => {
         const jwt = JSON.parse(decoded_token);
 
         // Email is in the preferred_username field
-        user.connect_calendar = true;
+        user.calendar_connected = true;
         if (user.calendar_list) {
           // const data = {
           //   connected_email: _res.data.email,
@@ -1906,7 +1906,7 @@ const authorizeGoogleCalendar = async (req, res) => {
     }
 
     // Email is in the preferred_username field
-    user.connect_calendar = true;
+    user.calendar_connected = true;
     if (user.calendar_list) {
       // const data = {
       //   connected_email: _res.data.email,
@@ -1996,7 +1996,7 @@ const addGoogleCalendar = async (auth, user, res) => {
       }
     );
   }
-  user.connect_calendar = true;
+  user.calendar_connected = true;
   user.save();
 
   return res.send({
@@ -2054,7 +2054,7 @@ const disconCalendar = async (req, res) => {
         }
       });
     }
-    user.connect_calendar = false;
+    user.calendar_connected = false;
 
     await user.save();
     return res.send({
@@ -2087,7 +2087,7 @@ const removeGoogleCalendar = async (auth, user, res) => {
       }
     });
   }
-  user.connect_calendar = false;
+  user.calendar_connected = false;
   user.save();
 
   return res.send({
