@@ -1559,42 +1559,44 @@ const remove = async (req, res) => {
   }
 };
 
-const getHistory = async (req, res) => {
+const getAnalytics = async (req, res) => {
   const { currentUser } = req;
-  const _activity_list = await Activity.aggregate([
+
+  const video = await Video.findOne({ _id: req.params.id });
+  const sent_activity = await Activity.countDocuments({
+    videos: req.params.id,
+    user: currentUser.id,
+  });
+
+  const watched_activity = await VideoTracker.find({
+    video: req.params.id,
+    user: currentUser.id,
+  }).populate('contact');
+
+  const watched_contacts = await VideoTracker.aggregate([
     {
-      $lookup: {
-        from: 'contacts',
-        localField: 'contacts',
-        foreignField: '_id',
-        as: 'video_detail',
+      $match: {
+        video: mongoose.Types.ObjectId(req.params.id),
+        user: mongoose.Types.ObjectId(currentUser.id),
       },
     },
     {
-      $match: { video: req.params.id, user: currentUser.id },
+      $group: {
+        _id: { contact: '$contact' },
+        count: { $sum: 1 },
+      },
     },
   ]);
-  for (let i = 0; i < _activity_list.length; i++) {
-    const _video_tracker = VideoTracker.find({
-      contact: _activity_list[i].contact,
-      video: req.params.id,
-      user: currentUser.id,
-    });
-    _activity_list[i].video_tracker = _video_tracker;
-  }
-  if (_activity_list) {
-    res.send({
-      status: true,
-      data: {
-        data: _activity_list,
-      },
-    });
-  } else {
-    res.status(404).send({
-      status: false,
-      error: 'Activity not found',
-    });
-  }
+
+  return res.send({
+    status: true,
+    data: {
+      video,
+      sent_activity,
+      watched_activity,
+      watched_contacts,
+    },
+  });
 };
 
 const bulkEmail = async (req, res) => {
@@ -3200,7 +3202,7 @@ module.exports = {
   bulkEmail,
   bulkText,
   remove,
-  getHistory,
+  getAnalytics,
   getContactsByLatestSent,
   createVideo,
   createSmsContent,

@@ -75,13 +75,46 @@ const remove = async (req, res) => {
 
   DealStage.deleteOne({
     _id: req.params.id,
-  }).catch((err) => {
-    console.log('deal stage remove err', err.message);
-  });
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('deal stage remove err', err.message);
+    });
+};
+
+const edit = async (req, res) => {
+  const { currentUser } = req;
+
+  DealStage.updateOne(
+    {
+      _id: req.params.id,
+      user: currentUser.id,
+    },
+    {
+      ...req.body,
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('deal stage update err', err.message);
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
 };
 
 module.exports = {
   getAll,
   create,
   remove,
+  edit,
 };

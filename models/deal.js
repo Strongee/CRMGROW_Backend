@@ -8,6 +8,7 @@ const DealSchema = new Schema(
     title: String,
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     deal_stage: { type: mongoose.Schema.Types.ObjectId, ref: 'deal_stage' },
+    value: Number,
     updated_at: Date,
     created_at: Date,
   },

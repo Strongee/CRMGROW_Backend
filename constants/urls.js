@@ -53,6 +53,7 @@ if (process.env.NODE_ENV === 'production') {
     FACEBOOK_URL: 'https://www.facebook.com/crmgrow',
     TERMS_SERVICE_URL: 'https://crmgrow.com/terms_of_service.html',
     PRIVACY_URL: 'https://crmgrow.com/privacy.html',
+    UNSUSCRIPTION_URL: 'https://app.crmgrow.com',
   };
 } else if (process.env.NODE_ENV === 'staging') {
   urls = {
