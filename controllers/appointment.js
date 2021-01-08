@@ -1074,12 +1074,21 @@ const remove = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.calendar_connected) {
-    const { event_id, recurrence_id, calendar_id } = req.body;
+    const {
+      event_id,
+      recurrence_id,
+      calendar_id,
+      connected_email,
+      connected_calendar_type,
+      outlook_refresh_token,
+      google_refresh_token,
+    } = req.body;
+
     const remove_id = recurrence_id || event_id;
-    if (currentUser.connected_email_type === 'outlook') {
+    if (connected_calendar_type === 'outlook') {
       let accessToken;
       const token = oauth2.accessToken.create({
-        refresh_token: currentUser.outlook_refresh_token,
+        refresh_token: outlook_refresh_token,
         expires_in: 0,
       });
 
@@ -1123,7 +1132,7 @@ const remove = async (req, res) => {
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
-      oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
+      oauth2Client.setCredentials(JSON.parse(google_refresh_token));
       const data = { oauth2Client, calendar_id, remove_id };
       await removeGoogleCalendarById(data).catch((err) => {
         console.log('event remove err', err.message);
