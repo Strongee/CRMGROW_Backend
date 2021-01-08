@@ -2531,6 +2531,7 @@ const schedulePaidDemo = async (req, res) => {
         .catch((err) => {
           console.log('ses send err', err);
         });
+
       return res.send({
         status: true,
       });
@@ -2545,9 +2546,11 @@ const schedulePaidDemo = async (req, res) => {
 };
 
 const sendWelcomeEmail = async (data) => {
-  const { email, user_name, password, time_zone } = data;
+  const { id, email, user_name, password, time_zone } = data;
+  const verification_url = `${urls.DOMAIN_URL}?id=${id}`;
   const templatedData = {
     user_name,
+    verification_url,
     created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
     webinar_url: system_settings.WEBINAR_LINK,
     import_url: urls.IMPORT_CSV_URL,
@@ -2582,7 +2585,7 @@ const pushNotification = async (req, res) => {
   );
   const subscription = JSON.parse(user['desktop_notification_subscription']);
   webPush.setVapidDetails(
-    'mailto:support@crmgrow.com',
+    `mailto:${mail_contents.REPLY}`,
     api.VAPID.PUBLIC_VAPID_KEY,
     api.VAPID.PRIVATE_VAPID_KEY
   );
