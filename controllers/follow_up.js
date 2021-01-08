@@ -203,8 +203,12 @@ const edit = async (req, res) => {
           ).catch((err) => {
             console.log('err', err);
           });
+          const myJSON = JSON.stringify(follow_up);
+          const data = JSON.parse(myJSON);
+          data.activity = _activity;
           return res.send({
             status: true,
+            data,
           });
         })
         .catch((e) => {
