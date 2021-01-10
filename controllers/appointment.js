@@ -8,6 +8,7 @@ const api = require('../config/api');
 const urls = require('../constants/urls');
 const { time_zone, days } = require('../constants/variable');
 const mail_contents = require('../constants/mail_contents');
+const system_settings = require('../config/system_settings');
 const Appointment = require('../models/appointment');
 const Activity = require('../models/activity');
 // const Reminder = require('../models/reminder');
@@ -39,7 +40,7 @@ const getAll = async (req, res) => {
     date = moment(date).startOf(mode);
   }
 
-  if (currentUser.connect_calendar && currentUser.calendar_list) {
+  if (currentUser.calendar_connected && currentUser.calendar_list) {
     const { calendar_list } = currentUser;
 
     for (let i = 0; i < calendar_list.length; i++) {
@@ -80,7 +81,9 @@ const getAll = async (req, res) => {
           },
         });
 
-        const ctz = time_zone[currentUser.time_zone];
+        const ctz = currentUser.time_zone_info
+          ? currentUser.time_zone_info.tz_name
+          : system_settings.TIME_ZONE;
         const calendar_data = {
           client,
           ctz,
@@ -510,9 +513,18 @@ const create = async (req, res) => {
   //   });
   // }
 
-  if (currentUser.connect_calendar) {
+  if (currentUser.calendar_connected) {
     const _appointment = req.body;
-    if (currentUser.connected_email_type === 'outlook') {
+    const {
+      connected_email,
+      connected_calendar_type,
+      outlook_refresh_token,
+      google_refresh_token,
+      calendar_id,
+      guests,
+    } = req.body;
+
+    if (connected_calendar_type === 'outlook') {
       const attendees = [];
       if (_appointment.guests) {
         for (let j = 0; j < _appointment.guests.length; j++) {
@@ -576,7 +588,10 @@ const create = async (req, res) => {
         };
       }
 
-      const ctz = time_zone[currentUser.time_zone];
+      const ctz = currentUser.time_zone_info
+        ? currentUser.time_zone_info.tz_name
+        : system_settings.TIME_ZONE;
+
       const newEvent = {
         subject: _appointment.title,
         body: {
@@ -600,7 +615,7 @@ const create = async (req, res) => {
 
       let accessToken;
       const token = oauth2.accessToken.create({
-        refresh_token: currentUser.outlook_refresh_token,
+        refresh_token: outlook_refresh_token,
         expires_in: 0,
       });
 
@@ -632,7 +647,9 @@ const create = async (req, res) => {
         },
       });
 
-      let res = await client.api('/me/events').post(newEvent);
+      let res = await client
+        .api(`/me/calendars/${calendar_id}/events`)
+        .post(newEvent);
       event_id = res.id;
     } else {
       const oauth2Client = new google.auth.OAuth2(
@@ -640,7 +657,7 @@ const create = async (req, res) => {
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
-      const token = JSON.parse(currentUser.google_refresh_token);
+      const token = JSON.parse(google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
       event_id = await addGoogleCalendarById(
         oauth2Client,
@@ -741,17 +758,21 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
     recurrence = [`RRULE:FREQ=${appointment.recurrence};`];
   }
 
+  const ctz = user.time_zone_info
+    ? user.time_zone_info.tz_name
+    : system_settings.TIME_ZONE;
+
   const event = {
     summary: appointment.title,
     location: appointment.location,
     description: appointment.description,
     start: {
       dateTime: appointment.due_start,
-      timeZone: `UTC${user.time_zone}`,
+      timeZone: ctz,
     },
     end: {
       dateTime: appointment.due_end,
-      timeZone: `UTC${user.time_zone}`,
+      timeZone: ctz,
     },
     attendees,
     recurrence,
@@ -760,7 +781,7 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
     calendar.events.insert(
       {
         auth,
-        calendarId: 'primary',
+        calendarId: appointment.calendar_id,
         sendNotifications: true,
         resource: event,
       },
@@ -780,14 +801,24 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
 const edit = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.connect_calendar) {
-    const _appointment = req.body;
-    const event_id = _appointment.recurrence_id || req.params.id;
+  if (currentUser.calendar_connected) {
+    const {
+      recurrence_id,
+      connected_email,
+      connected_calendar_type,
+      outlook_refresh_token,
+      google_refresh_token,
+      calendar_id,
+      guests,
+    } = req.body;
+    const edit_data = req.body;
 
-    if (currentUser.connected_email_type === 'outlook') {
+    const event_id = recurrence_id || req.params.id;
+
+    if (connected_calendar_type === 'outlook') {
       let accessToken;
       const token = oauth2.accessToken.create({
-        refresh_token: currentUser.outlook_refresh_token,
+        refresh_token: outlook_refresh_token,
         expires_in: 0,
       });
 
@@ -820,72 +851,38 @@ const edit = async (req, res) => {
       });
 
       const attendees = [];
-      if (_appointment.guests) {
-        for (let j = 0; j < _appointment.guests.length; j++) {
+      if (guests) {
+        for (let j = 0; j < guests.length; j++) {
           const addendee = {
             emailAddress: {
-              address: _appointment.guests[j],
+              address: guests[j],
             },
           };
           attendees.push(addendee);
         }
       }
       const event = {
-        subject: _appointment.title,
+        subject: edit_data.title,
         body: {
           contentType: 'HTML',
-          content: _appointment.description,
+          content: edit_data.description,
         },
         location: {
-          displayName: _appointment.location,
+          displayName: edit_data.location,
         },
         start: {
-          dateTime: _appointment.due_start,
+          dateTime: edit_data.due_start,
           timeZone: `UTC${currentUser.time_zone}`,
         },
         end: {
-          dateTime: _appointment.due_end,
+          dateTime: edit_data.due_end,
           timeZone: `UTC${currentUser.time_zone}`,
         },
         attendees,
       };
-      const { calendar_id } = _appointment;
       let res = await client
         .api(`/me/calendars/${calendar_id}/events/${event_id}`)
         .update(event);
-
-      // const updatePayload = {
-      //   subject: _appointment.title,
-      //   body: {
-      //     contentType: 'HTML',
-      //     content: _appointment.description,
-      //   },
-      //   location: {
-      //     displayName: _appointment.location,
-      //   },
-      //   start: {
-      //     dateTime: _appointment.due_start,
-      //     timeZone: `UTC${currentUser.time_zone}`,
-      //   },
-      //   end: {
-      //     dateTime: _appointment.due_end,
-      //     timeZone: `UTC${currentUser.time_zone}`,
-      //   },
-      //   attendees,
-      // };
-
-      // const updateEventParameters = {
-      //   token: accessToken,
-      //   eventId: event_id,
-      //   update: updatePayload,
-      // };
-
-      // outlook.base.setApiEndpoint('https://outlook.office.com/api/v2.0');
-      // outlook.calendar.updateEvent(updateEventParameters, function (error) {
-      //   if (error) {
-      //     console.log('err', error);
-      //   }
-      // });
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -893,20 +890,20 @@ const edit = async (req, res) => {
         urls.GMAIL_AUTHORIZE_URL
       );
 
-      const token = JSON.parse(currentUser.google_refresh_token);
+      const token = JSON.parse(google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
       const data = {
         oauth2Client,
         remove_id: event_id,
-        appointment: _appointment,
+        appointment: edit_data,
         time_zone: currentUser.time_zone,
       };
       await updateGoogleCalendarById(data);
     }
 
-    if (_appointment.contacts && _appointment.contacts.length > 0) {
-      for (let i = 0; i < _appointment.contacts.length; i++) {
-        const contact = _appointment.contacts[i];
+    if (edit_data.contacts && edit_data.contacts.length > 0) {
+      for (let i = 0; i < edit_data.contacts.length; i++) {
+        const contact = edit_data.contacts[i];
         const appointment = await Appointment.findOne({
           user: currentUser.id,
           event_id: req.params.id,
@@ -995,12 +992,12 @@ const edit = async (req, res) => {
       }
     }
     if (
-      _appointment.contacts.remove_contacts &&
-      _appointment.contacts.remove_contacts.length > 0
+      edit_data.contacts.remove_contacts &&
+      edit_data.contacts.remove_contacts.length > 0
     ) {
       Appointment.updateMany(
         {
-          _id: { $in: _appointment.contacts.remove_contacts },
+          _id: { $in: edit_data.contacts.remove_contacts },
         },
         {
           $set: {
@@ -1076,13 +1073,22 @@ const edit = async (req, res) => {
 const remove = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.connect_calendar) {
-    const { event_id, recurrence_id, calendar_id } = req.body;
+  if (currentUser.calendar_connected) {
+    const {
+      event_id,
+      recurrence_id,
+      calendar_id,
+      connected_email,
+      connected_calendar_type,
+      outlook_refresh_token,
+      google_refresh_token,
+    } = req.body;
+
     const remove_id = recurrence_id || event_id;
-    if (currentUser.connected_email_type === 'outlook') {
+    if (connected_calendar_type === 'outlook') {
       let accessToken;
       const token = oauth2.accessToken.create({
-        refresh_token: currentUser.outlook_refresh_token,
+        refresh_token: outlook_refresh_token,
         expires_in: 0,
       });
 
@@ -1126,7 +1132,7 @@ const remove = async (req, res) => {
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
-      oauth2Client.setCredentials(JSON.parse(currentUser.google_refresh_token));
+      oauth2Client.setCredentials(JSON.parse(google_refresh_token));
       const data = { oauth2Client, calendar_id, remove_id };
       await removeGoogleCalendarById(data).catch((err) => {
         console.log('event remove err', err.message);

@@ -41,7 +41,7 @@ const UserSchema = new Schema(
     yahoo_refresh_token: String,
     other_emailer: Object,
     connected_email_type: String,
-    connect_calendar: { type: Boolean, default: false },
+    calendar_connected: { type: Boolean, default: false },
     calendar_list: Array,
     connected_email: String,
     daily_report: { type: Boolean, default: false },
