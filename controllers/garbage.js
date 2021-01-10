@@ -1,4 +1,5 @@
 const Garbage = require('../models/garbage');
+const Template = require('../models/email_template');
 const { removeFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
 
@@ -141,9 +142,51 @@ const uploadIntroVideo = async (req, res) => {
   }
 };
 
+const loadDefaults = async (req, res) => {
+  const { currentUser } = req;
+  const currentGarbage = await Garbage.findOne({ user: currentUser._id });
+  if (!currentGarbage) {
+    return res.send({
+      status: true,
+      data: {
+        email: null,
+        sms: null,
+      },
+    });
+  }
+  let defaultEmail;
+  let defaultSms;
+  if (
+    currentGarbage &&
+    currentGarbage['canned_message'] &&
+    currentGarbage['canned_message']['email']
+  ) {
+    defaultEmail = await Template.findOne({
+      _id: currentGarbage['canned_message']['email'],
+    });
+  }
+  if (
+    currentGarbage &&
+    currentGarbage['canned_message'] &&
+    currentGarbage['canned_message']['sms']
+  ) {
+    defaultEmail = await Template.findOne({
+      _id: currentGarbage['canned_message']['sms'],
+    });
+  }
+  return res.send({
+    status: true,
+    data: {
+      email: defaultEmail,
+      sms: defaultSms,
+    },
+  });
+};
+
 module.exports = {
   get,
   create,
   edit,
   uploadIntroVideo,
+  loadDefaults,
 };
