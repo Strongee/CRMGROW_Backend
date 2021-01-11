@@ -423,7 +423,6 @@ const bulkOutlook = async (req, res) => {
     refresh_token: currentUser.outlook_refresh_token,
     expires_in: 0,
   });
-  let accessToken;
 
   if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
@@ -443,6 +442,7 @@ const bulkOutlook = async (req, res) => {
   }
 
   for (let i = 0; i < contacts.length; i++) {
+    let accessToken;
     await new Promise((resolve, reject) => {
       token.refresh(function (error, result) {
         if (error) {

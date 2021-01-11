@@ -1912,10 +1912,31 @@ const getLeaders = (req, res) => {
     });
 };
 
+const getSharedContacts = async (req, res) => {
+  const { currentUser } = req;
+  const contacts = await Contact.findOne({
+    shared_contact: true,
+    user: currentUser.id,
+  })
+    .populate({
+      path: 'shared_members',
+      select: 'user_name email picture_profile cell_phone',
+    })
+    .catch((err) => {
+      console.log('get shared contact', err.message);
+    });
+
+  return res.send({
+    status: true,
+    data: contacts,
+  });
+};
+
 module.exports = {
   getAll,
   getLeaders,
   getTeam,
+  getSharedContacts,
   getInvitedTeam,
   get,
   getInquireCall,

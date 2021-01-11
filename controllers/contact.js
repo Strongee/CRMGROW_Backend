@@ -8,6 +8,7 @@ const webpush = require('web-push');
 const phone = require('phone');
 const moment = require('moment');
 const Verifier = require('email-verifier');
+const AWS = require('aws-sdk');
 
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
@@ -29,17 +30,26 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const Team = require('../models/team');
+const Notification = require('../models/notification');
 const LabelHelper = require('../helpers/label');
 const ActivityHelper = require('../helpers/activity');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
+const { contacts } = require('node-outlook');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -4351,6 +4361,92 @@ const updateContact = async (req, res) => {
     });
 };
 
+const shareContacts = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = await Contact.findOne({
+      _id: contacts[i],
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact find err', err.message);
+    });
+
+    if (!contact) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid permission',
+      });
+    }
+
+    const user = await User.findOne({
+      _id: req.body.user,
+    }).catch((err) => {
+      console.log('user find err', err.message);
+    });
+
+    Contact.updateOne(
+      {
+        _id: contacts[i],
+      },
+      {
+        $set: {
+          shared_contact: true,
+        },
+        $push: {
+          shared_members: req.body.user,
+        },
+      }
+    )
+      .then(() => {
+        const templatedData = {
+          user_name: currentUser.user_name,
+          sharer_name: user.user_name,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
+          email: contact.email,
+          contact_first_name: contact.first_name,
+          contact_url: urls.CONTACT_PAGE_URL + contact.id,
+        };
+
+        const params = {
+          Destination: {
+            ToAddresses: [user.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'ContactAdd',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+        ses
+          .sendTemplatedEmail(params)
+          .promise()
+          .then((response) => {
+            console.log('success', response.MessageId);
+          })
+          .catch((err) => {
+            console.log('ses send err', err);
+          });
+
+        // Notification
+        const notification = new Notification({
+          user: req.body.user,
+          sharer: req.body.user,
+          criteria: 'contact_shared',
+          content: `${user.user_name} have shared a contact in CRMGrow`,
+        });
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+      })
+      .catch((err) => {
+        console.log('contact update err', err.message);
+      });
+  }
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4391,6 +4487,7 @@ module.exports = {
   interestContact,
   interestSubmitContact,
   getSharedContact,
+  shareContacts,
   contactMerge,
   updateContact,
 };

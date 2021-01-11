@@ -6,7 +6,7 @@ const DealSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
-    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     deal_stage: { type: mongoose.Schema.Types.ObjectId, ref: 'deal_stage' },
     value: Number,
     updated_at: Date,

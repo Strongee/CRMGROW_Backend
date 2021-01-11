@@ -6,6 +6,7 @@ const ContactSchema = mongoose.Schema(
     last_name: { type: String, default: '' },
     email: { type: String, default: '' },
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    shared_contact: Boolean,
     shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     address: String,
@@ -148,6 +149,7 @@ const capitalize = (s) => {
 ContactSchema.index({ user: 1, first_name: 1, last_name: 1 });
 ContactSchema.index({ user: 1, email: 1 });
 ContactSchema.index({ user: 1, cell_phone: 1 });
+ContactSchema.index({ shared_contact: 1 });
 ContactSchema.index({ user: 1 });
 const Contact = mongoose.model('contact', ContactSchema);
 module.exports = Contact;
