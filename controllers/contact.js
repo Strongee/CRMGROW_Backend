@@ -4444,6 +4444,10 @@ const shareContacts = async (req, res) => {
       .catch((err) => {
         console.log('contact update err', err.message);
       });
+
+    return res.send({
+      status: true,
+    });
   }
 };
 

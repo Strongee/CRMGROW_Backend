@@ -7,10 +7,11 @@ const ActivityHelper = require('../helpers/activity');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
+  const { contacts } = req.body;
 
   const data = await Deal.find({
     user: currentUser.id,
-    contact: req.body.contact,
+    contacts: { $in: contacts },
   });
 
   if (!data) {
@@ -28,6 +29,7 @@ const getAll = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
+  const { contacts } = req.body;
 
   const deal = new Deal({
     ...req.body,
@@ -55,30 +57,33 @@ const create = async (req, res) => {
         console.log('error', err.message);
       });
 
-      const activity = new Activity({
-        content: detail_content,
-        contacts: _deal.contact,
-        user: currentUser.id,
-        type: 'deals',
-        deals: _deal.id,
-      });
+      for (let i = 0; i < contacts.length; i++) {
+        const activity = new Activity({
+          content: detail_content,
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'deals',
+          deals: _deal.id,
+        });
 
-      activity.save().then((_activity) => {
+        activity.save().catch((err) => {
+          console.log('activity save err', err.message);
+        });
         Contact.updateOne(
-          { _id: _deal.contact },
-          { $set: { last_activity: _activity.id } }
+          { _id: contacts[i] },
+          { $set: { last_activity: activity.id } }
         ).catch((err) => {
           console.log('err', err);
         });
+      }
 
-        const myJSON = JSON.stringify(_deal);
-        const data = JSON.parse(myJSON);
-        data.activity = _activity;
-        data.deal_stage = req.body.deal_stage;
-        res.send({
-          status: true,
-          data,
-        });
+      const myJSON = JSON.stringify(_deal);
+      const data = JSON.parse(myJSON);
+      data.deal_stage = req.body.deal_stage;
+
+      return res.send({
+        status: true,
+        data: _deal,
       });
     })
     .catch((err) => {
