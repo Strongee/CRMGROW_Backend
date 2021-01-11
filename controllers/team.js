@@ -1914,7 +1914,7 @@ const getLeaders = (req, res) => {
 
 const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
-  const contacts = await Contact.findOne({
+  const contacts = await Contact.find({
     shared_contact: true,
     user: currentUser.id,
   })
