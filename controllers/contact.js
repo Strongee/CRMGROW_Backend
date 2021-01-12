@@ -4395,7 +4395,7 @@ const shareContacts = async (req, res) => {
           shared_contact: true,
         },
         $push: {
-          shared_members: req.body.user,
+          shared_members: req.body.users,
         },
       }
     )

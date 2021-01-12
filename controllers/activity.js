@@ -1,10 +1,25 @@
-const { validationResult } = require('express-validator/check');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 
 const get = async (req, res) => {
   const { currentUser } = req;
-  const count = await Activity.countDocuments({ user: currentUser.id });
+  const shared_contacts = await Contact.find({
+    shared_members: currentUser.id,
+  }).catch((err) => {
+    console.log('get shared contacts err', err.message);
+  });
+
+  let count;
+  if (shared_contacts && shared_contacts.length > 0) {
+    count = await Activity.countDocuments({
+      user: currentUser.id,
+      contacts: { $in: shared_contacts },
+    });
+  } else {
+    count = await Activity.countDocuments({
+      user: currentUser.id,
+    });
+  }
   let activity;
   if (typeof req.params.id === 'undefined') {
     activity = await Activity.find({ user: currentUser.id })
