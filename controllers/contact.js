@@ -37,6 +37,7 @@ const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
+const { getAvatarName } = require('../helpers/utility');
 const { contacts } = require('node-outlook');
 
 const accountSid = api.TWILIO.TWILIO_SID;
@@ -4363,50 +4364,94 @@ const updateContact = async (req, res) => {
 
 const shareContacts = async (req, res) => {
   const { currentUser } = req;
-  const contacts = req.body;
+  const { contacts } = req.body;
+  const promise_array = [];
+  const data = [];
+  const error = [];
+  let contacts_html = '';
+
+  const user = await User.findOne({
+    _id: req.body.user,
+  }).catch((err) => {
+    console.log('user find err', err.message);
+  });
 
   for (let i = 0; i < contacts.length; i++) {
-    const contact = await Contact.findOne({
-      _id: contacts[i],
-      user: currentUser.id,
-    }).catch((err) => {
-      console.log('contact find err', err.message);
-    });
-
-    if (!contact) {
-      return res.status(400).json({
-        status: false,
-        error: 'Invalid permission',
-      });
-    }
-
-    const user = await User.findOne({
-      _id: req.body.user,
-    }).catch((err) => {
-      console.log('user find err', err.message);
-    });
-
-    Contact.updateOne(
-      {
+    const promise = new Promise(async (resolve, reject) => {
+      const contact = await Contact.findOne({
         _id: contacts[i],
-      },
-      {
-        $set: {
-          shared_contact: true,
-        },
-        $push: {
-          shared_members: req.body.user,
-        },
+        user: currentUser.id,
+      }).catch((err) => {
+        console.log('contact find err', err.message);
+      });
+
+      if (!contact) {
+        error.push({
+          _id: contacts[i],
+          first_name: contact.first_name,
+          email: contact.email,
+          err: 'Invalid permission',
+        });
+
+        resolve();
       }
-    )
-      .then(() => {
+
+      Contact.updateOne(
+        {
+          _id: contacts[i],
+        },
+        {
+          $set: {
+            shared_contact: true,
+          },
+          $push: {
+            shared_members: req.body.user,
+          },
+        }
+      )
+        .then(() => {
+          const first_name = contact.first_name || '';
+          const last_name = contact.last_name || '';
+          const data = {
+            first_name,
+            last_name,
+          };
+
+          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+            data
+          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+          contacts_html += contact_html;
+
+          const notification = new Notification({
+            user: req.body.user,
+            sharer: req.body.user,
+            criteria: 'contact_shared',
+            content: `${user.user_name} have shared a contact in CRMGrow`,
+          });
+
+          // Notification
+          notification.save().catch((err) => {
+            console.log('notification save err', err.message);
+          });
+
+          data.push(contact);
+          resolve();
+        })
+        .catch((err) => {
+          console.log('contact update err', err.message);
+        });
+    });
+    promise_array.push(promise);
+  }
+
+  Promise.all(promise_array)
+    .then(() => {
+      if (data.length > 0) {
         const templatedData = {
           user_name: currentUser.user_name,
           sharer_name: user.user_name,
           created_at: moment().format('h:mm MMMM Do, YYYY'),
-          email: contact.email,
-          contact_first_name: contact.first_name,
-          contact_url: urls.CONTACT_PAGE_URL + contact.id,
+          contacts_html,
         };
 
         const params = {
@@ -4429,26 +4474,26 @@ const shareContacts = async (req, res) => {
           .catch((err) => {
             console.log('ses send err', err);
           });
-
-        // Notification
-        const notification = new Notification({
-          user: req.body.user,
-          sharer: req.body.user,
-          criteria: 'contact_shared',
-          content: `${user.user_name} have shared a contact in CRMGrow`,
+      }
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+          data,
         });
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
-      })
-      .catch((err) => {
-        console.log('contact update err', err.message);
+      }
+      return res.send({
+        status: true,
+        data,
       });
-
-    return res.send({
-      status: true,
+    })
+    .catch((err) => {
+      console.log('contact share err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
     });
-  }
 };
 
 module.exports = {
