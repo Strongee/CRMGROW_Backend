@@ -2079,9 +2079,7 @@ const campaign_job = new CronJob(
         };
 
         EmailHelper.sendEmail(data)
-          .then((res) => {
-            
-          })
+          .then((res) => {})
           .catch((err) => {
             console.log('err', err.message);
           });
