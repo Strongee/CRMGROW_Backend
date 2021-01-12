@@ -1918,10 +1918,15 @@ const getSharedContacts = async (req, res) => {
     shared_contact: true,
     user: currentUser.id,
   })
-    .populate({
-      path: 'shared_members',
-      select: 'user_name email picture_profile cell_phone',
-    })
+    .populate([
+      {
+        path: 'shared_members',
+        select: 'user_name email picture_profile cell_phone',
+      },
+      {
+        path: 'last_activity',
+      },
+    ])
     .catch((err) => {
       console.log('get shared contact', err.message);
     });

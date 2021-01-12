@@ -4363,7 +4363,7 @@ const updateContact = async (req, res) => {
 
 const shareContacts = async (req, res) => {
   const { currentUser } = req;
-  const { contacts } = req.body;
+  const contacts = req.body;
 
   for (let i = 0; i < contacts.length; i++) {
     const contact = await Contact.findOne({
@@ -4395,7 +4395,7 @@ const shareContacts = async (req, res) => {
           shared_contact: true,
         },
         $push: {
-          shared_members: req.body.users,
+          shared_members: req.body.user,
         },
       }
     )
