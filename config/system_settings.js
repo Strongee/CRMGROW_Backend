@@ -56,7 +56,7 @@ const system_settings = {
     AWS: 5000,
   },
   WEBINAR_LINK:
-    'https://zoom.us/meeting/register/tJUlcuyhrTgjGNUusD4B2Mtd9F_IbKCFlj_e',
+    'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',
 };
 
