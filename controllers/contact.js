@@ -4382,7 +4382,18 @@ const shareContacts = async (req, res) => {
         _id: contacts[i],
         user: currentUser.id,
       })
-        .populate('last_activity')
+        .populate(
+          { path: 'last_activity' },
+          {
+            path: 'shared_members',
+            select: {
+              user_name: 1,
+              picture_profile: 1,
+              email: 1,
+              cell_phone: 1,
+            },
+          }
+        )
         .catch((err) => {
           console.log('contact find err', err.message);
         });
