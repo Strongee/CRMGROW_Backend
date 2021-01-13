@@ -221,7 +221,7 @@ const getDetail = (req, res) => {
 
   Deal.findOne({ _id: id, user: currentUser._id })
     .then(async (_deal) => {
-      const _contacts = Contact.find({ $in: _deal['contacts'] });
+      const _contacts = await Contact.find({ $in: _deal['contacts'] });
       return res.send({
         status: true,
         data: {
