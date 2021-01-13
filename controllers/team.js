@@ -1524,7 +1524,7 @@ const acceptCall = async (req, res) => {
         _id: call_id,
       },
       {
-        $set: { 
+        $set: {
           ...req.body,
           status: 'planned',
         },

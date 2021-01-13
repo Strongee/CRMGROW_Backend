@@ -4381,9 +4381,11 @@ const shareContacts = async (req, res) => {
       const contact = await Contact.findOne({
         _id: contacts[i],
         user: currentUser.id,
-      }).catch((err) => {
-        console.log('contact find err', err.message);
-      });
+      })
+        .populate('last_activity')
+        .catch((err) => {
+          console.log('contact find err', err.message);
+        });
 
       if (!contact) {
         error.push({

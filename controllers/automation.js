@@ -6,11 +6,41 @@ const Video = require('../models/video');
 const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
 
-const get = (req, res) => {
+const get = async (req, res) => {
   const { id } = req.params;
+  const { currentUser } = req;
+
+  const contacts = await TimeLine.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.contact',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+  ]);
 
   Automation.findOne({ _id: id })
-    .then((data) => {
+    .then((automation) => {
+      const myJSON = JSON.stringify(automation);
+      const data = JSON.parse(myJSON);
+      data.contacts = contacts ? contacts.length : 0;
       res.send({
         status: false,
         data,
