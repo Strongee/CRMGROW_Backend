@@ -1524,7 +1524,10 @@ const acceptCall = async (req, res) => {
         _id: call_id,
       },
       {
-        status: 'planned',
+        $set: { 
+          ...req.body,
+          status: 'planned',
+        },
       }
     )
       .then(() => {

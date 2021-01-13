@@ -4412,13 +4412,13 @@ const shareContacts = async (req, res) => {
         .then(() => {
           const first_name = contact.first_name || '';
           const last_name = contact.last_name || '';
-          const data = {
+          const name = {
             first_name,
             last_name,
           };
 
           const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-            data
+            name
           )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
           contacts_html += contact_html;
 
