@@ -4382,7 +4382,7 @@ const shareContacts = async (req, res) => {
         _id: contacts[i],
         user: currentUser.id,
       })
-        .populate(
+        .populate([
           { path: 'last_activity' },
           {
             path: 'shared_members',
@@ -4392,8 +4392,8 @@ const shareContacts = async (req, res) => {
               email: 1,
               cell_phone: 1,
             },
-          }
-        )
+          },
+        ])
         .catch((err) => {
           console.log('contact find err', err.message);
         });
