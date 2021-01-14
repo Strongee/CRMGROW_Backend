@@ -1697,7 +1697,10 @@ const getInquireCall = async (req, res) => {
     status: { $in: ['pending'] },
   })
     .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      {
+        path: 'leader',
+        select: { user_name: 1, picture_profile: 1, email: 1 },
+      },
       { path: 'user', select: { user_name: 1, picture_profile: 1 } },
       // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
