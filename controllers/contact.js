@@ -4455,7 +4455,7 @@ const shareContacts = async (req, res) => {
             email: user.email,
             cell_phone: user.cell_phone,
           });
-          data.push(contact);
+          data.push(_contact);
           resolve();
         })
         .catch((err) => {
