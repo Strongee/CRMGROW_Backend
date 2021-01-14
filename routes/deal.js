@@ -21,5 +21,6 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(DealCtrl.moveDeal)
 );
+router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));
 
 module.exports = router;

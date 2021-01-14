@@ -215,10 +215,35 @@ const edit = async (req, res) => {
     });
 };
 
+const getDetail = (req, res) => {
+  const { currentUser } = req;
+  const id = req.params.id;
+
+  Deal.findOne({ _id: id, user: currentUser._id })
+    .then(async (_deal) => {
+      const _contacts = await Contact.find({ _id: { $in: _deal['contacts'] } });
+      return res.send({
+        status: true,
+        data: {
+          main: _deal,
+          contacts: _contacts,
+          activities: [],
+        },
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   create,
   moveDeal,
   edit,
   remove,
+  getDetail,
 };
