@@ -8,7 +8,10 @@ const getAll = async (req, res) => {
   const { currentUser } = req;
 
   const data = await DealStage.find({ user: currentUser.id })
-    .populate('deals')
+    .populate({
+      path: 'deals',
+      populate: { path: 'contacts', select: 'first_name last_name email' },
+    })
     .sort({ priority: 1 });
 
   if (!data) {
