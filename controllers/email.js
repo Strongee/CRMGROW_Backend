@@ -2868,11 +2868,19 @@ const sendEmail = async (req, res) => {
   }
   Promise.all(promise_array)
     .then(() => {
-      
+      if (error.length > 0) {
+        return res.send({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+      });
     })
     .catch((err) => {
       return res.status(500).json({
-        status: true,
+        status: false,
         errror: err.message,
       });
     });
