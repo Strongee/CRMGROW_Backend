@@ -4447,6 +4447,14 @@ const shareContacts = async (req, res) => {
             console.log('notification save err', err.message);
           });
 
+          const myJSON = JSON.stringify(contact);
+          const _contact = JSON.parse(myJSON);
+          _contact.shared_members.push({
+            user_name: user.user_name,
+            picture_profile: user.picture_profile,
+            email: user.email,
+            cell_phone: user.cell_phone,
+          });
           data.push(contact);
           resolve();
         })
