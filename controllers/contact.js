@@ -675,7 +675,6 @@ const importCSV = async (req, res) => {
               }
             }
 
-            console.log('query', query);
             const duplicate_contacts = await Contact.find({
               _id: { $nin: duplicate_contacts_ids },
               $or: query,
@@ -856,12 +855,13 @@ const importCSV = async (req, res) => {
                   });
 
                 if (data['notes'] && data['notes'].length > 0) {
-                  const notes = JSON.parse(data['notes']);
+                  // const notes = JSON.parse(data['notes']);
+                  const notes = data['notes'];
                   for (let i = 0; i < notes.length; i++) {
-                    const { content, title } = notes[i];
+                    // const { content, title } = notes[i];
+                    const content = notes[i];
                     const note = new Note({
                       content,
-                      title,
                       contact: _contact.id,
                       user: currentUser.id,
                       created_at: new Date(),
