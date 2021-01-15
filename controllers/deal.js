@@ -239,6 +239,10 @@ const getDetail = (req, res) => {
     });
 };
 
+const createNote = async (req, res) => {
+
+};
+
 module.exports = {
   getAll,
   create,
@@ -246,4 +250,5 @@ module.exports = {
   edit,
   remove,
   getDetail,
+  createNote,
 };

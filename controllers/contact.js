@@ -4299,10 +4299,10 @@ const updateContact = async (req, res) => {
     }
 
     for (let i = 0; i < req.body.notes.length; i++) {
-      const { content, title } = req.body['notes'][i];
+      // const { content, title } = req.body['notes'][i];
+      const content = req.body['notes'][i];
       const note = new Note({
         content,
-        title,
         contact: req.body.id,
         user: currentUser.id,
         created_at: new Date(),
