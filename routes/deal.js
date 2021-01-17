@@ -13,14 +13,20 @@ router.post(
   catchError(DealCtrl.create)
 );
 router.get('/', UserCtrl.checkAuth, catchError(DealCtrl.getAll));
-router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
-router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
+
+router.post(
+  '/get-activity',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.getActivity)
+);
 router.post(
   '/move-deal',
   UserCtrl.checkAuth,
   UserCtrl.checkSuspended,
   catchError(DealCtrl.moveDeal)
 );
+router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
+router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));
 
 module.exports = router;

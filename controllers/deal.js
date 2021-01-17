@@ -243,11 +243,10 @@ const getDetail = (req, res) => {
 
 const getActivity = async (req, res) => {
   const { currentUser } = req;
-  const { deal } = req.body;
 
   const activity = await Activity.find({
     user: currentUser.id,
-    deals: deal.id,
+    deals: req.body.deal,
   }).catch((err) => {
     console.log('activity get err', err.message);
   });
