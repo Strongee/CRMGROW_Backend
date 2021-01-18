@@ -14,6 +14,7 @@ const EmailSchema = new Schema(
     bcc: Array,
     message_id: String,
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     created_at: Date,
     updated_at: Date,
   },

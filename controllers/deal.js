@@ -6,6 +6,8 @@ const Contact = require('../models/contact');
 const Note = require('../models/note');
 const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
+const EmailHelper = require('../helpers/email');
+const Email = require('../models/email');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -261,9 +263,9 @@ const getNotes = async (req, res) => {
   const { currentUser } = req;
   const notes = await Note.find({
     user: currentUser.id,
-    shared_note: req.body.note,
+    deal: req.body.deal,
   });
-  0;
+
   return res.stantus({
     status: true,
     data: notes,
@@ -383,6 +385,42 @@ const createFollowUp = async (req, res) => {
   }
 };
 
+const sendEmail = async (req, res) => {
+  const { currentUser } = req;
+  const { email_subject, email_content, cc, bcc, deal } = req.body;
+
+  const email = new Email({
+    user: currentUser.id,
+    subject: email_subject,
+    content: email_content,
+    cc,
+    bcc,
+    deal,
+  });
+
+  email.save().catch((err) => {
+    console.log('new email save err', err.message);
+  });
+
+  const activity_content = 'sent email';
+
+  const activity = new Activity({
+    user: currentUser.id,
+    content: activity_content,
+    deals: deal,
+    type: 'deal-emails',
+    emails: email.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  EmailHelper.sendEmail(req.body).catch((err) => {
+    console.log('email send error');
+  });
+};
+
 module.exports = {
   getAll,
   getActivity,
@@ -394,4 +432,5 @@ module.exports = {
   getDetail,
   createNote,
   createFollowUp,
+  sendEmail,
 };

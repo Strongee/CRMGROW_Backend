@@ -19,6 +19,9 @@ router.post(
   UserCtrl.checkAuth,
   catchError(DealCtrl.getActivity)
 );
+router.post('/add-note', UserCtrl.checkAuth, catchError(DealCtrl.createNote));
+
+router.post('/get-note', UserCtrl.checkAuth, catchError(DealCtrl.getNotes));
 router.post(
   '/move-deal',
   UserCtrl.checkAuth,
