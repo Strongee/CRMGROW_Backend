@@ -23,11 +23,25 @@ router.post('/add-note', UserCtrl.checkAuth, catchError(DealCtrl.createNote));
 
 router.post('/get-note', UserCtrl.checkAuth, catchError(DealCtrl.getNotes));
 router.post(
+  '/add-follow',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.createFollowUp)
+);
+router.post(
+  '/get-follow',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.getFollowup)
+);
+
+router.post(
   '/move-deal',
   UserCtrl.checkAuth,
   UserCtrl.checkSuspended,
   catchError(DealCtrl.moveDeal)
 );
+
+router.post('/send-emai', UserCtrl.checkAuth, DealCtrl.sendEmail);
+router('/get-email', UserCtrl.checkAuth, DealCtrl.getEMail);
 router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
 router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));
