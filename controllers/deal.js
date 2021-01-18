@@ -3,6 +3,8 @@ const Deal = require('../models/deal');
 const DealStage = require('../models/deal_stage');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
+const Note = require('../models/note');
+const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
 
 const getAll = async (req, res) => {
@@ -239,16 +241,157 @@ const getDetail = (req, res) => {
     });
 };
 
-const createNote = async (req, res) => {
+const getActivity = async (req, res) => {
+  const { currentUser } = req;
 
+  const activity = await Activity.find({
+    user: currentUser.id,
+    deals: req.body.deal,
+  }).catch((err) => {
+    console.log('activity get err', err.message);
+  });
+
+  return res.send({
+    status: true,
+    data: activity,
+  });
+};
+
+const getNotes = async (req, res) => {
+  const { currentUser } = req;
+  const notes = await Note.find({
+    user: currentUser.id,
+    shared_note: req.body.note,
+  });
+  0;
+  return res.stantus({
+    status: true,
+    data: notes,
+  });
+};
+
+const createNote = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+
+  const note = new Note({
+    content: req.body.content,
+    deal: req.body.deal,
+    user: currentUser.id,
+  });
+
+  note.save().catch((err) => {
+    console.log('deal note create err', err.message);
+  });
+
+  const content = 'added note';
+  const activity = new Activity({
+    user: currentUser.id,
+    content,
+    type: 'deals',
+    deals: req.body.deal,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+    const contact_note = new Note({
+      contact: contacts[i],
+      has_shared: true,
+      shared_note: note.id,
+      content: req.body.content,
+      user: currentUser.id,
+    });
+
+    contact_note.save().catch((err) => {
+      console.log('note save err', err.message);
+    });
+
+    const note_activity = new Activity({
+      content,
+      contacts: contacts[i],
+      type: 'notes',
+      notes: contact_note.id,
+      user: currentUser.id,
+    });
+
+    note_activity.save().catch((err) => {
+      console.log('note activity err', err.message);
+    });
+  }
+  return res.send({
+    status: true,
+  });
+};
+
+const createFollowUp = async (req, res) => {
+  const { currentUser } = req;
+  const { deal, content, due_date } = req.body;
+  const followup = new FollowUp({
+    user: currentUser.id,
+    deal,
+    content,
+    due_date,
+  });
+
+  followup.save().catch((err) => {
+    console.log('new follow up save err', err.message);
+  });
+
+  const activity_content = 'added follow up';
+  const activity = new Activity({
+    content: activity_content,
+    type: 'deals',
+    follow_ups: followup.id,
+    deals: req.body.real,
+    user: currentUser.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  const { contacts } = req.body;
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+
+    const new_followup = new FollowUp({
+      has_shared: true,
+      shared_followup: followup.id,
+      contact,
+      content,
+      due_date,
+      user: currentUser.id,
+    });
+
+    new_followup.save().catch((err) => {
+      console.log('new follow up save err', err.message);
+    });
+
+    const new_activity = new Activity({
+      content: activity_content,
+      contact,
+      user: currentUser.id,
+      type: 'follow_ups',
+      follow_ups: new_followup.id,
+    });
+    new_activity.save().catch((err) => {
+      console.log('activity save err', err.message);
+    });
+  }
 };
 
 module.exports = {
   getAll,
+  getActivity,
+  getNotes,
   create,
   moveDeal,
   edit,
   remove,
   getDetail,
   createNote,
+  createFollowUp,
 };
