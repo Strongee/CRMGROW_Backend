@@ -24,6 +24,7 @@ const UserSchema = new Schema(
     time_zone_info: String,
     time_zone: { type: String, default: '-07:00' },
     email_signature: { type: String, default: '' },
+    location: { type: String, default: '' },
     proxy_number: String,
     proxy_number_id: String,
     twilio_number: String,
