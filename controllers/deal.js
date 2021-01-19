@@ -6,8 +6,8 @@ const Contact = require('../models/contact');
 const Note = require('../models/note');
 const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
-const EmailHelper = require('../helpers/email');
 const Email = require('../models/email');
+const EmailHelper = require('../helpers/email');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -290,7 +290,7 @@ const createNote = async (req, res) => {
   const activity = new Activity({
     user: currentUser.id,
     content,
-    type: 'deals',
+    type: 'deal-notes',
     deals: req.body.deal,
   });
 
@@ -345,7 +345,7 @@ const createFollowUp = async (req, res) => {
   const activity_content = 'added follow up';
   const activity = new Activity({
     content: activity_content,
-    type: 'deals',
+    type: 'deal-follow_ups',
     follow_ups: followup.id,
     deals: req.body.real,
     user: currentUser.id,
@@ -421,6 +421,19 @@ const sendEmail = async (req, res) => {
   });
 };
 
+const getEmails = async (req, res) => {
+  const { currentUser } = req;
+  const emails = await Email.find({
+    user: currentUser.id,
+    deal: req.body.deal,
+  });
+
+  return res.stantus({
+    status: true,
+    data: emails,
+  });
+};
+
 module.exports = {
   getAll,
   getActivity,
@@ -433,4 +446,5 @@ module.exports = {
   createNote,
   createFollowUp,
   sendEmail,
+  getEmails,
 };

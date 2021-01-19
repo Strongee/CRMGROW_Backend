@@ -40,8 +40,8 @@ router.post(
   catchError(DealCtrl.moveDeal)
 );
 
-router.post('/send-emai', UserCtrl.checkAuth, DealCtrl.sendEmail);
-router('/get-email', UserCtrl.checkAuth, DealCtrl.getEMail);
+router.post('/send-email', UserCtrl.checkAuth, DealCtrl.sendEmail);
+router('/get-email', UserCtrl.checkAuth, DealCtrl.getEmails);
 router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
 router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));
