@@ -2330,6 +2330,37 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const createPassword = async (req, res) => {
+  const { currentUser } = req;
+  const { password } = req.body;
+  if (currentUser.hash || currentUser.salt) {
+    return res.status(400).send({
+      status: false,
+      error: 'Please input your current password.',
+    });
+  } else {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto
+      .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
+      .toString('hex');
+    currentUser.salt = salt;
+    currentUser.hash = hash;
+    currentUser
+      .save()
+      .then(() => {
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  }
+};
+
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
   const data = await Contact.find({ user: currentUser.id });
@@ -2633,6 +2664,7 @@ module.exports = {
   resetPasswordByOld,
   resetPasswordByCode,
   forgotPassword,
+  createPassword,
   syncOutlook,
   authorizeOutlook,
   syncGmail,
