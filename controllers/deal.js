@@ -266,7 +266,7 @@ const getNotes = async (req, res) => {
     deal: req.body.deal,
   });
 
-  return res.stantus({
+  return res.status({
     status: true,
     data: notes,
   });
@@ -428,7 +428,7 @@ const getEmails = async (req, res) => {
     deal: req.body.deal,
   });
 
-  return res.stantus({
+  return res.status({
     status: true,
     data: emails,
   });
