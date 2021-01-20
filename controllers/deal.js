@@ -312,6 +312,7 @@ const createNote = async (req, res) => {
   const activity = new Activity({
     user: currentUser.id,
     content,
+    notes: note.id,
     type: 'notes',
     deals: req.body.deal,
   });
