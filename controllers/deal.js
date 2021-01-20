@@ -369,7 +369,7 @@ const createFollowUp = async (req, res) => {
     content: activity_content,
     type: 'follow_ups',
     follow_ups: followup.id,
-    deals: req.body.real,
+    deals: req.body.deal,
     user: currentUser.id,
   });
 
