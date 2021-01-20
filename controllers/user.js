@@ -1544,15 +1544,11 @@ const authorizeOutlookCalendar = async (req, res) => {
           //   google_refresh_token: JSON.stringify(tokens),
           //   connected_calendar_type: 'google',
           // };
-          // user.calendar_list.push(data);
-
-          user.calendar_list = [
-            {
-              connected_email: jwt.preferred_username,
-              outlook_refresh_token,
-              connected_calendar_type: 'outlook',
-            },
-          ];
+          user.calendar_list.push({
+            connected_email: jwt.preferred_username,
+            outlook_refresh_token,
+            connected_calendar_type: 'outlook',
+          });
         } else {
           user.calendar_list = [
             {
@@ -1915,13 +1911,11 @@ const authorizeGoogleCalendar = async (req, res) => {
       // };
       // user.calendar_list.push(data);
 
-      user.calendar_list = [
-        {
-          connected_email: _res.data.email,
-          google_refresh_token: JSON.stringify(tokens),
-          connected_calendar_type: 'google',
-        },
-      ];
+      user.calendar_list.push({
+        connected_email: _res.data.email,
+        google_refresh_token: JSON.stringify(tokens),
+        connected_calendar_type: 'google',
+      });
     } else {
       user.calendar_list = [
         {
