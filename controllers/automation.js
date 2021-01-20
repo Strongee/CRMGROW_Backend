@@ -157,6 +157,50 @@ const getStatus = async (req, res) => {
     });
 };
 
+const getAssignedContacts = async (req, res) => {
+  const { id } = req.params;
+  const { currentUser } = req;
+  const contacts = await TimeLine.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.contact',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+  ]);
+  const ids = [];
+  contacts.forEach((e) => {
+    ids.push(e._id);
+  });
+  const assignedContacts = await Contact.find(
+    { _id: { $in: ids } },
+    '_id first_name last_name email cell_phone'
+  ).catch((err) => {
+    console.log('Error', err);
+  });
+  res.send({
+    status: true,
+    data: assignedContacts,
+  });
+};
+
 const getPage = async (req, res) => {
   const { currentUser } = req;
   const { page } = req.params;
@@ -483,10 +527,26 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const getContactDetail = async (req, res) => {
+  const { currentUser } = req;
+  const { contact } = req.body;
+
+  const _timelines = await TimeLine.find({
+    user: currentUser.id,
+    contact,
+  });
+
+  return res.send({
+    status: true,
+    data: _timelines,
+  });
+};
+
 module.exports = {
   get,
   getAll,
   getStatus,
+  getAssignedContacts,
   getPage,
   getEasyLoad,
   create,
@@ -495,4 +555,5 @@ module.exports = {
   updateDefault,
   search,
   loadOwn,
+  getContactDetail,
 };
