@@ -387,12 +387,12 @@ const createFollowUp = async (req, res) => {
 
 const sendEmail = async (req, res) => {
   const { currentUser } = req;
-  const { email_subject, email_content, cc, bcc, deal } = req.body;
+  const { subject, content, cc, bcc, deal } = req.body;
 
   const email = new Email({
     user: currentUser.id,
-    subject: email_subject,
-    content: email_content,
+    subject,
+    content,
     cc,
     bcc,
     deal,
