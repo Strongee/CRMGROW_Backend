@@ -40,8 +40,20 @@ router.post(
   catchError(DealCtrl.moveDeal)
 );
 
-router.post('/send-email', UserCtrl.checkAuth, DealCtrl.sendEmail);
-router.post('/get-email', UserCtrl.checkAuth, DealCtrl.getEmails);
+router.post('/send-email', UserCtrl.checkAuth, catchError(DealCtrl.sendEmail));
+router.post('/get-email', UserCtrl.checkAuth, catchError(DealCtrl.getEmails));
+
+router.post(
+  '/create-appointment',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.createAppointment)
+);
+router.post(
+  '/get-appointments',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.getAppointments)
+);
+
 router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
 router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));

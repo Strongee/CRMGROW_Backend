@@ -434,10 +434,71 @@ const getEmails = async (req, res) => {
   });
 };
 
+const getAppointments = async (req, res) => {
+
+};
+
+const createAppointment = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+
+  const note = new Note({
+    content: req.body.content,
+    deal: req.body.deal,
+    user: currentUser.id,
+  });
+
+  note.save().catch((err) => {
+    console.log('deal note create err', err.message);
+  });
+
+  const content = 'added note';
+  const activity = new Activity({
+    user: currentUser.id,
+    content,
+    type: 'deal-notes',
+    deals: req.body.deal,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+    const contact_note = new Note({
+      contact: contacts[i],
+      has_shared: true,
+      shared_note: note.id,
+      content: req.body.content,
+      user: currentUser.id,
+    });
+
+    contact_note.save().catch((err) => {
+      console.log('note save err', err.message);
+    });
+
+    const note_activity = new Activity({
+      content,
+      contacts: contacts[i],
+      type: 'notes',
+      notes: contact_note.id,
+      user: currentUser.id,
+    });
+
+    note_activity.save().catch((err) => {
+      console.log('note activity err', err.message);
+    });
+  }
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   getAll,
   getActivity,
   getNotes,
+  getAppointments,
   create,
   moveDeal,
   edit,
@@ -445,6 +506,7 @@ module.exports = {
   getDetail,
   createNote,
   createFollowUp,
+  createAppointment,
   sendEmail,
   getEmails,
 };
