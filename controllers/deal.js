@@ -246,16 +246,38 @@ const getDetail = (req, res) => {
 const getActivity = async (req, res) => {
   const { currentUser } = req;
 
-  const activity = await Activity.find({
+  const activity_list = await Activity.find({
     user: currentUser.id,
     deals: req.body.deal,
-  }).catch((err) => {
-    console.log('activity get err', err.message);
-  });
+  })
+    .sort({ updated_at: 1 })
+    .catch((err) => {
+      console.log('activity get err', err.message);
+    });
+
+  const activity_detail_list = [];
+
+  for (let i = 0; i < activity_list.length; i++) {
+    const activity_detail = await Activity.aggregate([
+      {
+        $lookup: {
+          from: activity_list[i].type,
+          localField: activity_list[i].type,
+          foreignField: '_id',
+          as: 'activity_detail',
+        },
+      },
+      {
+        $match: { _id: activity_list[i]._id },
+      },
+    ]);
+
+    activity_detail_list.push(activity_detail[0]);
+  }
 
   return res.send({
     status: true,
-    data: activity,
+    data: activity_detail_list,
   });
 };
 
@@ -290,7 +312,7 @@ const createNote = async (req, res) => {
   const activity = new Activity({
     user: currentUser.id,
     content,
-    type: 'deal-notes',
+    type: 'notes',
     deals: req.body.deal,
   });
 
@@ -345,7 +367,7 @@ const createFollowUp = async (req, res) => {
   const activity_content = 'added follow up';
   const activity = new Activity({
     content: activity_content,
-    type: 'deal-follow_ups',
+    type: 'follow_ups',
     follow_ups: followup.id,
     deals: req.body.real,
     user: currentUser.id,
@@ -408,7 +430,7 @@ const sendEmail = async (req, res) => {
     user: currentUser.id,
     content: activity_content,
     deals: deal,
-    type: 'deal-emails',
+    type: 'emails',
     emails: email.id,
   });
 
@@ -434,9 +456,7 @@ const getEmails = async (req, res) => {
   });
 };
 
-const getAppointments = async (req, res) => {
-
-};
+const getAppointments = async (req, res) => {};
 
 const createAppointment = async (req, res) => {
   const { currentUser } = req;
@@ -456,7 +476,7 @@ const createAppointment = async (req, res) => {
   const activity = new Activity({
     user: currentUser.id,
     content,
-    type: 'deal-notes',
+    type: 'notes',
     deals: req.body.deal,
   });
 
