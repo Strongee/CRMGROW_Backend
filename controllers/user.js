@@ -1259,6 +1259,9 @@ const getMe = async (req, res) => {
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;
+  if (user.hash && user.salt) {
+    user.hasPassword = true;
+  }
   delete user.hash;
   delete user.salt;
   res.send({
