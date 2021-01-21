@@ -17,7 +17,7 @@ let socialType = $('#social_type').val();
 function start() {
   gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-      client_id: '630484366982-m6e66b06vlo0g6ebg9h2q5t7nrk2rimr.apps.googleusercontent.com',
+      client_id: '411466708563-qovcq88r0ptbsb1o2jjlnms5qu57rdec.apps.googleusercontent.com',
     });
 
     $('#signinButton').click(function() {
