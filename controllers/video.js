@@ -83,11 +83,13 @@ const play = async (req, res) => {
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
     console.log('err', err.message);
   });
-  const user = await User.findOne({ _id: sender_id, del: false }).catch(
-    (err) => {
-      console.log('err', err.message);
-    }
-  );
+  const user = await User.findOne({
+    _id: sender_id,
+    del: false,
+    'subscription.is_suspended': false,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
   let team;
   if (team_id) {
     team = await Team.findOne({ _id: team_id }).catch((err) => {
@@ -186,7 +188,7 @@ const play = async (req, res) => {
       },
     });
   } else {
-    res.send(
+    return res.send(
       'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
     );
   }
@@ -198,6 +200,17 @@ const play1 = async (req, res) => {
     .catch((err) => {
       console.log('err', err);
     });
+
+  if (!activity.user) {
+    return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
+  if (!activity.user.del) {
+    return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
 
   if (activity) {
     const data = activity['user'];
@@ -277,11 +290,13 @@ const play1 = async (req, res) => {
 const play2 = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
-  const video = await Video.findOne({ _id: video_id, del: false }).catch(
-    (err) => {
-      console.log('err', err.message);
-    }
-  );
+  const video = await Video.findOne({
+    _id: video_id,
+    del: false,
+    'subscription.is_suspended': false,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
   const user = await User.findOne({ _id: sender_id, del: false }).catch(
     (err) => {
       console.log('err', err.message);
