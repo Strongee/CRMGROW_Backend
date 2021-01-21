@@ -353,10 +353,11 @@ const createNote = async (req, res) => {
 
 const createFollowUp = async (req, res) => {
   const { currentUser } = req;
-  const { deal, content, due_date } = req.body;
+  const { deal, type, content, due_date } = req.body;
   const followup = new FollowUp({
     user: currentUser.id,
     deal,
+    type,
     content,
     due_date,
   });
@@ -388,6 +389,7 @@ const createFollowUp = async (req, res) => {
       contact,
       content,
       due_date,
+      type,
       user: currentUser.id,
     });
 
@@ -406,6 +408,10 @@ const createFollowUp = async (req, res) => {
       console.log('activity save err', err.message);
     });
   }
+
+  return res.send({
+    status: true,
+  });
 };
 
 const sendEmail = async (req, res) => {
