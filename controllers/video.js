@@ -3058,6 +3058,7 @@ const setupRecording = (io) => {
     });
     socket.on('saveVideo', async (data) => {
       const videoId = data.videoId;
+      const duration = data.duration;
       fileStreams[videoId].close();
 
       const token = data.token;
@@ -3077,6 +3078,7 @@ const setupRecording = (io) => {
           title: `${moment().format('MMMM Do YYYY')} - ${
             user.user_name
           } Recording`,
+          duration,
           user: decoded.id,
           recording: true,
           created_at: new Date(),
