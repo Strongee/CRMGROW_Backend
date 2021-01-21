@@ -60,6 +60,12 @@ router.post(
   catchError(UserCtrl.resetPasswordByOld)
 );
 
+router.post(
+  '/create-password',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.createPassword)
+);
+
 // Forgot password
 router.post('/forgot-password', catchError(UserCtrl.forgotPassword));
 
