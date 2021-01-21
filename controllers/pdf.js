@@ -1653,8 +1653,9 @@ const bulkOutlook = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
         pdf_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
@@ -1924,8 +1925,9 @@ const bulkGmail = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
         pdf_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +

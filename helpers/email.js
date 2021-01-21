@@ -856,8 +856,9 @@ const bulkVideo = async (data) => {
           replyTo: currentUser.connected_email,
           subject: video_subject,
           html:
-            '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
             video_content +
+            '</tbody></table>' +
             '<br/>Thank you,<br/>' +
             currentUser.email_signature +
             generateUnsubscribeLink(activity.id) +
@@ -1094,8 +1095,9 @@ const bulkVideo = async (data) => {
         }
 
         const email_content =
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
@@ -1370,8 +1372,9 @@ const bulkVideo = async (data) => {
             body: {
               contentType: 'HTML',
               content:
-                '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+                '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
                 video_content +
+                '</tbody></table>' +
                 '<br/>Thank you,<br/>' +
                 currentUser.email_signature +
                 generateUnsubscribeLink(activity.id) +
@@ -1595,8 +1598,9 @@ const bulkPDF = async (data) => {
         replyTo: currentUser.connected_email,
         subject: pdf_subject,
         html:
-          '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           pdf_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
@@ -1812,8 +1816,9 @@ const bulkPDF = async (data) => {
         }
 
         const email_content =
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           pdf_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
@@ -2074,8 +2079,9 @@ const bulkPDF = async (data) => {
           body: {
             contentType: 'HTML',
             content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+              '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
               pdf_content +
+              '</tbody></table>' +
               '<br/>Thank you,<br/>' +
               currentUser.email_signature +
               generateUnsubscribeLink(activity.id) +
@@ -2299,8 +2305,9 @@ const bulkImage = async (data) => {
         replyTo: currentUser.connected_email,
         subject: image_subject,
         html:
-          '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width:800px;margin-top:0px;">' +
+          '<html><head><title>Image Invitation</title></head><body><table><tbody>' +
           image_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
@@ -2544,8 +2551,9 @@ const bulkImage = async (data) => {
           body: {
             contentType: 'HTML',
             content:
-              '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+              '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
               image_content +
+              '</tbody></table>' +
               '<br/>Thank you,<br/>' +
               currentUser.email_signature +
               generateUnsubscribeLink(activity.id) +
@@ -2768,8 +2776,9 @@ const bulkImage = async (data) => {
         }
 
         const email_content =
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           image_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
@@ -3002,8 +3011,9 @@ const resendVideo = async (data) => {
           replyTo: currentUser.connected_email,
           subject: video_subject,
           html:
-            '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
             video_content +
+            '</tbody></table>' +
             '<br/>Thank you,<br/>' +
             currentUser.email_signature +
             generateUnsubscribeLink(activity) +
@@ -3235,8 +3245,9 @@ const resendVideo = async (data) => {
         }
 
         const email_content =
-          '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
+          '</tbody></table>' +
           '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity) +
@@ -3507,8 +3518,9 @@ const resendVideo = async (data) => {
             body: {
               contentType: 'HTML',
               content:
-                '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+                '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
                 video_content +
+                '</tbody></table>' +
                 '<br/>Thank you,<br/>' +
                 currentUser.email_signature +
                 generateUnsubscribeLink(activity) +
