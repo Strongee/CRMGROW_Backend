@@ -530,6 +530,41 @@ const reminder_job = new CronJob(
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);
           });
+          if (follow_up.set_occurrence) {
+            switch (follow_up.occurring_mode) {
+              case 'DAILY':
+                const today = moment(follow_up.due_date);
+                const tomorrow = today.add(1, 'days');
+
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: tomorrow,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
+
+                const new_reminder = new Reminder({
+                  contact: timeline.contact,
+                  due_date: tomorrow,
+                  type: 'follow_up',
+                  user: timeline.user,
+                  follow_up: follow_up.id,
+                });
+              
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+              break;
+              case: 'WEEKLY':
+                const today = moment(follow_up.due_date);
+                const week = today.add(7, 'days')
+
+            }
+          }
         } else {
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);

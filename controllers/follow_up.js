@@ -442,7 +442,7 @@ const getByDate = async (req, res) => {
     case 'next_week': {
       const next_week_start = moment()
         .utcOffset(time_zone)
-        .add(2, 'day')
+        .add(2, 'days')
         .startOf('day');
       const next_week_end = moment()
         .utcOffset(time_zone)
@@ -481,7 +481,7 @@ const getByDate = async (req, res) => {
     case 'next_month': {
       const start_month = moment()
         .utcOffset(time_zone)
-        .add(8, 'day')
+        .add(8, 'days')
         .startOf('day');
       const end_month = moment()
         .utcOffset(time_zone)
@@ -520,7 +520,7 @@ const getByDate = async (req, res) => {
     case 'future': {
       const start_future = moment()
         .utcOffset(time_zone)
-        .add(8, 'day')
+        .add(8, 'days')
         .startOf('day');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
