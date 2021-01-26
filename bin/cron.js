@@ -532,7 +532,7 @@ const reminder_job = new CronJob(
           });
           if (follow_up.set_occurrence) {
             switch (follow_up.occurring_mode) {
-              case 'DAILY':
+              case 'DAILY': {
                 const today = moment(follow_up.due_date);
                 const tomorrow = today.add(1, 'days');
 
@@ -548,21 +548,72 @@ const reminder_job = new CronJob(
                 });
 
                 const new_reminder = new Reminder({
-                  contact: timeline.contact,
+                  contact: contact.id,
                   due_date: tomorrow,
                   type: 'follow_up',
-                  user: timeline.user,
+                  user: follow_up.user,
                   follow_up: follow_up.id,
                 });
-              
+
                 new_reminder.save().catch((err) => {
                   console.log('reminder save err', err.message);
                 });
-              break;
-              case: 'WEEKLY':
+                break;
+              }
+              case 'WEEKLY': {
                 const today = moment(follow_up.due_date);
-                const week = today.add(7, 'days')
+                const week = today.add(7, 'days');
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: week,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
 
+                const new_reminder = new Reminder({
+                  contact: contact.id,
+                  due_date: week,
+                  type: 'follow_up',
+                  user: follow_up.user,
+                  follow_up: follow_up.id,
+                });
+
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+                break;
+              }
+              case 'MONTHLY': {
+                const today = moment(follow_up.due_date);
+                const month = today.add(1, 'months');
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: month,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
+
+                const new_reminder = new Reminder({
+                  contact: contact.id,
+                  due_date: month,
+                  type: 'follow_up',
+                  user: follow_up.user,
+                  follow_up: follow_up.id,
+                });
+
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+                break;
+              }
             }
           }
         } else {
