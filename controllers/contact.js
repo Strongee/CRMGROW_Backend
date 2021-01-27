@@ -104,13 +104,17 @@ const getByLastActivity = async (req, res) => {
 
   let contacts;
   if (typeof req.params.id === 'undefined') {
-    contacts = await Contact.find({ user: currentUser.id })
+    contacts = await Contact.find({
+      $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+    })
       .populate('last_activity')
       .sort({ [field]: dir })
       .limit(50);
   } else {
     const id = parseInt(req.params.id);
-    contacts = await Contact.find({ user: currentUser.id })
+    contacts = await Contact.find({
+      $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+    })
       .populate('last_activity')
       .sort({ [field]: dir })
       .skip(id)
