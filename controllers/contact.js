@@ -332,9 +332,10 @@ const create = async (req, res) => {
 
   /**
    *  Email / Phone unique validation
-   * 
+   */
+
   let contact_old;
-  if (typeof req.body['email'] !== 'undefined') {
+  if (!req.body.email && req.body.email != '') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       email: req.body['email'],
@@ -347,7 +348,7 @@ const create = async (req, res) => {
     }
   }
 
-  if (typeof req.body['cell_phone'] !== 'undefined') {
+  if (!req.body.cell_phone) {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       cell_phone: req.body['cell_phone'],
@@ -360,7 +361,6 @@ const create = async (req, res) => {
     }
   }
 
-   */
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -512,6 +512,35 @@ const edit = async (req, res) => {
       // }
       const cell_phone = phone(req.body.cell_phone)[0];
       contact['cell_phone'] = cell_phone;
+    }
+
+    let contact_old;
+    if (!req.body.email && req.body.email != '') {
+      contact_old = await Contact.findOne({
+        _id: { $ne: req.params.id },
+        user: currentUser.id,
+        email: req.body['email'],
+      });
+      if (contact_old !== null) {
+        return res.status(400).send({
+          status: false,
+          error: 'Email must be unique!',
+        });
+      }
+    }
+
+    if (!req.body.cell_phone) {
+      contact_old = await Contact.findOne({
+        _id: { $ne: req.params.id },
+        user: currentUser.id,
+        cell_phone: req.body['cell_phone'],
+      });
+      if (contact_old !== null) {
+        return res.status(400).send({
+          status: false,
+          error: 'Phone number must be unique!',
+        });
+      }
     }
 
     contact
@@ -3057,7 +3086,7 @@ const loadDuplication = async (req, res) => {
     data: duplications,
   });
 };
-
+/**
 const mergeContacts = (req, res) => {
   const { currentUser } = req;
   const { primary, secondaries, result } = req.body;
@@ -3131,6 +3160,7 @@ const mergeContacts = (req, res) => {
       });
     });
 };
+*/
 
 const bulkCreate = async (req, res) => {
   const { contacts } = req.body;
@@ -3185,6 +3215,34 @@ const bulkCreate = async (req, res) => {
           });
           if (!existing) {
             failure.push({ message: 'duplicate', data: email_contact });
+          }
+          resolve();
+          return;
+        }
+      }
+
+      if (data['cell_phone']) {
+        data['cell_phone'] = phone(req.body.cell_phone)[0];
+      }
+
+      if (data['cell_phone']) {
+        const phone_contact = await Contact.findOne({
+          cell_phone: data['email'],
+          user: currentUser.id,
+        }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        if (phone_contact) {
+          failure.push({ message: 'duplicate', data });
+
+          let existing = false;
+          failure.some((item) => {
+            if (item.data._id == phone_contact.id) {
+              existing = true;
+            }
+          });
+          if (!existing) {
+            failure.push({ message: 'duplicate', data: phone_contact });
           }
           resolve();
           return;
@@ -4554,7 +4612,7 @@ module.exports = {
   checkEmail,
   checkPhone,
   loadDuplication,
-  mergeContacts,
+  // mergeContacts,
   bulkCreate,
   verifyEmail,
   verifyPhone,
