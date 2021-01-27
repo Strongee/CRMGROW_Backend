@@ -42,10 +42,10 @@ body
     img(src="./assets/images/crm_logo.png")
     span
       | CRMRecord
-  .status.progressing
-    | Signing in to your account via 
-    span.type
-      | #{type}
+  //- .status.progressing
+  //-   | Signing in to your account via 
+  //-   span.type
+  //-     | #{type}
   .success.status.d-none
     | Welcome to using our Recording Application
   .error.status.d-none
@@ -54,9 +54,8 @@ body
     a.btn.btn-primary.font-weight-bold.text-white.px-5.py-2
       | Try again
   a.openApp(href="crmrecord://")
-  input(type="hidden" id="social_type" value=`${type}`)
-//- Theme JS
-//- script(src='https://secure.aadcdn.microsoftonline-p.com/lib/0.1.7/js/msal.min.js')
+  //- input(type="hidden" id="social_type" value=`${type}`)
+  input(type="hidden" id="status" value=`${status}`)
+  input(type="hidden" id="error" value=`${error}`)
+  input(type="hidden" id="data" value=`${JSON.stringify(data)}`)
 script(src='./theme/core/auth_callback.js')
-//- if type === 'google'
-//-   script(src='https://apis.google.com/js/platform.js?onload=start', async, defer)
