@@ -128,7 +128,9 @@ const getByLastActivity = async (req, res) => {
     });
   }
 
-  const count = await Contact.countDocuments({ user: currentUser.id });
+  const count = await Contact.countDocuments({
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+  });
 
   return res.send({
     status: true,
