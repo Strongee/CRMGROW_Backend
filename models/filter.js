@@ -6,7 +6,7 @@ const FilterSchema = new Schema(
   {
     title: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    content: String,
+    content: Object,
     created_at: Date,
     updated_at: Date,
   },
