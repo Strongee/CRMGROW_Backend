@@ -155,6 +155,7 @@ const create = async (req, res) => {
     }
     return res.send({
       status: true,
+      data,
     });
   }
   res.status(400).json({
