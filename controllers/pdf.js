@@ -2064,7 +2064,7 @@ const getEasyLoad = async (req, res) => {
 const createPDF = async (req, res) => {
   let preview;
   const { currentUser } = req;
-  if (req.body.preview && req.body.preview.indexOf('teamgrow.s3')) {
+  if (req.body.preview && req.body.preview.indexOf('teamgrow.s3') === -1) {
     try {
       const today = new Date();
       const year = today.getYear();
