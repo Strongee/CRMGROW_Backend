@@ -2380,7 +2380,8 @@ const resetPasswordByCode = async (req, res) => {
   const { code, password, email } = req.body;
 
   const user = await User.findOne({
-    email,
+    email: new RegExp(email, 'i'),
+    del: false,
   });
 
   if (!user) {
