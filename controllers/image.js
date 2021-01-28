@@ -349,7 +349,9 @@ const getAll = async (req, res) => {
   });
   Array.prototype.push.apply(_image_list, _image_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate('images');
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('images');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
@@ -1711,7 +1713,7 @@ const getEasyLoad = async (req, res) => {
 const createImage = async (req, res) => {
   let preview;
   const { currentUser } = req;
-  if (req.body.preview) {
+  if (req.body.preview && req.body.preview.indexOf('teamgrow.s3')) {
     try {
       const today = new Date();
       const year = today.getYear();
@@ -1723,6 +1725,8 @@ const createImage = async (req, res) => {
     } catch (error) {
       console.error('Upload Preview Image', error);
     }
+  } else {
+    preview = req.body.preview;
   }
 
   const image = new Image({

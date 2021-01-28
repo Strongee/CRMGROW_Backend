@@ -492,7 +492,9 @@ const getAll = async (req, res) => {
   });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate('pdfs');
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('pdfs');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
@@ -2062,7 +2064,7 @@ const getEasyLoad = async (req, res) => {
 const createPDF = async (req, res) => {
   let preview;
   const { currentUser } = req;
-  if (req.body.preview) {
+  if (req.body.preview && req.body.preview.indexOf('teamgrow.s3')) {
     try {
       const today = new Date();
       const year = today.getYear();
@@ -2074,6 +2076,8 @@ const createPDF = async (req, res) => {
     } catch (error) {
       console.error('Upload PDF Preview Image', error);
     }
+  } else {
+    preview = req.body.preview;
   }
 
   const pdf = new PDF({

@@ -70,9 +70,9 @@ const getAll = async (req, res) => {
 
   Array.prototype.push.apply(automations, _automation_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate(
-    'automations'
-  );
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('automations');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
