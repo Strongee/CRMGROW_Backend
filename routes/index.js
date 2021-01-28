@@ -36,6 +36,7 @@ const mail_list = require('./mail_list');
 const campaign = require('./campaign');
 const deal = require('./deal');
 const deal_stage = require('./deal_stage');
+const filter = require('./filter');
 const admin = require('./admin/index');
 
 const router = express.Router();
@@ -81,6 +82,7 @@ router.use('/mail-list', mail_list);
 router.use('/theme', theme);
 router.use('/deal', deal);
 router.use('/deal-stage', deal_stage);
+router.use('/filter', filter);
 router.use('/admin', admin);
 
 module.exports = router;
