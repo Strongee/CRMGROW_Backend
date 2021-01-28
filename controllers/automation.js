@@ -139,9 +139,9 @@ const getStatus = async (req, res) => {
     .populate('last_activity', 'label')
     .catch((err) => {
       console.log('Error', err);
-      return res.send({
-        status: true,
-        data: assignedContacts,
+      return res.status(400).json({
+        status: false,
+        error: err.message,
       });
     });
 

@@ -85,7 +85,7 @@ const getAllByLastActivity = async (req, res) => {
     });
   }
 
-  res.send({
+  return res.send({
     status: true,
     data,
   });
