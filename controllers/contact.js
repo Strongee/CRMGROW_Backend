@@ -4332,6 +4332,10 @@ const contactMerge = async (req, res) => {
     { new: true }
   )
     .then((data) => {
+      Contact.deleteOne({ _id: secondary_contact }).catch((err) => {
+        console.log('contact delete err', err.message);
+      });
+
       return res.send({
         status: true,
         data,

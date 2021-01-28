@@ -40,7 +40,7 @@ const get = async (req, res) => {
     .then((automation) => {
       const myJSON = JSON.stringify(automation);
       const data = JSON.parse(myJSON);
-      data.contacts = contacts ? contacts.length : 0;
+      data.contacts = contacts;
       res.send({
         status: false,
         data,
@@ -118,7 +118,9 @@ const getAll = async (req, res) => {
     ]);
     const myJSON = JSON.stringify(automation);
     const data = JSON.parse(myJSON);
-    const automation_detail = await Object.assign(data, { contacts });
+    const automation_detail = await Object.assign(data, {
+      contacts: contacts.length,
+    });
 
     automation_array.push(automation_detail);
   }
