@@ -135,9 +135,21 @@ const getStatus = async (req, res) => {
   const assignedContacts = await Contact.find(
     { _id: { $in: contacts } },
     '_id first_name last_name email cell_phone'
-  ).catch((err) => {
-    console.log('Error', err);
+  )
+    .populate('last_activity', 'label')
+    .catch((err) => {
+      console.log('Error', err);
+      return res.send({
+        status: true,
+        data: assignedContacts,
+      });
+    });
+
+  return res.send({
+    status: true,
+    data: assignedContacts,
   });
+  /**
   TimeLine.find({ automation: id })
     .populate()
     .then((data) => {
@@ -155,6 +167,7 @@ const getStatus = async (req, res) => {
         error: err.message || 'Automation reading is failed.',
       });
     });
+  */
 };
 
 const getAssignedContacts = async (req, res) => {

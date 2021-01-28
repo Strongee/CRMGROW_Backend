@@ -4581,7 +4581,6 @@ const shareContacts = async (req, res) => {
     });
 };
 
-
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4625,5 +4624,4 @@ module.exports = {
   shareContacts,
   contactMerge,
   updateContact,
-  saveFilter,
 };
