@@ -140,7 +140,7 @@ const create = async (req, res) => {
       }
     }
     if (error.length > 0) {
-      return res.status(405).json({
+      return res.status(400).json({
         status: false,
         error,
       });
