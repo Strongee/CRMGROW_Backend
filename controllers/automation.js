@@ -134,10 +134,7 @@ const getAll = async (req, res) => {
 const getStatus = async (req, res) => {
   const { id } = req.params;
   const { contacts } = req.body;
-  const assignedContacts = await Contact.find(
-    { _id: { $in: contacts } },
-    '_id first_name last_name email cell_phone'
-  )
+  const assignedContacts = await Contact.find({ _id: { $in: contacts } })
     .populate('last_activity', 'label')
     .catch((err) => {
       console.log('Error', err);
