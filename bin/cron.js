@@ -389,6 +389,7 @@ const reminder_job = new CronJob(
           const time_zone = user.time_zone_info
             ? JSON.parse(user.time_zone_info).tz_name
             : system_settings.TIME_ZONE;
+          console.log('cron timezone time_zone', time_zone);
           const due_date = moment(follow_up.due_date)
             .tz(time_zone)
             .format('h:mm a');
