@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const CronJob = require('cron').CronJob;
 const fs = require('fs');
 const uuidv1 = require('uuid/v1');
