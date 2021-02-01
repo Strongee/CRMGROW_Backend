@@ -4468,9 +4468,11 @@ const shareContacts = async (req, res) => {
 
       if (!contact) {
         error.push({
-          _id: contacts[i],
-          first_name: contact.first_name,
-          email: contact.email,
+          contact: {
+            _id: contacts[i],
+            first_name: contact.first_name,
+            email: contact.email,
+          },
           err: 'Invalid permission',
         });
 
@@ -4568,7 +4570,6 @@ const shareContacts = async (req, res) => {
         return res.status(405).json({
           status: false,
           error,
-          data,
         });
       }
       return res.send({
