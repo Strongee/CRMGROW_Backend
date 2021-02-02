@@ -44,7 +44,6 @@ const getAll = async (req, res) => {
     const { calendar_list } = currentUser;
     const promise_array = [];
 
-    console.log('calendar_list***********', calendar_list);
     for (let i = 0; i < calendar_list.length; i++) {
       const { connected_calendar_type } = calendar_list[i];
       if (connected_calendar_type === 'outlook') {
@@ -184,7 +183,15 @@ const googleCalendarList = (calendar_data) => {
         if (calendars) {
           const promise_array = [];
           for (let i = 0; i < calendars.length; i++) {
-            const promise = new Promise(async (resolve, reject) => {
+            const promise = new Promise(async (resolve) => {
+              const calendar_data = {
+                id: calendars[i].id,
+                title: calendars[i].summary,
+                time_zone: calendars[i].timeZone,
+                color: calendars[i].backgroundColor,
+                items: [],
+              };
+
               calendar.events.list(
                 {
                   calendarId: calendars[i].id,
@@ -234,7 +241,7 @@ const googleCalendarList = (calendar_data) => {
                         if (event.recurringEventId) {
                           recurrence_event.push({
                             id: event.recurringEventId,
-                            index: data.length,
+                            index: calendar_data.items.length,
                           });
                           _gmail_calendar_data.recurrence_id =
                             event.recurringEventId;
@@ -252,7 +259,7 @@ const googleCalendarList = (calendar_data) => {
                         _gmail_calendar_data.event_id = event.id;
                         _gmail_calendar_data.contacts = contacts;
                         _gmail_calendar_data.type = 2;
-                        data.push(_gmail_calendar_data);
+                        calendar_data.items.push(_gmail_calendar_data);
                       }
                       if (recurrence_event.length > 0) {
                         calendar.events.list(
@@ -277,26 +284,31 @@ const googleCalendarList = (calendar_data) => {
                                       event.recurrence[0].indexOf('DAILY') !==
                                       -1
                                     ) {
-                                      data[index].recurrence = 'DAILY';
+                                      calendar_data.items[index].recurrence =
+                                        'DAILY';
                                     } else if (
                                       event.recurrence[0].indexOf('WEEKLY') !==
                                       -1
                                     ) {
-                                      data[index].recurrence = 'WEEKLY';
+                                      calendar_data.items[index].recurrence =
+                                        'WEEKLY';
                                     } else if (
                                       event.recurrence[0].indexOf('MONTHLY') !==
                                       -1
                                     ) {
-                                      data[index].recurrence = 'MONTHLY';
+                                      calendar_data.items[index].recurrence =
+                                        'MONTHLY';
                                     }
                                   }
                                 }
                               });
                             }
+                            data.push(calendar_data);
                             resolve();
                           }
                         );
                       } else {
+                        data.push(calendar_data);
                         resolve();
                       }
                     } else {
@@ -336,6 +348,7 @@ const outlookCalendarList = (calendar_data) => {
       .then(async (outlook_calendars) => {
         const calendars = outlook_calendars.value;
 
+        console.log('calendars', calendars);
         if (calendars.length > 0) {
           const endDate = moment(date).add(1, `${mode}s`);
           // The start and end date are passed as query parameters
@@ -343,7 +356,14 @@ const outlookCalendarList = (calendar_data) => {
           const endDateTime = endDate.toISOString();
           for (let i = 0; i < calendars.length; i++) {
             const calendar = calendars[i];
+
             const promise = new Promise(async (resolve) => {
+              const calendar_data = {
+                id: calendar.id,
+                title: calendar.name,
+                color: calendar.hexColor === '' ? undefined : calendar.hexColor,
+                items: [],
+              };
               const outlook_events = await client
                 .api(
                   `/me/calendars/${calendar.id}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
@@ -466,11 +486,11 @@ const outlookCalendarList = (calendar_data) => {
                       calendar_event.seriesMasterId;
                     recurrence_event.push({
                       id: calendar_event.seriesMasterId,
-                      index: data.length,
+                      index: calendar_data.items.length,
                     });
                   }
 
-                  data.push(_outlook_calendar_data);
+                  calendar_data.items.push(_outlook_calendar_data);
                 }
                 if (recurrence_event.length > 0) {
                   for (let j = 0; j < recurrence_event.length; j++) {
@@ -489,26 +509,27 @@ const outlookCalendarList = (calendar_data) => {
                           'daily'
                         ) !== -1
                       ) {
-                        data[index].recurrence = 'DAILY';
+                        calendar_data.items[index].recurrence = 'DAILY';
                       } else if (
                         master_event.recurrence.pattern &&
                         master_event.recurrence.pattern.type.indexOf(
                           'weekly'
                         ) !== -1
                       ) {
-                        data[index].recurrence = 'WEEKLY';
+                        calendar_data.items[index].recurrence = 'WEEKLY';
                       } else if (
                         master_event.recurrence.pattern &&
                         master_event.recurrence.pattern.type.indexOf(
                           'monthly'
                         ) !== -1
                       ) {
-                        data[index].recurrence = 'MONTHLY';
+                        calendar_data.items[index].recurrence = 'MONTHLY';
                       }
                     }
                   }
                 }
               }
+              data.push(calendar_data);
               resolve();
             });
             promise_array.push(promise);
