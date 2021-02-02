@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const Contact = require('../models/contact');
+const Activity = require('../models/activity');
 const { ENV_PATH } = require('../config/path');
 
 require('dotenv').config({ path: ENV_PATH });
@@ -29,8 +30,20 @@ const search = async () => {
     console.log('contacts find err', err.message);
   });
 
-  if (contacts) {
-    console.log('contacts', contacts);
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+    if (contact) {
+      Activity.deleteOne({
+        contacts: contact.id,
+      }).catch((err) => {
+        console.log('activity remove err', err.message);
+      });
+      Contact.deleteOne({
+        _id: contact.id,
+      }).catch((err) => {
+        console.log('contact remove err', err.message);
+      });
+    }
   }
 };
 search();

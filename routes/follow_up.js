@@ -15,6 +15,7 @@ router.post(
 router.get('/', UserCtrl.checkAuth, catchError(FollowUpCtrl.get));
 router.get('/date', UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate));
 router.put('/:id', UserCtrl.checkAuth, catchError(FollowUpCtrl.edit));
+router.post('/load', UserCtrl.checkAuth, catchError(FollowUpCtrl.load));
 router.post(
   '/completed',
   UserCtrl.checkAuth,

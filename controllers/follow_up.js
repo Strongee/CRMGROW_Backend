@@ -1,5 +1,5 @@
 const { validationResult } = require('express-validator/check');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const FollowUp = require('../models/follow_up');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
@@ -7,6 +7,7 @@ const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
 const User = require('../models/user');
 const ActivityHelper = require('../helpers/activity');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -201,7 +202,7 @@ const edit = async (req, res) => {
               $set: { last_activity: _activity.id },
             }
           ).catch((err) => {
-            console.log('err', err);
+            console.log('activity save err', err.message);
           });
           const myJSON = JSON.stringify(follow_up);
           const data = JSON.parse(myJSON);
@@ -319,7 +320,10 @@ const getByDate = async (req, res) => {
   const query = { ...req.query };
   const cquery = { ...query };
   const due_date = query['due_date'];
-  const time_zone = currentUser.time_zone;
+  // const time_zone = currentUser.time_zone;
+  const time_zone = currentUser.time_zone_info
+    ? JSON.parse(currentUser.time_zone_info).tz_name
+    : system_settings.TIME_ZONE;
 
   // Check valid queries
   if (!allowed_queries.includes(due_date)) {
@@ -336,7 +340,9 @@ const getByDate = async (req, res) => {
 
   switch (due_date) {
     case 'overdue': {
-      const current_time = moment().utcOffset(time_zone).startOf('day');
+      // const current_time = moment().utcOffset(time_zone).startOf('day');
+      const current_time = moment().tz(time_zone).startOf('day');
+
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -349,7 +355,7 @@ const getByDate = async (req, res) => {
         const _contact = await Contact.findOne({
           _id: _follow_up[i].contact,
         }).catch((err) => {
-          console.log('err', err);
+          console.log('follow up find err', err.message);
         });
         const myJSON = JSON.stringify(_follow_up[i]);
         const follow_up = JSON.parse(myJSON);
@@ -372,8 +378,8 @@ const getByDate = async (req, res) => {
       break;
     }
     case 'today': {
-      const start = moment().utcOffset(time_zone).startOf('day'); // set to 12:00 am today
-      const end = moment().utcOffset(time_zone).endOf('day'); // set to 23:59 pm today
+      const start = moment().tz(time_zone).startOf('day'); // set to 12:00 am today
+      const end = moment().tz(time_zone).endOf('day'); // set to 23:59 pm today
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -405,8 +411,8 @@ const getByDate = async (req, res) => {
       break;
     }
     case 'tomorrow': {
-      const today_start = moment().utcOffset(time_zone).startOf('day'); // set to 12:00 am today
-      const today_end = moment().endOf('day'); // set to 23:59 pm today
+      const today_start = moment().tz(time_zone).startOf('day'); // set to 12:00 am today
+      const today_end = moment().tz(time_zone).endOf('day'); // set to 23:59 pm today
       const tomorrow_start = today_start.add(1, 'day');
       const tomorrow_end = today_end.add(1, 'day');
       const _follow_up = await FollowUp.find({
@@ -441,13 +447,10 @@ const getByDate = async (req, res) => {
     }
     case 'next_week': {
       const next_week_start = moment()
-        .utcOffset(time_zone)
-        .add(2, 'days')
+        .tz(time_zone)
+        .add(2, 'day')
         .startOf('day');
-      const next_week_end = moment()
-        .utcOffset(time_zone)
-        .add(7, 'days')
-        .endOf('day');
+      const next_week_end = moment().tz(time_zone).add(7, 'days').endOf('day');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -479,14 +482,8 @@ const getByDate = async (req, res) => {
       break;
     }
     case 'next_month': {
-      const start_month = moment()
-        .utcOffset(time_zone)
-        .add(8, 'days')
-        .startOf('day');
-      const end_month = moment()
-        .utcOffset(time_zone)
-        .add(30, 'days')
-        .endOf('day');
+      const start_month = moment().tz(time_zone).add(8, 'day').startOf('day');
+      const end_month = moment().tz(time_zone).add(30, 'days').endOf('day');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -518,10 +515,7 @@ const getByDate = async (req, res) => {
       break;
     }
     case 'future': {
-      const start_future = moment()
-        .utcOffset(time_zone)
-        .add(8, 'days')
-        .startOf('day');
+      const start_future = moment().tz(time_zone).add(8, 'day').startOf('day');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -876,6 +870,7 @@ const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, pageSize, searchOption } = req.body;
   const {
+
     types,
     status,
     contact,
@@ -888,6 +883,7 @@ const load = async (req, res) => {
 
   const query = { user: currentUser._id };
   types && types.length ? (query.type = { $in: types }) : false;
+
   if (typeof status !== 'undefined') {
     query.status = status;
   }
@@ -905,6 +901,7 @@ const load = async (req, res) => {
   if (str) {
     query.content = { $regex: '.*' + str + '.*' };
   }
+
   if (labels && labels.length) {
     const contacts = await Contact.find({
       user: currentUser._id,
@@ -984,6 +981,7 @@ const selectAll = async (req, res) => {
 
 module.exports = {
   get,
+  load,
   create,
   edit,
   completed,

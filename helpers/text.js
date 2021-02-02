@@ -585,6 +585,7 @@ const bulkImage = async (data) => {
         type: 'images',
         send_type: 1,
         images: image._id,
+        description: image_content,
         created_at: new Date(),
         updated_at: new Date(),
       });
