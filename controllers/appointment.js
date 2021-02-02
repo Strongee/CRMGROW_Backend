@@ -310,7 +310,13 @@ const googleCalendarList = (calendar_data) => {
             promise_array.push(promise);
           }
           Promise.all(promise_array).then(() => {
-            resolve(data);
+            resolve({
+              status: true,
+              calendar: {
+                email: connected_email,
+                data,
+              },
+            });
           });
         }
       }
@@ -508,8 +514,14 @@ const outlookCalendarList = (calendar_data) => {
             promise_array.push(promise);
           }
         }
-        Promise.all(promise_array).then((data) => {
-          resolve(data);
+        Promise.all(promise_array).then(() => {
+          resolve({
+            status: true,
+            calendar: {
+              email: connected_email,
+              data,
+            },
+          });
         });
       })
       .catch((err) => {
