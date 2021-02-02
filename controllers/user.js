@@ -1452,7 +1452,7 @@ const editMe = async (req, res) => {
   // TODO: should limit the editing fields here
   delete editData.password;
 
-  if (editData['email']) {
+  if (editData['email'] && !user.primary_connected) {
     user['connected_email'] = editData['email'];
   }
   for (const key in editData) {
