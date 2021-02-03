@@ -788,12 +788,12 @@ const appSocial = async (req, res) => {
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.APP_SIGNIN_URL + 'google'
     );
-  
+
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email'
+      'https://www.googleapis.com/auth/userinfo.email',
     ];
-  
+
     const authorizationUri = oauth2Client.generateAuthUrl({
       // 'online' (default) or 'offline' (gets refresh_token)
       access_type: 'offline',
@@ -801,22 +801,17 @@ const appSocial = async (req, res) => {
       // If you only need one scope you can pass it as a string
       scope: scopes,
     });
-  
+
     if (!authorizationUri) {
       return res.status(400).json({
         status: false,
         error: 'Client doesn`t exist',
       });
     }
-    return res.render('social_oauth', { url: authorizationUri})
+    return res.render('social_oauth', { url: authorizationUri });
   }
   if (socialType === 'outlook') {
-    const scopes = [
-      'openid',
-      'profile',
-      'offline_access',
-      'email',
-    ];
+    const scopes = ['openid', 'profile', 'offline_access', 'email'];
 
     const authorizationUri = oauth2.authCode.authorizeURL({
       redirect_uri: urls.APP_SIGNIN_URL + 'outlook',
@@ -1468,7 +1463,7 @@ const editMe = async (req, res) => {
   // TODO: should limit the editing fields here
   delete editData.password;
 
-  if (editData['email']) {
+  if (editData['email'] && !user.primary_connected) {
     user['connected_email'] = editData['email'];
   }
   for (const key in editData) {
