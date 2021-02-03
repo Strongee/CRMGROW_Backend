@@ -957,7 +957,6 @@ const getTwilioNumber = async (id) => {
   }
 
   if (typeof number !== 'undefined' && number !== '+') {
-    console.log('number', number);
     const proxy_number = await twilio.incomingPhoneNumbers
       .create({
         phoneNumber: number.phoneNumber,
