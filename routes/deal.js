@@ -54,6 +54,12 @@ router.post(
   catchError(DealCtrl.getAppointments)
 );
 
+router.post(
+  '/update-contact',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.updateContact)
+);
+
 router.delete('/:id', UserCtrl.checkAuth, catchError(DealCtrl.remove));
 router.put('/:id', UserCtrl.checkAuth, catchError(DealCtrl.edit));
 router.get('/:id', UserCtrl.checkAuth, catchError(DealCtrl.getDetail));

@@ -200,21 +200,102 @@ const remove = async (req, res) => {
 
 const edit = async (req, res) => {
   const { currentUser } = req;
+  const body = req.body;
 
-  Deal.updateOne({
+  const currentDeal = await Deal.findOne({
     _id: req.params.id,
     user: currentUser.id,
-  })
-    .then(() => {
-      return res.send({
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || JSON.stringify(err),
+    });
+  });
+
+  if (!currentDeal) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not found current deal.',
+    });
+  }
+
+  Deal.updateOne(
+    {
+      _id: req.params.id,
+      user: currentUser.id,
+    },
+    { $set: body }
+  )
+    .then(async () => {
+      if (currentDeal.deal_stage !== body.deal_stage) {
+        console.log(
+          'current stage',
+          'new-stage',
+          currentDeal.deal_stage,
+          body.deal_stage
+        );
+        await DealStage.updateOne(
+          { _id: currentDeal.deal_stage },
+          { $pull: { deals: currentDeal._id } }
+        ).catch((err) => {
+          return res.status(500).send({
+            status: false,
+            error: err.message || JSON.stringify(err),
+          });
+        });
+        await DealStage.updateOne(
+          { _id: body.deal_stage },
+          { $addToSet: { deals: currentDeal._id } }
+        ).catch((err) => {
+          return res.status(500).send({
+            status: false,
+            error: err.message || JSON.stringify(err),
+          });
+        });
+        return res.send({
+          status: true,
+        });
+      } else {
+        return res.send({
+          status: true,
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const updateContact = (req, res) => {
+  const { currentUser } = req;
+  const { action, contacts } = req.body;
+
+  let query;
+  if (action === 'add') {
+    query = { $addToSet: { contacts: { $each: contacts } } };
+  } else if (action === 'remove') {
+    query = { $pull: { contacts: { $in: contacts } } };
+  }
+
+  Deal.updateOne(
+    {
+      _id: req.params.id,
+      user: currentUser.id,
+    },
+    query
+  )
+    .then((result) => {
+      res.send({
         status: true,
       });
     })
     .catch((err) => {
-      console.log('deal update err', err.message);
-      return res.status(500).json({
+      res.status(500).send({
         status: false,
-        error: err.message,
+        error: err.message || JSON.stringify(err),
       });
     });
 };
@@ -536,4 +617,5 @@ module.exports = {
   createAppointment,
   sendEmail,
   getEmails,
+  updateContact,
 };
