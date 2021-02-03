@@ -1946,8 +1946,8 @@ const timesheet_check = new CronJob(
             break;
           }
           case 'bulk_sms': {
-            const { message_sid, activities } = timeline.action;
-            TextHelper.getStatus(message_sid).then((res) => {
+            const { message_sid, service, activities } = timeline.action;
+            TextHelper.getStatus(message_sid, service).then((res) => {
               if (res.status === 'delivered') {
                 Activity.updateMany(
                   {

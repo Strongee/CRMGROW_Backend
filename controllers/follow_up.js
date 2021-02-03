@@ -870,7 +870,6 @@ const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, pageSize, searchOption } = req.body;
   const {
-
     types,
     status,
     contact,
@@ -986,7 +985,6 @@ module.exports = {
   edit,
   completed,
   getByDate,
-  load,
   selectAll,
   updateChecked,
   updateArchived,
