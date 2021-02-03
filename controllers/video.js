@@ -2588,7 +2588,7 @@ const bulkText = async (req, res) => {
         });
       } else {
         fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        promise = new Promise((resolve, reject) => {
+        promise = new Promise((resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
