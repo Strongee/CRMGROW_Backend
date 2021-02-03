@@ -148,7 +148,7 @@ const create = async (req, res) => {
       }
     }
     if (error.length > 0) {
-      return res.status(405).json({
+      return res.status(400).json({
         status: false,
         error,
       });
@@ -299,7 +299,6 @@ const runTimeline = async (id) => {
               .save()
               .then((_activity) => {
                 timeline.status = 'completed';
-                timeline.updated_at = new Date();
                 timeline.save().catch((err) => {
                   console.log('err', err);
                 });
@@ -330,7 +329,6 @@ const runTimeline = async (id) => {
           })
           .catch((err) => {
             timeline.status = 'error';
-            timeline.updated_at = new Date();
             timeline.save().catch((err) => {
               console.log('err', err);
             });
@@ -385,7 +383,6 @@ const runTimeline = async (id) => {
                 console.log('err', err);
               });
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
@@ -394,7 +391,6 @@ const runTimeline = async (id) => {
           .catch((err) => {
             console.log('err', err);
             timeline.status = 'error';
-            timeline.updated_at = new Date();
             timeline.save().catch((err) => {
               console.log('err', err);
             });
@@ -413,7 +409,6 @@ const runTimeline = async (id) => {
           .then((res) => {
             if (res[0] && res[0].status === true) {
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
@@ -425,7 +420,6 @@ const runTimeline = async (id) => {
               setEmailTrackTimeline(activity_data);
             } else {
               timeline.status = 'error';
-              timeline.updated_at = new Date();
               console.log('err', res[0].err);
               timeline.save().catch((err) => {
                 console.log('err', err);
@@ -447,13 +441,11 @@ const runTimeline = async (id) => {
           .then((res) => {
             if (res[0] && res[0].status === true) {
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
             } else {
               timeline.status = 'error';
-              timeline.updated_at = new Date();
               console.log('err', res[0].err);
               timeline.save().catch((err) => {
                 console.log('err', err);
@@ -477,13 +469,11 @@ const runTimeline = async (id) => {
             console.log('res', res);
             if (res[0] && res[0].status === true) {
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
             } else {
               timeline.status = 'error';
-              timeline.updated_at = new Date();
               console.log('err', res[0].err);
               timeline.save().catch((err) => {
                 console.log('err', err);
@@ -562,13 +552,11 @@ const runTimeline = async (id) => {
           .then((res) => {
             if (res[0] && res[0].status === true) {
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
             } else {
               timeline.status = 'error';
-              timeline.updated_at = new Date();
               console.log('err', res[0].err);
               timeline.save().catch((err) => {
                 console.log('err', err);
@@ -591,13 +579,11 @@ const runTimeline = async (id) => {
           .then((res) => {
             if (res[0] && res[0].status === true) {
               timeline.status = 'completed';
-              timeline.updated_at = new Date();
               timeline.save().catch((err) => {
                 console.log('err', err);
               });
             } else {
               timeline.status = 'error';
-              timeline.updated_at = new Date();
               console.log('err', res[0].err);
               timeline.save().catch((err) => {
                 console.log('err', err);
@@ -778,7 +764,6 @@ const disableNext = async (id) => {
   });
   if (timeline) {
     timeline.status = 'disabled';
-    timeline.updated_at = new Date();
     timeline.save().catch((err) => {
       console.log('err', err);
     });
@@ -798,7 +783,6 @@ const disableNext = async (id) => {
       } else {
         timeline = timelines[0];
         timeline.status = 'disabled';
-        timeline.updated_at = new Date();
         timeline.save().catch((err) => {
           console.log('err', err.message);
         });

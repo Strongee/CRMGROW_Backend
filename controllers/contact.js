@@ -503,16 +503,16 @@ const edit = async (req, res) => {
       contact[key] = editData[key];
     }
 
-    if (!req.body.cell_phone) {
-      // let cleaned = ('' + cell_phone).replace(/\D/g, '')
-      // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-      // if (match) {
-      //   let intlCode = (match[1] ? '+1 ' : '')
-      //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-      // }
-      const cell_phone = phone(req.body.cell_phone)[0];
-      contact['cell_phone'] = cell_phone;
-    }
+    // if (req.body.cell_phone) {
+    //   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
+    //   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
+    //   // if (match) {
+    //   //   let intlCode = (match[1] ? '+1 ' : '')
+    //   //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
+    //   // }
+    //   const cell_phone = phone(req.body.cell_phone)[0];
+    //   contact['cell_phone'] = cell_phone;
+    // }
 
     let contact_old;
     if (!req.body.email && req.body.email != '') {
@@ -1297,6 +1297,11 @@ const leadContact = async (req, res) => {
       user,
     });
 
+    const time_zone = user.time_zone_info
+      ? JSON.parse(user.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+    const created_at = moment().tz(time_zone).format('h:mm a');
+
     if (video) {
       _contact
         .save()
@@ -1328,9 +1333,6 @@ const leadContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -1374,10 +1376,10 @@ const leadContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture video';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -1427,10 +1429,10 @@ const leadContact = async (req, res) => {
                 '\n' +
                 _video.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
@@ -1497,9 +1499,6 @@ const leadContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -1543,10 +1542,10 @@ const leadContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture pdf';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -1596,10 +1595,10 @@ const leadContact = async (req, res) => {
                 '\n' +
                 _pdf.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
@@ -1666,9 +1665,9 @@ const leadContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
+          // const created_at = moment()
+          //   .utcOffset(currentUser.time_zone)
+          //   .format('h:mm: a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -1712,10 +1711,10 @@ const leadContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture image';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -1765,10 +1764,10 @@ const leadContact = async (req, res) => {
                 '\n' +
                 _image.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
@@ -3581,9 +3580,10 @@ const interestSubmitContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
+          const time_zone = currentUser.time_zone_info
+            ? JSON.parse(currentUser.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+          const created_at = moment().tz(time_zone).format('h:mm a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -3627,10 +3627,10 @@ const interestSubmitContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture video';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -3680,10 +3680,10 @@ const interestSubmitContact = async (req, res) => {
                 '\n' +
                 _video.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
@@ -3750,9 +3750,10 @@ const interestSubmitContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
+          const time_zone = currentUser.time_zone_info
+            ? JSON.parse(currentUser.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+          const created_at = moment().tz(time_zone).format('h:mm a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -3796,10 +3797,10 @@ const interestSubmitContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture pdf';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -3849,10 +3850,10 @@ const interestSubmitContact = async (req, res) => {
                 '\n' +
                 _pdf.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages
@@ -3919,9 +3920,10 @@ const interestSubmitContact = async (req, res) => {
               console.log('err', err);
             });
 
-          const created_at = moment()
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm: a');
+          const time_zone = currentUser.time_zone_info
+            ? JSON.parse(currentUser.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+          const created_at = moment().tz(time_zone).format('h:mm a');
           const email_notification = garbage['email_notification'];
 
           if (email_notification['lead_capture']) {
@@ -3965,10 +3967,10 @@ const interestSubmitContact = async (req, res) => {
               currentUser.desktop_notification_subscription
             );
             const title = contact.first_name + ' watched lead capture image';
-            const created_at =
-              moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-              ' at ' +
-              moment().utcOffset(currentUser.time_zone).format('h:mm a');
+            // const created_at =
+            //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
             const body =
               contact.first_name +
               ' - ' +
@@ -4018,10 +4020,10 @@ const interestSubmitContact = async (req, res) => {
                 '\n' +
                 _image.title +
                 '\n';
-              const created_at =
-                moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
-                ' at ' +
-                moment().utcOffset(currentUser.time_zone).format('h:mm a');
+              // const created_at =
+              //   moment().utcOffset(currentUser.time_zone).format('MM/DD/YYYY') +
+              //   ' at ' +
+              //   moment().utcOffset(currentUser.time_zone).format('h:mm a');
               const time = ' on ' + created_at + '\n ';
               const contact_link = urls.CONTACT_PAGE_URL + contact.id;
               twilio.messages

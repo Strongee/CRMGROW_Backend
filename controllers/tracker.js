@@ -1,7 +1,7 @@
 const sgMail = require('@sendgrid/mail');
 const webpush = require('web-push');
 const phone = require('phone');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const User = require('../models/user');
 const Contact = require('../models/contact');
 const PDFTracker = require('../models/pdf_tracker');
@@ -20,6 +20,7 @@ const ActivityHelper = require('../helpers/activity');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
+const system_settings = require('../config/system_settings');
 const api = require('../config/api');
 
 const accountSid = api.TWILIO.TWILIO_SID;
@@ -48,6 +49,9 @@ const disconnectPDF = async (pdf_tracker_id) => {
   const contact = await Contact.findOne({ _id: query['contact'] });
   const pdf = await PDF.findOne({ _id: query['pdf'] });
   const garbage = await Garbage.findOne({ user: query['user'] });
+  const time_zone = currentUser.time_zone_info
+    ? JSON.parse(currentUser.time_zone_info).tz_name
+    : system_settings.TIME_ZONE;
 
   const d = query['duration'] / 1000;
   var h = Math.floor(d / 3600);
@@ -86,13 +90,10 @@ const disconnectPDF = async (pdf_tracker_id) => {
       ' reviewed pdf -' +
       pdf.title;
     const created_at =
-      moment(query['created_at'])
-        .utcOffset(currentUser.time_zone)
-        .format('MM/DD/YYYY') +
+      moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
       ' at ' +
-      moment(query['created_at'])
-        .utcOffset(currentUser.time_zone)
-        .format('h:mm a');
+      moment(query['created_at']).tz(time_zone).format('h:mm a');
+
     const body = 'Watched ' + timeWatched + ' on ' + created_at;
     const playload = JSON.stringify({
       notification: {
@@ -139,13 +140,9 @@ const disconnectPDF = async (pdf_tracker_id) => {
         pdf.title +
         '\n';
       const created_at =
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('MM/DD/YYYY') +
+        moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
         ' at ' +
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('h:mm a');
+        moment(query['created_at']).tz(time_zone).format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
@@ -173,7 +170,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const created_at = moment(query['created_at'])
-      .utcOffset(currentUser.time_zone)
+      .tz(time_zone)
       .format('h:mm:ss a');
     const msg = {
       to: currentUser.email,
@@ -315,6 +312,9 @@ const disconnectVideo = async (video_tracker_id) => {
   const contact = await Contact.findOne({ _id: query['contact'] });
   const video = await Video.findOne({ _id: query['video'] });
   const garbage = await Garbage.findOne({ user: query['user'] });
+  const time_zone = currentUser.time_zone_info
+    ? JSON.parse(currentUser.time_zone_info).tz_name
+    : system_settings.TIME_ZONE;
   let full_watched;
 
   if (currentUser && contact) {
@@ -454,13 +454,10 @@ const disconnectVideo = async (video_tracker_id) => {
         ' watched video -' +
         video.title;
       const created_at =
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('MM/DD/YYYY') +
+        moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
         ' at ' +
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('h:mm a');
+        moment(query['created_at']).tz(time_zone).format('h:mm a');
+
       const body =
         'Watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
       const playload = JSON.stringify({
@@ -507,13 +504,9 @@ const disconnectVideo = async (video_tracker_id) => {
           video.title +
           '\n';
         const created_at =
-          moment(query['created_at'])
-            .utcOffset(currentUser.time_zone)
-            .format('MM/DD/YYYY') +
+          moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
           ' at ' +
-          moment(query['created_at'])
-            .utcOffset(currentUser.time_zone)
-            .format('h:mm a');
+          moment(query['created_at']).tz(time_zone).format('h:mm a');
         const body =
           'watched ' + timeWatched + ' of ' + timeTotal + ' on ' + created_at;
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
@@ -542,7 +535,7 @@ const disconnectVideo = async (video_tracker_id) => {
     if (email_notification['material']) {
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       const created_at = moment(query['created_at'])
-        .utcOffset(currentUser.time_zone)
+        .tz(time_zone)
         .format('h:mm: a');
 
       const msg = {
@@ -805,6 +798,9 @@ const disconnectImage = async (image_tracker_id) => {
   const contact = await Contact.findOne({ _id: query['contact'] });
   const image = await Image.findOne({ _id: query['image'] });
   const garbage = await Garbage.findOne({ user: query['user'] });
+  const time_zone = currentUser.time_zone_info
+    ? JSON.parse(currentUser.time_zone_info).tz_name
+    : system_settings.TIME_ZONE;
 
   const activity = new Activity({
     content: 'reviewed image',
@@ -927,13 +923,9 @@ const disconnectImage = async (image_tracker_id) => {
       ' reviewed image -' +
       image.title;
     const created_at =
-      moment(query['created_at'])
-        .utcOffset(currentUser.time_zone)
-        .format('MM/DD/YYYY') +
+      moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
       ' at ' +
-      moment(query['created_at'])
-        .utcOffset(currentUser.time_zone)
-        .format('h:mm a');
+      moment(query['created_at']).tz(time_zone).format('h:mm a');
     const body = 'Watched ' + timeWatched + ' on ' + created_at;
     const playload = JSON.stringify({
       notification: {
@@ -980,13 +972,9 @@ const disconnectImage = async (image_tracker_id) => {
         image.title +
         '\n';
       const created_at =
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('MM/DD/YYYY') +
+        moment(query['created_at']).tz(time_zone).format('MM/DD/YYYY') +
         ' at ' +
-        moment(query['created_at'])
-          .utcOffset(currentUser.time_zone)
-          .format('h:mm a');
+        moment(query['created_at']).tz(time_zone).format('h:mm a');
       const body = 'Watched ' + timeWatched + ' on ' + created_at + '\n ';
       const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
@@ -1014,7 +1002,7 @@ const disconnectImage = async (image_tracker_id) => {
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     const created_at = moment(query['created_at'])
-      .utcOffset(currentUser.time_zone)
+      .tz(time_zone)
       .format('h:mm:ss a');
     const msg = {
       to: currentUser.email,

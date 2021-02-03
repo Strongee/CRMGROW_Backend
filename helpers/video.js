@@ -276,7 +276,7 @@ const getDuration = async (id) => {
       Video.updateOne(
         { _id: id },
         {
-          $set: { duration: time },
+          $set: { duration: time * 1000 },
         }
       ).catch((err) => {
         console.log('video update err', err.message);

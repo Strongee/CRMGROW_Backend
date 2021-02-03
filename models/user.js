@@ -86,6 +86,7 @@ const UserSchema = new Schema(
       period: { type: String, default: 'month' },
     },
     paid_demo: { type: Boolean, default: false },
+    paid_demo_mode: Number,
     expired_at: Date,
     created_at: Date,
     updated_at: Date,

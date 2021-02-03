@@ -16,13 +16,14 @@ head
   script(src='./theme/js/popper.min.js')
   script(src='./theme/js/qs.js')
 body.d-flex.align-items-center.flex-column(style="height: 50vh; margin-top: 150px;")
-  .spinner-border.text-warning(role='status', style="width: 5rem; height: 5rem; border-width: 0.5rem;")
-    span.sr-only 
-  #signinButton.mt-4.px-4(style="font-size: 20px;border-radius: 6px;border: 1px solid gainsboro;display: inline-block;padding: 10px;text-transform: capitalize;")
-    | Signing in with #{type}
-  input(type="hidden" id="social_type" value=`${type}`)
+  //- .spinner-border.text-warning(role='status', style="width: 5rem; height: 5rem; border-width: 0.5rem;")
+  //-   span.sr-only 
+  //- #signinButton.mt-4.px-4(style="font-size: 20px;border-radius: 6px;border: 1px solid gainsboro;display: inline-block;padding: 10px;text-transform: capitalize;")
+  //-   | Signing in with #{type}
+  a#redirect(style="display: none;", href=`${url}`)
+  //- input(type="hidden" id="social_type" value=`${type}`)
 //- Theme JS
-script(src='https://secure.aadcdn.microsoftonline-p.com/lib/0.1.7/js/msal.min.js')
 script(src='./theme/core/auth.js')
+script(src='https://secure.aadcdn.microsoftonline-p.com/lib/0.1.7/js/msal.min.js')
 if type === 'google'
   script(src='https://apis.google.com/js/platform.js?onload=start', async, defer)

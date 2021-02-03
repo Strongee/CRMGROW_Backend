@@ -8,6 +8,7 @@ const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const mongoose = require('mongoose');
+const moment = require('moment');
 
 var graph = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
@@ -49,6 +50,8 @@ const Contact = require('../models/contact');
 const User = require('../models/user');
 const Team = require('../models/team');
 const Garbage = require('../models/garbage');
+const TimeLine = require('../models/time_line');
+const Notification = require('../models/notification');
 const textHelper = require('../helpers/text');
 const emailHelper = require('../helpers/email');
 const garbageHelper = require('../helpers/garbage.js');
@@ -881,7 +884,51 @@ const bulkText = async (req, res) => {
             body: image_content,
           })
           .then((message) => {
-            if (message.status !== 'undelivered') {
+            if (message.status === 'queued' || message.status === 'sent') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                image_content
+              );
+
+              const now = moment();
+              const due_date = now.add(1, 'minutes');
+              const timeline = new TimeLine({
+                user: currentUser.id,
+                status: 'active',
+                action: {
+                  type: 'bulk_sms',
+                  message_sid: message.sid,
+                  activities,
+                },
+                due_date,
+              });
+              timeline.save().catch((err) => {
+                console.log('time line save err', err.message);
+              });
+
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  $set: { status: 'pending' },
+                }
+              ).catch((err) => {
+                console.log('activity err', err.message);
+              });
+
+              const notification = new Notification({
+                user: currentUser.id,
+                message_sid: message.sid,
+                contact: _contact.id,
+                activities,
+                criteria: 'bulk_sms',
+                status: 'pending',
+              });
+              notification.save().catch((err) => {
+                console.log('notification save err', err.message);
+              });
+              resolve();
+            } else if (message.status === 'delivered') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -1232,8 +1279,9 @@ const bulkGmail = async (req, res) => {
       //   '</body></html>';
 
       const email_content =
-        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Image Invitation</title></head><body><table><tbody>' +
         image_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
@@ -1593,8 +1641,9 @@ const bulkOutlook = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>Image Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Image Invitation</title></head><body><table><tbody>' +
         image_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
