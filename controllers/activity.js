@@ -178,15 +178,26 @@ const removeAll = async (req, res) => {
 const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, size } = req.body;
-  const count = await Activity.countDocuments({ user: currentUser.id });
+  const shared_contacts = await Contact.find({
+    shared_members: currentUser.id,
+  });
+
+  const count = await Activity.countDocuments({
+    $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+  });
+
   let activity;
   if (!skip) {
-    activity = await Activity.find({ user: currentUser.id })
+    activity = await Activity.find({
+      $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+    })
       .sort({ updated_at: -1 })
       .populate('contacts')
       .limit(size);
   } else {
-    activity = await Activity.find({ user: currentUser.id })
+    activity = await Activity.find({
+      $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+    })
       .sort({ updated_at: -1 })
       .populate('contacts')
       .skip(skip)

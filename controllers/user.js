@@ -49,8 +49,9 @@ const PaymentCtrl = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
+const PaidDemo = require('../models/paid_demo');
 
-const { getSignalWireNumber } = require('../helpers/text');
+const { getSignalWireNumber, getTwilioNumber } = require('../helpers/text');
 
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -201,8 +202,19 @@ const signUp = async (req, res) => {
           garbage.save().catch((err) => {
             console.log('garbage save err', err.message);
           });
-          // purchase proxy number
-          getSignalWireNumber(_res.id);
+
+          if (_res.phone) {
+            if (_res.phone.areaCode === 'US' || _res.phone.areaCode === 'CA') {
+              // purchase proxy number
+              const proxy_number = getSignalWireNumber(_res.id);
+              if (proxy_number === api.SIGNALWIRE.DEFAULT_NUMBER) {
+                getTwilioNumber(_res.id);
+              }
+            } else {
+              // purchase twilio number
+              getTwilioNumber(_res.id);
+            }
+          }
 
           // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -768,9 +780,166 @@ const socialGmail = async (req, res) => {
   });
 };
 
+const appSocial = async (req, res) => {
+  const socialType = req.params.social;
+  if (socialType === 'google') {
+    const oauth2Client = new google.auth.OAuth2(
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.APP_SIGNIN_URL + 'google'
+    );
+
+    const scopes = [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ];
+
+    const authorizationUri = oauth2Client.generateAuthUrl({
+      // 'online' (default) or 'offline' (gets refresh_token)
+      access_type: 'offline',
+      prompt: 'consent',
+      // If you only need one scope you can pass it as a string
+      scope: scopes,
+    });
+
+    if (!authorizationUri) {
+      return res.status(400).json({
+        status: false,
+        error: 'Client doesn`t exist',
+      });
+    }
+    return res.render('social_oauth', { url: authorizationUri });
+  }
+  if (socialType === 'outlook') {
+    const scopes = ['openid', 'profile', 'offline_access', 'email'];
+
+    const authorizationUri = oauth2.authCode.authorizeURL({
+      redirect_uri: urls.APP_SIGNIN_URL + 'outlook',
+      scope: scopes.join(' '),
+      prompt: 'select_account',
+    });
+
+    if (!authorizationUri) {
+      return res.status(400).json({
+        status: false,
+        error: 'Client doesn`t exist',
+      });
+    }
+    return res.render('social_oauth', { url: authorizationUri });
+  }
+};
+
+const appSocialCallback = async (req, res) => {
+  const socialType = req.params.social;
+  if (socialType === 'google') {
+    const code = decodeURIComponent(req.query.code);
+    const oauth2Client = new google.auth.OAuth2(
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.APP_SIGNIN_URL + 'google'
+    );
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+    if (typeof tokens.refresh_token === 'undefined') {
+      return res.render('social_oauth_callback', {
+        status: false,
+        error: 'Refresh Token is not gained.',
+      });
+    }
+    if (!tokens) {
+      return res.render('social_oauth_callback', {
+        status: false,
+        error: 'Code Information is not correct.',
+      });
+    }
+    const oauth2 = google.oauth2({
+      auth: oauth2Client,
+      version: 'v2',
+    });
+    oauth2.userinfo.v2.me.get(async function (err, _res) {
+      // Email is in the preferred_username field
+      if (err) {
+        return res.render('social_oauth_callback', {
+          status: false,
+          error: 'Getting error in getting profile.',
+        });
+      }
+      const social_id = _res.data.id;
+      const _user = await User.findOne({
+        social_id: new RegExp(social_id, 'i'),
+        del: false,
+      });
+      if (!_user) {
+        return res.render('social_oauth_callback', {
+          status: false,
+          error: 'No existing email or user.',
+        });
+      }
+      const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+      return res.render('social_oauth_callback', {
+        status: true,
+        data: {
+          token,
+          user: _user.id,
+        },
+      });
+    });
+  }
+  if (socialType === 'outlook') {
+    const code = decodeURIComponent(req.query.code);
+    const scopes = ['openid', 'profile', 'offline_access', 'email'];
+    oauth2.authCode.getToken(
+      {
+        code,
+        redirect_uri: urls.APP_SIGNIN_URL + 'outlook',
+        scope: scopes.join(' '),
+      },
+      async function (error, result) {
+        if (error) {
+          console.log('err', error);
+          return res.status(500).send({
+            status: false,
+            error,
+          });
+        } else {
+          const outlook_token = oauth2.accessToken.create(result);
+          const outlook_refresh_token = outlook_token.token.refresh_token;
+          const token_parts = outlook_token.token.id_token.split('.');
+          // Token content is in the second part, in urlsafe base64
+          const encoded_token = new Buffer(
+            token_parts[1].replace('-', '+').replace('_', '/'),
+            'base64'
+          );
+          const decoded_token = encoded_token.toString();
+          const user_info = JSON.parse(decoded_token);
+          if (user_info && user_info.oid) {
+            const _user = await User.findOne({
+              social_id: new RegExp(jwt.oid, 'i'),
+              del: false,
+            });
+            if (!_user) {
+              return res.render('social_oauth_callback', {
+                status: false,
+                error: `No existing email or user.`,
+              });
+            }
+            const token = jwt.sign({ id: _user.id }, api.JWT_SECRET);
+            return res.render('social_oauth_callback', {
+              status: true,
+              data: {
+                token,
+                user: _user.id,
+              },
+            });
+          }
+        }
+      }
+    );
+  }
+};
+
 const appGoogleSignIn = async (req, res) => {
   const code = req.query.code;
-  console.log(code);
   const oauth2Client = new google.auth.OAuth2(
     api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -1294,7 +1463,7 @@ const editMe = async (req, res) => {
   // TODO: should limit the editing fields here
   delete editData.password;
 
-  if (editData['email']) {
+  if (editData['email'] && !user.primary_connected) {
     user['connected_email'] = editData['email'];
   }
   for (const key in editData) {
@@ -1681,7 +1850,6 @@ const syncGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-    // If you only need one scope you can pass it as a string
     prompt: 'consent',
     scope: scopes,
   });
@@ -2216,7 +2384,8 @@ const resetPasswordByCode = async (req, res) => {
   const { code, password, email } = req.body;
 
   const user = await User.findOne({
-    email,
+    email: new RegExp(email, 'i'),
+    del: false,
   });
 
   if (!user) {
@@ -2511,10 +2680,17 @@ const schedulePaidDemo = async (req, res) => {
   });
 
   let amount;
+  let description;
+  let schedule_link;
+
   if (req.body.demo === 1) {
     amount = system_settings.ONBOARD_PRICING_30_MINS;
+    description = 'Schedule one on one onboarding 30mins';
+    schedule_link = system_settings.SCHEDULE_LINK_30_MINS;
   } else if (req.body.demo === 2) {
     amount = system_settings.ONBOARD_PRICING_1_HOUR;
+    description = 'Schedule one on one onboarding 1 hour';
+    schedule_link = system_settings.SCHEDULE_LINK_1_HOUR;
   }
 
   const data = {
@@ -2522,7 +2698,7 @@ const schedulePaidDemo = async (req, res) => {
     customer_id: payment.customer_id,
     receipt_email: currentUser.email,
     amount,
-    description: 'Schedule one on one onboarding 30mins',
+    description,
   };
 
   PaymentCtrl.createCharge(data)
@@ -2530,46 +2706,64 @@ const schedulePaidDemo = async (req, res) => {
       User.updateOne(
         { _id: currentUser.id },
         {
-          $set: { paid_demo: true },
+          $set: {
+            paid_demo: true,
+            paid_demo_mode: req.body.demo,
+          },
         }
       ).catch((err) => {
         console.log('user paid demo update err', err.message);
       });
-      const templatedData = {
-        user_name: currentUser.user_name,
-        schedule_link: system_settings.SCHEDULE_LINK,
-      };
+      const new_demo = new PaidDemo({
+        user: currentUser.id,
+        demo_mode: req.body.demo,
+      });
 
-      const params = {
-        Destination: {
-          ToAddresses: [currentUser.email],
-        },
-        Source: mail_contents.REPLY,
-        Template: 'OnboardCall',
-        TemplateData: JSON.stringify(templatedData),
-      };
+      new_demo
+        .save()
+        .then(() => {
+          const templatedData = {
+            user_name: currentUser.user_name,
+            schedule_link,
+          };
 
-      // Create the promise and SES service object
-      ses
-        .sendTemplatedEmail(params)
-        .promise()
-        .then((response) => {
-          console.log('success', response.MessageId);
+          const params = {
+            Destination: {
+              ToAddresses: [currentUser.email],
+            },
+            Source: mail_contents.REPLY,
+            Template: 'OnboardCall',
+            TemplateData: JSON.stringify(templatedData),
+          };
+
+          // Create the promise and SES service object
+          ses
+            .sendTemplatedEmail(params)
+            .promise()
+            .then((response) => {
+              console.log('success', response.MessageId);
+            })
+            .catch((err) => {
+              console.log('ses send err', err);
+            });
+          return res.send({
+            status: true,
+          });
         })
         .catch((err) => {
-          console.log('ses send err', err);
+          console.log('card payment err', err);
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
         });
 
       return res.send({
         status: true,
       });
     })
-    .catch((err) => {
-      console.log('card payment err', err);
-      return res.status(400).json({
-        status: false,
-        error: err.message,
-      });
+    .catch((_err) => {
+      console.log('new demo err', _err.message);
     });
 };
 
@@ -2653,6 +2847,8 @@ module.exports = {
   signUpOutlook,
   socialGmail,
   socialOutlook,
+  appSocial,
+  appSocialCallback,
   appGoogleSignIn,
   appOutlookSignIn,
   getMe,

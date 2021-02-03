@@ -39,7 +39,8 @@ const system_settings = {
   IMAP_PORT: 587,
   ONBOARD_PRICING_30_MINS: 5000,
   ONBOARD_PRICING_1_HOUR: 9500,
-  SCHEDULE_LINK: 'https://calendly.com/coachwithdaniel/crm-grow',
+  SCHEDULE_LINK_30_MINS: 'https://calendly.com/coachwithdaniel/crm-grow-30',
+  SCHEDULE_LINK_1_HOUR: 'https://calendly.com/coachwithdaniel/crm-grow',
   CAMPAIGN_MAIL_START: {
     SMTP: 500,
     GMAIL: 150,
@@ -56,7 +57,7 @@ const system_settings = {
     AWS: 5000,
   },
   WEBINAR_LINK:
-    'https://zoom.us/meeting/register/tJUlcuyhrTgjGNUusD4B2Mtd9F_IbKCFlj_e',
+    'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',
 };
 

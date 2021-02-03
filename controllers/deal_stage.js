@@ -98,7 +98,7 @@ const edit = async (req, res) => {
       user: currentUser.id,
     },
     {
-      ...req.body,
+      $set: { ...req.body },
     }
   )
     .then(() => {

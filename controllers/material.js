@@ -19,6 +19,11 @@ const {
   generateOpenTrackLink,
   addLinkTracking,
 } = require('../helpers/email');
+const {
+  sleep,
+  getSignalWireNumber,
+  getTwilioNumber,
+} = require('../helpers/text');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
@@ -691,6 +696,270 @@ const bulkEmail = async (req, res) => {
     });
 };
 
+const bulkText = async (req, res) => {
+  const { currentUser } = req;
+  const { content, videos: videoIds, contacts } = req.body;
+  const promise_array = [];
+  const error = [];
+
+  const videos = await Video.find({ _id: { $in: videoIds } });
+
+  let detail_content = 'sent video using sms';
+  if (req.guest_loggin) {
+    detail_content = ActivityHelper.assistantLog(detail_content);
+  }
+
+  if (contacts) {
+    if (contacts.length > system_settings.TEXT_ONE_TIME) {
+      return res.status(400).json({
+        status: false,
+        error: `You can send max ${system_settings.TEXT_ONE_TIME} contacts at a time`,
+      });
+    }
+
+    for (let i = 0; i < contacts.length; i++) {
+      await sleep(1000);
+      const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
+        (err) => {
+          console.log('contact update err', err.messgae);
+        }
+      );
+      let video_titles = '';
+      let video_descriptions = '';
+      let video_objects = '';
+      let video_content = content;
+      const activities = [];
+      let activity;
+      for (let j = 0; j < videos.length; j++) {
+        const video = videos[j];
+
+        if (!video_content) {
+          video_content = '';
+        }
+
+        video_content = video_content
+          .replace(/{user_name}/gi, currentUser.user_name)
+          .replace(/{user_email}/gi, currentUser.connected_email)
+          .replace(/{user_phone}/gi, currentUser.cell_phone)
+          .replace(/{contact_first_name}/gi, _contact.first_name)
+          .replace(/{contact_last_name}/gi, _contact.last_name)
+          .replace(/{contact_email}/gi, _contact.email)
+          .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+        const _activity = new Activity({
+          content: detail_content,
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'videos',
+          send_type: 1,
+          videos: video._id,
+          description: video_content,
+        });
+
+        activity = await _activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+
+        if (j < videos.length - 1) {
+          video_titles = video_titles + video.title + ', ';
+          video_descriptions += `${video.description}, `;
+        } else {
+          video_titles += video.title;
+          video_descriptions += video.description;
+        }
+        const video_object = `\n${video.title}:\n\n${video_link}\n`;
+        video_objects += video_object;
+        activities.push(activity.id);
+      }
+
+      if (video_content.search(/{video_object}/gi) !== -1) {
+        video_content = video_content.replace(
+          /{video_object}/gi,
+          video_objects
+        );
+      } else {
+        video_content = video_content + '\n' + video_objects;
+      }
+
+      if (video_content.search(/{video_title}/gi) !== -1) {
+        video_content = video_content.replace(/{video_title}/gi, video_titles);
+      }
+
+      if (video_content.search(/{video_description}/gi) !== -1) {
+        video_content = video_content.replace(
+          /{video_description}/gi,
+          video_descriptions
+        );
+      }
+
+      let fromNumber = currentUser['proxy_number'];
+      let promise;
+
+      if (!fromNumber) {
+        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
+        promise = new Promise((resolve, reject) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
+
+          textHelper.sleep(1000);
+          client.messages
+            .create({
+              from: fromNumber,
+              to: e164Phone,
+              body:
+                video_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+            })
+            .then((message) => {
+              if (message.status === 'queued' || message.status === 'sent') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  video_content
+                );
+
+                const now = moment();
+                const due_date = now.add(1, 'minutes');
+                const timeline = new TimeLine({
+                  user: currentUser.id,
+                  status: 'active',
+                  action: {
+                    type: 'bulk_sms',
+                    message_sid: message.sid,
+                    activities,
+                  },
+                  due_date,
+                });
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { status: 'pending' },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: currentUser.id,
+                  message_sid: message.sid,
+                  contact: _contact.id,
+                  activities,
+                  criteria: 'bulk_sms',
+                  status: 'pending',
+                });
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+                resolve();
+              } else if (message.status === 'delivered') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  video_content
+                );
+                Contact.updateOne(
+                  { _id: contacts[i] },
+                  {
+                    $set: { last_activity: activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+                resolve();
+              } else {
+                Activity.deleteMany({ _id: { $in: activities } }).catch(
+                  (err) => {
+                    console.log('err', err);
+                  }
+                );
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    cell_phone: _contact.cell_phone,
+                  },
+                  err: message.error_message,
+                });
+                resolve();
+              }
+            })
+            .catch((err) => {
+              console.log('video message send err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err,
+              });
+              resolve();
+            });
+        });
+      } else {
+        const e164Phone = phone(_contact.cell_phone)[0];
+        twilio.messages
+          .create({
+            from: fromNumber,
+            body: video_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+            to: e164Phone,
+          })
+          .catch((err) => {
+            console.log('send sms err: ', err);
+          });
+      }
+
+      promise_array.push(promise);
+    }
+
+    Promise.all(promise_array)
+      .then(() => {
+        if (error.length > 0) {
+          return res.status(405).json({
+            status: false,
+            error,
+          });
+        }
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('err', err);
+        return res.status(400).json({
+          status: false,
+          error: err,
+        });
+      });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contacts not found',
+    });
+  }
+};
+
 const socialShare = async (req, res) => {
   const { activity_id, site } = req.body;
   const activity = await Activity.findOne({ _id: activity_id });
@@ -951,6 +1220,7 @@ const thumbsUp = async (req, res) => {
 
 module.exports = {
   bulkEmail,
+  bulkText,
   socialShare,
   thumbsUp,
 };

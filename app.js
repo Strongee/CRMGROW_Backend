@@ -8,6 +8,7 @@ const { ENV_PATH } = require('./config/path');
 require('dotenv').config();
 
 const indexRouter = require('./routes/index.js');
+const UserCtrl = require('./controllers/user');
 const VideoCtrl = require('./controllers/video');
 const PDFCtrl = require('./controllers/pdf');
 const ImageCtrl = require('./controllers/image');
@@ -39,12 +40,11 @@ app.get('/image/:id', catchError(ImageCtrl.play1));
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay));
 app.get('/unsubscribe', catchError(EmailCtrl.unSubscribePage));
 app.get('/redirect', catchError(EmailCtrl.clickEmailLink));
-app.get('/social-oauth/:social', (req, res) => {
-  res.render('social_oauth', { type: req.params.social });
-});
-app.get('/social-oauth-callback/:social', (req, res) => {
-  res.render('social_oauth_callback', { type: req.params.social });
-});
+app.get('/social-oauth/:social', catchError(UserCtrl.appSocial));
+app.get(
+  '/social-oauth-callback/:social',
+  catchError(UserCtrl.appSocialCallback)
+);
 
 app.get('/auth', (req, res) => {
   res.render('auth');

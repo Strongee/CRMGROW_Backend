@@ -8,6 +8,7 @@ const phone = require('phone');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const mongoose = require('mongoose');
+const moment = require('moment');
 const Garbage = require('../models/garbage');
 const garbageHelper = require('../helpers/garbage.js');
 var graph = require('@microsoft/microsoft-graph-client');
@@ -30,6 +31,8 @@ const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
 const Team = require('../models/team');
+const TimeLine = require('../models/time_line');
+const Notification = require('../models/notification');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -492,7 +495,9 @@ const getAll = async (req, res) => {
   });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate('pdfs');
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('pdfs');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
@@ -1255,7 +1260,51 @@ const bulkText = async (req, res) => {
             body: pdf_content,
           })
           .then((message) => {
-            if (message.status !== 'undelivered') {
+            if (message.status === 'queued' || message.status === 'sent') {
+              console.log('Message ID: ', message.sid);
+              console.info(
+                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                pdf_content
+              );
+
+              const now = moment();
+              const due_date = now.add(1, 'minutes');
+              const timeline = new TimeLine({
+                user: currentUser.id,
+                status: 'active',
+                action: {
+                  type: 'bulk_sms',
+                  message_sid: message.sid,
+                  activities,
+                },
+                due_date,
+              });
+              timeline.save().catch((err) => {
+                console.log('time line save err', err.message);
+              });
+
+              Activity.updateMany(
+                { _id: { $in: activities } },
+                {
+                  $set: { status: 'pending' },
+                }
+              ).catch((err) => {
+                console.log('activity err', err.message);
+              });
+
+              const notification = new Notification({
+                user: currentUser.id,
+                message_sid: message.sid,
+                contact: _contact.id,
+                activities,
+                criteria: 'bulk_sms',
+                status: 'pending',
+              });
+              notification.save().catch((err) => {
+                console.log('notification save err', err.message);
+              });
+              resolve();
+            } else if (message.status === 'delivered') {
               console.log('Message ID: ', message.sid);
               console.info(
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
@@ -1606,8 +1655,9 @@ const bulkOutlook = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>PDF Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
         pdf_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
@@ -1877,8 +1927,9 @@ const bulkGmail = async (req, res) => {
       }
 
       const email_content =
-        '<html><head><title>Video Invitation</title></head><body><p style="white-space:pre-wrap;max-width: 800px;margin-top:0px;">' +
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
         pdf_content +
+        '</tbody></table>' +
         '<br/>Thank you,<br/>' +
         currentUser.email_signature +
         emailHelper.generateUnsubscribeLink(activity.id) +
@@ -2062,7 +2113,7 @@ const getEasyLoad = async (req, res) => {
 const createPDF = async (req, res) => {
   let preview;
   const { currentUser } = req;
-  if (req.body.preview) {
+  if (req.body.preview && req.body.preview.indexOf('teamgrow.s3') === -1) {
     try {
       const today = new Date();
       const year = today.getYear();
@@ -2074,6 +2125,8 @@ const createPDF = async (req, res) => {
     } catch (error) {
       console.error('Upload PDF Preview Image', error);
     }
+  } else {
+    preview = req.body.preview;
   }
 
   const pdf = new PDF({

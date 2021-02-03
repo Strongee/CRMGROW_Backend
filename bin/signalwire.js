@@ -125,8 +125,69 @@ const receivedStatus = async () => {
     console.log('res', res);
   });
 };
+
+const getSignalWireNumber = async (id) => {
+  // const user = await User.findOne({ _id: id }).catch((err) => {
+  //   console.log('err', err);
+  // });
+  let areaCode = '202';
+  let countryCode = 'CA';
+  let fromNumber;
+
+  const response = await request({
+    method: 'GET',
+    uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/search`,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    auth: {
+      user: api.SIGNALWIRE.PROJECT_ID,
+      password: api.SIGNALWIRE.TOKEN,
+    },
+    qs: {
+      areacode: areaCode,
+    },
+    json: true,
+  }).catch((err) => {
+    console.log('phone number get err', err);
+    fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+    return fromNumber;
+  });
+
+  if (fromNumber) {
+    return fromNumber;
+  }
+
+  const number = response.data[0];
+  console.log('number', number);
+  /**
+  if (number) {
+    const proxy_number = await request({
+      method: 'POST',
+      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        user: api.SIGNALWIRE.PROJECT_ID,
+        password: api.SIGNALWIRE.TOKEN,
+      },
+      body: {
+        number: number.e164,
+      },
+      json: true,
+    }).catch((err) => {
+      console.log('phone number get err', err);
+      fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+      return fromNumber;
+    });
+  }
+   */
+};
+
 // longNumber();
 // buyNumber();
 // sendMessage();
 // releasePhone();
-receivedStatus();
+// receivedStatus();
+getSignalWireNumber();
