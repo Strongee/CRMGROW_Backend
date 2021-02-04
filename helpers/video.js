@@ -217,6 +217,9 @@ const getConvertStatus = async (video_path) => {
       if (ar[1]) time += parseInt(ar[1]) * 60;
       if (ar[2]) time += parseInt(ar[2]) * 60 * 60;
 
+      console.log('time*********', time);
+      console.log('duration***********', duration);
+
       // calculate the progress
       progress = Math.round((time / duration) * 100);
     }
