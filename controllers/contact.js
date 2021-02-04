@@ -161,7 +161,7 @@ const get = async (req, res) => {
 
   const _contact = await Contact.findOne({
     _id: req.params.id,
-    user: currentUser.id,
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
   }).catch((err) => {
     console.log('contact found err', err.message);
   });

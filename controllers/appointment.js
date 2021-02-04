@@ -348,7 +348,6 @@ const outlookCalendarList = (calendar_data) => {
       .then(async (outlook_calendars) => {
         const calendars = outlook_calendars.value;
 
-        console.log('calendars', calendars);
         if (calendars.length > 0) {
           const endDate = moment(date).add(1, `${mode}s`);
           // The start and end date are passed as query parameters
@@ -563,16 +562,24 @@ const create = async (req, res) => {
 
   if (currentUser.calendar_connected) {
     const _appointment = req.body;
-    const {
-      connected_email,
-      connected_calendar_type,
-      outlook_refresh_token,
-      google_refresh_token,
-      calendar_id,
-      guests,
-    } = req.body;
+    const { connected_email, calendar_id, guests } = req.body;
 
-    if (connected_calendar_type === 'outlook') {
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
+      }
+    });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    if (calendar.connected_calendar_type === 'outlook') {
       const attendees = [];
       if (_appointment.guests) {
         for (let j = 0; j < _appointment.guests.length; j++) {
@@ -663,7 +670,7 @@ const create = async (req, res) => {
 
       let accessToken;
       const token = oauth2.accessToken.create({
-        refresh_token: outlook_refresh_token,
+        refresh_token: calendar.outlook_refresh_token,
         expires_in: 0,
       });
 
@@ -705,7 +712,7 @@ const create = async (req, res) => {
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
         urls.GMAIL_AUTHORIZE_URL
       );
-      const token = JSON.parse(google_refresh_token);
+      const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
       event_id = await addGoogleCalendarById(
         oauth2Client,
