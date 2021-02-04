@@ -219,7 +219,6 @@ const getConvertStatus = async (video_path) => {
 
       // calculate the progress
       progress = Math.round((time / duration) * 100);
-      console.log('progress', progress);
     }
 
     if (progress === 0) {
