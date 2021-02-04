@@ -238,7 +238,10 @@ const bulkEmail = async (req, res) => {
 
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const html_preview = `<a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{{${video.id}}}`, 'g'), video_link);
+          email_content = email_content.replace(
+            new RegExp(`{{${video.id}}}`, 'g'),
+            video_link
+          );
 
           // const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // video_objects += video_object;
@@ -288,7 +291,10 @@ const bulkEmail = async (req, res) => {
 
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
           // const html_preview = `<a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{{${pdf.id}}}`, 'g'), pdf_link);
+          email_content = email_content.replace(
+            new RegExp(`{{${pdf.id}}}`, 'g'),
+            pdf_link
+          );
 
           // const pdf_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // pdf_objects += pdf_object;
@@ -340,7 +346,10 @@ const bulkEmail = async (req, res) => {
 
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
           // const html_preview = `<a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{${image.id}}`, 'g'), image_link);
+          email_content = email_content.replace(
+            new RegExp(`{${image.id}}`, 'g'),
+            image_link
+          );
 
           // const image_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // image_objects += image_object;
