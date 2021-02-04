@@ -177,38 +177,78 @@ const removeAll = async (req, res) => {
 
 const load = async (req, res) => {
   const { currentUser } = req;
-  const { skip, size } = req.body;
+  const { size } = req.body;
+  let { skip } = req.body;
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
   });
 
-  const count = await Activity.countDocuments({
-    $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
-  });
+  // const count = await Activity.countDocuments({
+  //   $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+  // });
 
-  let activity;
-  if (!skip) {
-    activity = await Activity.find({
-      $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
-    })
-      .sort({ updated_at: -1 })
-      .populate('contacts')
-      .limit(size);
-  } else {
-    activity = await Activity.find({
-      $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
-    })
-      .sort({ updated_at: -1 })
-      .populate('contacts')
-      .skip(skip)
-      .limit(size);
+  let activity_list;
+  const data = [];
+  while (data.length < 50) {
+    if (!skip) {
+      activity_list = await Activity.find({
+        $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+      })
+        .sort({ _id: -1 })
+        .populate('contacts')
+        .limit(size * 5);
+    } else {
+      activity_list = await Activity.find({
+        $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+      })
+        .sort({ _id: -1 })
+        .populate('contacts')
+        .skip(skip)
+        .limit(size * 5);
+    }
+
+    for (let i = 0; i < activity_list.length; i++) {
+      const activity = activity_list[i];
+      let next_activity = activity_list[i + 1];
+      const activity_contact = activity.contacts ? activity.contacts._id : null;
+      let next_contact = next_activity.contacts
+        ? next_activity.contacts._id
+        : null;
+      if (activity_contact && activity_contact === next_contact) {
+        activity_contact.additional_field = [next_activity];
+        i++;
+
+        next_activity = activity_list[i + 1];
+        next_contact = next_activity.contacts
+          ? next_activity.contacts._id
+          : null;
+
+        while (activity_contact === next_contact) {
+          activity_contact.additional_field.push(next_activity);
+          next_activity = activity_list[i];
+          next_contact = next_activity.contacts
+            ? next_activity.contacts._id
+            : null;
+          i++;
+        }
+        data.push(activity_contact);
+      } else if (activity_contact) {
+        data.push(activity_contact);
+      }
+      if (data.length === 50) {
+        skip += i;
+        break;
+      }
+    }
+    if (data.length < 50) {
+      skip += activity_list.length;
+    }
   }
-
   return res.send({
     status: true,
     data: {
-      activity,
-      count,
+      activity_list: data,
+      skip,
     },
   });
 };
