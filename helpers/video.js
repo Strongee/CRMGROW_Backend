@@ -193,7 +193,7 @@ const getConvertStatus = async (video_path) => {
       const video = await Video.findOne({ _id: video_path }).catch((err) => {
         console.log('video find err', err.message);
       });
-      duration = video.duration;
+      duration = video.duration / 1000;
     } else {
       duration = parseFloat(ar[0]);
       if (ar[1]) duration += parseInt(ar[1]) * 60;
@@ -216,9 +216,6 @@ const getConvertStatus = async (video_path) => {
       time = parseFloat(ar[0]);
       if (ar[1]) time += parseInt(ar[1]) * 60;
       if (ar[2]) time += parseInt(ar[2]) * 60 * 60;
-
-      console.log('time*********', time);
-      console.log('duration***********', duration);
 
       // calculate the progress
       progress = Math.round((time / duration) * 100);
