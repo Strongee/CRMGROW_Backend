@@ -55,9 +55,9 @@ const create = async (req, res) => {
 
 const remove = async (req, res) => {
   const { currentUser } = req;
-
+  const { remove_stage, move_stage } = req.body;
   const deal_stage = await DealStage.findOne({
-    _id: req.params.id,
+    _id: remove_stage,
     user: currentUser.id,
   }).catch((err) => {
     console.log('deal stage err', err.message);
@@ -70,10 +70,17 @@ const remove = async (req, res) => {
     });
   }
 
-  Deal.deleteMany({
-    _id: { $in: deal_stage.deals },
-  }).catch((err) => {
-    console.log('remove deal', err.message);
+  Deal.updateMany(
+    {
+      _id: { $in: deal_stage.deals },
+    },
+    {
+      $set: {
+        deal_stage: move_stage,
+      },
+    }
+  ).catch((err) => {
+    console.log('move deals into other stage', err.message);
   });
 
   DealStage.deleteOne({
