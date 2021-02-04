@@ -202,6 +202,7 @@ const googleCalendarList = (calendar_data) => {
                 async (err, _res) => {
                   if (err) {
                     console.log(`The API returned an error: ${err}`);
+                    data.push(calendar_data);
                     resolve();
                   } else {
                     const events = _res.data.items;
