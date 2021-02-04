@@ -55,7 +55,7 @@ router.post(
 );
 
 router.post(
-  '/update-contact',
+  '/update-contact/:id',
   UserCtrl.checkAuth,
   catchError(DealCtrl.updateContact)
 );
