@@ -855,93 +855,110 @@ const bulkText = async (req, res) => {
       }
 
       let fromNumber = currentUser['proxy_number'];
+      let promise;
 
-      if (!fromNumber) {
+      if (fromNumber) {
         fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
-      }
-      const promise = new Promise(async (resolve, reject) => {
-        const e164Phone = phone(_contact.cell_phone)[0];
-        if (!e164Phone) {
-          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-            console.log('activity delete err', err.message);
-          });
-          error.push({
-            contact: {
-              first_name: _contact.first_name,
-              cell_phone: _contact.cell_phone,
-            },
-            err: 'Invalid phone number',
-          });
-          resolve(); // Invalid phone number
-        }
 
-        client.messages
-          .create({
-            from: fromNumber,
-            to: e164Phone,
-            body: image_content,
-          })
-          .then((message) => {
-            if (message.status === 'queued' || message.status === 'sent') {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                image_content
-              );
+        promise = new Promise(async (resolve, reject) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
 
-              const now = moment();
-              const due_date = now.add(1, 'minutes');
-              const timeline = new TimeLine({
-                user: currentUser.id,
-                status: 'active',
-                action: {
-                  type: 'bulk_sms',
+          client.messages
+            .create({
+              from: fromNumber,
+              to: e164Phone,
+              body: image_content,
+            })
+            .then((message) => {
+              if (message.status === 'queued' || message.status === 'sent') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+
+                const now = moment();
+                const due_date = now.add(1, 'minutes');
+                const timeline = new TimeLine({
+                  user: currentUser.id,
+                  status: 'active',
+                  action: {
+                    type: 'bulk_sms',
+                    message_sid: message.sid,
+                    activities,
+                  },
+                  due_date,
+                });
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { status: 'pending' },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: currentUser.id,
                   message_sid: message.sid,
+                  contact: _contact.id,
                   activities,
-                },
-                due_date,
-              });
-              timeline.save().catch((err) => {
-                console.log('time line save err', err.message);
-              });
-
-              Activity.updateMany(
-                { _id: { $in: activities } },
-                {
-                  $set: { status: 'pending' },
-                }
-              ).catch((err) => {
-                console.log('activity err', err.message);
-              });
-
-              const notification = new Notification({
-                user: currentUser.id,
-                message_sid: message.sid,
-                contact: _contact.id,
-                activities,
-                criteria: 'bulk_sms',
-                status: 'pending',
-              });
-              notification.save().catch((err) => {
-                console.log('notification save err', err.message);
-              });
-              resolve();
-            } else if (message.status === 'delivered') {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                image_content
-              );
-              Contact.updateOne(
-                { _id: contacts[i] },
-                {
-                  $set: { last_activity: activity.id },
-                }
-              ).catch((err) => {
-                console.log('err', err);
-              });
-              resolve();
-            } else {
+                  criteria: 'bulk_sms',
+                  status: 'pending',
+                });
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+                resolve();
+              } else if (message.status === 'delivered') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+                Contact.updateOne(
+                  { _id: contacts[i] },
+                  {
+                    $set: { last_activity: activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+                resolve();
+              } else {
+                Activity.deleteMany({ _id: { $in: activities } }).catch(
+                  (err) => {
+                    console.log('err', err);
+                  }
+                );
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    cell_phone: _contact.cell_phone,
+                  },
+                  err: message.error_message,
+                });
+                resolve();
+              }
+            })
+            .catch((err) => {
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
@@ -950,25 +967,242 @@ const bulkText = async (req, res) => {
                   first_name: _contact.first_name,
                   cell_phone: _contact.cell_phone,
                 },
-                err: message.error_message,
+                err,
               });
               resolve();
-            }
-          })
-          .catch((err) => {
+            });
+        });
+      } else if (currentUser['twilio_number']) {
+        fromNumber = currentUser['twilio_number'];
+        promise = new Promise((resolve) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('err', err);
+              console.log('activity delete err', err.message);
             });
             error.push({
               contact: {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err,
+              err: 'Invalid phone number',
             });
-            resolve();
-          });
-      });
+            resolve(); // Invalid phone number
+          }
+
+          textHelper.sleep(1000);
+          twilio.messages
+            .create({
+              from: fromNumber,
+              body:
+                image_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+              to: e164Phone,
+            })
+            .then((message) => {
+              if (
+                message.status === 'accepted' ||
+                message.status === 'sending' ||
+                message.status === 'queued' ||
+                message.status === 'sent'
+              ) {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+
+                const now = moment();
+                const due_date = now.add(1, 'minutes');
+                const timeline = new TimeLine({
+                  user: currentUser.id,
+                  status: 'active',
+                  action: {
+                    type: 'bulk_sms',
+                    message_sid: message.sid,
+                    activities,
+                    service: 'twilio',
+                  },
+                  due_date,
+                });
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { status: 'pending' },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: currentUser.id,
+                  message_sid: message.sid,
+                  contact: _contact.id,
+                  activities,
+                  criteria: 'bulk_sms',
+                  status: 'pending',
+                });
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+                resolve();
+              } else if (message.status === 'delivered') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+                Contact.updateOne(
+                  { _id: contacts[i] },
+                  {
+                    $set: { last_activity: activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+                resolve();
+              } else {
+                Activity.deleteMany({ _id: { $in: activities } }).catch(
+                  (err) => {
+                    console.log('err', err);
+                  }
+                );
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    cell_phone: _contact.cell_phone,
+                  },
+                  err: message.error_message,
+                });
+                resolve();
+              }
+            })
+            .catch((err) => {
+              console.log('send sms err: ', err);
+            });
+        });
+      } else {
+        fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+        promise = new Promise((resolve) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
+
+          textHelper.sleep(1000);
+          client.messages
+            .create({
+              from: fromNumber,
+              to: e164Phone,
+              body:
+                image_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+            })
+            .then((message) => {
+              if (message.status === 'queued' || message.status === 'sent') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+
+                const now = moment();
+                const due_date = now.add(1, 'minutes');
+                const timeline = new TimeLine({
+                  user: currentUser.id,
+                  status: 'active',
+                  action: {
+                    type: 'bulk_sms',
+                    message_sid: message.sid,
+                    activities,
+                    service: 'signalwire',
+                  },
+                  due_date,
+                });
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { status: 'pending' },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: currentUser.id,
+                  message_sid: message.sid,
+                  contact: _contact.id,
+                  activities,
+                  criteria: 'bulk_sms',
+                  status: 'pending',
+                });
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+                resolve();
+              } else if (message.status === 'delivered') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  image_content
+                );
+                Contact.updateOne(
+                  { _id: contacts[i] },
+                  {
+                    $set: { last_activity: activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+                resolve();
+              } else {
+                Activity.deleteMany({ _id: { $in: activities } }).catch(
+                  (err) => {
+                    console.log('err', err);
+                  }
+                );
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    cell_phone: _contact.cell_phone,
+                  },
+                  err: message.error_message,
+                });
+                resolve();
+              }
+            })
+            .catch((err) => {
+              console.log('video message send err', err);
+              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+                console.log('err', err);
+              });
+              error.push({
+                contact: {
+                  first_name: _contact.first_name,
+                  cell_phone: _contact.cell_phone,
+                },
+                err,
+              });
+              resolve();
+            });
+        });
+      }
       promise_array.push(promise);
     }
 
