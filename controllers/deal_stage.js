@@ -83,8 +83,18 @@ const remove = async (req, res) => {
     console.log('move deals into other stage', err.message);
   });
 
+  const deals = await Deal.find({ _id: { $in: deal_stage.deals } });
+  const dealIds = [];
+  deals.forEach((e) => {
+    dealIds.push(e._id);
+  });
+  await DealStage.update(
+    { _id: move_stage },
+    { $addToSet: { deals: { $each: dealIds } } }
+  );
+
   DealStage.deleteOne({
-    _id: req.params.id,
+    _id: remove_stage,
   })
     .then(() => {
       return res.send({
@@ -122,9 +132,24 @@ const edit = async (req, res) => {
     });
 };
 
+const changeOrder = async (req, res) => {
+  const orderInfo = req.body;
+  for (const prop in orderInfo) {
+    console.log(prop, orderInfo[prop]);
+    await DealStage.updateOne(
+      { _id: prop },
+      { $set: { priority: orderInfo[prop] } }
+    );
+  }
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   getAll,
   create,
   remove,
   edit,
+  changeOrder,
 };
