@@ -562,7 +562,7 @@ const create = async (req, res) => {
 
   if (currentUser.calendar_connected) {
     const _appointment = req.body;
-    const { connected_email, calendar_id, guests } = req.body;
+    const { connected_email, calendar_id } = req.body;
 
     const calendar_list = currentUser.calendar_list;
     let calendar;

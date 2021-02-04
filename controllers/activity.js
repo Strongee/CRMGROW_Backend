@@ -197,6 +197,7 @@ const load = async (req, res) => {
         .sort({ _id: -1 })
         .populate('contacts')
         .limit(size * 5);
+      skip = 0;
     } else {
       activity_list = await Activity.find({
         $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
@@ -208,14 +209,14 @@ const load = async (req, res) => {
     }
 
     for (let i = 0; i < activity_list.length; i++) {
-      const activity = activity_list[i];
+      let activity = activity_list[i];
       let next_activity = activity_list[i + 1];
       const activity_contact = activity.contacts ? activity.contacts._id : null;
       let next_contact = next_activity.contacts
         ? next_activity.contacts._id
         : null;
       if (activity_contact && activity_contact === next_contact) {
-        activity_contact.additional_field = [next_activity];
+        activity = { ...activity._doc, additional_field: [next_activity] };
         i++;
 
         next_activity = activity_list[i + 1];
@@ -224,16 +225,16 @@ const load = async (req, res) => {
           : null;
 
         while (activity_contact === next_contact) {
-          activity_contact.additional_field.push(next_activity);
-          next_activity = activity_list[i];
+          activity.additional_field.push(next_activity);
+          i++;
+          next_activity = activity_list[i + 1];
           next_contact = next_activity.contacts
             ? next_activity.contacts._id
             : null;
-          i++;
         }
-        data.push(activity_contact);
+        data.push(activity);
       } else if (activity_contact) {
-        data.push(activity_contact);
+        data.push(activity);
       }
       if (data.length === 50) {
         skip += i;
