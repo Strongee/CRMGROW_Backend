@@ -223,7 +223,6 @@ const getConvertStatus = async (video_path) => {
 
     if (progress === 0) {
       // TODO err - giving up after 8 sec. no progress - handle progress errors here
-      console.log('progress logged here', progress);
       result = {
         id: video_path,
         status: false,
