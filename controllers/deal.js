@@ -193,6 +193,8 @@ const remove = async (req, res) => {
     console.log('remove deal', err.message);
   });
 
+  // TODO: Relative Notes, Tasks, Emails, Appointments remove
+
   return res.send({
     status: true,
   });
