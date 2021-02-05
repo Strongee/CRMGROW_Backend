@@ -1,5 +1,3 @@
-const { validationResult } = require('express-validator/check');
-const outlook = require('node-outlook');
 const moment = require('moment-timezone');
 const { google } = require('googleapis');
 const sgMail = require('@sendgrid/mail');
