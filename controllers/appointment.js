@@ -703,10 +703,10 @@ const create = async (req, res) => {
         },
       });
 
-      let res = await client
+      const new_event = await client
         .api(`/me/calendars/${calendar_id}/events`)
         .post(newEvent);
-      event_id = res.id;
+      event_id = new_event.id;
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -851,6 +851,118 @@ const addGoogleCalendarById = async (auth, user, appointment) => {
         resolve(event.data.id);
       }
     );
+  });
+};
+
+const addOutlookCalendarById = async (user, appointment, calendar) => {
+  const attendees = [];
+  if (appointment.guests) {
+    for (let j = 0; j < appointment.guests.length; j++) {
+      const addendee = {
+        emailAddress: {
+          Address: appointment.guests[j],
+        },
+      };
+      attendees.push(addendee);
+    }
+  }
+
+  let recurrence;
+  if (appointment.recurrence) {
+    let type;
+    let daysOfWeek;
+    let dayOfMonth;
+    switch (appointment.recurrence) {
+      case 'DAILY':
+        type = 'daily';
+        break;
+      case 'WEEKLY':
+        type = 'weekly';
+        daysOfWeek = [days[moment(appointment.due_start).day()]];
+        break;
+      case 'MONTHLY':
+        type = 'absoluteMonthly';
+        dayOfMonth = moment(appointment.due_start).date();
+        break;
+      default:
+        console.log('no matching');
+    }
+
+    recurrence = {
+      pattern: {
+        type,
+        interval: 1,
+        daysOfWeek,
+        dayOfMonth,
+      },
+      range: {
+        type: 'noEnd',
+        startDate: moment(appointment.due_start).format('YYYY-MM-DD'),
+      },
+    };
+  }
+
+  const ctz = user.time_zone_info
+    ? user.time_zone_info.tz_name
+    : system_settings.TIME_ZONE;
+
+  const newEvent = {
+    subject: appointment.title,
+    body: {
+      contentType: 'HTML',
+      content: appointment.description,
+    },
+    location: {
+      displayName: appointment.location,
+    },
+    start: {
+      dateTime: appointment.due_start,
+      timeZone: ctz,
+    },
+    end: {
+      dateTime: appointment.due_end,
+      timeZone: ctz,
+    },
+    attendees,
+    recurrence,
+  };
+
+  return new Promise(async (resolve, reject) => {
+    let accessToken;
+    const token = oauth2.accessToken.create({
+      refresh_token: calendar.outlook_refresh_token,
+      expires_in: 0,
+    });
+
+    await new Promise((resolve, reject) => {
+      token.refresh(function (error, result) {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.token);
+        }
+      });
+    })
+      .then((token) => {
+        accessToken = token.access_token;
+      })
+      .catch((error) => {
+        console.log('error', error);
+        reject(error);
+      });
+
+    const client = graph.Client.init({
+      // Use the provided access token to authenticate
+      // requests
+      authProvider: (done) => {
+        done(null, accessToken);
+      },
+    });
+
+    const new_event = await client
+      .api(`/me/calendars/${appointment.calendar_id}/events`)
+      .post(newEvent);
+    resolve(new_event.id);
   });
 };
 
@@ -1483,4 +1595,6 @@ module.exports = {
   remove,
   accept,
   decline,
+  addOutlookCalendarById,
+  addGoogleCalendarById,
 };

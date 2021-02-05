@@ -7,6 +7,8 @@ const Note = require('../models/note');
 const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
 const Email = require('../models/email');
+const Appointment = require('../models/appointment');
+const TeamCall = require('../models/team_call');
 const EmailHelper = require('../helpers/email');
 
 const getAll = async (req, res) => {
@@ -546,27 +548,49 @@ const getEmails = async (req, res) => {
   });
 };
 
-const getAppointments = async (req, res) => {};
+const getAppointments = async (req, res) => {
+  const { currentUser } = req;
+  const appointments = await Appointment.find({
+    user: currentUser.id,
+    deal: req.body.deal,
+  });
+
+  return res.status({
+    status: true,
+    data: appointments,
+  });
+};
+
+const getTeamCalls = async (req, res) => {
+  const { currentUser } = req;
+  const team_calls = await TeamCall.find({
+    user: currentUser.id,
+    deal: req.body.deal,
+  });
+
+  return res.status({
+    status: true,
+    data: team_calls,
+  });
+};
 
 const createAppointment = async (req, res) => {
   const { currentUser } = req;
   const { contacts } = req.body;
 
-  const note = new Note({
-    content: req.body.content,
-    deal: req.body.deal,
-    user: currentUser.id,
+  const appointment = new Appointment({
+    ...req.body,
   });
 
-  note.save().catch((err) => {
-    console.log('deal note create err', err.message);
+  appointment.save().catch((err) => {
+    console.log('deal appointment create err', err.message);
   });
 
-  const content = 'added note';
+  const content = 'added appointment';
   const activity = new Activity({
     user: currentUser.id,
     content,
-    type: 'notes',
+    type: 'appointments',
     deals: req.body.deal,
   });
 
@@ -575,27 +599,27 @@ const createAppointment = async (req, res) => {
   });
 
   for (let i = 0; i < contacts.length; i++) {
-    const contact_note = new Note({
+    const contact_appointment = new Appointment({
+      ...req.body,
       contact: contacts[i],
       has_shared: true,
-      shared_note: note.id,
-      content: req.body.content,
+      shared_appointment: appointment.id,
       user: currentUser.id,
     });
 
-    contact_note.save().catch((err) => {
+    contact_appointment.save().catch((err) => {
       console.log('note save err', err.message);
     });
 
-    const note_activity = new Activity({
+    const appointment_activity = new Activity({
       content,
       contacts: contacts[i],
-      type: 'notes',
-      notes: contact_note.id,
+      type: 'appointments',
+      appointments: contact_appointment.id,
       user: currentUser.id,
     });
 
-    note_activity.save().catch((err) => {
+    appointment_activity.save().catch((err) => {
       console.log('note activity err', err.message);
     });
   }
@@ -609,6 +633,7 @@ module.exports = {
   getActivity,
   getNotes,
   getAppointments,
+  getTeamCalls,
   create,
   moveDeal,
   edit,
