@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { google } = require('googleapis');
+
 const Deal = require('../models/deal');
 const DealStage = require('../models/deal_stage');
 const Activity = require('../models/activity');
@@ -9,7 +11,13 @@ const ActivityHelper = require('../helpers/activity');
 const Email = require('../models/email');
 const Appointment = require('../models/appointment');
 const TeamCall = require('../models/team_call');
+const {
+  addGoogleCalendarById,
+  addOutlookCalendarById,
+} = require('./appointment');
 const EmailHelper = require('../helpers/email');
+const api = require('../config/api');
+const urls = require('../constants/urls');
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -578,54 +586,100 @@ const createAppointment = async (req, res) => {
   const { currentUser } = req;
   const { contacts } = req.body;
 
-  const appointment = new Appointment({
-    ...req.body,
-  });
+  let event_id;
 
-  appointment.save().catch((err) => {
-    console.log('deal appointment create err', err.message);
-  });
+  if (currentUser.calendar_connected) {
+    const _appointment = req.body;
+    const { connected_email } = req.body;
 
-  const content = 'added appointment';
-  const activity = new Activity({
-    user: currentUser.id,
-    content,
-    type: 'appointments',
-    deals: req.body.deal,
-  });
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
+      }
+    });
 
-  activity.save().catch((err) => {
-    console.log('activity save err', err.message);
-  });
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
 
-  for (let i = 0; i < contacts.length; i++) {
-    const contact_appointment = new Appointment({
+    if (calendar.connected_calendar_type === 'outlook') {
+      event_id = addOutlookCalendarById(currentUser, _appointment, calendar);
+    } else {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      );
+      const token = JSON.parse(calendar.google_refresh_token);
+      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+      event_id = await addGoogleCalendarById(
+        oauth2Client,
+        currentUser,
+        _appointment
+      );
+    }
+
+    const appointment = new Appointment({
       ...req.body,
-      contact: contacts[i],
-      has_shared: true,
-      shared_appointment: appointment.id,
+      event_id,
+    });
+
+    appointment.save().catch((err) => {
+      console.log('deal appointment create err', err.message);
+    });
+
+    const content = 'added appointment';
+    const activity = new Activity({
       user: currentUser.id,
-    });
-
-    contact_appointment.save().catch((err) => {
-      console.log('note save err', err.message);
-    });
-
-    const appointment_activity = new Activity({
       content,
-      contacts: contacts[i],
       type: 'appointments',
-      appointments: contact_appointment.id,
-      user: currentUser.id,
+      deals: req.body.deal,
     });
 
-    appointment_activity.save().catch((err) => {
-      console.log('note activity err', err.message);
+    activity.save().catch((err) => {
+      console.log('activity save err', err.message);
+    });
+
+    for (let i = 0; i < contacts.length; i++) {
+      const contact_appointment = new Appointment({
+        ...req.body,
+        event_id,
+        contact: contacts[i],
+        has_shared: true,
+        shared_appointment: appointment.id,
+        user: currentUser.id,
+      });
+
+      contact_appointment.save().catch((err) => {
+        console.log('note save err', err.message);
+      });
+
+      const appointment_activity = new Activity({
+        content,
+        contacts: contacts[i],
+        type: 'appointments',
+        appointments: contact_appointment.id,
+        user: currentUser.id,
+      });
+
+      appointment_activity.save().catch((err) => {
+        console.log('note activity err', err.message);
+      });
+    }
+    return res.send({
+      status: true,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'You must connect gmail/outlook',
     });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 module.exports = {
