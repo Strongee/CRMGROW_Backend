@@ -335,7 +335,7 @@ const create = async (req, res) => {
    */
 
   let contact_old;
-  if (!req.body.email && req.body.email != '') {
+  if (req.body.email && req.body.email != '') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       email: req.body['email'],
@@ -348,7 +348,7 @@ const create = async (req, res) => {
     }
   }
 
-  if (!req.body.cell_phone) {
+  if (req.body.cell_phone) {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       cell_phone: req.body['cell_phone'],
@@ -515,7 +515,7 @@ const edit = async (req, res) => {
     // }
 
     let contact_old;
-    if (!req.body.email && req.body.email != '') {
+    if (req.body.email && req.body.email != '') {
       contact_old = await Contact.findOne({
         _id: { $ne: req.params.id },
         user: currentUser.id,
@@ -529,7 +529,7 @@ const edit = async (req, res) => {
       }
     }
 
-    if (!req.body.cell_phone) {
+    if (req.body.cell_phone) {
       contact_old = await Contact.findOne({
         _id: { $ne: req.params.id },
         user: currentUser.id,
