@@ -1585,9 +1585,177 @@ const decline = async (req, res) => {
     });
 };
 
+const getCalendarList = async (req, res) => {
+  const { currentUser } = req;
+
+  if (currentUser.calendar_connected && currentUser.calendar_list) {
+    const { calendar_list } = currentUser;
+    const promise_array = [];
+    const data = [];
+
+    for (let i = 0; i < calendar_list.length; i++) {
+      const { connected_calendar_type } = calendar_list[i];
+      if (connected_calendar_type === 'outlook') {
+        let accessToken;
+        const { connected_email, outlook_refresh_token } = calendar_list[i];
+        const token = oauth2.accessToken.create({
+          refresh_token: outlook_refresh_token,
+          expires_in: 0,
+        });
+
+        await new Promise((resolve, reject) => {
+          token.refresh(function (error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result.token);
+            }
+          });
+        })
+          .then((token) => {
+            accessToken = token.access_token;
+          })
+          .catch((error) => {
+            console.log('error', error);
+          });
+
+        if (!accessToken) {
+          promise_array.push(
+            new Promise((resolve, reject) => {
+              resolve({
+                status: false,
+                err: connected_email,
+              });
+            })
+          );
+          continue;
+        }
+
+        const client = graph.Client.init({
+          // Use the provided access token to authenticate
+          // requests
+          authProvider: (done) => {
+            done(null, accessToken);
+          },
+        });
+
+        const outlook_calendar = new Promise((resolve) => {
+          client
+            .api('/me/calendars')
+            .header()
+            .get()
+            .then(async (outlook_calendars) => {
+              const calendars = outlook_calendars.value;
+              if (calendars.length > 0) {
+                const calendar = {
+                  email: connected_email,
+                  data: [],
+                };
+                for (let i = 0; i < calendars.length; i++) {
+                  calendar.data.push({
+                    id: calendar.id,
+                    title: calendar.name,
+                    color:
+                      calendar.hexColor === '' ? undefined : calendar.hexColor,
+                  });
+                }
+                data.push(calendar);
+                resolve();
+              } else {
+                resolve();
+              }
+            });
+        });
+
+        promise_array.push(outlook_calendar);
+      } else {
+        const oauth2Client = new google.auth.OAuth2(
+          api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+          api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+          urls.GMAIL_AUTHORIZE_URL
+        );
+        const { google_refresh_token, connected_email } = calendar_list[i];
+        const token = JSON.parse(google_refresh_token);
+        oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+        const client = google.calendar({ version: 'v3', auth: oauth2Client });
+        const google_calendar = new Promise((resolve) => {
+          client.calendarList.list(
+            {
+              maxResults: 100,
+            },
+            function (err, result) {
+              if (err) {
+                console.log(`The API returned an error: ${err}`);
+                resolve({
+                  status: false,
+                  err: connected_email,
+                });
+              }
+
+              const calendars = result.data.items;
+              if (calendars) {
+                const calendar = {
+                  email: connected_email,
+                  data: [],
+                };
+                for (let i = 0; i < calendars.length; i++) {
+                  const calendar_data = {
+                    id: calendars[i].id,
+                    title: calendars[i].summary,
+                    time_zone: calendars[i].timeZone,
+                    color: calendars[i].backgroundColor,
+                  };
+                  calendar.data.push(calendar_data);
+                }
+                data.push(calendar);
+                resolve();
+              }
+            }
+          );
+        });
+
+        promise_array.push(google_calendar);
+      }
+
+      Promise.all(promise_array)
+        .then((data) => {
+          return res.send({
+            status: true,
+            data,
+          });
+        })
+        .catch((err) => {
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        });
+    }
+    Promise.all(promise_array)
+      .then((data) => {
+        return res.send({
+          status: true,
+          data,
+        });
+      })
+      .catch((err) => {
+        return res.status(400).json({
+          status: false,
+        });
+      });
+  } else {
+    return res.send({
+      status: true,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   getAll,
   get,
+  getCalendarList,
   create,
   edit,
   remove,
