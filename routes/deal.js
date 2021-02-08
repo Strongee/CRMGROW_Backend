@@ -55,6 +55,17 @@ router.post(
 );
 
 router.post(
+  '/create-team-call',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.createTeamCall)
+);
+router.post(
+  '/get-team-calls',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.getTeamCalls)
+);
+
+router.post(
   '/update-contact/:id',
   UserCtrl.checkAuth,
   catchError(DealCtrl.updateContact)
