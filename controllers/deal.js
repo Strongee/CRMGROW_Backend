@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
+const moment = require('moment');
 const { google } = require('googleapis');
+const AWS = require('aws-sdk');
 
+const User = require('../models/user');
 const Deal = require('../models/deal');
 const DealStage = require('../models/deal_stage');
 const Activity = require('../models/activity');
@@ -11,6 +14,7 @@ const ActivityHelper = require('../helpers/activity');
 const Email = require('../models/email');
 const Appointment = require('../models/appointment');
 const TeamCall = require('../models/team_call');
+const Notification = require('../models/notification');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -18,6 +22,15 @@ const {
 const EmailHelper = require('../helpers/email');
 const api = require('../config/api');
 const urls = require('../constants/urls');
+const mail_contents = require('../constants/mail_contents');
+const { getAvatarName } = require('../helpers/utility');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -638,6 +651,7 @@ const createAppointment = async (req, res) => {
       user: currentUser.id,
       content,
       type: 'appointments',
+      appointments: appointment.id,
       deals: req.body.deal,
     });
 
@@ -682,6 +696,165 @@ const createAppointment = async (req, res) => {
   }
 };
 
+const createTeamCall = async (req, res) => {
+  const { currentUser } = req;
+  let leader;
+  let contacts;
+
+  if (req.body.leader) {
+    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
+      console.log('leader find err', err.message);
+    });
+  }
+
+  const deal_data = { ...req.body };
+  delete deal_data.contacts;
+  const deal_call = new TeamCall({
+    deal_data,
+  });
+
+  deal_call.save().catch((err) => {
+    console.log('deal team create err', err.message);
+  });
+
+  const activity = new Activity({
+    team_calls: team_call.id,
+    user: currentUser.id,
+    content: 'inquire group call',
+    type: 'team_calls',
+    deals: req.body.deal,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  if (req.body.contacts && req.body.contacts.length > 0) {
+    contacts = await Contact.find({ _id: { $in: req.body.contacts } }).catch(
+      (err) => {
+        console.log('contact find err', err.message);
+      }
+    );
+  }
+
+  const team_call = new TeamCall({
+    user: currentUser.id,
+    ...req.body,
+  });
+
+  team_call
+    .save()
+    .then((data) => {
+      if (leader) {
+        let guests = '';
+        if (contacts) {
+          for (let i = 0; i < contacts.length; i++) {
+            const first_name = contacts[i].first_name || '';
+            const last_name = contacts[i].last_name || '';
+            const data = {
+              first_name,
+              last_name,
+            };
+
+            const new_activity = new Activity({
+              team_calls: team_call.id,
+              user: currentUser.id,
+              contacts: contacts[i].id,
+              content: 'inquire group call',
+              type: 'team_calls',
+            });
+
+            new_activity.save().catch((err) => {
+              console.log('activity save err', err.message);
+            });
+
+            Contact.updateOne(
+              {
+                _id: contacts[i].id,
+              },
+              {
+                $set: { last_activity: new_activity.id },
+              }
+            ).catch((err) => {
+              console.log('contact update err', err.message);
+            });
+
+            const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+              data
+            )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+            guests += guest;
+          }
+        }
+
+        const organizer = `<tr><td><span class="icon-user">${getAvatarName({
+          full_name: currentUser.user_name,
+        })}</label></td><td style="padding-left: 5px;">${
+          currentUser.user_name
+        }</td></tr>`;
+
+        const templatedData = {
+          user_name: currentUser.user_name,
+          leader_name: leader.user_name,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
+          subject: team_call.subject,
+          description: team_call.description || '',
+          organizer,
+          call_url: urls.TEAM_CALLS + team_call.id,
+          guests,
+        };
+
+        const params = {
+          Destination: {
+            ToAddresses: [leader.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'TeamCallRequest',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+        ses
+          .sendTemplatedEmail(params)
+          .promise()
+          .then((response) => {
+            console.log('success', response.MessageId);
+          })
+          .catch((err) => {
+            console.log('ses send err', err);
+          });
+      }
+
+      /** **********
+       *  Creat dashboard notification to the inviated users
+       *  */
+      if (leader) {
+        const notification = new Notification({
+          user: leader.id,
+          team_call: team_call.id,
+          criteria: 'team_call_invited',
+          content: `You've been invited to join a call by ${currentUser.user_name}.`,
+        });
+
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+      }
+
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('team save err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getActivity,
@@ -696,6 +869,7 @@ module.exports = {
   createNote,
   createFollowUp,
   createAppointment,
+  createTeamCall,
   sendEmail,
   getEmails,
   updateContact,
