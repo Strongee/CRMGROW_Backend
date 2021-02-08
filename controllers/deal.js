@@ -313,6 +313,28 @@ const updateContact = (req, res) => {
     query
   )
     .then((result) => {
+      if (action === 'add') {
+        const detail_content = 'added deal';
+        for (let i = 0; i < contacts.length; i++) {
+          const activity = new Activity({
+            content: detail_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'deals',
+            deals: req.params.id,
+          });
+
+          activity.save().catch((err) => {
+            console.log('activity save err', err.message);
+          });
+          Contact.updateOne(
+            { _id: contacts[i] },
+            { $set: { last_activity: activity.id } }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+        }
+      }
       res.send({
         status: true,
       });
