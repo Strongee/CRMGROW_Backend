@@ -239,6 +239,9 @@ const load = async (req, res) => {
           i++;
 
           next_activity = activity_list[i + 1];
+          if (!next_activity) {
+            break;
+          }
           next_contact = next_activity.contacts
             ? next_activity.contacts._id
             : null;
@@ -247,6 +250,9 @@ const load = async (req, res) => {
             activity.additional_field.push(next_activity);
             i++;
             next_activity = activity_list[i + 1];
+            if (!next_activity) {
+              break;
+            }
             next_contact = next_activity.contacts
               ? next_activity.contacts._id
               : null;
@@ -255,6 +261,8 @@ const load = async (req, res) => {
         } else if (activity_contact) {
           data.push(activity);
         }
+      } else {
+        break;
       }
     }
     if (data.length < 50) {
