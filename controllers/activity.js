@@ -178,7 +178,7 @@ const removeAll = async (req, res) => {
 const load = async (req, res) => {
   const { currentUser } = req;
   const { size } = req.body;
-  let { skip } = req.body;
+  const { starting_after, ending_before } = req.body;
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
   });
@@ -190,21 +190,28 @@ const load = async (req, res) => {
   let activity_list;
   const data = [];
   while (data.length < 50) {
-    if (!skip) {
+    if (!starting_after && !ending_before) {
       activity_list = await Activity.find({
         $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
       })
         .sort({ _id: -1 })
         .populate('contacts')
         .limit(size * 5);
-      skip = 0;
-    } else {
+    } else if (starting_after) {
       activity_list = await Activity.find({
+        _id: { $lt: starting_after },
         $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
       })
         .sort({ _id: -1 })
         .populate('contacts')
-        .skip(skip)
+        .limit(size * 5);
+    } else if (ending_before) {
+      activity_list = await Activity.find({
+        _id: { $gt: ending_before },
+        $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+      })
+        .sort({ _id: -1 })
+        .populate('contacts')
         .limit(size * 5);
     }
 
@@ -236,20 +243,12 @@ const load = async (req, res) => {
       } else if (activity_contact) {
         data.push(activity);
       }
-      if (data.length === 50) {
-        skip += i;
-        break;
-      }
-    }
-    if (data.length < 50) {
-      skip += activity_list.length;
     }
   }
   return res.send({
     status: true,
     data: {
       activity_list: data,
-      skip,
     },
   });
 };
