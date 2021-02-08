@@ -12,6 +12,7 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(DealStageCtrl.create)
 );
+router.get('/init', UserCtrl.checkAuth, catchError(DealStageCtrl.init));
 router.get('/', UserCtrl.checkAuth, catchError(DealStageCtrl.getAll));
 router.put('/:id', UserCtrl.checkAuth, catchError(DealStageCtrl.edit));
 router.post('/remove', UserCtrl.checkAuth, catchError(DealStageCtrl.remove));

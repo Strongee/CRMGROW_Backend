@@ -59,6 +59,14 @@ const system_settings = {
   WEBINAR_LINK:
     'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',
+  DEFAULT_STAGES: [
+    'Lead',
+    '30% Committed',
+    '60% Committed',
+    '90% Committed',
+    'Application',
+    'Submitted',
+  ],
 };
 
 module.exports = system_settings;

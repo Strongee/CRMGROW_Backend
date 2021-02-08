@@ -177,8 +177,10 @@ const removeAll = async (req, res) => {
 
 const load = async (req, res) => {
   const { currentUser } = req;
-  const { size } = req.body;
   const { starting_after, ending_before } = req.body;
+  let skip = req.body.skip || 0;
+  const size = req.body.size || 50;
+
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
   });
@@ -196,6 +198,7 @@ const load = async (req, res) => {
       })
         .sort({ _id: -1 })
         .populate('contacts')
+        .skip(skip)
         .limit(size * 5);
     } else if (starting_after) {
       activity_list = await Activity.find({
@@ -204,6 +207,7 @@ const load = async (req, res) => {
       })
         .sort({ _id: -1 })
         .populate('contacts')
+        .skip(skip)
         .limit(size * 5);
     } else if (ending_before) {
       activity_list = await Activity.find({
@@ -212,37 +216,49 @@ const load = async (req, res) => {
       })
         .sort({ _id: -1 })
         .populate('contacts')
+        .skip(skip)
         .limit(size * 5);
+    }
+
+    if (activity_list.length === 0) {
+      break;
     }
 
     for (let i = 0; i < activity_list.length; i++) {
       let activity = activity_list[i];
       let next_activity = activity_list[i + 1];
-      const activity_contact = activity.contacts ? activity.contacts._id : null;
-      let next_contact = next_activity.contacts
-        ? next_activity.contacts._id
-        : null;
-      if (activity_contact && activity_contact === next_contact) {
-        activity = { ...activity._doc, additional_field: [next_activity] };
-        i++;
-
-        next_activity = activity_list[i + 1];
-        next_contact = next_activity.contacts
+      if (next_activity) {
+        const activity_contact = activity.contacts
+          ? activity.contacts._id
+          : null;
+        let next_contact = next_activity.contacts
           ? next_activity.contacts._id
           : null;
-
-        while (activity_contact === next_contact) {
-          activity.additional_field.push(next_activity);
+        if (activity_contact && activity_contact === next_contact) {
+          activity = { ...activity._doc, additional_field: [next_activity] };
           i++;
+
           next_activity = activity_list[i + 1];
           next_contact = next_activity.contacts
             ? next_activity.contacts._id
             : null;
+
+          while (activity_contact === next_contact) {
+            activity.additional_field.push(next_activity);
+            i++;
+            next_activity = activity_list[i + 1];
+            next_contact = next_activity.contacts
+              ? next_activity.contacts._id
+              : null;
+          }
+          data.push(activity);
+        } else if (activity_contact) {
+          data.push(activity);
         }
-        data.push(activity);
-      } else if (activity_contact) {
-        data.push(activity);
       }
+    }
+    if (data.length < 50) {
+      skip += activity_list.length;
     }
   }
   return res.send({

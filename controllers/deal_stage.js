@@ -3,6 +3,43 @@ const Deal = require('../models/deal');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const ActivityHelper = require('../helpers/activity');
+const { DEFAULT_STAGES } = require('../config/system_settings');
+
+const init = async (req, res) => {
+  const { currentUser } = req;
+  const promise_array = [];
+  for (let i = 0; i < DEFAULT_STAGES.length; i++) {
+    const promise = new Promise((resolve) => {
+      const deal_stage = new DealStage({
+        user: currentUser.id,
+        title: DEFAULT_STAGES[i],
+        priority: i,
+      });
+      deal_stage
+        .save()
+        .then((data) => {
+          resolve(data);
+        })
+        .catch((err) => {
+          console.log('deal stage err', err.message);
+        });
+    });
+    promise_array.push(promise);
+  }
+  Promise.all(promise_array)
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        error: err || 'Deal intialize error',
+      });
+    });
+};
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -147,6 +184,7 @@ const changeOrder = async (req, res) => {
 };
 
 module.exports = {
+  init,
   getAll,
   create,
   remove,
