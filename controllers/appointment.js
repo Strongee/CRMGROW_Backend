@@ -1653,10 +1653,12 @@ const getCalendarList = async (req, res) => {
                 };
                 for (let i = 0; i < calendars.length; i++) {
                   calendar.data.push({
-                    id: calendar.id,
-                    title: calendar.name,
+                    id: calendars[i].id,
+                    title: calendars[i].name,
                     color:
-                      calendar.hexColor === '' ? undefined : calendar.hexColor,
+                      calendars[i].hexColor === ''
+                        ? undefined
+                        : calendars[i].hexColor,
                   });
                 }
                 data.push(calendar);
@@ -1699,6 +1701,7 @@ const getCalendarList = async (req, res) => {
                   email: connected_email,
                   data: [],
                 };
+
                 for (let i = 0; i < calendars.length; i++) {
                   const calendar_data = {
                     id: calendars[i].id,
@@ -1717,31 +1720,19 @@ const getCalendarList = async (req, res) => {
 
         promise_array.push(google_calendar);
       }
-
-      Promise.all(promise_array)
-        .then((data) => {
-          return res.send({
-            status: true,
-            data,
-          });
-        })
-        .catch((err) => {
-          return res.status(400).json({
-            status: false,
-            error: err,
-          });
-        });
     }
     Promise.all(promise_array)
-      .then((data) => {
+      .then(() => {
         return res.send({
           status: true,
           data,
         });
       })
       .catch((err) => {
+        console.log('get calendar err', err);
         return res.status(400).json({
           status: false,
+          error: err,
         });
       });
   } else {
