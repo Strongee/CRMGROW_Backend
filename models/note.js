@@ -15,6 +15,8 @@ const NoteSchema = new Schema(
   }
 );
 
+NoteSchema.index({ user: 1 });
+NoteSchema.index({ contacts: 1 });
 const Note = mongoose.model('note', NoteSchema);
 
 module.exports = Note;
