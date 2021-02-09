@@ -102,6 +102,7 @@ if (status === 'true') {
   // CHANGE URL
   window.history.pushState("", "", url.origin + url.pathname + '?success');
   // OPEN APP
+  localStorage.setItem('token', token);
   $('.openApp').attr('href', `crmrecord://signin?token=${token}&id=${user}`);
   document.querySelector(".openApp").click();
 } else {
