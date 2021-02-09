@@ -1170,6 +1170,7 @@ const upload_video_job = new CronJob(
       for (let i = 0; i < videos.length; i++) {
         const video = videos[i];
         const file_path = video.path;
+        const old_path = video.old_path;
         if (file_path) {
           const file_name = video.path.slice(37);
 
@@ -1242,6 +1243,9 @@ const upload_video_job = new CronJob(
               console.log('err', err.message);
               // read file
             }
+          }
+          if (old_path && fs.existsSync(old_path)) {
+            fs.unlinkSync(old_path);
           }
         }
       }

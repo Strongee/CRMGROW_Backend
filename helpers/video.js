@@ -140,6 +140,7 @@ const convertUploadVideo = async (id) => {
     video['url'] = new_url;
     video['converted'] = 'completed';
     video['path'] = new_path;
+    video['old_path'] = file_path;
     video
       .save()
       .then(() => {
