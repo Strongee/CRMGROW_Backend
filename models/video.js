@@ -18,6 +18,7 @@ const VideoSchema = new Schema(
     preview: String,
     recording: { type: Boolean, default: false },
     path: String,
+    old_path: String,
     type: String,
     duration: Number,
     url: String,

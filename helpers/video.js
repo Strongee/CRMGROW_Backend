@@ -68,10 +68,11 @@ const convertRecordVideo = async (id, area) => {
     video['url'] = new_url;
     video['converted'] = 'completed';
     video['path'] = new_path;
+    video['old_path'] = file_path;
     video
       .save()
       .then(() => {
-        fs.unlinkSync(file_path);
+        // fs.unlinkSync(file_path);
       })
       .catch((err) => {
         console.log('vide update err', err.message || err.msg);
@@ -142,7 +143,7 @@ const convertUploadVideo = async (id) => {
     video
       .save()
       .then(() => {
-        fs.unlinkSync(file_path);
+        // fs.unlinkSync(file_path);
       })
       .catch((err) => {
         console.log('vide update err', err.message || err.msg);
