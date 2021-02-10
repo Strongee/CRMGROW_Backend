@@ -30,6 +30,7 @@ const ActivitySchema = new Schema(
     },
     texts: { type: mongoose.Schema.Types.ObjectId, ref: 'text' },
     deals: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
+    team_calls: { type: mongoose.Schema.Types.ObjectId, ref: 'team_call' },
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     material_last: Number,
     full_watched: Boolean,
