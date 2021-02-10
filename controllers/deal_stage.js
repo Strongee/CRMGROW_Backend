@@ -84,12 +84,12 @@ const getAll = async (req, res) => {
           error: err || 'Deal intialize error',
         });
       });
+  } else {
+    return res.send({
+      status: true,
+      data,
+    });
   }
-
-  return res.send({
-    status: true,
-    data,
-  });
 };
 
 const create = async (req, res) => {
