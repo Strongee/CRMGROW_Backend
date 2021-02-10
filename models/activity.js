@@ -28,7 +28,7 @@ const ActivitySchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'email_tracker',
     },
-    sms: { type: mongoose.Schema.Types.ObjectId, ref: 'sms' },
+    texts: { type: mongoose.Schema.Types.ObjectId, ref: 'text' },
     deals: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     material_last: Number,

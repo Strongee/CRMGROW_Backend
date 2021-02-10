@@ -235,7 +235,7 @@ const load = async (req, res) => {
           ? next_activity.contacts._id
           : null;
         if (activity_contact && activity_contact === next_contact) {
-          activity = { ...activity._doc, additional_field: [next_activity] };
+          activity = { ...activity._doc, additional_field: [next_activity.id] };
           i++;
 
           next_activity = activity_list[i + 1];
@@ -247,7 +247,7 @@ const load = async (req, res) => {
             : null;
 
           while (activity_contact === next_contact) {
-            activity.additional_field.push(next_activity);
+            activity.additional_field.push(next_activity.id);
             i++;
             next_activity = activity_list[i + 1];
             if (!next_activity) {

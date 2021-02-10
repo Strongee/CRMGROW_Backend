@@ -3808,7 +3808,10 @@ const sendEmail = async (data) => {
 
           const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
           // const html_preview = `<a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{{${video.id}}}`, 'g'), video_link);
+          email_content = email_content.replace(
+            new RegExp(`{{${video.id}}}`, 'g'),
+            video_link
+          );
 
           // const video_object = `<tr style="margin-top:10px;max-width: 800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // video_objects += video_object;

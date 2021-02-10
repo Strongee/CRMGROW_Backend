@@ -2358,7 +2358,7 @@ const bulkText = async (req, res) => {
 
       if (fromNumber) {
         // fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
-        promise = new Promise((resolve, reject) => {
+        promise = new Promise(async (resolve, reject) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -2374,7 +2374,7 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          textHelper.sleep(1000);
+          await textHelper.sleep(1000);
           client.messages
             .create({
               from: fromNumber,
@@ -2476,7 +2476,7 @@ const bulkText = async (req, res) => {
         });
       } else if (currentUser['twilio_number']) {
         fromNumber = currentUser['twilio_number'];
-        promise = new Promise((resolve) => {
+        promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -2492,7 +2492,7 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          textHelper.sleep(1000);
+          await textHelper.sleep(1000);
           twilio.messages
             .create({
               from: fromNumber,
@@ -2588,7 +2588,7 @@ const bulkText = async (req, res) => {
         });
       } else {
         fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        promise = new Promise((resolve) => {
+        promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -2604,7 +2604,7 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          textHelper.sleep(1000);
+          await textHelper.sleep(1000);
           client.messages
             .create({
               from: fromNumber,

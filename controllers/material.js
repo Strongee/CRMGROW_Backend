@@ -1,3 +1,6 @@
+const phone = require('phone');
+const moment = require('moment-timezone');
+
 const User = require('../models/user');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
@@ -5,9 +8,11 @@ const Image = require('../models/image');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
+const Text = require('../models/text');
 const VideoTracker = require('../models/video_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
+const Notification = require('../models/notification');
 const ActivityHelper = require('../helpers/activity');
 const api = require('../config/api');
 const request = require('request-promise');
@@ -19,11 +24,7 @@ const {
   generateOpenTrackLink,
   addLinkTracking,
 } = require('../helpers/email');
-const {
-  sleep,
-  getSignalWireNumber,
-  getTwilioNumber,
-} = require('../helpers/text');
+const { sleep } = require('../helpers/text');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
@@ -38,6 +39,16 @@ const credentials = {
 };
 
 const oauth2 = require('simple-oauth2')(credentials);
+
+const { RestClient } = require('@signalwire/node');
+
+const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
+  signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
+});
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
+
+const twilio = require('twilio')(accountSid, authToken);
 
 const bulkEmail = async (req, res) => {
   const { currentUser } = req;
@@ -59,13 +70,13 @@ const bulkEmail = async (req, res) => {
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
-  const promise_array = [];
-  const activities = [];
   let html_content = '';
   let no_connected = false;
+  const promise_array = [];
 
   for (let i = 0; i < contacts.length; i++) {
     let promise;
+    const activities = [];
 
     let contact = await Contact.findOne({
       _id: contacts[i],
@@ -707,17 +718,10 @@ const bulkEmail = async (req, res) => {
 
 const bulkText = async (req, res) => {
   const { currentUser } = req;
-  const { content, videos: videoIds, contacts } = req.body;
+  const { video_ids, pdf_ids, image_ids, content, contacts, mode } = req.body;
+
   const promise_array = [];
   const error = [];
-
-  const videos = await Video.find({ _id: { $in: videoIds } });
-
-  let detail_content = 'sent video using sms';
-  if (req.guest_loggin) {
-    detail_content = ActivityHelper.assistantLog(detail_content);
-  }
-
   if (contacts) {
     if (contacts.length > system_settings.TEXT_ONE_TIME) {
       return res.status(400).json({
@@ -728,90 +732,183 @@ const bulkText = async (req, res) => {
 
     for (let i = 0; i < contacts.length; i++) {
       await sleep(1000);
+      let text_content = content;
+      const activities = [];
+
       const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
         (err) => {
           console.log('contact update err', err.messgae);
         }
       );
-      let video_titles = '';
-      let video_descriptions = '';
-      let video_objects = '';
-      let video_content = content;
-      const activities = [];
-      let activity;
-      for (let j = 0; j < videos.length; j++) {
-        const video = videos[j];
 
-        if (!video_content) {
-          video_content = '';
-        }
+      if (video_ids && video_ids.length > 0) {
+        const videos = await Video.find({ _id: { $in: video_ids } }).catch(
+          (err) => {
+            console.log('video find error', err.message);
+          }
+        );
 
-        video_content = video_content
-          .replace(/{user_name}/gi, currentUser.user_name)
-          .replace(/{user_email}/gi, currentUser.connected_email)
-          .replace(/{user_phone}/gi, currentUser.cell_phone)
-          .replace(/{contact_first_name}/gi, _contact.first_name)
-          .replace(/{contact_last_name}/gi, _contact.last_name)
-          .replace(/{contact_email}/gi, _contact.email)
-          .replace(/{contact_phone}/gi, _contact.cell_phone);
+        for (let j = 0; j < videos.length; i++) {
+          const video = videos[j];
+          let activity_content = 'sent video using sms';
 
-        const _activity = new Activity({
-          content: detail_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'videos',
-          send_type: 1,
-          videos: video._id,
-          description: video_content,
-        });
+          switch (mode) {
+            case 'automation':
+              activity_content = ActivityHelper.automationLog(activity_content);
+              break;
+            case 'campaign':
+              activity_content = ActivityHelper.campaignLog(activity_content);
+              break;
+            case 'api':
+              activity_content = ActivityHelper.apiLog(activity_content);
+              break;
+          }
 
-        activity = await _activity
-          .save()
-          .then()
-          .catch((err) => {
-            console.log('err', err);
+          const activity = new Activity({
+            content: activity_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'videos',
+            videos: video.id,
           });
 
-        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          activity.save().catch((err) => {
+            console.log('email send err', err.message);
+          });
 
-        if (j < videos.length - 1) {
-          video_titles = video_titles + video.title + ', ';
-          video_descriptions += `${video.description}, `;
-        } else {
-          video_titles += video.title;
-          video_descriptions += video.description;
+          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          text_content = text_content.replace(
+            new RegExp(`{{${video.id}}}`, 'g'),
+            video_link
+          );
+
+          activities.push(activity);
         }
-        const video_object = `\n${video.title}:\n\n${video_link}\n`;
-        video_objects += video_object;
-        activities.push(activity.id);
       }
 
-      if (video_content.search(/{video_object}/gi) !== -1) {
-        video_content = video_content.replace(
-          /{video_object}/gi,
-          video_objects
+      if (pdf_ids && pdf_ids.length > 0) {
+        const pdfs = await PDF.find({ _id: { $in: pdf_ids } }).catch((err) => {
+          console.log('pdf find error', err.message);
+        });
+
+        for (let j = 0; j < pdfs.length; i++) {
+          const pdf = pdfs[j];
+          let activity_content = 'sent pdf using sms';
+
+          switch (mode) {
+            case 'automation':
+              activity_content = ActivityHelper.automationLog(activity_content);
+              break;
+            case 'campaign':
+              activity_content = ActivityHelper.campaignLog(activity_content);
+              break;
+            case 'api':
+              activity_content = ActivityHelper.apiLog(activity_content);
+              break;
+          }
+
+          const activity = new Activity({
+            content: activity_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'pdfs',
+            pdfs: pdf.id,
+          });
+
+          activity.save().catch((err) => {
+            console.log('email send err', err.message);
+          });
+
+          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
+          text_content = text_content.replace(
+            new RegExp(`{{${pdf.id}}}`, 'g'),
+            pdf_link
+          );
+
+          activities.push(activity);
+        }
+      }
+
+      if (image_ids && image_ids.length > 0) {
+        const images = await Image.find({ _id: { $in: image_ids } }).catch(
+          (err) => {
+            console.log('image find error', err.message);
+          }
         );
-      } else {
-        video_content = video_content + '\n' + video_objects;
+
+        for (let j = 0; j < images.length; i++) {
+          const image = images[j];
+          let activity_content = 'sent image using email';
+
+          switch (mode) {
+            case 'automation':
+              activity_content = ActivityHelper.automationLog(activity_content);
+              break;
+            case 'campaign':
+              activity_content = ActivityHelper.campaignLog(activity_content);
+              break;
+            case 'api':
+              activity_content = ActivityHelper.apiLog(activity_content);
+              break;
+          }
+
+          const activity = new Activity({
+            content: activity_content,
+            contacts: contacts[i],
+            user: currentUser.id,
+            type: 'images',
+            images: image_ids,
+          });
+
+          activity.save().catch((err) => {
+            console.log('email send err', err.message);
+          });
+
+          const image_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          text_content = text_content.replace(
+            new RegExp(`{{${image.id}}}`, 'g'),
+            image_link
+          );
+
+          activities.push(activity);
+        }
       }
 
-      if (video_content.search(/{video_title}/gi) !== -1) {
-        video_content = video_content.replace(/{video_title}/gi, video_titles);
+      let activity_content = 'sent text';
+      if (req.guest_loggin) {
+        activity_content = ActivityHelper.assistantLog(activity_content);
       }
 
-      if (video_content.search(/{video_description}/gi) !== -1) {
-        video_content = video_content.replace(
-          /{video_description}/gi,
-          video_descriptions
-        );
-      }
+      const text = new Text({
+        user: currentUser.id,
+        content: text_content,
+        contacts: contacts[i],
+      });
 
-      let fromNumber = currentUser['proxy_number'];
+      text.save().catch((err) => {
+        console.log('sms save err', err.message);
+      });
+
+      const activity = new Activity({
+        content: activity_content,
+        contacts: contacts[i],
+        user: currentUser.id,
+        type: 'texts',
+        texts: text.id,
+        videos: video_ids,
+        pdfs: pdf_ids,
+        images: image_ids,
+      });
+
+      activity.save().catch((err) => {
+        console.log('text send err', err.message);
+      });
+
+      const fromNumber = currentUser['proxy_number'];
       let promise;
 
-      if (!fromNumber) {
-        fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
-        promise = new Promise((resolve, reject) => {
+      if (fromNumber) {
+        promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -827,20 +924,19 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          textHelper.sleep(1000);
+          await sleep(1000);
           client.messages
             .create({
               from: fromNumber,
               to: e164Phone,
-              body:
-                video_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+              body: text_content + '\n\n' + generateUnsubscribeLink(),
             })
             .then((message) => {
               if (message.status === 'queued' || message.status === 'sent') {
                 console.log('Message ID: ', message.sid);
                 console.info(
                   `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                  video_content
+                  text_content
                 );
 
                 const now = moment();
@@ -884,7 +980,7 @@ const bulkText = async (req, res) => {
                 console.log('Message ID: ', message.sid);
                 console.info(
                   `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                  video_content
+                  text_content
                 );
                 Contact.updateOne(
                   { _id: contacts[i] },
@@ -931,7 +1027,7 @@ const bulkText = async (req, res) => {
         twilio.messages
           .create({
             from: fromNumber,
-            body: video_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+            body: text_content + '\n\n' + generateUnsubscribeLink(),
             to: e164Phone,
           })
           .catch((err) => {

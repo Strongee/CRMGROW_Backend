@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const SMSSchema = new Schema(
+const TextSchema = new Schema(
   {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
@@ -17,6 +17,6 @@ const SMSSchema = new Schema(
   }
 );
 
-const SMS = mongoose.model('sms', SMSSchema);
+const Text = mongoose.model('text', TextSchema);
 
-module.exports = SMS;
+module.exports = Text;
