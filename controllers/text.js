@@ -3,7 +3,7 @@ const phone = require('phone');
 const User = require('../models/user');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
-const SMS = require('../models/text');
+const Text = require('../models/text');
 const Note = require('../models/note');
 const urls = require('../constants/urls');
 const api = require('../config/api');
@@ -21,7 +21,7 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
 
 const send = async (req, res) => {
   const { currentUser } = req;
-  const { text } = req.body;
+  const { text_content } = req.body;
   const contact = await Contact.findOne({ _id: req.params.id }).catch((err) => {
     console.log('err', err);
   });
@@ -61,7 +61,7 @@ const send = async (req, res) => {
       console.log('err', err);
     });
 
-  const sms = new SMS({
+  const text = new Text({
     content: req.body.text,
     contact: req.params.id,
     to: e164Phone,
@@ -71,17 +71,15 @@ const send = async (req, res) => {
     created_at: new Date(),
   });
 
-  sms
+  text
     .save()
     .then((_sms) => {
       const activity = new Activity({
         content: currentUser.user_name + ' sent text',
         contacts: _sms.contact,
         user: currentUser.id,
-        type: 'sms',
-        sms: _sms.id,
-        created_at: new Date(),
-        updated_at: new Date(),
+        type: 'texts',
+        text: _sms.id,
       });
 
       activity.save().then((_activity) => {
@@ -289,9 +287,93 @@ const get = async (req, res) => {
   });
 };
 
+const receiveText = async (req, res) => {
+  const text = req.body['Body'];
+  const from = req.body['From'];
+  const to = req.body['To'];
+
+  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+    console.log('current user found err sms', err.message);
+  });
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
+
+    const contact = await Contact.findOne({
+      cell_phone: phoneNumber,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact found err sms reply', err);
+    });
+
+    if (contact) {
+      if (text.toLowerCase() === 'stop') {
+        const activity = new Activity({
+          content: 'unsubscribed sms',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'sms_trackers',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        const _activity = await activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+            $push: { tags: { $each: ['unsubscribed'] } },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+        const content =
+          'You have successfully been unsubscribed. You will not receive any more messages from this number.';
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      } else {
+        const content =
+          contact.first_name +
+          ', please call/text ' +
+          currentUser.user_name +
+          ' back at: ' +
+          currentUser.cell_phone;
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      }
+    }
+  }
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   send,
   receive,
   receive1,
+  receiveText,
 };
