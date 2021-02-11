@@ -430,6 +430,7 @@ const bulkEmail = async (req, res) => {
         currentUser.connected_email_type === 'gmail' ||
         currentUser.connected_email_type === 'gsuit'
       ) {
+        console.log('here***********************');
         const oauth2Client = new google.auth.OAuth2(
           api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
           api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
