@@ -447,6 +447,11 @@ const bulkEmail = async (req, res) => {
           }
         }
 
+        console.log(
+          '${oauth2Client.credentials.access_token}***************',
+          oauth2Client.credentials.access_token
+        );
+
         promise = new Promise((resolve, reject) => {
           try {
             const body = createBody({
