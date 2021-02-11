@@ -501,6 +501,7 @@ const bulkEmail = async (req, res) => {
                 Activity.deleteOne({ _id: activity.id }).catch((err) => {
                   console.log('activity delete err', err.message);
                 });
+                console.log('activities************', activities);
 
                 Activity.deleteMany({ _id: { $in: activities } }).catch(
                   (err) => {
@@ -544,6 +545,7 @@ const bulkEmail = async (req, res) => {
               console.log('activity delete err', err.message);
             });
 
+            console.log('activities************', activities);
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('activieis delete err', err.message);
             });
