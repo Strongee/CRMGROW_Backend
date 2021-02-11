@@ -1,5 +1,5 @@
 let domain = 'https://app.crmgrow.com/';
-const front = 'teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/';
+const front = 'teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://app.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
