@@ -32,12 +32,6 @@ router.post(
     body('user_name')
       .isLength({ min: 3 })
       .withMessage('user_name must be at least 3 chars long'),
-    // password must be at least 5 chars long
-    // :TODO phone number regexp should be used
-    body('cell_phone')
-      .isLength({ min: 9 })
-      .matches(/^[\+\d]?(?:[\d-.\s()]*)$/)
-      .withMessage('cell_phone must be a valid phone number!'),
   ],
   catchError(UserCtrl.create)
 );
