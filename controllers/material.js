@@ -887,7 +887,7 @@ const bulkText = async (req, res) => {
       });
 
       text.save().catch((err) => {
-        console.log('sms save err', err.message);
+        console.log('text save err', err.message);
       });
 
       const activity = new Activity({
