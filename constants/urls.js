@@ -4,7 +4,7 @@ if (process.env.NODE_ENV === 'production') {
 } else if (process.env.NODE_ENV === 'staging') {
   domain = 'https://ecsbe.crmgrow.com';
 } else {
-  domain = 'https://localhost:3000';
+  domain = 'http://localhost:3000';
 }
 
 const urls = {
