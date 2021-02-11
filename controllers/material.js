@@ -883,6 +883,7 @@ const bulkText = async (req, res) => {
         user: currentUser.id,
         content: text_content,
         contacts: contacts[i],
+        type: 1,
       });
 
       text.save().catch((err) => {

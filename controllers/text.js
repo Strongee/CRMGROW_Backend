@@ -287,7 +287,7 @@ const get = async (req, res) => {
   });
 };
 
-const receiveText = async (req, res) => {
+const receiveTextSignalWire = async (req, res) => {
   const text = req.body['Body'];
   const from = req.body['From'];
   const to = req.body['To'];
@@ -312,7 +312,88 @@ const receiveText = async (req, res) => {
           content: 'unsubscribed sms',
           contacts: contact.id,
           user: currentUser.id,
-          type: 'sms_trackers',
+          type: 'text_trackers',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        const _activity = await activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: _activity.id },
+            $push: { tags: { $each: ['unsubscribed'] } },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+        const content =
+          'You have successfully been unsubscribed. You will not receive any more messages from this number.';
+
+        await client.messages
+          .create({
+            from: to,
+            to: from,
+            body: content,
+          })
+          .catch((err) => {
+            console.log('sms reply err', err);
+          });
+      } else {
+        const text = new Text({
+          user: currentUser.id,
+          contact: contact.id,
+          content: text,
+        });
+
+        const activity = new Activity({
+          content: 'unsubscribed sms',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'text_trackers',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+    }
+  }
+  return res.send({
+    status: true,
+  });
+};
+
+const receiveTextTwilio = async (req, res) => {
+  const text = req.body['Body'];
+  const from = req.body['From'];
+  const to = req.body['To'];
+
+  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+    console.log('current user found err sms', err.message);
+  });
+
+  if (currentUser != null) {
+    const phoneNumber = req.body['From'];
+
+    const contact = await Contact.findOne({
+      cell_phone: phoneNumber,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('contact found err sms reply', err);
+    });
+
+    if (contact) {
+      if (text.toLowerCase() === 'stop') {
+        const activity = new Activity({
+          content: 'unsubscribed sms',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'text_trackers',
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -375,5 +456,6 @@ module.exports = {
   send,
   receive,
   receive1,
-  receiveText,
+  receiveTextSignalWire,
+  receiveTextTwilio,
 };

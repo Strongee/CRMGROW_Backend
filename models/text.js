@@ -9,6 +9,7 @@ const TextSchema = new Schema(
     phone: String,
     content: String,
     from: String,
+    type: Number,
     updated_at: Date,
     created_at: Date,
   },
