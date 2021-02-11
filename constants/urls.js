@@ -1,4 +1,5 @@
-let domain = 'https://app.crmgrow.com/';
+let domain = 'https://app.crmgrow.com';
+const domain1 = 'https://app.crmgrow.com';
 const front = 'teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://app.crmgrow.com';
@@ -16,7 +17,7 @@ const urls = {
   SOCIAL_SIGNUP_URL: `${domain}/signup/`,
   APP_SIGNIN_URL: `${domain}/social-oauth-callback/`,
   OUTLOOK_AUTHORIZE_URL: `${domain}/profile/outlook`,
-  GMAIL_AUTHORIZE_URL: `${domain}/profile/gmail`,
+  GMAIL_AUTHORIZE_URL: `${domain1}/profile/gmail`,
   GOOGLE_CALENDAR_AUTHORIZE_URL: `${front}/calendar/google`,
   OUTLOOK_CALENDAR_AUTHORIZE_URL: `${front}/calendar/outlook`,
   VIDEO_THUMBNAIL_URL: `${domain}/api/video/thumbnail/`,

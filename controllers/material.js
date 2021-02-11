@@ -430,7 +430,6 @@ const bulkEmail = async (req, res) => {
         currentUser.connected_email_type === 'gmail' ||
         currentUser.connected_email_type === 'gsuit'
       ) {
-        console.log('here***********************');
         const oauth2Client = new google.auth.OAuth2(
           api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
           api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -447,11 +446,6 @@ const bulkEmail = async (req, res) => {
             });
           }
         }
-
-        console.log(
-          '${oauth2Client.credentials.access_token}***************',
-          oauth2Client.credentials.access_token
-        );
 
         promise = new Promise((resolve, reject) => {
           try {
@@ -502,12 +496,9 @@ const bulkEmail = async (req, res) => {
                 });
               })
               .catch((err) => {
-                console.log('gmail video send err', err.message);
-
                 Activity.deleteOne({ _id: activity.id }).catch((err) => {
                   console.log('activity delete err', err.message);
                 });
-                console.log('activities************', activities);
 
                 Activity.deleteMany({ _id: { $in: activities } }).catch(
                   (err) => {
@@ -551,7 +542,6 @@ const bulkEmail = async (req, res) => {
               console.log('activity delete err', err.message);
             });
 
-            console.log('activities************', activities);
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
               console.log('activieis delete err', err.message);
             });
