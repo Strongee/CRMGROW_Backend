@@ -51,17 +51,45 @@ const getAll = async (req, res) => {
     })
     .sort({ priority: 1 });
 
-  if (!data) {
-    return res.status(400).json({
-      status: false,
-      error: 'Deals doesn`t exist',
+  if (!data || !data.length) {
+    const promise_array = [];
+    for (let i = 0; i < DEFAULT_STAGES.length; i++) {
+      const promise = new Promise((resolve) => {
+        const deal_stage = new DealStage({
+          user: currentUser.id,
+          title: DEFAULT_STAGES[i],
+          priority: i,
+        });
+        deal_stage
+          .save()
+          .then((deal) => {
+            resolve(deal);
+          })
+          .catch((err) => {
+            console.log('deal stage err', err.message);
+          });
+      });
+      promise_array.push(promise);
+    }
+    Promise.all(promise_array)
+      .then((deals) => {
+        return res.send({
+          status: true,
+          data: deals,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          status: false,
+          error: err || 'Deal intialize error',
+        });
+      });
+  } else {
+    return res.send({
+      status: true,
+      data,
     });
   }
-
-  return res.send({
-    status: true,
-    data,
-  });
 };
 
 const create = async (req, res) => {
