@@ -11,15 +11,7 @@ router.post(
   UserCtrl.checkAuth,
   catchError(MaterialCtrl.bulkEmail)
 );
-router.post(
-  '/social-share',
-  UserCtrl.checkAuth,
-  catchError(MaterialCtrl.socialShare)
-);
-router.post(
-  '/thumbs-up',
-  UserCtrl.checkAuth,
-  catchError(MaterialCtrl.thumbsUp)
-);
+router.post('/social-share', catchError(MaterialCtrl.socialShare));
+router.post('/thumbs-up', catchError(MaterialCtrl.thumbsUp));
 
 module.exports = router;

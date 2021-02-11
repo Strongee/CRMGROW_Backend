@@ -36,6 +36,18 @@ router.get(
   catchError(AutomationCtrl.getEasyLoad)
 );
 
+router.get(
+  '/assigned-contacts/:id',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getAssignedContacts)
+);
+
+router.post(
+  '/contact-detail',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.getContactDetail)
+);
+
 router.get('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
 
 // Default Video Edit

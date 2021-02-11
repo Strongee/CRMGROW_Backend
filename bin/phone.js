@@ -3,6 +3,13 @@ const User = require('../models/user');
 const { ENV_PATH } = require('../config/path');
 require('dotenv').config({ path: ENV_PATH });
 const { DB_PORT } = require('../config/database');
+const { sendNewMessage } = require('node-outlook/mail-api');
+const api = require('../config/api');
+
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
+
+const twilio = require('twilio')(accountSid, authToken);
 
 mongoose.set('useCreateIndex', true);
 mongoose
@@ -45,7 +52,7 @@ const migrate = async () => {
   }
 };
 
-const twilio = async () => {
+const twilioNumber = async () => {
   const users = await User.find({
     del: false,
   }).catch((err) => {
@@ -69,4 +76,22 @@ const twilio = async () => {
   }
 };
 
-twilio();
+const sendSMS = () => {
+  const fromNumber = '+16474916957';
+  const e164Phone = '+15625480802‬';
+  twilio.messages
+    .create({
+      from: fromNumber,
+      body: 'This is new testing for twilio',
+      to: e164Phone,
+    })
+    .then((res) => {
+      console.log('message send response', res);
+    })
+    .catch((err) => {
+      console.log('message send err', err);
+    });
+};
+
+// twilioNumber();
+sendSMS();

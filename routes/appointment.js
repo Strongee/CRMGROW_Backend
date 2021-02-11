@@ -19,6 +19,13 @@ router.get('/accept', catchError(AppointmentCtrl.accept));
 // Update appointment by id
 router.get('/decline', catchError(AppointmentCtrl.decline));
 
+// Get calendar list
+router.get(
+  '/calendar',
+  UserCtrl.checkAuth,
+  catchError(AppointmentCtrl.getCalendarList)
+);
+
 // Remove contact and its all related info (activity, followup) by id
 router.post('/delete', UserCtrl.checkAuth, catchError(AppointmentCtrl.remove));
 

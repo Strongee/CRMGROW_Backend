@@ -130,6 +130,12 @@ router.get(
   catchError(TeamCtrl.getFinishedCall)
 );
 
+router.get(
+  '/shared-contacts',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getSharedContacts)
+);
+
 router.post(
   '/request-call',
   UserCtrl.checkAuth,

@@ -8,6 +8,7 @@ const outlook = require('node-outlook');
 
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
+const webPush = require('web-push');
 
 const yahooCredentials = {
   clientID: api.YAHOO_CLIENT.YAHOO_CLIENT_ID1,
@@ -28,6 +29,7 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials);
 const nodemailer = require('nodemailer');
 const AWS = require('aws-sdk');
+const moment = require('moment-timezone');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -49,7 +51,7 @@ const Guest = require('../models/guest');
 const Team = require('../models/team');
 const PaidDemo = require('../models/paid_demo');
 
-const { getSignalWireNumber } = require('../helpers/text');
+const { getSignalWireNumber, getTwilioNumber } = require('../helpers/text');
 
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -200,8 +202,19 @@ const signUp = async (req, res) => {
           garbage.save().catch((err) => {
             console.log('garbage save err', err.message);
           });
-          // purchase proxy number
-          getSignalWireNumber(_res.id);
+
+          if (_res.phone) {
+            if (_res.phone.areaCode === 'US' || _res.phone.areaCode === 'CA') {
+              // purchase proxy number
+              const proxy_number = getSignalWireNumber(_res.id);
+              if (proxy_number === api.SIGNALWIRE.DEFAULT_NUMBER) {
+                getTwilioNumber(_res.id);
+              }
+            } else {
+              // purchase twilio number
+              getTwilioNumber(_res.id);
+            }
+          }
 
           // welcome email
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
@@ -661,7 +674,7 @@ const signUpGmail = async (req, res) => {
   const authorizationUri = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
+    prompt: 'consent',
     // If you only need one scope you can pass it as a string
     scope: scopes,
   });
@@ -775,12 +788,12 @@ const appSocial = async (req, res) => {
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
       urls.APP_SIGNIN_URL + 'google'
     );
-  
+
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email'
+      'https://www.googleapis.com/auth/userinfo.email',
     ];
-  
+
     const authorizationUri = oauth2Client.generateAuthUrl({
       // 'online' (default) or 'offline' (gets refresh_token)
       access_type: 'offline',
@@ -788,22 +801,17 @@ const appSocial = async (req, res) => {
       // If you only need one scope you can pass it as a string
       scope: scopes,
     });
-  
+
     if (!authorizationUri) {
       return res.status(400).json({
         status: false,
         error: 'Client doesn`t exist',
       });
     }
-    return res.render('social_oauth', { url: authorizationUri})
+    return res.render('social_oauth', { url: authorizationUri });
   }
   if (socialType === 'outlook') {
-    const scopes = [
-      'openid',
-      'profile',
-      'offline_access',
-      'email',
-    ];
+    const scopes = ['openid', 'profile', 'offline_access', 'email'];
 
     const authorizationUri = oauth2.authCode.authorizeURL({
       redirect_uri: urls.APP_SIGNIN_URL + 'outlook',
@@ -1047,7 +1055,7 @@ const socialOutlook = async (req, res) => {
           connected_email_type: 'outlook',
           primary_connected: true,
           outlook_refresh_token,
-          connect_calendar: true,
+          calendar_connected: true,
           email_max_count,
         };
         return res.send({
@@ -1420,6 +1428,9 @@ const getMe = async (req, res) => {
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;
+  if (user.hash && user.salt) {
+    user.hasPassword = true;
+  }
   delete user.hash;
   delete user.salt;
   res.send({
@@ -1698,22 +1709,18 @@ const authorizeOutlookCalendar = async (req, res) => {
         const jwt = JSON.parse(decoded_token);
 
         // Email is in the preferred_username field
-        user.connect_calendar = true;
+        user.calendar_connected = true;
         if (user.calendar_list) {
           // const data = {
           //   connected_email: _res.data.email,
           //   google_refresh_token: JSON.stringify(tokens),
           //   connected_calendar_type: 'google',
           // };
-          // user.calendar_list.push(data);
-
-          user.calendar_list = [
-            {
-              connected_email: jwt.preferred_username,
-              outlook_refresh_token,
-              connected_calendar_type: 'outlook',
-            },
-          ];
+          user.calendar_list.push({
+            connected_email: jwt.preferred_username,
+            outlook_refresh_token,
+            connected_calendar_type: 'outlook',
+          });
         } else {
           user.calendar_list = [
             {
@@ -1844,7 +1851,6 @@ const syncGmail = async (req, res) => {
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
     prompt: 'consent',
-    // If you only need one scope you can pass it as a string
     scope: scopes,
   });
 
@@ -2067,7 +2073,7 @@ const authorizeGoogleCalendar = async (req, res) => {
     }
 
     // Email is in the preferred_username field
-    user.connect_calendar = true;
+    user.calendar_connected = true;
     if (user.calendar_list) {
       // const data = {
       //   connected_email: _res.data.email,
@@ -2076,13 +2082,11 @@ const authorizeGoogleCalendar = async (req, res) => {
       // };
       // user.calendar_list.push(data);
 
-      user.calendar_list = [
-        {
-          connected_email: _res.data.email,
-          google_refresh_token: JSON.stringify(tokens),
-          connected_calendar_type: 'google',
-        },
-      ];
+      user.calendar_list.push({
+        connected_email: _res.data.email,
+        google_refresh_token: JSON.stringify(tokens),
+        connected_calendar_type: 'google',
+      });
     } else {
       user.calendar_list = [
         {
@@ -2157,7 +2161,7 @@ const addGoogleCalendar = async (auth, user, res) => {
       }
     );
   }
-  user.connect_calendar = true;
+  user.calendar_connected = true;
   user.save();
 
   return res.send({
@@ -2215,7 +2219,7 @@ const disconCalendar = async (req, res) => {
         }
       });
     }
-    user.connect_calendar = false;
+    user.calendar_connected = false;
 
     await user.save();
     return res.send({
@@ -2248,7 +2252,7 @@ const removeGoogleCalendar = async (auth, user, res) => {
       }
     });
   }
-  user.connect_calendar = false;
+  user.calendar_connected = false;
   user.save();
 
   return res.send({
@@ -2495,6 +2499,37 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const createPassword = async (req, res) => {
+  const { currentUser } = req;
+  const { password } = req.body;
+  if (currentUser.hash || currentUser.salt) {
+    return res.status(400).send({
+      status: false,
+      error: 'Please input your current password.',
+    });
+  } else {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto
+      .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
+      .toString('hex');
+    currentUser.salt = salt;
+    currentUser.hash = hash;
+    currentUser
+      .save()
+      .then(() => {
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  }
+};
+
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
   const data = await Contact.find({ user: currentUser.id });
@@ -2722,9 +2757,81 @@ const schedulePaidDemo = async (req, res) => {
             error: err.message,
           });
         });
+
+      return res.send({
+        status: true,
+      });
     })
     .catch((_err) => {
       console.log('new demo err', _err.message);
+    });
+};
+
+const sendWelcomeEmail = async (data) => {
+  const { id, email, user_name, password, time_zone } = data;
+  const verification_url = `${urls.DOMAIN_URL}?id=${id}`;
+  const templatedData = {
+    user_name,
+    verification_url,
+    created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+    webinar_url: system_settings.WEBINAR_LINK,
+    import_url: urls.IMPORT_CSV_URL,
+    template_url: urls.CONTACT_CSV_URL,
+    facebook_url: urls.FACEBOOK_URL,
+    login_url: urls.LOGIN_URL,
+    terms_url: urls.TERMS_SERVICE_URL,
+    privacy_url: urls.PRIVACY_URL,
+    email,
+    password,
+  };
+
+  const params = {
+    Destination: {
+      ToAddresses: [email],
+    },
+    Source: mail_contents.REPLY,
+    Template: 'Welcome',
+    TemplateData: JSON.stringify(templatedData),
+  };
+
+  // Create the promise and SES service object
+
+  ses.sendTemplatedEmail(params).promise();
+};
+
+const pushNotification = async (req, res) => {
+  const user = await User.findOne({ _id: req.params.id, del: false }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+  const subscription = JSON.parse(user['desktop_notification_subscription']);
+  webPush.setVapidDetails(
+    `mailto:${mail_contents.REPLY}`,
+    api.VAPID.PUBLIC_VAPID_KEY,
+    api.VAPID.PRIVATE_VAPID_KEY
+  );
+  const playload = JSON.stringify({
+    notification: {
+      title: 'Notification Title',
+      body: 'Notification Description',
+      icon: '/fav.ico',
+      badge: '/fav.ico',
+    },
+  });
+  webPush
+    .sendNotification(subscription, playload)
+    .then((data) => {
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      return res.send({
+        status: false,
+        error: err,
+      });
     });
 };
 
@@ -2733,6 +2840,7 @@ module.exports = {
   login,
   logout,
   checkUser,
+  sendWelcomeEmail,
   socialSignUp,
   socialLogin,
   signUpGmail,
@@ -2752,6 +2860,7 @@ module.exports = {
   resetPasswordByOld,
   resetPasswordByCode,
   forgotPassword,
+  createPassword,
   syncOutlook,
   authorizeOutlook,
   syncGmail,
@@ -2781,4 +2890,5 @@ module.exports = {
   checkLastLogin,
   closeAccount,
   connectAnotherEmail,
+  pushNotification,
 };

@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 const { validationResult } = require('express-validator/check');
 const mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
@@ -7,6 +8,7 @@ const webpush = require('web-push');
 const phone = require('phone');
 const moment = require('moment');
 const Verifier = require('email-verifier');
+const AWS = require('aws-sdk');
 
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
@@ -28,17 +30,27 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const Team = require('../models/team');
+const Notification = require('../models/notification');
 const LabelHelper = require('../helpers/label');
 const ActivityHelper = require('../helpers/activity');
 const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
+const { getAvatarName } = require('../helpers/utility');
+const { contacts } = require('node-outlook');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
@@ -73,7 +85,7 @@ const getAllByLastActivity = async (req, res) => {
     });
   }
 
-  res.send({
+  return res.send({
     status: true,
     data,
   });
@@ -92,13 +104,17 @@ const getByLastActivity = async (req, res) => {
 
   let contacts;
   if (typeof req.params.id === 'undefined') {
-    contacts = await Contact.find({ user: currentUser.id })
+    contacts = await Contact.find({
+      $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+    })
       .populate('last_activity')
       .sort({ [field]: dir })
       .limit(50);
   } else {
     const id = parseInt(req.params.id);
-    contacts = await Contact.find({ user: currentUser.id })
+    contacts = await Contact.find({
+      $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+    })
       .populate('last_activity')
       .sort({ [field]: dir })
       .skip(id)
@@ -112,7 +128,9 @@ const getByLastActivity = async (req, res) => {
     });
   }
 
-  const count = await Contact.countDocuments({ user: currentUser.id });
+  const count = await Contact.countDocuments({
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+  });
 
   return res.send({
     status: true,
@@ -143,7 +161,7 @@ const get = async (req, res) => {
 
   const _contact = await Contact.findOne({
     _id: req.params.id,
-    user: currentUser.id,
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
   }).catch((err) => {
     console.log('contact found err', err.message);
   });
@@ -314,9 +332,10 @@ const create = async (req, res) => {
 
   /**
    *  Email / Phone unique validation
-   * 
+   */
+
   let contact_old;
-  if (typeof req.body['email'] !== 'undefined') {
+  if (req.body.email && req.body.email != '') {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       email: req.body['email'],
@@ -329,7 +348,7 @@ const create = async (req, res) => {
     }
   }
 
-  if (typeof req.body['cell_phone'] !== 'undefined') {
+  if (req.body.cell_phone) {
     contact_old = await Contact.findOne({
       user: currentUser.id,
       cell_phone: req.body['cell_phone'],
@@ -342,7 +361,6 @@ const create = async (req, res) => {
     }
   }
 
-   */
   // let cleaned = ('' + cell_phone).replace(/\D/g, '')
   // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
   // if (match) {
@@ -453,6 +471,7 @@ const removeContact = async (user_id, id) => {
 
   await Contact.deleteOne({ _id: id });
   await Activity.deleteMany({ contacts: id });
+  await Note.deleteMany({ contact: id });
   await FollowUp.deleteMany({ contact: id });
   await Appointment.deleteMany({ contact: id });
   await Reminder.deleteMany({ contact: id });
@@ -494,6 +513,35 @@ const edit = async (req, res) => {
     //   const cell_phone = phone(req.body.cell_phone)[0];
     //   contact['cell_phone'] = cell_phone;
     // }
+
+    let contact_old;
+    if (req.body.email && req.body.email != '') {
+      contact_old = await Contact.findOne({
+        _id: { $ne: req.params.id },
+        user: currentUser.id,
+        email: req.body['email'],
+      });
+      if (contact_old !== null) {
+        return res.status(400).send({
+          status: false,
+          error: 'Email must be unique!',
+        });
+      }
+    }
+
+    if (req.body.cell_phone) {
+      contact_old = await Contact.findOne({
+        _id: { $ne: req.params.id },
+        user: currentUser.id,
+        cell_phone: req.body['cell_phone'],
+      });
+      if (contact_old !== null) {
+        return res.status(400).send({
+          status: false,
+          error: 'Phone number must be unique!',
+        });
+      }
+    }
 
     contact
       .save()
@@ -587,6 +635,7 @@ const importCSV = async (req, res) => {
   const file = req.file;
   const { currentUser } = req;
   const failure = [];
+  const duplicate_contacts_ids = [];
   let count = 0;
   let max_upload_count = 0;
   const contact_info = currentUser.contact_info;
@@ -613,13 +662,13 @@ const importCSV = async (req, res) => {
     })
     .on('end', () => {
       const promise_array = [];
+
       let add_content = 'added contact';
       let note_content = 'added note';
       if (req.guest_loggin) {
         add_content = ActivityHelper.assistantLog(add_content);
         note_content = ActivityHelper.assistantLog(note_content);
       }
-
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
@@ -629,87 +678,159 @@ const importCSV = async (req, res) => {
           if (data['email'] === '') {
             data['email'] = null;
           }
-          if (data['phone'] === '') {
-            data['phone'] = null;
+          if (data['cell_phone'] === '') {
+            data['cell_phone'] = null;
           }
-          if (data['first_name'] || data['email'] || data['phone']) {
-            const cell_phone = data['phone'];
-            // let cleaned = ('' + cell_phone).replace(/\D/g, '')
-            // let match = cleaned.match(/^(1|)?(\d{3})(\d{3})(\d{4})$/)
-            // if (match) {
-            //   let intlCode = (match[1] ? '+1 ' : '')
-            //   cell_phone = [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('')
-            // }
+          if (data['first_name'] || data['email'] || data['cell_phone']) {
+            let cell_phone;
+            const query = [];
+
             if (data['first_name'] && data['last_name']) {
-              const name_contact = await Contact.findOne({
+              query.push({
+                user: currentUser.id,
                 first_name: data['first_name'],
                 last_name: data['last_name'],
+              });
+            }
+
+            if (data['email']) {
+              query.push({
                 user: currentUser.id,
-              }).catch((err) => {
+                email: data['email'],
+              });
+            }
+
+            if (data['cell_phone']) {
+              cell_phone = phone(data['cell_phone'])[0];
+              if (cell_phone) {
+                query.push({
+                  user: currentUser.id,
+                  cell_phone,
+                });
+              }
+            }
+
+            const duplicate_contacts = await Contact.find({
+              _id: { $nin: duplicate_contacts_ids },
+              $or: query,
+            })
+              .populate('label')
+              .catch((err) => {
+                console.log('contact find err', err.message);
+              });
+
+            if (duplicate_contacts && duplicate_contacts.length > 0) {
+              duplicate_contacts.forEach((contact) => {
+                duplicate_contacts_ids.push(contact.id);
+                failure.push({
+                  message: 'duplicate',
+                  data: contact,
+                });
+              });
+
+              failure.push({ message: 'duplicate', data });
+              resolve();
+              return;
+            }
+            console.log('duplicate_contacts_ids', duplicate_contacts_ids);
+            /**
+            const name_contact = await Contact.find({
+              first_name: data['first_name'],
+              last_name: data['last_name'],
+              user: currentUser.id,
+            })
+              .populate('label')
+              .catch((err) => {
                 console.log('contact found err', err.message);
               });
-              if (name_contact) {
-                const field = {
-                  id: i,
-                  email: data['email'],
-                  err: 'Duplicated Full name',
-                };
-                failure.push(field);
-                failure.push(name_contact);
-                resolve();
-                return;
+            if (name_contact && name_contact.length > 0) {
+              failure.push({ message: 'duplicate', data });
+
+              let existing = false;
+              failure.some((item) => {
+                if (item.data._id == name_contact.id) {
+                  existing = true;
+                }
+              });
+              if (!existing) {
+                failure.push({
+                  message: 'duplicate',
+                  data: name_contact,
+                });
               }
+              resolve();
+              return;
             }
 
             if (data['email']) {
               const email_contact = await Contact.findOne({
                 email: data['email'],
                 user: currentUser.id,
-              }).catch((err) => {
-                console.log('contact found err', err.message);
-              });
+              })
+                .populate('label')
+                .catch((err) => {
+                  console.log('contact found err', err.message);
+                });
               if (email_contact) {
-                const field = {
-                  id: i,
-                  email: data['email'],
-                  err: 'Duplicated Email',
-                };
-                failure.push(field);
-                failure.push(email_contact);
+                failure.push({ message: 'duplicate', data });
+
+                let existing = false;
+                failure.some((item) => {
+                  if (item.data._id == email_contact.id) {
+                    existing = true;
+                  }
+                });
+                if (!existing) {
+                  failure.push({
+                    message: 'duplicate',
+                    data: email_contact,
+                  });
+                }
                 resolve();
                 return;
               }
             }
             if (data['cell_phone']) {
+              cell_phone = phone(data['cell_phone'])[0];
+            }
+            if (cell_phone) {
               const phone_contact = await Contact.findOne({
-                cell_phone: data['cell_phone'],
+                cell_phone,
                 user: currentUser.id,
               }).catch((err) => {
                 console.log('contact found err', err.message);
               });
               if (phone_contact) {
-                const field = {
-                  id: i,
-                  cell_phone: data['cell_phone'],
-                  err: 'Duplicated Phone',
-                };
-                failure.push(field);
-                failure.push(phone_contact);
+                failure.push({ message: 'duplicate', data });
+
+                let existing = false;
+                failure.some((item) => {
+                  if (item.data._id == phone_contact.id) {
+                    existing = true;
+                  }
+                });
+                if (!existing) {
+                  failure.push({
+                    message: 'duplicate',
+                    data: phone_contact,
+                  });
+                }
                 resolve();
                 return;
               }
             }
+            * */
 
             count += 1;
 
             if (contact_info['is_limit'] && max_upload_count < count) {
-              const field = {
-                id: i,
-                email: data['email'],
-                cell_phone: data['phone'],
-                err: 'Exceed upload max contacts',
-              };
-              failure.push(field);
+              // const field = {
+              //   id: i,
+              //   email: data['email'],
+              //   cell_phone: data['phone'],
+              //   err: 'Exceed upload max contacts',
+              // };
+              failure.push({ message: 'upload_max', data });
               resolve();
               return;
             }
@@ -722,7 +843,6 @@ const importCSV = async (req, res) => {
             if (data['label'] !== '' && typeof data['label'] !== 'undefined') {
               for (let i = 0; i < labels.length; i++) {
                 if (capitalize(labels[i].name) === capitalize(data['label'])) {
-                  console.log('label id', labels[i]._id);
                   label = labels[i]._id;
                   break;
                 }
@@ -768,38 +888,47 @@ const importCSV = async (req, res) => {
                   .catch((err) => {
                     console.log('err', err);
                   });
-                if (data['note'] && data['note'] !== '') {
-                  const note = new Note({
-                    content: data['note'],
-                    contact: _contact.id,
-                    user: currentUser.id,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                  });
-                  note.save().then((_note) => {
-                    const _activity = new Activity({
-                      content: note_content,
-                      contacts: _contact.id,
+
+                if (data['notes'] && data['notes'].length > 0) {
+                  const notes = JSON.parse(data['notes']);
+                  // const notes = data['notes'];
+                  for (let i = 0; i < notes.length; i++) {
+                    // const { content, title } = notes[i];
+                    const content = notes[i];
+                    const note = new Note({
+                      content,
+                      contact: _contact.id,
                       user: currentUser.id,
-                      type: 'notes',
-                      notes: _note.id,
                       created_at: new Date(),
                       updated_at: new Date(),
                     });
-                    _activity
-                      .save()
-                      .then((__activity) => {
-                        Contact.updateOne(
-                          { _id: _contact.id },
-                          { $set: { last_activity: __activity.id } }
-                        ).catch((err) => {
-                          console.log('err', err);
-                        });
-                      })
-                      .catch((err) => {
-                        console.log('error', err);
+
+                    note.save().then((_note) => {
+                      const _activity = new Activity({
+                        content: note_content,
+                        contacts: _contact.id,
+                        user: currentUser.id,
+                        type: 'notes',
+                        notes: _note.id,
+                        created_at: new Date(),
+                        updated_at: new Date(),
                       });
-                  });
+
+                      _activity
+                        .save()
+                        .then((__activity) => {
+                          Contact.updateOne(
+                            { _id: _contact.id },
+                            { $set: { last_activity: __activity.id } }
+                          ).catch((err) => {
+                            console.log('err', err);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('error', err);
+                        });
+                    });
+                  }
                 }
                 resolve();
               })
@@ -2956,7 +3085,7 @@ const loadDuplication = async (req, res) => {
     data: duplications,
   });
 };
-
+/**
 const mergeContacts = (req, res) => {
   const { currentUser } = req;
   const { primary, secondaries, result } = req.body;
@@ -3030,6 +3159,7 @@ const mergeContacts = (req, res) => {
       });
     });
 };
+*/
 
 const bulkCreate = async (req, res) => {
   const { contacts } = req.body;
@@ -3054,19 +3184,79 @@ const bulkCreate = async (req, res) => {
 
   for (let i = 0; i < contacts.length; i++) {
     const promise = new Promise(async (resolve, reject) => {
-      const data = contacts[i];
+      const data = { ...contacts[i] };
       count += 1;
       if (max_count < count) {
         const field = {
-          id: i,
-          email: data['email'],
-          cell_phone: data['cell_phone'],
-          err: 'Exceed upload max contacts',
+          data,
+          message: 'Exceed upload max contacts',
         };
         failure.push(field);
         resolve();
         return;
       }
+
+      if (data['email']) {
+        const email_contact = await Contact.findOne({
+          email: data['email'],
+          user: currentUser.id,
+        }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        if (email_contact) {
+          failure.push({ message: 'duplicate', data });
+
+          let existing = false;
+          failure.some((item) => {
+            if (item.data._id == email_contact.id) {
+              existing = true;
+            }
+          });
+          if (!existing) {
+            failure.push({ message: 'duplicate', data: email_contact });
+          }
+          resolve();
+          return;
+        }
+      }
+
+      if (data['cell_phone']) {
+        data['cell_phone'] = phone(req.body.cell_phone)[0];
+      }
+
+      if (data['cell_phone']) {
+        const phone_contact = await Contact.findOne({
+          cell_phone: data['email'],
+          user: currentUser.id,
+        }).catch((err) => {
+          console.log('contact found err', err.message);
+        });
+        if (phone_contact) {
+          failure.push({ message: 'duplicate', data });
+
+          let existing = false;
+          failure.some((item) => {
+            if (item.data._id == phone_contact.id) {
+              existing = true;
+            }
+          });
+          if (!existing) {
+            failure.push({ message: 'duplicate', data: phone_contact });
+          }
+          resolve();
+          return;
+        }
+      }
+
+      if (data['label']) {
+        data['label'] = await LabelHelper.convertLabel(
+          currentUser.id,
+          data['label']
+        );
+      } else {
+        delete data.label;
+      }
+
       const contact = new Contact({
         ...data,
         user: currentUser.id,
@@ -3987,6 +4177,417 @@ const getSharedContact = async (req, res) => {
   }
 };
 
+const contactMerge = async (req, res) => {
+  const { primary_contact, secondary_contact } = req.body;
+  const editData = { ...req.body };
+
+  delete editData.primary_contact;
+  delete editData.secondary_contact;
+
+  if (editData.activity_merge) {
+    switch (editData.activity_merge) {
+      case 'both': {
+        Activity.updateMany(
+          {
+            contacts: secondary_contact,
+          },
+          {
+            $set: { contacts: mongoose.Types.ObjectId(primary_contact) },
+          }
+        ).catch((err) => {
+          console.log('activity update err', err.message);
+        });
+
+        VideoTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        PDFTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        ImageTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        EmailTracker.updateMany(
+          { contact: secondary_contact },
+          { $set: { contact: mongoose.Types.ObjectId(primary_contact) } }
+        );
+
+        Email.updateMany(
+          { contacts: secondary_contact },
+          { $set: { contacts: mongoose.Types.ObjectId(primary_contact) } }
+        );
+        break;
+      }
+
+      case 'primary': {
+        Activity.deleteMany({
+          contacts: secondary_contact,
+        }).catch((err) => {
+          console.log('activity remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        Activity.deleteMany({
+          contacts: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('activity remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  if (editData.followup_merge) {
+    switch (editData.followup_merge) {
+      case 'both': {
+        FollowUp.updateMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('followup update err', err.message);
+        });
+        Reminder.updateMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('reminder update err', err.message);
+        });
+        break;
+      }
+      case 'primary': {
+        FollowUp.deleteMany({
+          contact: secondary_contact,
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        Reminder.deleteMany(
+          {
+            contact: secondary_contact,
+          },
+          {
+            $set: { contact: primary_contact },
+          }
+        ).catch((err) => {
+          console.log('reminder update err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        FollowUp.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('followup remove err', err.message);
+        });
+        Reminder.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('reminder remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  if (editData.automation_merge) {
+    switch (editData.automation_merge) {
+      case 'primary': {
+        TimeLine.deleteMany({
+          contact: secondary_contact,
+        }).catch((err) => {
+          console.log('timeline remove err', err.message);
+        });
+        break;
+      }
+      case 'remove': {
+        TimeLine.deleteMany({
+          contact: { $in: [primary_contact, secondary_contact] },
+        }).catch((err) => {
+          console.log('timeline remove err', err.message);
+        });
+        break;
+      }
+    }
+  }
+
+  Contact.findOneAndUpdate(
+    {
+      _id: primary_contact,
+    },
+    {
+      $set: editData,
+    },
+    { new: true }
+  )
+    .then((data) => {
+      Contact.deleteOne({ _id: secondary_contact }).catch((err) => {
+        console.log('contact delete err', err.message);
+      });
+
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('contact update err', err.message);
+    });
+};
+
+const updateContact = async (req, res) => {
+  const { label, cell_phone } = req.body;
+  const { currentUser } = req;
+
+  if (label) {
+    req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
+  } else {
+    delete req.body.label;
+  }
+  if (cell_phone) {
+    req.body.cell_phone = phone(cell_phone)[0];
+  } else {
+    delete req.body.cell_phone;
+  }
+  if (req.body.notes && req.body.notes.length > 0) {
+    let note_content = 'added note';
+    if (req.guest_loggin) {
+      note_content = ActivityHelper.assistantLog(note_content);
+    }
+
+    for (let i = 0; i < req.body.notes.length; i++) {
+      // const { content, title } = req.body['notes'][i];
+      const content = req.body['notes'][i];
+      const note = new Note({
+        content,
+        contact: req.body.id,
+        user: currentUser.id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      note.save().then((_note) => {
+        const _activity = new Activity({
+          content: note_content,
+          contacts: req.body.id,
+          user: currentUser.id,
+          type: 'notes',
+          notes: _note.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        _activity
+          .save()
+          .then((__activity) => {
+            Contact.updateOne(
+              { _id: req.body.id },
+              { $set: { last_activity: __activity.id } }
+            ).catch((err) => {
+              console.log('err', err);
+            });
+          })
+          .catch((err) => {
+            console.log('error', err);
+          });
+      });
+    }
+  }
+
+  Contact.updateOne(
+    {
+      _id: req.body.id,
+      user: currentUser.id,
+    },
+    {
+      $set: {
+        ...req.body,
+      },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('contact update err', err.message);
+      return res.send({
+        status: false,
+        error: 'Internal server error',
+      });
+    });
+};
+
+const shareContacts = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+  const promise_array = [];
+  const data = [];
+  const error = [];
+  let contacts_html = '';
+
+  const user = await User.findOne({
+    _id: req.body.user,
+  }).catch((err) => {
+    console.log('user find err', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+    const promise = new Promise(async (resolve, reject) => {
+      const contact = await Contact.findOne({
+        _id: contacts[i],
+        user: currentUser.id,
+      })
+        .populate([
+          { path: 'last_activity' },
+          {
+            path: 'shared_members',
+            select: {
+              user_name: 1,
+              picture_profile: 1,
+              email: 1,
+              cell_phone: 1,
+            },
+          },
+        ])
+        .catch((err) => {
+          console.log('contact find err', err.message);
+        });
+
+      if (!contact) {
+        error.push({
+          contact: {
+            _id: contacts[i],
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          err: 'Invalid permission',
+        });
+
+        resolve();
+      }
+
+      Contact.updateOne(
+        {
+          _id: contacts[i],
+        },
+        {
+          $set: {
+            shared_contact: true,
+          },
+          $push: {
+            shared_members: req.body.user,
+          },
+        }
+      )
+        .then(() => {
+          const first_name = contact.first_name || '';
+          const last_name = contact.last_name || '';
+          const name = {
+            first_name,
+            last_name,
+          };
+
+          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+            name
+          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+          contacts_html += contact_html;
+
+          const notification = new Notification({
+            user: req.body.user,
+            sharer: req.body.user,
+            criteria: 'contact_shared',
+            content: `${user.user_name} have shared a contact in CRMGrow`,
+          });
+
+          // Notification
+          notification.save().catch((err) => {
+            console.log('notification save err', err.message);
+          });
+
+          const myJSON = JSON.stringify(contact);
+          const _contact = JSON.parse(myJSON);
+          _contact.shared_members.push({
+            user_name: user.user_name,
+            picture_profile: user.picture_profile,
+            email: user.email,
+            cell_phone: user.cell_phone,
+          });
+          data.push(_contact);
+          resolve();
+        })
+        .catch((err) => {
+          console.log('contact update err', err.message);
+        });
+    });
+    promise_array.push(promise);
+  }
+
+  Promise.all(promise_array)
+    .then(() => {
+      if (data.length > 0) {
+        const templatedData = {
+          user_name: currentUser.user_name,
+          sharer_name: user.user_name,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
+          contacts_html,
+        };
+
+        const params = {
+          Destination: {
+            ToAddresses: [user.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'ContactAdd',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+        ses
+          .sendTemplatedEmail(params)
+          .promise()
+          .then((response) => {
+            console.log('success', response.MessageId);
+          })
+          .catch((err) => {
+            console.log('ses send err', err);
+          });
+      }
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('contact share err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4018,7 +4619,7 @@ module.exports = {
   checkEmail,
   checkPhone,
   loadDuplication,
-  mergeContacts,
+  // mergeContacts,
   bulkCreate,
   verifyEmail,
   verifyPhone,
@@ -4027,4 +4628,7 @@ module.exports = {
   interestContact,
   interestSubmitContact,
   getSharedContact,
+  shareContacts,
+  contactMerge,
+  updateContact,
 };

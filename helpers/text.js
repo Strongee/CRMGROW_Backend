@@ -958,7 +958,6 @@ const getTwilioNumber = async (id) => {
   }
 
   if (typeof number !== 'undefined' && number !== '+') {
-    console.log('number', number);
     const proxy_number = await twilio.incomingPhoneNumbers
       .create({
         phoneNumber: number.phoneNumber,
@@ -1096,8 +1095,12 @@ const matchUSPhoneNumber = (phoneNumberString) => {
   return phoneNumber;
 };
 
-const getStatus = (id) => {
-  return client.messages(id).fetch();
+const getStatus = (id, service) => {
+  if (service === 'twilio') {
+    return twilio.messages(id).fetch();
+  } else {
+    return client.messages(id).fetch();
+  }
 };
 
 const releaseSignalWireNumber = (phoneNumberSid) => {

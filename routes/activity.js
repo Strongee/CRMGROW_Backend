@@ -26,5 +26,6 @@ router.get(
   UserCtrl.checkLastLogin,
   catchError(ActivityCtrl.get)
 );
+router.post('/get', UserCtrl.checkAuth, catchError(ActivityCtrl.load));
 
 module.exports = router;

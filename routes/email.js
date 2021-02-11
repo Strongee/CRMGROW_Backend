@@ -37,4 +37,10 @@ router.post(
   UserCtrl.checkAuth,
   catchError(EmailCtrl.sharePlatform)
 );
+router.post(
+  '/send-email',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  catchError(EmailCtrl.sendEmail)
+);
 module.exports = router;

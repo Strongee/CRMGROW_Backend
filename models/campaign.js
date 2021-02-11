@@ -6,7 +6,7 @@ const CampaignSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     title: String,
-    contacts: Array,
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     mail_list: { type: mongoose.Schema.Types.ObjectId, ref: 'mail_list' },
     email_template: {
       type: mongoose.Schema.Types.ObjectId,

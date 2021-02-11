@@ -19,6 +19,12 @@ const TeamCallSchema = new Schema(
     link: String,
     schedule_link: String,
     proposed_at: Array,
+    deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
+    shared_team_call: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'team_call',
+    },
+    has_shared: Boolean,
     confirmed_at: Date,
     desired_at: Date,
     updated_at: Date,

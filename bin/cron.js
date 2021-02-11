@@ -361,7 +361,7 @@ const reminder_job = new CronJob(
           _id: reminder.follow_up,
           status: 0,
         }).catch((err) => {
-          console.log('err: ', err);
+          console.log('followup find err: ', err.message);
         });
 
         if (follow_up) {
@@ -394,6 +394,10 @@ const reminder_job = new CronJob(
             .format('h:mm a');
 
           if (email_notification['follow_up']) {
+            const time_zone = user.time_zone_info
+              ? user.time_zone_info.tz_name
+              : system_settings.TIME_ZONE;
+
             const msg = {
               to: user.email,
               from: mail_contents.FOLLOWUP_REMINDER.MAIL,
@@ -520,6 +524,92 @@ const reminder_job = new CronJob(
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);
           });
+          if (follow_up.set_occurrence) {
+            switch (follow_up.occurring_mode) {
+              case 'DAILY': {
+                const today = moment(follow_up.due_date);
+                const tomorrow = today.add(1, 'days');
+
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: tomorrow,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
+
+                const new_reminder = new Reminder({
+                  contact: contact.id,
+                  due_date: tomorrow,
+                  type: 'follow_up',
+                  user: follow_up.user,
+                  follow_up: follow_up.id,
+                });
+
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+                break;
+              }
+              case 'WEEKLY': {
+                const today = moment(follow_up.due_date);
+                const week = today.add(7, 'days');
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: week,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
+
+                const new_reminder = new Reminder({
+                  contact: contact.id,
+                  due_date: week,
+                  type: 'follow_up',
+                  user: follow_up.user,
+                  follow_up: follow_up.id,
+                });
+
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+                break;
+              }
+              case 'MONTHLY': {
+                const today = moment(follow_up.due_date);
+                const month = today.add(1, 'months');
+                FollowUp.updateOne(
+                  {
+                    _id: follow_up.id,
+                  },
+                  {
+                    due_date: month,
+                  }
+                ).catch((err) => {
+                  console.log('follow up err', err.message);
+                });
+
+                const new_reminder = new Reminder({
+                  contact: contact.id,
+                  due_date: month,
+                  type: 'follow_up',
+                  user: follow_up.user,
+                  follow_up: follow_up.id,
+                });
+
+                new_reminder.save().catch((err) => {
+                  console.log('reminder save err', err.message);
+                });
+                break;
+              }
+            }
+          }
         } else {
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);
@@ -1080,6 +1170,7 @@ const upload_video_job = new CronJob(
       for (let i = 0; i < videos.length; i++) {
         const video = videos[i];
         const file_path = video.path;
+        const old_path = video.old_path;
         if (file_path) {
           const file_name = video.path.slice(37);
 
@@ -1152,6 +1243,9 @@ const upload_video_job = new CronJob(
               console.log('err', err.message);
               // read file
             }
+          }
+          if (old_path && fs.existsSync(old_path)) {
+            fs.unlinkSync(old_path);
           }
         }
       }
@@ -1856,8 +1950,8 @@ const timesheet_check = new CronJob(
             break;
           }
           case 'bulk_sms': {
-            const { message_sid, activities } = timeline.action;
-            TextHelper.getStatus(message_sid).then((res) => {
+            const { message_sid, service, activities } = timeline.action;
+            TextHelper.getStatus(message_sid, service).then((res) => {
               if (res.status === 'delivered') {
                 Activity.updateMany(
                   {
@@ -1889,7 +1983,6 @@ const timesheet_check = new CronJob(
                 );
                 const now = moment();
                 if (beginning_time.isBefore(now)) {
-                  console.log('before');
                   Activity.deleteMany({
                     _id: { $in: activities },
                   }).catch((err) => {
@@ -1901,7 +1994,9 @@ const timesheet_check = new CronJob(
                   {
                     $set: {
                       status: 'undelivered',
-                      description: res.error_message,
+                      description:
+                        res.errorMessage ||
+                        'Could`t get delivery result from carrier',
                       content: 'Failed texting material',
                     },
                   }
@@ -1927,7 +2022,7 @@ const timesheet_check = new CronJob(
                   {
                     $set: {
                       status: 'undelivered',
-                      description: res.error_message,
+                      description: res.errorMessage,
                       content: 'Failed texting material',
                     },
                   }
@@ -1941,6 +2036,37 @@ const timesheet_check = new CronJob(
                 });
               }
             });
+            break;
+          }
+          case 'send_email': {
+            const data = {
+              ...timeline.action,
+              contacts: [timeline.contact],
+              user: timeline.user,
+            };
+            EmailHelper.sendEmail(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
             break;
           }
         }
@@ -2024,11 +2150,22 @@ const campaign_job = new CronJob(
           _id: campaign.email_template,
         });
 
+        const { user, contacts } = campaign_job;
         const data = {
-          user: campaign_job.user,
+          user,
           content: email_template.content,
           subject: email_template.subject,
+          contacts,
+          video_ids: campaign.videos,
+          pdf_ids: campaign.pdfs,
+          image_ids: campaign.images,
         };
+
+        EmailHelper.sendEmail(data)
+          .then((res) => {})
+          .catch((err) => {
+            console.log('err', err.message);
+          });
       }
     }
   },

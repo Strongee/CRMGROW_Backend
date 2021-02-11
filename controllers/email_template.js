@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');
@@ -72,9 +71,9 @@ const getAll = async (req, res) => {
 
   Array.prototype.push.apply(email_templates, _template_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate(
-    'email_templates'
-  );
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('email_templates');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {

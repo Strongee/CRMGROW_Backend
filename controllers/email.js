@@ -354,7 +354,7 @@ const bulkGmail = async (req, res) => {
       });
     })
     .catch((err) => {
-      console.log('err', err);
+      console.log('bulk gmail send err', err);
       return res.status(400).json({
         status: false,
         error: err,
@@ -423,7 +423,6 @@ const bulkOutlook = async (req, res) => {
     refresh_token: currentUser.outlook_refresh_token,
     expires_in: 0,
   });
-  let accessToken;
 
   if (contacts.length > system_settings.EMAIL_ONE_TIME) {
     return res.status(400).json({
@@ -443,6 +442,7 @@ const bulkOutlook = async (req, res) => {
   }
 
   for (let i = 0; i < contacts.length; i++) {
+    let accessToken;
     await new Promise((resolve, reject) => {
       token.refresh(function (error, result) {
         if (error) {
@@ -2730,6 +2730,167 @@ const clickEmailLink = async (req, res) => {
   });
 };
 
+const sendEmail = async (req, res) => {
+  const { emails, email_content, email_subject } = req.body;
+  const { currentUser } = req;
+  const promise_array = [];
+  const error = [];
+  if (
+    currentUser.connected_email_type === 'gmail' ||
+    currentUser.connected_email_type === 'gsuit'
+  ) {
+    const oauth2Client = new google.auth.OAuth2(
+      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+      urls.GMAIL_AUTHORIZE_URL
+    );
+    const token = JSON.parse(currentUser.google_refresh_token);
+    oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+    await oauth2Client.getAccessToken().catch((err) => {
+      console.log('get access err', err.message || err.msg);
+      return res.status(406).send({
+        status: false,
+        error: 'not connected',
+      });
+    });
+    for (let i = 0; i < emails.length; i++) {
+      const email = emails[i];
+      const promise = new Promise(async (resolve, reject) => {
+        try {
+          const body = createBody({
+            headers: {
+              To: email,
+              From: `${currentUser.user_name} <${currentUser.connected_email}>`,
+              Subject: email_subject,
+            },
+            textHtml: email_content,
+          });
+          request({
+            method: 'POST',
+            uri:
+              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            headers: {
+              Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+              'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
+            },
+            body,
+          })
+            .then(async () => {
+              resolve();
+            })
+            .catch((err) => {
+              console.log('user send email err', err.message);
+              error.push(email);
+              resolve();
+            });
+        } catch (err) {
+          console.log('user send email err', err.message);
+          error.push(email);
+        }
+      }).catch((err) => {
+        console.log('promise err', err);
+      });
+      promise_array.push(promise);
+    }
+  } else if (
+    currentUser.connected_email_type === 'outlook' ||
+    currentUser.connected_email_type === 'microsoft'
+  ) {
+    const token = oauth2.accessToken.create({
+      refresh_token: currentUser.outlook_refresh_token,
+      expires_in: 0,
+    });
+
+    for (let i = 0; i < emails.length; i++) {
+      const email = emails[i];
+      let accessToken;
+      await new Promise((resolve, reject) => {
+        token.refresh(function (error, result) {
+          if (error) {
+            reject(error.message);
+          } else {
+            resolve(result.token);
+          }
+        });
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('outlook token grant error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
+        });
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
+      });
+
+      const sendMail = {
+        message: {
+          subject: email_subject,
+          from: {
+            emailAddress: {
+              name: currentUser.user_name,
+              address: currentUser.connected_email,
+            },
+          },
+          body: {
+            contentType: 'HTML',
+            content: email_content,
+          },
+          toRecipients: [
+            {
+              emailAddress: {
+                address: email,
+              },
+            },
+          ],
+        },
+        saveToSentItems: 'true',
+      };
+
+      const promise = new Promise((resolve, reject) => {
+        client
+          .api('/me/sendMail')
+          .post(sendMail)
+          .then(() => {
+            resolve();
+          })
+          .catch((err) => {
+            console.log('outlook err', err.message);
+            error.push(email);
+            resolve();
+          });
+      });
+      promise_array.push(promise);
+    }
+  }
+  Promise.all(promise_array)
+    .then(() => {
+      if (error.length > 0) {
+        return res.send({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        errror: err.message,
+      });
+    });
+};
+
 module.exports = {
   openTrack,
   getGmail,
@@ -2745,4 +2906,5 @@ module.exports = {
   unSubscribePage,
   reSubscribeEmail,
   sharePlatform,
+  sendEmail,
 };

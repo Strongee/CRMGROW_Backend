@@ -101,6 +101,13 @@ const GarbageSchema = new Schema(
       email: String,
       link: String,
     },
+    smtp: {
+      host: String,
+      user: String,
+      password: String,
+      secure: Boolean,
+      port: Number,
+    },
     created_at: Date,
     updated_at: Date,
   },
