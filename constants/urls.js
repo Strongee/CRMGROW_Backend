@@ -1,4 +1,5 @@
 let domain = 'https://app.crmgrow.com/';
+let front = 'teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://app.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
@@ -16,8 +17,8 @@ const urls = {
   APP_SIGNIN_URL: `${domain}/social-oauth-callback/`,
   OUTLOOK_AUTHORIZE_URL: `${domain}/profile/outlook`,
   GMAIL_AUTHORIZE_URL: `${domain}/profile/gmail`,
-  GOOGLE_CALENDAR_AUTHORIZE_URL: `${domain}/calendar/google`,
-  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${domain}/calendar/outlook`,
+  GOOGLE_CALENDAR_AUTHORIZE_URL: `${front}/calendar/google`,
+  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${front}/calendar/outlook`,
   VIDEO_THUMBNAIL_URL: `${domain}/api/video/thumbnail/`,
   PDF_PREVIEW_URL: `${domain}/api/pdf/preview/`,
   IMAGE_PREVIEW_URL: `${domain}/api/image/preview/`,
