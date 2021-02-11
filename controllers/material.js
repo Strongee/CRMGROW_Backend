@@ -474,7 +474,7 @@ const bulkEmail = async (req, res) => {
             })
               .then(async () => {
                 email_count += 1;
-
+                console.log('email has been sent out!');
                 Activity.updateMany(
                   { _id: { $in: activities } },
                   {
