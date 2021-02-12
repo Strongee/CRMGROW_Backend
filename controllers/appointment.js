@@ -1605,16 +1605,21 @@ const accept = async (req, res) => {
         resource: event,
         sendNotifications: true,
       };
-      return new Promise((resolve, reject) => {
-        calendar.events.patch(params, function (err) {
-          if (err) {
-            console.log(
-              `There was an error contacting the Calendar service: ${err}`
-            );
-            reject(err);
-          }
-          resolve();
-        });
+
+      calendar.events.patch(params, function (err) {
+        if (err) {
+          console.log(
+            `There was an error contacting the Calendar service: ${err}`
+          );
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        } else {
+          return res.send({
+            status: true,
+          });
+        }
       });
     }
   }
