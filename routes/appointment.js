@@ -14,10 +14,14 @@ router.get('/', UserCtrl.checkAuth, catchError(AppointmentCtrl.getAll));
 router.put('/:id', UserCtrl.checkAuth, catchError(AppointmentCtrl.edit));
 
 // Update appointment by id
-router.post('/accept', catchError(AppointmentCtrl.accept));
+router.post('/accept', UserCtrl.checkAuth, catchError(AppointmentCtrl.accept));
 
 // Update appointment by id
-router.post('/decline', catchError(AppointmentCtrl.decline));
+router.post(
+  '/decline',
+  UserCtrl.checkAuth,
+  catchError(AppointmentCtrl.decline)
+);
 
 // Get calendar list
 router.get(
