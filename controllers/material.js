@@ -691,6 +691,7 @@ const bulkEmail = async (req, res) => {
               resolve({
                 status: false,
                 contact: {
+                  id: contact.id,
                   first_name: contact.first_name,
                   email: contact.email,
                 },
@@ -703,12 +704,30 @@ const bulkEmail = async (req, res) => {
     }
   }
   Promise.all(promise_array)
-    .then((data) => {
-      return res.send(data);
+    .then((result) => {
+      const error = [];
+      result.forEach((_res) => {
+        if (!_res.status) {
+          error.push({
+            contact: _res.contact,
+            error: _res.error,
+          });
+        }
+      });
+
+      if (error.length > 0) {
+        return res.status(400).json({
+          status: false,
+          error,
+        });
+      } else {
+        return res.send(result);
+      }
     })
     .catch((err) => {
-      return res.status(400).json({
+      return res.status(500).json({
         status: false,
+        error: err,
       });
     });
 };
