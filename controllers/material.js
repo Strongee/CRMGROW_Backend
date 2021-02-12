@@ -474,7 +474,6 @@ const bulkEmail = async (req, res) => {
             })
               .then(async () => {
                 email_count += 1;
-                console.log('email has been sent out!');
                 Activity.updateMany(
                   { _id: { $in: activities } },
                   {
@@ -493,6 +492,7 @@ const bulkEmail = async (req, res) => {
 
                 resolve({
                   status: true,
+                  data: activities,
                 });
               })
               .catch((err) => {
@@ -676,6 +676,7 @@ const bulkEmail = async (req, res) => {
 
               resolve({
                 status: true,
+                data: activities,
               });
             })
             .catch((err) => {
@@ -702,10 +703,8 @@ const bulkEmail = async (req, res) => {
     }
   }
   Promise.all(promise_array)
-    .then(() => {
-      return res.send({
-        status: true,
-      });
+    .then((data) => {
+      return res.send(data);
     })
     .catch((err) => {
       return res.status(400).json({
