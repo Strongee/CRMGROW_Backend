@@ -1518,7 +1518,7 @@ const accept = async (req, res) => {
   const { currentUser } = req;
 
   if (currentUser.calendar_connected) {
-    const { recurrence_id, connected_email, calendar_id, guests } = req.body;
+    const { recurrence_id, connected_email, calendar_id } = req.body;
 
     const calendar_list = currentUser.calendar_list;
     let calendar;
