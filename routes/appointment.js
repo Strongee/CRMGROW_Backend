@@ -17,7 +17,7 @@ router.put('/:id', UserCtrl.checkAuth, catchError(AppointmentCtrl.edit));
 router.post('/accept', catchError(AppointmentCtrl.accept));
 
 // Update appointment by id
-router.get('/decline', catchError(AppointmentCtrl.decline));
+router.post('/decline', catchError(AppointmentCtrl.decline));
 
 // Get calendar list
 router.get(
