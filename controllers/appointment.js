@@ -1537,7 +1537,10 @@ const accept = async (req, res) => {
 
     const event_id = recurrence_id || req.params.id;
 
-    if (calendar.connected_calendar_type === 'outlook') {
+    if (
+      calendar.connected_calendar_type === 'outlook' ||
+      calendar.connected_calendar_type === 'microsoft'
+    ) {
       let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: calendar.outlook_refresh_token,
@@ -1575,10 +1578,24 @@ const accept = async (req, res) => {
       const accept = {
         sendResponse: true,
       };
-      let res = await client
+      client
         .api(`/me/calendars/${calendar_id}/events/${event_id}/accept`)
-        .post(accept);
-    } else if (calendar.connected_calendar_type === 'gmail') {
+        .post(accept)
+        .then(() => {
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
+        });
+    } else if (
+      calendar.connected_calendar_type === 'gmail' ||
+      calendar.connected_calendar_type === 'gsuit'
+    ) {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
