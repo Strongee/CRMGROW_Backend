@@ -185,8 +185,8 @@ const getByDate = async (req, res) => {
     case 'tomorrow': {
       const today_start = moment().utcOffset(time_zone).startOf('day'); // set to 12:00 am today
       const today_end = moment().endOf('day'); // set to 23:59 pm today
-      const tomorrow_start = today_start.add(1, 'day');
-      const tomorrow_end = today_end.add(1, 'day');
+      const tomorrow_start = today_start.add(1, 'days');
+      const tomorrow_end = today_end.add(1, 'days');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,
         status: 0,
@@ -221,11 +221,11 @@ const getByDate = async (req, res) => {
     case 'next_week': {
       const next_week_start = moment()
         .utcOffset(time_zone)
-        .add(2, 'day')
+        .add(2, 'days')
         .startOf('day');
       const next_week_end = moment()
         .utcOffset(time_zone)
-        .add('days', 7)
+        .add(7, 'days')
         .endOf('day');
       const _follow_up = await FollowUp.find({
         user: currentUser.id,

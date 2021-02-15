@@ -6,6 +6,7 @@ const AWS = require('aws-sdk');
 const short = require('short-uuid');
 const moment = require('moment');
 const api = require('../config/api');
+const Activity = require('../models/activity');
 const Team = require('../models/team');
 const User = require('../models/user');
 const Image = require('../models/image');
@@ -1431,6 +1432,29 @@ const requestCall = async (req, res) => {
               last_name,
             };
 
+            const new_activity = new Activity({
+              team_calls: team_call.id,
+              user: currentUser.id,
+              contacts: contacts[i].id,
+              content: 'inquire group call',
+              type: 'team_calls',
+            });
+
+            new_activity.save().catch((err) => {
+              console.log('activity save err', err.message);
+            });
+
+            Contact.updateOne(
+              {
+                _id: contacts[i].id,
+              },
+              {
+                $set: { last_activity: new_activity.id },
+              }
+            ).catch((err) => {
+              console.log('contact update err', err.message);
+            });
+
             const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
               data
             )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
@@ -1524,29 +1548,38 @@ const acceptCall = async (req, res) => {
         _id: call_id,
       },
       {
-        status: 'planned',
+        $set: {
+          ...req.body,
+          status: 'planned',
+        },
       }
     )
       .then(() => {
-        /** **********
-         *  Send email notification to the inviated users
-         *  */
-        // sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-        // const msg = {
-        //   to: user.email,
-        //   from: mail_contents.NO_REPLAY,
-        //   templateId: api.SENDGRID.NOTIFICATION_REQUEST_TEAM_CALL,
-        //   dynamic_template_data: {
-        //     LOGO_URL: urls.LOGO_URL,
-        //     subject: mail_contents.NOTIFICATION_REQUEST_TEAM_CALL.SUBJECT,
-        //     invite: currentUser.user_name,
-        //     user_name: user.user_name,
-        //     VIEW_URL: urls.TEAM_CALLS + team_call.id,
-        //   },
-        // };
-        // sgMail.send(msg).catch((err) => {
-        //   console.log('team call invitation email err', err);
-        // });
+        const contacts = team_call.contacts;
+        for (let i = 0; i < team_call.length; i++) {
+          const new_activity = new Activity({
+            team_calls: team_call.id,
+            user: currentUser.id,
+            contacts: contacts[i],
+            content: 'accepted a group call',
+            type: 'team_calls',
+          });
+
+          new_activity.save().catch((err) => {
+            console.log('activity save err', err.message);
+          });
+
+          Contact.updateOne(
+            {
+              _id: contacts[i],
+            },
+            {
+              $set: { last_activity: new_activity.id },
+            }
+          ).catch((err) => {
+            console.log('contact update err', err.message);
+          });
+        }
 
         const templatedData = {
           leader_name: currentUser.user_name,
@@ -1694,7 +1727,10 @@ const getInquireCall = async (req, res) => {
     status: { $in: ['pending'] },
   })
     .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      {
+        path: 'leader',
+        select: { user_name: 1, picture_profile: 1, email: 1 },
+      },
       { path: 'user', select: { user_name: 1, picture_profile: 1 } },
       // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
       { path: 'contacts' },
@@ -1912,10 +1948,36 @@ const getLeaders = (req, res) => {
     });
 };
 
+const getSharedContacts = async (req, res) => {
+  const { currentUser } = req;
+  const contacts = await Contact.find({
+    shared_contact: true,
+    user: currentUser.id,
+  })
+    .populate([
+      {
+        path: 'shared_members',
+        select: 'user_name email picture_profile cell_phone',
+      },
+      {
+        path: 'last_activity',
+      },
+    ])
+    .catch((err) => {
+      console.log('get shared contact', err.message);
+    });
+
+  return res.send({
+    status: true,
+    data: contacts,
+  });
+};
+
 module.exports = {
   getAll,
   getLeaders,
   getTeam,
+  getSharedContacts,
   getInvitedTeam,
   get,
   getInquireCall,

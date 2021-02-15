@@ -17,6 +17,11 @@ router.get('/date', UserCtrl.checkAuth, catchError(FollowUpCtrl.getByDate));
 router.put('/:id', UserCtrl.checkAuth, catchError(FollowUpCtrl.edit));
 router.post('/load', UserCtrl.checkAuth, catchError(FollowUpCtrl.load));
 router.post(
+  '/completed',
+  UserCtrl.checkAuth,
+  catchError(FollowUpCtrl.completed)
+);
+router.post(
   '/checked',
   UserCtrl.checkAuth,
   catchError(FollowUpCtrl.updateChecked)
@@ -28,5 +33,11 @@ router.post(
 );
 router.post('/create', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkCreate));
 router.post('/update', UserCtrl.checkAuth, catchError(FollowUpCtrl.bulkUpdate));
+router.post('/load', UserCtrl.checkAuth, catchError(FollowUpCtrl.load));
+router.post(
+  '/select-all',
+  UserCtrl.checkAuth,
+  catchError(FollowUpCtrl.selectAll)
+);
 
 module.exports = router;

@@ -33,6 +33,11 @@ var upload = multer({
   }),
 });
 
+router.get(
+  '/load-default',
+  UserCtrl.checkAuth,
+  catchError(GarbageCtrl.loadDefaults)
+);
 router.post('/', UserCtrl.checkAuth, catchError(GarbageCtrl.create));
 router.get('/', UserCtrl.checkAuth, catchError(GarbageCtrl.get));
 router.put('/', UserCtrl.checkAuth, catchError(GarbageCtrl.edit));

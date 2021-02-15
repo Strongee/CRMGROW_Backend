@@ -20,6 +20,7 @@ const create = async (req, res) => {
   const { currentUser } = req;
   const { contacts, automation_id } = req.body;
   const error = [];
+  const contact_array = [];
   const _automation = await Automation.findOne({ _id: automation_id }).catch(
     (err) => {
       console.log('err', err);
@@ -79,6 +80,13 @@ const create = async (req, res) => {
         });
         continue;
       }
+
+      const contact = await Contact.findOne({ _id: contacts[i] }).populate(
+        'last_activity',
+        'label'
+      );
+
+      contact_array.push(contact);
 
       for (let j = 0; j < automations.length; j++) {
         const automation = automations[j];
@@ -147,6 +155,7 @@ const create = async (req, res) => {
     }
     return res.send({
       status: true,
+      data: contact_array,
     });
   }
   res.status(400).json({

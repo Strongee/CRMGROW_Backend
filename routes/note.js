@@ -19,5 +19,7 @@ router.post(
   UserCtrl.checkSuspended,
   catchError(NoteCtrl.bulkCreate)
 );
+router.put('/:id', UserCtrl.checkAuth, catchError(NoteCtrl.update));
+router.delete('/:id', UserCtrl.checkAuth, catchError(NoteCtrl.remove));
 
 module.exports = router;

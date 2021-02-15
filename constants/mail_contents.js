@@ -78,7 +78,7 @@ const mail_contents = {
   },
   MAIL_SEND: 'mailservice@crmgrow.com',
   NO_REPLAY: 'CRMGROW <no-reply@crmgrow.com>',
-  REPLY: 'support@crmgrow.com',
+  REPLY: 'CRMGROW <support@crmgrow.com>',
   VIDEO_TITLE: 'eXp Realty eXplained Videos',
   PDF_TITLE: 'eXp Realty eXplained PDFs',
   IMAGE_TITLE: 'eXp Realty eXplained Images',

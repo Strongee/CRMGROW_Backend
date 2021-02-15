@@ -14,10 +14,21 @@ router.get('/', UserCtrl.checkAuth, catchError(AppointmentCtrl.getAll));
 router.put('/:id', UserCtrl.checkAuth, catchError(AppointmentCtrl.edit));
 
 // Update appointment by id
-router.get('/accept', catchError(AppointmentCtrl.accept));
+router.post('/accept', UserCtrl.checkAuth, catchError(AppointmentCtrl.accept));
 
 // Update appointment by id
-router.get('/decline', catchError(AppointmentCtrl.decline));
+router.post(
+  '/decline',
+  UserCtrl.checkAuth,
+  catchError(AppointmentCtrl.decline)
+);
+
+// Get calendar list
+router.get(
+  '/calendar',
+  UserCtrl.checkAuth,
+  catchError(AppointmentCtrl.getCalendarList)
+);
 
 // Remove contact and its all related info (activity, followup) by id
 router.post('/delete', UserCtrl.checkAuth, catchError(AppointmentCtrl.remove));

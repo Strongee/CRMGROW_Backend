@@ -22,7 +22,7 @@ const system_settings = {
     BASIC: 15,
   },
   PASSWORD: {
-    USER: process.env.DEFAULT_PASS || 'admin123',
+    USER: process.env.DEFAULT_PASS || 'user123',
     ADMIN: process.env.ADMIN_DEFAULT_PASS || 'admin123',
   },
   COMPANY: {
@@ -42,6 +42,7 @@ const system_settings = {
   SCHEDULE_LINK_30_MINS: 'https://calendly.com/coachwithdaniel/crm-grow-30',
   SCHEDULE_LINK_1_HOUR: 'https://calendly.com/coachwithdaniel/crm-grow',
   CAMPAIGN_MAIL_START: {
+    SMTP: 500,
     GMAIL: 150,
     GSUIT: 500,
     OUTLOOK: 150,
@@ -58,6 +59,14 @@ const system_settings = {
   WEBINAR_LINK:
     'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',
+  DEFAULT_STAGES: [
+    'Lead',
+    '30% Committed',
+    '60% Committed',
+    '90% Committed',
+    'Application',
+    'Submitted',
+  ],
 };
 
 module.exports = system_settings;

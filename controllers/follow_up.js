@@ -185,7 +185,7 @@ const edit = async (req, res) => {
 
       const activity = new Activity({
         content: detail_content,
-        contacts: req.params.id,
+        contacts: req.body.contact,
         user: currentUser.id,
         type: 'follow_ups',
         follow_ups: _follow_up.id,
@@ -197,15 +197,19 @@ const edit = async (req, res) => {
         .save()
         .then((_activity) => {
           Contact.updateOne(
-            { _id: req.params.id },
+            { _id: req.body.contact },
             {
               $set: { last_activity: _activity.id },
             }
           ).catch((err) => {
             console.log('activity save err', err.message);
           });
+          const myJSON = JSON.stringify(follow_up);
+          const data = JSON.parse(myJSON);
+          data.activity = _activity;
           return res.send({
             status: true,
+            data,
           });
         })
         .catch((e) => {
@@ -219,6 +223,85 @@ const edit = async (req, res) => {
     .catch((err) => {
       console.log('err', err);
     });
+};
+
+const completed = async (req, res) => {
+  const { currentUser } = req;
+  const { follow_up } = req.body;
+  if (follow_up) {
+    let detail_content = 'completed follow up';
+    if (req.guest_loggin) {
+      detail_content = ActivityHelper.assistantLog(detail_content);
+    }
+
+    try {
+      const _follow_up = await FollowUp.findOne({ _id: follow_up }).catch(
+        (err) => {
+          console.log('err', err);
+        }
+      );
+
+      _follow_up.status = 1;
+      _follow_up.save().catch((err) => {
+        console.log('err', err);
+      });
+
+      Reminder.deleteOne({
+        follow_up,
+      }).catch((err) => {
+        console.log('err', err);
+      });
+
+      const activity = new Activity({
+        content: detail_content,
+        contacts: _follow_up.contact,
+        user: currentUser.id,
+        type: 'follow_ups',
+        follow_ups: follow_up,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      activity
+        .save()
+        .then((_activity) => {
+          Contact.updateOne(
+            { _id: _follow_up.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+          const myJSON = JSON.stringify(_follow_up);
+          const data = JSON.parse(myJSON);
+          data.activity = _activity;
+          return res.send({
+            status: true,
+            data,
+          });
+        })
+        .catch((e) => {
+          console.log('follow error', e);
+          return res.status(400).send({
+            status: false,
+            error: e,
+          });
+        });
+    } catch (err) {
+      console.log('err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    }
+  } else {
+    console.log('FollowUp doesn`t exist');
+    return res.status(400).json({
+      status: false,
+      error: 'FollowUp doesn`t exist',
+    });
+  }
 };
 
 const getByDate = async (req, res) => {
@@ -580,7 +663,7 @@ const updateChecked = async (req, res) => {
 };
 
 const bulkUpdate = async (req, res) => {
-  const { ids, content, due_date } = req.body;
+  const { ids, content, due_date, type } = req.body;
 
   const { currentUser } = req;
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
@@ -611,6 +694,9 @@ const bulkUpdate = async (req, res) => {
       const query = {};
       if (content) {
         query['content'] = content;
+      }
+      if (type) {
+        query['type'] = type;
       }
       if (due_date) {
         query['due_date'] = due_date;
@@ -676,7 +762,14 @@ const bulkUpdate = async (req, res) => {
 
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
-  const { contacts, content, due_date } = req.body;
+  const {
+    contacts,
+    content,
+    due_date,
+    type,
+    set_occurrence,
+    occurring_mode,
+  } = req.body;
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
     (err) => {
@@ -697,9 +790,12 @@ const bulkCreate = async (req, res) => {
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
     const followUp = new FollowUp({
+      type,
       content,
       due_date,
       contact,
+      set_occurrence,
+      occurring_mode,
       user: currentUser.id,
       updated_at: new Date(),
       created_at: new Date(),
@@ -774,17 +870,19 @@ const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, pageSize, searchOption } = req.body;
   const {
-    type,
+    types,
     status,
     contact,
-    label,
+    labels,
     start_date,
     end_date,
     str,
+    sortDir,
   } = searchOption;
 
   const query = { user: currentUser._id };
-  type ? (query.type = type) : false;
+  types && types.length ? (query.type = { $in: types }) : false;
+
   if (typeof status !== 'undefined') {
     query.status = status;
   }
@@ -796,15 +894,24 @@ const load = async (req, res) => {
     if (query.due_date) {
       query.due_date.$lt = end_date;
     } else {
-      query.due_date = { $lte: start_date };
+      query.due_date = { $lte: end_date };
     }
   }
   if (str) {
     query.content = { $regex: '.*' + str + '.*' };
   }
 
+  if (labels && labels.length) {
+    const contacts = await Contact.find({
+      user: currentUser._id,
+      label: { $in: labels },
+    }).select('_id');
+    const contact_ids = contacts.map((e) => e._id);
+    query.contact = { $in: contact_ids };
+  }
   const count = await FollowUp.countDocuments(query);
   const _follow_ups = await FollowUp.find(query)
+    .sort({ due_date: sortDir })
     .skip(skip)
     .limit(pageSize)
     .populate({ path: 'contact' });
@@ -818,12 +925,67 @@ const load = async (req, res) => {
   });
 };
 
+const selectAll = async (req, res) => {
+  const { currentUser } = req;
+  const {
+    types,
+    status,
+    contact,
+    labels,
+    start_date,
+    end_date,
+    str,
+    sortDir,
+  } = req.body;
+
+  const query = { user: currentUser._id };
+  types && types.length ? (query.type = { $in: types }) : false;
+  if (typeof status !== 'undefined') {
+    query.status = status;
+  }
+  contact ? (query.contact = contact) : false;
+  if (start_date) {
+    query.due_date = { $gte: start_date };
+  }
+  if (end_date) {
+    if (query.due_date) {
+      query.due_date.$lt = end_date;
+    } else {
+      query.due_date = { $lte: end_date };
+    }
+  }
+  if (str) {
+    query.content = { $regex: '.*' + str + '.*' };
+  }
+  if (labels && labels.length) {
+    const contacts = await Contact.find({
+      user: currentUser._id,
+      label: { $in: labels },
+    }).select('_id');
+    const contact_ids = contacts.map((e) => e._id);
+    query.contact = { $in: contact_ids };
+  }
+
+  const _follow_ups = await FollowUp.find(query).select({ _id: 1, status: 1 });
+  const selected_follows = _follow_ups.map((e) => ({
+    _id: e._id,
+    status: e.status,
+  }));
+
+  return res.send({
+    status: true,
+    data: selected_follows,
+  });
+};
+
 module.exports = {
   get,
   load,
   create,
   edit,
+  completed,
   getByDate,
+  selectAll,
   updateChecked,
   updateArchived,
   bulkUpdate,

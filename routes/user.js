@@ -60,6 +60,12 @@ router.post(
   catchError(UserCtrl.resetPasswordByOld)
 );
 
+router.post(
+  '/create-password',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.createPassword)
+);
+
 // Forgot password
 router.post('/forgot-password', catchError(UserCtrl.forgotPassword));
 
@@ -242,6 +248,8 @@ router.post(
   UserCtrl.checkAuth2,
   catchError(UserCtrl.schedulePaidDemo)
 );
+
+router.get('/push-notification/:id', catchError(UserCtrl.pushNotification));
 
 // Edit own profile
 router.get('/:id', catchError(UserCtrl.getUser));

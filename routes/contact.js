@@ -227,6 +227,25 @@ router.get(
   catchError(ContactCtrl.getSharedContact)
 );
 
+router.post(
+  '/contact-merge',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.contactMerge)
+);
+
+router.post(
+  '/update-contact',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.updateContact)
+);
+
+// Share contact
+router.post(
+  '/share-contact',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.shareContacts)
+);
+
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 

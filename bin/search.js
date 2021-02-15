@@ -25,7 +25,7 @@ const search = async () => {
   const due_date = new Date('2020-12-16T14:52:53.728Z');
   const contacts = await Contact.find({
     user: user_id,
-    created_at: { $gt: due_date },
+    updated_at: { $lte: due_date },
   }).catch((err) => {
     console.log('contacts find err', err.message);
   });

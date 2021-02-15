@@ -12,6 +12,8 @@ const FollowUpSchema = new Schema(
     reminder: Number,
     reminder_type: String,
     type: String,
+    set_occurrence: Boolean,
+    occurring_mode: Date,
     updated_at: Date,
     created_at: Date,
   },

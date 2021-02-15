@@ -6,6 +6,7 @@ const ContactSchema = mongoose.Schema(
     last_name: { type: String, default: '' },
     email: { type: String, default: '' },
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    shared_contact: Boolean,
     shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     address: String,
@@ -16,9 +17,9 @@ const ContactSchema = mongoose.Schema(
     //   type: String,
     // },
     label: { type: mongoose.Schema.Types.ObjectId, ref: 'label' },
-    seconary_email: { type: String, default: '' },
+    secondary_email: { type: String, default: '' },
     cell_phone: { type: String, default: '' },
-    secondary_phone: { type: String, default: ''},
+    secondary_phone: { type: String, default: '' },
     country: { type: String, default: '' },
     auto_follow_up: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     source: String,
@@ -145,6 +146,10 @@ const capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
+ContactSchema.index({ user: 1, first_name: 1, last_name: 1 });
+ContactSchema.index({ user: 1, email: 1 });
+ContactSchema.index({ user: 1, cell_phone: 1 });
+ContactSchema.index({ shared_contact: 1 });
 ContactSchema.index({ user: 1 });
 const Contact = mongoose.model('contact', ContactSchema);
 module.exports = Contact;

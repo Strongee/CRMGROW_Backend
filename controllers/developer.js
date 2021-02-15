@@ -85,45 +85,6 @@ const addContact = async (req, res) => {
     });
 };
 
-const updateContact = async (req, res) => {
-  const { label, cell_phone } = req.body;
-  const { currentUser } = req;
-
-  if (label) {
-    req.body.label = await LabelHelper.convertLabel(currentUser.id, label);
-  } else {
-    delete req.body.label;
-  }
-  if (cell_phone) {
-    req.body.cell_phone = phone(cell_phone)[0];
-  } else {
-    delete req.body.cell_phone;
-  }
-  Contact.updateOne(
-    {
-      _id: req.body.id,
-      user: currentUser.id,
-    },
-    {
-      $set: {
-        ...req.body,
-      },
-    }
-  )
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      console.log('contact update err', err.message);
-      return res.send({
-        status: false,
-        error: 'Internal server error',
-      });
-    });
-};
-
 const getContact = (req, res) => {
   const { currentUser } = req;
   Contact.findOne({
@@ -546,7 +507,6 @@ module.exports = {
   getContact,
   addContact,
   addNewTag,
-  updateContact,
   getAutomations,
   getEmailTemplates,
   getLabels,

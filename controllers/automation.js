@@ -6,11 +6,41 @@ const Video = require('../models/video');
 const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
 
-const get = (req, res) => {
+const get = async (req, res) => {
   const { id } = req.params;
+  const { currentUser } = req;
+
+  const contacts = await TimeLine.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.contact',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+  ]);
 
   Automation.findOne({ _id: id })
-    .then((data) => {
+    .then((automation) => {
+      const myJSON = JSON.stringify(automation);
+      const data = JSON.parse(myJSON);
+      data.contacts = contacts;
       res.send({
         status: false,
         data,
@@ -40,9 +70,9 @@ const getAll = async (req, res) => {
 
   Array.prototype.push.apply(automations, _automation_admin);
 
-  const teams = await Team.find({ members: currentUser.id }).populate(
-    'automations'
-  );
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate('automations');
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
@@ -88,7 +118,9 @@ const getAll = async (req, res) => {
     ]);
     const myJSON = JSON.stringify(automation);
     const data = JSON.parse(myJSON);
-    const automation_detail = await Object.assign(data, { contacts });
+    const automation_detail = await Object.assign(data, {
+      contacts: contacts.length,
+    });
 
     automation_array.push(automation_detail);
   }
@@ -102,12 +134,21 @@ const getAll = async (req, res) => {
 const getStatus = async (req, res) => {
   const { id } = req.params;
   const { contacts } = req.body;
-  const assignedContacts = await Contact.find(
-    { _id: { $in: contacts } },
-    '_id first_name last_name email cell_phone'
-  ).catch((err) => {
-    console.log('Error', err);
+  const assignedContacts = await Contact.find({ _id: { $in: contacts } })
+    .populate('last_activity', 'label')
+    .catch((err) => {
+      console.log('Error', err);
+      return res.status(400).json({
+        status: false,
+        error: err.message,
+      });
+    });
+
+  return res.send({
+    status: true,
+    data: assignedContacts,
   });
+  /**
   TimeLine.find({ automation: id })
     .populate()
     .then((data) => {
@@ -125,6 +166,51 @@ const getStatus = async (req, res) => {
         error: err.message || 'Automation reading is failed.',
       });
     });
+  */
+};
+
+const getAssignedContacts = async (req, res) => {
+  const { id } = req.params;
+  const { currentUser } = req;
+  const contacts = await TimeLine.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.contact',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+  ]);
+  const ids = [];
+  contacts.forEach((e) => {
+    ids.push(e._id);
+  });
+  const assignedContacts = await Contact.find(
+    { _id: { $in: ids } },
+    '_id first_name last_name email cell_phone'
+  ).catch((err) => {
+    console.log('Error', err);
+  });
+  res.send({
+    status: true,
+    data: assignedContacts,
+  });
 };
 
 const getPage = async (req, res) => {
@@ -453,10 +539,26 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const getContactDetail = async (req, res) => {
+  const { currentUser } = req;
+  const { contact } = req.body;
+
+  const _timelines = await TimeLine.find({
+    user: currentUser.id,
+    contact,
+  });
+
+  return res.send({
+    status: true,
+    data: _timelines,
+  });
+};
+
 module.exports = {
   get,
   getAll,
   getStatus,
+  getAssignedContacts,
   getPage,
   getEasyLoad,
   create,
@@ -465,4 +567,5 @@ module.exports = {
   updateDefault,
   search,
   loadOwn,
+  getContactDetail,
 };
