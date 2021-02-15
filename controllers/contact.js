@@ -144,7 +144,7 @@ const getByLastActivity = async (req, res) => {
 const get = async (req, res) => {
   const { currentUser } = req;
   let { dir } = req.body;
-  const { key, index } = req.body;
+  const { key, index, count } = req.body;
 
   if (req.params.id === 'null' || req.params.id === 'undefined') {
     return res.status(400).json({
@@ -225,16 +225,18 @@ const get = async (req, res) => {
       prev = prev_contact[0].id;
     }
 
-    const _follow_up = await FollowUp.find({
-      user: currentUser.id,
-      contact: req.params.id,
-      status: { $ne: -1 },
-    }).sort({ due_date: 1 });
+    // const _follow_up = await FollowUp.find({
+    //   user: currentUser.id,
+    //   contact: req.params.id,
+    //   status: { $ne: -1 },
+    // }).sort({ due_date: 1 });
+
     // const _appointment = await Appointment.find({
     //   user: currentUser.id,
     //   contact: req.params.id,
     //   status: { $ne: -1 },
     // }).sort({ due_date: 1 });
+
     const _timelines = await TimeLine.find({
       user: currentUser.id,
       contact: req.params.id,
@@ -254,11 +256,25 @@ const get = async (req, res) => {
           console.log('err', err);
         });
     }
-    const _activity_list = await Activity.find({
-      user: currentUser.id,
-      contacts: req.params.id,
-      status: { $ne: 'pending' },
-    }).sort({ updated_at: 1 });
+
+    let _activity_list;
+
+    if (count) {
+      _activity_list = await Activity.find({
+        user: currentUser.id,
+        contacts: req.params.id,
+        status: { $ne: 'pending' },
+      })
+        .sort({ updated_at: 1 })
+        .limit(count);
+    } else {
+      _activity_list = await Activity.find({
+        user: currentUser.id,
+        contacts: req.params.id,
+        status: { $ne: 'pending' },
+      }).sort({ updated_at: 1 });
+    }
+
     const _activity_detail_list = [];
 
     for (let i = 0; i < _activity_list.length; i++) {
@@ -283,7 +299,7 @@ const get = async (req, res) => {
     const contact = JSON.parse(myJSON);
     const data = await Object.assign(
       contact,
-      { follow_up: _follow_up },
+      // { follow_up: _follow_up },
       // { appointment: _appointment },
       { activity: _activity_detail_list },
       { next },
