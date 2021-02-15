@@ -1578,7 +1578,55 @@ const accept = async (req, res) => {
       client
         .api(`/me/calendars/${calendar_id}/events/${event_id}/accept`)
         .post(accept)
-        .then(() => {
+        .then(async () => {
+          const contact = await Contact.findOne({
+            user: currentUser.id,
+            email: req.body.email,
+          });
+
+          if (contact) {
+            const appointment = new Appointment({
+              contact: contact._id,
+              user: currentUser.id,
+              type: 0,
+              event_id,
+            });
+
+            appointment.save().catch((err) => {
+              console.log('appointment save err', err.message);
+            });
+
+            const activity = new Activity({
+              content: 'accepted appointment',
+              contacts: contact._id,
+              appointments: appointment.id,
+              user: currentUser.id,
+              type: 'appointments',
+            });
+
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  {
+                    _id: contact._id,
+                  },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('appointment save err', err.message);
+                return res.status(500).send({
+                  status: false,
+                  error: err.message,
+                });
+              });
+          }
+
           return res.send({
             status: true,
           });
