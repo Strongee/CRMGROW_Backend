@@ -524,8 +524,8 @@ const reminder_job = new CronJob(
           Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
             console.log('reminder remove err', err.message);
           });
-          if (follow_up.set_occurrence) {
-            switch (follow_up.occurring_mode) {
+          if (follow_up.set_recurrence) {
+            switch (follow_up.recurrence_mode) {
               case 'DAILY': {
                 const today = moment(follow_up.due_date);
                 const tomorrow = today.add(1, 'days');
