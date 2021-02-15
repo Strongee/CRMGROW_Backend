@@ -80,10 +80,6 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 
-const accountSid = api.TWILIO.TWILIO_SID;
-const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
-const twilio = require('twilio')(accountSid, authToken);
-
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
