@@ -61,7 +61,7 @@ const send = async (req, res) => {
       console.log('err', err);
     });
 
-  const text = new Text({
+  const new_text = new Text({
     content: req.body.text,
     contact: req.params.id,
     to: e164Phone,
@@ -71,7 +71,7 @@ const send = async (req, res) => {
     created_at: new Date(),
   });
 
-  text
+  new_text
     .save()
     .then((_sms) => {
       const activity = new Activity({
@@ -346,11 +346,15 @@ const receiveTextSignalWire = async (req, res) => {
             console.log('sms reply err', err);
           });
       } else {
-        const text = new Text({
+        const new_text = new Text({
           user: currentUser.id,
           contact: contact.id,
           content: text,
           type: 1,
+        });
+
+        new_text.save().catch((err) => {
+          console.log('new text save err', err.message);
         });
 
         const activity = new Activity({
@@ -454,11 +458,15 @@ const receiveTextTwilio = async (req, res) => {
             console.log('sms reply err', err);
           });
       } else {
-        const text = new Text({
+        const new_text = new Text({
           user: currentUser.id,
           contact: contact.id,
           content: text,
           type: 1,
+        });
+
+        new_text.save().catch((err) => {
+          console.log('new text save err', err.message);
         });
 
         const activity = new Activity({
