@@ -2355,7 +2355,6 @@ const bulkText = async (req, res) => {
 
       let promise;
       let fromNumber = currentUser['proxy_number'];
-      let promise;
 
       if (fromNumber) {
         // fromNumber = await textHelper.getSignalWireNumber(currentUser.id);
