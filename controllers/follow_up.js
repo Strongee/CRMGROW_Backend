@@ -767,8 +767,8 @@ const bulkCreate = async (req, res) => {
     content,
     due_date,
     type,
-    set_occurrence,
-    occurring_mode,
+    set_recurrence,
+    recurrence_mode,
   } = req.body;
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
@@ -794,8 +794,8 @@ const bulkCreate = async (req, res) => {
       content,
       due_date,
       contact,
-      set_occurrence,
-      occurring_mode,
+      set_recurrence,
+      recurrence_mode,
       user: currentUser.id,
       updated_at: new Date(),
       created_at: new Date(),
