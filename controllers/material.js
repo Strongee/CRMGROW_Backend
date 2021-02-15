@@ -725,12 +725,14 @@ const bulkEmail = async (req, res) => {
       });
 
       if (error.length > 0) {
-        return res.status(400).json({
+        return res.status(405).json({
           status: false,
           error,
         });
       } else {
-        return res.send(result);
+        return res.send({
+          status: true,
+        });
       }
     })
     .catch((err) => {
