@@ -2477,7 +2477,7 @@ const bulkText = async (req, res) => {
         });
       } else if (currentUser['twilio_number']) {
         fromNumber = currentUser['twilio_number'];
-        
+
         promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
