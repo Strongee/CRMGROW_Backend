@@ -32,7 +32,6 @@ router.post(
     body('user_name')
       .isLength({ min: 3 })
       .withMessage('user_name must be at least 3 chars long'),
-    // password must be at least 5 chars long
   ],
   catchError(UserCtrl.create)
 );

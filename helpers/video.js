@@ -195,7 +195,7 @@ const getConvertStatus = async (video_path) => {
       const video = await Video.findOne({ _id: video_path }).catch((err) => {
         console.log('video find err', err.message);
       });
-      duration = video.duration;
+      duration = video.duration / 1000;
     } else {
       duration = parseFloat(ar[0]);
       if (ar[1]) duration += parseInt(ar[1]) * 60;
@@ -225,7 +225,6 @@ const getConvertStatus = async (video_path) => {
 
     if (progress === 0) {
       // TODO err - giving up after 8 sec. no progress - handle progress errors here
-
       result = {
         id: video_path,
         status: false,

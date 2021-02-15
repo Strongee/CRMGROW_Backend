@@ -80,6 +80,10 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 
+const accountSid = api.TWILIO.TWILIO_SID;
+const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
+const twilio = require('twilio')(accountSid, authToken);
+
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
@@ -2353,6 +2357,7 @@ const bulkText = async (req, res) => {
         );
       }
 
+      let promise;
       let fromNumber = currentUser['proxy_number'];
       let promise;
 
@@ -2375,6 +2380,7 @@ const bulkText = async (req, res) => {
           }
 
           await textHelper.sleep(1000);
+
           client.messages
             .create({
               from: fromNumber,
@@ -2476,6 +2482,7 @@ const bulkText = async (req, res) => {
         });
       } else if (currentUser['twilio_number']) {
         fromNumber = currentUser['twilio_number'];
+        
         promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
@@ -2588,6 +2595,7 @@ const bulkText = async (req, res) => {
         });
       } else {
         fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+
         promise = new Promise(async (resolve) => {
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
