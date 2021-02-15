@@ -1535,12 +1535,9 @@ const accept = async (req, res) => {
       });
     }
 
-    const event_id = recurrence_id || req.params.id;
+    const event_id = recurrence_id || req.body.event_id;
 
-    if (
-      calendar.connected_calendar_type === 'outlook' ||
-      calendar.connected_calendar_type === 'microsoft'
-    ) {
+    if (calendar.connected_calendar_type === 'outlook') {
       let accessToken;
       const token = oauth2.accessToken.create({
         refresh_token: calendar.outlook_refresh_token,
@@ -1592,20 +1589,17 @@ const accept = async (req, res) => {
             error: err.message,
           });
         });
-    } else if (
-      calendar.connected_calendar_type === 'gmail' ||
-      calendar.connected_calendar_type === 'gsuit'
-    ) {
+    } else if (calendar.connected_calendar_type === 'google') {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-        urls.GMAIL_AUTHORIZE_URL
+        urls.GOOGLE_CALENDAR_AUTHORIZE_URL
       );
 
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
 
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const client = google.calendar({ version: 'v3', auth: oauth2Client });
 
       const event = {
         attendees: [
@@ -1623,7 +1617,7 @@ const accept = async (req, res) => {
         sendNotifications: true,
       };
 
-      calendar.events.patch(params, function (err) {
+      client.events.patch(params, function (err) {
         if (err) {
           console.log(
             `There was an error contacting the Calendar service: ${err}`
@@ -1633,6 +1627,7 @@ const accept = async (req, res) => {
             error: err,
           });
         } else {
+          console.log('calendar update');
           return res.send({
             status: true,
           });
@@ -1663,7 +1658,7 @@ const decline = async (req, res) => {
       });
     }
 
-    const event_id = recurrence_id || req.params.id;
+    const event_id = recurrence_id || req.body.event_id;
 
     if (calendar.connected_calendar_type === 'outlook') {
       let accessToken;
@@ -1703,20 +1698,31 @@ const decline = async (req, res) => {
       const decline = {
         sendResponse: true,
       };
-      let res = await client
+      client
         .api(`/me/calendars/${calendar_id}/events/${event_id}/decline`)
-        .post(decline);
-    } else if (calendar.connected_calendar_type === 'gmail') {
+        .post(decline)
+        .then(() => {
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
+        });
+    } else if (calendar.connected_calendar_type === 'google') {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
         api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-        urls.GMAIL_AUTHORIZE_URL
+        urls.GOOGLE_CALENDAR_AUTHORIZE_URL
       );
 
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
 
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const client = google.calendar({ version: 'v3', auth: oauth2Client });
 
       const event = {
         attendees: [
@@ -1733,16 +1739,15 @@ const decline = async (req, res) => {
         resource: event,
         sendNotifications: true,
       };
-      return new Promise((resolve, reject) => {
-        calendar.events.patch(params, function (err) {
-          if (err) {
-            console.log(
-              `There was an error contacting the Calendar service: ${err}`
-            );
-            reject(err);
-          }
-          resolve();
-        });
+
+      client.events.patch(params, function (err) {
+        if (err) {
+          console.log(
+            `There was an error contacting the Calendar service: ${err}`
+          );
+          reject(err);
+        }
+        resolve();
       });
     }
   }
