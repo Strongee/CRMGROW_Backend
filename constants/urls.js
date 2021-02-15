@@ -1,8 +1,10 @@
-let domain = 'https://app.crmgrow.com/';
+let domain = 'https://app.crmgrow.com';
+const domain1 = 'https://app.crmgrow.com';
+const front = 'teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://app.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
-  domain = 'https://ecsbe.crmgrow.com';
+  domain = 'http://3.139.190.87:3000';
 } else {
   domain = 'http://localhost:3000';
 }
@@ -15,9 +17,9 @@ const urls = {
   SOCIAL_SIGNUP_URL: `${domain}/signup/`,
   APP_SIGNIN_URL: `${domain}/social-oauth-callback/`,
   OUTLOOK_AUTHORIZE_URL: `${domain}/profile/outlook`,
-  GMAIL_AUTHORIZE_URL: `${domain}/profile/gmail`,
-  GOOGLE_CALENDAR_AUTHORIZE_URL: `${domain}/calendar/google`,
-  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${domain}/calendar/outlook`,
+  GMAIL_AUTHORIZE_URL: `${domain1}/profile/gmail`,
+  GOOGLE_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/google`,
+  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/outlook`,
   VIDEO_THUMBNAIL_URL: `${domain}/api/video/thumbnail/`,
   PDF_PREVIEW_URL: `${domain}/api/pdf/preview/`,
   IMAGE_PREVIEW_URL: `${domain}/api/image/preview/`,

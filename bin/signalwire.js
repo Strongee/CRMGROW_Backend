@@ -130,7 +130,7 @@ const getSignalWireNumber = async (id) => {
   // const user = await User.findOne({ _id: id }).catch((err) => {
   //   console.log('err', err);
   // });
-  let areaCode = '202';
+  let areaCode = '818';
   let countryCode = 'CA';
   let fromNumber;
 

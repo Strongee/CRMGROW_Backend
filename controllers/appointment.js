@@ -1035,6 +1035,11 @@ const edit = async (req, res) => {
           attendees.push(addendee);
         }
       }
+
+      const ctz = currentUser.time_zone_info
+        ? currentUser.time_zone_info.tz_name
+        : system_settings.TIME_ZONE;
+
       const event = {
         subject: edit_data.title,
         body: {
@@ -1046,11 +1051,11 @@ const edit = async (req, res) => {
         },
         start: {
           dateTime: edit_data.due_start,
-          timeZone: `UTC${currentUser.time_zone}`,
+          timeZone: ctz,
         },
         end: {
           dateTime: edit_data.due_end,
-          timeZone: `UTC${currentUser.time_zone}`,
+          timeZone: ctz,
         },
         attendees,
       };
@@ -1066,11 +1071,16 @@ const edit = async (req, res) => {
 
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+      const ctz = currentUser.time_zone_info
+        ? currentUser.time_zone_info.tz_name
+        : system_settings.TIME_ZONE;
+
       const data = {
         oauth2Client,
-        remove_id: event_id,
+        event_id,
         appointment: edit_data,
-        time_zone: currentUser.time_zone,
+        time_zone: ctz,
       };
       await updateGoogleCalendarById(data);
     }
@@ -1460,7 +1470,7 @@ const removeGoogleCalendarById = async (data) => {
 };
 
 const updateGoogleCalendarById = async (data) => {
-  const { oauth2Client, remove_id, appointment, time_zone } = data;
+  const { oauth2Client, event_id, appointment, time_zone } = data;
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const attendees = [];
   if (appointment.guests) {
@@ -1477,17 +1487,17 @@ const updateGoogleCalendarById = async (data) => {
     description: appointment.description,
     start: {
       dateTime: appointment.due_start,
-      timeZone: `UTC${time_zone}`,
+      timeZone: time_zone,
     },
     end: {
       dateTime: appointment.due_end,
-      timeZone: `UTC${time_zone}`,
+      timeZone: time_zone,
     },
     attendees,
   };
   const params = {
     calendarId: appointment.calendar_id,
-    eventId: remove_id,
+    eventId: event_id,
     resource: event,
     sendNotifications: true,
   };
@@ -1505,99 +1515,296 @@ const updateGoogleCalendarById = async (data) => {
 };
 
 const accept = async (req, res) => {
-  const _appointment = await Appointment.findOne({
-    _id: req.query.appointment,
-  });
-  const user = await User.findOne({ _id: _appointment.user });
-  const { contact } = req.query;
+  const { currentUser } = req;
 
-  // const time_zone = user.time_zone_info
-  //   ? JSON.parse(user.time_zone_info).tz_name
-  //   : system_settings.TIME_ZONE;
-  const created_at = moment().tz(time_zone).format('h:mm a');
-  const msg = {
-    to: user.email,
-    from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
-    subject: 'Appointment Accept Notification',
-    templateId: api.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
-    dynamic_template_data: {
-      event_title: _appointment.title,
-      description: _appointment.description,
-      event_time: `${moment(_appointment.due_start)
-        .utcOffset(user.time_zone)
-        .format('dddd, MMMM Do YYYY HH:mm')} - ${moment(_appointment.due_end)
-        .utcOffset(user.time_zone)
-        .format('HH:mm')} UTC ${user.time_zone}`,
-      event_address: _appointment.location,
-      organizer: user.user_name,
-      appointment_notification: `${contact} accepted the following appointment invitation`,
-    },
-  };
+  if (currentUser.calendar_connected) {
+    const { recurrence_id, connected_email, calendar_id } = req.body;
 
-  sgMail
-    .send(msg)
-    .then((_res) => {
-      if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-        console.log('status', _res[0].statusCode);
-        return res.send('Thanks for your submitting');
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
       }
-      console.log('email sending err', msg.to + res[0].statusCode);
-      return res.send(
-        'Sorry! Something went wrong... It couldn`t be notified to appointment organizer'
-      );
-    })
-    .catch((e) => {
-      console.error(e);
-      return res.send(
-        'Sorry! Something went wrong... It couldn`t be notified to appointment organizer'
-      );
     });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    const event_id = recurrence_id || req.body.event_id;
+
+    if (calendar.connected_calendar_type === 'outlook') {
+      let accessToken;
+      const token = oauth2.accessToken.create({
+        refresh_token: calendar.outlook_refresh_token,
+        expires_in: 0,
+      });
+
+      await new Promise((resolve, reject) => {
+        token.refresh(function (error, result) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result.token);
+          }
+        });
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
+        });
+
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
+      });
+
+      const accept = {
+        sendResponse: true,
+      };
+      client
+        .api(`/me/calendars/${calendar_id}/events/${event_id}/accept`)
+        .post(accept)
+        .then(async () => {
+          const contact = await Contact.findOne({
+            user: currentUser.id,
+            email: req.body.email,
+          });
+
+          if (contact) {
+            const appointment = new Appointment({
+              contact: contact._id,
+              user: currentUser.id,
+              type: 0,
+              event_id,
+            });
+
+            appointment.save().catch((err) => {
+              console.log('appointment save err', err.message);
+            });
+
+            const activity = new Activity({
+              content: 'accepted appointment',
+              contacts: contact._id,
+              appointments: appointment.id,
+              user: currentUser.id,
+              type: 'appointments',
+            });
+
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  {
+                    _id: contact._id,
+                  },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('appointment save err', err.message);
+                return res.status(500).send({
+                  status: false,
+                  error: err.message,
+                });
+              });
+          }
+
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
+        });
+    } else if (calendar.connected_calendar_type === 'google') {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+      );
+
+      const token = JSON.parse(calendar.google_refresh_token);
+      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+      const client = google.calendar({ version: 'v3', auth: oauth2Client });
+
+      const event = {
+        attendees: [
+          {
+            email: calendar.connected_email,
+            responseStatus: 'accepted',
+          },
+        ],
+      };
+
+      const params = {
+        calendarId: calendar_id,
+        eventId: event_id,
+        resource: event,
+        sendNotifications: true,
+      };
+
+      client.events.patch(params, function (err) {
+        if (err) {
+          console.log(
+            `There was an error contacting the Calendar service: ${err}`
+          );
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        } else {
+          console.log('calendar update');
+          return res.send({
+            status: true,
+          });
+        }
+      });
+    }
+  }
 };
 
 const decline = async (req, res) => {
-  const _appointment = await Appointment.findOne({
-    _id: req.query.appointment,
-  });
-  const user = await User.findOne({ _id: _appointment.user });
-  const { contact } = req.query;
+  const { currentUser } = req;
 
-  const msg = {
-    to: user.email,
-    from: mail_contents.NOTIFICATION_APPOINTMENT.MAIL,
-    subject: 'Appointment Decline Notification',
-    templateId: api.SENDGRID.SENDGRID_APPOINTMENT_NOTIFICATION_TEMPLATE,
-    dynamic_template_data: {
-      event_title: _appointment.title,
-      description: _appointment.description,
-      event_time: `${moment(_appointment.due_start)
-        .utcOffset(user.time_zone)
-        .format('dddd, MMMM Do YYYY HH:mm')} - ${moment(_appointment.due_end)
-        .utcOffset(user.time_zone)
-        .format('HH:mm')} UTC ${user.time_zone}`,
-      event_address: _appointment.location,
-      organizer: user.user_name,
-      appointment_notification: `${contact} declined the following appointment invitation`,
-    },
-  };
+  if (currentUser.calendar_connected) {
+    const { recurrence_id, connected_email, calendar_id } = req.body;
 
-  sgMail
-    .send(msg)
-    .then((_res) => {
-      if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-        console.log('status', _res[0].statusCode);
-        return res.send('Thanks for your submitting');
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
       }
-      console.log('email sending err', msg.to + res[0].statusCode);
-      return res.send(
-        'Sorry! Something went wrong... It couldn`t be notified to appointment organizer'
-      );
-    })
-    .catch((e) => {
-      console.error(e);
-      return res.send(
-        'Sorry! Something went wrong... It couldn`t be notified to appointment organizer'
-      );
     });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    const event_id = recurrence_id || req.body.event_id;
+
+    if (calendar.connected_calendar_type === 'outlook') {
+      let accessToken;
+      const token = oauth2.accessToken.create({
+        refresh_token: calendar.outlook_refresh_token,
+        expires_in: 0,
+      });
+
+      await new Promise((resolve, reject) => {
+        token.refresh(function (error, result) {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result.token);
+          }
+        });
+      })
+        .then((token) => {
+          accessToken = token.access_token;
+        })
+        .catch((error) => {
+          console.log('error', error);
+          return res.status(406).send({
+            status: false,
+            error: 'not connected',
+          });
+        });
+
+      const client = graph.Client.init({
+        // Use the provided access token to authenticate
+        // requests
+        authProvider: (done) => {
+          done(null, accessToken);
+        },
+      });
+
+      const decline = {
+        sendResponse: true,
+      };
+      client
+        .api(`/me/calendars/${calendar_id}/events/${event_id}/decline`)
+        .post(decline)
+        .then(() => {
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          return res.status(400).json({
+            status: false,
+            error: err.message,
+          });
+        });
+    } else if (calendar.connected_calendar_type === 'google') {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GOOGLE_CALENDAR_AUTHORIZE_URL
+      );
+
+      const token = JSON.parse(calendar.google_refresh_token);
+      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+      const client = google.calendar({ version: 'v3', auth: oauth2Client });
+
+      const event = {
+        attendees: [
+          {
+            email: calendar.connected_email,
+            responseStatus: 'declined',
+          },
+        ],
+      };
+
+      const params = {
+        calendarId: calendar_id,
+        eventId: event_id,
+        resource: event,
+        sendNotifications: true,
+      };
+
+      client.events.patch(params, function (err) {
+        if (err) {
+          console.log(
+            `There was an error contacting the Calendar service: ${err}`
+          );
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        } else {
+          return res.send({
+            status: true,
+          });
+        }
+      });
+    }
+  }
 };
 
 const getCalendarList = async (req, res) => {

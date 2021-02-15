@@ -293,10 +293,10 @@ const receiveTextSignalWire = async (req, res) => {
   const to = req.body['To'];
 
   const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
-    console.log('current user found err sms', err.message);
+    console.log('current user found err text', err.message);
   });
 
-  if (currentUser != null) {
+  if (currentUser) {
     const phoneNumber = req.body['From'];
 
     const contact = await Contact.findOne({
@@ -317,7 +317,7 @@ const receiveTextSignalWire = async (req, res) => {
           updated_at: new Date(),
         });
 
-        const _activity = await activity
+        activity
           .save()
           .then()
           .catch((err) => {
@@ -327,7 +327,7 @@ const receiveTextSignalWire = async (req, res) => {
         Contact.updateOne(
           { _id: contact.id },
           {
-            $set: { last_activity: _activity.id },
+            $set: { last_activity: activity.id },
             $push: { tags: { $each: ['unsubscribed'] } },
           }
         ).catch((err) => {
@@ -350,22 +350,49 @@ const receiveTextSignalWire = async (req, res) => {
           user: currentUser.id,
           contact: contact.id,
           content: text,
+          type: 1,
         });
 
         const activity = new Activity({
-          content: 'unsubscribed sms',
+          content: 'received text',
           contacts: contact.id,
           user: currentUser.id,
-          type: 'text_trackers',
-          created_at: new Date(),
-          updated_at: new Date(),
+          type: 'texts',
+          texts: text.id,
+        });
+
+        activity.save().catch((err) => {
+          console.log('activity save err', err.message);
+        });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
         });
       }
+    } else {
+      const content =
+        'Please call/text ' +
+        currentUser.user_name +
+        'back at: ' +
+        currentUser.cell_phone;
+
+      await client.messages
+        .create({
+          from: to,
+          to: from,
+          body: content,
+        })
+        .catch((err) => {
+          console.log('sms reply err', err);
+        });
     }
   }
-  return res.send({
-    status: true,
-  });
+  return res.send();
 };
 
 const receiveTextTwilio = async (req, res) => {
@@ -427,28 +454,49 @@ const receiveTextTwilio = async (req, res) => {
             console.log('sms reply err', err);
           });
       } else {
-        const content =
-          contact.first_name +
-          ', please call/text ' +
-          currentUser.user_name +
-          ' back at: ' +
-          currentUser.cell_phone;
+        const text = new Text({
+          user: currentUser.id,
+          contact: contact.id,
+          content: text,
+          type: 1,
+        });
 
-        await client.messages
-          .create({
-            from: to,
-            to: from,
-            body: content,
-          })
-          .catch((err) => {
-            console.log('sms reply err', err);
-          });
+        const activity = new Activity({
+          content: 'received text',
+          contacts: contact.id,
+          user: currentUser.id,
+          type: 'texts',
+          texts: text.id,
+        });
+
+        activity.save().catch((err) => {
+          console.log('activity save err', err.message);
+        });
+
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
       }
+    } else {
+      const content =
+        'Please call/text ' +
+        currentUser.user_name +
+        ' back at: ' +
+        currentUser.cell_phone;
+
+      await twilio.messages
+        .create({ from: to, body: content, to: from })
+        .catch((err) => {
+          console.log('sms reply err', err);
+        });
     }
   }
-  return res.send({
-    status: true,
-  });
+  return res.send();
 };
 
 module.exports = {
