@@ -13,6 +13,7 @@ const VideoTracker = require('../models/video_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const Notification = require('../models/notification');
+const Garbage = require('../models/garbage');
 const ActivityHelper = require('../helpers/activity');
 const api = require('../config/api');
 const request = require('request-promise');
@@ -424,6 +425,14 @@ const bulkEmail = async (req, res) => {
           '</td></tr><tr><td>' +
           generateUnsubscribeLink(activity.id) +
           '</td></tr></tbody></body></html>';
+      }
+
+      if (video_ids || pdf_ids || image_ids) {
+        const garbage = await Garbage.findOne({
+          user: currentUser.id,
+        }).catch((err) => {
+          console.log('garbage find err', err.message);
+        });
       }
 
       if (

@@ -1971,14 +1971,9 @@ const timesheet_check = new CronJob(
                 ).catch((err) => {
                   console.log('notification update err', err.message);
                 });
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
               } else if (res.status === 'sent') {
                 const beginning_time = moment(timeline.due_date).add(
-                  10,
+                  3,
                   'minutes'
                 );
                 const now = moment();
@@ -1988,26 +1983,28 @@ const timesheet_check = new CronJob(
                   }).catch((err) => {
                     console.log('activity save err', err.message);
                   });
+
+                  Notification.updateMany(
+                    { message_sid },
+                    {
+                      $set: {
+                        status: 'undelivered',
+                        description:
+                          res.errorMessage ||
+                          'Could`t get delivery result from carrier',
+                        content: 'Failed texting material',
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('notification update err', err.message);
+                  });
+
+                  TimeLine.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
                 }
-                Notification.updateMany(
-                  { message_sid },
-                  {
-                    $set: {
-                      status: 'undelivered',
-                      description:
-                        res.errorMessage ||
-                        'Could`t get delivery result from carrier',
-                      content: 'Failed texting material',
-                    },
-                  }
-                ).catch((err) => {
-                  console.log('notification update err', err.message);
-                });
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
               } else if (
                 res.status === 'undelivered' ||
                 res.status === 'failed'
