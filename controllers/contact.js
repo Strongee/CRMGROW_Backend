@@ -265,7 +265,7 @@ const get = async (req, res) => {
         contacts: req.params.id,
         status: { $ne: 'pending' },
       })
-        .sort({ updated_at: 1 })
+        .sort({ updated_at: -1 })
         .limit(count);
     } else {
       _activity_list = await Activity.find({
