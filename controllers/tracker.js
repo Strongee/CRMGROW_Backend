@@ -257,7 +257,13 @@ const disconnectPDF = async (pdf_tracker_id) => {
   if (unwatched_timelines.length > 0) {
     for (let i = 0; i < unwatched_timelines.length; i++) {
       const timeline = unwatched_timelines[i];
-      TimeLineCtrl.disableNext(timeline.id);
+      if (timeline.action && timeline.action.type === 'resend_email_video') {
+        TimeLine.deleteOne({ _id: timeline.id }).catch((err) => {
+          console.log('time line delete err', err.message);
+        });
+      } else {
+        TimeLineCtrl.disableNext(timeline.id);
+      }
     }
   }
 
