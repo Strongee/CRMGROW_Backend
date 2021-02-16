@@ -1844,7 +1844,7 @@ const loadCalls = async (req, res) => {
   const { type, skip } = req.body;
   let query;
   switch (type) {
-    case 'inquiries':
+    case 'inquiry':
       query = {
         leader: currentUser.id,
         status: 'pending',
@@ -1874,7 +1874,7 @@ const loadCalls = async (req, res) => {
         status: { $in: ['canceled'] },
       };
       break;
-    case 'declined':
+    case 'denied':
       query = {
         $or: [{ user: currentUser.id }, { leader: currentUser.id }],
         status: { $in: ['declined'] },
