@@ -160,5 +160,6 @@ router.delete('/call', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
+router.post('/load-call', UserCtrl.checkAuth, catchError(TeamCtrl.loadCalls));
 
 module.exports = router;
