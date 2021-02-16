@@ -433,6 +433,12 @@ const bulkEmail = async (req, res) => {
         }).catch((err) => {
           console.log('garbage find err', err.message);
         });
+
+        if (garbage && garbage.auto_follow_up2) {
+          const auto_follow_up1 = garbage.auto_follow_up1;
+          if (auto_follow_up1['enabled']) {
+          }
+        }
       }
 
       if (
