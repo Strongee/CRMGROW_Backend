@@ -2020,6 +2020,10 @@ const getSharedContacts = async (req, res) => {
         select: 'user_name email picture_profile cell_phone',
       },
       {
+        path: 'user',
+        select: 'user_name email picture_profile cell_phone',
+      },
+      {
         path: 'last_activity',
       },
     ])
