@@ -1839,6 +1839,66 @@ const getFinishedCall = async (req, res) => {
   });
 };
 
+const loadCalls = async (req, res) => {
+  const { currentUser } = req;
+  const { type, skip } = req.body;
+  let query;
+  switch (type) {
+    case 'inquiry':
+      query = {
+        leader: currentUser.id,
+        status: 'pending',
+      };
+      break;
+    case 'sent':
+      query = {
+        user: currentUser.id,
+        status: 'pending',
+      };
+      break;
+    case 'scheduled':
+      query = {
+        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+        status: { $in: ['planned'] },
+      };
+      break;
+    case 'completed':
+      query = {
+        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+        status: { $in: ['finished'] },
+      };
+      break;
+    case 'canceled':
+      query = {
+        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+        status: { $in: ['canceled'] },
+      };
+      break;
+    case 'denied':
+      query = {
+        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+        status: { $in: ['declined'] },
+      };
+      break;
+  }
+  const data = await TeamCall.find(query)
+    .populate([
+      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      { path: 'contacts' },
+    ])
+    .skip(skip)
+    .limit(8);
+
+  const total = await TeamCall.countDocuments(query);
+
+  return res.send({
+    status: true,
+    data,
+    total,
+  });
+};
+
 const updateCall = async (req, res) => {
   const { currentUser } = req;
   const team_call = await TeamCall.findOne({
@@ -2008,4 +2068,5 @@ module.exports = {
   updateCall,
   removeCall,
   updateTeam,
+  loadCalls,
 };
