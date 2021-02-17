@@ -35,6 +35,7 @@ const MaterialTheme = require('../models/material_theme');
 const Team = require('../models/team');
 const User = require('../models/user');
 const TimeLine = require('../models/time_line');
+const Task = require('../models/task');
 const EmailTemplate = require('../models/email_template');
 const Notification = require('../models/notification');
 const {
@@ -1821,7 +1822,7 @@ const bulkEmail = async (req, res) => {
               });
 
               const garbage = await Garbage.findOne({ user: currentUser.id });
-              const auto_resend = garbage.auto_resend;
+              const auto_resend = garbage.auto_resend2;
               if (auto_resend['enabled']) {
                 const data = { activities, auto_resend };
                 autoResend(data);
@@ -3213,8 +3214,8 @@ const autoResend = async (data) => {
       }
     );
     if (!activity.send_type) {
-      time_line = await TimeLine.findOne({
-        'action.type': 'resend_email_video',
+      time_line = await Task.findOne({
+        'action.type': 'resend_email_video2',
         'action.activity': activity.id,
         status: 'active',
       });
@@ -3224,11 +3225,12 @@ const autoResend = async (data) => {
         const canned_message = await EmailTemplate.findOne({
           _id: auto_resend.email_canned_message,
         });
-        time_line = new TimeLine({
+
+        time_line = new Task({
           user: activity.user,
           contact: activity.contacts,
           action: {
-            type: 'resend_email_video',
+            type: 'resend_email_video2',
             activity: activity.id,
             content: canned_message.content,
             subject: canned_message.subject,
@@ -3242,8 +3244,8 @@ const autoResend = async (data) => {
         });
       }
     } else {
-      time_line = await TimeLine.findOne({
-        'action.type': 'resend_text_video',
+      time_line = await Task.findOne({
+        'action.type': 'resend_text_video2',
         'action.activity': activity.id,
         status: 'active',
       });
@@ -3253,11 +3255,11 @@ const autoResend = async (data) => {
         const canned_message = await EmailTemplate.findOne({
           _id: auto_resend.sms_canned_message,
         });
-        time_line = new TimeLine({
+        time_line = new Task({
           user: activity.user,
           contact: activity.contacts,
           action: {
-            type: 'resend_text_video',
+            type: 'resend_text_video2',
             activity: activity.id,
             content: canned_message.content,
             subject: canned_message.subject,

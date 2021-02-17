@@ -42,6 +42,11 @@ router.post('/', UserCtrl.checkAuth, catchError(GarbageCtrl.create));
 router.get('/', UserCtrl.checkAuth, catchError(GarbageCtrl.get));
 router.put('/', UserCtrl.checkAuth, catchError(GarbageCtrl.edit));
 router.post(
+  '/terminate-auto_setting',
+  UserCtrl.checkAuth,
+  catchError(GarbageCtrl.terminateAutoSetting)
+);
+router.post(
   '/intro_video',
   UserCtrl.checkAuth,
   upload.single('video'),

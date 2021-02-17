@@ -1,5 +1,6 @@
 const Garbage = require('../models/garbage');
 const Template = require('../models/email_template');
+const Task = require('../models/task');
 const { removeFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
 
@@ -183,10 +184,45 @@ const loadDefaults = async (req, res) => {
   });
 };
 
+const terminateAutoSetting = async (req, res) => {
+  const { currentUser } = req;
+  const { auto_setting } = req.body;
+  switch (auto_setting) {
+    case 'auto_follow_up2': {
+      Task.deleteMany({
+        user: currentUser.id,
+        'action.type': 'auto_follow_up2',
+      }).catch((err) => {
+        console.log('task delete err', err.message);
+      });
+      break;
+    }
+    case 'auto_resend1': {
+      Task.deleteMany({
+        user: currentUser.id,
+        'action.type': 'auto_resend1',
+      }).catch((err) => {
+        console.log('task delete err', err.message);
+      });
+      break;
+    }
+    case 'auto_resend2': {
+      Task.deleteMany({
+        user: currentUser.id,
+        'action.type': 'auto_resend2',
+      }).catch((err) => {
+        console.log('task delete err', err.message);
+      });
+      break;
+    }
+  }
+};
+
 module.exports = {
   get,
   create,
   edit,
   uploadIntroVideo,
   loadDefaults,
+  terminateAutoSetting,
 };

@@ -16,6 +16,7 @@ const Garbage = require('../models/garbage');
 const FollowUp = require('../models/follow_up');
 const Reminder = require('../models/reminder');
 const EmailTemplate = require('../models/email_template');
+const Task = require('../models/task');
 const ActivityHelper = require('../helpers/activity');
 const TimeLineCtrl = require('./time_line');
 const urls = require('../constants/urls');
@@ -245,6 +246,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
       }
     }
   }
+
   const unwatched_timelines = await TimeLine.find({
     contact: contact.id,
     status: 'active',
@@ -254,17 +256,27 @@ const disconnectPDF = async (pdf_tracker_id) => {
   }).catch((err) => {
     console.log('err', err);
   });
+
   if (unwatched_timelines.length > 0) {
     for (let i = 0; i < unwatched_timelines.length; i++) {
       const timeline = unwatched_timelines[i];
-      if (timeline.action && timeline.action.type === 'resend_email_video') {
-        TimeLine.deleteOne({ _id: timeline.id }).catch((err) => {
-          console.log('time line delete err', err.message);
-        });
-      } else {
-        TimeLineCtrl.disableNext(timeline.id);
-      }
+      TimeLineCtrl.disableNext(timeline.id);
     }
+  }
+
+  if (
+    (garbage.auto_follow_up2 && garbage.auto_follow_up2['enabled']) ||
+    (garbage.auto_resend2 && garbage.auto_resend2['enabled'])
+  ) {
+    Task.deleteMany({
+      contact: contact.id,
+      status: 'active',
+      watched_pdf: query['pdf'],
+      'condition.case': 'watched_pdf',
+      'condition.answer': false,
+    }).catch((err) => {
+      console.log('unwatched pdf task remove err', err.message);
+    });
   }
 
   const activity = new Activity({
@@ -389,6 +401,7 @@ const disconnectVideo = async (video_tracker_id) => {
         }
       }
     }
+
     const unwatched_timelines = await TimeLine.find({
       contact: contact.id,
       status: 'active',
@@ -404,6 +417,21 @@ const disconnectVideo = async (video_tracker_id) => {
         const timeline = unwatched_timelines[i];
         TimeLineCtrl.disableNext(timeline.id);
       }
+    }
+
+    if (
+      (garbage.auto_follow_up2 && garbage.auto_follow_up2['enabled']) ||
+      (garbage.auto_resend2 && garbage.auto_resend2['enabled'])
+    ) {
+      Task.deleteMany({
+        contact: contact.id,
+        status: 'active',
+        watched_video: query['video'],
+        'condition.case': 'watched_video',
+        'condition.answer': false,
+      }).catch((err) => {
+        console.log('unwatched task remove err', err.message);
+      });
     }
 
     const d = query['duration'] / 1000;
@@ -715,8 +743,8 @@ const disconnectVideo = async (video_tracker_id) => {
           due_date.set({ second: 0, millisecond: 0 });
 
           if (!_activity.send_type) {
-            time_line = await TimeLine.findOne({
-              'action.type': 'resend_email_video',
+            time_line = await Task.findOne({
+              'action.type': 'resend_email_video1',
               'action.activity': _activity.id,
               status: 'active',
             });
@@ -726,11 +754,11 @@ const disconnectVideo = async (video_tracker_id) => {
               const canned_message = await EmailTemplate.findOne({
                 _id: auto_resend.email_canned_message,
               });
-              time_line = new TimeLine({
+              time_line = new Task({
                 user: currentUser.id,
                 contact: contact.id,
                 action: {
-                  type: 'resend_email_video',
+                  type: 'resend_email_video1',
                   activity: _activity.id,
                   content: canned_message.content,
                   subject: canned_message.subject,
@@ -741,8 +769,8 @@ const disconnectVideo = async (video_tracker_id) => {
               });
             }
           } else {
-            time_line = await TimeLine.findOne({
-              'action.type': 'resend_text_video',
+            time_line = await Task.findOne({
+              'action.type': 'resend_text_video1',
               'action.activity': _activity.id,
               status: 'active',
             });
@@ -752,11 +780,11 @@ const disconnectVideo = async (video_tracker_id) => {
               const canned_message = await EmailTemplate.findOne({
                 _id: auto_resend.sms_canned_message,
               });
-              time_line = new TimeLine({
+              time_line = new Task({
                 user: currentUser.id,
                 contact: contact.id,
                 action: {
-                  type: 'resend_text_video',
+                  type: 'resend_text_video1',
                   activity: _activity.id,
                   content: canned_message.content,
                   video: video.id,
@@ -886,12 +914,24 @@ const disconnectImage = async (image_tracker_id) => {
   }).catch((err) => {
     console.log('err', err);
   });
+
   if (unwatched_timelines.length > 0) {
     for (let i = 0; i < unwatched_timelines.length; i++) {
       const timeline = unwatched_timelines[i];
       TimeLineCtrl.disableNext(timeline.id);
     }
   }
+
+  Task.deleteMany({
+    contact: contact.id,
+    status: 'active',
+    watched_image: query['image'],
+    'condition.case': 'watched_image',
+    'condition.answer': false,
+  }).catch((err) => {
+    console.log('unwatched task remove err', err.message);
+  });
+
   const d = query['duration'] / 1000;
   var h = Math.floor(d / 3600);
   var m = Math.floor((d % 3600) / 60);
