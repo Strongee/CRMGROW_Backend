@@ -30,6 +30,7 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const CampaignJob = require('../models/campaign_job');
 const EmailTemplate = require('../models/email_template');
+const Task = require('../models/task');
 const TimeLineCtrl = require('../controllers/time_line');
 
 const api = require('../config/api');
@@ -1668,92 +1669,6 @@ const timesheet_check = new CronJob(
                 });
               });
             break;
-          case 'resend_email_video':
-            data = {
-              user: timeline.user,
-              content: action.content,
-              subject: action.subject,
-              activities: [action.activity],
-              videos: [action.video],
-              contacts: [timeline.contact],
-            };
-            EmailHelper.resendVideo(data)
-              .then((res) => {
-                // if (res[0] && res[0].status === true) {
-                //   timeline['status'] = 'completed';
-                //   timeline['updated_at'] = new Date();
-                //   timeline.save().catch((err) => {
-                //     console.log('err', err);
-                //   });
-                // } else {
-                //   timeline['status'] = 'error';
-                //   timeline['updated_at'] = new Date();
-                //   timeline.save().catch((err) => {
-                //     console.log('err', err);
-                //   });
-                // }
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              })
-              .catch((err) => {
-                // timeline['status'] = 'error';
-                // timeline['updated_at'] = new Date();
-                // timeline.save().catch((err) => {
-                //   console.log('err', err);
-                // });
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              });
-            break;
-          case 'resend_text_video':
-            data = {
-              user: timeline.user,
-              content: action.content,
-              subject: action.subject,
-              activities: [action.activity],
-              videos: [action.video],
-              contacts: [timeline.contact],
-            };
-            TextHelper.resendVideo(data)
-              .then((res) => {
-                // if (res[0] && res[0].status === true) {
-                //   timeline['status'] = 'completed';
-                //   timeline['updated_at'] = new Date();
-                //   timeline.save().catch((err) => {
-                //     console.log('err', err);
-                //   });
-                // } else {
-                //   timeline['status'] = 'error';
-                //   timeline['updated_at'] = new Date();
-                //   timeline.save().catch((err) => {
-                //     console.log('err', err);
-                //   });
-                // }
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              })
-              .catch((err) => {
-                // timeline['status'] = 'error';
-                // timeline['updated_at'] = new Date();
-                // timeline.save().catch((err) => {
-                //   console.log('err', err);
-                // });
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              });
-            break;
           case 'update_contact': {
             switch (action.command) {
               case 'update_label':
@@ -2100,6 +2015,250 @@ const timesheet_check = new CronJob(
   'US/Central'
 );
 
+const task_check = new CronJob(
+  '*/10 * * * *',
+  async () => {
+    const due_date = new Date();
+    const tasks = await Task.find({
+      status: 'active',
+      due_date: { $lte: due_date },
+    });
+
+    if (tasks) {
+      for (let i = 0; i < tasks.length; i++) {
+        const timeline = tasks[i];
+        const action = timeline['action'];
+        let data;
+        if (!action) {
+          continue;
+        }
+        switch (action.type) {
+          case 'send_email':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              video_ids: action.videos,
+              pdf_ids: action.pdfs,
+              image_ids: action.images,
+              contacts: [timeline.contact],
+            };
+
+            EmailHelper.sendEmail(data)
+              .then((res) => {
+                if (res[0] && res[0].status === true) {
+                  timeline['status'] = 'completed';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                } else {
+                  timeline['status'] = 'error';
+                  timeline['updated_at'] = new Date();
+                  timeline.save().catch((err) => {
+                    console.log('err', err);
+                  });
+                }
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err);
+                });
+              });
+            break;
+          case 'auto_follow_up2': {
+            let follow_due_date;
+            if (action.due_date) {
+              follow_due_date = action.due_date;
+            } else {
+              const now = moment();
+              now.set({ second: 0, millisecond: 0 });
+              follow_due_date = now.add(action.due_duration, 'hours');
+              follow_due_date.set({ second: 0, millisecond: 0 });
+            }
+            const followUp = new FollowUp({
+              content: action.content,
+              contact: timeline.contact,
+              user: timeline.user,
+              type: 'follow_up',
+              due_date: follow_due_date,
+            });
+
+            followUp
+              .save()
+              .then(async (_followup) => {
+                const garbage = await Garbage.findOne({
+                  user: timeline.user,
+                }).catch((err) => {
+                  console.log('err', err);
+                });
+                let reminder_before = 30;
+                if (garbage) {
+                  reminder_before = garbage.reminder_before;
+                }
+                const startdate = moment(_followup.due_date);
+                const reminder_due_date = startdate.subtract(
+                  reminder_before,
+                  'mins'
+                );
+
+                const reminder = new Reminder({
+                  contact: timeline.contact,
+                  due_date: reminder_due_date,
+                  type: 'follow_up',
+                  user: timeline.user,
+                  follow_up: _followup.id,
+                });
+
+                reminder.save().catch((err) => {
+                  console.log('error', err);
+                });
+
+                let detail_content = 'added follow up';
+                detail_content = ActivityHelper.automationLog(detail_content);
+                const activity = new Activity({
+                  content: detail_content,
+                  contacts: _followup.contact,
+                  user: timeline.user,
+                  type: 'follow_ups',
+                  follow_ups: _followup.id,
+                });
+
+                activity
+                  .save()
+                  .then((_activity) => {
+                    timeline['status'] = 'completed';
+                    timeline['updated_at'] = new Date();
+                    timeline.save().catch((err) => {
+                      console.log('err', err);
+                    });
+                    Contact.updateOne(
+                      { _id: _followup.contact },
+                      { $set: { last_activity: _activity.id } }
+                    ).catch((err) => {
+                      console.log('contact update err', err.message);
+                    });
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+
+                TimeLine.updateMany(
+                  {
+                    contact: timeline.contact,
+                    'action.ref_id': timeline.ref,
+                  },
+                  {
+                    $set: { 'action.follow_up': _followup.id },
+                  }
+                )
+                  .then(() => {
+                    console.log('follow up updated');
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err.message);
+                });
+                console.log('follow error', err.message);
+              });
+            break;
+          }
+          case 'resend_email_video1':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+
+            EmailHelper.resendVideo(data).catch((err) => {
+              console.log('email resend video err', err.message);
+            });
+
+            Task.deleteOne({
+              _id: timeline.id,
+            }).catch((err) => {
+              console.log('timeline remove err', err.message);
+            });
+            break;
+          case 'resend_text_video1':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            TextHelper.resendVideo(data).catch((err) => {
+              console.log('text resend video err', err.message);
+            });
+
+            Task.deleteOne({
+              _id: timeline.id,
+            }).catch((err) => {
+              console.log('timeline remove err', err.message);
+            });
+            break;
+          case 'resend_email_video2':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+
+            EmailHelper.resendVideo(data).catch((err) => {
+              console.log('email resend video err', err.message);
+            });
+
+            Task.deleteOne({
+              _id: timeline.id,
+            }).catch((err) => {
+              console.log('timeline remove err', err.message);
+            });
+            break;
+          case 'resend_text_video2':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activities: [action.activity],
+              videos: [action.video],
+              contacts: [timeline.contact],
+            };
+            TextHelper.resendVideo(data).catch((err) => {
+              console.log('text resend video err', err.message);
+            });
+
+            Task.deleteOne({
+              _id: timeline.id,
+            }).catch((err) => {
+              console.log('timeline remove err', err.message);
+            });
+            break;
+        }
+      }
+    }
+  },
+  function () {
+    console.log('Task check Job finished.');
+  },
+  false,
+  'US/Centrial'
+);
 const reset_daily_limit = new CronJob(
   '0 3 * * *',
   async () => {
@@ -2182,5 +2341,6 @@ payment_check.start();
 // campaign_job.start();
 // logger_check.start()
 notification_check.start();
+task_check.start();
 timesheet_check.start();
 reset_daily_limit.start();

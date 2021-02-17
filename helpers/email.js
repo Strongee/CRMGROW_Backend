@@ -3644,11 +3644,11 @@ const sendEmail = async (data) => {
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
 
   const promise_array = [];
-  const activities = [];
-  let html_content = '';
 
   for (let i = 0; i < contacts.length; i++) {
     let promise;
+    const activities = [];
+    let html_content = '';
 
     let contact = await Contact.findOne({
       _id: contacts[i],

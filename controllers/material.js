@@ -14,6 +14,7 @@ const PDFTracker = require('../models/pdf_tracker');
 const ImageTracker = require('../models/image_tracker');
 const Notification = require('../models/notification');
 const Garbage = require('../models/garbage');
+const Task = require('../models/task');
 const ActivityHelper = require('../helpers/activity');
 const api = require('../config/api');
 const request = require('request-promise');
@@ -122,9 +123,10 @@ const bulkEmail = async (req, res) => {
     }
 
     if (scheduled_time) {
-      const time_line = new TimeLine({
+      const task = new Task({
         user: currentUser.id,
         action: {
+          type: 'send_email_video',
           video_ids,
           pdf_ids,
           image_ids,
@@ -137,8 +139,9 @@ const bulkEmail = async (req, res) => {
         due_date: scheduled_time,
         status: 'pending',
       });
-      time_line.save().catch((err) => {
-        console.log('material sendemail timeline save err', err.message);
+
+      task.save().catch((err) => {
+        console.log('material send email timeline save err', err.message);
       });
       continue;
     }
@@ -435,8 +438,78 @@ const bulkEmail = async (req, res) => {
         });
 
         if (garbage && garbage.auto_follow_up2) {
-          const auto_follow_up1 = garbage.auto_follow_up1;
-          if (auto_follow_up1['enabled']) {
+          const auto_follow_up2 = garbage.auto_follow_up2;
+          if (auto_follow_up2['enabled']) {
+            const now = moment();
+            const period = auto_follow_up2['period'];
+            const content = auto_follow_up2['content'];
+            const due_date = now.add(period, 'hours');
+
+            if (video_ids && video_ids.length > 0) {
+              for (let j = 0; j < video_ids.length; j++) {
+                const task = new Task({
+                  user: currentUser.id,
+                  action: {
+                    type: 'auto_follow_up2',
+                    due_date,
+                    content,
+                  },
+                  watched_video: video_ids[j],
+                  'condition.case': 'watched_video',
+                  'condition.answer': false,
+                  status: 'active',
+                  contact: contacts[i],
+                });
+
+                task.save().catch((err) => {
+                  console.log('task save err', err.message);
+                });
+              }
+            }
+
+            if (pdf_ids && pdf_ids.length > 0) {
+              for (let j = 0; j < pdf_ids.length; j++) {
+                const task = new Task({
+                  user: currentUser.id,
+                  action: {
+                    type: 'auto_follow_up2',
+                    due_date,
+                    content,
+                  },
+                  watched_pdf: pdf_ids[j],
+                  'condition.case': 'watched_pdf',
+                  'condition.answer': false,
+                  status: 'active',
+                  contact: contacts[i],
+                });
+
+                task.save().catch((err) => {
+                  console.log('task save err', err.message);
+                });
+              }
+            }
+
+            if (image_ids && image_ids.length > 0) {
+              for (let j = 0; j < image_ids.length; j++) {
+                const task = new Task({
+                  user: currentUser.id,
+                  action: {
+                    type: 'auto_follow_up2',
+                    due_date,
+                    content,
+                  },
+                  watched_image: image_ids[j],
+                  'condition.case': 'watched_image',
+                  'condition.answer': false,
+                  status: 'active',
+                  contact: contacts[i],
+                });
+
+                task.save().catch((err) => {
+                  console.log('task save err', err.message);
+                });
+              }
+            }
           }
         }
       }

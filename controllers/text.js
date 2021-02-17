@@ -14,6 +14,7 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const { RestClient } = require('@signalwire/node');
+const request = require('request-promise');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -507,11 +508,125 @@ const receiveTextTwilio = async (req, res) => {
   return res.send();
 };
 
+const buyNumbers = async (req, res) => {
+  const { currentUser } = req;
+  let areaCode;
+  let countryCode;
+  const data = [];
+  const phone = currentUser.phone;
+  if (phone) {
+    areaCode = phone.areaCode;
+    countryCode = phone.countryCode;
+  } else {
+    areaCode = currentUser.cell_phone.substring(1, 4);
+    countryCode = 'US';
+  }
+
+  const search_code = req.body.searchCode || areaCode;
+
+  if (countryCode === 'US' || countryCode === 'CA') {
+    client
+      .availablePhoneNumbers(countryCode)
+      .local.list({
+        AreaCode: search_code,
+      })
+      .then(async (response) => {
+        if (
+          response.available_phone_numbers &&
+          response.available_phone_numbers.length > 0
+        ) {
+          response.available_phone_numbers.forEach((number) => {
+            data.push({
+              ...number,
+              service: 'signalwire',
+            });
+          });
+          return res.send({
+            status: true,
+            data,
+          });
+        } else {
+          /**
+           * twilio numbers search
+           *  */
+          twilio
+            .availablePhoneNumbers(countryCode)
+            .local.list({
+              areaCode: search_code,
+            })
+            .then((response) => {
+              const number = response[0];
+              if (typeof number === 'undefined' || number === '+') {
+                return res.status(400).json({
+                  status: false,
+                  error: 'Numbers not found',
+                });
+              } else {
+                response.forEach((number) => {
+                  data.push({
+                    ...number,
+                    service: 'twilio',
+                  });
+                });
+                return res.send({
+                  status: true,
+                  data,
+                });
+              }
+            })
+            .catch((err) => {
+              return res.status(500).json({
+                status: false,
+                error: err.message || err,
+              });
+            });
+        }
+      })
+      .catch((err) => {
+        console.log('phone number get err', err);
+      });
+  } else {
+    twilio
+      .availablePhoneNumbers(countryCode)
+      .local.list({
+        areaCode,
+      })
+      .then(async (response) => {
+        const number = data[0];
+
+        if (typeof number === 'undefined' || number === '+') {
+          return res.status(400).json({
+            status: false,
+            error: 'Numbers not found',
+          });
+        } else {
+          response.forEach((number) => {
+            data.push({
+              ...number,
+              service: 'twilio',
+            });
+          });
+          return res.send({
+            status: true,
+            data,
+          });
+        }
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          status: false,
+          error: err.message || err,
+        });
+      });
+  }
+};
+
 module.exports = {
   get,
   send,
   receive,
   receive1,
+  buyNumbers,
   receiveTextSignalWire,
   receiveTextTwilio,
 };
