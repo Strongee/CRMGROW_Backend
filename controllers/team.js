@@ -2012,7 +2012,7 @@ const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
   const contacts = await Contact.find({
     shared_contact: true,
-    user: currentUser.id,
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
   })
     .populate([
       {
