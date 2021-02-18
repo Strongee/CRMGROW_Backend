@@ -748,7 +748,6 @@ const importCSV = async (req, res) => {
               resolve();
               return;
             }
-            console.log('duplicate_contacts_ids', duplicate_contacts_ids);
             /**
             const name_contact = await Contact.find({
               first_name: data['first_name'],
@@ -3242,7 +3241,7 @@ const bulkCreate = async (req, res) => {
 
       if (data['cell_phone']) {
         const phone_contact = await Contact.findOne({
-          cell_phone: data['email'],
+          cell_phone: data['cell_phone'],
           user: currentUser.id,
         }).catch((err) => {
           console.log('contact found err', err.message);

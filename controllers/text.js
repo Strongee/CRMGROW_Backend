@@ -530,14 +530,11 @@ const buyNumbers = async (req, res) => {
       .local.list({
         AreaCode: search_code,
       })
-      .then(async (response) => {
-        if (
-          response.available_phone_numbers &&
-          response.available_phone_numbers.length > 0
-        ) {
-          response.available_phone_numbers.forEach((number) => {
+      .then(async (available_phone_numbers) => {
+        if (available_phone_numbers && available_phone_numbers.length > 0) {
+          available_phone_numbers.forEach((number) => {
             data.push({
-              ...number,
+              number: number.phoneNumber,
               service: 'signalwire',
             });
           });
@@ -564,7 +561,7 @@ const buyNumbers = async (req, res) => {
               } else {
                 response.forEach((number) => {
                   data.push({
-                    ...number,
+                    number: number.phoneNumber,
                     service: 'twilio',
                   });
                 });
@@ -602,7 +599,7 @@ const buyNumbers = async (req, res) => {
         } else {
           response.forEach((number) => {
             data.push({
-              ...number,
+              number: number.phoneNumber,
               service: 'twilio',
             });
           });
