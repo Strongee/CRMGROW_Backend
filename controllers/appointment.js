@@ -180,6 +180,7 @@ const googleCalendarList = (calendar_data) => {
         const calendars = result.data.items;
         if (calendars) {
           const promise_array = [];
+          console.log('calendars***********', calendars);
           for (let i = 0; i < calendars.length; i++) {
             const promise = new Promise(async (resolve) => {
               const calendar_data = {
