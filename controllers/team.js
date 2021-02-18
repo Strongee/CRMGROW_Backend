@@ -1883,7 +1883,10 @@ const loadCalls = async (req, res) => {
   }
   const data = await TeamCall.find(query)
     .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1, email: 1 } },
+      {
+        path: 'leader',
+        select: { user_name: 1, picture_profile: 1, email: 1 },
+      },
       { path: 'user', select: { user_name: 1, picture_profile: 1, email: 1 } },
       { path: 'contacts' },
     ])
