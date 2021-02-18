@@ -1883,8 +1883,11 @@ const loadCalls = async (req, res) => {
   }
   const data = await TeamCall.find(query)
     .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
+      {
+        path: 'leader',
+        select: { user_name: 1, picture_profile: 1, email: 1 },
+      },
+      { path: 'user', select: { user_name: 1, picture_profile: 1, email: 1 } },
       { path: 'contacts' },
     ])
     .skip(skip)
@@ -2012,11 +2015,15 @@ const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
   const contacts = await Contact.find({
     shared_contact: true,
-    user: currentUser.id,
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
   })
     .populate([
       {
         path: 'shared_members',
+        select: 'user_name email picture_profile cell_phone',
+      },
+      {
+        path: 'user',
         select: 'user_name email picture_profile cell_phone',
       },
       {
