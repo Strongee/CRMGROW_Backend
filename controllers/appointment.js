@@ -347,6 +347,7 @@ const outlookCalendarList = (calendar_data) => {
       .get()
       .then(async (outlook_calendars) => {
         const calendars = outlook_calendars.value;
+        console.log('calendars***********', calendars);
 
         if (calendars.length > 0) {
           const endDate = moment(date).add(1, `${mode}s`);
