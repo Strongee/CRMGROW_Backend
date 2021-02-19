@@ -1889,7 +1889,7 @@ const getCalendarList = async (req, res) => {
                   data: [],
                 };
                 for (let i = 0; i < calendars.length; i++) {
-                  if (calendar[i].canEdit) {
+                  if (calendars[i].canEdit) {
                     calendar.data.push({
                       id: calendars[i].id,
                       title: calendars[i].name,
