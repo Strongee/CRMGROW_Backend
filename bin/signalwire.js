@@ -34,8 +34,18 @@ async function main() {
 
 const releasePhone = () => {
   const phone_numbers = [
-    'e686f05f-3507-4e7a-8044-d6d2447d624e',
-    '5019b645-4cef-40e8-838a-2897742a6dbf',
+    '2c99fd15-bf54-4cfe-938e-4e1ae6af9e45',
+    '1557b0a7-5d67-48fa-a678-090c75ddb108',
+    '91080ae2-dadf-42ac-8ee5-8456ff377167',
+    '6fb1685b-1581-4d85-bcbc-7377f7e8a902',
+    '529bf37e-8ca5-420f-a53f-aee2262a251f',
+    '292aeeae-d170-4383-9434-6c798c1ec9f9',
+    'a8a5c880-ee22-4fb6-8de8-d555f5ac2125',
+    '693fee8a-8c85-489b-b468-fa1d31fccda6',
+    '41a42bb1-5248-4667-854a-77790c7cf0c4',
+    '58331f70-e06f-4be6-ac10-076fd638d9b9',
+    '3865fedd-15f3-4067-8372-f51660bda4c3',
+    'a3ff9e3f-1388-4353-839d-e3ece17473b1'
   ];
   for (let i = 0; i < phone_numbers.length; i++) {
     client
