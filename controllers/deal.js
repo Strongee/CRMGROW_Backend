@@ -545,6 +545,7 @@ const createFollowUp = async (req, res) => {
 const sendEmail = async (req, res) => {
   const { currentUser } = req;
   const { subject, content, cc, bcc, deal } = req.body;
+  const error = [];
 
   const email = new Email({
     user: currentUser.id,
@@ -573,9 +574,36 @@ const sendEmail = async (req, res) => {
     console.log('activity save err', err.message);
   });
 
-  EmailHelper.sendEmail(req.body).catch((err) => {
-    console.log('email send error');
-  });
+  const data = {
+    user: currentUser.id,
+    ...req.body,
+  };
+
+  EmailHelper.sendEmail(data)
+    .then((_res) => {
+      console.log('_res', _res);
+      _res.forEach((response) => {
+        if (!response.status) {
+          error.push({
+            contact: response.contact,
+            error: response.error,
+          });
+        }
+      });
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      } else {
+        return res.send({
+          status: true,
+        });
+      }
+    })
+    .catch((err) => {
+      console.log('email send error', err);
+    });
 };
 
 const getEmails = async (req, res) => {
@@ -659,8 +687,11 @@ const createAppointment = async (req, res) => {
       );
     }
 
+    const deal_data = { ...req.body };
+    delete deal_data.contacts;
+
     const appointment = new Appointment({
-      ...req.body,
+      ...deal_data,
       event_id,
     });
 
@@ -740,7 +771,7 @@ const createTeamCall = async (req, res) => {
   });
 
   const activity = new Activity({
-    team_calls: team_call.id,
+    team_calls: deal_call.id,
     user: currentUser.id,
     content: 'inquire group call',
     type: 'team_calls',
@@ -766,7 +797,7 @@ const createTeamCall = async (req, res) => {
 
   team_call
     .save()
-    .then((data) => {
+    .then(() => {
       if (leader) {
         let guests = '';
         if (contacts) {
@@ -865,7 +896,6 @@ const createTeamCall = async (req, res) => {
 
       return res.send({
         status: true,
-        data,
       });
     })
     .catch((err) => {

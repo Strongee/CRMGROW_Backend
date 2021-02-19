@@ -45,7 +45,21 @@ const releasePhone = () => {
     '41a42bb1-5248-4667-854a-77790c7cf0c4',
     '58331f70-e06f-4be6-ac10-076fd638d9b9',
     '3865fedd-15f3-4067-8372-f51660bda4c3',
-    'a3ff9e3f-1388-4353-839d-e3ece17473b1'
+    'a3ff9e3f-1388-4353-839d-e3ece17473b1',
+    '93af75cb-fefc-48ac-8005-a19a4d1ccbda',
+    '3fac2c7e-23aa-4098-85a5-e1ea7e5c694e',
+    '398ae929-6188-4341-9452-8a78f9022422',
+    'ad269f30-a038-48de-b516-1cecdefd6423',
+    '25f59c86-d390-4b15-acac-fb15909e81b5',
+    '8529aaa0-9015-4fca-8792-2ac62851b644',
+    '60432ded-f949-422b-8f06-18ba235b9573',
+    '2823db5a-8847-4e3e-af7f-3ecab73b5a23',
+    '3d98ab7a-ca28-4d11-8392-97f064aa37c6',
+    '670050da-f653-4ef9-aa99-a97cdcd58287',
+    '9436700d-3428-4e64-914d-de06829412cf',
+    '7c793642-41b3-4e93-8762-09df944ce549',
+    '103472f8-6f46-4a6c-88e6-417cfc066799',
+    '6ddc02cb-1153-4cf5-90cb-401312a7c61d',
   ];
   for (let i = 0; i < phone_numbers.length; i++) {
     client
@@ -198,6 +212,6 @@ const getSignalWireNumber = async (id) => {
 // longNumber();
 // buyNumber();
 // sendMessage();
-// releasePhone();
+releasePhone();
 // receivedStatus();
-getSignalWireNumber();
+// getSignalWireNumber();

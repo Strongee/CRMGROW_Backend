@@ -4016,6 +4016,28 @@ const sendEmail = async (data) => {
           urls.GMAIL_AUTHORIZE_URL
         );
 
+        const token = JSON.parse(currentUser.google_refresh_token);
+        oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+        await oauth2Client.getAccessToken().catch((err) => {
+          console.log('get access err', err.message);
+        });
+
+        if (!oauth2Client.credentials.access_token) {
+          promise_array.push(
+            new Promise((resolve, reject) => {
+              resolve({
+                status: false,
+                contact: {
+                  first_name: contact.first_name,
+                  email: contact.email,
+                },
+                error: 'google access token invalid!',
+              });
+            })
+          );
+          continue;
+        }
         const attachment_array = [];
         if (attachments) {
           for (let i = 0; i < attachments.length; i++) {
