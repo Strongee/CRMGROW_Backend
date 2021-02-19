@@ -216,7 +216,10 @@ const googleCalendarList = (calendar_data) => {
                             event_id: event.id,
                           })
                             .select('contact')
-                            .populate({ path: 'contact', select: 'email' });
+                            .populate({
+                              path: 'contact',
+                              select: 'email first_name last_name',
+                            });
 
                           appointments.map((appointment) => {
                             contacts.push(appointment.contact);
@@ -396,7 +399,10 @@ const outlookCalendarList = (calendar_data) => {
                       event_id: calendar_event.id,
                     })
                       .select('contact')
-                      .populate({ path: 'contact', select: 'email' });
+                      .populate({
+                        path: 'contact',
+                        select: 'email first_name last_name',
+                      });
 
                     appointments.map((appointment) => {
                       contacts.push(appointment.contact);
