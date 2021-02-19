@@ -1889,14 +1889,16 @@ const getCalendarList = async (req, res) => {
                   data: [],
                 };
                 for (let i = 0; i < calendars.length; i++) {
-                  calendar.data.push({
-                    id: calendars[i].id,
-                    title: calendars[i].name,
-                    color:
-                      calendars[i].hexColor === ''
-                        ? undefined
-                        : calendars[i].hexColor,
-                  });
+                  if (calendar[i].canEdit) {
+                    calendar.data.push({
+                      id: calendars[i].id,
+                      title: calendars[i].name,
+                      color:
+                        calendars[i].hexColor === ''
+                          ? undefined
+                          : calendars[i].hexColor,
+                    });
+                  }
                 }
                 data.push(calendar);
                 resolve();
@@ -1940,13 +1942,15 @@ const getCalendarList = async (req, res) => {
                 };
 
                 for (let i = 0; i < calendars.length; i++) {
-                  const calendar_data = {
-                    id: calendars[i].id,
-                    title: calendars[i].summary,
-                    time_zone: calendars[i].timeZone,
-                    color: calendars[i].backgroundColor,
-                  };
-                  calendar.data.push(calendar_data);
+                  if (calendars[i].accessRole === 'owner') {
+                    const calendar_data = {
+                      id: calendars[i].id,
+                      title: calendars[i].summary,
+                      time_zone: calendars[i].timeZone,
+                      color: calendars[i].backgroundColor,
+                    };
+                    calendar.data.push(calendar_data);
+                  }
                 }
                 data.push(calendar);
                 resolve();
