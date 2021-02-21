@@ -613,6 +613,7 @@ const bulkEmail = async (req, res) => {
                     error: err.message,
                   });
                 } else {
+                  console.log('recipience err', err);
                   resolve({
                     status: false,
                     contact: {
