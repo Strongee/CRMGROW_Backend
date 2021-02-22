@@ -1485,6 +1485,7 @@ const loadMaterial = async (req, res) => {
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
+  Array.prototype.push.apply(_video_list, _video_admin);
 
   const _pdf_list = await PDF.find({ user: currentUser.id, del: false })
     .sort({ priority: 1 })
@@ -1497,6 +1498,7 @@ const loadMaterial = async (req, res) => {
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
+  Array.prototype.push.apply(_pdf_list, _pdf_admin);
 
   const _image_list = await Image.find({ user: currentUser.id, del: false })
     .sort({ priority: 1 })
@@ -1509,6 +1511,7 @@ const loadMaterial = async (req, res) => {
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
+  Array.prototype.push.apply(_image_list, _image_admin);
 
   const teams = await Team.find({
     $or: [{ members: currentUser.id }, { owner: currentUser.id }],
@@ -1577,6 +1580,8 @@ const loadMaterial = async (req, res) => {
     _pdf_detail_list.push(pdf_detail);
   }
 
+  console.log(_pdf_detail_list);
+
   const _image_detail_list = [];
 
   for (let i = 0; i < _image_list.length; i++) {
@@ -1591,9 +1596,11 @@ const loadMaterial = async (req, res) => {
     _image_detail_list.push(image_detail);
   }
 
+  console.log(_image_detail_list);
+
   res.send({
     status: true,
-    data: [..._video_detail_list, ..._pdf_detail_list, ..._image_detail_list]
+    data: [..._video_detail_list, ..._pdf_detail_list, ..._image_detail_list],
   });
 };
 
