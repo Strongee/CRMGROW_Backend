@@ -1517,40 +1517,52 @@ const loadMaterial = async (req, res) => {
     $or: [{ members: currentUser.id }, { owner: currentUser.id }],
   }).populate([{ path: 'videos' }, { path: 'pdfs' }, { path: 'images' }]);
 
+  const materialOwnerIds = [];
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
       const team = teams[i];
+      team['videos'].forEach((e) => {
+        e['team'] = { _id: team._id, name: team['name'] };
+        materialOwnerIds.push(e.user);
+      });
+      team['pdfs'].forEach((e) => {
+        e['team'] = { _id: team._id, name: team['name'] };
+        materialOwnerIds.push(e.user);
+      });
+      team['images'].forEach((e) => {
+        e['team'] = { _id: team._id, name: team['name'] };
+        materialOwnerIds.push(e.user);
+      });
+
       Array.prototype.push.apply(_video_list, team['videos']);
       Array.prototype.push.apply(_pdf_list, team['pdfs']);
       Array.prototype.push.apply(_image_list, team['images']);
     }
   }
 
+  const _material_owners = await User.find({ _id: { $in: materialOwnerIds } });
+  const _material_owner_objects = {};
+  _material_owners.forEach((e) => {
+    _material_owner_objects[e._id] = e;
+  });
+
   const _video_detail_list = [];
 
   for (let i = 0; i < _video_list.length; i++) {
-    const _video_detail = await VideoTracker.aggregate([
-      {
-        $lookup: {
-          from: 'videos',
-          localField: 'video',
-          foreignField: '_id',
-          as: 'video_detail',
-        },
-      },
-      {
-        $match: {
-          video: _video_list[i]._id,
-          user: currentUser._id,
-        },
-      },
-    ]);
+    const view = await VideoTracker.countDocuments({
+      image: _image_list[i]._id,
+      user: currentUser._id,
+    });
 
     const myJSON = JSON.stringify(_video_list[i]);
     const _video = JSON.parse(myJSON);
     const video_detail = await Object.assign(_video, {
-      views: _video_detail.length,
+      views: view,
+      material_type: 'video',
     });
+    if (_material_owner_objects[video_detail.user]) {
+      video_detail['user'] = _material_owner_objects[video_detail.user];
+    }
     _video_detail_list.push(video_detail);
   }
 
@@ -1577,10 +1589,11 @@ const loadMaterial = async (req, res) => {
     const myJSON = JSON.stringify(_pdf_list[i]);
     const _pdf = JSON.parse(myJSON);
     const pdf_detail = await Object.assign(_pdf, { views: _pdf_detail.length });
+    if (_material_owner_objects[pdf_detail.user]) {
+      pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
+    }
     _pdf_detail_list.push(pdf_detail);
   }
-
-  console.log(_pdf_detail_list);
 
   const _image_detail_list = [];
 
@@ -1593,10 +1606,11 @@ const loadMaterial = async (req, res) => {
     const myJSON = JSON.stringify(_image_list[i]);
     const _image = JSON.parse(myJSON);
     const image_detail = await Object.assign(_image, { views: view });
+    if (_material_owner_objects[image_detail.user]) {
+      image_detail['user'] = _material_owner_objects[image_detail.user];
+    }
     _image_detail_list.push(image_detail);
   }
-
-  console.log(_image_detail_list);
 
   res.send({
     status: true,
