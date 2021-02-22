@@ -1550,7 +1550,7 @@ const loadMaterial = async (req, res) => {
 
   for (let i = 0; i < _video_list.length; i++) {
     const view = await VideoTracker.countDocuments({
-      image: _image_list[i]._id,
+      video: _video_list[i]._id,
       user: currentUser._id,
     });
 
