@@ -148,7 +148,7 @@ const create = async (req, res) => {
       }
     }
     if (error.length > 0) {
-      return res.status(400).json({
+      return res.status(405).json({
         status: false,
         error,
       });
@@ -685,7 +685,7 @@ const recreate = async (req, res) => {
   const _automation = await Automation.findOne({ _id: automation_id }).catch(
     (err) => {
       console.log('err', err);
-      res.status(400).json({
+      return res.status(400).json({
         status: false,
         err: err.message || 'Automation found err',
       });
