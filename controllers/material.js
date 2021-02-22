@@ -1540,7 +1540,9 @@ const loadMaterial = async (req, res) => {
     }
   }
 
-  const _material_owners = await User.find({ _id: { $in: materialOwnerIds } });
+  const _material_owners = await User.find({
+    _id: { $in: materialOwnerIds },
+  }).select('_id user_name');
   const _material_owner_objects = {};
   _material_owners.forEach((e) => {
     _material_owner_objects[e._id] = e;
@@ -1588,7 +1590,10 @@ const loadMaterial = async (req, res) => {
 
     const myJSON = JSON.stringify(_pdf_list[i]);
     const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, { views: _pdf_detail.length });
+    const pdf_detail = await Object.assign(_pdf, {
+      views: _pdf_detail.length,
+      material_type: 'pdf',
+    });
     if (_material_owner_objects[pdf_detail.user]) {
       pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
     }
@@ -1605,7 +1610,10 @@ const loadMaterial = async (req, res) => {
 
     const myJSON = JSON.stringify(_image_list[i]);
     const _image = JSON.parse(myJSON);
-    const image_detail = await Object.assign(_image, { views: view });
+    const image_detail = await Object.assign(_image, {
+      views: view,
+      material_type: 'image',
+    });
     if (_material_owner_objects[image_detail.user]) {
       image_detail['user'] = _material_owner_objects[image_detail.user];
     }
