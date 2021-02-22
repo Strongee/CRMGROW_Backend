@@ -13,5 +13,6 @@ router.post(
 );
 router.post('/social-share', catchError(MaterialCtrl.socialShare));
 router.post('/thumbs-up', catchError(MaterialCtrl.thumbsUp));
+router.get('/load', UserCtrl.checkAuth, catchError(MaterialCtrl.loadMaterial));
 
 module.exports = router;

@@ -5,6 +5,7 @@ const User = require('../models/user');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
+const Team = require('../models/team');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
@@ -27,6 +28,7 @@ const {
   addLinkTracking,
 } = require('../helpers/email');
 const { sleep } = require('../helpers/text');
+const garbageHelper = require('../helpers/garbage.js');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
@@ -1431,9 +1433,151 @@ const thumbsUp = async (req, res) => {
   });
 };
 
+const loadMaterial = async (req, res) => {
+  const { currentUser } = req;
+  const garbage = await garbageHelper.get(currentUser);
+  let editedVideos = [];
+  let editedPdfs = [];
+  let editedImages = [];
+  if (garbage && garbage['edited_video']) {
+    editedVideos = garbage['edited_video'];
+  }
+  if (garbage && garbage['edited_pdf']) {
+    editedPdfs = garbage['edited_pdf'];
+  }
+  if (garbage && garbage['edited_image']) {
+    editedImages = garbage['edited_image'];
+  }
+
+  const company = currentUser.company || 'eXp Realty';
+
+  const _video_list = await Video.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _video_admin = await Video.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedVideos },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  const _pdf_list = await PDF.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _pdf_admin = await PDF.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedPdfs },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  const _image_list = await Image.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _image_admin = await Image.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedImages },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate([{ path: 'videos' }, { path: 'pdfs' }, { path: 'images' }]);
+
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      Array.prototype.push.apply(_video_list, team['videos']);
+      Array.prototype.push.apply(_pdf_list, team['pdfs']);
+      Array.prototype.push.apply(_image_list, team['images']);
+    }
+  }
+
+  const _video_detail_list = [];
+
+  for (let i = 0; i < _video_list.length; i++) {
+    const _video_detail = await VideoTracker.aggregate([
+      {
+        $lookup: {
+          from: 'videos',
+          localField: 'video',
+          foreignField: '_id',
+          as: 'video_detail',
+        },
+      },
+      {
+        $match: {
+          video: _video_list[i]._id,
+          user: currentUser._id,
+        },
+      },
+    ]);
+
+    const myJSON = JSON.stringify(_video_list[i]);
+    const _video = JSON.parse(myJSON);
+    const video_detail = await Object.assign(_video, {
+      views: _video_detail.length,
+    });
+    _video_detail_list.push(video_detail);
+  }
+
+  const _pdf_detail_list = [];
+
+  for (let i = 0; i < _pdf_list.length; i++) {
+    const _pdf_detail = await PDFTracker.aggregate([
+      {
+        $lookup: {
+          from: 'pdfs',
+          localField: 'pdf',
+          foreignField: '_id',
+          as: 'pdf_detail',
+        },
+      },
+      {
+        $match: {
+          pdf: _pdf_list[i]._id,
+          user: currentUser._id,
+        },
+      },
+    ]);
+
+    const myJSON = JSON.stringify(_pdf_list[i]);
+    const _pdf = JSON.parse(myJSON);
+    const pdf_detail = await Object.assign(_pdf, { views: _pdf_detail.length });
+    _pdf_detail_list.push(pdf_detail);
+  }
+
+  const _image_detail_list = [];
+
+  for (let i = 0; i < _image_list.length; i++) {
+    const view = await ImageTracker.countDocuments({
+      image: _image_list[i]._id,
+      user: currentUser._id,
+    });
+
+    const myJSON = JSON.stringify(_image_list[i]);
+    const _image = JSON.parse(myJSON);
+    const image_detail = await Object.assign(_image, { views: view });
+    _image_detail_list.push(image_detail);
+  }
+
+  res.send({
+    status: true,
+    data: [..._video_detail_list, ..._pdf_detail_list, ..._image_detail_list]
+  });
+};
+
 module.exports = {
   bulkEmail,
   bulkText,
   socialShare,
   thumbsUp,
+  loadMaterial,
 };
