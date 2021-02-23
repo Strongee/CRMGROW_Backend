@@ -1683,24 +1683,19 @@ const editFolder = async (req, res) => {
   const { currentUser } = req;
   const _id = req.params.id;
   const { title } = req.body;
-  const folder = await Image.findOne({ _id }).catch((err) => {
-    return res.status(500).send({
-      status: false,
-      error: err.message,
-    });
-  });
+  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+    (err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    }
+  );
 
   if (!folder) {
     return res.status(400).send({
       status: false,
       error: 'Not found folder',
-    });
-  }
-
-  if (folder.user !== currentUser._id) {
-    return res.status(400).send({
-      status: false,
-      error: 'Invalid Permission',
     });
   }
 
@@ -1723,24 +1718,19 @@ const removeFolder = async (req, res) => {
   const { currentUser } = req;
   const { _id, mode } = req.body;
 
-  const folder = await Image.findOne({ _id }).catch((err) => {
-    return res.status(500).send({
-      status: false,
-      error: err.message,
-    });
-  });
+  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+    (err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    }
+  );
 
   if (!folder) {
     return res.status(400).send({
       status: false,
       error: 'Not found folder',
-    });
-  }
-
-  if (folder.user !== currentUser._id) {
-    return res.status(400).send({
-      status: false,
-      error: 'Invalid Permission',
     });
   }
 
