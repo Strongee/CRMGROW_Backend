@@ -32,7 +32,7 @@ const system_settings = {
   LEAD: '5f16d58d0af09220208b6e11',
   AUTO_FOLLOW_UP: 'has reviewed material',
   AUTO_FOLLOW_UP2: 'didn`t watch material',
-  AUTOMATION: 2000,
+  AUTOMATION: 300,
   THUMBNAIL: {
     WIDTH: 400,
     HEIGHT: 220,

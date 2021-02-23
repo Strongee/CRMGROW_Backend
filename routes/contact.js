@@ -230,7 +230,7 @@ router.get(
 router.post(
   '/contact-merge',
   UserCtrl.checkAuth,
-  catchError(ContactCtrl.contactMerge)
+  catchError(ContactCtrl.mergeContact)
 );
 
 router.post(
