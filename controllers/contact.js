@@ -880,6 +880,7 @@ const importCSV = async (req, res) => {
             contact
               .save()
               .then((_contact) => {
+                console.log('_contact', _contact);
                 const activity = new Activity({
                   content: add_content,
                   contacts: _contact.id,
@@ -3100,6 +3101,7 @@ const loadDuplication = async (req, res) => {
     data: duplications,
   });
 };
+
 /**
 const mergeContacts = (req, res) => {
   const { currentUser } = req;
@@ -3174,7 +3176,7 @@ const mergeContacts = (req, res) => {
       });
     });
 };
-*/
+ */
 
 const bulkCreate = async (req, res) => {
   const { contacts } = req.body;
@@ -4192,7 +4194,7 @@ const getSharedContact = async (req, res) => {
   }
 };
 
-const contactMerge = async (req, res) => {
+const mergeContact = async (req, res) => {
   const { primary_contact, secondary_contact } = req.body;
   const editData = { ...req.body };
 
@@ -4248,6 +4250,7 @@ const contactMerge = async (req, res) => {
         });
         break;
       }
+
       case 'remove': {
         Activity.deleteMany({
           contacts: { $in: [primary_contact, secondary_contact] },
@@ -4634,7 +4637,6 @@ module.exports = {
   checkEmail,
   checkPhone,
   loadDuplication,
-  // mergeContacts,
   bulkCreate,
   verifyEmail,
   verifyPhone,
@@ -4644,6 +4646,7 @@ module.exports = {
   interestSubmitContact,
   getSharedContact,
   shareContacts,
-  contactMerge,
+  mergeContact,
+  // mergeContacts,
   updateContact,
 };

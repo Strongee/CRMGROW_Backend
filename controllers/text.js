@@ -22,7 +22,7 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
 
 const send = async (req, res) => {
   const { currentUser } = req;
-  const { text_content } = req.body;
+  const { text } = req.body;
   const contact = await Contact.findOne({ _id: req.params.id }).catch((err) => {
     console.log('err', err);
   });

@@ -153,7 +153,7 @@ const remove = async (req, res) => {
   deals.forEach((e) => {
     dealIds.push(e._id);
   });
-  await DealStage.update(
+  await DealStage.updateOne(
     { _id: move_stage },
     { $addToSet: { deals: { $each: dealIds } } }
   );
