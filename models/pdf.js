@@ -14,6 +14,7 @@ const PDFSchema = new Schema(
     default_edited: { type: Boolean, default: false },
     default_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     has_shared: { type: Boolean, default: false },
+    folder: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,

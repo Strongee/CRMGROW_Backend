@@ -5,6 +5,7 @@ const User = require('../models/user');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
+const Team = require('../models/team');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const Email = require('../models/email');
@@ -27,6 +28,7 @@ const {
   addLinkTracking,
 } = require('../helpers/email');
 const { sleep } = require('../helpers/text');
+const garbageHelper = require('../helpers/garbage.js');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
@@ -1454,9 +1456,352 @@ const thumbsUp = async (req, res) => {
   });
 };
 
+const loadMaterial = async (req, res) => {
+  const { currentUser } = req;
+  const garbage = await garbageHelper.get(currentUser);
+  let editedVideos = [];
+  let editedPdfs = [];
+  let editedImages = [];
+  if (garbage && garbage['edited_video']) {
+    editedVideos = garbage['edited_video'];
+  }
+  if (garbage && garbage['edited_pdf']) {
+    editedPdfs = garbage['edited_pdf'];
+  }
+  if (garbage && garbage['edited_image']) {
+    editedImages = garbage['edited_image'];
+  }
+
+  const company = currentUser.company || 'eXp Realty';
+
+  const _folder_list = await Image.find({
+    user: currentUser.id,
+    del: false,
+    type: 'folder',
+  });
+
+  const _video_list = await Video.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _video_admin = await Video.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedVideos },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  Array.prototype.push.apply(_video_list, _video_admin);
+
+  const _pdf_list = await PDF.find({ user: currentUser.id, del: false })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _pdf_admin = await PDF.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedPdfs },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  Array.prototype.push.apply(_pdf_list, _pdf_admin);
+
+  const _image_list = await Image.find({
+    user: currentUser.id,
+    del: false,
+    type: { $ne: 'folder' },
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _image_admin = await Image.find({
+    role: 'admin',
+    del: false,
+    _id: { $nin: editedImages },
+    company,
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  Array.prototype.push.apply(_image_list, _image_admin);
+
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  }).populate([{ path: 'videos' }, { path: 'pdfs' }, { path: 'images' }]);
+
+  const materialOwnerIds = [];
+  if (teams && teams.length > 0) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      const videos = [];
+      const pdfs = [];
+      const images = [];
+      team['videos'].forEach((e) => {
+        videos.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
+        materialOwnerIds.push(e.user);
+      });
+      team['pdfs'].forEach((e) => {
+        pdfs.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
+        materialOwnerIds.push(e.user);
+      });
+      team['images'].forEach((e) => {
+        images.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
+        materialOwnerIds.push(e.user);
+      });
+
+      Array.prototype.push.apply(_video_list, videos);
+      Array.prototype.push.apply(_pdf_list, pdfs);
+      Array.prototype.push.apply(_image_list, images);
+    }
+  }
+
+  const _material_owners = await User.find({
+    _id: { $in: materialOwnerIds },
+  }).select('_id user_name');
+  const _material_owner_objects = {};
+  _material_owners.forEach((e) => {
+    _material_owner_objects[e._id] = e;
+  });
+
+  const _video_detail_list = [];
+
+  for (let i = 0; i < _video_list.length; i++) {
+    const view = await VideoTracker.countDocuments({
+      video: _video_list[i]._id,
+      user: currentUser._id,
+    });
+
+    const myJSON = JSON.stringify(_video_list[i]);
+    const _video = JSON.parse(myJSON);
+    const video_detail = await Object.assign(_video, {
+      views: view,
+      material_type: 'video',
+    });
+    if (_material_owner_objects[video_detail.user]) {
+      video_detail['user'] = _material_owner_objects[video_detail.user];
+    }
+    _video_detail_list.push(video_detail);
+  }
+
+  const _pdf_detail_list = [];
+
+  for (let i = 0; i < _pdf_list.length; i++) {
+    const _pdf_detail = await PDFTracker.aggregate([
+      {
+        $lookup: {
+          from: 'pdfs',
+          localField: 'pdf',
+          foreignField: '_id',
+          as: 'pdf_detail',
+        },
+      },
+      {
+        $match: {
+          pdf: _pdf_list[i]._id,
+          user: currentUser._id,
+        },
+      },
+    ]);
+
+    const myJSON = JSON.stringify(_pdf_list[i]);
+    const _pdf = JSON.parse(myJSON);
+    const pdf_detail = await Object.assign(_pdf, {
+      views: _pdf_detail.length,
+      material_type: 'pdf',
+    });
+    if (_material_owner_objects[pdf_detail.user]) {
+      pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
+    }
+    _pdf_detail_list.push(pdf_detail);
+  }
+
+  const _image_detail_list = [];
+
+  for (let i = 0; i < _image_list.length; i++) {
+    const view = await ImageTracker.countDocuments({
+      image: _image_list[i]._id,
+      user: currentUser._id,
+    });
+
+    const myJSON = JSON.stringify(_image_list[i]);
+    const _image = JSON.parse(myJSON);
+    const image_detail = await Object.assign(_image, {
+      views: view,
+      material_type: 'image',
+    });
+    if (_material_owner_objects[image_detail.user]) {
+      image_detail['user'] = _material_owner_objects[image_detail.user];
+    }
+    _image_detail_list.push(image_detail);
+  }
+
+  const _folder_detail_list = [];
+
+  for (let i = 0; i < _folder_list.length; i++) {
+    const myJSON = JSON.stringify(_folder_list[i]);
+    const _folder = JSON.parse(myJSON);
+    const folder = await Object.assign(_folder, {
+      material_type: 'folder',
+    });
+    _folder_detail_list.push(folder);
+  }
+
+  res.send({
+    status: true,
+    data: [
+      ..._folder_detail_list,
+      ..._video_detail_list,
+      ..._pdf_detail_list,
+      ..._image_detail_list,
+    ],
+  });
+};
+
+const createFolder = (req, res) => {
+  const { currentUser } = req;
+
+  const folder = new Image({
+    ...req.body,
+    type: 'folder',
+    user: currentUser._id,
+  });
+
+  folder
+    .save()
+    .then((_folder) => {
+      return res.send({
+        status: true,
+        data: _folder,
+      });
+    })
+    .catch((e) => {
+      return res.status(500).send({
+        status: false,
+        error: e.message,
+      });
+    });
+};
+const editFolder = async (req, res) => {
+  const { currentUser } = req;
+  const _id = req.params.id;
+  const { title } = req.body;
+  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+    (err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    }
+  );
+
+  if (!folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not found folder',
+    });
+  }
+
+  folder['title'] = title;
+  folder
+    .save()
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+const removeFolder = async (req, res) => {
+  const { currentUser } = req;
+  const { _id, mode } = req.body;
+
+  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+    (err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    }
+  );
+
+  if (!folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not found folder',
+    });
+  }
+
+  if (mode === 'only-folder') {
+    await Image.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+    await Video.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+    await PDF.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+  } else {}
+  Image.deleteOne({ _id })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+const moveMaterials = (req, res) => {
+  const { currentUser } = req;
+  const { materials, target } = req.body;
+  const { videos, pdfs, images, shared_materials } = materials;
+
+  if (videos.length) {
+
+  }
+
+  if (pdfs.length) {
+
+  }
+
+  if (images.length) {
+
+  }
+
+  if (shared_materials.length) {
+    Image.updateOne(
+      { _id: target, user: currentUser._id },
+      { $set: { shared_materials } }
+    ).then(() => {
+      return res.send({
+        status: true,
+      });
+    });
+  } else {
+    return res.send({
+      status: true,
+    });
+  }
+};
+
 module.exports = {
   bulkEmail,
   bulkText,
   socialShare,
   thumbsUp,
+  loadMaterial,
+  createFolder,
+  editFolder,
+  removeFolder,
+  moveMaterials,
 };

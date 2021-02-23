@@ -13,5 +13,26 @@ router.post(
 );
 router.post('/social-share', catchError(MaterialCtrl.socialShare));
 router.post('/thumbs-up', catchError(MaterialCtrl.thumbsUp));
+router.get('/load', UserCtrl.checkAuth, catchError(MaterialCtrl.loadMaterial));
+router.post(
+  '/folder',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.createFolder)
+);
+router.put(
+  '/folder/:id',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.editFolder)
+);
+router.post(
+  '/remove-folder',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.removeFolder)
+);
+router.post(
+  '/move-material',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.moveMaterials)
+);
 
 module.exports = router;
