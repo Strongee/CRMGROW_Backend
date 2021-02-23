@@ -1474,6 +1474,12 @@ const loadMaterial = async (req, res) => {
 
   const company = currentUser.company || 'eXp Realty';
 
+  const _folder_list = await Image.find({
+    user: currentUser.id,
+    del: false,
+    type: 'folder',
+  });
+
   const _video_list = await Video.find({ user: currentUser.id, del: false })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
@@ -1500,7 +1506,11 @@ const loadMaterial = async (req, res) => {
     .sort({ created_at: 1 });
   Array.prototype.push.apply(_pdf_list, _pdf_admin);
 
-  const _image_list = await Image.find({ user: currentUser.id, del: false })
+  const _image_list = await Image.find({
+    user: currentUser.id,
+    del: false,
+    type: { $ne: 'folder' },
+  })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
   const _image_admin = await Image.find({
@@ -1521,22 +1531,25 @@ const loadMaterial = async (req, res) => {
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
       const team = teams[i];
+      const videos = [];
+      const pdfs = [];
+      const images = [];
       team['videos'].forEach((e) => {
-        e['team'] = { _id: team._id, name: team['name'] };
+        videos.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
         materialOwnerIds.push(e.user);
       });
       team['pdfs'].forEach((e) => {
-        e['team'] = { _id: team._id, name: team['name'] };
+        pdfs.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
         materialOwnerIds.push(e.user);
       });
       team['images'].forEach((e) => {
-        e['team'] = { _id: team._id, name: team['name'] };
+        images.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
         materialOwnerIds.push(e.user);
       });
 
-      Array.prototype.push.apply(_video_list, team['videos']);
-      Array.prototype.push.apply(_pdf_list, team['pdfs']);
-      Array.prototype.push.apply(_image_list, team['images']);
+      Array.prototype.push.apply(_video_list, videos);
+      Array.prototype.push.apply(_pdf_list, pdfs);
+      Array.prototype.push.apply(_image_list, images);
     }
   }
 
@@ -1620,10 +1633,175 @@ const loadMaterial = async (req, res) => {
     _image_detail_list.push(image_detail);
   }
 
+  const _folder_detail_list = [];
+
+  for (let i = 0; i < _folder_list.length; i++) {
+    const myJSON = JSON.stringify(_folder_list[i]);
+    const _folder = JSON.parse(myJSON);
+    const folder = await Object.assign(_folder, {
+      material_type: 'folder',
+    });
+    _folder_detail_list.push(folder);
+  }
+
   res.send({
     status: true,
-    data: [..._video_detail_list, ..._pdf_detail_list, ..._image_detail_list],
+    data: [
+      ..._folder_detail_list,
+      ..._video_detail_list,
+      ..._pdf_detail_list,
+      ..._image_detail_list,
+    ],
   });
+};
+
+const createFolder = (req, res) => {
+  const { currentUser } = req;
+
+  const folder = new Image({
+    ...req.body,
+    type: 'folder',
+    user: currentUser._id,
+  });
+
+  folder
+    .save()
+    .then((_folder) => {
+      return res.send({
+        status: true,
+        data: _folder,
+      });
+    })
+    .catch((e) => {
+      return res.status(500).send({
+        status: false,
+        error: e.message,
+      });
+    });
+};
+const editFolder = async (req, res) => {
+  const { currentUser } = req;
+  const _id = req.params.id;
+  const { title } = req.body;
+  const folder = await Image.findOne({ _id }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  if (!folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not found folder',
+    });
+  }
+
+  if (folder.user !== currentUser._id) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  folder['title'] = title;
+  folder
+    .save()
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+const removeFolder = async (req, res) => {
+  const { currentUser } = req;
+  const { _id, mode } = req.body;
+
+  const folder = await Image.findOne({ _id }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  if (!folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not found folder',
+    });
+  }
+
+  if (folder.user !== currentUser._id) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  if (mode === 'only-folder') {
+    await Image.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+    await Video.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+    await PDF.update(
+      { user: currentUser._id, folder: _id },
+      { $unset: { folder: undefined } }
+    );
+  } else {}
+  Image.deleteOne({ _id })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+const moveMaterials = (req, res) => {
+  const { currentUser } = req;
+  const { materials, target } = req.body;
+  const { videos, pdfs, images, shared_materials } = materials;
+
+  if (videos.length) {
+
+  }
+
+  if (pdfs.length) {
+
+  }
+
+  if (images.length) {
+
+  }
+
+  if (shared_materials.length) {
+    Image.updateOne(
+      { _id: target, user: currentUser._id },
+      { $set: { shared_materials } }
+    ).then(() => {
+      return res.send({
+        status: true,
+      });
+    });
+  } else {
+    return res.send({
+      status: true,
+    });
+  }
 };
 
 module.exports = {
@@ -1632,4 +1810,8 @@ module.exports = {
   socialShare,
   thumbsUp,
   loadMaterial,
+  createFolder,
+  editFolder,
+  removeFolder,
+  moveMaterials,
 };
