@@ -211,9 +211,22 @@ const changeOrder = async (req, res) => {
   });
 };
 
+const getEasyLoad = async (req, res) => {
+  const { currentUser } = req;
+  const deal_stage = await DealStage.find({ user: currentUser.id }).sort({
+    priority: 1,
+  });
+
+  return res.send({
+    status: true,
+    data: deal_stage,
+  });
+};
+
 module.exports = {
   init,
   getAll,
+  getEasyLoad,
   create,
   remove,
   edit,
