@@ -36,33 +36,33 @@ const create = async (req, res) => {
     let count = 0;
     let max_assign_count;
 
-    const timeline = await TimeLine.aggregate([
-      {
-        $match: {
-          user: mongoose.Types.ObjectId(currentUser._id),
-        },
-      },
-      {
-        $group: {
-          _id: { contact: '$contact' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $count: 'total',
-      },
-    ]);
-
-    if (timeline[0] && timeline[0]['total']) {
-      count = timeline[0]['total'];
-    }
-
     const automation_info = currentUser.automation_info;
 
     if (automation_info['is_limit']) {
       max_assign_count =
         automation_info.max_count ||
         system_settings.AUTOMATION_ASSIGN_LIMIT.BASIC;
+
+      const timeline = await TimeLine.aggregate([
+        {
+          $match: {
+            user: mongoose.Types.ObjectId(currentUser._id),
+          },
+        },
+        {
+          $group: {
+            _id: { contact: '$contact' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $count: 'total',
+        },
+      ]);
+
+      if (timeline[0] && timeline[0]['total']) {
+        count = timeline[0]['total'];
+      }
     }
 
     for (let i = 0; i < contacts.length; i++) {
