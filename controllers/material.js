@@ -1735,15 +1735,15 @@ const removeFolder = async (req, res) => {
   }
 
   if (mode === 'only-folder') {
-    await Image.updateOne(
+    await Image.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-    await Video.updateOne(
+    await Video.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-    await PDF.updateOne(
+    await PDF.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
