@@ -1748,7 +1748,6 @@ const removeFolder = async (req, res) => {
       { $unset: { folder: undefined } }
     );
   } else {
-
   }
   Image.deleteOne({ _id })
     .then(() => {
@@ -1784,9 +1783,15 @@ const moveMaterials = async (req, res) => {
 
   if (pdfs.length) {
     if (target) {
-      await PDF.updateMany({ _id: { $in: pdfs } }, { $set: { folder: target } });
+      await PDF.updateMany(
+        { _id: { $in: pdfs } },
+        { $set: { folder: target } }
+      );
     } else {
-      await PDF.updateMany({ _id: { $in: pdfs } }, { $unset: { folder: undefined } });
+      await PDF.updateMany(
+        { _id: { $in: pdfs } },
+        { $unset: { folder: undefined } }
+      );
     }
   }
 
