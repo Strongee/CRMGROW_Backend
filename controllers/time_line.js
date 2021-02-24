@@ -33,6 +33,37 @@ const create = async (req, res) => {
 
   if (_automation) {
     const { automations } = _automation;
+    let count = 0;
+    let max_assign_count;
+
+    const timeline = await TimeLine.aggregate([
+      {
+        $match: {
+          user: mongoose.Types.ObjectId(currentUser._id),
+        },
+      },
+      {
+        $group: {
+          _id: { contact: '$contact' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $count: 'total',
+      },
+    ]);
+
+    if (timeline[0] && timeline[0]['total']) {
+      count = timeline[0]['total'];
+    }
+
+    const automation_info = currentUser.automation_info;
+
+    if (automation_info['is_limit']) {
+      max_assign_count =
+        automation_info.max_count ||
+        system_settings.AUTOMATION_ASSIGN_LIMIT.BASIC;
+    }
 
     for (let i = 0; i < contacts.length; i++) {
       const old_timeline = await TimeLine.findOne({
@@ -52,24 +83,7 @@ const create = async (req, res) => {
         continue;
       }
 
-      const count = await TimeLine.aggregate([
-        {
-          $match: {
-            user: mongoose.Types.ObjectId(currentUser._id),
-          },
-        },
-        {
-          $group: {
-            _id: { contact: '$contact' },
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $count: 'total',
-        },
-      ]);
-
-      if (count[0] && count[0]['total'] > system_settings.AUTOMATION) {
+      if (automation_info['is_limit'] && max_assign_count < count) {
         const contact = await Contact.findOne({ _id: contacts[i] });
         error.push({
           contact: {
@@ -86,6 +100,7 @@ const create = async (req, res) => {
         'label'
       );
 
+      count += 1;
       contact_array.push(contact);
 
       for (let j = 0; j < automations.length; j++) {

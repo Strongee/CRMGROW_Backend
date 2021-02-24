@@ -11,6 +11,13 @@ router.post(
   UserCtrl.checkAuth,
   catchError(MaterialCtrl.bulkEmail)
 );
+
+router.post(
+  '/bulk-text',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.bulkText)
+);
+
 router.post('/social-share', catchError(MaterialCtrl.socialShare));
 router.post('/thumbs-up', catchError(MaterialCtrl.thumbsUp));
 router.get('/load', UserCtrl.checkAuth, catchError(MaterialCtrl.loadMaterial));

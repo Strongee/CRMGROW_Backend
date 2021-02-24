@@ -74,6 +74,13 @@ const UserSchema = new Schema(
       },
       count: { type: Number, default: 0 },
     },
+    automation_info: {
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.AUTOMATION_ASSIGN_LIMIT.BASIC,
+      },
+    },
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },
     is_free: { type: Boolean, default: false },
