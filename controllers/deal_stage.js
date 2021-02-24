@@ -135,28 +135,33 @@ const remove = async (req, res) => {
     });
   }
 
-  Deal.updateMany(
-    {
-      _id: { $in: deal_stage.deals },
-    },
-    {
-      $set: {
-        deal_stage: move_stage,
+  if (move_stage) {
+    Deal.updateMany(
+      {
+        _id: { $in: deal_stage.deals },
       },
-    }
-  ).catch((err) => {
-    console.log('move deals into other stage', err.message);
-  });
+      {
+        $set: {
+          deal_stage: move_stage,
+        },
+      }
+    ).catch((err) => {
+      console.log('move deals into other stage', err.message);
+    });
+  }
 
   const deals = await Deal.find({ _id: { $in: deal_stage.deals } });
   const dealIds = [];
   deals.forEach((e) => {
     dealIds.push(e._id);
   });
-  await DealStage.updateOne(
-    { _id: move_stage },
-    { $addToSet: { deals: { $each: dealIds } } }
-  );
+
+  if (move_stage) {
+    await DealStage.updateOne(
+      { _id: move_stage },
+      { $addToSet: { deals: { $each: dealIds } } }
+    );
+  }
 
   DealStage.deleteOne({
     _id: remove_stage,

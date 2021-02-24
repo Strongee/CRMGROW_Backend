@@ -32,5 +32,6 @@ router.get(
   UserCtrl.checkAuth,
   catchError(DealStageCtrl.getEasyLoad)
 );
+router.get('/:id', UserCtrl.checkAuth, catchError(DealStageCtrl.getStage));
 
 module.exports = router;
