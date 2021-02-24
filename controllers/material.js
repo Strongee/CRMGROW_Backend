@@ -1761,21 +1761,21 @@ const removeFolder = async (req, res) => {
       });
     });
 };
-const moveMaterials = (req, res) => {
+const moveMaterials = async (req, res) => {
   const { currentUser } = req;
   const { materials, target } = req.body;
   const { videos, pdfs, images, shared_materials } = materials;
 
   if (videos.length) {
-
+    await Video.update({ _id: { $in: videos } }, { $set: { folder: target } });
   }
 
   if (pdfs.length) {
-
+    await PDF.update({ _id: { $in: pdfs } }, { $set: { folder: target } });
   }
 
   if (images.length) {
-
+    await Image.update({ _id: { $in: images } }, { $set: { folder: target } });
   }
 
   if (shared_materials.length) {
