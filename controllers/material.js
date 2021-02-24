@@ -1735,19 +1735,21 @@ const removeFolder = async (req, res) => {
   }
 
   if (mode === 'only-folder') {
-    await Image.update(
+    await Image.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-    await Video.update(
+    await Video.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-    await PDF.update(
+    await PDF.updateMany(
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-  } else {}
+  } else {
+
+  }
   Image.deleteOne({ _id })
     .then(() => {
       return res.send({
@@ -1763,35 +1765,64 @@ const removeFolder = async (req, res) => {
 };
 const moveMaterials = async (req, res) => {
   const { currentUser } = req;
-  const { materials, target } = req.body;
+  const { materials, target, source } = req.body;
   const { videos, pdfs, images, shared_materials } = materials;
 
   if (videos.length) {
-    await Video.update({ _id: { $in: videos } }, { $set: { folder: target } });
+    if (target) {
+      await Video.updateMany(
+        { _id: { $in: videos } },
+        { $set: { folder: target } }
+      );
+    } else {
+      await Video.updateMany(
+        { _id: { $in: videos } },
+        { $unset: { folder: undefined } }
+      );
+    }
   }
 
   if (pdfs.length) {
-    await PDF.update({ _id: { $in: pdfs } }, { $set: { folder: target } });
+    if (target) {
+      await PDF.updateMany({ _id: { $in: pdfs } }, { $set: { folder: target } });
+    } else {
+      await PDF.updateMany({ _id: { $in: pdfs } }, { $unset: { folder: undefined } });
+    }
   }
 
   if (images.length) {
-    await Image.update({ _id: { $in: images } }, { $set: { folder: target } });
+    if (target) {
+      await Image.updateMany(
+        { _id: { $in: images } },
+        { $set: { folder: target } }
+      );
+    } else {
+      await Image.updateMany(
+        { _id: { $in: images } },
+        { $unset: { folder: undefined } }
+      );
+    }
   }
 
   if (shared_materials.length) {
-    Image.updateOne(
-      { _id: target, user: currentUser._id },
-      { $set: { shared_materials } }
-    ).then(() => {
-      return res.send({
-        status: true,
-      });
-    });
-  } else {
-    return res.send({
-      status: true,
-    });
+    if (source) {
+      console.log('soruce', source);
+      await Image.updateOne(
+        { _id: source, user: currentUser._id },
+        { $pull: { shared_materials: { $in: shared_materials } } }
+      );
+    }
+    if (target) {
+      console.log('target', target);
+      await Image.updateOne(
+        { _id: target, user: currentUser._id },
+        { $addToSet: { shared_materials: { $each: shared_materials } } }
+      );
+    }
   }
+  return res.send({
+    status: true,
+  });
 };
 
 module.exports = {
