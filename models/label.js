@@ -6,7 +6,7 @@ const LabelSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     name: String,
-    color: { type: String, default: '#FFFFFF' },
+    color: { type: String, default: '#000000' },
     font_color: { type: String, default: '#000000' },
     role: String,
     company: String,
