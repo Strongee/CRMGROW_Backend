@@ -30,6 +30,7 @@ const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
 const Team = require('../models/team');
+const Label = require('../models/label');
 const Notification = require('../models/notification');
 const LabelHelper = require('../helpers/label');
 const ActivityHelper = require('../helpers/activity');
@@ -862,6 +863,18 @@ const importCSV = async (req, res) => {
                   break;
                 }
               }
+
+              if (!label) {
+                const new_label = new Label({
+                  user: currentUser.id,
+                  name: data['label'],
+                });
+
+                label.save().catch((err) => {
+                  console.log('new label save err', err.message);
+                });
+                label = new_label.id;
+              }
             }
 
             delete data.label;
@@ -880,7 +893,6 @@ const importCSV = async (req, res) => {
             contact
               .save()
               .then((_contact) => {
-                console.log('_contact', _contact);
                 const activity = new Activity({
                   content: add_content,
                   contacts: _contact.id,
