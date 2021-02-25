@@ -870,7 +870,7 @@ const importCSV = async (req, res) => {
                   name: data['label'],
                 });
 
-                label.save().catch((err) => {
+                new_label.save().catch((err) => {
                   console.log('new label save err', err.message);
                 });
                 label = new_label.id;
