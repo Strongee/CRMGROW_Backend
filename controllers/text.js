@@ -1,4 +1,5 @@
 const phone = require('phone');
+const mongoose = require('mongoose');
 
 const User = require('../models/user');
 const Contact = require('../models/contact');
@@ -14,11 +15,36 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 
 const { RestClient } = require('@signalwire/node');
-const request = require('request-promise');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
+
+const getAll = async (req, res) => {
+  const { currentUser } = req;
+  const texts = await Text.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+  ]);
+
+  console.log('texts', texts);
+  return res.send({
+    status: true,
+  });
+};
 
 const send = async (req, res) => {
   const { currentUser } = req;
@@ -620,6 +646,7 @@ const buyNumbers = async (req, res) => {
 
 module.exports = {
   get,
+  getAll,
   send,
   receive,
   receive1,

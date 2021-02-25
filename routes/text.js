@@ -12,6 +12,7 @@ router.post('/receive1', catchError(TextCtrl.receive1));
 router.post('/receive-signalwire', catchError(TextCtrl.receiveTextSignalWire));
 router.post('/receive-twilio', catchError(TextCtrl.receiveTextTwilio));
 
+router.get('/', UserCtrl.checkAuth, catchError(TextCtrl.getAll));
 router.post(
   '/search-numbers',
   UserCtrl.checkAuth,
