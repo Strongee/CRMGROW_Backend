@@ -661,6 +661,23 @@ const updateFollowUp = async (req, res) => {
     console.log('contact deal update followup', err.message);
   });
 
+  let due_date;
+  if (req.body.due_date) {
+    const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
+
+    let reminder_before = 30;
+    if (garbage) {
+      reminder_before = garbage.reminder_before;
+    }
+
+    const startdate = moment(req.body.due_date);
+    due_date = startdate.subtract(reminder_before, 'minutes');
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
 
@@ -671,6 +688,19 @@ const updateFollowUp = async (req, res) => {
       type: 'follow_ups',
       follow_ups: req.body.followup,
     });
+
+    if (req.body.due_date) {
+      Reminder.updateOne(
+        { follow_up: req.params.id },
+        {
+          $set: {
+            due_date,
+          },
+        }
+      ).catch((err) => {
+        console.log('err', err);
+      });
+    }
 
     new_activity.save().catch((err) => {
       console.log('activity save err', err.message);
