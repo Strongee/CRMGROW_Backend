@@ -34,9 +34,16 @@ const getAll = async (req, res) => {
         data: { $push: '$$ROOT' },
       },
     },
+    {
+      $lookup: {
+        from: 'contacts',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'contact_detail',
+      },
+    },
   ]);
 
-  console.log('texts', texts);
   return res.send({
     status: true,
     data: texts,
