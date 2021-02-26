@@ -379,7 +379,7 @@ const receiveTextSignalWire = async (req, res) => {
       } else {
         const new_text = new Text({
           user: currentUser.id,
-          contact: contact.id,
+          contacts: contact.id,
           content: text,
           type: 1,
         });
@@ -491,7 +491,7 @@ const receiveTextTwilio = async (req, res) => {
       } else {
         const new_text = new Text({
           user: currentUser.id,
-          contact: contact.id,
+          contacts: contact.id,
           content: text,
           type: 1,
         });
