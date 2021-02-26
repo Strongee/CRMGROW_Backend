@@ -23,6 +23,11 @@ router.post(
 router.post('/add-note', UserCtrl.checkAuth, catchError(DealCtrl.createNote));
 router.post('/edit-note', UserCtrl.checkAuth, catchError(DealCtrl.editNote));
 router.post('/get-note', UserCtrl.checkAuth, catchError(DealCtrl.getNotes));
+router.post(
+  '/remove-note',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.removeNote)
+);
 
 router.post(
   '/add-follow',

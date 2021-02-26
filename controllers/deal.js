@@ -15,6 +15,8 @@ const Email = require('../models/email');
 const Appointment = require('../models/appointment');
 const TeamCall = require('../models/team_call');
 const Notification = require('../models/notification');
+const Garbage = require('../models/garbage');
+const Reminder = require('../models/reminder');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -510,6 +512,24 @@ const editNote = async (req, res) => {
   });
 };
 
+const removeNote = async (req, res) => {
+  Note.deletOne({
+    _id: req.body.note,
+  }).catch((err) => {
+    console.log('deal note delete err', err.message);
+  });
+
+  Note.deleteMany({
+    shared_note: req.body.note,
+  }).catch((err) => {
+    console.log('deal note delete err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 const createFollowUp = async (req, res) => {
   const { currentUser } = req;
   const { deal, type, content, due_date } = req.body;
@@ -554,6 +574,31 @@ const createFollowUp = async (req, res) => {
 
     new_followup.save().catch((err) => {
       console.log('new follow up save err', err.message);
+    });
+
+    const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
+
+    let reminder_before = 30;
+    if (garbage) {
+      reminder_before = garbage.reminder_before;
+    }
+
+    const startdate = moment(due_date);
+    const due_date = startdate.subtract(reminder_before, 'minutes');
+    const reminder = new Reminder({
+      contact,
+      due_date,
+      type: 'follow_up',
+      user: currentUser.id,
+      follow_up: new_followup.id,
+    });
+
+    reminder.save().catch((err) => {
+      console.log('error', err);
     });
 
     const new_activity = new Activity({
@@ -636,6 +681,8 @@ const updateFollowUp = async (req, res) => {
     status: true,
   });
 };
+
+const removeFollowUp = async (req, res) => {};
 
 const sendEmail = async (req, res) => {
   const { currentUser } = req;
@@ -1015,9 +1062,11 @@ module.exports = {
   getDetail,
   createNote,
   editNote,
+  removeNote,
   createFollowUp,
   createAppointment,
   updateFollowUp,
+  removeFollowUp,
   createTeamCall,
   sendEmail,
   getEmails,
