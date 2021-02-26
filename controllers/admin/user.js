@@ -515,6 +515,12 @@ const disableUser = async (req, res) => {
             await Tag.deleteMany({ user: user.id });
             await TimeLine.deleteMany({ user: user.id });
             await Team.deleteMany({ user: user.id });
+            Team.updateMany(
+              { members: user.id },
+              {
+                $pull: { members: { $in: [user.id] } },
+              }
+            );
             VideoHelper.removeVideo(user.id);
 
             return res.send({
@@ -544,6 +550,9 @@ const disableUser = async (req, res) => {
         });
       });
   } else {
+    if (user.proxy_number_id) {
+      releaseSignalWireNumber(user.proxy_number_id);
+    }
     User.updateOne(
       { _id: req.params.id },
       {
@@ -563,6 +572,13 @@ const disableUser = async (req, res) => {
         await Tag.deleteMany({ user: user.id });
         await TimeLine.deleteMany({ user: user.id });
         await Team.deleteMany({ user: user.id });
+        Team.updateMany(
+          { members: user.id },
+          {
+            $pull: { members: { $in: [user.id] } },
+          }
+        );
+        VideoHelper.removeVideo(user.id);
 
         return res.send({
           status: true,
