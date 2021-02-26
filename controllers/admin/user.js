@@ -11,7 +11,9 @@ const Activity = require('../../models/activity');
 const Reminder = require('../../models/reminder');
 const FollowUp = require('../../models/follow_up');
 const TimeLine = require('../../models/time_line');
+const Team = require('../../models/team');
 const PaymentCtrl = require('../payment');
+const VideoHelper = require('../../helpers/video');
 const { isBlockedEmail } = require('../../helpers/email');
 const api = require('../../config/api');
 const system_settings = require('../../config/system_settings');
@@ -462,7 +464,7 @@ const closeAccount = async (req, res) => {
     await Appointment.deleteMany({ user: user.id });
     await Reminder.deleteMany({ user: user.id });
     await Tag.deleteMany({ user: user.id });
-    await TimeLine.deleteMany({ user: user.id });
+    await Team.deleteMany({ user: user.id });
   }
 
   if (user.proxy_number_id) {
@@ -512,6 +514,9 @@ const disableUser = async (req, res) => {
             await Reminder.deleteMany({ user: user.id });
             await Tag.deleteMany({ user: user.id });
             await TimeLine.deleteMany({ user: user.id });
+            await Team.deleteMany({ user: user.id });
+            VideoHelper.removeVideo(user.id);
+
             return res.send({
               status: true,
             });
@@ -557,6 +562,8 @@ const disableUser = async (req, res) => {
         await Reminder.deleteMany({ user: user.id });
         await Tag.deleteMany({ user: user.id });
         await TimeLine.deleteMany({ user: user.id });
+        await Team.deleteMany({ user: user.id });
+
         return res.send({
           status: true,
         });

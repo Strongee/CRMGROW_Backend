@@ -5,6 +5,9 @@ const fs = require('fs');
 const AWS = require('aws-sdk');
 const api = require('../config/api');
 const Video = require('../models/video');
+const Garbage = require('../models/garbage');
+const Team = require('../models/team');
+
 const {
   VIDEO_CONVERT_LOG_PATH,
   TEMP_PATH,
@@ -346,10 +349,84 @@ const generateThumbnail = (data) => {
   });
 };
 
+const removeVideo = async (user) => {
+  const videos = await Video.find({
+    user,
+  }).catch((err) => {
+    console.log('video find err', err.message);
+  });
+
+  for (let i = 0; i < videos.length; i++) {
+    const video = videos[i];
+
+    if (video['default_edited']) {
+      Garbage.updateOne(
+        { user },
+        {
+          $pull: { edited_video: { $in: [video.default_video] } },
+        }
+      ).catch((err) => {
+        console.log('default video remove err', err.message);
+      });
+    } else if (video['has_shared']) {
+      Video.updateOne(
+        {
+          _id: video.shared_video,
+          user,
+        },
+        {
+          $unset: { shared_video: true },
+          has_shared: false,
+        }
+      ).catch((err) => {
+        console.log('default video remove err', err.message);
+      });
+    } else {
+      const url = video.url;
+      if (url.indexOf('teamgrow.s3') > 0) {
+        s3.deleteObject(
+          {
+            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+            Key: url.slice(44),
+          },
+          function (err, data) {
+            console.log('err', err);
+          }
+        );
+      } else {
+        try {
+          const file_path = video.path;
+          if (file_path) {
+            fs.unlinkSync(file_path);
+          }
+        } catch (err) {
+          console.log('err', err);
+        }
+      }
+    }
+
+    if (video.role === 'team') {
+      Team.updateOne(
+        { videos: video.id },
+        {
+          $pull: { videos: { $in: [video.id] } },
+        }
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+    }
+
+    Video.updateOne({ _id: video.id }, { $set: { del: true } }).catch((err) => {
+      console.log('err', err.message);
+    });
+  }
+};
+
 module.exports = {
   convertRecordVideo,
   convertUploadVideo,
   getConvertStatus,
   getDuration,
   generateThumbnail,
+  removeVideo,
 };

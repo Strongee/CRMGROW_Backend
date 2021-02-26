@@ -5,11 +5,12 @@ const Schema = mongoose.Schema;
 const TextSchema = new Schema(
   {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-    contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     phone: String,
     content: String,
     from: String,
     type: Number,
+    status: String,
     updated_at: Date,
     created_at: Date,
   },

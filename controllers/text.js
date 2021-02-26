@@ -25,17 +25,13 @@ const getAll = async (req, res) => {
   const texts = await Text.aggregate([
     {
       $match: {
-        $and: [
-          {
-            user: mongoose.Types.ObjectId(currentUser._id),
-            automation: mongoose.Types.ObjectId(id),
-          },
-        ],
+        user: mongoose.Types.ObjectId(currentUser._id),
       },
     },
     {
       $group: {
-        _id: { contact: '$contact' },
+        _id: '$contacts',
+        data: { $push: '$$ROOT' },
       },
     },
   ]);
@@ -43,6 +39,7 @@ const getAll = async (req, res) => {
   console.log('texts', texts);
   return res.send({
     status: true,
+    data: texts,
   });
 };
 
