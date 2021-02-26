@@ -479,6 +479,37 @@ const createNote = async (req, res) => {
   });
 };
 
+const editNote = async (req, res) => {
+  const editData = { ...req.body };
+  delete editData.contact;
+
+  Note.updateOne(
+    {
+      _id: req.body.note,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('deal note update err', err.message);
+  });
+
+  Note.updateMany(
+    {
+      shared_note: req.body.note,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('deal note update err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 const createFollowUp = async (req, res) => {
   const { currentUser } = req;
   const { deal, type, content, due_date } = req.body;
@@ -532,6 +563,70 @@ const createFollowUp = async (req, res) => {
       type: 'follow_ups',
       follow_ups: new_followup.id,
     });
+    new_activity.save().catch((err) => {
+      console.log('activity save err', err.message);
+    });
+  }
+
+  return res.send({
+    status: true,
+  });
+};
+
+const updateFollowUp = async (req, res) => {
+  const { currentUser } = req;
+  // const { deal, type, content, due_date } = req.body;
+  const editData = { ...req.body };
+
+  FollowUp.updateOne(
+    {
+      _id: req.body.followup,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('deal followup update err', err.message);
+  });
+
+  const activity_content = 'updated follow up';
+
+  const activity = new Activity({
+    content: activity_content,
+    type: 'follow_ups',
+    follow_ups: req.body.followup,
+    deals: req.body.deal,
+    user: currentUser.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  const { contacts } = req.body;
+
+  FollowUp.updateMany(
+    {
+      shared_followup: req.body.followup,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('contact deal update followup', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+
+    const new_activity = new Activity({
+      content: activity_content,
+      contact,
+      user: currentUser.id,
+      type: 'follow_ups',
+      follow_ups: req.body.followup,
+    });
+
     new_activity.save().catch((err) => {
       console.log('activity save err', err.message);
     });
@@ -919,8 +1014,10 @@ module.exports = {
   remove,
   getDetail,
   createNote,
+  editNote,
   createFollowUp,
   createAppointment,
+  updateFollowUp,
   createTeamCall,
   sendEmail,
   getEmails,

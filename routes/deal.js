@@ -19,9 +19,11 @@ router.post(
   UserCtrl.checkAuth,
   catchError(DealCtrl.getActivity)
 );
-router.post('/add-note', UserCtrl.checkAuth, catchError(DealCtrl.createNote));
 
+router.post('/add-note', UserCtrl.checkAuth, catchError(DealCtrl.createNote));
+router.post('/edit-note', UserCtrl.checkAuth, catchError(DealCtrl.editNote));
 router.post('/get-note', UserCtrl.checkAuth, catchError(DealCtrl.getNotes));
+
 router.post(
   '/add-follow',
   UserCtrl.checkAuth,
@@ -31,6 +33,11 @@ router.post(
   '/get-follow',
   UserCtrl.checkAuth,
   catchError(DealCtrl.getFollowup)
+);
+router.post(
+  '/update-follow',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.updateFollowUp)
 );
 
 router.post(
