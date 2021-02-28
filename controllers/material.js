@@ -27,7 +27,10 @@ const {
   generateOpenTrackLink,
   addLinkTracking,
 } = require('../helpers/email');
-const { sleep } = require('../helpers/text');
+const {
+  sleep,
+  generateUnsubscribeLink: generateTextUnsubscribeLink,
+} = require('../helpers/text');
 const garbageHelper = require('../helpers/garbage.js');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
@@ -1062,7 +1065,7 @@ const bulkText = async (req, res) => {
             .create({
               from: fromNumber,
               to: e164Phone,
-              body: text_content + '\n\n' + generateUnsubscribeLink(),
+              body: text_content + '\n\n' + generateTextUnsubscribeLink(),
             })
             .then((message) => {
               if (message.status === 'queued' || message.status === 'sent') {
@@ -1160,7 +1163,7 @@ const bulkText = async (req, res) => {
         twilio.messages
           .create({
             from: fromNumber,
-            body: text_content + '\n\n' + generateUnsubscribeLink(),
+            body: text_content + '\n\n' + generateTextUnsubscribeLink(),
             to: e164Phone,
           })
           .catch((err) => {
