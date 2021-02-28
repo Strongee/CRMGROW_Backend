@@ -676,6 +676,21 @@ const updateFollowUp = async (req, res) => {
 
     const startdate = moment(req.body.due_date);
     due_date = startdate.subtract(reminder_before, 'minutes');
+
+    const followups = await FollowUp.find({
+      shared_followup: req.body.follow_up,
+    });
+
+    Reminder.updateMany(
+      { follow_up: { $in: followups } },
+      {
+        $set: {
+          due_date,
+        },
+      }
+    ).catch((err) => {
+      console.log('err', err);
+    });
   }
 
   for (let i = 0; i < contacts.length; i++) {
@@ -689,19 +704,6 @@ const updateFollowUp = async (req, res) => {
       follow_ups: req.body.followup,
     });
 
-    if (req.body.due_date) {
-      Reminder.updateOne(
-        { follow_up: req.params.id },
-        {
-          $set: {
-            due_date,
-          },
-        }
-      ).catch((err) => {
-        console.log('err', err);
-      });
-    }
-
     new_activity.save().catch((err) => {
       console.log('activity save err', err.message);
     });
@@ -712,7 +714,17 @@ const updateFollowUp = async (req, res) => {
   });
 };
 
-const removeFollowUp = async (req, res) => {};
+const removeFollowUp = async (req, res) => {
+  FollowUp.deleteOne({
+    _id: req.body.followup,
+  }).catch((err) => {
+    console.log('remove followup err', err.message);
+  });
+
+  FollowUp.deleteMany({
+    
+  })
+};
 
 const sendEmail = async (req, res) => {
   const { currentUser } = req;
