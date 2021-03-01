@@ -382,14 +382,27 @@ const getActivity = async (req, res) => {
   const { currentUser } = req;
   const { count } = req.body;
 
-  const activity_list = await Activity.find({
-    user: currentUser.id,
-    deals: req.body.deal,
-  })
-    .sort({ updated_at: 1 })
-    .catch((err) => {
-      console.log('activity get err', err.message);
-    });
+  let activity_list;
+  if (count) {
+    activity_list = await Activity.find({
+      user: currentUser.id,
+      deals: req.body.deal,
+    })
+      .sort({ updated_at: 1 })
+      .limit(count)
+      .catch((err) => {
+        console.log('activity get err', err.message);
+      });
+  } else {
+    activity_list = await Activity.find({
+      user: currentUser.id,
+      deals: req.body.deal,
+    })
+      .sort({ updated_at: 1 })
+      .catch((err) => {
+        console.log('activity get err', err.message);
+      });
+  }
 
   const activity_detail_list = [];
 
