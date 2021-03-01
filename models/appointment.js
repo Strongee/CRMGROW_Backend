@@ -12,7 +12,7 @@ const AppointmentSchema = new Schema(
     due_end: Date,
     type: Number,
     del: { type: Boolean, default: false },
-    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     guests: Array,
     event_id: String,
     deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },

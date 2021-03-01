@@ -8,6 +8,11 @@ const FollowUpSchema = new Schema(
     due_date: Date,
     content: { type: String, default: 'Contact has reviewed material' },
     contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    shared_follow_up: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'follow_up',
+    },
+    has_shared: Boolean,
     status: { type: Number, default: 0 },
     reminder: Number,
     reminder_type: String,

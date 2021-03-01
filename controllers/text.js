@@ -42,6 +42,9 @@ const getAll = async (req, res) => {
         as: 'contact_detail',
       },
     },
+    {
+      $sort: { created_at: -1 },
+    },
   ]);
 
   return res.send({

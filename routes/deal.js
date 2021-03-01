@@ -44,6 +44,11 @@ router.post(
   UserCtrl.checkAuth,
   catchError(DealCtrl.updateFollowUp)
 );
+router.post(
+  '/remove-follow',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.removeFollowUp)
+);
 
 router.post(
   '/move-deal',
@@ -75,6 +80,11 @@ router.post(
   '/get-team-calls',
   UserCtrl.checkAuth,
   catchError(DealCtrl.getTeamCalls)
+);
+router.post(
+  '/update-team-call',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.updateTeamCall)
 );
 
 router.post(

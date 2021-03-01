@@ -20,11 +20,16 @@ const Reminder = require('../models/reminder');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
+  updateGoogleCalendarById,
+  updateOutlookCalendarById,
+  removeGoogleCalendarById,
+  removeOutlookCalendarById,
 } = require('./appointment');
 const EmailHelper = require('../helpers/email');
 const api = require('../config/api');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
+const system_settings = require('../config/system_settings');
 const { getAvatarName } = require('../helpers/utility');
 
 const ses = new AWS.SES({
@@ -251,7 +256,7 @@ const edit = async (req, res) => {
       _id: req.params.id,
       user: currentUser.id,
     },
-    { $set: body }
+    { $set: { ...body } }
   )
     .then(async () => {
       if (currentDeal.deal_stage !== body.deal_stage) {
@@ -375,6 +380,7 @@ const getDetail = (req, res) => {
 
 const getActivity = async (req, res) => {
   const { currentUser } = req;
+  const { count } = req.body;
 
   const activity_list = await Activity.find({
     user: currentUser.id,
@@ -564,7 +570,7 @@ const createFollowUp = async (req, res) => {
 
     const new_followup = new FollowUp({
       has_shared: true,
-      shared_followup: followup.id,
+      shared_follow_up: followup.id,
       contact,
       content,
       due_date,
@@ -652,7 +658,7 @@ const updateFollowUp = async (req, res) => {
 
   FollowUp.updateMany(
     {
-      shared_followup: req.body.followup,
+      shared_follow_up: req.body.followup,
     },
     {
       $set: { ...editData },
@@ -678,7 +684,7 @@ const updateFollowUp = async (req, res) => {
     due_date = startdate.subtract(reminder_before, 'minutes');
 
     const followups = await FollowUp.find({
-      shared_followup: req.body.follow_up,
+      shared_follow_up: req.body.follow_up,
     });
 
     Reminder.updateMany(
@@ -721,9 +727,27 @@ const removeFollowUp = async (req, res) => {
     console.log('remove followup err', err.message);
   });
 
+  const follow_ups = await FollowUp.find({
+    shared_follow_up: req.body.followup,
+  }).catch((err) => {
+    console.log('followup find err', err.message);
+  });
+
   FollowUp.deleteMany({
-    
-  })
+    shared_follow_up: req.body.followup,
+  }).catch((err) => {
+    console.log('remove followup err', err.message);
+  });
+
+  Reminder.deleteMany({
+    follow_up: { $in: follow_ups },
+  }).catch((err) => {
+    console.log('remove reminder err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
 };
 
 const sendEmail = async (req, res) => {
@@ -829,6 +853,28 @@ const getTeamCalls = async (req, res) => {
   });
 };
 
+const removeTeamCall = async (req, res) => {
+  const { currentUser } = req;
+
+  TeamCall.deleteOne({
+    _id: req.body.team_call,
+    user: currentUser.id,
+  })
+    .then(() => {
+      // shared team call delete
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call delete err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 const createAppointment = async (req, res) => {
   const { currentUser } = req;
   const { contacts } = req.body;
@@ -854,8 +900,12 @@ const createAppointment = async (req, res) => {
       });
     }
 
+    const ctz = currentUser.time_zone_info
+      ? currentUser.time_zone_info.tz_name
+      : system_settings.TIME_ZONE;
+
     if (calendar.connected_calendar_type === 'outlook') {
-      event_id = addOutlookCalendarById(currentUser, _appointment, calendar);
+      event_id = addOutlookCalendarById(ctz, _appointment, calendar);
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -864,19 +914,15 @@ const createAppointment = async (req, res) => {
       );
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      event_id = await addGoogleCalendarById(
-        oauth2Client,
-        currentUser,
-        _appointment
-      );
+      event_id = await addGoogleCalendarById(oauth2Client, ctz, _appointment);
     }
 
     const deal_data = { ...req.body };
-    delete deal_data.contacts;
 
     const appointment = new Appointment({
       ...deal_data,
       event_id,
+      user: currentUser.id,
     });
 
     appointment.save().catch((err) => {
@@ -897,24 +943,24 @@ const createAppointment = async (req, res) => {
     });
 
     for (let i = 0; i < contacts.length; i++) {
-      const contact_appointment = new Appointment({
-        ...req.body,
-        event_id,
-        contact: contacts[i],
-        has_shared: true,
-        shared_appointment: appointment.id,
-        user: currentUser.id,
-      });
+      // const contact_appointment = new Appointment({
+      //   ...req.body,
+      //   event_id,
+      //   contact: contacts[i],
+      //   has_shared: true,
+      //   shared_appointment: appointment.id,
+      //   user: currentUser.id,
+      // });
 
-      contact_appointment.save().catch((err) => {
-        console.log('note save err', err.message);
-      });
+      // contact_appointment.save().catch((err) => {
+      //   console.log('note save err', err.message);
+      // });
 
       const appointment_activity = new Activity({
         content,
         contacts: contacts[i],
         type: 'appointments',
-        appointments: contact_appointment.id,
+        appointments: appointment.id,
         user: currentUser.id,
       });
 
@@ -933,38 +979,163 @@ const createAppointment = async (req, res) => {
   }
 };
 
+const updateAppointment = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+
+  if (currentUser.calendar_connected) {
+    const _appointment = req.body;
+    const { connected_email } = req.body;
+
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
+      }
+    });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    const ctz = currentUser.time_zone_info
+      ? currentUser.time_zone_info.tz_name
+      : system_settings.TIME_ZONE;
+
+    const event_id = req.body.recurrence_id || req.body.event_id;
+    if (calendar.connected_calendar_type === 'outlook') {
+      const data = { ctz, appointment: _appointment, calendar, event_id };
+      updateOutlookCalendarById(data);
+    } else {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      );
+      const token = JSON.parse(calendar.google_refresh_token);
+      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+      const data = {
+        oauth2Client,
+        ctz,
+        appointment: _appointment,
+        calendar,
+        event_id,
+      };
+      await updateGoogleCalendarById(data);
+    }
+
+    const deal_data = { ...req.body };
+
+    const appointment = new Appointment({
+      ...deal_data,
+      event_id,
+      user: currentUser.id,
+    });
+
+    appointment.save().catch((err) => {
+      console.log('deal appointment create err', err.message);
+    });
+
+    const activity_content = 'updated appointment';
+    const activity = new Activity({
+      user: currentUser.id,
+      content: activity_content,
+      type: 'appointments',
+      appointments: appointment.id,
+      deals: req.body.deal,
+    });
+
+    activity.save().catch((err) => {
+      console.log('activity save err', err.message);
+    });
+
+    for (let i = 0; i < contacts.length; i++) {
+      const appointment_activity = new Activity({
+        content: activity_content,
+        contacts: contacts[i],
+        type: 'appointments',
+        appointments: appointment.id,
+        user: currentUser.id,
+      });
+
+      appointment_activity.save().catch((err) => {
+        console.log('note activity err', err.message);
+      });
+    }
+    return res.send({
+      status: true,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'You must connect gmail/outlook',
+    });
+  }
+};
+
+const removeAppointment = async (req, res) => {
+  const { currentUser } = req;
+
+  if (currentUser.calendar_connected) {
+    const { connected_email } = req.body;
+
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
+      }
+    });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    const remove_id = req.body.recurrence_id || req.body.event_id;
+
+    if (calendar.connected_calendar_type === 'outlook') {
+      const data = { calendar_id: req.body.calendar_id, calendar, remove_id };
+      removeOutlookCalendarById(data);
+    } else {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      );
+      const token = JSON.parse(calendar.google_refresh_token);
+      oauth2Client.setCredentials({ refresh_token: token.refresh_token });
+      const data = {
+        oauth2Client,
+        calendar_id: req.body.calendar_id,
+        remove_id,
+      };
+      removeGoogleCalendarById(data);
+    }
+
+    Appointment.deleteOne({
+      user: currentUser.id,
+      event_id: remove_id,
+    }).catch((err) => {
+      console.log('appointment update err', err.message);
+    });
+
+    return res.send({
+      status: true,
+    });
+  }
+};
+
 const createTeamCall = async (req, res) => {
   const { currentUser } = req;
   let leader;
   let contacts;
-
-  if (req.body.leader) {
-    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
-      console.log('leader find err', err.message);
-    });
-  }
-
-  const deal_data = { ...req.body };
-  delete deal_data.contacts;
-  const deal_call = new TeamCall({
-    deal_data,
-  });
-
-  deal_call.save().catch((err) => {
-    console.log('deal team create err', err.message);
-  });
-
-  const activity = new Activity({
-    team_calls: deal_call.id,
-    user: currentUser.id,
-    content: 'inquire group call',
-    type: 'team_calls',
-    deals: req.body.deal,
-  });
-
-  activity.save().catch((err) => {
-    console.log('activity save err', err.message);
-  });
 
   if (req.body.contacts && req.body.contacts.length > 0) {
     contacts = await Contact.find({ _id: { $in: req.body.contacts } }).catch(
@@ -974,14 +1145,34 @@ const createTeamCall = async (req, res) => {
     );
   }
 
+  if (req.body.leader) {
+    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
+      console.log('leader find err', err.message);
+    });
+  }
+
+  const deal_data = { ...req.body };
+
   const team_call = new TeamCall({
+    deal_data,
     user: currentUser.id,
-    ...req.body,
   });
 
   team_call
     .save()
     .then(() => {
+      const activity = new Activity({
+        team_calls: team_call.id,
+        user: currentUser.id,
+        content: 'inquire group call',
+        type: 'team_calls',
+        deals: req.body.deal,
+      });
+
+      activity.save().catch((err) => {
+        console.log('activity save err', err.message);
+      });
+
       if (leader) {
         let guests = '';
         if (contacts) {
@@ -1097,6 +1288,7 @@ module.exports = {
   getNotes,
   getAppointments,
   getTeamCalls,
+  removeTeamCall,
   create,
   moveDeal,
   edit,
@@ -1107,6 +1299,8 @@ module.exports = {
   removeNote,
   createFollowUp,
   createAppointment,
+  updateAppointment,
+  removeAppointment,
   updateFollowUp,
   removeFollowUp,
   createTeamCall,
