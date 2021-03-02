@@ -20,6 +20,7 @@ const AppointmentSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'appointment',
     },
+    calendar_id: String,
     has_shared: Boolean,
     created_at: Date,
     updated_at: Date,

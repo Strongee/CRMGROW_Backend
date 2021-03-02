@@ -1012,6 +1012,7 @@ const updateAppointment = async (req, res) => {
     calendar_list.some((_calendar) => {
       if (_calendar.connected_email === connected_email) {
         calendar = _calendar;
+        return true;
       }
     });
 
@@ -1050,14 +1051,13 @@ const updateAppointment = async (req, res) => {
 
     const deal_data = { ...req.body };
 
-    const appointment = new Appointment({
-      ...deal_data,
-      event_id,
-      user: currentUser.id,
-    });
-
-    appointment.save().catch((err) => {
-      console.log('deal appointment create err', err.message);
+    Appointment.updateOne(
+      {
+        _id: req.body.appointment,
+      },
+      { $set: deal_data }
+    ).catch((err) => {
+      console.log('appointment update err', err.message);
     });
 
     const activity_content = 'updated appointment';
@@ -1065,7 +1065,7 @@ const updateAppointment = async (req, res) => {
       user: currentUser.id,
       content: activity_content,
       type: 'appointments',
-      appointments: appointment.id,
+      appointments: req.body.appointment,
       deals: req.body.deal,
     });
 
@@ -1078,7 +1078,7 @@ const updateAppointment = async (req, res) => {
         content: activity_content,
         contacts: contacts[i],
         type: 'appointments',
-        appointments: appointment.id,
+        appointments: req.body.appointment,
         user: currentUser.id,
       });
 
