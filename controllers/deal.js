@@ -532,7 +532,7 @@ const editNote = async (req, res) => {
 };
 
 const removeNote = async (req, res) => {
-  Note.deletOne({
+  Note.deleteOne({
     _id: req.body.note,
   }).catch((err) => {
     console.log('deal note delete err', err.message);
@@ -607,10 +607,10 @@ const createFollowUp = async (req, res) => {
     }
 
     const startdate = moment(due_date);
-    const due_date = startdate.subtract(reminder_before, 'minutes');
+    const remind_due_date = startdate.subtract(reminder_before, 'minutes');
     const reminder = new Reminder({
       contact,
-      due_date,
+      due_date: remind_due_date,
       type: 'follow_up',
       user: currentUser.id,
       follow_up: new_followup.id,
@@ -667,8 +667,6 @@ const updateFollowUp = async (req, res) => {
     console.log('activity save err', err.message);
   });
 
-  const { contacts } = req.body;
-
   FollowUp.updateMany(
     {
       shared_follow_up: req.body.followup,
@@ -681,6 +679,19 @@ const updateFollowUp = async (req, res) => {
   });
 
   let due_date;
+  const followups = await FollowUp.find({
+    shared_follow_up: req.body.followup,
+  });
+  const contacts = [];
+  const followUpIds = [];
+  const contactFollowMatch = {};
+  followups.forEach((e) => {
+    if (e && e['contact'] && e['contact'][0]) {
+      contacts.push(e['contact'][0]);
+      contactFollowMatch[e['contact'][0]] = e._id;
+    }
+    followUpIds.push(e._id);
+  });
   if (req.body.due_date) {
     const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
       (err) => {
@@ -696,12 +707,8 @@ const updateFollowUp = async (req, res) => {
     const startdate = moment(req.body.due_date);
     due_date = startdate.subtract(reminder_before, 'minutes');
 
-    const followups = await FollowUp.find({
-      shared_follow_up: req.body.follow_up,
-    });
-
     Reminder.updateMany(
-      { follow_up: { $in: followups } },
+      { follow_up: { $in: followUpIds } },
       {
         $set: {
           due_date,
@@ -717,10 +724,10 @@ const updateFollowUp = async (req, res) => {
 
     const new_activity = new Activity({
       content: activity_content,
-      contact,
+      contacts: contact,
       user: currentUser.id,
       type: 'follow_ups',
-      follow_ups: req.body.followup,
+      follow_ups: contactFollowMatch[contact],
     });
 
     new_activity.save().catch((err) => {
