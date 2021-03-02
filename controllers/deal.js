@@ -388,7 +388,7 @@ const getActivity = async (req, res) => {
       user: currentUser.id,
       deals: req.body.deal,
     })
-      .sort({ updated_at: 1 })
+      .sort({ updated_at: -1 })
       .limit(count)
       .catch((err) => {
         console.log('activity get err', err.message);
