@@ -70,6 +70,16 @@ router.post(
   UserCtrl.checkAuth,
   catchError(DealCtrl.getAppointments)
 );
+router.post(
+  '/update-appointment',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.updateAppointment)
+);
+router.post(
+  '/remove-appointment',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.removeAppointment)
+);
 
 router.post(
   '/create-team-call',
@@ -80,11 +90,6 @@ router.post(
   '/get-team-calls',
   UserCtrl.checkAuth,
   catchError(DealCtrl.getTeamCalls)
-);
-router.post(
-  '/update-team-call',
-  UserCtrl.checkAuth,
-  catchError(DealCtrl.updateTeamCall)
 );
 
 router.post(
