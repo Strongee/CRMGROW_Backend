@@ -1174,9 +1174,11 @@ const createTeamCall = async (req, res) => {
   const deal_data = { ...req.body };
 
   const team_call = new TeamCall({
-    deal_data,
+    ...deal_data,
     user: currentUser.id,
   });
+
+  console.log('deal_data', deal_data, team_call);
 
   team_call
     .save()
