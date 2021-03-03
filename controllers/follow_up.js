@@ -347,33 +347,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $lt: current_time },
-      }).sort({ created_at: -1 });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({
-          _id: _follow_up[i].contact,
-        }).catch((err) => {
-          console.log('follow up find err', err.message);
-        });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'OverDue doesn`t exist',
-        });
-      }
+        contact: { $ne: null },
+      }).populate('contact');
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
@@ -384,29 +363,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $gte: start, $lt: end },
-      });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({ _id: _follow_up[i].contact });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'FollowUp doesn`t exist on Today',
-        });
-      }
+        contact: { $ne: null },
+      }).populate('contact');
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
@@ -419,29 +381,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $gte: tomorrow_start, $lt: tomorrow_end },
-      });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({ _id: _follow_up[i].contact });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'FollowUp doesn`t exist on Tomorrow',
-        });
-      }
+        contact: { $ne: null },
+      }).populate('contact');
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
@@ -455,29 +400,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $gte: next_week_start, $lt: next_week_end },
+        contact: { $ne: null },
       });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({ _id: _follow_up[i].contact });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'FollowUp doesn`t exist on Tomorrow',
-        });
-      }
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
@@ -488,29 +416,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $gte: start_month, $lt: end_month },
+        contact: { $ne: null },
       });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({ _id: _follow_up[i].contact });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'FollowUp doesn`t exist on Tomorrow',
-        });
-      }
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
@@ -520,29 +431,12 @@ const getByDate = async (req, res) => {
         user: currentUser.id,
         status: 0,
         due_date: { $gte: start_future },
+        contact: { $ne: null },
       });
-
-      const data = [];
-
-      for (let i = 0; i < _follow_up.length; i++) {
-        const _contact = await Contact.findOne({ _id: _follow_up[i].contact });
-        const myJSON = JSON.stringify(_follow_up[i]);
-        const follow_up = JSON.parse(myJSON);
-        delete follow_up.contact;
-        follow_up.contact = _contact;
-        data.push(follow_up);
-      }
-
-      if (!data) {
-        return res.status(400).json({
-          status: false,
-          error: 'Future doesn`t exist',
-        });
-      }
 
       res.send({
         status: true,
-        data,
+        data: _follow_up,
       });
       break;
     }
