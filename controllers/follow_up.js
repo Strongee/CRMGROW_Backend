@@ -780,7 +780,7 @@ const load = async (req, res) => {
   if (typeof status !== 'undefined') {
     query.status = status;
   }
-  contact ? (query.contact = contact) : false;
+  contact ? (query.contact = contact) : (query.contact = { $ne: null });
   if (start_date) {
     query.due_date = { $gte: start_date };
   }
