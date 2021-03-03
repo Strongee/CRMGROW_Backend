@@ -440,3 +440,21 @@ div#pdf-container::before {
   background: #000a!important;
   padding: 5px!important;
 }
+
+.i-icon {
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.i-facebook {
+  background-image: url(../icons/facebook-app-logo-svgrepo-com.svg);
+}
+.i-twitter {
+  background-image: url(../icons/twitter-svgrepo-com.svg);
+}
+.i-linkedin {
+  background-image: url(../icons/linkedin-big-logo-svgrepo-com.svg);
+}
