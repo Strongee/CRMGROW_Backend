@@ -469,3 +469,21 @@ div#pdf-container::before {
 .socials i.fa-linkedin-in{
   color: #0288d1;
 }
+
+.i-icon {
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.i-facebook {
+  background-image: url(../icons/facebook-app-logo-svgrepo-com.svg);
+}
+.i-twitter {
+  background-image: url(../icons/twitter-svgrepo-com.svg);
+}
+.i-linkedin {
+  background-image: url(../icons/linkedin-big-logo-svgrepo-com.svg);
+}

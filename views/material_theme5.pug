@@ -70,13 +70,13 @@ section.material-section
       img.avatar(src=`${ user.picture_profile || 'theme/images/avatar.jpeg'}`)
       .user-info
         .user-name #{user.user_name}
-        .socials
+        .socials.d-flex
           a(class=social_link['facebook']?'':'d-none' href=social_link['facebook'])
-            i.fab.fa-facebook-square
+            i.i-icon.i-facebook
           a(class=social_link['twitter']?'':'d-none' href=social_link['twitter'])
-            i.fab.fa-twitter
+            i.i-icon.i-twitter
           a(class=social_link['linkedin']?'':'d-none' href=social_link['linkedin'])
-            i.fab.fa-linkedin-in
+            i.i-icon.i-linkedin
       .widget-actions
         .widget-action.phone
           a.icon(href="tel:" + user.cell_phone)
