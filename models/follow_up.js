@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 
 const FollowUpSchema = new Schema(
   {
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     due_date: Date,
     content: { type: String, default: 'Contact has reviewed material' },
-    contact: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     shared_follow_up: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'follow_up',
