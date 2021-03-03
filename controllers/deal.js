@@ -733,6 +733,97 @@ const updateFollowUp = async (req, res) => {
   });
 };
 
+const completeFollowUp = async (req, res) => {
+  const { currentUser } = req;
+  // const { deal, type, content, due_date } = req.body;
+  const editData = { ...req.body };
+
+  FollowUp.updateOne(
+    {
+      _id: req.body.followup,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('deal followup update err', err.message);
+  });
+
+  const activity_content = 'completed follow up';
+
+  const activity = new Activity({
+    content: activity_content,
+    type: 'follow_ups',
+    follow_ups: req.body.followup,
+    deals: req.body.deal,
+    user: currentUser.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  const { contacts } = req.body;
+
+  FollowUp.updateMany(
+    {
+      shared_follow_up: req.body.followup,
+    },
+    {
+      $set: { status: 1 },
+    }
+  ).catch((err) => {
+    console.log('contact deal update followup', err.message);
+  });
+
+  const followups = await FollowUp.find({
+    shared_follow_up: req.body.followup,
+  }).catch((err) => {
+    console.log('followups find err', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+      Reminder.deleteOne({
+        follow_up,
+      }).catch((err) => {
+        console.log('err', err);
+      });
+
+      const activity = new Activity({
+        content: detail_content,
+        contacts: _follow_up.contact,
+        user: currentUser.id,
+        type: 'follow_ups',
+        follow_ups: follow_up,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      activity
+        .save()
+        .then((_activity) => {
+          Contact.updateOne(
+            { _id: _follow_up.contact },
+            {
+              $set: { last_activity: _activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err);
+          });
+        })
+        .catch((e) => {
+          console.log('follow error', e);
+          return res.status(400).send({
+            status: false,
+            error: e,
+          });
+        });
+    }
+    return res.send({
+      status: true,
+    });
+};
+
 const removeFollowUp = async (req, res) => {
   FollowUp.deleteOne({
     _id: req.body.followup,
@@ -1311,6 +1402,7 @@ module.exports = {
   editNote,
   removeNote,
   createFollowUp,
+  completeFollowUp,
   createAppointment,
   updateAppointment,
   removeAppointment,
