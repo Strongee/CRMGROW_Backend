@@ -491,9 +491,25 @@ const createNote = async (req, res) => {
       user: currentUser.id,
     });
 
-    note_activity.save().catch((err) => {
-      console.log('note activity err', err.message);
-    });
+    note_activity
+      .save()
+      .then((_activity) => {
+        Contact.updateOne(
+          { _id: contacts[i] },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+      })
+      .catch((e) => {
+        console.log('follow error', e);
+        return res.status(400).send({
+          status: false,
+          error: e,
+        });
+      });
   }
   return res.send({
     status: true,
@@ -730,11 +746,129 @@ const updateFollowUp = async (req, res) => {
       follow_ups: contactFollowMatch[contact],
     });
 
-    new_activity.save().catch((err) => {
-      console.log('activity save err', err.message);
+    new_activity
+      .save()
+      .then((_activity) => {
+        Contact.updateOne(
+          { _id: contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+      })
+      .catch((e) => {
+        console.log('follow error', e);
+        return res.status(400).send({
+          status: false,
+          error: e,
+        });
+      });
+  }
+
+  return res.send({
+    status: true,
+  });
+};
+
+const completeFollowUp = async (req, res) => {
+  const { currentUser } = req;
+  // const { deal, type, content, due_date } = req.body;
+  const editData = { ...req.body };
+
+  FollowUp.updateOne(
+    {
+      _id: req.body.followup,
+    },
+    {
+      $set: { ...editData },
+    }
+  ).catch((err) => {
+    console.log('deal followup update err', err.message);
+  });
+
+  const activity_content = 'completed follow up';
+
+  const activity = new Activity({
+    content: activity_content,
+    type: 'follow_ups',
+    follow_ups: req.body.followup,
+    deals: req.body.deal,
+    user: currentUser.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('activity save err', err.message);
+  });
+
+  FollowUp.updateMany(
+    {
+      shared_follow_up: req.body.followup,
+    },
+    {
+      $set: { status: 1 },
+    }
+  ).catch((err) => {
+    console.log('contact deal update followup', err.message);
+  });
+
+  const followups = await FollowUp.find({
+    shared_follow_up: req.body.followup,
+  }).catch((err) => {
+    console.log('followups find err', err.message);
+  });
+
+  const contacts = [];
+  const followUpIds = [];
+  const contactFollowMatch = {};
+  followups.forEach((e) => {
+    if (e && e['contact'] && e['contact'][0]) {
+      contacts.push(e['contact'][0]);
+      contactFollowMatch[e['contact'][0]] = e._id;
+    }
+    followUpIds.push(e._id);
+  });
+
+  if (followUpIds) {
+    Reminder.deleteMany({
+      follow_up: { $in: followUpIds },
+    }).catch((err) => {
+      console.log('reminder remove err', err.message);
     });
   }
 
+  for (let i = 0; i < contacts.length; i++) {
+    const contact = contacts[i];
+
+    const activity = new Activity({
+      content: activity_content,
+      contacts: contact,
+      user: currentUser.id,
+      type: 'follow_ups',
+      follow_ups: contactFollowMatch[contact],
+    });
+
+    activity
+      .save()
+      .then((_activity) => {
+        Contact.updateOne(
+          { _id: contact },
+          {
+            $set: { last_activity: _activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+      })
+      .catch((e) => {
+        console.log('follow error', e);
+        return res.status(400).send({
+          status: false,
+          error: e,
+        });
+      });
+  }
   return res.send({
     status: true,
   });
@@ -1320,6 +1454,7 @@ module.exports = {
   editNote,
   removeNote,
   createFollowUp,
+  completeFollowUp,
   createAppointment,
   updateAppointment,
   removeAppointment,

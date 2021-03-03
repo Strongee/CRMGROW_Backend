@@ -34,15 +34,16 @@ router.post(
   UserCtrl.checkAuth,
   catchError(DealCtrl.createFollowUp)
 );
-router.post(
-  '/get-follow',
-  UserCtrl.checkAuth,
-  catchError(DealCtrl.getFollowup)
-);
+
 router.post(
   '/update-follow',
   UserCtrl.checkAuth,
   catchError(DealCtrl.updateFollowUp)
+);
+router.post(
+  '/complete-follow',
+  UserCtrl.checkAuth,
+  catchError(DealCtrl.completeFollowUp)
 );
 router.post(
   '/remove-follow',
