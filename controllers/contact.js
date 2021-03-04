@@ -3028,7 +3028,9 @@ const loadTimelines = async (req, res) => {
 const selectAllContacts = async (req, res) => {
   const { currentUser } = req;
 
-  const contacts = await Contact.find({ user: currentUser.id }).select('_id');
+  const contacts = await Contact.find({
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+  }).select('_id');
   return res.send({
     status: true,
     data: contacts,
@@ -3038,7 +3040,9 @@ const selectAllContacts = async (req, res) => {
 const getAllContacts = async (req, res) => {
   const { currentUser } = req;
 
-  const contacts = await Contact.find({ user: currentUser.id }).select({
+  const contacts = await Contact.find({
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+  }).select({
     _id: 1,
     first_name: 1,
     last_name: 1,
