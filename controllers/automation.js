@@ -9,6 +9,36 @@ const garbageHelper = require('../helpers/garbage');
 const get = async (req, res) => {
   const { id } = req.params;
   const { currentUser } = req;
+  const count = req.body.count || 50;
+
+  const total = await TimeLine.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: { contact: '$contact' },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.contact',
+      },
+    },
+    {
+      $project: { _id: 1 },
+    },
+    {
+      $count: 'count',
+    },
+  ]);
 
   const contacts = await TimeLine.aggregate([
     {
@@ -34,13 +64,15 @@ const get = async (req, res) => {
     {
       $project: { _id: 1 },
     },
+    { $limit: count },
   ]);
 
   Automation.findOne({ _id: id })
     .then((automation) => {
       const myJSON = JSON.stringify(automation);
       const data = JSON.parse(myJSON);
-      data.contacts = contacts;
+      data.contacts = { contacts, count: total[0] ? total[0].count : 0 };
+
       res.send({
         status: false,
         data,
@@ -115,11 +147,14 @@ const getAll = async (req, res) => {
       {
         $project: { _id: 1 },
       },
+      {
+        $count: 'count',
+      },
     ]);
     const myJSON = JSON.stringify(automation);
     const data = JSON.parse(myJSON);
     const automation_detail = await Object.assign(data, {
-      contacts: contacts.length,
+      contacts: contacts[0] ? contacts[0].count : 0,
     });
 
     automation_array.push(automation_detail);

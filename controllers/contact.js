@@ -96,6 +96,7 @@ const getByLastActivity = async (req, res) => {
   const { currentUser } = req;
   let { field, dir } = req.body;
   dir = dir ? 1 : -1;
+  const count = req.body.count || 50;
   if (field === 'updated_at') {
     field = 'last_activity';
     dir *= -1;
@@ -110,7 +111,7 @@ const getByLastActivity = async (req, res) => {
     })
       .populate('last_activity')
       .sort({ [field]: dir })
-      .limit(50);
+      .limit(count);
   } else {
     const id = parseInt(req.params.id);
     contacts = await Contact.find({
@@ -119,7 +120,7 @@ const getByLastActivity = async (req, res) => {
       .populate('last_activity')
       .sort({ [field]: dir })
       .skip(id)
-      .limit(50);
+      .limit(count);
   }
 
   if (!contacts) {
@@ -129,7 +130,7 @@ const getByLastActivity = async (req, res) => {
     });
   }
 
-  const count = await Contact.countDocuments({
+  const total = await Contact.countDocuments({
     $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
   });
 
@@ -137,7 +138,7 @@ const getByLastActivity = async (req, res) => {
     status: true,
     data: {
       contacts,
-      count,
+      count: total,
     },
   });
 };
