@@ -48,7 +48,7 @@ router.post(
   catchError(AutomationCtrl.getContactDetail)
 );
 
-router.get('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
+router.post('/get-detail', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
 
 // Default Video Edit
 router.post(

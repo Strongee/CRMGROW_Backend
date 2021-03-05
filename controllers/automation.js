@@ -7,7 +7,7 @@ const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
 
 const get = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const { currentUser } = req;
   const count = req.body.count || 50;
 

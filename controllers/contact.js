@@ -4520,6 +4520,15 @@ const shareContacts = async (req, res) => {
         resolve();
       }
 
+      const activity_content = 'shared contact';
+      const activity = new Activity({
+        user: currentUser.id,
+        contacts: contacts[i],
+        content: activity_content,
+      }).catch((err) => {
+        console.log('activity save err', err.message)
+      });
+
       Contact.updateOne(
         {
           _id: contacts[i],

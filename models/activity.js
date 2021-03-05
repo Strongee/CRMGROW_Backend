@@ -16,6 +16,7 @@ const ActivitySchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'video_tracker',
     },
+    users: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     pdf_trackers: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf_tracker' },
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
