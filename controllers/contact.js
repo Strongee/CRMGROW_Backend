@@ -110,6 +110,7 @@ const getByLastActivity = async (req, res) => {
       $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
     })
       .populate('last_activity')
+      .collation({ locale: 'en' })
       .sort({ [field]: dir })
       .limit(count);
   } else {
@@ -118,6 +119,7 @@ const getByLastActivity = async (req, res) => {
       $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
     })
       .populate('last_activity')
+      .collation({ locale: 'en' })
       .sort({ [field]: dir })
       .skip(id)
       .limit(count);
