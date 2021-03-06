@@ -10,6 +10,7 @@ const get = async (req, res) => {
   const { id } = req.body;
   const { currentUser } = req;
   const count = req.body.count || 50;
+  const skip = req.body.skip || 0;
 
   const total = await TimeLine.aggregate([
     {
@@ -65,6 +66,7 @@ const get = async (req, res) => {
       $project: { _id: 1 },
     },
     { $limit: count },
+    { $skip: skip },
   ]);
 
   Automation.findOne({ _id: id })
