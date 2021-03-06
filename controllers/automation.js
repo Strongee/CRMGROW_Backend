@@ -65,6 +65,7 @@ const get = async (req, res) => {
     {
       $project: { _id: 1 },
     },
+    { $skip: skip },
     { $limit: count },
     { $skip: skip },
   ]);
