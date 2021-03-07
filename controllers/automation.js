@@ -67,6 +67,7 @@ const get = async (req, res) => {
     },
     { $skip: skip },
     { $limit: count },
+    { $skip: skip },
   ]);
 
   Automation.findOne({ _id: id })
