@@ -4527,8 +4527,12 @@ const shareContacts = async (req, res) => {
         user: currentUser.id,
         contacts: contacts[i],
         content: activity_content,
-      }).catch((err) => {
-        console.log('activity save err', err.message)
+        users: req.body.user,
+        type: 'users',
+      });
+
+      activity.save().catch((err) => {
+        console.log('activity save err', err.message);
       });
 
       Contact.updateOne(
