@@ -38,6 +38,18 @@ const get = async (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
 
+  const count = Guest.countDocuments({
+    user: currentUser.id,
+  });
+
+  const assistant_info = currentUser.assistant_info;
+  if (assistant_info.is_limit && count >= assistant_info.max_count) {
+    return res.status(400).json({
+      status: false,
+      error: 'Can`t add more seat',
+    });
+  }
+
   const password = req.body.password;
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto
@@ -136,7 +148,7 @@ const edit = async (req, res) => {
 const remove = async (req, res) => {
   const { currentUser } = req;
   const _id = req.params.id;
-  await Guest.deleteOne({ _id }).catch((err) => {
+  await Guest.deleteOne({ _id, user: currentUser.id }).catch((err) => {
     console.log('err', err.message);
   });
   return res.send({

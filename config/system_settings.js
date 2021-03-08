@@ -15,8 +15,13 @@ const system_settings = {
   TEXT_MONTHLY_LIMIT: {
     BASIC: 250,
   },
+  ASSISTANT_INFO: {
+    BASIC: 1,
+    EXTEND: 3,
+  },
   CONTACT_UPLOAD_LIMIT: {
     BASIC: 3000,
+    EXTEND: 20000,
   },
   MATERIAL_UPLOAD_LIMIT: {
     BASIC: 15,

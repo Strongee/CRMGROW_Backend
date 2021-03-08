@@ -8,7 +8,6 @@ const Text = require('../models/text');
 const Note = require('../models/note');
 const urls = require('../constants/urls');
 const api = require('../config/api');
-const TextHelper = require('../helpers/text');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -541,7 +540,7 @@ const receiveTextTwilio = async (req, res) => {
   return res.send();
 };
 
-const buyNumbers = async (req, res) => {
+const searchNumbers = async (req, res) => {
   const { currentUser } = req;
   let areaCode;
   let countryCode;
@@ -561,16 +560,28 @@ const buyNumbers = async (req, res) => {
     client
       .availablePhoneNumbers(countryCode)
       .local.list({
-        AreaCode: search_code,
+        areaCode: search_code,
       })
       .then(async (available_phone_numbers) => {
         if (available_phone_numbers && available_phone_numbers.length > 0) {
           available_phone_numbers.forEach((number) => {
             data.push({
               number: number.phoneNumber,
+              region: number.region,
               service: 'signalwire',
             });
           });
+
+          for (let i = 0; i < 3; i++) {
+            const number = available_phone_numbers[i];
+            if (number) {
+              data.push({
+                number: number.phoneNumber,
+                region: number.region,
+                service: 'signalwire',
+              });
+            }
+          }
           return res.send({
             status: true,
             data,
@@ -592,12 +603,17 @@ const buyNumbers = async (req, res) => {
                   error: 'Numbers not found',
                 });
               } else {
-                response.forEach((number) => {
-                  data.push({
-                    number: number.phoneNumber,
-                    service: 'twilio',
-                  });
-                });
+                for (let i = 0; i < 3; i++) {
+                  const number = response[i];
+                  if (number) {
+                    data.push({
+                      number: number.phoneNumber,
+                      region: number.region,
+                      service: 'twilio',
+                    });
+                  }
+                }
+
                 return res.send({
                   status: true,
                   data,
@@ -651,12 +667,75 @@ const buyNumbers = async (req, res) => {
   }
 };
 
+const buyNumbers = async (req, res) => {
+  const { currentUser } = req.body;
+  if (req.body.service === 'signalwire') {
+    client.incomingPhoneNumbers
+      .create({
+        friendlyName: currentUser.user_name,
+        phoneNumber: req.body.number,
+        smsUrl: urls.SMS_RECEIVE_URL1,
+      })
+      .then((incoming_phone_number) => {
+        User.updateOne(
+          { _id: currentUser.id },
+          {
+            $set: {
+              proxy_number: req.body.number,
+              proxy_number_id: incoming_phone_number.sid,
+            },
+          }
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(400).json({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else {
+    twilio.incomingPhoneNumbers
+      .create({
+        friendlyName: currentUser.user_name,
+        phoneNumber: req.body.number,
+        smsUrl: urls.SMS_RECEIVE_URL,
+      })
+      .then((incoming_phone_number) => {
+        User.updateOne(
+          { _id: currentUser.id },
+          {
+            $set: {
+              twilio_number: req.body.number,
+              twilio_number_id: incoming_phone_number.sid,
+            },
+          }
+        ).catch((err) => {
+          console.log('err', err.message);
+        });
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('proxy number error', err);
+      });
+  }
+};
+
 module.exports = {
   get,
   getAll,
   send,
   receive,
   receive1,
+  searchNumbers,
   buyNumbers,
   receiveTextSignalWire,
   receiveTextTwilio,

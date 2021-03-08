@@ -13,11 +13,18 @@ router.post('/receive-signalwire', catchError(TextCtrl.receiveTextSignalWire));
 router.post('/receive-twilio', catchError(TextCtrl.receiveTextTwilio));
 
 router.get('/', UserCtrl.checkAuth, catchError(TextCtrl.getAll));
+
 router.post(
   '/search-numbers',
   UserCtrl.checkAuth,
+  catchError(TextCtrl.searchNumbers)
+);
+router.post(
+  '/buy-numbers',
+  UserCtrl.checkAuth,
   catchError(TextCtrl.buyNumbers)
 );
+
 router.post('/send/:id', UserCtrl.checkAuth, catchError(TextCtrl.send));
 
 module.exports = router;

@@ -30,7 +30,7 @@ const UserSchema = new Schema(
     twilio_number: String,
     proxy_phone: {
       number: String,
-      is_released: { type: Boolean, default: false },
+      is_released: Boolean,
       updated_at: Date,
     },
     picture_profile: String,
@@ -51,6 +51,13 @@ const UserSchema = new Schema(
     desktop_notification: { type: Boolean, default: false },
     desktop_notification_subscription: String,
     text_notification: { type: Boolean, default: false },
+    assistant_info: {
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.ASSISTANT_INFO.BASIC,
+      },
+    },
     contact_info: {
       is_limit: { type: Boolean, default: true },
       max_count: {
