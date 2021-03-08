@@ -395,7 +395,7 @@ const receiveTextSignalWire = async (req, res) => {
           contacts: contact.id,
           user: currentUser.id,
           type: 'texts',
-          texts: text.id,
+          texts: new_text.id,
         });
 
         activity.save().catch((err) => {
@@ -507,7 +507,7 @@ const receiveTextTwilio = async (req, res) => {
           contacts: contact.id,
           user: currentUser.id,
           type: 'texts',
-          texts: text.id,
+          texts: new_text.id,
         });
 
         activity.save().catch((err) => {
