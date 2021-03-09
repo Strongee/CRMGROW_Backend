@@ -729,6 +729,10 @@ const buyNumbers = async (req, res) => {
   }
 };
 
+const buyCredit = async (req, res) => {
+
+};
+
 module.exports = {
   get,
   getAll,
@@ -737,6 +741,7 @@ module.exports = {
   receive1,
   searchNumbers,
   buyNumbers,
+  buyCredit,
   receiveTextSignalWire,
   receiveTextTwilio,
 };
