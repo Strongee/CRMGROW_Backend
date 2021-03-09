@@ -155,7 +155,7 @@ const get = (req, res) => {
       { path: 'requests' },
     ])
     .then((data) => {
-      if (!data.join_link) {
+      if (data && !data.join_link) {
         const join_link = short.generate();
         Team.updateOne(
           { _id: req.params.id },
