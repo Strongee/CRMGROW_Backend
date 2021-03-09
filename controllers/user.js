@@ -1031,7 +1031,7 @@ const socialOutlook = async (req, res) => {
         const token_parts = outlook_token.token.id_token.split('.');
 
         // Token content is in the second part, in urlsafe base64
-        const encoded_token = new Buffer(
+        const encoded_token = new Buffer.from(
           token_parts[1].replace('-', '+').replace('_', '/'),
           'base64'
         );
@@ -1890,7 +1890,7 @@ const authorizeYahoo = async (req, res) => {
         const token_parts = yahoo_token.token.id_token.split('.');
 
         // Token content is in the second part, in urlsafe base64
-        const encoded_token = new Buffer(
+        const encoded_token = new Buffer.from(
           token_parts[1].replace('-', '+').replace('_', '/'),
           'base64'
         );

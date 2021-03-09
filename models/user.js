@@ -72,6 +72,7 @@ const UserSchema = new Schema(
         default: system_settings.TEXT_MONTHLY_LIMIT.BASIC,
       },
       count: { type: Number, default: 0 },
+      additional_count: Object,
     },
     email_info: {
       is_limit: { type: Boolean, default: true },
