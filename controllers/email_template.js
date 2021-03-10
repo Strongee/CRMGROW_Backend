@@ -112,10 +112,19 @@ const create = async (req, res) => {
     created_at: new Date(),
   });
 
-  await template.save();
-  return res.send({
-    status: true,
-  });
+  template
+    .save()
+    .then((_t) => {
+      return res.send({
+        status: true,
+        data: _t,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        error: err.message || JSON.stringify(err),
+      });
+    });
 };
 
 const update = async (req, res) => {
