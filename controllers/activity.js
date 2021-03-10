@@ -191,6 +191,13 @@ const load = async (req, res) => {
 
   let activity_list;
   const data = [];
+
+  const latest_activity = await Activity.find({
+    $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
+  })
+    .sort({ _id: -1 })
+    .limit(1);
+
   while (data.length < 50) {
     if (!starting_after && !ending_before) {
       activity_list = await Activity.find({
@@ -273,6 +280,7 @@ const load = async (req, res) => {
     status: true,
     data: {
       activity_list: data,
+      latest: latest_activity[0],
     },
   });
 };
