@@ -76,6 +76,21 @@ const system_settings = {
     'Application',
     'Submitted',
   ],
+  SMS_CREDIT: [
+    {
+      PRICE: 800,
+      AMOUNT: 2000,
+    },
+    {
+      PRICE: 1300,
+      AMOUNT: 2000,
+    },
+    {
+      PRICE: 1300,
+      AMOUNT: 2000,
+    },
+  ],
+  SMS_DESCRIPTION: ''
 };
 
 module.exports = system_settings;
