@@ -89,6 +89,85 @@ const get = async (req, res) => {
     });
 };
 
+const searchContact = async (req, res) => {
+  const { currentUser } = req;
+  const searchStr = req.body.search;
+  const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+  const phoneSearch = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');
+  let searched_contacts = [];
+  if (search.split(' ').length > 1) {
+    searched_contacts = await Contact.find({
+      $or: [
+        {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          user: currentUser.id,
+        },
+      ],
+    })
+      .populate('last_activity')
+      .sort({ first_name: 1 });
+  } else {
+    searched_contacts = await Contact.find({
+      $or: [
+        {
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          user: currentUser.id,
+        },
+      ],
+    })
+      .populate('last_activity')
+      .sort({ first_name: 1 });
+  }
+
+  if (searched_contacts.length > 0) {
+    for (let i = 0; i < searched_contacts.length; i++) {
+      const contact = searched_contacts[i];
+      const timeline = await TimeLine.findOne({
+        contact,
+      }).catch((err) => {
+        console.log('time line find err', err.message);
+      });
+
+      if(searched_timeline){
+
+      } 
+    }
+  }
+
+  const count = await Contact.countDocuments({ user: currentUser.id });
+  return res.send({
+    status: true,
+    data: {
+      contacts,
+      search,
+      total: count,
+    },
+  });
+};
+
 const getAll = async (req, res) => {
   const { currentUser } = req;
   const company = currentUser.company || 'eXp Realty';
@@ -604,6 +683,7 @@ module.exports = {
   remove,
   updateDefault,
   search,
+  searchContact,
   loadOwn,
   getContactDetail,
 };
