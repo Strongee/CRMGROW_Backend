@@ -6,12 +6,24 @@ const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const Text = require('../models/text');
 const Note = require('../models/note');
+const Payment = require('../models/payment');
+const PaymentCtrl = require('./payment');
 const urls = require('../constants/urls');
 const api = require('../config/api');
+const system_settings = require('../config/system_settings');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
+const AWS = require('aws-sdk');
+const moment = require('moment-timezone');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
 
 const { RestClient } = require('@signalwire/node');
 
@@ -730,7 +742,92 @@ const buyNumbers = async (req, res) => {
 };
 
 const buyCredit = async (req, res) => {
+  const { currentUser } = req;
+  const payment = await Payment.findOne({
+    _id: currentUser.payment,
+  }).catch((err) => {
+    console.log('payment find err', err.message);
+  });
 
+  let price;
+  let amount;
+  const description = 'Buy sms credit';
+
+  if (req.body.option === 1) {
+    price = system_settings.SMS_CREDIT[0].PRICE;
+    amount = system_settings.SMS_CREDIT[0].AMOUNT;
+  } else if (req.body.option === 2) {
+    price = system_settings.SMS_CREDIT[1].PRICE;
+    amount = system_settings.SMS_CREDIT[1].AMOUNT;
+  } else if (req.body.option === 3) {
+    price = system_settings.SMS_CREDIT[2].PRICE;
+    amount = system_settings.SMS_CREDIT[2].AMOUNT;
+  }
+
+  const data = {
+    card_id: payment.card_id,
+    customer_id: payment.customer_id,
+    receipt_email: currentUser.email,
+    amount: price,
+    description,
+  };
+
+  PaymentCtrl.createCharge(data)
+    .then(() => {
+      const { additional_credit } = currentUser.text_info;
+      if (additional_credit) {
+        additional_credit.updated_at = new Date();
+        additional_credit.amount += amount;
+      } else {
+        additional_credit.updated_at = new Date();
+        additional_credit.amount = amount;
+      }
+
+      User.updateOne(
+        { _id: currentUser.id },
+        {
+          $set: {
+            'text_info.additional_credit': additional_credit,
+          },
+        }
+      ).catch((err) => {
+        console.log('user paid demo update err', err.message);
+      });
+
+      /**
+      const templatedData = {
+        user_name: currentUser.user_name,
+        schedule_link,
+      };
+
+      const params = {
+        Destination: {
+          ToAddresses: [currentUser.email],
+        },
+        Source: mail_contents.REPLY,
+        Template: 'OnboardCall',
+        TemplateData: JSON.stringify(templatedData),
+      };
+
+      // Create the promise and SES service object
+      ses
+        .sendTemplatedEmail(params)
+        .promise()
+        .then((response) => {
+          console.log('success', response.MessageId);
+        })
+        .catch((err) => {
+          console.log('ses send err', err);
+        });
+      */
+
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((_err) => {
+      console.log('new demo err', _err.message);
+    });
 };
 
 module.exports = {
