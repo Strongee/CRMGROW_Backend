@@ -11,7 +11,7 @@ const system_settings = {
     OUTLOOK: 300,
     MICROSOFT: 2000,
   },
-  TEXT_ONE_TIME: 5,
+  TEXT_ONE_TIME: 15,
   TEXT_MONTHLY_LIMIT: {
     BASIC: 250,
   },
