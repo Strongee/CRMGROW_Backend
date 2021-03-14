@@ -2169,95 +2169,57 @@ const addGoogleCalendar = async (auth, user, res) => {
   });
 };
 
-const disconCalendar = async (req, res) => {
-  const user = req.currentUser;
+const disconnectCalendar = async (req, res) => {
+  const { currentUser } = req;
+  const { connected_email } = req.body;
 
-  if (user.connected_email === undefined) {
-    return res.status(400).json({
-      status: false,
-      error: 'Conneted email doesn`t exist',
-    });
-  }
+  const calendar_list = currentUser.calendar_list;
+  const new_list = calendar_list.filter((_calendar) => {
+    return _calendar.connected_email !== connected_email;
+  });
 
-  if (user.connected_email_type === 'outlook') {
-    const _appointments = await Appointment.find({ user: user.id });
-    for (let i = 0; i < _appointments.length; i++) {
-      const token = oauth2.accessToken.create({
-        refresh_token: user.outlook_refresh_token,
-        expires_in: 0,
-      });
-      let accessToken;
-
-      await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
-          if (error) {
-            reject(error.message);
-          } else {
-            resolve(result.token);
-          }
+  if (new_list.length > 0) {
+    User.updateOne(
+      { _id: currentUser.id },
+      {
+        $set: { calendar_list: new_list },
+      }
+    )
+      .then(() => {
+        return res.send({
+          status: true,
         });
       })
-        .then((token) => {
-          accessToken = token.access_token;
-        })
-        .catch((error) => {
-          console.log('outlook token grant error', error);
-          return res.status(406).send({
-            status: false,
-            error: 'not connected',
-          });
+      .catch((err) => {
+        return res.status(500).json({
+          status: false,
+          error: err.message,
         });
-
-      const deleteEventParameters = {
-        token: accessToken,
-        eventId: _appointments[i].event_id,
-      };
-
-      outlook.calendar.deleteEvent(deleteEventParameters, function (error) {
-        if (error) {
-          console.log(error);
-        }
       });
-    }
-    user.calendar_connected = false;
-
-    await user.save();
-    return res.send({
-      status: true,
-    });
   } else {
-    const oauth2Client = new google.auth.OAuth2(
-      api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-      api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-      urls.GMAIL_AUTHORIZE_URL
-    );
-    oauth2Client.setCredentials(JSON.parse(user.google_refresh_token));
-    removeGoogleCalendar(oauth2Client, user, res);
-  }
-};
-
-const removeGoogleCalendar = async (auth, user, res) => {
-  const calendar = google.calendar({ version: 'v3', auth });
-  const _appointments = await Appointment.find({ user: user.id });
-  for (let i = 0; i < _appointments.length; i++) {
-    const params = {
-      calendarId: 'primary',
-      eventId: _appointments[i].event_id,
-    };
-    calendar.events.delete(params, function (err) {
-      if (err) {
-        console.log(
-          'There was an error contacting the Calendar service: ' + err
-        );
+    User.updateOne(
+      { _id: currentUser.id },
+      {
+        $set: {
+          calendar_connected: false,
+        },
+        $unset: {
+          calendar_list: true,
+        },
       }
-    });
+    )
+      .then(() => {
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          status: false,
+          error: err.message,
+        });
+      });
   }
-  user.calendar_connected = false;
-  user.save();
-
-  return res.send({
-    status: true,
-  });
 };
 
 const dailyReport = async (req, res) => {
@@ -2348,36 +2310,6 @@ const desktopNotification = async (req, res) => {
         });
       });
   }
-};
-
-const disconDesktop = async (req, res) => {
-  const user = req.currentUser;
-  user['desktop_notification'] = false;
-
-  user.save();
-  return res.send({
-    status: true,
-  });
-};
-
-const textNotification = async (req, res) => {
-  const user = req.currentUser;
-  user['text_notification'] = true;
-
-  user.save();
-  return res.send({
-    status: true,
-  });
-};
-
-const disconText = async (req, res) => {
-  const user = req.currentUser;
-  user['text_notification'] = false;
-
-  user.save();
-  return res.send({
-    status: true,
-  });
 };
 
 const resetPasswordByCode = async (req, res) => {
@@ -2872,15 +2804,12 @@ module.exports = {
   authorizeGoogleCalendar,
   syncOutlookCalendar,
   authorizeOutlookCalendar,
-  disconCalendar,
+  disconnectCalendar,
   schedulePaidDemo,
   dailyReport,
   desktopNotification,
-  textNotification,
   disconDaily,
   disconWeekly,
-  disconDesktop,
-  disconText,
   disconnectGmail,
   weeklyReport,
   checkAuth,
