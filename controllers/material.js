@@ -81,6 +81,13 @@ const bulkEmail = async (req, res) => {
   let no_connected = false;
   const promise_array = [];
 
+  if (!currentUser.primary_connected) {
+    return res.status(406).json({
+      status: false,
+      error: 'no connected',
+    });
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     let promise;
     const activities = [];
@@ -865,6 +872,13 @@ const bulkText = async (req, res) => {
       });
     }
 
+    if(!currentUser['proxy_number'] && !currentUser['twilio_number']) {
+      return res.status(407).json({
+        status: false,
+        error: 'No phone',
+      })
+    }
+
     for (let i = 0; i < contacts.length; i++) {
       await sleep(1000);
       let text_content = content;
@@ -877,28 +891,27 @@ const bulkText = async (req, res) => {
       );
 
       if (video_ids && video_ids.length > 0) {
-        const videos = await Video.find({ _id: { $in: video_ids } }).catch(
-          (err) => {
-            console.log('video find error', err.message);
-          }
-        );
+        let activity_content = 'sent video using sms';
 
-        for (let j = 0; j < videos.length; i++) {
-          const video = videos[j];
-          let activity_content = 'sent video using sms';
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
+        }
 
-          switch (mode) {
-            case 'automation':
-              activity_content = ActivityHelper.automationLog(activity_content);
-              break;
-            case 'campaign':
-              activity_content = ActivityHelper.campaignLog(activity_content);
-              break;
-            case 'api':
-              activity_content = ActivityHelper.apiLog(activity_content);
-              break;
-          }
-
+        for (let j = 0; j < video_ids.length; j++) {
+          const video = await Video.findOne({ _id: video_ids[j]}).catch(
+            (err) => {
+              console.log('video find error', err.message);
+            }
+          );
+      
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -917,31 +930,31 @@ const bulkText = async (req, res) => {
             video_link
           );
 
-          activities.push(activity);
+          activities.push(activity.id);
         }
       }
 
       if (pdf_ids && pdf_ids.length > 0) {
-        const pdfs = await PDF.find({ _id: { $in: pdf_ids } }).catch((err) => {
-          console.log('pdf find error', err.message);
-        });
+        let activity_content = 'sent pdf using sms';
 
-        for (let j = 0; j < pdfs.length; i++) {
-          const pdf = pdfs[j];
-          let activity_content = 'sent pdf using sms';
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
+        }
 
-          switch (mode) {
-            case 'automation':
-              activity_content = ActivityHelper.automationLog(activity_content);
-              break;
-            case 'campaign':
-              activity_content = ActivityHelper.campaignLog(activity_content);
-              break;
-            case 'api':
-              activity_content = ActivityHelper.apiLog(activity_content);
-              break;
-          }
-
+        for (let j = 0; j < pdfs_id.length; j++) {
+          const pdf = await PDF.findOne({ _id: pdf_ids[j] }).catch((err) => {
+            console.log('pdf find error', err.message);
+          });
+  
+  
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -960,39 +973,38 @@ const bulkText = async (req, res) => {
             pdf_link
           );
 
-          activities.push(activity);
+          activities.push(activity.id);
         }
       }
 
       if (image_ids && image_ids.length > 0) {
-        const images = await Image.find({ _id: { $in: image_ids } }).catch(
-          (err) => {
-            console.log('image find error', err.message);
-          }
-        );
+        let activity_content = 'sent image using email';
 
-        for (let j = 0; j < images.length; i++) {
-          const image = images[j];
-          let activity_content = 'sent image using email';
+        switch (mode) {
+          case 'automation':
+            activity_content = ActivityHelper.automationLog(activity_content);
+            break;
+          case 'campaign':
+            activity_content = ActivityHelper.campaignLog(activity_content);
+            break;
+          case 'api':
+            activity_content = ActivityHelper.apiLog(activity_content);
+            break;
+        }
 
-          switch (mode) {
-            case 'automation':
-              activity_content = ActivityHelper.automationLog(activity_content);
-              break;
-            case 'campaign':
-              activity_content = ActivityHelper.campaignLog(activity_content);
-              break;
-            case 'api':
-              activity_content = ActivityHelper.apiLog(activity_content);
-              break;
-          }
+        for (let j = 0; j < image_ids.length; j++) {
+          const image = await Image.findOne({ _id: image_ids[j] }).catch(
+            (err) => {
+              console.log('image find error', err.message);
+            }
+          );
 
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
-            images: image_ids,
+            images: image.id,
           });
 
           activity.save().catch((err) => {
@@ -1005,11 +1017,12 @@ const bulkText = async (req, res) => {
             image_link
           );
 
-          activities.push(activity);
+          activities.push(activity.id);
         }
       }
 
       let activity_content = 'sent text';
+
       if (req.guest_loggin) {
         activity_content = ActivityHelper.assistantLog(activity_content);
       }
@@ -1040,7 +1053,7 @@ const bulkText = async (req, res) => {
         console.log('text send err', err.message);
       });
 
-      const fromNumber = currentUser['proxy_number'];
+      let fromNumber = currentUser['proxy_number'];
       let promise;
 
       if (fromNumber) {
@@ -1159,21 +1172,122 @@ const bulkText = async (req, res) => {
             });
         });
       } else {
-        const e164Phone = phone(_contact.cell_phone)[0];
-        twilio.messages
-          .create({
-            from: fromNumber,
-            body: text_content + '\n\n' + generateTextUnsubscribeLink(),
-            to: e164Phone,
-          })
-          .catch((err) => {
-            console.log('send sms err: ', err);
-          });
-      }
+        fromNumber = currentUser['twilio_number'];
 
+        promise = new Promise(async (resolve) => {
+          const e164Phone = phone(_contact.cell_phone)[0];
+          if (!e164Phone) {
+            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+              console.log('activity delete err', err.message);
+            });
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              err: 'Invalid phone number',
+            });
+            resolve(); // Invalid phone number
+          }
+
+          await textHelper.sleep(1000);
+          twilio.messages
+            .create({
+              from: fromNumber,
+              body:
+                text_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+              to: e164Phone,
+            })
+            .then((message) => {
+              if (
+                message.status === 'accepted' ||
+                message.status === 'sending' ||
+                message.status === 'queued' ||
+                message.status === 'sent'
+              ) {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  text_content
+                );
+
+                const now = moment();
+                const due_date = now.add(1, 'minutes');
+                const timeline = new TimeLine({
+                  user: currentUser.id,
+                  status: 'active',
+                  action: {
+                    type: 'bulk_sms',
+                    message_sid: message.sid,
+                    activities,
+                    service: 'twilio',
+                  },
+                  due_date,
+                });
+                timeline.save().catch((err) => {
+                  console.log('time line save err', err.message);
+                });
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: { status: 'pending' },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: currentUser.id,
+                  message_sid: message.sid,
+                  contact: _contact.id,
+                  activities,
+                  criteria: 'bulk_sms',
+                  status: 'pending',
+                });
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+                resolve();
+              } else if (message.status === 'delivered') {
+                console.log('Message ID: ', message.sid);
+                console.info(
+                  `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
+                  video_content
+                );
+                Contact.updateOne(
+                  { _id: contacts[i] },
+                  {
+                    $set: { last_activity: activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+                resolve();
+              } else {
+                Activity.deleteMany({ _id: { $in: activities } }).catch(
+                  (err) => {
+                    console.log('err', err);
+                  }
+                );
+                error.push({
+                  contact: {
+                    first_name: _contact.first_name,
+                    cell_phone: _contact.cell_phone,
+                  },
+                  err: message.error_message,
+                });
+                resolve();
+              }
+            })
+            .catch((err) => {
+              console.log('send sms err: ', err);
+            });
+        });
+      }
       promise_array.push(promise);
     }
-
+  
     Promise.all(promise_array)
       .then(() => {
         if (error.length > 0) {
