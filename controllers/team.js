@@ -2013,17 +2013,13 @@ const getLeaders = (req, res) => {
 
 const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
-  const contacts = await Contact.find({
+  const sharing_contacts = await Contact.find({
     shared_contact: true,
-    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+    user: currentUser.id,
   })
     .populate([
       {
         path: 'shared_members',
-        select: 'user_name email picture_profile cell_phone',
-      },
-      {
-        path: 'user',
         select: 'user_name email picture_profile cell_phone',
       },
       {
@@ -2033,6 +2029,22 @@ const getSharedContacts = async (req, res) => {
     .catch((err) => {
       console.log('get shared contact', err.message);
     });
+
+  const shared_contacts = await Contact.find({
+    shared_contact: true,
+    shared_members: currentUser.id,
+  }).populate([
+    {
+      path: 'user',
+      select: 'user_name email picture_profile cell_phone',
+    },
+    {
+      path: 'last_activity',
+    },
+  ])
+  .catch((err) => {
+    console.log('get shared contact', err.message);
+  });
 
   return res.send({
     status: true,
