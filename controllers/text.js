@@ -5,7 +5,6 @@ const User = require('../models/user');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const Text = require('../models/text');
-const Note = require('../models/note');
 const Payment = require('../models/payment');
 const PaymentCtrl = require('./payment');
 const urls = require('../constants/urls');
@@ -33,7 +32,8 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
 
 const getAll = async (req, res) => {
   const { currentUser } = req;
-  const texts = await Text.aggregate([
+  const data = [];
+  const contacts = await Text.aggregate([
     {
       $match: {
         user: mongoose.Types.ObjectId(currentUser._id),
@@ -42,27 +42,27 @@ const getAll = async (req, res) => {
     {
       $group: {
         _id: '$contacts',
-        data: { $push: '$$ROOT' },
       },
-    },
-    {
-      $lookup: {
-        from: 'contacts',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'contact_detail',
-      },
-    },
-    {
-      $sort: { created_at: -1 },
     },
   ]);
 
+  if ( contacts && contacts.length > 0) {
+    for(let i = 0; i < contacts.length; i ++) {
+      const contact = contacts[i]._id[0];
+      const text = await Text.findOne({
+        contacts: contact,
+      }).sort({ _id: -1 }).populate('contacts');
+    
+      data.push(text);
+    } 
+  }
+
   return res.send({
     status: true,
-    data: texts,
-  });
+    data,
+  });  
 };
+
 
 const send = async (req, res) => {
   const { currentUser } = req;
@@ -315,18 +315,17 @@ const receive1 = async (req, res) => {
 
 const get = async (req, res) => {
   const { currentUser } = req;
-  const query = { ...req.query };
-  const contact = query['contact'];
-  const data = await Note.find({ user: currentUser.id, contact });
+  const { contact } = req.body;
+  const data = await Text.find({ user: currentUser.id, contacts: contact });
 
   if (!data) {
     return res.status(400).json({
       status: false,
-      error: 'Note doesn`t exist',
+      error: 'Contact doesn`t exist',
     });
   }
 
-  res.send({
+  return res.send({
     status: true,
     data,
   });

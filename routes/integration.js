@@ -23,8 +23,8 @@ router.post(
   UserCtrl.checkAuth,
   catchError(IntegrationCtrl.setEventCalendly)
 );
-router.post(
-  '/calendly/disconnect-calendly',
+router.get(
+  '/calendly/disconnect',
   UserCtrl.checkAuth,
   catchError(IntegrationCtrl.disconnectCalendly)
 );

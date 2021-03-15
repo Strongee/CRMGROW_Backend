@@ -19,6 +19,7 @@ const TextSchema = new Schema(
   }
 );
 
+TextSchema.index({ contacts: 1 });
 const Text = mongoose.model('text', TextSchema);
 
 module.exports = Text;
