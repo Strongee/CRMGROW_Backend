@@ -29,6 +29,9 @@ const checkAuthCalendly = async (req, res) => {
 
       return res.send({
         status: true,
+        data: {
+          calendly,
+        },
       });
     })
     .catch((err) => {
