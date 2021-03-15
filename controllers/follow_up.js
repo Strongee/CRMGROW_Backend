@@ -776,7 +776,7 @@ const load = async (req, res) => {
 
   const query = { user: currentUser._id };
   types && types.length ? (query.type = { $in: types }) : false;
-  if (types.indexOf('task') !== -1) {
+  if (types && types.indexOf('task') !== -1) {
     types.push('');
     types.push(null);
   }
