@@ -23,6 +23,11 @@ router.post(
   UserCtrl.checkAuth,
   catchError(IntegrationCtrl.setEventCalendly)
 );
+router.post(
+  '/calendly/disconnect-calendly',
+  UserCtrl.checkAuth,
+  catchError(IntegrationCtrl.disconnectCalendly)
+);
 
 router.post(
   '/sync-smtp',

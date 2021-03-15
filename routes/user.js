@@ -187,13 +187,6 @@ router.post(
   catchError(UserCtrl.desktopNotification)
 );
 
-// Disconnect Desktop Notification
-router.get(
-  '/discon-desktop',
-  UserCtrl.checkAuth,
-  catchError(UserCtrl.disconDesktop)
-);
-
 // Text Notification
 router.get(
   '/text-notification',
@@ -201,8 +194,12 @@ router.get(
   catchError(UserCtrl.textNotification)
 );
 
-// Disconnect Desktop Notification
-router.get('/discon-text', UserCtrl.checkAuth, catchError(UserCtrl.disconText));
+// Disconnect Google Calendar
+router.get(
+  '/discon-calendar',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.disconnectCalendar)
+);
 
 // Signup Gmail
 router.get('/signup-gmail', catchError(UserCtrl.signUpGmail));

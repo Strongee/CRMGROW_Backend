@@ -1841,7 +1841,7 @@ const getFinishedCall = async (req, res) => {
 
 const loadCalls = async (req, res) => {
   const { currentUser } = req;
-  const { type, skip } = req.body;
+  const { type, skip, count } = req.body;
   let query;
   switch (type) {
     case 'inquiry':
@@ -1891,7 +1891,7 @@ const loadCalls = async (req, res) => {
       { path: 'contacts' },
     ])
     .skip(skip)
-    .limit(8);
+    .limit(count || 10);
 
   const total = await TeamCall.countDocuments(query);
 

@@ -434,7 +434,7 @@ const remove = async (req, res) => {
           },
           {
             $unset: { shared_image: true },
-            has_shared: false,
+            $set: { has_shared: false },
           }
         ).catch((err) => {
           console.log('default image remove err', err.message);
