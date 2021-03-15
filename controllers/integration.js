@@ -163,9 +163,34 @@ const connectSMTP = async (req, res) => {
   });
 };
 
+const disconnectCalendly = async (req, res) => {
+  const { currentUser } = req;
+  Garbage.updateOne(
+    {
+      user: currentUser.id,
+    },
+    {
+      $unset: { calendly: true },
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('garbage update err', err.message);
+      return res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   checkAuthCalendly,
   setEventCalendly,
   getCalendly,
+  disconnectCalendly,
   connectSMTP,
 };

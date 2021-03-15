@@ -5,7 +5,6 @@ const User = require('../models/user');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const Text = require('../models/text');
-const Note = require('../models/note');
 const Payment = require('../models/payment');
 const PaymentCtrl = require('./payment');
 const urls = require('../constants/urls');
@@ -45,7 +44,6 @@ const getAll = async (req, res) => {
         _id: '$contacts',
       },
     },
-    // },
   ]);
 
   if ( contacts && contacts.length > 0) {
