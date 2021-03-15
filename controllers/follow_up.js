@@ -778,6 +778,7 @@ const load = async (req, res) => {
   types && types.length ? (query.type = { $in: types }) : false;
   if (types.indexOf('task') !== -1) {
     types.push('');
+    types.push(null);
   }
 
   if (typeof status !== 'undefined') {
