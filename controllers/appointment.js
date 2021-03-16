@@ -1809,6 +1809,7 @@ const getCalendarList = async (req, res) => {
             .header()
             .get()
             .then(async (outlook_calendars) => {
+              console.log('outlook_calendars', outlook_calendars);
               const calendars = outlook_calendars.value;
               if (calendars.length > 0) {
                 const calendar = {

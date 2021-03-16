@@ -195,7 +195,7 @@ router.get(
 );
 
 // Disconnect Google Calendar
-router.get(
+router.post(
   '/discon-calendar',
   UserCtrl.checkAuth,
   catchError(UserCtrl.disconnectCalendar)
