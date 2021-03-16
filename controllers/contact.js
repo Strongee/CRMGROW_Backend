@@ -1081,11 +1081,23 @@ const search = async (req, res) => {
           user: currentUser.id,
         },
         {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
           cell_phone: {
             $regex: '.*' + phoneSearch + '.*',
             $options: 'i',
           },
           user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          shared_members: currentUser.id,
         },
       ],
     })
@@ -1099,12 +1111,24 @@ const search = async (req, res) => {
           user: currentUser.id,
         },
         {
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
           email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
           last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
         },
         {
           cell_phone: {
@@ -1112,6 +1136,13 @@ const search = async (req, res) => {
             $options: 'i',
           },
           user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          shared_members: currentUser.id,
         },
       ],
     })
@@ -1175,6 +1206,14 @@ const searchEasy = async (req, res) => {
         {
           first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           last_name: { $regex: search.split(' ')[1] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search + '.*', $options: 'i' },
           user: currentUser.id,
         },
         {
