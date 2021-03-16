@@ -90,7 +90,6 @@ const system_settings = {
       AMOUNT: 2000,
     },
   ],
-  SMS_DESCRIPTION: ''
 };
 
 module.exports = system_settings;

@@ -2013,7 +2013,46 @@ const getLeaders = (req, res) => {
 
 const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
-  const sharing_contacts = await Contact.find({
+
+  const count = await Contact.countDocuments({
+    shared_contact: true,
+    shared_members: currentUser.id,
+  });
+
+  const contacts = await Contact.find({
+    shared_contact: true,
+    shared_members: currentUser.id,
+  })
+    .populate([
+      {
+        path: 'user',
+        select: 'user_name email picture_profile cell_phone',
+      },
+      {
+        path: 'last_activity',
+      },
+    ])
+    .catch((err) => {
+      console.log('get shared contact', err.message);
+    });
+
+  return res.send({
+    status: true,
+    data: {
+      count,
+      contacts,
+    },
+  });
+};
+
+const getSharingContacts = async (req, res) => {
+  const { currentUser } = req;
+  const count = await Contact.countDocuments({
+    shared_contact: true,
+    user: currentUser.id,
+  });
+
+  const contacts = await Contact.find({
     shared_contact: true,
     user: currentUser.id,
   })
@@ -2029,26 +2068,12 @@ const getSharedContacts = async (req, res) => {
     .catch((err) => {
       console.log('get shared contact', err.message);
     });
-
-  const shared_contacts = await Contact.find({
-    shared_contact: true,
-    shared_members: currentUser.id,
-  }).populate([
-    {
-      path: 'user',
-      select: 'user_name email picture_profile cell_phone',
-    },
-    {
-      path: 'last_activity',
-    },
-  ])
-  .catch((err) => {
-    console.log('get shared contact', err.message);
-  });
-
   return res.send({
     status: true,
-    data: contacts,
+    data: {
+      count,
+      contacts,
+    },
   });
 };
 
@@ -2057,6 +2082,7 @@ module.exports = {
   getLeaders,
   getTeam,
   getSharedContacts,
+  getSharingContacts,
   getInvitedTeam,
   get,
   getInquireCall,
