@@ -638,7 +638,7 @@ const createFollowUp = async (req, res) => {
 
     const new_activity = new Activity({
       content: activity_content,
-      contact,
+      contacts: contact,
       user: currentUser.id,
       type: 'follow_ups',
       follow_ups: new_followup.id,
