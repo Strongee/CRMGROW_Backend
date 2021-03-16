@@ -110,8 +110,6 @@ const setEventCalendly = async (req, res) => {
     });
 };
 
-
-
 const connectSMTP = async (req, res) => {
   const { currentUser } = req;
   const { host, port, user, pass, secure } = req.body;
