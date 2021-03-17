@@ -95,6 +95,8 @@ const searchContact = async (req, res) => {
   const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
   const phoneSearch = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');
   let searched_contacts = [];
+  const data = [];
+
   if (search.split(' ').length > 1) {
     searched_contacts = await Contact.find({
       $or: [
@@ -145,26 +147,22 @@ const searchContact = async (req, res) => {
   if (searched_contacts.length > 0) {
     for (let i = 0; i < searched_contacts.length; i++) {
       const contact = searched_contacts[i];
-      const timeline = await TimeLine.findOne({
+      const searched_timeline = await TimeLine.findOne({
         contact,
+        automation: req.body.automation,
       }).catch((err) => {
         console.log('time line find err', err.message);
       });
 
-      if(searched_timeline){
-
-      } 
+      if (searched_timeline) {
+        data.push(contact);
+      }
     }
   }
 
-  const count = await Contact.countDocuments({ user: currentUser.id });
   return res.send({
     status: true,
-    data: {
-      contacts,
-      search,
-      total: count,
-    },
+    data,
   });
 };
 

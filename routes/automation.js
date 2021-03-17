@@ -10,6 +10,12 @@ router.get('/', UserCtrl.checkAuth, catchError(AutomationCtrl.getAll));
 
 router.post('/search', UserCtrl.checkAuth, catchError(AutomationCtrl.search));
 
+router.post(
+  '/search-contact',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.searchContact)
+);
+
 router.post('/', UserCtrl.checkAuth, catchError(AutomationCtrl.create));
 
 router.put('/:id', UserCtrl.checkAuth, catchError(AutomationCtrl.update));
