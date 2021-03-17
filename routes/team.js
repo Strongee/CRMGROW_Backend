@@ -136,6 +136,12 @@ router.get(
   catchError(TeamCtrl.getSharedContacts)
 );
 
+router.get(
+  '/sharing-contacts',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getSharingContacts)
+);
+
 router.post(
   '/request-call',
   UserCtrl.checkAuth,
