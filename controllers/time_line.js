@@ -260,7 +260,7 @@ const runTimeline = async (id) => {
           content: action.content,
           contact: timeline.contact,
           user: timeline.user,
-          type: timeline.type,
+          type: timeline.task_type,
           due_date: follow_due_date,
           updated_at: new Date(),
           created_at: new Date(),

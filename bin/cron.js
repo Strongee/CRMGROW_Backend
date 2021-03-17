@@ -1296,7 +1296,7 @@ const timesheet_check = new CronJob(
               content: action.content,
               contact: timeline.contact,
               user: timeline.user,
-              type: timeline.type,
+              type: timeline.task_type,
               due_date: follow_due_date,
               updated_at: new Date(),
               created_at: new Date(),
@@ -2082,7 +2082,7 @@ const task_check = new CronJob(
               content: action.content,
               contact: timeline.contact,
               user: timeline.user,
-              type: timeline.type,
+              type: action.task_type,
               due_date: follow_due_date,
             });
 
