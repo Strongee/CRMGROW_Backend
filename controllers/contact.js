@@ -1086,6 +1086,22 @@ const search = async (req, res) => {
           shared_members: currentUser.id,
         },
         {
+          first_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
           cell_phone: {
             $regex: '.*' + phoneSearch + '.*',
             $options: 'i',
@@ -1164,6 +1180,7 @@ const search = async (req, res) => {
 const searchEasy = async (req, res) => {
   const { currentUser } = req;
   const search = req.body.search;
+  const skip = req.body.skip || 0;
   let data = [];
   if (!search.split(' ')[1]) {
     data = await Contact.find({
@@ -1196,6 +1213,7 @@ const searchEasy = async (req, res) => {
       ],
     })
       .sort({ first_name: 1 })
+      .skip(skip)
       .limit(8)
       .catch((err) => {
         console.log('err', err);
@@ -1223,6 +1241,7 @@ const searchEasy = async (req, res) => {
       ],
     })
       .sort({ first_name: 1 })
+      .skip(skip)
       .limit(8)
       .catch((err) => {
         console.log('err', err);

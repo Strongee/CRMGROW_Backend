@@ -986,6 +986,8 @@ const shareEmailTemplates = async (req, res) => {
 const searchUser = async (req, res) => {
   const search = req.body.search;
   const { currentUser } = req;
+  const skip = req.body.skip || 0;
+
   const user_array = await User.find({
     $or: [
       {
@@ -1013,6 +1015,7 @@ const searchUser = async (req, res) => {
     _id: { $nin: [currentUser.id] },
   })
     .sort({ first_name: 1 })
+    .skip(skip)
     .limit(8)
     .catch((err) => {
       console.log('err', err);
@@ -1024,6 +1027,7 @@ const searchUser = async (req, res) => {
     .populate({ path: 'owner' })
     .sort({ first_name: 1 })
     .limit(8)
+    .skip(skip)
     .catch((err) => {
       console.log('err', err);
     });
