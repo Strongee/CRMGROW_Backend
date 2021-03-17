@@ -2017,8 +2017,10 @@ const getLeaders = (req, res) => {
 
 const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
+  const count = req.body.count || 50;
+  const skip = req.body.skip || 0;
 
-  const count = await Contact.countDocuments({
+  const total = await Contact.countDocuments({
     shared_contact: true,
     shared_members: currentUser.id,
   });
@@ -2036,6 +2038,8 @@ const getSharedContacts = async (req, res) => {
         path: 'last_activity',
       },
     ])
+    .skip(skip)
+    .limit(count)
     .catch((err) => {
       console.log('get shared contact', err.message);
     });
@@ -2043,7 +2047,7 @@ const getSharedContacts = async (req, res) => {
   return res.send({
     status: true,
     data: {
-      count,
+      count: total,
       contacts,
     },
   });
@@ -2051,7 +2055,10 @@ const getSharedContacts = async (req, res) => {
 
 const getSharingContacts = async (req, res) => {
   const { currentUser } = req;
-  const count = await Contact.countDocuments({
+  const count = req.body.count || 50;
+  const skip = req.body.skip || 0;
+
+  const total = await Contact.countDocuments({
     shared_contact: true,
     user: currentUser.id,
   });
@@ -2069,13 +2076,15 @@ const getSharingContacts = async (req, res) => {
         path: 'last_activity',
       },
     ])
+    .skip(skip)
+    .limit(count)
     .catch((err) => {
       console.log('get shared contact', err.message);
     });
   return res.send({
     status: true,
     data: {
-      count,
+      count: total,
       contacts,
     },
   });
