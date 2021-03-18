@@ -2021,13 +2021,29 @@ const getSharedContacts = async (req, res) => {
   const skip = req.body.skip || 0;
 
   const total = await Contact.countDocuments({
-    shared_contact: true,
-    shared_members: currentUser.id,
+    $or: [
+      {
+        shared_contact: true,
+        user: currentUser.id,
+      },
+      {
+        shared_contact: true,
+        shared_members: currentUser.id,
+      },
+    ],
   });
 
   const contacts = await Contact.find({
-    shared_contact: true,
-    shared_members: currentUser.id,
+    $or: [
+      {
+        shared_contact: true,
+        shared_members: currentUser.id,
+      },
+      {
+        shared_contact: true,
+        user: currentUser.id,
+      },
+    ],
   })
     .populate([
       {
@@ -2053,39 +2069,113 @@ const getSharedContacts = async (req, res) => {
   });
 };
 
-const getSharingContacts = async (req, res) => {
+const searchContacts = async (req, res) => {
   const { currentUser } = req;
-  const count = req.body.count || 50;
-  const skip = req.body.skip || 0;
+  const searchStr = req.body.search;
+  const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+  const phoneSearch = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');
+  let contacts = [];
+  if (search.split(' ').length > 1) {
+    contacts = await Contact.find({
+      $or: [
+        {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          first_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          shared_members: currentUser.id,
+        },
+      ],
+    })
+      .populate('last_activity')
+      .sort({ first_name: 1 });
+  } else {
+    contacts = await Contact.find({
+      $or: [
+        {
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+          shared_members: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          shared_members: currentUser.id,
+        },
+      ],
+    })
+      .populate('last_activity')
+      .sort({ first_name: 1 });
+  }
 
-  const total = await Contact.countDocuments({
-    shared_contact: true,
-    user: currentUser.id,
-  });
-
-  const contacts = await Contact.find({
-    shared_contact: true,
-    user: currentUser.id,
-  })
-    .populate([
-      {
-        path: 'shared_members',
-        select: 'user_name email picture_profile cell_phone',
-      },
-      {
-        path: 'last_activity',
-      },
-    ])
-    .skip(skip)
-    .limit(count)
-    .catch((err) => {
-      console.log('get shared contact', err.message);
-    });
+  const count = await Contact.countDocuments({ user: currentUser.id });
   return res.send({
     status: true,
     data: {
-      count: total,
       contacts,
+      search,
+      total: count,
     },
   });
 };
@@ -2095,7 +2185,7 @@ module.exports = {
   getLeaders,
   getTeam,
   getSharedContacts,
-  getSharingContacts,
+  searchContacts,
   getInvitedTeam,
   get,
   getInquireCall,

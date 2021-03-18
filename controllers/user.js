@@ -1736,7 +1736,7 @@ const authorizeOutlookCalendar = async (req, res) => {
           .then(() => {
             res.send({
               status: true,
-              data: user.connected_email,
+              data: jwt.preferred_username,
             });
           })
           .catch((err) => {

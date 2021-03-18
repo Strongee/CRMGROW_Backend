@@ -8,6 +8,7 @@ const ContactSchema = mongoose.Schema(
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     shared_contact: Boolean,
     shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    shared_team: [{ type: mongoose.Schema.Types.ObjectId, ref: 'team' }],
     last_activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     address: String,
     city: String,
