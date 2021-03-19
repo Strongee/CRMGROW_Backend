@@ -20,7 +20,7 @@ const sendWelcomeEmail = async (data) => {
   const templatedData = {
     user_name,
     verification_url,
-    created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+    created_at: moment().tz(time_zone).format('MMMM D, YYYY, h:mmA'),
     webinar_url: system_settings.WEBINAR_LINK,
     import_url: urls.IMPORT_CSV_URL,
     template_url: urls.CONTACT_CSV_URL,
@@ -31,10 +31,11 @@ const sendWelcomeEmail = async (data) => {
     unsubscription_url: urls.UNSUSCRIPTION_URL,
     connect_url: urls.PROFILE_URL,
     user_email: email,
+    recording_url: urls.INTRO_VIDEO_URL,
+    recording_preview: urls.RECORDING_PREVIEW_URL,
     password,
   };
 
-  console.log('data', templatedData);
   const params = {
     Destination: {
       ToAddresses: [email],

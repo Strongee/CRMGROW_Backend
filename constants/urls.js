@@ -41,9 +41,10 @@ const urls = {
     'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
   CONTACT_CSV_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
-  IMPORT_CSV_URL: `${domain}/import-csv`,
-  // INTRO_VIDEO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/how+to+send+video+-+crmgrow.mp4',
-  INTRO_VIDEO_URL: `${domain}/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc`,
+  IMPORT_CSV_URL: `${domain}/contacts/import-csv`,
+  INTRO_VIDEO_URL:
+    'https://zoom.us/rec/play/w2x1LGD1yGDUMkTo3Aa8XA2OAmb7hez5p9raoL7H-lrbLXP-5H52YE_t4MdpJO1y5mTJuZfplpHXjefN.yUHzRToASLwY8yPz?continueMode=true&_x_zm_rtaid=kNtWtmh8Ri2ht1dmHmtPQw.1614790967245.588ab25e5935f7ac744e189c6b379dd3&_x_zm_rhtaid=625',
+  // INTRO_VIDEO_URL: `${domain}/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc`,
   GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
   TRACK_URL: `${domain}/api/email/opened/`,
   UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
@@ -61,6 +62,8 @@ const urls = {
   TERMS_SERVICE_URL: 'https://crmgrow.com/terms_of_service.html',
   PRIVACY_URL: 'https://crmgrow.com/privacy.html',
   UNSUSCRIPTION_URL: `${domain}`,
+  RECORDING_PREVIEW_URL:
+    'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
 };
 
 module.exports = urls;

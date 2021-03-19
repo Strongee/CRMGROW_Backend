@@ -19,6 +19,15 @@
             letter-spacing: 0;
             line-height: 22px;
         }
+        .recording-video {
+            height: 30px;
+            opacity: 0.64;
+            color: #101336;
+            font-family: Arial;
+            font-size: 14px;
+            letter-spacing: 0;
+            line-height: 22px;
+        }
         .invite-time {
             height: 30px;
             opacity: 0.64;
@@ -154,15 +163,15 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="invite-user">
-                                                                    {{user_name}},
+                                                                    Welcome {{user_name}},
                                                                 </td>
                                                                 <td align="right" class="invite-time">
                                                                     {{created_at}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="invite-user">
-                                                                    Welcome Thank's for trying CRMGrow! Here how to get started:
+                                                                <td class="invite-user" style="padding-top: 20px;">
+                                                                    Thank's for trying crmgrow! Here, how to get started:
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -202,7 +211,7 @@
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="invite-user" style="padding-bottom: 10px;">
+                                                                <td class="invite-user" style="padding-bottom:10px;">
                                                                     Connect your desired Gmail to our Microsoft 365 email account and confirm the information in your profile is accurate
                                                                 </td>
                                                             </tr>
@@ -250,7 +259,7 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="invite-user" style="padding-bottom: 10px;">
-                                                                    Every Tuesday and Thursday at 3:00PM we go live and show you how to use the software in depth and Q&A.
+                                                                    Every Tuesday at 1:00PM we go live and show you how to use the software in depth and Q&A.
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -268,7 +277,32 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="step-title">
-                                                                    5.Your account details
+                                                                    5.Watch the recording video
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="recording-video" style="padding-bottom: 10px;">
+                                                                    Here is one of our last webinar "how to use" the software recording.
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <a href="{{recording_url}}" target="_blank">
+                                                                        <img src="{{recording_preview}}" alt="demo video">
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 20px;">
+                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="step-title">
+                                                                    6.Your account details
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -306,12 +340,12 @@
                                             </tr>
                                             <tr>
                                                 <td class="account-info">
-                                                    Thank you for being valued user of our platform!
+                                                    Thank you for your business and support!
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="account-info" style="font-weight: bold;">
-                                                    CRMgrow Team
+                                                <td class="account-info" style="font-weight: bold; padding-top:20px;">
+                                                    Support Team
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -372,13 +406,13 @@
                                                                         <tbody>
                                                                             <tr>
                                                                                 <td>
-                                                                                    <a href="{{terms_url}}" class="footer-text" style="color:#0000ff;">Terms & Conditions</a>
+                                                                                    <a href="{{terms_url}}" class="footer-terms" style="color:#0000ff;">Terms & Conditions</a>
                                                                                 </td>
                                                                                 <td>
-                                                                                    <a href="{{privacy_url}}" class="footer-terms">Privacy Policy</a>
+                                                                                    <a href="{{privacy_url}}" class="footer-terms" style="color:#0000ff;">Privacy Policy</a>
                                                                                 </td>
                                                                                 <td>
-                                                                                    <a href="{{unsubscription_url}}" class="footer-text" style="opacity:0.2;">Unsubscribe from notifications</a>
+                                                                                    <a href="{{unsubscription_url}}" class="footer-text" style="opacity:0.5;font-size:12px;">Unsubscribe</a>
                                                                                 </td>
                                                                             </tr>
                                                                         </tbody>
