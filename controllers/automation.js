@@ -12,12 +12,21 @@ const get = async (req, res) => {
   const count = req.body.count || 50;
   const skip = req.body.skip || 0;
 
+  // get shared contacts first
+  const shared_contacts = await Contact.find({
+    shared_members: currentUser.id,
+  });
+
   const total = await TimeLine.aggregate([
     {
       $match: {
-        $and: [
+        $or: [
           {
             user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+          {
+            contact: { $in: shared_contacts },
             automation: mongoose.Types.ObjectId(id),
           },
         ],
