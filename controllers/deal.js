@@ -320,27 +320,30 @@ const updateContact = (req, res) => {
     query
   )
     .then((result) => {
+      let detail_content = '';
       if (action === 'add') {
-        const detail_content = 'added deal';
-        for (let i = 0; i < contacts.length; i++) {
-          const activity = new Activity({
-            content: detail_content,
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'deals',
-            deals: req.params.id,
-          });
+        detail_content = 'added to deal';
+      } else {
+        detail_content = 'removed from deal';
+      }
+      for (let i = 0; i < contacts.length; i++) {
+        const activity = new Activity({
+          content: detail_content,
+          contacts: contacts[i],
+          user: currentUser.id,
+          type: 'deals',
+          deals: req.params.id,
+        });
 
-          activity.save().catch((err) => {
-            console.log('activity save err', err.message);
-          });
-          Contact.updateOne(
-            { _id: contacts[i] },
-            { $set: { last_activity: activity.id } }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-        }
+        activity.save().catch((err) => {
+          console.log('activity save err', err.message);
+        });
+        Contact.updateOne(
+          { _id: contacts[i] },
+          { $set: { last_activity: activity.id } }
+        ).catch((err) => {
+          console.log('err', err);
+        });
       }
       res.send({
         status: true,
@@ -410,8 +413,8 @@ const getActivity = async (req, res) => {
     const activity_detail = await Activity.aggregate([
       {
         $lookup: {
-          from: activity_list[i].type,
-          localField: activity_list[i].type,
+          from: activity_list[i].type !== 'deals' ? activity_list[i].type : 'contacts',
+          localField: activity_list[i].type !== 'deals' ? activity_list[i].type : 'contacts',
           foreignField: '_id',
           as: 'activity_detail',
         },
