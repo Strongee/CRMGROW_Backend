@@ -5,7 +5,7 @@ const TextCtrl = require('../controllers/text');
 const { catchError } = require('../controllers/error');
 
 const router = express.Router();
-)
+
 router.post('/receive', catchError(TextCtrl.receive));
 router.post('/receive1', catchError(TextCtrl.receive1));
 
