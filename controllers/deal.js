@@ -322,9 +322,9 @@ const updateContact = (req, res) => {
     .then((result) => {
       let detail_content = '';
       if (action === 'add') {
-        detail_content = 'added deal';
+        detail_content = 'added to deal';
       } else {
-        detail_content = 'removed deal';
+        detail_content = 'removed from deal';
       }
       for (let i = 0; i < contacts.length; i++) {
         const activity = new Activity({
