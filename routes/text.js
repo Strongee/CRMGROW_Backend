@@ -14,7 +14,6 @@ router.post('/receive-twilio', catchError(TextCtrl.receiveTextTwilio));
 
 router.get('/', UserCtrl.checkAuth, catchError(TextCtrl.getAll));
 
-
 router.post('/get-messages', UserCtrl.checkAuth, catchError(TextCtrl.get));
 router.post(
   '/search-numbers',

@@ -872,11 +872,11 @@ const bulkText = async (req, res) => {
       });
     }
 
-    if(!currentUser['proxy_number'] && !currentUser['twilio_number']) {
+    if (!currentUser['proxy_number'] && !currentUser['twilio_number']) {
       return res.status(407).json({
         status: false,
         error: 'No phone',
-      })
+      });
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -906,12 +906,12 @@ const bulkText = async (req, res) => {
         }
 
         for (let j = 0; j < video_ids.length; j++) {
-          const video = await Video.findOne({ _id: video_ids[j]}).catch(
+          const video = await Video.findOne({ _id: video_ids[j] }).catch(
             (err) => {
               console.log('video find error', err.message);
             }
           );
-      
+
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -949,12 +949,11 @@ const bulkText = async (req, res) => {
             break;
         }
 
-        for (let j = 0; j < pdfs_id.length; j++) {
+        for (let j = 0; j < pdf_ids.length; j++) {
           const pdf = await PDF.findOne({ _id: pdf_ids[j] }).catch((err) => {
             console.log('pdf find error', err.message);
           });
-  
-  
+
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -1190,12 +1189,11 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          await textHelper.sleep(1000);
+          await sleep(1000);
           twilio.messages
             .create({
               from: fromNumber,
-              body:
-                text_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+              body: text_content + '\n\n' + generateTextUnsubscribeLink(),
               to: e164Phone,
             })
             .then((message) => {
@@ -1253,7 +1251,7 @@ const bulkText = async (req, res) => {
                 console.log('Message ID: ', message.sid);
                 console.info(
                   `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                  video_content
+                  text_content
                 );
                 Contact.updateOne(
                   { _id: contacts[i] },
@@ -1287,7 +1285,7 @@ const bulkText = async (req, res) => {
       }
       promise_array.push(promise);
     }
-  
+
     Promise.all(promise_array)
       .then(() => {
         if (error.length > 0) {
@@ -1864,7 +1862,6 @@ const removeFolder = async (req, res) => {
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-  } else {
   }
   Image.deleteOne({ _id })
     .then(() => {

@@ -15,7 +15,6 @@ const get = async (req, res) => {
   // get shared contacts first
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
-    shared_contact: true,
   });
 
   const total = await TimeLine.aggregate([
@@ -124,7 +123,6 @@ const searchContact = async (req, res) => {
           first_name: { $regex: search.split(' ')[0], $options: 'i' },
           last_name: { $regex: search.split(' ')[1], $options: 'i' },
           shared_members: currentUser.id,
-          shared_contact: true,
         },
         {
           first_name: { $regex: search, $options: 'i' },
@@ -133,7 +131,6 @@ const searchContact = async (req, res) => {
         {
           first_name: { $regex: search, $options: 'i' },
           shared_members: currentUser.id,
-          shared_contact: true,
         },
         {
           last_name: { $regex: search, $options: 'i' },
@@ -142,7 +139,6 @@ const searchContact = async (req, res) => {
         {
           last_name: { $regex: search, $options: 'i' },
           shared_members: currentUser.id,
-          shared_contact: true,
         },
         {
           cell_phone: {
@@ -157,7 +153,6 @@ const searchContact = async (req, res) => {
             $options: 'i',
           },
           shared_members: currentUser.id,
-          shared_contact: true,
         },
       ],
     })
@@ -246,6 +241,11 @@ const getAll = async (req, res) => {
       error: 'Automation doesn`t exist',
     });
   }
+
+  const shared_contacts = await Contact.find({
+    shared_members: currentUser.id,
+  });
+
   const automation_array = [];
 
   for (let i = 0; i < automations.length; i++) {
@@ -260,7 +260,7 @@ const getAll = async (req, res) => {
             },
             {
               contact: { $in: shared_contacts },
-              automation: mongoose.Types.ObjectId(id),
+              automation: mongoose.Types.ObjectId(automation._id),
             },
           ],
         },

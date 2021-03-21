@@ -2028,7 +2028,6 @@ const getSharedContacts = async (req, res) => {
         shared_team: req.body.team,
       },
       {
-        shared_contact: true,
         shared_members: currentUser.id,
         shared_team: req.body.team,
       },
@@ -2038,7 +2037,6 @@ const getSharedContacts = async (req, res) => {
   const contacts = await Contact.find({
     $or: [
       {
-        shared_contact: true,
         shared_members: currentUser.id,
         shared_team: req.body.team,
       },
@@ -2094,7 +2092,6 @@ const searchContacts = async (req, res) => {
           last_name: { $regex: search.split(' ')[1], $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           first_name: { $regex: search, $options: 'i' },
@@ -2106,7 +2103,6 @@ const searchContacts = async (req, res) => {
           first_name: { $regex: search, $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           last_name: { $regex: search, $options: 'i' },
@@ -2118,7 +2114,6 @@ const searchContacts = async (req, res) => {
           last_name: { $regex: search, $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           cell_phone: {
@@ -2136,7 +2131,6 @@ const searchContacts = async (req, res) => {
           },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
       ],
     })
@@ -2155,7 +2149,6 @@ const searchContacts = async (req, res) => {
           first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
@@ -2167,7 +2160,6 @@ const searchContacts = async (req, res) => {
           email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
@@ -2179,7 +2171,6 @@ const searchContacts = async (req, res) => {
           last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
         {
           cell_phone: {
@@ -2197,7 +2188,6 @@ const searchContacts = async (req, res) => {
           },
           shared_members: currentUser.id,
           shared_team: req.body.team,
-          shared_contact: true,
         },
       ],
     })
