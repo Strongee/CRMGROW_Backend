@@ -1459,28 +1459,12 @@ const getAll = async (req, res) => {
   const _video_detail_list = [];
 
   for (let i = 0; i < _video_list.length; i++) {
-    const _video_detail = await VideoTracker.aggregate([
-      {
-        $lookup: {
-          from: 'videos',
-          localField: 'video',
-          foreignField: '_id',
-          as: 'video_detail',
-        },
-      },
-      {
-        $match: {
-          video: _video_list[i]._id,
-          user: currentUser._id,
-        },
-      },
-    ]);
-
-    const myJSON = JSON.stringify(_video_list[i]);
-    const _video = JSON.parse(myJSON);
-    const video_detail = await Object.assign(_video, {
-      views: _video_detail.length,
+    const _video_detail = await VideoTracker.countDocuments({
+      video: _video_list[i]._id,
+      user: currentUser._id,
     });
+
+    const video_detail = { ..._video_list[i].doc, views: _video_detail.length,};
     _video_detail_list.push(video_detail);
   }
 
