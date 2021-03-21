@@ -1703,11 +1703,22 @@ const loadMaterial = async (req, res) => {
       pdf: _pdf_list[i]._id,
       user: currentUser._id,
     });
-    let pdf_detail = {
-      ..._pdf_list[i]._doc,
-      views: view,
-      material_type: 'pdf',
-    };
+
+    let pdf_detail;
+    if (_pdf_list[i]._doc) {
+      pdf_detail = {
+        ..._pdf_list[i]._doc,
+        views: view,
+        material_type: 'pdf',
+      };
+    } else {
+      pdf_detail = {
+        ..._pdf_list[i],
+        views: view,
+        material_type: 'pdf',
+      };
+    }
+
     if (_material_owner_objects[pdf_detail.user]) {
       pdf_detail = {
         ...pdf_detail,
