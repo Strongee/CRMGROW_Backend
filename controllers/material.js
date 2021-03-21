@@ -1703,10 +1703,11 @@ const loadMaterial = async (req, res) => {
       pdf: _pdf_list[i]._id,
       user: currentUser._id,
     });
-
-    const myJSON = JSON.stringify(_pdf_list[i]);
-    const _pdf = JSON.parse(myJSON);
-    const pdf_detail = { ..._pdf._doc, views: view, material_type: 'pdf' };
+    const pdf_detail = {
+      ..._pdf_list[i]._doc,
+      views: view,
+      material_type: 'pdf',
+    };
     if (_material_owner_objects[pdf_detail.user]) {
       pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
     }
