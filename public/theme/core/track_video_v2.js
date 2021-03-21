@@ -12,7 +12,9 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector('#duration').value;
 let limit = duration
+var tracker_id = '';
 
+// Video Full watched limit setting
 if(duration > 600) {
   limit = duration - 5
 }
@@ -38,6 +40,9 @@ function updateStartTime() {
       var siteAddr = location.protocol + '//' + location.hostname;
       // var siteAddr = 'http://localhost:3000'
       socket = io.connect(siteAddr);
+      socket.on('inited_video', (data) => {
+        tracker_id = data._id;
+      });
     }
   }
   let currentTime = vPlayer.currentTime;
@@ -151,6 +156,7 @@ function reportTime() {
         socket.emit('init_video', report);
       } else {
         socket.emit('update_video', {
+          tracker_id: tracker_id,
           duration: total * 1000,
           material_last: vPlayer.currentTime
         });
@@ -158,14 +164,15 @@ function reportTime() {
     } else {
       if (!reported) {
         let currentTime = vPlayer.currentTime;
-        if(currentTime > limit - 2 ) {
+        if (currentTime > limit - 2 ) {
           currentTime = 0;
         }
         socket.emit('update_video', {
+          tracker_id: tracker_id,
           duration: duration * 1000,
           material_last: currentTime
         });
-        socket.emit('close');
+        socket.emit('close', { mode: 'full_watched' });
         reported = true;
       }
     }
@@ -236,18 +243,20 @@ function initRecord() {
 function handleVisibilityChange() {
   if (document.hidden) {
     // Close the Socket on mobile
-    if(deviceType === 'mobile') {
-      if(socket) {
-        socket.emit('close');
+    if (deviceType === 'mobile') {
+      if (socket) {
+        socket.emit('close', { mode: 'hide' });
       }
     }
   } else  {
     // Restart the Socket on mobile
-    if(deviceType === 'mobile') {
+    if (deviceType === 'mobile') {
       initRecord();
       var siteAddr = location.protocol + '//' + location.hostname;
-      // var siteAddr = 'http://localhost:3000'
       socket = io.connect(siteAddr);
+      socket.on('inited_video', (data) => {
+        tracker_id = data._id;
+      });
     }
   }
 }

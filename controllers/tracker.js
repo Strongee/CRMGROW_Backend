@@ -1125,6 +1125,18 @@ const setup = (io) => {
           .catch((err) => {
             console.log('err', err);
           });
+      } else {
+        const { duration, material_last, tracker_id } = data;
+        updateVideo(duration, material_last, tracker_id)
+          .then(() => {
+            VideoTracker.findOne({ _id: tracker_id }).then((tracker) => {
+              socket.type = 'video';
+              socket.video_tracker = tracker;
+            });
+          })
+          .catch((err) => {
+            console.log('err', err);
+          });
       }
     });
 
@@ -1174,17 +1186,14 @@ const setup = (io) => {
 
     socket.on('close', () => {
       if (socket.type === 'pdf') {
-        console.log('disconnecting with full view');
         const pdf_tracker = socket.pdf_tracker;
         socket.pdf_tracker.viewed = true;
         disconnectPDF(pdf_tracker._id);
       } else if (socket.type === 'video') {
-        console.log('disconnecting with full view');
         const video_tracker = socket.video_tracker;
         socket.video_tracker.viewed = true;
         disconnectVideo(video_tracker._id);
       } else if (socket.type === 'image') {
-        console.log('disconnectiong with full view');
         const image_tracker = socket.image_tracker;
         socket.image_tracker.viewed = true;
         disconnectImage(image_tracker._id);
