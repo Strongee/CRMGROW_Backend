@@ -1699,29 +1699,14 @@ const loadMaterial = async (req, res) => {
   const _pdf_detail_list = [];
 
   for (let i = 0; i < _pdf_list.length; i++) {
-    const _pdf_detail = await PDFTracker.aggregate([
-      {
-        $lookup: {
-          from: 'pdfs',
-          localField: 'pdf',
-          foreignField: '_id',
-          as: 'pdf_detail',
-        },
-      },
-      {
-        $match: {
-          pdf: _pdf_list[i]._id,
-          user: currentUser._id,
-        },
-      },
-    ]);
+    const view = await PDFTracker.countDocuments({
+      pdf: _pdf_list[i]._id,
+      user: currentUser._id,
+    });
 
     const myJSON = JSON.stringify(_pdf_list[i]);
     const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, {
-      views: _pdf_detail.length,
-      material_type: 'pdf',
-    });
+    const pdf_detail = { ..._pdf._doc, views: view, material_type: 'pdf' };
     if (_material_owner_objects[pdf_detail.user]) {
       pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
     }
