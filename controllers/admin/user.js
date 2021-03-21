@@ -20,6 +20,7 @@ const system_settings = require('../../config/system_settings');
 const urls = require('../../constants/urls');
 const mail_contents = require('../../constants/mail_contents');
 const { releaseSignalWireNumber } = require('../../helpers/text');
+const { sendWelcomeEmail } = require('../user');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -390,6 +391,7 @@ const create = async (req, res) => {
   user
     .save()
     .then((_res) => {
+      /**
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       let msg = {
         to: _res.email,
@@ -424,7 +426,20 @@ const create = async (req, res) => {
       sgMail.send(msg).catch((err) => {
         console.log('err', err.message);
       });
+      */
+      const time_zone = _res.time_zone_info
+        ? JSON.parse(_res.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
 
+      const data = {
+        id: _res.id,
+        email: _res.email,
+        user_name: _res.user_name,
+        password,
+        time_zone,
+      };
+
+      sendWelcomeEmail(data);
       const myJSON = JSON.stringify(_res);
       const user = JSON.parse(myJSON);
       delete user.hash;
