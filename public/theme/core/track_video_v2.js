@@ -36,7 +36,7 @@ function updateStartTime() {
   const contact = document.querySelector('#contact').value;
   const activity = document.querySelector('#activity').value;
   if (contact && activity) {
-    if (!socket) {
+    if (!socket || !socket.connected) {
       var siteAddr = location.protocol + '//' + location.hostname;
       if (location.port) {
         siteAddr += (':' + location.port)
@@ -254,15 +254,17 @@ function handleVisibilityChange() {
   } else  {
     // Restart the Socket on mobile
     if (deviceType === 'mobile') {
-      initRecord();
-      var siteAddr = location.protocol + '//' + location.hostname;
-      if (location.port) {
-        siteAddr += (':' + location.port)
+      if (!socket || !socket.connected) {
+        initRecord();
+        var siteAddr = location.protocol + '//' + location.hostname;
+        if (location.port) {
+          siteAddr += (':' + location.port)
+        }
+        socket = io.connect(siteAddr);
+        socket.on('inited_video', (data) => {
+          tracker_id = data._id;
+        });
       }
-      socket = io.connect(siteAddr);
-      socket.on('inited_video', (data) => {
-        tracker_id = data._id;
-      });
     }
   }
 }

@@ -1197,7 +1197,9 @@ const setup = (io) => {
       } else if (socket.type === 'video') {
         console.log('close', JSON.stringify(data));
         const video_tracker = socket.video_tracker;
-        socket.video_tracker.viewed = true;
+        if (data.mode === 'full_watched') {
+          socket.video_tracker.viewed = true;
+        }
         disconnectVideo(video_tracker._id);
       } else if (socket.type === 'image') {
         const image_tracker = socket.image_tracker;
