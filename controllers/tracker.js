@@ -1121,7 +1121,7 @@ const setup = (io) => {
 
     socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
-      console.log('update video', data, video_tracker);
+      console.log('update video', JSON.stringify(data), JSON.stringify(video_tracker));
       if (typeof video_tracker !== 'undefined') {
         const { duration, material_last } = data;
         updateVideo(duration, material_last, video_tracker._id)
@@ -1172,7 +1172,7 @@ const setup = (io) => {
         }
       } else if (socket.type === 'video') {
         const video_tracker = socket.video_tracker;
-        console.log('video_disconnecting', video_tracker);
+        console.log('video_disconnecting', JSON.stringify(video_tracker));
         if (!socket.video_tracker.viewed) {
           console.log('disconnected');
           disconnectVideo(video_tracker._id);
@@ -1194,7 +1194,7 @@ const setup = (io) => {
         socket.pdf_tracker.viewed = true;
         disconnectPDF(pdf_tracker._id);
       } else if (socket.type === 'video') {
-        console.log('close', data);
+        console.log('close', JSON.stringify(data));
         const video_tracker = socket.video_tracker;
         socket.video_tracker.viewed = true;
         disconnectVideo(video_tracker._id);
