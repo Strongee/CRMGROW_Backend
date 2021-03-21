@@ -211,11 +211,6 @@ const play1 = async (req, res) => {
       'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
     );
   }
-  if (!activity.user.del) {
-    return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.2'
-    );
-  }
 
   if (activity) {
     const data = activity['user'];
