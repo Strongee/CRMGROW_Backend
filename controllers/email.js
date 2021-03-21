@@ -1601,7 +1601,6 @@ const receiveEmail = async (req, res) => {
       const sent = new Date(activity.updated_at);
       const opened_gap = opened.getTime() - sent.getTime();
 
-      console.log('opened_gap', opened_gap);
       if (opened_gap < 2000) {
         return;
       }
