@@ -220,7 +220,12 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const video = activity['videos'];
+    let video;
+    if (activity['videos'] instanceof Array) {
+      video = activity['videos'][0];
+    } else {
+      video = activity['videos'];
+    }
 
     const pattern = /^((http|https|ftp):\/\/)/;
     let social_link = {};
