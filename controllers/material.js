@@ -1710,7 +1710,7 @@ const loadMaterial = async (req, res) => {
     };
     if (_material_owner_objects[pdf_detail.user]) {
       pdf_detail = {
-        ..._pdf_list[i],
+        ...pdf_detail,
         user: _material_owner_objects[pdf_detail.user],
       };
     }
