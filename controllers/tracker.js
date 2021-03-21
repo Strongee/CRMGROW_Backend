@@ -367,6 +367,8 @@ const disconnectVideo = async (video_tracker_id) => {
       });
     }
 
+    await Activity.deleteMany({ video_trackers: query.id });
+
     activity
       .save()
       .then((_activity) => {
