@@ -38,6 +38,9 @@ function updateStartTime() {
   if (contact && activity) {
     if (!socket) {
       var siteAddr = location.protocol + '//' + location.hostname;
+      if (location.port) {
+        siteAddr += (':' + location.port)
+      }
       // var siteAddr = 'http://localhost:3000'
       socket = io.connect(siteAddr);
       socket.on('inited_video', (data) => {
@@ -253,6 +256,9 @@ function handleVisibilityChange() {
     if (deviceType === 'mobile') {
       initRecord();
       var siteAddr = location.protocol + '//' + location.hostname;
+      if (location.port) {
+        siteAddr += (':' + location.port)
+      }
       socket = io.connect(siteAddr);
       socket.on('inited_video', (data) => {
         tracker_id = data._id;
