@@ -1684,8 +1684,6 @@ const loadMaterial = async (req, res) => {
       user: currentUser._id,
     });
 
-    const myJSON = JSON.stringify(_video_list[i]);
-    const _video = JSON.parse(myJSON);
     const video_detail = await Object.assign(_video, {
       views: view,
       material_type: 'video',
