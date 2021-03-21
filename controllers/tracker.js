@@ -1112,6 +1112,7 @@ const setup = (io) => {
     });
 
     socket.on('init_video', (data) => {
+      console.log('init video', JSON.stringify(data));
       createVideo(data).then((_video_tracker) => {
         socket.type = 'video';
         socket.video_tracker = _video_tracker;
