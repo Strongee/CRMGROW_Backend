@@ -217,40 +217,56 @@ const signUp = async (req, res) => {
           }
 
           // welcome email
-          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-          let msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-              user_email: _res.email,
-              user_password: req.body.password,
-              contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
-            },
+          /**
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+            let msg = {
+              to: _res.email,
+              from: mail_contents.WELCOME_SIGNUP.MAIL,
+              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+              dynamic_template_data: {
+                first_name: _res.user_name,
+                login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+                user_email: _res.email,
+                user_password: req.body.password,
+                contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
+              },
+            };
+
+            sgMail.send(msg).catch((err) => {
+              console.log('err', err);
+            });
+
+            msg = {
+              to: _res.email,
+              from: mail_contents.WELCOME_SIGNUP.MAIL,
+              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+              dynamic_template_data: {
+                first_name: _res.user_name,
+                connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+                upload_avatar: `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
+                upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+                contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
+              },
+            };
+
+            sgMail.send(msg).catch((err) => {
+              console.log('err', err);
+            });
+          */
+
+          const time_zone = _res.time_zone_info
+            ? JSON.parse(_res.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+
+          const data = {
+            id: _res.id,
+            email: _res.email,
+            user_name: _res.user_name,
+            password,
+            time_zone,
           };
 
-          sgMail.send(msg).catch((err) => {
-            console.log('err', err);
-          });
-
-          msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-              upload_avatar: `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
-              upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-              contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-            },
-          };
-
-          sgMail.send(msg).catch((err) => {
-            console.log('err', err);
-          });
+          sendWelcomeEmail(data);
 
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
@@ -512,40 +528,55 @@ const socialSignUp = async (req, res) => {
           getSignalWireNumber(_res.id);
 
           // send welcome email
-          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-          let msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-              user_email: _res.email,
-              contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
-            },
+          /**
+            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+            let msg = {
+              to: _res.email,
+              from: mail_contents.WELCOME_SIGNUP.MAIL,
+              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
+              dynamic_template_data: {
+                first_name: _res.user_name,
+                login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
+                user_email: _res.email,
+                contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
+              },
+            };
+
+            sgMail.send(msg).catch((err) => {
+              console.log('err', err);
+            });
+
+            msg = {
+              to: _res.email,
+              from: mail_contents.WELCOME_SIGNUP.MAIL,
+              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
+              dynamic_template_data: {
+                first_name: _res.user_name,
+                // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
+                upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
+                upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
+                contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
+              },
+            };
+
+            sgMail.send(msg).catch((err) => {
+              console.log('err', err);
+            });
+          */
+
+          const time_zone = _res.time_zone_info
+            ? JSON.parse(_res.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+
+          const data = {
+            id: _res.id,
+            email: _res.email,
+            user_name: _res.user_name,
+            password: 'No password (use social login)',
+            time_zone,
           };
 
-          sgMail.send(msg).catch((err) => {
-            console.log('err', err);
-          });
-
-          msg = {
-            to: _res.email,
-            from: mail_contents.WELCOME_SIGNUP.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-            dynamic_template_data: {
-              first_name: _res.user_name,
-              // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-              upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-              upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-              contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-            },
-          };
-
-          sgMail.send(msg).catch((err) => {
-            console.log('err', err);
-          });
-
+          sendWelcomeEmail(data);
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
           // });

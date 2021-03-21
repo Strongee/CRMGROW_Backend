@@ -872,11 +872,11 @@ const bulkText = async (req, res) => {
       });
     }
 
-    if(!currentUser['proxy_number'] && !currentUser['twilio_number']) {
+    if (!currentUser['proxy_number'] && !currentUser['twilio_number']) {
       return res.status(407).json({
         status: false,
         error: 'No phone',
-      })
+      });
     }
 
     for (let i = 0; i < contacts.length; i++) {
@@ -906,12 +906,12 @@ const bulkText = async (req, res) => {
         }
 
         for (let j = 0; j < video_ids.length; j++) {
-          const video = await Video.findOne({ _id: video_ids[j]}).catch(
+          const video = await Video.findOne({ _id: video_ids[j] }).catch(
             (err) => {
               console.log('video find error', err.message);
             }
           );
-      
+
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -949,12 +949,11 @@ const bulkText = async (req, res) => {
             break;
         }
 
-        for (let j = 0; j < pdfs_id.length; j++) {
+        for (let j = 0; j < pdf_ids.length; j++) {
           const pdf = await PDF.findOne({ _id: pdf_ids[j] }).catch((err) => {
             console.log('pdf find error', err.message);
           });
-  
-  
+
           const activity = new Activity({
             content: activity_content,
             contacts: contacts[i],
@@ -1190,12 +1189,11 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          await textHelper.sleep(1000);
+          await sleep(1000);
           twilio.messages
             .create({
               from: fromNumber,
-              body:
-                text_content + '\n\n' + textHelper.generateUnsubscribeLink(),
+              body: text_content + '\n\n' + generateTextUnsubscribeLink(),
               to: e164Phone,
             })
             .then((message) => {
@@ -1253,7 +1251,7 @@ const bulkText = async (req, res) => {
                 console.log('Message ID: ', message.sid);
                 console.info(
                   `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                  video_content
+                  text_content
                 );
                 Contact.updateOne(
                   { _id: contacts[i] },
@@ -1287,7 +1285,7 @@ const bulkText = async (req, res) => {
       }
       promise_array.push(promise);
     }
-  
+
     Promise.all(promise_array)
       .then(() => {
         if (error.length > 0) {
@@ -1701,31 +1699,31 @@ const loadMaterial = async (req, res) => {
   const _pdf_detail_list = [];
 
   for (let i = 0; i < _pdf_list.length; i++) {
-    const _pdf_detail = await PDFTracker.aggregate([
-      {
-        $lookup: {
-          from: 'pdfs',
-          localField: 'pdf',
-          foreignField: '_id',
-          as: 'pdf_detail',
-        },
-      },
-      {
-        $match: {
-          pdf: _pdf_list[i]._id,
-          user: currentUser._id,
-        },
-      },
-    ]);
-
-    const myJSON = JSON.stringify(_pdf_list[i]);
-    const _pdf = JSON.parse(myJSON);
-    const pdf_detail = await Object.assign(_pdf, {
-      views: _pdf_detail.length,
-      material_type: 'pdf',
+    const view = await PDFTracker.countDocuments({
+      pdf: _pdf_list[i]._id,
+      user: currentUser._id,
     });
+
+    let pdf_detail;
+    if (_pdf_list[i]._doc) {
+      pdf_detail = {
+        ..._pdf_list[i]._doc,
+        views: view,
+        material_type: 'pdf',
+      };
+    } else {
+      pdf_detail = {
+        ..._pdf_list[i],
+        views: view,
+        material_type: 'pdf',
+      };
+    }
+
     if (_material_owner_objects[pdf_detail.user]) {
-      pdf_detail['user'] = _material_owner_objects[pdf_detail.user];
+      pdf_detail = {
+        ...pdf_detail,
+        user: _material_owner_objects[pdf_detail.user],
+      };
     }
     _pdf_detail_list.push(pdf_detail);
   }
@@ -1864,7 +1862,6 @@ const removeFolder = async (req, res) => {
       { user: currentUser._id, folder: _id },
       { $unset: { folder: undefined } }
     );
-  } else {
   }
   Image.deleteOne({ _id })
     .then(() => {

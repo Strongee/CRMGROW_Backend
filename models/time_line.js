@@ -34,6 +34,6 @@ TimeLineSchema.index({ status: 1, due_date: 1 });
 TimeLineSchema.index({ contact: 1, parent_ref: 1, status: 1 });
 TimeLineSchema.index({ user: 1 });
 
-const   TimeLine = mongoose.model('time_line', TimeLineSchema);
+const TimeLine = mongoose.model('time_line', TimeLineSchema);
 
 module.exports = TimeLine;
