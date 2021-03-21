@@ -15,6 +15,7 @@ const get = async (req, res) => {
   // get shared contacts first
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
+    shared_contact: true,
   });
 
   const total = await TimeLine.aggregate([
@@ -53,9 +54,13 @@ const get = async (req, res) => {
   const contacts = await TimeLine.aggregate([
     {
       $match: {
-        $and: [
+        $or: [
           {
             user: mongoose.Types.ObjectId(currentUser._id),
+            automation: mongoose.Types.ObjectId(id),
+          },
+          {
+            contact: { $in: shared_contacts },
             automation: mongoose.Types.ObjectId(id),
           },
         ],
@@ -105,6 +110,8 @@ const searchContact = async (req, res) => {
   let searched_contacts = [];
   const data = [];
 
+  // get shared contacts first
+
   if (search.split(' ').length > 1) {
     searched_contacts = await Contact.find({
       $or: [
@@ -114,11 +121,43 @@ const searchContact = async (req, res) => {
           user: currentUser.id,
         },
         {
+          first_name: { $regex: search.split(' ')[0], $options: 'i' },
+          last_name: { $regex: search.split(' ')[1], $options: 'i' },
+          shared_members: currentUser.id,
+          shared_contact: true,
+        },
+        {
+          first_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          first_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+          shared_contact: true,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          user: currentUser.id,
+        },
+        {
+          last_name: { $regex: search, $options: 'i' },
+          shared_members: currentUser.id,
+          shared_contact: true,
+        },
+        {
           cell_phone: {
             $regex: '.*' + phoneSearch + '.*',
             $options: 'i',
           },
           user: currentUser.id,
+        },
+        {
+          cell_phone: {
+            $regex: '.*' + phoneSearch + '.*',
+            $options: 'i',
+          },
+          shared_members: currentUser.id,
+          shared_contact: true,
         },
       ],
     })
@@ -214,10 +253,14 @@ const getAll = async (req, res) => {
     const contacts = await TimeLine.aggregate([
       {
         $match: {
-          $and: [
+          $or: [
             {
               user: mongoose.Types.ObjectId(currentUser._id),
               automation: mongoose.Types.ObjectId(automation._id),
+            },
+            {
+              contact: { $in: shared_contacts },
+              automation: mongoose.Types.ObjectId(id),
             },
           ],
         },

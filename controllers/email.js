@@ -1227,6 +1227,13 @@ const receiveEmailSendGrid = async (req, res) => {
         }
 
         if (!old_activity && email_activity) {
+          const sent = new Date(email_activity.updated_at);
+          const opened_gap = opened.getTime() - sent.getTime();
+
+          if (opened_gap < 2000) {
+            return;
+          }
+
           const email_tracker = new EmailTracker({
             user: user.id,
             contact: contact.id,
@@ -1590,6 +1597,13 @@ const receiveEmail = async (req, res) => {
         : system_settings.TIME_ZONE;
       const created_at = moment(opened).tz(time_zone).format('h:mm a');
       const action = 'opened';
+
+      const sent = new Date(activity.updated_at);
+      const opened_gap = opened.getTime() - sent.getTime();
+
+      if (opened_gap < 2000) {
+        return;
+      }
 
       let reopened = moment();
       reopened = reopened.subtract(1, 'hours');

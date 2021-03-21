@@ -4600,6 +4600,7 @@ const shareContacts = async (req, res) => {
         {
           $set: {
             shared_contact: true,
+            shared_team: req.body.team,
           },
           $push: {
             shared_members: req.body.user,
