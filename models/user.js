@@ -89,6 +89,7 @@ const UserSchema = new Schema(
         default: system_settings.AUTOMATION_ASSIGN_LIMIT.BASIC,
       },
     },
+    email_verified: Boolean,
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },
     is_free: { type: Boolean, default: false },
