@@ -1684,14 +1684,26 @@ const loadMaterial = async (req, res) => {
       user: currentUser._id,
     });
 
-    const myJSON = JSON.stringify(_video_list[i]);
-    const _video = JSON.parse(myJSON);
-    const video_detail = await Object.assign(_video, {
-      views: view,
-      material_type: 'video',
-    });
+    let video_detail;
+    if (_video_list[i]._doc) {
+      video_detail = {
+        ..._video_list[i]._doc,
+        views: view,
+        material_type: 'video',
+      };
+    } else {
+      video_detail = {
+        ..._video_list[i],
+        views: view,
+        material_type: 'video',
+      };
+    }
+
     if (_material_owner_objects[video_detail.user]) {
-      video_detail['user'] = _material_owner_objects[video_detail.user];
+      video_detail = {
+        ...video_detail,
+        user: _material_owner_objects[video_detail.user],
+      };
     }
     _video_detail_list.push(video_detail);
   }
@@ -1736,14 +1748,26 @@ const loadMaterial = async (req, res) => {
       user: currentUser._id,
     });
 
-    const myJSON = JSON.stringify(_image_list[i]);
-    const _image = JSON.parse(myJSON);
-    const image_detail = await Object.assign(_image, {
-      views: view,
-      material_type: 'image',
-    });
+    let image_detail;
+    if (_image_list[i]._doc) {
+      image_detail = {
+        ..._image_list[i]._doc,
+        views: view,
+        material_type: 'image',
+      };
+    } else {
+      image_detail = {
+        ..._image_list[i],
+        views: view,
+        material_type: 'image',
+      };
+    }
+
     if (_material_owner_objects[image_detail.user]) {
-      image_detail['user'] = _material_owner_objects[image_detail.user];
+      image_detail = {
+        ...image_detail,
+        user: _material_owner_objects[image_detail.user]
+      };
     }
     _image_detail_list.push(image_detail);
   }

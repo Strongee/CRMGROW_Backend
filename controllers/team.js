@@ -14,6 +14,7 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
+const VideoTracker = require('../models/video_tracker');
 const Contact = require('../models/contact');
 const Notification = require('../models/notification');
 const TeamCall = require('../models/team_call');
@@ -154,7 +155,26 @@ const get = (req, res) => {
       { path: 'email_templates' },
       { path: 'requests' },
     ])
-    .then((data) => {
+    .then(async (data) => {
+      const videos = data.videos;
+
+      if (videos) {
+        for (let i = 0; i < videos.length; i++) {
+          const view = await VideoTracker.countDocuments({
+            video: videos[i]._id,
+            user: currentUser._id,
+          });
+
+          console.log('data.videos[i]****', data.videos[i]);
+
+          data.videos[i] = {
+            ...data.videos[i],
+            views: view,
+            material_type: 'video',
+          };
+        }
+      }
+
       if (data && !data.join_link) {
         const join_link = short.generate();
         Team.updateOne(
