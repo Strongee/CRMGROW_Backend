@@ -367,6 +367,8 @@ const disconnectVideo = async (video_tracker_id) => {
       });
     }
 
+    await Activity.deleteMany({ video_trackers: query.id });
+
     activity
       .save()
       .then((_activity) => {
@@ -1110,18 +1112,33 @@ const setup = (io) => {
     });
 
     socket.on('init_video', (data) => {
+      console.log('init video', JSON.stringify(data));
       createVideo(data).then((_video_tracker) => {
         socket.type = 'video';
         socket.video_tracker = _video_tracker;
+        socket.emit('inited_video', { _id: _video_tracker._id });
       });
     });
 
     socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
+      console.log('update video', JSON.stringify(data), JSON.stringify(video_tracker));
       if (typeof video_tracker !== 'undefined') {
         const { duration, material_last } = data;
         updateVideo(duration, material_last, video_tracker._id)
           .then(() => {})
+          .catch((err) => {
+            console.log('err', err);
+          });
+      } else {
+        const { duration, material_last, tracker_id } = data;
+        updateVideo(duration, material_last, tracker_id)
+          .then(() => {
+            VideoTracker.findOne({ _id: tracker_id }).then((tracker) => {
+              socket.type = 'video';
+              socket.video_tracker = tracker;
+            });
+          })
           .catch((err) => {
             console.log('err', err);
           });
@@ -1155,8 +1172,8 @@ const setup = (io) => {
           disconnectPDF(pdf_tracker._id);
         }
       } else if (socket.type === 'video') {
-        console.log('video_disconnecting');
         const video_tracker = socket.video_tracker;
+        console.log('video_disconnecting', JSON.stringify(video_tracker));
         if (!socket.video_tracker.viewed) {
           console.log('disconnected');
           disconnectVideo(video_tracker._id);
@@ -1172,19 +1189,19 @@ const setup = (io) => {
       }
     });
 
-    socket.on('close', () => {
+    socket.on('close', (data) => {
       if (socket.type === 'pdf') {
-        console.log('disconnecting with full view');
         const pdf_tracker = socket.pdf_tracker;
         socket.pdf_tracker.viewed = true;
         disconnectPDF(pdf_tracker._id);
       } else if (socket.type === 'video') {
-        console.log('disconnecting with full view');
+        console.log('close', JSON.stringify(data));
         const video_tracker = socket.video_tracker;
-        socket.video_tracker.viewed = true;
+        if (data.mode === 'full_watched') {
+          socket.video_tracker.viewed = true;
+        }
         disconnectVideo(video_tracker._id);
       } else if (socket.type === 'image') {
-        console.log('disconnectiong with full view');
         const image_tracker = socket.image_tracker;
         socket.image_tracker.viewed = true;
         disconnectImage(image_tracker._id);

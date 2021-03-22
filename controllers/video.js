@@ -208,12 +208,7 @@ const play1 = async (req, res) => {
 
   if (!activity.user) {
     return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
-    );
-  }
-  if (!activity.user.del) {
-    return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
     );
   }
 
@@ -225,7 +220,12 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const video = activity['videos'];
+    let video;
+    if (activity['videos'] instanceof Array) {
+      video = activity['videos'][0];
+    } else {
+      video = activity['videos'];
+    }
 
     const pattern = /^((http|https|ftp):\/\/)/;
     let social_link = {};
@@ -287,7 +287,7 @@ const play1 = async (req, res) => {
     });
   } else {
     return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.3'
     );
   }
 };
