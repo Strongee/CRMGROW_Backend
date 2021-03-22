@@ -46,17 +46,18 @@ const getAll = async (req, res) => {
     },
   ]);
 
-  console.log('contacts******', contacts);
   if (contacts && contacts.length > 0) {
     for (let i = 0; i < contacts.length; i++) {
-      const contact = contacts[i]._id[0];
-      const text = await Text.findOne({
-        contacts: contact,
-      })
-        .sort({ _id: -1 })
-        .populate('contacts');
+      if (contacts[i]._id) {
+        const contact = contacts[i]._id[0];
+        const text = await Text.findOne({
+          contacts: contact,
+        })
+          .sort({ _id: -1 })
+          .populate('contacts');
 
-      data.push(text);
+        data.push(text);
+      }
     }
   }
 
