@@ -164,6 +164,9 @@ const get = (req, res) => {
             video: videos[i]._id,
             user: currentUser._id,
           });
+
+          console.log('data.videos[i]****', data.videos[i]);
+
           data.videos[i] = {
             ...data.videos[i],
             views: view,
