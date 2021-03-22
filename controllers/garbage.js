@@ -171,7 +171,7 @@ const loadDefaults = async (req, res) => {
     currentGarbage['canned_message'] &&
     currentGarbage['canned_message']['sms']
   ) {
-    defaultEmail = await Template.findOne({
+    defaultSms = await Template.findOne({
       _id: currentGarbage['canned_message']['sms'],
     });
   }
