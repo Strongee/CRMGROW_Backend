@@ -282,11 +282,20 @@ const getAll = async (req, res) => {
         $count: 'count',
       },
     ]);
-    const myJSON = JSON.stringify(automation);
-    const data = JSON.parse(myJSON);
-    const automation_detail = await Object.assign(data, {
-      contacts: contacts[0] ? contacts[0].count : 0,
-    });
+
+    let automation_detail;
+
+    if (automation._doc) {
+      automation_detail = {
+        ...automation._doc,
+        contacts: contacts[0] ? contacts[0].count : 0,
+      };
+    } else {
+      automation_detail = {
+        ...automation,
+        contacts: contacts[0] ? contacts[0].count : 0,
+      };
+    }
 
     automation_array.push(automation_detail);
   }
