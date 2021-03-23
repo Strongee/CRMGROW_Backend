@@ -2207,7 +2207,7 @@ const searchContacts = async (req, res) => {
 
 const loadMaterial = async (req, res) => {
   const { currentUser } = req;
-  const team = await Team.findOne({ _id: req.body.team }).catch((err) => {
+  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
     console.log('team find err', err.message);
   });
 
@@ -2299,7 +2299,7 @@ const loadMaterial = async (req, res) => {
 
 const loadAutomation = async (req, res) => {
   const { currentUser } = req;
-  const team = await Team.findOne({ _id: req.body.team }).catch((err) => {
+  const team = await Team.findOne({ _id: req.params.id }).catch((err) => {
     console.log('team find err', err.message);
   });
 
@@ -2375,12 +2375,28 @@ const loadAutomation = async (req, res) => {
   });
 };
 
+const loadTemplate = async (req, res) => {
+  const team = await Team.findOne({
+    _id: req.params.id,
+  })
+    .populate('email_templates')
+    .catch((err) => {
+      console.log('team load err', err.message);
+    });
+
+  return res.send({
+    status: true,
+    data: team.email_templates,
+  });
+};
+
 module.exports = {
   getAll,
   getLeaders,
   getTeam,
   loadMaterial,
   loadAutomation,
+  loadTemplate,
   getSharedContacts,
   searchContacts,
   getInvitedTeam,

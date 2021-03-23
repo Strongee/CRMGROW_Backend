@@ -157,6 +157,21 @@ router.post(
 router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
 router.delete('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
 router.delete('/call', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
+router.get(
+  '/material/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.loadMaterial)
+);
+router.get(
+  '/automation/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.loadAutomation)
+);
+router.get(
+  '/template/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.loadTemplate)
+);
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
