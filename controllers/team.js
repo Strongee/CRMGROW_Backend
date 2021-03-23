@@ -15,9 +15,12 @@ const PDF = require('../models/pdf');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 const VideoTracker = require('../models/video_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const ImageTracker = require('../models/image_tracker');
 const Contact = require('../models/contact');
 const Notification = require('../models/notification');
 const TeamCall = require('../models/team_call');
+const TimeLine = require('../models/time_line');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 const { getAvatarName } = require('../helpers/utility');
 
@@ -148,33 +151,9 @@ const get = (req, res) => {
       { path: 'owner' },
       { path: 'members' },
       { path: 'invites' },
-      { path: 'videos' },
-      { path: 'pdfs' },
-      { path: 'images' },
-      { path: 'automations' },
-      { path: 'email_templates' },
       { path: 'requests' },
     ])
     .then(async (data) => {
-      const videos = data.videos;
-
-      if (videos) {
-        for (let i = 0; i < videos.length; i++) {
-          const view = await VideoTracker.countDocuments({
-            video: videos[i]._id,
-            user: currentUser._id,
-          });
-
-          console.log('data.videos[i]****', data.videos[i]);
-
-          data.videos[i] = {
-            ...data.videos[i],
-            views: view,
-            material_type: 'video',
-          };
-        }
-      }
-
       if (data && !data.join_link) {
         const join_link = short.generate();
         Team.updateOne(
@@ -2226,10 +2205,160 @@ const searchContacts = async (req, res) => {
   });
 };
 
+const loadMaterial = async (req, res) => {
+  const { currentUser } = req;
+  const team = await Team.findOne({ _id: req.body.team }).catch((err) => {
+    console.log('team find err', err.message);
+  });
+
+  const video_data = [];
+  const pdf_data = [];
+  const image_data = [];
+
+  if (team.videos && team.videos.length > 0) {
+    const video_ids = team.videos;
+    for (let i = 0; i < video_ids.length; i++) {
+      const video = await Video.findOne({
+        _id: video_ids[i],
+      }).catch((err) => {
+        console.log('video find err', err.message);
+      });
+
+      const views = await VideoTracker.countDocuments({
+        video: video_ids[i],
+        user: currentUser.id,
+      });
+
+      const video_detail = {
+        ...video._doc,
+        views,
+        material_type: 'video',
+      };
+
+      video_data.push(video_detail);
+    }
+  }
+
+  if (team.pdfs && team.pdfs.length > 0) {
+    const pdf_ids = team.pdfs;
+    for (let i = 0; i < pdf_ids.length; i++) {
+      const pdf = await PDF.findOne({
+        _id: pdf_ids[i],
+      }).catch((err) => {
+        console.log('pdf find err', err.message);
+      });
+
+      const views = await PDFTracker.countDocuments({
+        pdf: pdf_ids[i],
+        user: currentUser.id,
+      });
+
+      const pdf_detail = {
+        ...pdf._doc,
+        views,
+        material_type: 'pdf',
+      };
+
+      pdf_data.push(pdf_detail);
+    }
+  }
+
+  if (team.images && team.images.length > 0) {
+    const image_ids = team.images;
+    for (let i = 0; i < image_ids.length; i++) {
+      const image = await Image.findOne({
+        _id: image_ids[i],
+      }).catch((err) => {
+        console.log('image find err', err.message);
+      });
+
+      const views = await ImageTracker.countDocuments({
+        image: image_ids[i],
+        user: currentUser.id,
+      });
+
+      const image_detail = {
+        ...image._doc,
+        views,
+        material_type: 'image',
+      };
+
+      image_data.push(image_detail);
+    }
+  }
+
+  return res.send({
+    status: true,
+    data: {
+      video_data,
+      pdf_data,
+      image_data,
+    },
+  });
+};
+
+const loadAutomation = async (req, res) => {
+  const { currentUser } = req;
+  const team = await Team.findOne({ _id: req.body.team }).catch((err) => {
+    console.log('team find err', err.message);
+  });
+
+  // get shared contacts first
+  const shared_contacts = await Contact.find({
+    shared_members: currentUser.id,
+  });
+
+  if (team.automations && team.automations.length > 0) {
+    const automation_ids = team.automations;
+    for (let i = 0; i < automation_ids.length; i++) {
+      const automation = await Automation.findOne({
+        _id: automation_ids[i],
+      }).catch((err) => {
+        console.log('automation find err', err.message);
+      });
+
+      const total = await TimeLine.aggregate([
+        {
+          $match: {
+            $or: [
+              {
+                user: mongoose.Types.ObjectId(currentUser._id),
+                automation: mongoose.Types.ObjectId(automation._id),
+              },
+              {
+                contact: { $in: shared_contacts },
+                automation: mongoose.Types.ObjectId(automation._id),
+              },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: { contact: '$contact' },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+        {
+          $count: 'count',
+        },
+      ]);
+    }
+  }
+};
+
 module.exports = {
   getAll,
   getLeaders,
   getTeam,
+  loadMaterial,
+  loadAutomation,
   getSharedContacts,
   searchContacts,
   getInvitedTeam,
