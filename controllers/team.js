@@ -2303,6 +2303,7 @@ const loadAutomation = async (req, res) => {
     console.log('team find err', err.message);
   });
 
+  const data = [];
   // get shared contacts first
   const shared_contacts = await Contact.find({
     shared_members: currentUser.id,
@@ -2349,8 +2350,29 @@ const loadAutomation = async (req, res) => {
           $count: 'count',
         },
       ]);
+
+      let automation_detail;
+
+      if (automation._doc) {
+        automation_detail = {
+          ...automation._doc,
+          contacts: total[0] ? total[0].count : 0,
+        };
+      } else {
+        automation_detail = {
+          ...automation,
+          contacts: total[0] ? total[0].count : 0,
+        };
+      }
+
+      data.push(automation_detail);
     }
   }
+
+  return res.send({
+    status: true,
+    data,
+  });
 };
 
 module.exports = {
