@@ -2224,18 +2224,20 @@ const loadMaterial = async (req, res) => {
         console.log('video find err', err.message);
       });
 
-      const views = await VideoTracker.countDocuments({
-        video: video_ids[i],
-        user: currentUser.id,
-      });
+      if (video) {
+        const views = await VideoTracker.countDocuments({
+          video: video_ids[i],
+          user: currentUser.id,
+        });
 
-      const video_detail = {
-        ...video._doc,
-        views,
-        material_type: 'video',
-      };
+        const video_detail = {
+          ...video._doc,
+          views,
+          material_type: 'video',
+        };
 
-      video_data.push(video_detail);
+        video_data.push(video_detail);
+      }
     }
   }
 
@@ -2248,18 +2250,20 @@ const loadMaterial = async (req, res) => {
         console.log('pdf find err', err.message);
       });
 
-      const views = await PDFTracker.countDocuments({
-        pdf: pdf_ids[i],
-        user: currentUser.id,
-      });
+      if (pdf) {
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf_ids[i],
+          user: currentUser.id,
+        });
 
-      const pdf_detail = {
-        ...pdf._doc,
-        views,
-        material_type: 'pdf',
-      };
+        const pdf_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'pdf',
+        };
 
-      pdf_data.push(pdf_detail);
+        pdf_data.push(pdf_detail);
+      }
     }
   }
 
@@ -2272,18 +2276,20 @@ const loadMaterial = async (req, res) => {
         console.log('image find err', err.message);
       });
 
-      const views = await ImageTracker.countDocuments({
-        image: image_ids[i],
-        user: currentUser.id,
-      });
+      if (image) {
+        const views = await ImageTracker.countDocuments({
+          image: image_ids[i],
+          user: currentUser.id,
+        });
 
-      const image_detail = {
-        ...image._doc,
-        views,
-        material_type: 'image',
-      };
+        const image_detail = {
+          ...image._doc,
+          views,
+          material_type: 'image',
+        };
 
-      image_data.push(image_detail);
+        image_data.push(image_detail);
+      }
     }
   }
 
@@ -2318,54 +2324,56 @@ const loadAutomation = async (req, res) => {
         console.log('automation find err', err.message);
       });
 
-      const total = await TimeLine.aggregate([
-        {
-          $match: {
-            $or: [
-              {
-                user: mongoose.Types.ObjectId(currentUser._id),
-                automation: mongoose.Types.ObjectId(automation._id),
-              },
-              {
-                contact: { $in: shared_contacts },
-                automation: mongoose.Types.ObjectId(automation._id),
-              },
-            ],
+      if (automation) {
+        const total = await TimeLine.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  user: mongoose.Types.ObjectId(currentUser._id),
+                  automation: mongoose.Types.ObjectId(automation._id),
+                },
+                {
+                  contact: { $in: shared_contacts },
+                  automation: mongoose.Types.ObjectId(automation._id),
+                },
+              ],
+            },
           },
-        },
-        {
-          $group: {
-            _id: { contact: '$contact' },
+          {
+            $group: {
+              _id: { contact: '$contact' },
+            },
           },
-        },
-        {
-          $group: {
-            _id: '$_id.contact',
+          {
+            $group: {
+              _id: '$_id.contact',
+            },
           },
-        },
-        {
-          $project: { _id: 1 },
-        },
-        {
-          $count: 'count',
-        },
-      ]);
+          {
+            $project: { _id: 1 },
+          },
+          {
+            $count: 'count',
+          },
+        ]);
 
-      let automation_detail;
+        let automation_detail;
 
-      if (automation._doc) {
-        automation_detail = {
-          ...automation._doc,
-          contacts: total[0] ? total[0].count : 0,
-        };
-      } else {
-        automation_detail = {
-          ...automation,
-          contacts: total[0] ? total[0].count : 0,
-        };
+        if (automation._doc) {
+          automation_detail = {
+            ...automation._doc,
+            contacts: total[0] ? total[0].count : 0,
+          };
+        } else {
+          automation_detail = {
+            ...automation,
+            contacts: total[0] ? total[0].count : 0,
+          };
+        }
+
+        data.push(automation_detail);
       }
-
-      data.push(automation_detail);
     }
   }
 
