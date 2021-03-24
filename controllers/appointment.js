@@ -89,7 +89,7 @@ const getAll = async (req, res) => {
         });
 
         const ctz = currentUser.time_zone_info
-          ? currentUser.time_zone_info.tz_name
+          ? JSON.parse(currentUser.time_zone_info).tz_name
           : system_settings.TIME_ZONE;
         const calendar_data = {
           client,
@@ -600,7 +600,7 @@ const create = async (req, res) => {
     }
 
     const ctz = currentUser.time_zone_info
-      ? currentUser.time_zone_info.tz_name
+      ? JSON.parse(currentUser.time_zone_info).tz_name
       : system_settings.TIME_ZONE;
 
     if (calendar.connected_calendar_type === 'outlook') {
