@@ -137,6 +137,12 @@ router.post(
 );
 
 router.post(
+  '/search-contact',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.searchContact)
+);
+
+router.post(
   '/request-call',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.requestCall)
