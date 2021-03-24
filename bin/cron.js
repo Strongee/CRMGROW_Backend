@@ -395,10 +395,6 @@ const reminder_job = new CronJob(
             .format('h:mm a');
 
           if (email_notification['follow_up']) {
-            const time_zone = user.time_zone_info
-              ? user.time_zone_info.tz_name
-              : system_settings.TIME_ZONE;
-
             const msg = {
               to: user.email,
               from: mail_contents.FOLLOWUP_REMINDER.MAIL,

@@ -603,7 +603,6 @@ const create = async (req, res) => {
       ? JSON.parse(currentUser.time_zone_info).tz_name
       : system_settings.TIME_ZONE;
 
-    console.log('ctz*******', ctz);
     if (calendar.connected_calendar_type === 'outlook') {
       const attendees = [];
       if (_appointment.guests) {
@@ -1037,7 +1036,7 @@ const edit = async (req, res) => {
       }
 
       const ctz = currentUser.time_zone_info
-        ? currentUser.time_zone_info.tz_name
+        ? JSON.parse(currentUser.time_zone_info).tz_name
         : system_settings.TIME_ZONE;
 
       const event = {
@@ -1073,7 +1072,7 @@ const edit = async (req, res) => {
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
 
       const ctz = currentUser.time_zone_info
-        ? currentUser.time_zone_info.tz_name
+        ? JSON.parse(currentUser.time_zone_info).tz_name
         : system_settings.TIME_ZONE;
 
       const data = {

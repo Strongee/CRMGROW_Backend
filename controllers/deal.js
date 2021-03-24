@@ -1064,7 +1064,7 @@ const createAppointment = async (req, res) => {
     }
 
     const ctz = currentUser.time_zone_info
-      ? currentUser.time_zone_info.tz_name
+      ? JSON.parse(currentUser.time_zone_info).tz_name
       : system_settings.TIME_ZONE;
 
     if (calendar.connected_calendar_type === 'outlook') {
@@ -1167,7 +1167,7 @@ const updateAppointment = async (req, res) => {
     }
 
     const ctz = currentUser.time_zone_info
-      ? currentUser.time_zone_info.tz_name
+      ? JSON.parse(currentUser.time_zone_info).tz_name
       : system_settings.TIME_ZONE;
 
     const event_id = req.body.recurrence_id || req.body.event_id;
