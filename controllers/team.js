@@ -2070,7 +2070,7 @@ const getSharedContacts = async (req, res) => {
   });
 };
 
-const searchContacts = async (req, res) => {
+const searchContact = async (req, res) => {
   const { currentUser } = req;
   const searchStr = req.body.search;
   const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
@@ -2406,7 +2406,7 @@ module.exports = {
   loadAutomation,
   loadTemplate,
   getSharedContacts,
-  searchContacts,
+  searchContact,
   getInvitedTeam,
   get,
   getInquireCall,
