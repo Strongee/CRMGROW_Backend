@@ -5,7 +5,6 @@ const Schema = mongoose.Schema;
 const EmailSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    shared_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     title: String,
     subject: String,
     content: String,

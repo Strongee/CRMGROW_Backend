@@ -413,8 +413,14 @@ const getActivity = async (req, res) => {
     const activity_detail = await Activity.aggregate([
       {
         $lookup: {
-          from: activity_list[i].type !== 'deals' ? activity_list[i].type : 'contacts',
-          localField: activity_list[i].type !== 'deals' ? activity_list[i].type : 'contacts',
+          from:
+            activity_list[i].type !== 'deals'
+              ? activity_list[i].type
+              : 'contacts',
+          localField:
+            activity_list[i].type !== 'deals'
+              ? activity_list[i].type
+              : 'contacts',
           foreignField: '_id',
           as: 'activity_detail',
         },

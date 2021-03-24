@@ -1,5 +1,4 @@
 /* eslint-disable eqeqeq */
-const { validationResult } = require('express-validator/check');
 const mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
 const fs = require('fs');
@@ -29,6 +28,8 @@ const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
 const PhoneLog = require('../models/phone_log');
+const Deal = require('../models/deal');
+const DealStage = require('../models/deal_stage');
 const Team = require('../models/team');
 const Label = require('../models/label');
 const Notification = require('../models/notification');
@@ -417,6 +418,58 @@ const create = async (req, res) => {
         _contact.save().catch((err) => {
           console.log('err', err);
         });
+
+        if (req.body.deal) {
+          const deal = new Deal({
+            contacts: contact.id,
+            user: currentUser.id,
+            deal_stage: req.body.deal_stage,
+            title: `${contact.first}  Deal`,
+          });
+
+          deal
+            .save()
+            .then((_deal) => {
+              let detail_content = 'added deal';
+              if (req.guest_loggin) {
+                detail_content = ActivityHelper.assistantLog(detail_content);
+              }
+
+              DealStage.updateOne(
+                {
+                  _id: req.body.deal_stage,
+                },
+                {
+                  $push: { deals: _deal._id },
+                }
+              ).catch((err) => {
+                console.log('error', err.message);
+              });
+
+              const activity = new Activity({
+                content: detail_content,
+                contacts: contact.id,
+                user: currentUser.id,
+                type: 'deals',
+                deals: _deal.id,
+              });
+
+              activity.save().catch((err) => {
+                console.log('activity save err', err.message);
+              });
+
+              Contact.updateOne(
+                { _id: contact.id },
+                { $set: { last_activity: activity.id } }
+              ).catch((err) => {
+                console.log('contact update err', err.message);
+              });
+            })
+            .catch((err) => {
+              console.log('deal create err', err.message);
+            });
+        }
+
         const myJSON = JSON.stringify(_contact);
         const data = JSON.parse(myJSON);
         data.activity = _activity;
