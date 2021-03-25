@@ -3430,6 +3430,10 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const bulkRemove = async (req, res) => {
+  const { remove_ids } = req.body;
+};
+
 module.exports = {
   play,
   play1,
@@ -3454,6 +3458,7 @@ module.exports = {
   createSmsContent,
   bulkGmail,
   bulkOutlook,
+  bulkRemove,
   autoResend,
   setupRecording,
 };
