@@ -64,6 +64,7 @@ const urls = {
   UNSUSCRIPTION_URL: `${domain}`,
   RECORDING_PREVIEW_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
+  ONEONONE_URL: 'https://crmgrow.com/oneonone',
 };
 
 module.exports = urls;

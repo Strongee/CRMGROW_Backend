@@ -33,6 +33,7 @@ const sendWelcomeEmail = async (data) => {
     user_email: email,
     recording_url: urls.INTRO_VIDEO_URL,
     recording_preview: urls.RECORDING_PREVIEW_URL,
+    oneonone_url: urls.ONEONONE_URL,
     password,
   };
 
