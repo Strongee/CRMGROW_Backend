@@ -221,7 +221,7 @@ const load = async (req, res) => {
         _id: { $gt: ending_before },
         $or: [{ user: currentUser.id }, { contacts: { $in: shared_contacts } }],
       })
-        .sort({ _id: -1 })
+        .sort({ _id: 1 })
         .populate('contacts')
         .skip(skip)
         .limit(size * 5);

@@ -796,7 +796,7 @@ const load = async (req, res) => {
     }
   }
   if (str) {
-    query.content = { $regex: '.*' + str + '.*' };
+    query.content = { $regex: '.*' + str + '.*', $options: 'i' };
   }
 
   if (labels && labels.length) {

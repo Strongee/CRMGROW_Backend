@@ -92,6 +92,19 @@ const getAll = async (req, res) => {
   }
 };
 
+const getStages = async (req, res) => {
+  const { currentUser } = req;
+
+  const data = await DealStage.find({ user: currentUser.id }).sort({
+    priority: 1,
+  });
+
+  return res.send({
+    status: true,
+    data,
+  });
+};
+
 const create = async (req, res) => {
   const { currentUser } = req;
 
@@ -236,4 +249,5 @@ module.exports = {
   remove,
   edit,
   changeOrder,
+  getStages,
 };
