@@ -15,6 +15,12 @@ router.post(
 
 router.get('/init', UserCtrl.checkAuth, catchError(DealStageCtrl.init));
 
+router.get(
+  '/easy-load',
+  UserCtrl.checkAuth,
+  catchError(DealStageCtrl.getStages)
+);
+
 router.get('/', UserCtrl.checkAuth, catchError(DealStageCtrl.getAll));
 
 router.put('/:id', UserCtrl.checkAuth, catchError(DealStageCtrl.edit));

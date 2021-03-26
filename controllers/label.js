@@ -40,7 +40,7 @@ const getAll = async (req, res) => {
   const company = currentUser.company || 'eXp Realty';
   const _label_list = await Label.find({
     user: currentUser.id,
-  }).sort({ priority: 1 });
+  }).sort({ priority: -1 });
 
   const _label_admin = await Label.find({
     role: 'admin',
@@ -105,9 +105,26 @@ const remove = (req, res) => {
     });
 };
 
+const changeOrder = async (req, res) => {
+  const { data } = req.body;
+  const { currentUser } = req;
+
+  for (let i = 0; i < data.length; i++) {
+    await Label.updateOne(
+      { _id: data[i]._id, user: currentUser._id },
+      { $set: { priority: i } }
+    );
+  }
+
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   create,
   getAll,
   update,
   remove,
+  changeOrder,
 };

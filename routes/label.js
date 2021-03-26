@@ -19,5 +19,7 @@ router.get('/', UserCtrl.checkAuth, catchError(LabelCtrl.getAll));
 router.put('/:id', UserCtrl.checkAuth, catchError(LabelCtrl.update));
 // Remove label by id
 router.delete('/:id', UserCtrl.checkAuth, catchError(LabelCtrl.remove));
+// Change Label orders
+router.post('/order', UserCtrl.checkAuth, catchError(LabelCtrl.changeOrder));
 
 module.exports = router;
