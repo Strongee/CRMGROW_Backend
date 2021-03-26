@@ -72,6 +72,7 @@ const credentials = {
 };
 const oauth2 = require('simple-oauth2')(credentials);
 const { RestClient } = require('@signalwire/node');
+const { FindValueSubscriber } = require('rxjs/internal/operators/find');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -1642,7 +1643,7 @@ const bulkEmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'contact email not found or unsubscribed',
+            error: 'contact email not found or unsubscribed',
           });
           resolve();
         });
@@ -1658,7 +1659,7 @@ const bulkEmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'email daily limit exceed!',
+            error: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -1822,7 +1823,7 @@ const bulkEmail = async (req, res) => {
                   first_name: _contact.first_name,
                   email: _contact.email,
                 },
-                err: _res[0].statusCode,
+                error: _res[0].statusCode,
               });
             }
           })
@@ -1938,7 +1939,7 @@ const bulkGmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'Contact email is unsubscribed',
+            error: 'Contact email is unsubscribed',
           });
           resolve();
         });
@@ -1954,7 +1955,7 @@ const bulkGmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'email daily limit exceed!',
+            error: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -2098,7 +2099,7 @@ const bulkGmail = async (req, res) => {
         //         first_name: _contact.first_name,
         //         email: _contact.email,
         //       },
-        //       err: err.response['statusText']
+        //       error: err.response['statusText']
         //     })
         //     resolve();
         //   } else {
@@ -2158,7 +2159,7 @@ const bulkGmail = async (req, res) => {
                     first_name: _contact.first_name,
                     email: _contact.email,
                   },
-                  err: 'No Connected Gmail',
+                  error: 'No Connected Gmail',
                 });
               } else if (err.statusCode === 400) {
                 error.push({
@@ -2166,7 +2167,7 @@ const bulkGmail = async (req, res) => {
                     first_name: _contact.first_name,
                     email: _contact.email,
                   },
-                  err: err.message,
+                  error: err.message,
                 });
               } else {
                 error.push({
@@ -2174,7 +2175,7 @@ const bulkGmail = async (req, res) => {
                     first_name: _contact.first_name,
                     email: _contact.email,
                   },
-                  err: 'Recipient address required',
+                  error: 'Recipient address required',
                 });
               }
               resolve();
@@ -2189,7 +2190,7 @@ const bulkGmail = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: err.message,
+            error: err.message,
           });
           resolve();
         }
@@ -2354,7 +2355,7 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err: 'Invalid phone number',
+              error: 'Invalid phone number',
             });
             resolve(); // Invalid phone number
           }
@@ -2440,7 +2441,7 @@ const bulkText = async (req, res) => {
                     first_name: _contact.first_name,
                     cell_phone: _contact.cell_phone,
                   },
-                  err: message.error_message,
+                  error: message.error_message,
                 });
                 resolve();
               }
@@ -2474,7 +2475,7 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err: 'Invalid phone number',
+              error: 'Invalid phone number',
             });
             resolve(); // Invalid phone number
           }
@@ -2564,13 +2565,13 @@ const bulkText = async (req, res) => {
                     first_name: _contact.first_name,
                     cell_phone: _contact.cell_phone,
                   },
-                  err: message.error_message,
+                  error: message.error_message,
                 });
                 resolve();
               }
             })
             .catch((err) => {
-              console.log('send sms err: ', err);
+              console.log('send sms error: ', err);
             });
         });
       } else {
@@ -2587,7 +2588,7 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err: 'Invalid phone number',
+              error: 'Invalid phone number',
             });
             resolve(); // Invalid phone number
           }
@@ -2672,7 +2673,7 @@ const bulkText = async (req, res) => {
                     first_name: _contact.first_name,
                     cell_phone: _contact.cell_phone,
                   },
-                  err: message.error_message,
+                  error: message.error_message,
                 });
                 resolve();
               }
@@ -2858,7 +2859,7 @@ const bulkOutlook = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'contact email not found or unsubscribed',
+            error: 'contact email not found or unsubscribed',
           });
           resolve();
         });
@@ -2873,7 +2874,7 @@ const bulkOutlook = async (req, res) => {
               first_name: _contact.first_name,
               email: _contact.email,
             },
-            err: 'email daily limit exceed!',
+            error: 'email daily limit exceed!',
           });
           resolve();
         });
@@ -3078,7 +3079,7 @@ const bulkOutlook = async (req, res) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: err.message || err.msg,
+              error: err.message || err.msg,
             });
             resolve();
           });
@@ -3432,6 +3433,122 @@ const getEasyLoad = async (req, res) => {
 
 const bulkRemove = async (req, res) => {
   const { remove_ids } = req.body;
+  const { currentUser } = req;
+  const error = [];
+  const promise_array = [];
+
+  for (let i = 0; i < remove_ids.length; i++) {
+    const promise = new Promise(async (resolve) => {
+      const video = await Video.findOne({
+        _id: remove_ids[i],
+        user: currentUser.id,
+      });
+
+      if (video) {
+        if (video['default_edited']) {
+          Garbage.updateOne(
+            { user: currentUser.id },
+            {
+              $pull: { edited_video: { $in: [video.default_video] } },
+            }
+          ).catch((err) => {
+            console.log('default video remove err', err.message);
+          });
+        } else if (video['has_shared']) {
+          Video.updateOne(
+            {
+              _id: video.shared_video,
+              user: currentUser.id,
+            },
+            {
+              $unset: { shared_video: true },
+              has_shared: false,
+            }
+          ).catch((err) => {
+            console.log('default video remove err', err.message);
+          });
+        } else {
+          const url = video.url;
+          if (url.indexOf('teamgrow.s3') > 0) {
+            s3.deleteObject(
+              {
+                Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                Key: url.slice(44),
+              },
+              function (err, data) {
+                console.log('err', err);
+              }
+            );
+          } else {
+            try {
+              const file_path = video.path;
+              if (file_path) {
+                fs.unlinkSync(file_path);
+              }
+            } catch (err) {
+              console.log('err', err);
+            }
+          }
+        }
+
+        if (video.role === 'team') {
+          Team.updateOne(
+            { videos: remove_ids[i] },
+            {
+              $pull: { videos: { $in: [remove_ids[i]] } },
+            }
+          ).catch((err) => {
+            console.log('err', err.message);
+          });
+        }
+
+        Video.updateOne({ _id: remove_ids[i] }, { $set: { del: true } }).catch(
+          (err) => {
+            console.log('err', err.message);
+          }
+        );
+        resolve({
+          status: true,
+        });
+      } else {
+        const video = await Video.findOne({
+          _id: remove_ids[i],
+        });
+
+        error.push({
+          video: {
+            _id: remove_ids[i],
+            title: video.title,
+          },
+          error: 'Invalid Permission',
+        });
+
+        resolve();
+      }
+    });
+    promise_array.push(promise);
+  }
+
+  Promise.all(promise_array)
+    .then(() => {
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      } else {
+        return res.send({
+          status: true,
+        });
+      }
+    })
+    .catch((err) => {
+      console.log('video bulk remove err', err.message);
+      res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
 };
 
 module.exports = {

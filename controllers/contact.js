@@ -946,8 +946,6 @@ const importCSV = async (req, res) => {
               label,
               cell_phone,
               user: currentUser.id,
-              created_at: new Date(),
-              updated_at: new Date(),
             });
 
             contact
@@ -4627,7 +4625,7 @@ const shareContacts = async (req, res) => {
             first_name: contact.first_name,
             email: contact.email,
           },
-          err: 'Invalid permission',
+          error: 'Invalid permission',
         });
 
         resolve();

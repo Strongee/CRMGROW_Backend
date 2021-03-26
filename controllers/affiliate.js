@@ -24,7 +24,7 @@ const get = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details,
+          error: err.details,
         });
       });
   } else {
@@ -66,13 +66,13 @@ const getAll = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.details[0],
+          error: err.details[0],
         });
       });
   } else {
     res.status(400).json({
       status: false,
-      err: `Can't find affilate id`,
+      error: `Can't find affilate id`,
     });
   }
 };
@@ -117,7 +117,7 @@ const create = async (req, res) => {
       console.log(err);
       res.status(500).json({
         status: false,
-        err: err.error.details[0],
+        error: err.error.details[0],
       });
     });
 };
@@ -160,13 +160,13 @@ const update = async (req, res) => {
       .catch((err) => {
         res.status(500).json({
           status: false,
-          err: err.error.details[0],
+          error: err.error.details[0],
         });
       });
   } else {
     res.status(400).json({
       status: false,
-      err: `Can't find affilate id`,
+      error: `Can't find affilate id`,
     });
   }
 };

@@ -2598,7 +2598,7 @@ const searchUserEmail = (req, res) => {
     .catch((err) => {
       res.status(400).send({
         status: false,
-        err: err.message,
+        error: err.message,
       });
     });
 };

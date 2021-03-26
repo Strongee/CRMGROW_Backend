@@ -77,7 +77,7 @@ const bulkEmail = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -113,7 +113,7 @@ const bulkEmail = async (data) => {
             resolve({
               status: false,
               contact: contacts[i],
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -123,7 +123,7 @@ const bulkEmail = async (data) => {
             resolve({
               status: false,
               contact: contacts[i],
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -225,7 +225,7 @@ const bulkEmail = async (data) => {
               resolve({
                 status: false,
                 contact: contacts[i],
-                err: _res[0].message,
+                error: _res[0].message,
               });
             }
           })
@@ -237,7 +237,7 @@ const bulkEmail = async (data) => {
             resolve({
               status: false,
               contact: contacts[i],
-              err: err.msg || err.message,
+              error: err.msg || err.message,
             });
           });
       });
@@ -263,7 +263,7 @@ const bulkEmail = async (data) => {
         new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: err.message,
+            error: err.message,
           });
         })
       );
@@ -294,7 +294,7 @@ const bulkEmail = async (data) => {
             resolve({
               status: false,
               contact: contacts[i],
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -304,7 +304,7 @@ const bulkEmail = async (data) => {
             resolve({
               status: false,
               contact: contacts[i],
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -419,7 +419,7 @@ const bulkEmail = async (data) => {
                 });
                 resolve({
                   contact: contacts[i],
-                  err: err.message,
+                  error: err.message,
                 });
               });
           } catch (err) {
@@ -429,7 +429,7 @@ const bulkEmail = async (data) => {
             });
             resolve({
               contact: contacts[i],
-              err: err.message || err.mgs,
+              error: err.message || err.mgs,
             });
           }
         }).catch((err) => {
@@ -439,7 +439,7 @@ const bulkEmail = async (data) => {
         promise = new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'no contact found',
+            error: 'no contact found',
             contact: contacts[i],
           });
         });
@@ -477,7 +477,7 @@ const bulkEmail = async (data) => {
             new Promise((resolve, reject) => {
               resolve({
                 status: false,
-                err: err.message,
+                error: err.message,
               });
             })
           );
@@ -516,7 +516,7 @@ const bulkEmail = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -528,7 +528,7 @@ const bulkEmail = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -648,7 +648,7 @@ const bulkEmail = async (data) => {
               resolve({
                 status: false,
                 contact: contacts[i],
-                err:
+                error:
                   err.message ||
                   'Please go to the login into your Email box and follow instruction',
               });
@@ -656,7 +656,7 @@ const bulkEmail = async (data) => {
               resolve({
                 status: false,
                 contact: contacts[i],
-                err: err.message || err.msg,
+                error: err.message || err.msg,
               });
             }
           });
@@ -683,7 +683,7 @@ const bulkVideo = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -721,7 +721,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -734,7 +734,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email removed',
+              error: 'contact email removed',
             });
           });
           promise_array.push(promise);
@@ -892,7 +892,7 @@ const bulkVideo = async (data) => {
                 console.log('email sending err', msg.to + _res[0].statusCode);
                 resolve({
                   status: false,
-                  err: msg.to + _res[0].statusCode,
+                  error: msg.to + _res[0].statusCode,
                   contact: contacts[i],
                 });
               }
@@ -965,7 +965,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -978,7 +978,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -1158,7 +1158,7 @@ const bulkVideo = async (data) => {
             });
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
               contact: contacts[i],
             });
           }
@@ -1167,7 +1167,7 @@ const bulkVideo = async (data) => {
         promise = new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'no contact found',
+            error: 'no contact found',
             contact: contacts[i],
           });
         });
@@ -1205,7 +1205,7 @@ const bulkVideo = async (data) => {
           new Promise((resolve, reject) => {
             resolve({
               status: false,
-              err: err.message || err.msg,
+              error: err.message || err.msg,
             });
           })
         );
@@ -1242,7 +1242,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -1254,7 +1254,7 @@ const bulkVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -1419,7 +1419,7 @@ const bulkVideo = async (data) => {
               resolve({
                 status: false,
                 contact: contacts[i],
-                err: err.message,
+                error: err.message,
               });
             });
         });
@@ -1446,7 +1446,7 @@ const bulkPDF = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -1481,7 +1481,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -1493,7 +1493,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact not found err',
+              error: 'contact not found err',
             });
           });
           promise_array.push(promise);
@@ -1636,7 +1636,7 @@ const bulkPDF = async (data) => {
               console.log('email sending err', msg.to + _res[0].statusCode);
               resolve({
                 status: false,
-                err: _res[0].statusCode,
+                error: _res[0].statusCode,
                 contact: contacts[i],
               });
             }
@@ -1648,7 +1648,7 @@ const bulkPDF = async (data) => {
             console.log('email sending err', err.message);
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
               contact: contacts[i],
             });
           });
@@ -1703,7 +1703,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -1715,7 +1715,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact found err',
+              error: 'contact found err',
             });
           });
           promise_array.push(promise);
@@ -1887,7 +1887,7 @@ const bulkPDF = async (data) => {
         promise = new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'no contact found',
+            error: 'no contact found',
             contact: contacts[i],
           });
         });
@@ -1926,7 +1926,7 @@ const bulkPDF = async (data) => {
             new Promise((resolve, reject) => {
               resolve({
                 status: false,
-                err: err.message || err.msg,
+                error: err.message || err.msg,
               });
             })
           );
@@ -1962,7 +1962,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -1974,7 +1974,7 @@ const bulkPDF = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -2149,7 +2149,7 @@ const bulkImage = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -2183,7 +2183,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -2195,7 +2195,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact not found email',
+              error: 'contact not found email',
             });
           });
           promise_array.push(promise);
@@ -2344,7 +2344,7 @@ const bulkImage = async (data) => {
               console.log('email sending err', msg.to + _res[0].statusCode);
               resolve({
                 status: false,
-                err: _res[0].statusCode,
+                error: _res[0].statusCode,
                 contact: contacts[i],
               });
             }
@@ -2356,7 +2356,7 @@ const bulkImage = async (data) => {
             console.error('email sending err', err.message);
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
               contact: contacts[i],
             });
           });
@@ -2393,7 +2393,7 @@ const bulkImage = async (data) => {
           new Promise((resolve, reject) => {
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
             });
           })
         );
@@ -2430,7 +2430,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -2442,7 +2442,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact not found',
+              error: 'contact not found',
             });
           });
           promise_array.push(promise);
@@ -2595,7 +2595,7 @@ const bulkImage = async (data) => {
             console.log('activity found err', err.message);
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
               contact: contacts[i],
             });
           });
@@ -2652,7 +2652,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -2664,7 +2664,7 @@ const bulkImage = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact not found',
+              error: 'contact not found',
             });
           });
           promise_array.push(promise);
@@ -2847,7 +2847,7 @@ const bulkImage = async (data) => {
         promise = new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'no contact found',
+            error: 'no contact found',
             contact: contacts[i],
           });
         });
@@ -2873,7 +2873,7 @@ const resendVideo = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -2911,7 +2911,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -2924,7 +2924,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email removed',
+              error: 'contact email removed',
             });
           });
           promise_array.push(promise);
@@ -3060,7 +3060,7 @@ const resendVideo = async (data) => {
               } else {
                 resolve({
                   status: false,
-                  err: msg.to + _res[0].statusCode,
+                  error: msg.to + _res[0].statusCode,
                   contact: contacts[i],
                 });
               }
@@ -3130,7 +3130,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -3143,7 +3143,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -3320,7 +3320,7 @@ const resendVideo = async (data) => {
             console.log('err', err.message);
             resolve({
               status: false,
-              err: err.message,
+              error: err.message,
               contact: contacts[i],
             });
           }
@@ -3329,7 +3329,7 @@ const resendVideo = async (data) => {
         promise = new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'no contact found',
+            error: 'no contact found',
             contact: contacts[i],
           });
         });
@@ -3367,7 +3367,7 @@ const resendVideo = async (data) => {
           new Promise((resolve, reject) => {
             resolve({
               status: false,
-              err: err.message || err.msg,
+              error: err.message || err.msg,
             });
           })
         );
@@ -3404,7 +3404,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email unsubscribed',
+              error: 'contact email unsubscribed',
             });
           });
           promise_array.push(promise);
@@ -3416,7 +3416,7 @@ const resendVideo = async (data) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: 'contact email not found',
+              error: 'contact email not found',
             });
           });
           promise_array.push(promise);
@@ -3580,7 +3580,7 @@ const resendVideo = async (data) => {
               resolve({
                 status: false,
                 contact: contacts[i],
-                err: err.message,
+                error: err.message,
               });
             });
         });

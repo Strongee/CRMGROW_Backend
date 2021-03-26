@@ -1067,7 +1067,7 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err: 'Invalid phone number',
+              error: 'Invalid phone number',
             });
             resolve(); // Invalid phone number
           }
@@ -1150,7 +1150,7 @@ const bulkText = async (req, res) => {
                     first_name: _contact.first_name,
                     cell_phone: _contact.cell_phone,
                   },
-                  err: message.error_message,
+                  error: message.error_message,
                 });
                 resolve();
               }
@@ -1184,7 +1184,7 @@ const bulkText = async (req, res) => {
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err: 'Invalid phone number',
+              error: 'Invalid phone number',
             });
             resolve(); // Invalid phone number
           }
@@ -1273,13 +1273,13 @@ const bulkText = async (req, res) => {
                     first_name: _contact.first_name,
                     cell_phone: _contact.cell_phone,
                   },
-                  err: message.error_message,
+                  error: message.error_message,
                 });
                 resolve();
               }
             })
             .catch((err) => {
-              console.log('send sms err: ', err);
+              console.log('send sms error: ', err);
             });
         });
       }

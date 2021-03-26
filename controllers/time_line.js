@@ -26,7 +26,7 @@ const create = async (req, res) => {
       console.log('err', err);
       return res.status(400).json({
         status: false,
-        err: err.message || 'Automation found err',
+        error: err.message || 'Automation found err',
       });
     }
   );
@@ -78,7 +78,7 @@ const create = async (req, res) => {
             first_name: contact.first_name,
             email: contact.email,
           },
-          err: 'A contact has been already assigned automation',
+          error: 'A contact has been already assigned automation',
         });
         continue;
       }
@@ -90,7 +90,7 @@ const create = async (req, res) => {
             first_name: contact.first_name,
             email: contact.email,
           },
-          err: 'Exceed automation max contacts',
+          error: 'Exceed automation max contacts',
         });
         continue;
       }
@@ -175,7 +175,7 @@ const create = async (req, res) => {
   }
   res.status(400).json({
     status: false,
-    err: 'Automation not found',
+    error: 'Automation not found',
   });
 };
 
@@ -702,7 +702,7 @@ const recreate = async (req, res) => {
       console.log('err', err);
       return res.status(400).json({
         status: false,
-        err: err.message || 'Automation found err',
+        error: err.message || 'Automation found err',
       });
     }
   );
@@ -769,7 +769,7 @@ const recreate = async (req, res) => {
   }
   res.status(400).json({
     status: false,
-    err: 'Automation not found',
+    error: 'Automation not found',
   });
 };
 
