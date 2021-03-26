@@ -707,7 +707,8 @@ const bulkUpdate = async (req, res) => {
 const importCSV = async (req, res) => {
   const file = req.file;
   const { currentUser } = req;
-  const failure = [];
+  const duplicate = [];
+  const max_limited = [];
   const duplicate_contacts_ids = [];
   let count = 0;
   let max_upload_count = 0;
@@ -715,19 +716,10 @@ const importCSV = async (req, res) => {
   const labels = await LabelHelper.getAll(currentUser.id);
 
   if (contact_info['is_limit']) {
-    // if (req.body.first_time) {
-    //   count = await Contact.countDocuments({ user: currentUser.id });
-    // } else {
-    //   count = contact_info.count;
-    // }
-
     count = await Contact.countDocuments({ user: currentUser.id });
 
     max_upload_count =
       contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
-
-    console.log('*******count', count);
-    console.log('*******max_update_count', max_upload_count);
 
     if (max_upload_count <= count) {
       return res.status(400).json({
@@ -755,6 +747,18 @@ const importCSV = async (req, res) => {
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
+          if (contact_info['is_limit'] && max_upload_count < count) {
+            // const field = {
+            //   id: i,
+            //   email: data['email'],
+            //   cell_phone: data['phone'],
+            //   err: 'Exceed upload max contacts',
+            // };
+            failure.push({ message: 'upload_max', data });
+            resolve();
+            return;
+          }
+
           if (data['first_name'] === '') {
             data['first_name'] = null;
           }
@@ -905,17 +909,6 @@ const importCSV = async (req, res) => {
 
             count += 1;
 
-            if (contact_info['is_limit'] && max_upload_count < count) {
-              // const field = {
-              //   id: i,
-              //   email: data['email'],
-              //   cell_phone: data['phone'],
-              //   err: 'Exceed upload max contacts',
-              // };
-              failure.push({ message: 'upload_max', data });
-              resolve();
-              return;
-            }
             let tags = [];
             if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
               tags = data['tags'].split(/,\s|\s,|,|\s/);
