@@ -729,7 +729,7 @@ const importCSV = async (req, res) => {
     console.log('*******count', count);
     console.log('*******max_update_count', max_upload_count);
 
-    if (max_upload_count < count) {
+    if (max_upload_count <= count) {
       return res.status(400).json({
         status: false,
         error: 'Exceed upload max contacts',
