@@ -38,7 +38,7 @@ const bulkVideo = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -62,7 +62,7 @@ const bulkVideo = async (data) => {
         new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'Contact not found',
+            error: 'Contact not found',
           });
         })
       );
@@ -267,7 +267,7 @@ const bulkPDF = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -292,7 +292,7 @@ const bulkPDF = async (data) => {
         new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'Contact not found',
+            error: 'Contact not found',
           });
         })
       );
@@ -525,7 +525,7 @@ const bulkImage = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -550,7 +550,7 @@ const bulkImage = async (data) => {
         new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'Contact not found',
+            error: 'Contact not found',
           });
         })
       );
@@ -754,7 +754,7 @@ const resendVideo = async (data) => {
       new Promise((resolve, reject) => {
         resolve({
           status: false,
-          err: 'User not found',
+          error: 'User not found',
         });
       })
     );
@@ -778,7 +778,7 @@ const resendVideo = async (data) => {
         new Promise((resolve, reject) => {
           resolve({
             status: false,
-            err: 'Contact not found',
+            error: 'Contact not found',
           });
         })
       );

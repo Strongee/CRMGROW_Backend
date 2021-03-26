@@ -142,4 +142,7 @@ router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
 // Delete a video
 router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));
 
+// Remove videos
+router.post('/remove', UserCtrl.checkAuth, catchError(VideoCtrl.bulkRemove));
+
 module.exports = router;

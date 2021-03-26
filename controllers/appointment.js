@@ -73,7 +73,7 @@ const getAll = async (req, res) => {
             new Promise((resolve, reject) => {
               resolve({
                 status: false,
-                err: connected_email,
+                error: connected_email,
               });
             })
           );
@@ -173,7 +173,7 @@ const googleCalendarList = (calendar_data) => {
           console.log(`The API returned an error: ${err}`);
           resolve({
             status: false,
-            err: connected_email,
+            error: connected_email,
           });
         }
 
@@ -1788,7 +1788,7 @@ const getCalendarList = async (req, res) => {
             new Promise((resolve, reject) => {
               resolve({
                 status: false,
-                err: connected_email,
+                error: connected_email,
               });
             })
           );
@@ -1858,7 +1858,7 @@ const getCalendarList = async (req, res) => {
                 console.log(`The API returned an error: ${err}`);
                 resolve({
                   status: false,
-                  err: connected_email,
+                  error: connected_email,
                 });
               }
 

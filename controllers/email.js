@@ -125,7 +125,7 @@ const bulkGmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'contact email not found or unsubscribed',
+          error: 'contact email not found or unsubscribed',
         });
         resolve();
       });
@@ -141,7 +141,7 @@ const bulkGmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'email daily limit exceed!',
+          error: 'email daily limit exceed!',
         });
         resolve();
       });
@@ -288,7 +288,7 @@ const bulkGmail = async (req, res) => {
                   first_name: _contact.first_name,
                   email: _contact.email,
                 },
-                err: 'No Connected Gmail',
+                error: 'No Connected Gmail',
               });
             } else if (err.statusCode === 400) {
               error.push({
@@ -296,7 +296,7 @@ const bulkGmail = async (req, res) => {
                   first_name: _contact.first_name,
                   email: _contact.email,
                 },
-                err: err.message,
+                error: err.message,
               });
             } else {
               error.push({
@@ -304,7 +304,7 @@ const bulkGmail = async (req, res) => {
                   first_name: _contact.first_name,
                   email: _contact.email,
                 },
-                err: 'Recipient address required',
+                error: 'Recipient address required',
               });
             }
             resolve();
@@ -320,7 +320,7 @@ const bulkGmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: err.message || 'Unknown Error',
+          error: err.message || 'Unknown Error',
         });
         resolve();
       }
@@ -490,7 +490,7 @@ const bulkOutlook = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'contact email not found or unsubscribed',
+          error: 'contact email not found or unsubscribed',
         });
         resolve();
       });
@@ -506,7 +506,7 @@ const bulkOutlook = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'email daily limit exceed!',
+          error: 'email daily limit exceed!',
         });
         resolve();
       });
@@ -971,7 +971,7 @@ const bulkEmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'contact email not found or unsubscribed',
+          error: 'contact email not found or unsubscribed',
         });
         resolve();
       });
@@ -987,7 +987,7 @@ const bulkEmail = async (req, res) => {
             first_name: _contact.first_name,
             email: _contact.email,
           },
-          err: 'email daily limit exceed!',
+          error: 'email daily limit exceed!',
         });
         resolve();
       });
@@ -1093,7 +1093,7 @@ const bulkEmail = async (req, res) => {
                 first_name: _contact.first_name,
                 email: _contact.email,
               },
-              err: _res[0].statusCode,
+              error: _res[0].statusCode,
             });
             resolve();
           }
@@ -2500,7 +2500,7 @@ const sharePlatform = async (req, res) => {
                 first_name: _contact.name,
                 email: _contact.email,
               },
-              err: _res[0].statusCode,
+              error: _res[0].statusCode,
             });
             resolve();
           }
