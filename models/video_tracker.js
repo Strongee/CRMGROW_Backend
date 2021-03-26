@@ -9,6 +9,8 @@ const TrackerSchema = new Schema(
     video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     activity: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
     type: { type: String, default: 'watch' },
+    start: Number,
+    end: Number,
     duration: Number,
     material_last: Number,
     created_at: Date,

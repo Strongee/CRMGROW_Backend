@@ -806,13 +806,21 @@ const disconnectVideo = async (video_tracker_id) => {
   }
 };
 
-const updateVideo = async (duration, material_last, video_tracker_id) => {
+const updateVideo = async (
+  video_tracker_id,
+  duration,
+  material_last,
+  start,
+  end
+) => {
   await VideoTracker.updateOne(
     { _id: video_tracker_id },
     {
       $set: {
         duration,
         material_last,
+        start,
+        end,
       },
     }
   );
@@ -1122,17 +1130,16 @@ const setup = (io) => {
 
     socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
-      console.log('update video', JSON.stringify(data), JSON.stringify(video_tracker));
       if (typeof video_tracker !== 'undefined') {
-        const { duration, material_last } = data;
-        updateVideo(duration, material_last, video_tracker._id)
+        const { duration, material_last, start, end } = data;
+        updateVideo(video_tracker._id, duration, material_last, start, end)
           .then(() => {})
           .catch((err) => {
             console.log('err', err);
           });
       } else {
-        const { duration, material_last, tracker_id } = data;
-        updateVideo(duration, material_last, tracker_id)
+        const { duration, material_last, tracker_id, start, end } = data;
+        updateVideo(tracker_id, duration, material_last, start, end)
           .then(() => {
             VideoTracker.findOne({ _id: tracker_id }).then((tracker) => {
               socket.type = 'video';
