@@ -34,11 +34,7 @@ router.put('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.edit));
 router.delete('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.remove));
 
 // Remove contacts and their relative info
-router.post(
-  '/remove',
-  UserCtrl.checkAuth,
-  catchError(ContactCtrl.removeContacts)
-);
+router.post('/remove', UserCtrl.checkAuth, catchError(ContactCtrl.bulkRemove));
 
 router.post('/lead', catchError(ContactCtrl.leadContact));
 router.post('/interest', catchError(ContactCtrl.interestSubmitContact));

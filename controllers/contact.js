@@ -514,7 +514,7 @@ const remove = async (req, res) => {
   });
 };
 
-const removeContacts = async (req, res) => {
+const bulkRemove = async (req, res) => {
   const { currentUser } = req;
   const ids = req.body.ids;
   var deleted = 0;
@@ -715,9 +715,19 @@ const importCSV = async (req, res) => {
   const labels = await LabelHelper.getAll(currentUser.id);
 
   if (contact_info['is_limit']) {
+    // if (req.body.first_time) {
+    //   count = await Contact.countDocuments({ user: currentUser.id });
+    // } else {
+    //   count = contact_info.count;
+    // }
+
     count = await Contact.countDocuments({ user: currentUser.id });
+
     max_upload_count =
       contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+
+    console.log('*******count', count);
+    console.log('*******max_update_count', max_upload_count);
 
     if (max_upload_count < count) {
       return res.status(400).json({
@@ -4765,7 +4775,7 @@ module.exports = {
   advanceSearch,
   searchEasy,
   remove,
-  removeContacts,
+  bulkRemove,
   edit,
   bulkEditLabel,
   bulkUpdate,
