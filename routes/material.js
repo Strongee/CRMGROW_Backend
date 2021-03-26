@@ -36,6 +36,7 @@ router.post(
   UserCtrl.checkAuth,
   catchError(MaterialCtrl.removeFolder)
 );
+router.post('/remove', UserCtrl.checkAuth, catchError(MaterialCtrl.bulkRemove));
 router.post(
   '/move-material',
   UserCtrl.checkAuth,
