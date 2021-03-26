@@ -1,5 +1,7 @@
 const phone = require('phone');
 const moment = require('moment-timezone');
+const fs = require('fs');
+const AWS = require('aws-sdk');
 
 const User = require('../models/user');
 const Video = require('../models/video');
@@ -56,6 +58,12 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
+
+const s3 = new AWS.S3({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_S3_REGION,
+});
 
 const bulkEmail = async (req, res) => {
   const { currentUser } = req;
@@ -1766,7 +1774,7 @@ const loadMaterial = async (req, res) => {
     if (_material_owner_objects[image_detail.user]) {
       image_detail = {
         ...image_detail,
-        user: _material_owner_objects[image_detail.user]
+        user: _material_owner_objects[image_detail.user],
       };
     }
     _image_detail_list.push(image_detail);
@@ -1968,6 +1976,292 @@ const moveMaterials = async (req, res) => {
   });
 };
 
+const bulkRemove = async (req, res) => {
+  const { videos, pdfs, images } = req.body;
+  const { currentUser } = req;
+  const error = [];
+  const promise_array = [];
+
+  if (videos) {
+    for (let i = 0; i < videos.length; i++) {
+      const promise = new Promise(async (resolve) => {
+        const video = await Video.findOne({
+          _id: videos[i],
+          user: currentUser.id,
+        });
+
+        if (video) {
+          if (video['default_edited']) {
+            Garbage.updateOne(
+              { user: currentUser.id },
+              {
+                $pull: { edited_video: { $in: [video.default_video] } },
+              }
+            ).catch((err) => {
+              console.log('default video remove err', err.message);
+            });
+          } else if (video['has_shared']) {
+            Video.updateOne(
+              {
+                _id: video.shared_video,
+                user: currentUser.id,
+              },
+              {
+                $unset: { shared_video: true },
+                has_shared: false,
+              }
+            ).catch((err) => {
+              console.log('default video remove err', err.message);
+            });
+          } else {
+            const url = video.url;
+            if (url.indexOf('teamgrow.s3') > 0) {
+              s3.deleteObject(
+                {
+                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                  Key: url.slice(44),
+                },
+                function (err, data) {
+                  console.log('err', err);
+                }
+              );
+            } else {
+              try {
+                const file_path = video.path;
+                if (file_path) {
+                  fs.unlinkSync(file_path);
+                }
+              } catch (err) {
+                console.log('err', err);
+              }
+            }
+          }
+
+          if (video.role === 'team') {
+            Team.updateOne(
+              { videos: videos[i] },
+              {
+                $pull: { videos: { $in: [videos[i]] } },
+              }
+            ).catch((err) => {
+              console.log('err', err.message);
+            });
+          }
+
+          Video.updateOne({ _id: videos[i] }, { $set: { del: true } }).catch(
+            (err) => {
+              console.log('err', err.message);
+            }
+          );
+          resolve();
+        } else {
+          const video = await Video.findOne({
+            _id: videos[i],
+          });
+
+          error.push({
+            video: {
+              _id: videos[i],
+              title: video.title,
+            },
+            error: 'Invalid Permission',
+          });
+
+          resolve();
+        }
+      });
+      promise_array.push(promise);
+    }
+  }
+
+  if (pdfs) {
+    for (let i = 0; i < pdfs.length; i++) {
+      const promise = new Promise(async (resolve) => {
+        const pdf = await PDF.findOne({
+          _id: pdfs[i],
+          user: currentUser.id,
+        });
+
+        if (pdf) {
+          if (pdf['default_edited']) {
+            Garbage.updateOne(
+              { user: currentUser.id },
+              {
+                $pull: { edited_pdf: { $in: [pdf.default_pdf] } },
+              }
+            ).catch((err) => {
+              console.log('default pdf remove err', err.message);
+            });
+          } else if (pdf['has_shared']) {
+            PDF.updateOne(
+              {
+                _id: pdf.shared_pdf,
+                user: currentUser.id,
+              },
+              {
+                $unset: { shared_pdf: true },
+                has_shared: false,
+              }
+            ).catch((err) => {
+              console.log('default pdf remove err', err.message);
+            });
+          } else {
+            const url = pdf.url;
+            if (url.indexOf('teamgrow.s3') > 0) {
+              s3.deleteObject(
+                {
+                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                  Key: url.slice(44),
+                },
+                function (err, data) {
+                  console.log('err', err);
+                }
+              );
+            }
+          }
+
+          if (pdf.role === 'team') {
+            Team.updateOne(
+              { pdfs: pdfs[i] },
+              {
+                $pull: { pdfs: { $in: [pdfs[i]] } },
+              }
+            ).catch((err) => {
+              console.log('err', err.message);
+            });
+          }
+
+          PDF.updateOne({ _id: pdfs[i] }, { $set: { del: true } }).catch(
+            (err) => {
+              console.log('err', err.message);
+            }
+          );
+          resolve();
+        } else {
+          const pdf = await PDF.findOne({
+            _id: pdfs[i],
+          });
+
+          error.push({
+            pdf: {
+              _id: pdfs[i],
+              title: pdf.title,
+            },
+            error: 'Invalid Permission',
+          });
+
+          resolve();
+        }
+      });
+      promise_array.push(promise);
+    }
+  }
+
+  if (images) {
+    for (let i = 0; i < images.length; i++) {
+      const promise = new Promise(async (resolve) => {
+        const image = await Image.findOne({
+          _id: images[i],
+          user: currentUser.id,
+        });
+
+        if (image) {
+          if (image['default_edited']) {
+            Garbage.updateOne(
+              { user: currentUser.id },
+              {
+                $pull: { edited_image: { $in: [image.default_image] } },
+              }
+            ).catch((err) => {
+              console.log('default image remove err', err.message);
+            });
+          } else if (image['has_shared']) {
+            Image.updateOne(
+              {
+                _id: image.shared_image,
+                user: currentUser.id,
+              },
+              {
+                $unset: { shared_image: true },
+                has_shared: false,
+              }
+            ).catch((err) => {
+              console.log('default image remove err', err.message);
+            });
+          } else {
+            const url = image.url;
+            if (url.indexOf('teamgrow.s3') > 0) {
+              s3.deleteObject(
+                {
+                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                  Key: url.slice(44),
+                },
+                function (err, data) {
+                  console.log('err', err);
+                }
+              );
+            }
+          }
+
+          if (image.role === 'team') {
+            Team.updateOne(
+              { images: images[i] },
+              {
+                $pull: { images: { $in: [images[i]] } },
+              }
+            ).catch((err) => {
+              console.log('err', err.message);
+            });
+          }
+
+          Image.updateOne({ _id: images[i] }, { $set: { del: true } }).catch(
+            (err) => {
+              console.log('err', err.message);
+            }
+          );
+          resolve();
+        } else {
+          const image = await Image.findOne({
+            _id: images[i],
+          });
+
+          error.push({
+            image: {
+              _id: images[i],
+              title: image.title,
+            },
+            error: 'Invalid Permission',
+          });
+
+          resolve();
+        }
+      });
+      promise_array.push(promise);
+    }
+  }
+
+  Promise.all(promise_array)
+    .then(() => {
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      } else {
+        return res.send({
+          status: true,
+        });
+      }
+    })
+    .catch((err) => {
+      console.log('material bulk remove err', err.message);
+      res.status(500).json({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   bulkEmail,
   bulkText,
@@ -1978,4 +2272,5 @@ module.exports = {
   editFolder,
   removeFolder,
   moveMaterials,
+  bulkRemove,
 };

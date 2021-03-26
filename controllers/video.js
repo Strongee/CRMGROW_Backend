@@ -3431,125 +3431,6 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
-const bulkRemove = async (req, res) => {
-  const { remove_ids } = req.body;
-  const { currentUser } = req;
-  const error = [];
-  const promise_array = [];
-
-  for (let i = 0; i < remove_ids.length; i++) {
-    const promise = new Promise(async (resolve) => {
-      const video = await Video.findOne({
-        _id: remove_ids[i],
-        user: currentUser.id,
-      });
-
-      if (video) {
-        if (video['default_edited']) {
-          Garbage.updateOne(
-            { user: currentUser.id },
-            {
-              $pull: { edited_video: { $in: [video.default_video] } },
-            }
-          ).catch((err) => {
-            console.log('default video remove err', err.message);
-          });
-        } else if (video['has_shared']) {
-          Video.updateOne(
-            {
-              _id: video.shared_video,
-              user: currentUser.id,
-            },
-            {
-              $unset: { shared_video: true },
-              has_shared: false,
-            }
-          ).catch((err) => {
-            console.log('default video remove err', err.message);
-          });
-        } else {
-          const url = video.url;
-          if (url.indexOf('teamgrow.s3') > 0) {
-            s3.deleteObject(
-              {
-                Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-                Key: url.slice(44),
-              },
-              function (err, data) {
-                console.log('err', err);
-              }
-            );
-          } else {
-            try {
-              const file_path = video.path;
-              if (file_path) {
-                fs.unlinkSync(file_path);
-              }
-            } catch (err) {
-              console.log('err', err);
-            }
-          }
-        }
-
-        if (video.role === 'team') {
-          Team.updateOne(
-            { videos: remove_ids[i] },
-            {
-              $pull: { videos: { $in: [remove_ids[i]] } },
-            }
-          ).catch((err) => {
-            console.log('err', err.message);
-          });
-        }
-
-        Video.updateOne({ _id: remove_ids[i] }, { $set: { del: true } }).catch(
-          (err) => {
-            console.log('err', err.message);
-          }
-        );
-        resolve({
-          status: true,
-        });
-      } else {
-        const video = await Video.findOne({
-          _id: remove_ids[i],
-        });
-
-        error.push({
-          video: {
-            _id: remove_ids[i],
-            title: video.title,
-          },
-          error: 'Invalid Permission',
-        });
-
-        resolve();
-      }
-    });
-    promise_array.push(promise);
-  }
-
-  Promise.all(promise_array)
-    .then(() => {
-      if (error.length > 0) {
-        return res.status(405).json({
-          status: false,
-          error,
-        });
-      } else {
-        return res.send({
-          status: true,
-        });
-      }
-    })
-    .catch((err) => {
-      console.log('video bulk remove err', err.message);
-      res.status(500).json({
-        status: false,
-        error: err.message,
-      });
-    });
-};
 
 module.exports = {
   play,
@@ -3575,7 +3456,6 @@ module.exports = {
   createSmsContent,
   bulkGmail,
   bulkOutlook,
-  bulkRemove,
   autoResend,
   setupRecording,
 };

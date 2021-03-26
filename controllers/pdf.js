@@ -811,19 +811,18 @@ const remove = async (req, res) => {
       pdf['del'] = true;
       pdf.save();
 
-      res.send({
+      return res.send({
         status: true,
       });
     } else {
-      res.status(404).send({
+      return res.status(400).send({
         status: false,
         error: 'invalid permission',
       });
-      return;
     }
   } catch (e) {
     console.error(e);
-    res.status(500).send({
+    return res.status(500).send({
       status: false,
       error: 'internal_server_error',
     });
