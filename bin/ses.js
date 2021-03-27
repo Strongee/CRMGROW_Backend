@@ -19,7 +19,7 @@ const subjects = {
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,
   OnboardCall: `One on one onboarding`,
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
-  Welcome: 'Welcome CRMGrow',
+  Welcome: 'Welcome to CRMGrow, {{user_name}}!',
 };
 const htmls = {};
 fs.readFile(
