@@ -134,9 +134,17 @@ function updateEndTime() {
 // Report the time 
 function reportTime() {
   var total = 0;
+  var start = duration;
+  var end = 0;
   trackingTimes.forEach((e) => {
     if (e[1]) {
       total += e[1] - e[0];
+      if (e[0] < start) {
+        start = e[0];
+      }
+      if (e[1] > end) {
+        end = e[1];
+      }
     }
   });
   watched_time = total;
@@ -161,7 +169,9 @@ function reportTime() {
         socket.emit('update_video', {
           tracker_id: tracker_id,
           duration: total * 1000,
-          material_last: vPlayer.currentTime
+          material_last: vPlayer.currentTime,
+          start: start,
+          end: end
         });
       }
     } else {
@@ -173,7 +183,9 @@ function reportTime() {
         socket.emit('update_video', {
           tracker_id: tracker_id,
           duration: duration * 1000,
-          material_last: currentTime
+          material_last: currentTime,
+          start: start,
+          end: end
         });
         socket.emit('close', { mode: 'full_watched' });
         reported = true;
