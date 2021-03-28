@@ -906,6 +906,13 @@ const importCSV = async (req, res) => {
             }
             * */
 
+            console.log('max_upload_count', max_upload_count);
+            console.log('count', count);
+            if (contact_info['is_limit'] && max_upload_count <= count) {
+              exceed_contacts.push(data);
+              resolve();
+              return;
+            }
             count += 1;
 
             let tags = [];
