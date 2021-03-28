@@ -416,6 +416,10 @@ const outlookCalendarList = (calendar_data) => {
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
                         let response = '';
+                        console.log(
+                          'attendees[j].status.response',
+                          attendees[j].status.response
+                        );
                         switch (attendees[j].status.response) {
                           case 'none':
                             response = 'needsAction';
