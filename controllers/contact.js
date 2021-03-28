@@ -722,7 +722,7 @@ const importCSV = async (req, res) => {
       contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
 
     if (max_upload_count <= count) {
-      return res.status(400).json({
+      return res.send({
         status: false,
         error: 'Exceed upload max contacts',
       });
@@ -747,7 +747,7 @@ const importCSV = async (req, res) => {
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
-          if (contact_info['is_limit'] && max_upload_count < count) {
+          if (contact_info['is_limit'] && max_upload_count <= count) {
             // const field = {
             //   id: i,
             //   email: data['email'],
