@@ -269,6 +269,7 @@ const load = async (req, res) => {
           data.push(activity);
         }
       } else {
+        data.push(activity);
         break;
       }
     }
