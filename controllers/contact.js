@@ -419,7 +419,7 @@ const create = async (req, res) => {
           console.log('err', err);
         });
 
-        if (req.body.deal) {
+        if (req.body.deal_stage) {
           const deal = new Deal({
             contacts: contact.id,
             user: currentUser.id,
