@@ -241,12 +241,14 @@ const load = async (req, res) => {
         let next_contact = next_activity.contacts
           ? next_activity.contacts._id
           : null;
+
         if (activity_contact && activity_contact === next_contact) {
           activity = { ...activity._doc, additional_field: [next_activity.id] };
           i++;
 
           next_activity = activity_list[i + 1];
           if (!next_activity) {
+            data.push(activity);
             break;
           }
           next_contact = next_activity.contacts
@@ -256,6 +258,7 @@ const load = async (req, res) => {
           while (activity_contact === next_contact) {
             activity.additional_field.push(next_activity.id);
             i++;
+
             next_activity = activity_list[i + 1];
             if (!next_activity) {
               break;
