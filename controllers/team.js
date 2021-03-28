@@ -2054,6 +2054,10 @@ const getSharedContacts = async (req, res) => {
       {
         path: 'last_activity',
       },
+      {
+        path: 'shared_members',
+        select: 'user_name email picture_profile cell_phone',
+      },
     ])
     .skip(skip)
     .limit(count)
@@ -2398,6 +2402,24 @@ const loadTemplate = async (req, res) => {
   });
 };
 
+const getAllSharedContacts = async (req, res) => {
+  const { currentUser } = req;
+
+  const contacts = await Contact.find({
+    shared_members: currentUser.id,
+  }).select({
+    _id: 1,
+    first_name: 1,
+    last_name: 1,
+    email: 1,
+    cell_phone: 1,
+  });
+  return res.send({
+    status: true,
+    data: contacts,
+  });
+};
+
 module.exports = {
   getAll,
   getLeaders,
@@ -2406,6 +2428,7 @@ module.exports = {
   loadAutomation,
   loadTemplate,
   getSharedContacts,
+  getAllSharedContacts,
   searchContact,
   getInvitedTeam,
   get,

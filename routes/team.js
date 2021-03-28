@@ -18,6 +18,12 @@ router.get(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getInvitedTeam)
 );
+router.get(
+  '/get-all',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.getAllSharedContacts)
+);
+
 router.get('/user/:id', UserCtrl.checkAuth, catchError(TeamCtrl.getTeam));
 router.post('/request', UserCtrl.checkAuth, catchError(TeamCtrl.requestTeam));
 

@@ -416,10 +416,6 @@ const outlookCalendarList = (calendar_data) => {
                       for (let j = 0; j < attendees.length; j++) {
                         const guest = attendees[j].emailAddress.address;
                         let response = '';
-                        console.log(
-                          'attendees[j].status.response',
-                          attendees[j].status.response
-                        );
                         switch (attendees[j].status.response) {
                           case 'none':
                             response = 'needsAction';
@@ -1611,7 +1607,7 @@ const accept = async (req, res) => {
         sendNotifications: true,
       };
 
-      client.events.patch(params, function (err) {
+      client.events.patch(params, async (err) => {
         if (err) {
           console.log(
             `There was an error contacting the Calendar service: ${err}`
@@ -1622,6 +1618,55 @@ const accept = async (req, res) => {
           });
         } else {
           console.log('calendar update');
+
+          const contact = await Contact.findOne({
+            user: currentUser.id,
+            email: req.body.email,
+          });
+
+          if (contact) {
+            const appointment = new Appointment({
+              contact: contact._id,
+              user: currentUser.id,
+              type: 1,
+              event_id,
+            });
+
+            appointment.save().catch((err) => {
+              console.log('appointment save err', err.message);
+            });
+
+            const activity = new Activity({
+              content: 'accepted appointment',
+              contacts: contact._id,
+              appointments: appointment.id,
+              user: currentUser.id,
+              type: 'appointments',
+            });
+
+            activity
+              .save()
+              .then((_activity) => {
+                Contact.updateOne(
+                  {
+                    _id: contact._id,
+                  },
+                  {
+                    $set: { last_activity: _activity.id },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+              })
+              .catch((err) => {
+                console.log('appointment save err', err.message);
+                return res.status(500).send({
+                  status: false,
+                  error: err.message,
+                });
+              });
+          }
+
           return res.send({
             status: true,
           });
@@ -1696,6 +1741,7 @@ const decline = async (req, res) => {
         .api(`/me/calendars/${calendar_id}/events/${event_id}/decline`)
         .post(decline)
         .then(() => {
+
           return res.send({
             status: true,
           });
