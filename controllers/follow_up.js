@@ -785,9 +785,11 @@ const load = async (req, res) => {
     query.status = status;
   }
   contact ? (query.contact = contact) : (query.contact = { $ne: null });
+
   if (start_date) {
     query.due_date = { $gte: start_date };
   }
+
   if (end_date) {
     if (query.due_date) {
       query.due_date.$lt = end_date;
@@ -795,6 +797,7 @@ const load = async (req, res) => {
       query.due_date = { $lte: end_date };
     }
   }
+
   if (str) {
     query.content = { $regex: '.*' + str + '.*', $options: 'i' };
   }
