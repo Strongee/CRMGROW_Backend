@@ -707,8 +707,8 @@ const bulkUpdate = async (req, res) => {
 const importCSV = async (req, res) => {
   const file = req.file;
   const { currentUser } = req;
-  const duplicate = [];
-  const max_limited = [];
+  const duplicate_contacts = [];
+  const exceed_contacts = [];
   const duplicate_contacts_ids = [];
   let count = 0;
   let max_upload_count = 0;
@@ -754,7 +754,7 @@ const importCSV = async (req, res) => {
             //   cell_phone: data['phone'],
             //   err: 'Exceed upload max contacts',
             // };
-            failure.push({ message: 'upload_max', data });
+            exceed_contacts.push(data);
             resolve();
             return;
           }
@@ -797,7 +797,7 @@ const importCSV = async (req, res) => {
               }
             }
 
-            const duplicate_contacts = await Contact.find({
+            const _duplicate_contacts = await Contact.find({
               _id: { $nin: duplicate_contacts_ids },
               $or: query,
             })
@@ -806,16 +806,13 @@ const importCSV = async (req, res) => {
                 console.log('contact find err', err.message);
               });
 
-            if (duplicate_contacts && duplicate_contacts.length > 0) {
-              duplicate_contacts.forEach((contact) => {
+            if (_duplicate_contacts && _duplicate_contacts.length > 0) {
+              _duplicate_contacts.forEach((contact) => {
                 duplicate_contacts_ids.push(contact.id);
-                failure.push({
-                  message: 'duplicate',
-                  data: contact,
-                });
+                duplicate_contacts.push(contact);
               });
 
-              failure.push({ message: 'duplicate', data });
+              duplicate_contacts.push(data);
               resolve();
               return;
             }
@@ -959,8 +956,6 @@ const importCSV = async (req, res) => {
                   contacts: _contact.id,
                   user: currentUser.id,
                   type: 'contacts',
-                  created_at: new Date(),
-                  updated_at: new Date(),
                 });
                 activity
                   .save()
@@ -988,8 +983,6 @@ const importCSV = async (req, res) => {
                       content,
                       contact: _contact.id,
                       user: currentUser.id,
-                      created_at: new Date(),
-                      updated_at: new Date(),
                     });
 
                     note.save().then((_note) => {
@@ -999,8 +992,6 @@ const importCSV = async (req, res) => {
                         user: currentUser.id,
                         type: 'notes',
                         notes: _note.id,
-                        created_at: new Date(),
-                        updated_at: new Date(),
                       });
 
                       _activity
@@ -1034,7 +1025,8 @@ const importCSV = async (req, res) => {
       Promise.all(promise_array).then(() => {
         return res.send({
           status: true,
-          failure,
+          exceed_contacts,
+          duplicate_contacts,
         });
       });
     });
