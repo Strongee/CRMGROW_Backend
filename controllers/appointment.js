@@ -1119,7 +1119,7 @@ const edit = async (req, res) => {
             const activity = new Activity({
               content: 'updated appointment',
               contacts: contact._id,
-              appointments: appointment.id,
+              appointments: appointment._id,
               user: currentUser.id,
               type: 'appointments',
             });
@@ -1127,6 +1127,7 @@ const edit = async (req, res) => {
             activity
               .save()
               .then((_activity) => {
+                console.log('activty is saved newly for update appointment');
                 Contact.updateOne(
                   { _id: contact._id },
                   {
