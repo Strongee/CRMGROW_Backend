@@ -1111,6 +1111,11 @@ const edit = async (req, res) => {
             appointment.contacts &&
             appointment.contacts.indexOf(contact) !== -1
           ) {
+            console.log(
+              'update appointment activity register',
+              contact,
+              appointment.contacts
+            );
             const activity = new Activity({
               content: 'updated appointment',
               contacts: contact._id,
@@ -1135,6 +1140,11 @@ const edit = async (req, res) => {
                 console.log('activity save err', err.message);
               });
           } else {
+            console.log(
+              'new contact is added to this appointment',
+              contact,
+              appointment.contacts
+            );
             const activity = new Activity({
               content: 'added appointment',
               contacts: contact._id,
