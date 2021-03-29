@@ -764,8 +764,8 @@ const importCSV = async (req, res) => {
             if (data['first_name'] && data['last_name']) {
               query.push({
                 user: currentUser.id,
-                first_name: new RegExp(data['first_name'], 'i'),
-                last_name: new RegExp(data['last_name'], 'i'),
+                first_name: data['first_name'],
+                last_name: data['last_name'],
               });
             }
 
