@@ -242,6 +242,12 @@ router.post(
   catchError(ContactCtrl.shareContacts)
 );
 
+router.post(
+  '/load-by-emails',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.loadByEmails)
+);
+
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
