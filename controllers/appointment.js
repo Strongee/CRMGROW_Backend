@@ -1113,8 +1113,8 @@ const edit = async (req, res) => {
           ) {
             const activity = new Activity({
               content: 'updated appointment',
-              contacts: contact._id,
-              appointments: appointment.id,
+              contacts: contact,
+              appointments: appointment._id,
               user: currentUser.id,
               type: 'appointments',
             });
@@ -1123,7 +1123,7 @@ const edit = async (req, res) => {
               .save()
               .then((_activity) => {
                 Contact.updateOne(
-                  { _id: contact._id },
+                  { _id: contact },
                   {
                     $set: { last_activity: _activity.id },
                   }
@@ -1137,7 +1137,7 @@ const edit = async (req, res) => {
           } else {
             const activity = new Activity({
               content: 'added appointment',
-              contacts: contact._id,
+              contacts: contact,
               appointments: appointment.id,
               user: currentUser.id,
               type: 'appointments',
@@ -1146,7 +1146,7 @@ const edit = async (req, res) => {
             activity.save().then((_activity) => {
               Contact.updateOne(
                 {
-                  _id: contact._id,
+                  _id: contact,
                 },
                 {
                   $set: { last_activity: _activity.id },
@@ -1158,6 +1158,10 @@ const edit = async (req, res) => {
           }
         }
       }
+      return res.send({
+        status: true,
+      });
+    } else {
       return res.send({
         status: true,
       });
