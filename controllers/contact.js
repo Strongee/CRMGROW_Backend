@@ -755,6 +755,8 @@ const importCSV = async (req, res) => {
             //   cell_phone: data['phone'],
             //   err: 'Exceed upload max contacts',
             // };
+            console.log('max_upload_count', max_upload_count);
+            console.log('count', count);
             exceed_contacts.push(data);
             resolve();
             return;
