@@ -901,6 +901,15 @@ const bulkText = async (req, res) => {
         }
       );
 
+      text_content = text_content
+        .replace(/{user_name}/gi, currentUser.user_name)
+        .replace(/{user_email}/gi, currentUser.connected_email)
+        .replace(/{user_phone}/gi, currentUser.cell_phone)
+        .replace(/{contact_first_name}/gi, _contact.first_name)
+        .replace(/{contact_last_name}/gi, _contact.last_name)
+        .replace(/{contact_email}/gi, _contact.email)
+        .replace(/{contact_phone}/gi, _contact.cell_phone);
+
       if (video_ids && video_ids.length > 0) {
         let activity_content = 'sent video using sms';
 
