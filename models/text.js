@@ -10,7 +10,7 @@ const TextSchema = new Schema(
     content: String,
     from: String,
     type: Number,
-    status: String,
+    status: Number,
     updated_at: Date,
     created_at: Date,
   },

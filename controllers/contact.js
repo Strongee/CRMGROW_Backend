@@ -764,15 +764,15 @@ const importCSV = async (req, res) => {
             if (data['first_name'] && data['last_name']) {
               query.push({
                 user: currentUser.id,
-                first_name: { $regex: data['first_name'], $options: 'i' },
-                last_name: { $regex: data['last_name'], $options: 'i' },
+                first_name: new RegExp(data['first_name'], 'i'),
+                last_name: new RegExp(data['last_name'], 'i'),
               });
             }
 
             if (data['email']) {
               query.push({
                 user: currentUser.id,
-                email: { $regex: data['email'], $options: 'i' },
+                email: new RegExp(data['email'], 'i'),
               });
             }
 
