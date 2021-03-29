@@ -747,8 +747,7 @@ const importCSV = async (req, res) => {
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
-          console.log('max_upload_count', max_upload_count);
-          console.log('count', count);
+
           if (contact_info['is_limit'] && max_upload_count <= count) {
             // const field = {
             //   id: i,
@@ -777,15 +776,15 @@ const importCSV = async (req, res) => {
             if (data['first_name'] && data['last_name']) {
               query.push({
                 user: currentUser.id,
-                first_name: data['first_name'],
-                last_name: data['last_name'],
+                first_name: { $regex: data['first_name'], $options: 'i' },
+                last_name: { $regex: data['last_name'], $options: 'i' },
               });
             }
 
             if (data['email']) {
               query.push({
                 user: currentUser.id,
-                email: data['email'],
+                email: { $regex: data['email'], $options: 'i' },
               });
             }
 
@@ -906,8 +905,6 @@ const importCSV = async (req, res) => {
             }
             * */
 
-            console.log('max_upload_count', max_upload_count);
-            console.log('count', count);
             if (contact_info['is_limit'] && max_upload_count <= count) {
               exceed_contacts.push(data);
               resolve();
