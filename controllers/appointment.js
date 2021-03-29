@@ -1161,6 +1161,10 @@ const edit = async (req, res) => {
       return res.send({
         status: true,
       });
+    } else {
+      return res.send({
+        status: true,
+      });
     }
   } else {
     return res.status(400).json({

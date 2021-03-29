@@ -4805,6 +4805,7 @@ const loadByEmails = (req, res) => {
     email: { $in: emails },
     user: currentUser._id,
   })
+    .select({ _id: 1, first_name: 1, last_name: 1, email: 1, cell_phone: 1 })
     .then((_contacts) => {
       return res.send({
         status: true,
