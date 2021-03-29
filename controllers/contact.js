@@ -748,20 +748,6 @@ const importCSV = async (req, res) => {
         const promise = new Promise(async (resolve) => {
           const data = contact_array[i];
 
-          if (contact_info['is_limit'] && max_upload_count <= count) {
-            // const field = {
-            //   id: i,
-            //   email: data['email'],
-            //   cell_phone: data['phone'],
-            //   err: 'Exceed upload max contacts',
-            // };
-            console.log('max_upload_count', max_upload_count);
-            console.log('count', count);
-            exceed_contacts.push(data);
-            resolve();
-            return;
-          }
-
           if (data['first_name'] === '') {
             data['first_name'] = null;
           }
