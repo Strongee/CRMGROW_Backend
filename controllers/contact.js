@@ -707,9 +707,9 @@ const bulkUpdate = async (req, res) => {
 const importCSV = async (req, res) => {
   const file = req.file;
   const { currentUser } = req;
-  const duplicate_contacts = [];
+  let duplicate_contacts = [];
   const exceed_contacts = [];
-  const duplicate_contacts_ids = [];
+
   let count = 0;
   let max_upload_count = 0;
   const contact_info = currentUser.contact_info;
@@ -787,7 +787,6 @@ const importCSV = async (req, res) => {
             }
 
             const _duplicate_contacts = await Contact.find({
-              _id: { $nin: duplicate_contacts_ids },
               $or: query,
             })
               .populate('label')
@@ -796,10 +795,9 @@ const importCSV = async (req, res) => {
               });
 
             if (_duplicate_contacts && _duplicate_contacts.length > 0) {
-              for (let j = 0; j < _duplicate_contacts.length; j++) {
-                duplicate_contacts_ids.push(_duplicate_contacts[j].id);
-                duplicate_contacts.push(_duplicate_contacts[j]);
-              }
+              duplicate_contacts = duplicate_contacts.concat(
+                _duplicate_contacts
+              );
 
               duplicate_contacts.push(data);
               resolve();
