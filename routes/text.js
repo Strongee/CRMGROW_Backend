@@ -26,6 +26,12 @@ router.post(
   catchError(TextCtrl.buyNumbers)
 );
 
+router.put(
+  '/mark-read/:id',
+  UserCtrl.checkAuth,
+  catchError(TextCtrl.markAsRead)
+);
+
 router.post('/send/:id', UserCtrl.checkAuth, catchError(TextCtrl.send));
 
 module.exports = router;

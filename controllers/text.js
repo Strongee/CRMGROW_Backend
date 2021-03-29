@@ -834,6 +834,25 @@ const buyCredit = async (req, res) => {
     });
 };
 
+const markAsRead = async (req, res) => {
+  Text.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: {
+        status: 'read',
+      },
+    }
+  ).catch((err) => {
+    console.log('text update err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   getAll,
@@ -845,4 +864,5 @@ module.exports = {
   buyCredit,
   receiveTextSignalWire,
   receiveTextTwilio,
+  markAsRead,
 };
