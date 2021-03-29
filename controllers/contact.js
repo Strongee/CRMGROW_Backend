@@ -4798,6 +4798,27 @@ const shareContacts = async (req, res) => {
     });
 };
 
+const loadByEmails = (req, res) => {
+  const { currentUser } = req;
+  const { emails } = req.body;
+  Contact.find({
+    email: { $in: emails },
+    user: currentUser._id,
+  })
+    .then((_contacts) => {
+      return res.send({
+        status: true,
+        data: _contacts,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4841,4 +4862,5 @@ module.exports = {
   mergeContact,
   // mergeContacts,
   updateContact,
+  loadByEmails,
 };
