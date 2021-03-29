@@ -795,6 +795,10 @@ const importCSV = async (req, res) => {
               });
 
             if (_duplicate_contacts && _duplicate_contacts.length > 0) {
+              console.log(
+                '_duplicate_contacts************',
+                _duplicate_contacts
+              );
               duplicate_contacts = duplicate_contacts.concat(
                 _duplicate_contacts
               );
