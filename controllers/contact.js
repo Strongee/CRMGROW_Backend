@@ -794,9 +794,6 @@ const importCSV = async (req, res) => {
                 console.log('contact find err', err.message);
               });
 
-            if (data['email'] === 'support@crmgrow.com') {
-              console.log('email', contact_array);
-            }
             if (_duplicate_contacts && _duplicate_contacts.length > 0) {
               duplicate_contacts = duplicate_contacts.concat(
                 _duplicate_contacts
