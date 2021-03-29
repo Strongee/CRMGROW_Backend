@@ -888,7 +888,10 @@ const bulkText = async (req, res) => {
     }
 
     for (let i = 0; i < contacts.length; i++) {
-      await sleep(1000);
+      if (i > 0) {
+        await sleep(1000);
+      }
+
       let text_content = content;
       const activities = [];
 
@@ -1080,7 +1083,6 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          await sleep(1000);
           client.messages
             .create({
               from: fromNumber,
@@ -1197,7 +1199,6 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
-          await sleep(1000);
           twilio.messages
             .create({
               from: fromNumber,
