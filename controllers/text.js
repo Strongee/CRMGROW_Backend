@@ -347,8 +347,10 @@ const receiveTextSignalWire = async (req, res) => {
     const phoneNumber = req.body['From'];
 
     const contact = await Contact.findOne({
-      cell_phone: phoneNumber,
-      user: currentUser.id,
+      $or: [
+        { cell_phone: phoneNumber, user: currentUser.id },
+        { cell_phone: phoneNumber, shared_members: currentUser.id },
+      ],
     }).catch((err) => {
       console.log('contact found err sms reply', err);
     });
