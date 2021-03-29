@@ -424,7 +424,7 @@ const create = async (req, res) => {
             contacts: contact.id,
             user: currentUser.id,
             deal_stage: req.body.deal_stage,
-            title: `${contact.first}  Deal`,
+            title: `${contact.first_name}  Deal`,
           });
 
           deal

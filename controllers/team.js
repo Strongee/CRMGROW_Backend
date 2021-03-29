@@ -306,6 +306,8 @@ const update = async (req, res) => {
   let picture;
   if (req.body.picture) {
     picture = await uploadBase64Image(req.body.picture);
+  } else {
+    picture = team.picture;
   }
 
   Team.findOneAndUpdate(
