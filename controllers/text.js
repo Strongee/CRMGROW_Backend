@@ -399,6 +399,7 @@ const receiveTextSignalWire = async (req, res) => {
           user: currentUser.id,
           contacts: contact.id,
           content: text,
+          status: 0,
           type: 1,
         });
 
@@ -511,6 +512,7 @@ const receiveTextTwilio = async (req, res) => {
           user: currentUser.id,
           contacts: contact.id,
           content: text,
+          status: 0,
           type: 1,
         });
 
