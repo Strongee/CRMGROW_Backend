@@ -1111,14 +1111,9 @@ const edit = async (req, res) => {
             appointment.contacts &&
             appointment.contacts.indexOf(contact) !== -1
           ) {
-            console.log(
-              'update appointment activity register',
-              contact,
-              appointment.contacts
-            );
             const activity = new Activity({
               content: 'updated appointment',
-              contacts: contact._id,
+              contacts: contact,
               appointments: appointment._id,
               user: currentUser.id,
               type: 'appointments',
@@ -1127,9 +1122,8 @@ const edit = async (req, res) => {
             activity
               .save()
               .then((_activity) => {
-                console.log('activty is saved newly for update appointment');
                 Contact.updateOne(
-                  { _id: contact._id },
+                  { _id: contact },
                   {
                     $set: { last_activity: _activity.id },
                   }
@@ -1141,14 +1135,9 @@ const edit = async (req, res) => {
                 console.log('activity save err', err.message);
               });
           } else {
-            console.log(
-              'new contact is added to this appointment',
-              contact,
-              appointment.contacts
-            );
             const activity = new Activity({
               content: 'added appointment',
-              contacts: contact._id,
+              contacts: contact,
               appointments: appointment.id,
               user: currentUser.id,
               type: 'appointments',
@@ -1157,7 +1146,7 @@ const edit = async (req, res) => {
             activity.save().then((_activity) => {
               Contact.updateOne(
                 {
-                  _id: contact._id,
+                  _id: contact,
                 },
                 {
                   $set: { last_activity: _activity.id },
