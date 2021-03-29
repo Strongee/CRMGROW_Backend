@@ -796,10 +796,10 @@ const importCSV = async (req, res) => {
               });
 
             if (_duplicate_contacts && _duplicate_contacts.length > 0) {
-              _duplicate_contacts.forEach((contact) => {
-                duplicate_contacts_ids.push(contact.id);
-                duplicate_contacts.push(contact);
-              });
+              for (let j = 0; j < _duplicate_contacts.length; j++) {
+                duplicate_contacts_ids.push(_duplicate_contacts[j].id);
+                duplicate_contacts.push(_duplicate_contacts[j]);
+              }
 
               duplicate_contacts.push(data);
               resolve();
