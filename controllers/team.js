@@ -705,10 +705,30 @@ const shareVideos = async (req, res) => {
     }
   )
     .then(async (_data) => {
+      const data = [];
       const updatedVideos = await Video.find({ _id: { $in: newTeamVideos } });
+
+      for (let i = 0; i < updatedVideos.length; i++) {
+        const video = updatedVideos[i];
+        if (video) {
+          const views = await VideoTracker.countDocuments({
+            video: video.id,
+            user: currentUser.id,
+          });
+
+          const video_detail = {
+            ...video._doc,
+            views,
+            material_type: 'video',
+          };
+
+          data.push(video_detail);
+        }
+      }
+
       res.send({
         status: true,
-        data: updatedVideos,
+        data,
       });
     })
     .catch((err) => {
@@ -1430,40 +1450,42 @@ const requestCall = async (req, res) => {
         let guests = '';
         if (contacts) {
           for (let i = 0; i < contacts.length; i++) {
-            const first_name = contacts[i].first_name || '';
-            const last_name = contacts[i].last_name || '';
-            const data = {
-              first_name,
-              last_name,
-            };
+            if (contacts[i]) {
+              const first_name = contacts[i].first_name || '';
+              const last_name = contacts[i].last_name || '';
+              const data = {
+                first_name,
+                last_name,
+              };
 
-            const new_activity = new Activity({
-              team_calls: team_call.id,
-              user: currentUser.id,
-              contacts: contacts[i].id,
-              content: 'inquire group call',
-              type: 'team_calls',
-            });
+              const new_activity = new Activity({
+                team_calls: team_call.id,
+                user: currentUser.id,
+                contacts: contacts[i].id,
+                content: 'inquire group call',
+                type: 'team_calls',
+              });
 
-            new_activity.save().catch((err) => {
-              console.log('activity save err', err.message);
-            });
+              new_activity.save().catch((err) => {
+                console.log('activity save err', err.message);
+              });
 
-            Contact.updateOne(
-              {
-                _id: contacts[i].id,
-              },
-              {
-                $set: { last_activity: new_activity.id },
-              }
-            ).catch((err) => {
-              console.log('contact update err', err.message);
-            });
+              Contact.updateOne(
+                {
+                  _id: contacts[i].id,
+                },
+                {
+                  $set: { last_activity: new_activity.id },
+                }
+              ).catch((err) => {
+                console.log('contact update err', err.message);
+              });
 
-            const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-              data
-            )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
-            guests += guest;
+              const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+                data
+              )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+              guests += guest;
+            }
           }
         }
 

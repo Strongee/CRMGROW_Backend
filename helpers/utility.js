@@ -1,7 +1,7 @@
 const getAvatarName = (data) => {
   let { first_name, last_name } = data;
   const { full_name } = data;
-  if (!first_name) {
+  if (full_name) {
     first_name = full_name.split(' ')[0];
     last_name = full_name.split(' ')[1] || '';
   }
