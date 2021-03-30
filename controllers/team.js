@@ -1995,6 +1995,7 @@ const getLeaders = (req, res) => {
       },
     ])
     .then((data) => {
+      console.log('data', data);
       let users = [];
       data.forEach((e) => {
         if (users.length) {
