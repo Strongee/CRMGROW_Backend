@@ -1995,13 +1995,12 @@ const getLeaders = (req, res) => {
       },
     ])
     .then((data) => {
-      console.log('data', data);
       let users = [];
       data.forEach((e) => {
         if (users.length) {
-          users = [...e.editors, ...e.owner];
-        } else {
           users = [...users, ...e.editors, ...e.owner];
+        } else {
+          users = [...e.editors, ...e.owner];
         }
       });
       return res.send({
