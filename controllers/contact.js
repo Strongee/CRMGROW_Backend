@@ -746,64 +746,65 @@ const importCSV = async (req, res) => {
       }
       for (let i = 0; i < contact_array.length; i++) {
         const promise = new Promise(async (resolve) => {
-          const data = contact_array[i];
+          try {
+            const data = contact_array[i];
 
-          if (data['first_name'] === '') {
-            data['first_name'] = null;
-          }
-          if (data['email'] === '') {
-            data['email'] = null;
-          }
-          if (data['cell_phone'] === '') {
-            data['cell_phone'] = null;
-          }
-          if (data['first_name'] || data['email'] || data['cell_phone']) {
-            let cell_phone;
-            const query = [];
-
-            if (data['first_name'] && data['last_name']) {
-              query.push({
-                user: currentUser.id,
-                first_name: data['first_name'],
-                last_name: data['last_name'],
-              });
+            if (data['first_name'] === '') {
+              data['first_name'] = null;
             }
-
-            if (data['email']) {
-              query.push({
-                user: currentUser.id,
-                email: new RegExp(data['email'], 'i'),
-              });
+            if (data['email'] === '') {
+              data['email'] = null;
             }
+            if (data['cell_phone'] === '') {
+              data['cell_phone'] = null;
+            }
+            if (data['first_name'] || data['email'] || data['cell_phone']) {
+              let cell_phone;
+              const query = [];
 
-            if (data['cell_phone']) {
-              cell_phone = phone(data['cell_phone'])[0];
-              if (cell_phone) {
+              if (data['first_name'] && data['last_name']) {
                 query.push({
                   user: currentUser.id,
-                  cell_phone,
+                  first_name: data['first_name'],
+                  last_name: data['last_name'],
                 });
               }
-            }
 
-            const _duplicate_contacts = await Contact.find({
-              $or: query,
-            })
-              .populate('label')
-              .catch((err) => {
-                console.log('contact find err', err.message);
-              });
+              if (data['email']) {
+                query.push({
+                  user: currentUser.id,
+                  email: new RegExp(data['email'], 'i'),
+                });
+              }
 
-            if (_duplicate_contacts && _duplicate_contacts.length > 0) {
-              duplicate_contacts = duplicate_contacts.concat(
-                _duplicate_contacts
-              );
+              if (data['cell_phone']) {
+                cell_phone = phone(data['cell_phone'])[0];
+                if (cell_phone) {
+                  query.push({
+                    user: currentUser.id,
+                    cell_phone,
+                  });
+                }
+              }
 
-              duplicate_contacts.push(data);
-              resolve();
-              return;
-            }
-            /**
+              const _duplicate_contacts = await Contact.find({
+                $or: query,
+              })
+                .populate('label')
+                .catch((err) => {
+                  console.log('contact find err', err.message);
+                });
+
+              if (_duplicate_contacts && _duplicate_contacts.length > 0) {
+                duplicate_contacts = duplicate_contacts.concat(
+                  _duplicate_contacts
+                );
+
+                duplicate_contacts.push(data);
+                resolve();
+                return;
+              }
+              /**
             const name_contact = await Contact.find({
               first_name: data['first_name'],
               last_name: data['last_name'],
@@ -891,124 +892,132 @@ const importCSV = async (req, res) => {
             }
             * */
 
-            if (contact_info['is_limit'] && max_upload_count <= count) {
-              exceed_contacts.push(data);
-              resolve();
-              return;
-            }
-            count += 1;
-
-            let tags = [];
-            if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
-              tags = data['tags'].split(/,\s|\s,|,|\s/);
-            }
-            let label;
-
-            if (data['label'] !== '' && typeof data['label'] !== 'undefined') {
-              for (let i = 0; i < labels.length; i++) {
-                if (capitalize(labels[i].name) === capitalize(data['label'])) {
-                  label = labels[i]._id;
-                  break;
-                }
+              if (contact_info['is_limit'] && max_upload_count <= count) {
+                exceed_contacts.push(data);
+                resolve();
+                return;
               }
+              count += 1;
 
-              if (!label) {
-                const new_label = new Label({
-                  user: currentUser.id,
-                  name: data['label'],
-                });
-
-                new_label.save().catch((err) => {
-                  console.log('new label save err', err.message);
-                });
-                label = new_label.id;
-                labels.push({
-                  _id: label,
-                  name: data['label'],
-                });
+              let tags = [];
+              if (data['tags'] !== '' && typeof data['tags'] !== 'undefined') {
+                tags = data['tags'].split(/,\s|\s,|,|\s/);
               }
-            }
+              let label;
 
-            delete data.label;
-            delete data.tags;
-
-            const contact = new Contact({
-              ...data,
-              tags,
-              label,
-              cell_phone,
-              user: currentUser.id,
-            });
-
-            contact
-              .save()
-              .then((_contact) => {
-                const activity = new Activity({
-                  content: add_content,
-                  contacts: _contact.id,
-                  user: currentUser.id,
-                  type: 'contacts',
-                });
-                activity
-                  .save()
-                  .then((_activity) => {
-                    Contact.updateOne(
-                      { _id: _contact.id },
-                      {
-                        $set: { last_activity: _activity.id },
-                      }
-                    ).catch((err) => {
-                      console.log('err', err);
-                    });
-                  })
-                  .catch((err) => {
-                    console.log('err', err);
-                  });
-
-                if (data['notes'] && data['notes'].length > 0) {
-                  const notes = JSON.parse(data['notes']);
-                  // const notes = data['notes'];
-                  for (let i = 0; i < notes.length; i++) {
-                    // const { content, title } = notes[i];
-                    const content = notes[i];
-                    const note = new Note({
-                      content,
-                      contact: _contact.id,
-                      user: currentUser.id,
-                    });
-
-                    note.save().then((_note) => {
-                      const _activity = new Activity({
-                        content: note_content,
-                        contacts: _contact.id,
-                        user: currentUser.id,
-                        type: 'notes',
-                        notes: _note.id,
-                      });
-
-                      _activity
-                        .save()
-                        .then((__activity) => {
-                          Contact.updateOne(
-                            { _id: _contact.id },
-                            { $set: { last_activity: __activity.id } }
-                          ).catch((err) => {
-                            console.log('err', err);
-                          });
-                        })
-                        .catch((err) => {
-                          console.log('error', err);
-                        });
-                    });
+              if (
+                data['label'] !== '' &&
+                typeof data['label'] !== 'undefined'
+              ) {
+                for (let i = 0; i < labels.length; i++) {
+                  if (
+                    capitalize(labels[i].name) === capitalize(data['label'])
+                  ) {
+                    label = labels[i]._id;
+                    break;
                   }
                 }
-                resolve();
-              })
-              .catch((err) => {
-                console.log('contact save err', err);
+
+                if (!label) {
+                  const new_label = new Label({
+                    user: currentUser.id,
+                    name: data['label'],
+                  });
+
+                  new_label.save().catch((err) => {
+                    console.log('new label save err', err.message);
+                  });
+                  label = new_label.id;
+                  labels.push({
+                    _id: label,
+                    name: data['label'],
+                  });
+                }
+              }
+
+              delete data.label;
+              delete data.tags;
+
+              const contact = new Contact({
+                ...data,
+                tags,
+                label,
+                cell_phone,
+                user: currentUser.id,
               });
-          } else {
-            resolve();
+
+              contact
+                .save()
+                .then((_contact) => {
+                  const activity = new Activity({
+                    content: add_content,
+                    contacts: _contact.id,
+                    user: currentUser.id,
+                    type: 'contacts',
+                  });
+                  activity
+                    .save()
+                    .then((_activity) => {
+                      Contact.updateOne(
+                        { _id: _contact.id },
+                        {
+                          $set: { last_activity: _activity.id },
+                        }
+                      ).catch((err) => {
+                        console.log('err', err);
+                      });
+                    })
+                    .catch((err) => {
+                      console.log('err', err);
+                    });
+
+                  if (data['notes'] && data['notes'].length > 0) {
+                    const notes = JSON.parse(data['notes']);
+                    // const notes = data['notes'];
+                    for (let i = 0; i < notes.length; i++) {
+                      // const { content, title } = notes[i];
+                      const content = notes[i];
+                      const note = new Note({
+                        content,
+                        contact: _contact.id,
+                        user: currentUser.id,
+                      });
+
+                      note.save().then((_note) => {
+                        const _activity = new Activity({
+                          content: note_content,
+                          contacts: _contact.id,
+                          user: currentUser.id,
+                          type: 'notes',
+                          notes: _note.id,
+                        });
+
+                        _activity
+                          .save()
+                          .then((__activity) => {
+                            Contact.updateOne(
+                              { _id: _contact.id },
+                              { $set: { last_activity: __activity.id } }
+                            ).catch((err) => {
+                              console.log('err', err);
+                            });
+                          })
+                          .catch((err) => {
+                            console.log('error', err);
+                          });
+                      });
+                    }
+                  }
+                  resolve();
+                })
+                .catch((err) => {
+                  console.log('contact save err', err);
+                });
+            } else {
+              resolve();
+            }
+          } catch (err) {
+            console.log('contact import csv internal err', err);
           }
         });
         promise_array.push(promise);
