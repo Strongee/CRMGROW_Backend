@@ -843,7 +843,7 @@ const markAsRead = async (req, res) => {
     },
     {
       $set: {
-        status: 'read',
+        status: 1,
       },
     }
   ).catch((err) => {
