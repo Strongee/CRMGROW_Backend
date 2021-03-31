@@ -39,7 +39,7 @@ const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
-const { getAvatarName } = require('../helpers/utility');
+const { getAvatarName, validateEmail } = require('../helpers/utility');
 const { contacts } = require('node-outlook');
 
 const accountSid = api.TWILIO.TWILIO_SID;
@@ -770,7 +770,7 @@ const importCSV = async (req, res) => {
                 });
               }
 
-              if (data['email']) {
+              if (data['email'] && validateEmail(data['email'])) {
                 query.push({
                   user: currentUser.id,
                   email: new RegExp(data['email'], 'i'),
