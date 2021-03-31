@@ -790,11 +790,29 @@ const sharePdfs = async (req, res) => {
       },
     }
   )
-    .then(async (data) => {
+    .then(async (_data) => {
+      const data = [];
+
       const updatedPdfs = await PDF.find({ _id: { $in: newTeamPdfs } });
-      res.send({
+      for (let i = 0; i < updatedPdfs.length; i++) {
+        const pdf = updatedPdfs[i];
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf.id,
+          user: currentUser.id,
+        });
+
+        const video_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'video',
+        };
+
+        data.push(video_detail);
+      }
+
+      return res.send({
         status: true,
-        data: updatedPdfs,
+        data,
       });
     })
     .catch((err) => {
@@ -1098,6 +1116,10 @@ const requestTeam = async (req, res) => {
 
   for (let i = 0; i < senders.length; i++) {
     const sender = senders[i];
+
+    /**
+     *
+     */
     const msg = {
       to: sender.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -2430,7 +2452,17 @@ const getAllSharedContacts = async (req, res) => {
   const { currentUser } = req;
 
   const contacts = await Contact.find({
-    shared_members: currentUser.id,
+    $or: [
+      {
+        shared_members: currentUser.id,
+        shared_team: req.body.team,
+      },
+      {
+        shared_contact: true,
+        user: currentUser.id,
+        shared_team: req.body.team,
+      },
+    ],
   }).select({
     _id: 1,
     first_name: 1,
