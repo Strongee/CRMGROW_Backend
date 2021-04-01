@@ -705,10 +705,30 @@ const shareVideos = async (req, res) => {
     }
   )
     .then(async (_data) => {
+      const data = [];
       const updatedVideos = await Video.find({ _id: { $in: newTeamVideos } });
+
+      for (let i = 0; i < updatedVideos.length; i++) {
+        const video = updatedVideos[i];
+        if (video) {
+          const views = await VideoTracker.countDocuments({
+            video: video.id,
+            user: currentUser.id,
+          });
+
+          const video_detail = {
+            ...video._doc,
+            views,
+            material_type: 'video',
+          };
+
+          data.push(video_detail);
+        }
+      }
+
       res.send({
         status: true,
-        data: updatedVideos,
+        data,
       });
     })
     .catch((err) => {
@@ -770,11 +790,29 @@ const sharePdfs = async (req, res) => {
       },
     }
   )
-    .then(async (data) => {
+    .then(async (_data) => {
+      const data = [];
+
       const updatedPdfs = await PDF.find({ _id: { $in: newTeamPdfs } });
-      res.send({
+      for (let i = 0; i < updatedPdfs.length; i++) {
+        const pdf = updatedPdfs[i];
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf.id,
+          user: currentUser.id,
+        });
+
+        const video_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'video',
+        };
+
+        data.push(video_detail);
+      }
+
+      return res.send({
         status: true,
-        data: updatedPdfs,
+        data,
       });
     })
     .catch((err) => {
@@ -1078,6 +1116,10 @@ const requestTeam = async (req, res) => {
 
   for (let i = 0; i < senders.length; i++) {
     const sender = senders[i];
+
+    /**
+     *
+     */
     const msg = {
       to: sender.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -1430,40 +1472,42 @@ const requestCall = async (req, res) => {
         let guests = '';
         if (contacts) {
           for (let i = 0; i < contacts.length; i++) {
-            const first_name = contacts[i].first_name || '';
-            const last_name = contacts[i].last_name || '';
-            const data = {
-              first_name,
-              last_name,
-            };
+            if (contacts[i]) {
+              const first_name = contacts[i].first_name || '';
+              const last_name = contacts[i].last_name || '';
+              const data = {
+                first_name,
+                last_name,
+              };
 
-            const new_activity = new Activity({
-              team_calls: team_call.id,
-              user: currentUser.id,
-              contacts: contacts[i].id,
-              content: 'inquire group call',
-              type: 'team_calls',
-            });
+              const new_activity = new Activity({
+                team_calls: team_call.id,
+                user: currentUser.id,
+                contacts: contacts[i].id,
+                content: 'inquire group call',
+                type: 'team_calls',
+              });
 
-            new_activity.save().catch((err) => {
-              console.log('activity save err', err.message);
-            });
+              new_activity.save().catch((err) => {
+                console.log('activity save err', err.message);
+              });
 
-            Contact.updateOne(
-              {
-                _id: contacts[i].id,
-              },
-              {
-                $set: { last_activity: new_activity.id },
-              }
-            ).catch((err) => {
-              console.log('contact update err', err.message);
-            });
+              Contact.updateOne(
+                {
+                  _id: contacts[i].id,
+                },
+                {
+                  $set: { last_activity: new_activity.id },
+                }
+              ).catch((err) => {
+                console.log('contact update err', err.message);
+              });
 
-            const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-              data
-            )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
-            guests += guest;
+              const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+                data
+              )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+              guests += guest;
+            }
           }
         }
 
@@ -1998,9 +2042,9 @@ const getLeaders = (req, res) => {
       let users = [];
       data.forEach((e) => {
         if (users.length) {
-          users = [...e.editors, ...e.owner];
-        } else {
           users = [...users, ...e.editors, ...e.owner];
+        } else {
+          users = [...e.editors, ...e.owner];
         }
       });
       return res.send({
@@ -2408,7 +2452,17 @@ const getAllSharedContacts = async (req, res) => {
   const { currentUser } = req;
 
   const contacts = await Contact.find({
-    shared_members: currentUser.id,
+    $or: [
+      {
+        shared_members: currentUser.id,
+        shared_team: req.body.team,
+      },
+      {
+        shared_contact: true,
+        user: currentUser.id,
+        shared_team: req.body.team,
+      },
+    ],
   }).select({
     _id: 1,
     first_name: 1,

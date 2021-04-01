@@ -18,7 +18,7 @@ router.get(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getInvitedTeam)
 );
-router.get(
+router.post(
   '/get-all',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.getAllSharedContacts)

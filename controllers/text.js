@@ -399,6 +399,7 @@ const receiveTextSignalWire = async (req, res) => {
           user: currentUser.id,
           contacts: contact.id,
           content: text,
+          status: 0,
           type: 1,
         });
 
@@ -511,6 +512,7 @@ const receiveTextTwilio = async (req, res) => {
           user: currentUser.id,
           contacts: contact.id,
           content: text,
+          status: 0,
           type: 1,
         });
 
@@ -834,6 +836,25 @@ const buyCredit = async (req, res) => {
     });
 };
 
+const markAsRead = async (req, res) => {
+  Text.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: {
+        status: 1,
+      },
+    }
+  ).catch((err) => {
+    console.log('text update err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 module.exports = {
   get,
   getAll,
@@ -845,4 +866,5 @@ module.exports = {
   buyCredit,
   receiveTextSignalWire,
   receiveTextTwilio,
+  markAsRead,
 };
