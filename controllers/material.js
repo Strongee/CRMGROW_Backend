@@ -1023,7 +1023,7 @@ const bulkText = async (req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
-            images: imag.id,
+            images: image.id,
           });
 
           activity.save().catch((err) => {
