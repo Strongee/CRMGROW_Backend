@@ -572,6 +572,7 @@ const outlookCalendarList = (calendar_data) => {
 const create = async (req, res) => {
   const { currentUser } = req;
   let event_id;
+  let recurrence_id;
 
   // if (!req.body.contacts) {
   //   return res.status(400).json({
@@ -604,128 +605,13 @@ const create = async (req, res) => {
       : system_settings.TIME_ZONE;
 
     if (calendar.connected_calendar_type === 'outlook') {
-      const attendees = [];
-      if (_appointment.guests) {
-        for (let j = 0; j < _appointment.guests.length; j++) {
-          const addendee = {
-            emailAddress: {
-              Address: _appointment.guests[j],
-            },
-          };
-          attendees.push(addendee);
-        }
-      }
-      // if (_appointment.contacts) {
-      //   const contacts = await Contact.find({
-      //     _id: _appointment.contacts,
-      //   }).catch((err) => {
-      //     console.log('appointment contacts find err', err.messages);
-      //   });
-      //   for (let j = 0; j < contacts.length; j++) {
-      //     if (contacts[j].email) {
-      //       const addendee = {
-      //         emailAddress: {
-      //           Address: contacts[j].email,
-      //         },
-      //       };
-      //       attendees.push(addendee);
-      //     }
-      //   }
-      // }
-      let recurrence;
-      if (_appointment.recurrence) {
-        let type;
-        let daysOfWeek;
-        let dayOfMonth;
-        switch (_appointment.recurrence) {
-          case 'DAILY':
-            type = 'daily';
-            break;
-          case 'WEEKLY':
-            type = 'weekly';
-            daysOfWeek = [days[moment(_appointment.due_start).day()]];
-            break;
-          case 'MONTHLY':
-            type = 'absoluteMonthly';
-            dayOfMonth = moment(_appointment.due_start).date();
-            break;
-          default:
-            console.log('no matching');
-        }
-
-        recurrence = {
-          pattern: {
-            type,
-            interval: 1,
-            daysOfWeek,
-            dayOfMonth,
-          },
-          range: {
-            type: 'noEnd',
-            startDate: moment(_appointment.due_start).format('YYYY-MM-DD'),
-          },
-        };
-      }
-
-      const newEvent = {
-        subject: _appointment.title,
-        body: {
-          contentType: 'HTML',
-          content: _appointment.description,
-        },
-        location: {
-          displayName: _appointment.location,
-        },
-        start: {
-          dateTime: _appointment.due_start,
-          timeZone: ctz,
-        },
-        end: {
-          dateTime: _appointment.due_end,
-          timeZone: ctz,
-        },
-        attendees,
-        recurrence,
-      };
-
-      let accessToken;
-      const token = oauth2.accessToken.create({
-        refresh_token: calendar.outlook_refresh_token,
-        expires_in: 0,
-      });
-
-      await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result.token);
-          }
-        });
-      })
-        .then((token) => {
-          accessToken = token.access_token;
-        })
-        .catch((error) => {
-          console.log('error', error);
-          return res.status(406).send({
-            status: false,
-            error: 'not connected',
-          });
-        });
-
-      const client = graph.Client.init({
-        // Use the provided access token to authenticate
-        // requests
-        authProvider: (done) => {
-          done(null, accessToken);
-        },
-      });
-
-      const new_event = await client
-        .api(`/me/calendars/${calendar_id}/events`)
-        .post(newEvent);
-      event_id = new_event.id;
+      const { new_event_id, new_recurrence_id } = await addOutlookCalendarById(
+        ctz,
+        _appointment,
+        calendar
+      );
+      event_id = new_event_id;
+      recurrence_id = new_recurrence_id;
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -734,7 +620,13 @@ const create = async (req, res) => {
       );
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      event_id = await addGoogleCalendarById(oauth2Client, ctz, _appointment);
+      const { new_event_id, new_recurrence_id } = await addGoogleCalendarById(
+        oauth2Client,
+        ctz,
+        _appointment
+      );
+      event_id = new_event_id;
+      recurrence_id = new_recurrence_id;
     }
 
     if (req.body.contacts) {
@@ -849,7 +741,10 @@ const addGoogleCalendarById = async (auth, ctz, appointment) => {
           );
           reject(err);
         }
-        resolve(event.data.id);
+        resolve({
+          event_id: event.data.id,
+          recurrence_id: event.data.recurringEventId,
+        });
       }
     );
   });
@@ -959,7 +854,7 @@ const addOutlookCalendarById = async (ctz, appointment, calendar) => {
     const new_event = await client
       .api(`/me/calendars/${appointment.calendar_id}/events`)
       .post(newEvent);
-    resolve(new_event.id);
+    resolve({ event_id: new_event.id, recurrence_id: '' });
   });
 };
 

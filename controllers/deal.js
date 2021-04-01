@@ -1043,6 +1043,7 @@ const createAppointment = async (req, res) => {
   const { contacts } = req.body;
 
   let event_id;
+  let recurrence_id;
 
   if (currentUser.calendar_connected) {
     const _appointment = req.body;
@@ -1068,7 +1069,13 @@ const createAppointment = async (req, res) => {
       : system_settings.TIME_ZONE;
 
     if (calendar.connected_calendar_type === 'outlook') {
-      event_id = addOutlookCalendarById(ctz, _appointment, calendar);
+      const { new_event_id, new_recurrence_id } = await addOutlookCalendarById(
+        ctz,
+        _appointment,
+        calendar
+      );
+      event_id = new_event_id;
+      recurrence_id = new_recurrence_id;
     } else {
       const oauth2Client = new google.auth.OAuth2(
         api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
@@ -1077,7 +1084,13 @@ const createAppointment = async (req, res) => {
       );
       const token = JSON.parse(calendar.google_refresh_token);
       oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-      event_id = await addGoogleCalendarById(oauth2Client, ctz, _appointment);
+      const { new_event_id, new_recurrence_id } = await addGoogleCalendarById(
+        oauth2Client,
+        ctz,
+        _appointment
+      );
+      event_id = new_event_id;
+      recurrence_id = new_recurrence_id;
     }
 
     const deal_data = { ...req.body };
