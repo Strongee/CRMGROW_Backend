@@ -15,6 +15,7 @@ const AppointmentSchema = new Schema(
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     guests: Array,
     event_id: String,
+    recurrence_id: String,
     deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     shared_appointment: {
       type: mongoose.Schema.Types.ObjectId,
