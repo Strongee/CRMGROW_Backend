@@ -25,6 +25,7 @@ const ses = new AWS.SES({
 });
 
 const { RestClient } = require('@signalwire/node');
+const VideoTracker = require('../models/video_tracker');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -855,6 +856,22 @@ const markAsRead = async (req, res) => {
   });
 };
 
+const loadFiles = async (req, res) => {
+  const { currentUser } = req;
+  const { activities, contact } = req.body;
+
+  VideoTracker.find({ contact, activity: { $in: activities } })
+    .populate({
+      path: 'video',
+    })
+    .then((videos) => {
+      return res.send({
+        status: true,
+        data: videos,
+      });
+    });
+};
+
 module.exports = {
   get,
   getAll,
@@ -867,4 +884,5 @@ module.exports = {
   receiveTextSignalWire,
   receiveTextTwilio,
   markAsRead,
+  loadFiles,
 };
