@@ -10,7 +10,7 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
-
+const phone = require('phone');
 mongoose.set('useCreateIndex', true);
 mongoose
   .connect(DB_PORT, { useNewUrlParser: true })
@@ -94,4 +94,13 @@ const sendSMS = () => {
 };
 
 // twilioNumber();
-sendSMS();
+// sendSMS();
+
+const validatePhone = (data) => {
+  const validate = phone(data);
+  console.log('validate', validate);
+};
+
+// +44 1494 506206
+// +44 7911 123456
+validatePhone('7758158669');

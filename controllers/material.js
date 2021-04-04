@@ -1023,7 +1023,7 @@ const bulkText = async (req, res) => {
             contacts: contacts[i],
             user: currentUser.id,
             type: 'images',
-            images: imag.id,
+            images: image.id,
           });
 
           activity.save().catch((err) => {
@@ -1247,7 +1247,10 @@ const bulkText = async (req, res) => {
                 Activity.updateMany(
                   { _id: { $in: activities } },
                   {
-                    $set: { status: 'pending' },
+                    $set: {
+                      status: 'pending',
+                      texts: text.id,
+                    },
                   }
                 ).catch((err) => {
                   console.log('activity err', err.message);
@@ -1271,6 +1274,18 @@ const bulkText = async (req, res) => {
                   `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                   text_content
                 );
+
+                Activity.updateMany(
+                  { _id: { $in: activities } },
+                  {
+                    $set: {
+                      texts: text.id,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('activity err', err.message);
+                });
+
                 Contact.updateOne(
                   { _id: contacts[i] },
                   {
