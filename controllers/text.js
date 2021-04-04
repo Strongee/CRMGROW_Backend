@@ -861,9 +861,7 @@ const loadFiles = async (req, res) => {
   const { activities, contact } = req.body;
 
   VideoTracker.find({ contact, activity: { $in: activities } })
-    .populate({
-      path: 'video',
-    })
+    .populate([{ path: 'video' }, { path: 'pdf' }, { path: 'image' }])
     .then((videos) => {
       return res.send({
         status: true,
