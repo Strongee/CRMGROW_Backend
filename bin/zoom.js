@@ -3,9 +3,9 @@ const request = require('request-promise');
 const CLIENT_ID = 'mQgAEHmITMuvlvr0HInkQ';
 const CLIENT_SECRET = 'fLvXkKXaVX01h2niehMmYpC5tkibfTc2';
 const ACCESS_TOKEN =
-  'eyJhbGciOiJIUzUxMiIsInYiOiIyLjAiLCJraWQiOiIwNGI0MWJkNC0wYjhjLTRlMzEtOTQyOS0wYjI5Mzk0NjA1ZDcifQ.eyJ2ZXIiOjcsImF1aWQiOiIyYmUxOTRmMGE4MzRmYzdhZjFkOGYzOTQyMTgwMmYyMyIsImNvZGUiOiJrRzlndW1PeHJsXzhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJpc3MiOiJ6bTpjaWQ6bVFnQUVIbUlUTXV2bHZyMEhJbmtRIiwiZ25vIjowLCJ0eXBlIjowLCJ0aWQiOjAsImF1ZCI6Imh0dHBzOi8vb2F1dGguem9vbS51cyIsInVpZCI6IjhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJuYmYiOjE2MTc1NTg4NzYsImV4cCI6MTYxNzU2MjQ3NiwiaWF0IjoxNjE3NTU4ODc2LCJhaWQiOiJzSkFtUUwyZlF5R1NycVlZRk02UURBIiwianRpIjoiNDE1M2E1YWQtNTYwNi00ZDZkLWIxNjgtYzViNGY3ZGQ3ZjM4In0.SAQLMxy_n2piPYnbBuzXwl5gyISrKllJPu8T1TCtiMYcCdGD5cOWnSpBrx3AXEAcHEbR6fx0u8gVThFsHKCQvw';
+  'eyJhbGciOiJIUzUxMiIsInYiOiIyLjAiLCJraWQiOiI2MWU4ZWRlYi00M2U4LTQyZWItYmMwZC0yZTYzMTk0ODVkNGIifQ.eyJ2ZXIiOjcsImF1aWQiOiIyYWE1MjljODJhZjdhYzVkMjI3NjJkM2FkZTA2MDRiMSIsImNvZGUiOiI3cmptTzhoa0xiXzhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJpc3MiOiJ6bTpjaWQ6bVFnQUVIbUlUTXV2bHZyMEhJbmtRIiwiZ25vIjowLCJ0eXBlIjowLCJ0aWQiOjAsImF1ZCI6Imh0dHBzOi8vb2F1dGguem9vbS51cyIsInVpZCI6IjhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJuYmYiOjE2MTc2MDM2MDcsImV4cCI6MTYxNzYwNzIwNywiaWF0IjoxNjE3NjAzNjA3LCJhaWQiOiJzSkFtUUwyZlF5R1NycVlZRk02UURBIiwianRpIjoiYmQ4MWY3MWYtYzY4MC00ZWRhLWE5ZmMtMGE1Y2U4NjE3MjM1In0.i6WUjPgtsn6xVRdXmUX_JY6_Bjo3fmNfaQy1Xa7nRrjXYUeV5Ry52LAJjcxl604ez4nleVRbfVQsRe59Nol9Vg';
 const REFRESH_TOKEN =
-  'eyJhbGciOiJIUzUxMiIsInYiOiIyLjAiLCJraWQiOiI1ZjFhOGJhMy00MzU3LTQ2NzAtYWRiNC0xZjJmNGRjODgzZTQifQ.eyJ2ZXIiOjcsImF1aWQiOiIyYmUxOTRmMGE4MzRmYzdhZjFkOGYzOTQyMTgwMmYyMyIsImNvZGUiOiJrRzlndW1PeHJsXzhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJpc3MiOiJ6bTpjaWQ6bVFnQUVIbUlUTXV2bHZyMEhJbmtRIiwiZ25vIjowLCJ0eXBlIjoxLCJ0aWQiOjAsImF1ZCI6Imh0dHBzOi8vb2F1dGguem9vbS51cyIsInVpZCI6IjhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJuYmYiOjE2MTc1NTg4NzYsImV4cCI6MjA5MDU5ODg3NiwiaWF0IjoxNjE3NTU4ODc2LCJhaWQiOiJzSkFtUUwyZlF5R1NycVlZRk02UURBIiwianRpIjoiODZlNDEwYWItZDdhZi00ZDgzLThlMjAtYTYzN2IwNGMwYTgzIn0.h6dltv5f4sg-QFnyAv47SjB6cIS2zqQp9SfpeIfQ9zDWIC58ILD2DNmqUeKaoF2LKYGlv4Jy9KaA5uWWh7R1PQ';
+  'eyJhbGciOiJIUzUxMiIsInYiOiIyLjAiLCJraWQiOiJkNWZmYmEwZC1iMGI1LTQyNzQtODJlOS0wNmExMjBmOTlmODAifQ.eyJ2ZXIiOjcsImF1aWQiOiIyYWE1MjljODJhZjdhYzVkMjI3NjJkM2FkZTA2MDRiMSIsImNvZGUiOiI3cmptTzhoa0xiXzhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJpc3MiOiJ6bTpjaWQ6bVFnQUVIbUlUTXV2bHZyMEhJbmtRIiwiZ25vIjowLCJ0eXBlIjoxLCJ0aWQiOjAsImF1ZCI6Imh0dHBzOi8vb2F1dGguem9vbS51cyIsInVpZCI6IjhuR0txMUl5UldDSWRhNV83Vm15Y3ciLCJuYmYiOjE2MTc2MDM2MDcsImV4cCI6MjA5MDY0MzYwNywiaWF0IjoxNjE3NjAzNjA3LCJhaWQiOiJzSkFtUUwyZlF5R1NycVlZRk02UURBIiwianRpIjoiYjgyOWFhNWMtMDdiMi00OGQ1LTlhYzItMzU2YmRiNTYzZDYwIn0.yxBPkV1d7fBnWlCGi8IbP9RT39ZKbsVtCgBgQ2NEV_SZwxBjkjzbS_x8MK5I8zuBBUl6f3KD1SLttTDloqP2IA';
 
 const requestAuth = () => {
   var options = {
@@ -14,7 +14,7 @@ const requestAuth = () => {
     qs: {
       grant_type: 'authorization_code',
       // The code below is a sample authorization code. Replace it with your actual authorization code while making requests.
-      code: 'kG9gumOxrl_8nGKq1IyRWCIda5_7Vmycw',
+      code: '7rjmO8hkLb_8nGKq1IyRWCIda5_7Vmycw',
       // The uri below is a sample redirect_uri. Replace it with your actual redirect_uri while making requests.
       redirect_uri:
         'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/profile/zoom',
@@ -75,6 +75,7 @@ const createMeeting = () => {
       registrants_email_notification: 'boolean',
     },
   };
+
   var options = {
     method: 'POST',
     url: 'https://api.zoom.us/v2/users/me/meetings',
@@ -90,7 +91,6 @@ const createMeeting = () => {
       type: 2,
       agenda: 'This is a meeting with a Super',
       duration: 30,
-      schedule_for: 'super@crmgrow.com',
     },
     json: true,
   };

@@ -18,6 +18,10 @@ const api = {
     YAHOO_CLIENT_ID: process.env.YAHOO_CLIENT_ID,
     YAHOO_CLIENT_CECRET: process.env.YAHOO_CLIENT_CECRET,
   },
+  ZOOM_CLIENT: {
+    ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID,
+    ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET,
+  },
   JWT_SECRET:
     process.env.JWT_SECRET || 'THIS IS USED TO SIGN AND VERIFY JWT TOKENS',
   SENDGRID: {

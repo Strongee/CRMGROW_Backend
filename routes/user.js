@@ -120,6 +120,13 @@ router.get(
   catchError(UserCtrl.authorizeYahoo)
 );
 
+// Zoom authorized
+router.get(
+  '/authorize-zoom',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.authorizeZoom)
+);
+
 /**
  * Calendar
  */

@@ -4,7 +4,7 @@ const { validationResult } = require('express-validator/check');
 const randomstring = require('randomstring');
 const sgMail = require('@sendgrid/mail');
 const { google } = require('googleapis');
-const outlook = require('node-outlook');
+const request = require('request-promise');
 
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
@@ -753,11 +753,7 @@ const signUpOutlook = async (req, res) => {
 
 const socialGmail = async (req, res) => {
   const code = req.query.code;
-  const oauth2Client = new google.auth.OAuth2(
-    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.SOCIAL_SIGNUP_URL + 'gmail'
-  );
+  const oauth2Client = new google.auth.OAuth2(api.GMAIL_CLIENT.GMAIL_CLIENT_ID);
 
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
@@ -2798,6 +2794,67 @@ const pushNotification = async (req, res) => {
     });
 };
 
+const authorizeZoom = async (req, res) => {
+  const { code } = req.query;
+  const { currentUser } = req;
+
+  const options = {
+    method: 'POST',
+    url: 'https://zoom.us/oauth/token',
+    qs: {
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: urls.ZOOM_AUTHORIZE_URL,
+    },
+    headers: {
+      Authorization:
+        'Basic ' +
+        Buffer.from(api.CLIENT_ID + ':' + api.CLIENT_SECRET).toString('base64'),
+    },
+  };
+
+  request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+
+    const { access_token, refresh_token } = body;
+
+    const profile_option = {
+      method: 'GET',
+      url: 'https://api.zoom.us/v2/users/me',
+      headers: {
+        Authorization: 'Bearer ' + access_token,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    request(profile_option, function (error, response, body) {
+      if (error) throw new Error(error);
+      const { email } = body;
+
+      Garbage.updateOne(
+        {
+          user: currentUser.id,
+        },
+        {
+          $set: {
+            zoom: {
+              email,
+              refresh_token,
+            },
+          },
+        }
+      ).catch((err) => {
+        console.log('garbage update err', err.message);
+      });
+
+      return res.send({
+        status: true,
+        email,
+      });
+    });
+  });
+};
+
 module.exports = {
   signUp,
   login,
@@ -2836,6 +2893,7 @@ module.exports = {
   syncOutlookCalendar,
   authorizeOutlookCalendar,
   disconnectCalendar,
+  authorizeZoom,
   schedulePaidDemo,
   dailyReport,
   desktopNotification,

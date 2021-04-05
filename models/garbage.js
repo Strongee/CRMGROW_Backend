@@ -101,6 +101,10 @@ const GarbageSchema = new Schema(
       email: String,
       link: String,
     },
+    zoom: {
+      email: String,
+      refresh_token: String,
+    },
     smtp: {
       host: String,
       user: String,
