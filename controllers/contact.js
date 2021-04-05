@@ -3408,7 +3408,7 @@ const bulkCreate = async (req, res) => {
       }
 
       if (data['cell_phone']) {
-        data['cell_phone'] = phone(req.body.cell_phone)[0];
+        data['cell_phone'] = phone(data['cell_phone'])[0];
       }
 
       if (data['cell_phone']) {
