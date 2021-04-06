@@ -4300,10 +4300,6 @@ const getSharedContact = async (req, res) => {
   const _contact = await Contact.findOne({
     _id: req.params.id,
   })
-    .select({
-      email: 0,
-      cell_phone: 0,
-    })
     .populate('label')
     .catch((err) => {
       console.log('contact found err', err.message);

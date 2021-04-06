@@ -60,6 +60,73 @@
             letter-spacing: 0;
             line-height: 22px;
         }
+        .btn-redirect {
+            background-color: #ffffff;
+            border: 1px solid #0000ff;
+            border-radius: 3px;
+            color: #0000ff;
+            font-family: 'Nunito';
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0;
+            padding: 5px 10px;
+            text-align: center;
+        }
+        .td-facebook {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid #eaeaf0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 15px 0 5px;
+        }
+        .btn-facebook {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding-top: 6px;
+        }
+        .footer-terms {
+            color: #0000ff;
+            font-family: 'Nunito';
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0;
+            line-height: 22px;
+            padding: 0 8px;
+            border-left: 1px solid #eaeaf0;
+            border-right: 1px solid #eaeaf0;
+            margin: 0 8px;
+        }
+        p {
+            margin: 0;
+        }
+        a {
+            color: #0000ff;
+            font-size: 14px;
+            height: 30px;
+            font-family: 'Arial';
+            font-size: 14px;
+            letter-spacing: 0;
+            line-height: 22px;
+            text-decoration: none;
+        }
+        hr {
+            border: 1px solid #eaeaf0;
+            margin: 10px 0;
+        }
+        @media screen and (max-width: 575px) {
+            .footer-terms {
+                font-size: 12px;
+            }
+            .footer-text, .footer-link{
+                display: block;
+            }
+        }
     </style>
 </head>
 <body bgcolor="#f8f8fd" style="margin: 0;">
@@ -71,7 +138,7 @@
                         <tbody>
                             <tr>
                                 <td align="center" style="padding-top: 56px; padding-bottom: 40px;">
-                                    <img src="./assets/img/crmgrow-logo-40px.png" width="228" height="37">
+                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-40px.png" width="228" height="37">
                                 </td>
                             </tr>
                             <tr>
@@ -85,12 +152,12 @@
                                                             <tr>
                                                                 <td class="invite-user">
                                                                     <span>
-                                                                        Welcome Garrett,
+                                                                        Welcome {{user_name}},
                                                                     </span>
                                                                 </td>
                                                                 <td align="right" class="invite-time">
                                                                     <span>
-                                                                        20:04 8 April 2020
+                                                                        {{created_at}}
                                                                     </span>
                                                                 </td>
                                                             </tr>
@@ -100,7 +167,7 @@
                                             </tr>
                                             <tr>
                                                 <td class="watch-description">
-                                                    Your contact <span style="color: #0000FF">John Peterson</span> have watched video
+                                                    Your contact <span style="color: #0000FF">{{contact_name}}</span> have watched video
                                                 </td>
                                             </tr>
                                             <tr>
@@ -124,10 +191,10 @@
                                                                             </tr>
                                                                             <tr>
                                                                                 <td class="video-watch-detail" style="color: #0000FF; font-weight: bold; padding-bottom: 20px;">
-                                                                                    eXp Realty eXplained in 9 Minutes
+                                                                                    {{material_title}}
                                                                                 </td>
                                                                                 <td class="video-watch-detail" style="padding-left: 30px; padding-bottom: 20px;">
-                                                                                    0:00
+                                                                                    {{start_at}}
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
@@ -140,10 +207,10 @@
                                                                             </tr>
                                                                             <tr>
                                                                                 <td class="video-watch-detail">
-                                                                                    4:21
+                                                                                    {{duration}}
                                                                                 </td>
                                                                                 <td class="video-watch-detail" style="padding-left: 30px">
-                                                                                    4:21
+                                                                                    {{end_at}}
                                                                                 </td>
                                                                             </tr>
                                                                         </tbody>
@@ -158,33 +225,93 @@
                                     </table>
                                 </td>
                             </tr>
+                            <!-- <tr>
+                                <td style="padding-top: 40px; padding-bottom: 20px;">
+                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-24px.png" width="142" height="23">
+                                </td>
+                            </tr> -->
+                            <!-- <tr>
+                                <td style="padding-bottom: 16px;">
+                                    <p class="footer-text">
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                                    </p>
+                                </td>
+                            </tr> -->
                             <tr>
-                                <td bgcolor="#f8f8fd" style="padding-left: 50px; padding-right: 50px;">
+                                <td bgcolor="#f8f8fd" style="padding-left: 50px; padding-right: 50px; padding-bottom: 50px;">
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td style="padding-top: 40px; padding-bottom: 20px;">
-                                                    <img src="./assets/img/crmgrow-logo-24px.png" width="142" height="23">
+                                                <td>
+                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td style="padding-top: 40px">
+                                                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-24px.png" width="142" height="23">
+                                                                </td>
+                                                                <td align="right" style="padding-top: 40px">
+                                                                    <table border="0" cellpadding="0" cellspacing="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="footer-text" style="color: #0000ff;">
+                                                                                    Follow us on
+                                                                                </td>
+                                                                                <td class="td-facebook">
+                                                                                    <a class="btn-facebook" href="{{facebook_url}}" target="_blank"><img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/facebook.png"></a>
+                                                                                </td>
+                                                                                <td>
+                                                                                    <a class="btn-redirect" href="{{login_url}}">
+                                                                                        Redirect to login
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding-bottom: 16px;">
-                                                    <p class="footer-text">
-                                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                                                    </p>
+                                                <td>
+                                                    <hr />
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding-bottom: 51px;">
-                                                    <p class="footer-text">
-                                                        All rights reserved.
-                                                    </p>
+                                                <td>
+                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="footer-text">
+                                                                    @ 2021 All rights reserved.
+                                                                </td>
+                                                                <td class="footer-link" align="right">
+                                                                    <table border="0" cellpadding="0" cellspacing="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <a href="{{terms_url}}" class="footer-terms" style="color:#0000ff;">Terms & Conditions</a>
+                                                                                </td>
+                                                                                <td>
+                                                                                    <a href="{{privacy_url}}" class="footer-terms" style="color:#0000ff;">Privacy Policy</a>
+                                                                                </td>
+                                                                                <td>
+                                                                                    <a href="{{unsubscription_url}}" class="footer-text" style="opacity:0.5;font-size:12px;">Unsubscribe</a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </td>
-                            </tr>
+                            </tr>   
                         </tbody>
                     </table>
                 </td>
