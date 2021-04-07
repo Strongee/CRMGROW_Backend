@@ -20,6 +20,7 @@ const subjects = {
   OnboardCall: `One on one onboarding`,
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
   Welcome: 'Welcome to CRMGrow, {{user_name}}!',
+  VideoWatched: 'CRMGrow video Watched'
 };
 const htmls = {};
 fs.readFile(

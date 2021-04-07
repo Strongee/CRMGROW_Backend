@@ -1640,7 +1640,6 @@ const decline = async (req, res) => {
         .api(`/me/calendars/${calendar_id}/events/${event_id}/decline`)
         .post(decline)
         .then(() => {
-
           return res.send({
             status: true,
           });

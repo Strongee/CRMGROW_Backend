@@ -343,8 +343,6 @@ const disconnectVideo = async (video_tracker_id) => {
       type: 'video_trackers',
       video_trackers: query.id,
       videos: video.id,
-      created_at: new Date(),
-      updated_at: new Date(),
     });
 
     if (query.material_last) {
