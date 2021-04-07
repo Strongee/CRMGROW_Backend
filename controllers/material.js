@@ -1030,7 +1030,7 @@ const bulkText = async (req, res) => {
             console.log('email send err', err.message);
           });
 
-          const image_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
+          const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
           text_content = text_content.replace(
             new RegExp(`{{${image.id}}}`, 'g'),
             image_link
