@@ -382,7 +382,7 @@ const bulkEmail = async (req, res) => {
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
           // const html_preview = `<a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
           email_content = email_content.replace(
-            new RegExp(`{${image.id}}`, 'g'),
+            new RegExp(`{{${image.id}}}`, 'g'),
             image_link
           );
 
