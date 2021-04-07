@@ -7,6 +7,7 @@ const User = require('../models/user');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
+const Folder = require('../models/folder');
 const Team = require('../models/team');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
@@ -1622,10 +1623,9 @@ const loadMaterial = async (req, res) => {
 
   const company = currentUser.company || 'eXp Realty';
 
-  const _folder_list = await Image.find({
+  const _folder_list = await Folder.find({
     user: currentUser.id,
     del: false,
-    type: 'folder',
   });
 
   const _video_list = await Video.find({ user: currentUser.id, del: false })
@@ -1830,9 +1830,8 @@ const loadMaterial = async (req, res) => {
 const createFolder = (req, res) => {
   const { currentUser } = req;
 
-  const folder = new Image({
+  const folder = new Folder({
     ...req.body,
-    type: 'folder',
     user: currentUser._id,
   });
 
@@ -1851,11 +1850,12 @@ const createFolder = (req, res) => {
       });
     });
 };
+
 const editFolder = async (req, res) => {
   const { currentUser } = req;
   const _id = req.params.id;
   const { title } = req.body;
-  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+  const folder = await Folder.findOne({ _id, user: currentUser._id }).catch(
     (err) => {
       return res.status(500).send({
         status: false,
@@ -1890,7 +1890,7 @@ const removeFolder = async (req, res) => {
   const { currentUser } = req;
   const { _id, mode } = req.body;
 
-  const folder = await Image.findOne({ _id, user: currentUser._id }).catch(
+  const folder = await Folder.findOne({ _id, user: currentUser._id }).catch(
     (err) => {
       return res.status(500).send({
         status: false,
@@ -1907,20 +1907,9 @@ const removeFolder = async (req, res) => {
   }
 
   if (mode === 'only-folder') {
-    await Image.updateMany(
-      { user: currentUser._id, folder: _id },
-      { $unset: { folder: undefined } }
-    );
-    await Video.updateMany(
-      { user: currentUser._id, folder: _id },
-      { $unset: { folder: undefined } }
-    );
-    await PDF.updateMany(
-      { user: currentUser._id, folder: _id },
-      { $unset: { folder: undefined } }
-    );
+    // Skip
   }
-  Image.deleteOne({ _id })
+  Folder.deleteOne({ _id })
     .then(() => {
       return res.send({
         status: true,
