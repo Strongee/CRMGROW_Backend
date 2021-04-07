@@ -28,6 +28,7 @@ const ContactSchema = mongoose.Schema(
     tags: Array,
     recruiting_stage: String,
     website: String,
+    additional_field: Object,
     created_at: Date,
     updated_at: Date,
   },
