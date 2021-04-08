@@ -986,6 +986,8 @@ const updateDefault = async (req, res) => {
     garbage['edited_video'] = [id];
   }
 
+  console.log('garbage', garbage);
+
   await garbage.save().catch((err) => {
     return res.status(400).json({
       status: false,
