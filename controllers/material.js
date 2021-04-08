@@ -1625,7 +1625,6 @@ const loadMaterial = async (req, res) => {
 
   const _folder_list = await Folder.find({
     user: currentUser.id,
-    del: false,
   });
 
   const _video_list = await Video.find({ user: currentUser.id, del: false })

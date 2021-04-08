@@ -30,7 +30,6 @@ const VideoSchema = new Schema(
     default_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     has_shared: { type: Boolean, default: false },
     shared_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
-    folder: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     priority: { type: Number, default: 1000 },
     del: { type: Boolean, default: false },
     created_at: Date,

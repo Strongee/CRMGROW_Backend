@@ -28,6 +28,7 @@ const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
 const Activity = require('../models/activity');
 const Video = require('../models/video');
+const Folder = require('../models/folder');
 const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
 const Contact = require('../models/contact');
@@ -724,6 +725,13 @@ const update = async (req, res) => {
       .catch((err) => {
         console.log('err', err.message);
       });
+  }
+
+  if (editData['folder']) {
+    await Folder.updateOne(
+      { _id: editData['folder'], user: currentUser._id },
+      { $addToSet: { videos: { $each: video['_id'] } } }
+    );
   }
 
   video['updated_at'] = new Date();
