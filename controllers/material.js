@@ -1924,65 +1924,30 @@ const removeFolder = async (req, res) => {
 const moveMaterials = async (req, res) => {
   const { currentUser } = req;
   const { materials, target, source } = req.body;
-  const { videos, pdfs, images, shared_materials } = materials;
-
-  if (videos.length) {
-    if (target) {
-      await Video.updateMany(
-        { _id: { $in: videos } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await Video.updateMany(
-        { _id: { $in: videos } },
-        { $unset: { folder: undefined } }
-      );
-    }
+  const { videos, pdfs, images } = materials;
+  if (source) {
+    await Folder.updateOne(
+      { _id: source, user: currentUser._id },
+      {
+        $pull: {
+          videos: { $in: videos },
+          pdfs: { $in: pdfs },
+          images: { $in: images },
+        },
+      }
+    );
   }
-
-  if (pdfs.length) {
-    if (target) {
-      await PDF.updateMany(
-        { _id: { $in: pdfs } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await PDF.updateMany(
-        { _id: { $in: pdfs } },
-        { $unset: { folder: undefined } }
-      );
-    }
-  }
-
-  if (images.length) {
-    if (target) {
-      await Image.updateMany(
-        { _id: { $in: images } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await Image.updateMany(
-        { _id: { $in: images } },
-        { $unset: { folder: undefined } }
-      );
-    }
-  }
-
-  if (shared_materials.length) {
-    if (source) {
-      console.log('soruce', source);
-      await Image.updateOne(
-        { _id: source, user: currentUser._id },
-        { $pull: { shared_materials: { $in: shared_materials } } }
-      );
-    }
-    if (target) {
-      console.log('target', target);
-      await Image.updateOne(
-        { _id: target, user: currentUser._id },
-        { $addToSet: { shared_materials: { $each: shared_materials } } }
-      );
-    }
+  if (target) {
+    await Folder.updateOne(
+      { _id: target, user: currentUser._id },
+      {
+        $addToSet: {
+          videos: { $each: videos },
+          images: { $each: images },
+          pdfs: { $each: pdfs },
+        },
+      }
+    );
   }
   return res.send({
     status: true,
