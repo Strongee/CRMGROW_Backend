@@ -1484,7 +1484,7 @@ const requestCall = async (req, res) => {
                 team_calls: team_call.id,
                 user: currentUser.id,
                 contacts: contacts[i].id,
-                content: 'inquire group call',
+                content: 'inquired group call',
                 type: 'team_calls',
               });
 

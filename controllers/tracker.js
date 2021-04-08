@@ -567,6 +567,10 @@ const disconnectVideo = async (video_tracker_id) => {
     // send email notification
 
     if (email_notification['material']) {
+      /**
+       * sendgrid
+       */
+      /**
       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
       const created_at = moment(query['created_at'])
         .tz(time_zone)
@@ -602,6 +606,7 @@ const disconnectVideo = async (video_tracker_id) => {
       };
 
       sgMail.send(msg).catch((err) => console.error(err));
+       */
     }
 
     const auto_follow_up = garbage.auto_follow_up;

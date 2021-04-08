@@ -1342,7 +1342,7 @@ const createTeamCall = async (req, res) => {
       const activity = new Activity({
         team_calls: team_call.id,
         user: currentUser.id,
-        content: 'inquire group call',
+        content: 'inquired group call',
         type: 'team_calls',
         deals: req.body.deal,
       });
@@ -1366,7 +1366,7 @@ const createTeamCall = async (req, res) => {
               team_calls: team_call.id,
               user: currentUser.id,
               contacts: contacts[i].id,
-              content: 'inquire group call',
+              content: 'inquired group call',
               type: 'team_calls',
             });
 

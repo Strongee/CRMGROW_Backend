@@ -4320,6 +4320,33 @@ const sendEmail = async (data) => {
   return Promise.all(promise_array);
 };
 
+const sendWelcomeEmail = async (data) => {
+  const { email, template_data, template_name, required_reply } = data;
+  const templatedData = {
+    ...template_data,
+    facebook_url: urls.FACEBOOK_URL,
+    login_url: urls.LOGIN_URL,
+    terms_url: urls.TERMS_SERVICE_URL,
+    privacy_url: urls.PRIVACY_URL,
+  };
+
+  const source_email = required_reply
+    ? mail_contents.REPLY
+    : mail_contents.NO_REPLAY;
+  const params = {
+    Destination: {
+      ToAddresses: [email],
+    },
+    Source: source_email,
+    Template: template_name,
+    TemplateData: JSON.stringify(templatedData),
+  };
+
+  // Create the promise and SES service object
+
+  ses.sendTemplatedEmail(params).promise();
+};
+
 module.exports = {
   sendEmail,
   isBlockedEmail,
@@ -4328,6 +4355,7 @@ module.exports = {
   bulkPDF,
   bulkImage,
   resendVideo,
+  sendNotificationEmail,
   addLinkTracking,
   generateUnsubscribeLink,
   generateOpenTrackLink,
