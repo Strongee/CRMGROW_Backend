@@ -2183,7 +2183,19 @@ const searchContact = async (req, res) => {
         },
       ],
     })
-      .populate('last_activity')
+      .populate([
+        {
+          path: 'user',
+          select: 'user_name email picture_profile cell_phone',
+        },
+        {
+          path: 'last_activity',
+        },
+        {
+          path: 'shared_members',
+          select: 'user_name email picture_profile cell_phone',
+        },
+      ])
       .sort({ first_name: 1 });
   } else {
     contacts = await Contact.find({
@@ -2240,17 +2252,27 @@ const searchContact = async (req, res) => {
         },
       ],
     })
-      .populate('last_activity')
+      .populate([
+        {
+          path: 'user',
+          select: 'user_name email picture_profile cell_phone',
+        },
+        {
+          path: 'last_activity',
+        },
+        {
+          path: 'shared_members',
+          select: 'user_name email picture_profile cell_phone',
+        },
+      ])
       .sort({ first_name: 1 });
   }
 
-  const count = await Contact.countDocuments({ user: currentUser.id });
   return res.send({
     status: true,
     data: {
       contacts,
       search,
-      total: count,
     },
   });
 };
