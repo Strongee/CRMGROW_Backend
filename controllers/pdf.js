@@ -280,7 +280,7 @@ const updateDetail = async (req, res) => {
   if (editData['folder']) {
     await Folder.updateOne(
       { _id: editData['folder'], user: currentUser._id },
-      { $addToSet: { pdfs: { $each: pdf['_id'] } } }
+      { $addToSet: { pdfs: { $each: [pdf['_id']] } } }
     );
   }
 

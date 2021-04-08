@@ -559,7 +559,7 @@ const createVideo = async (req, res) => {
   if (req.body.folder) {
     await Folder.updateOne(
       { _id: req.body['folder'], user: currentUser._id },
-      { $addToSet: { videos: { $each: video['_id'] } } }
+      { $addToSet: { videos: { $each: [video['_id']] } } }
     );
   }
 
@@ -732,13 +732,6 @@ const update = async (req, res) => {
       .catch((err) => {
         console.log('err', err.message);
       });
-  }
-
-  if (editData['folder']) {
-    await Folder.updateOne(
-      { _id: editData['folder'], user: currentUser._id },
-      { $addToSet: { videos: { $each: video['_id'] } } }
-    );
   }
 
   video['updated_at'] = new Date();
@@ -934,6 +927,13 @@ const updateDetail = async (req, res) => {
   ) {
     video['converted'] = 'progress';
     videoHelper.convertUploadVideo(video.id);
+  }
+
+  if (editData['folder']) {
+    await Folder.updateOne(
+      { _id: editData['folder'], user: currentUser._id },
+      { $addToSet: { videos: { $each: [video['_id']] } } }
+    );
   }
 
   video['updated_at'] = new Date();

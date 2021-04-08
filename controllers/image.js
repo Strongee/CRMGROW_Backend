@@ -284,7 +284,7 @@ const updateDetail = async (req, res) => {
   if (editData['folder']) {
     await Folder.updateOne(
       { _id: editData['folder'], user: currentUser._id },
-      { $addToSet: { images: { $each: image['_id'] } } }
+      { $addToSet: { images: { $each: [image['_id']] } } }
     );
   }
   image['updated_at'] = new Date();
