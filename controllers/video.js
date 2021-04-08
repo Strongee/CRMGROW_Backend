@@ -556,6 +556,13 @@ const createVideo = async (req, res) => {
       console.log('err', err);
     });
 
+  if (req.body.folder) {
+    await Folder.updateOne(
+      { _id: req.body['folder'], user: currentUser._id },
+      { $addToSet: { videos: { $each: video['_id'] } } }
+    );
+  }
+
   res.send({
     status: true,
     data: _video,
