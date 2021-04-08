@@ -1887,7 +1887,7 @@ const editFolder = async (req, res) => {
 };
 const removeFolder = async (req, res) => {
   const { currentUser } = req;
-  const { _id, mode } = req.body;
+  const { _id, mode, target } = req.body;
 
   const folder = await Folder.findOne({ _id, user: currentUser._id }).catch(
     (err) => {
@@ -1903,6 +1903,46 @@ const removeFolder = async (req, res) => {
       status: false,
       error: 'Not found folder',
     });
+  }
+
+  if (mode === 'remove-all') {
+    const oldFolderData = { ...folder._doc };
+    Folder.deleteOne({ _id })
+      .then(async () => {
+        const {videos, images, pdfs} = oldFolderData;
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else if (mode === 'move-other') {
+    const oldFolderData = { ...folder._doc };
+    Folder.deleteOne({ _id })
+      .then(async () => {
+        if (target) {
+          await Folder.updateOne(
+            { _id: target },
+            {
+              $addToSet: {
+                videos: { $each: oldFolderData.videos },
+                images: { $each: oldFolderData.images },
+                pdfs: { $each: oldFolderData.pdfs },
+              },
+            }
+          );
+        }
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
   }
 
   if (mode === 'only-folder') {
