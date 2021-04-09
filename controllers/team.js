@@ -2392,9 +2392,14 @@ const loadAutomation = async (req, res) => {
     for (let i = 0; i < automation_ids.length; i++) {
       const automation = await Automation.findOne({
         _id: automation_ids[i],
-      }).catch((err) => {
-        console.log('automation find err', err.message);
-      });
+      })
+        .populate({
+          path: 'user',
+          select: { user_name: 1, picture_profile: 1 },
+        })
+        .catch((err) => {
+          console.log('automation find err', err.message);
+        });
 
       if (automation) {
         const total = await TimeLine.aggregate([
@@ -2459,7 +2464,13 @@ const loadTemplate = async (req, res) => {
   const team = await Team.findOne({
     _id: req.params.id,
   })
-    .populate('email_templates')
+    .populate({
+      path: 'email_templates',
+      populate: {
+        path: 'user',
+        select: { user_name: 1, picture_profile: 1 },
+      },
+    })
     .catch((err) => {
       console.log('team load err', err.message);
     });

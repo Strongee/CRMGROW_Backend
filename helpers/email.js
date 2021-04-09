@@ -30,6 +30,15 @@ const credentials = {
 const oauth2 = require('simple-oauth2')(credentials);
 const cheerio = require('cheerio');
 
+const AWS = require('aws-sdk');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
+
 const isBlockedEmail = (email) => {
   const mac = /^[a-z0-9](\.?[a-z0-9]){2,}@mac\.com$/;
   const me = /^[a-z0-9](\.?[a-z0-9]){2,}@me\.com$/;
@@ -42,6 +51,7 @@ const isBlockedEmail = (email) => {
     yahoo.test(String(email).toLowerCase())
   );
 };
+
 const makeBody = (to, from, subject, message) => {
   var str = [
     'Content-Type: text/html; charset="UTF-8"\n',
@@ -4320,7 +4330,7 @@ const sendEmail = async (data) => {
   return Promise.all(promise_array);
 };
 
-const sendWelcomeEmail = async (data) => {
+const sendNotificationEmail = async (data) => {
   const { email, template_data, template_name, required_reply } = data;
   const templatedData = {
     ...template_data,

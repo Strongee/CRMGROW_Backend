@@ -11,11 +11,15 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 const phone = require('phone');
+
+/**
 mongoose.set('useCreateIndex', true);
 mongoose
   .connect(DB_PORT, { useNewUrlParser: true })
   .then(() => console.log('Connecting to database successful'))
   .catch((err) => console.error('Could not connect to mongo DB', err));
+ */
+
 // Fetch or read data from
 // const migrate = async() => {
 //   const users = await User.find({del: true}).catch(err=>{
@@ -28,6 +32,7 @@ mongoose
 //     }
 //   }
 // }
+
 const migrate = async () => {
   const users = await User.find({
     del: true,
@@ -77,8 +82,9 @@ const twilioNumber = async () => {
 };
 
 const sendSMS = () => {
+  // const fromNumber = '+16474916957';
   const fromNumber = '+16474916957';
-  const e164Phone = '+15625480802‬';
+  const e164Phone = '+8618204158455';
   twilio.messages
     .create({
       from: fromNumber,
@@ -103,4 +109,5 @@ const validatePhone = (data) => {
 
 // +44 1494 506206
 // +44 7911 123456
-validatePhone('7758158669');
+// validatePhone('7758158669');
+sendSMS();
