@@ -157,6 +157,7 @@ const get = (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
       {
@@ -168,6 +169,7 @@ const get = (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
       {
@@ -179,6 +181,7 @@ const get = (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
       {
@@ -190,6 +193,7 @@ const get = (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
     ])
@@ -1981,6 +1985,7 @@ const loadCalls = async (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
       {
@@ -1992,6 +1997,7 @@ const loadCalls = async (req, res) => {
           cell_phone: 1,
           company: 1,
           location: 1,
+          time_zone_info: 1,
         },
       },
       { path: 'contacts' },
@@ -2152,14 +2158,16 @@ const getSharedContacts = async (req, res) => {
     .populate([
       {
         path: 'user',
-        select: 'user_name email picture_profile cell_phone',
+        select:
+          'user_name email picture_profile cell_phone location time_zone_info company',
       },
       {
         path: 'last_activity',
       },
       {
         path: 'shared_members',
-        select: 'user_name email picture_profile cell_phone',
+        select:
+          'user_name email picture_profile cell_phone location time_zone_info company',
       },
     ])
     .skip(skip)
