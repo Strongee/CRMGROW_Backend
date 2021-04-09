@@ -1152,12 +1152,17 @@ const remove = async (req, res) => {
       });
     }
 
+    // remove activity
     Appointment.deleteOne({
       user: currentUser.id,
       event_id,
-    }).catch((err) => {
-      console.log('appointment update err', err.message);
-    });
+    })
+      .then((_res) => {
+        console.log('_res remove', _res);
+      })
+      .catch((err) => {
+        console.log('appointment update err', err.message);
+      });
     // const activity = new Activity({
     //   content: 'removed appointment',
     //   contacts: appointment.contact,
