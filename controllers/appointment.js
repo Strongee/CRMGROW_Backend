@@ -854,7 +854,8 @@ const addOutlookCalendarById = async (ctz, appointment, calendar) => {
     const new_event = await client
       .api(`/me/calendars/${appointment.calendar_id}/events`)
       .post(newEvent);
-    resolve({ event_id: new_event.id, recurrence_id: '' });
+    console.log('outlook new_event', new_event);
+    resolve({ new_event_id: new_event.id, new_recurrence_id: '' });
   });
 };
 
