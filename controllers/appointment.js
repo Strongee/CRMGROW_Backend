@@ -742,10 +742,10 @@ const addGoogleCalendarById = async (auth, ctz, appointment) => {
           );
           reject(err);
         }
-        console.log('event.data', event.data);
+
         resolve({
           event_id: event.data.id,
-          recurrence_id: event.data.recurringEventId,
+          recurrence_id: event.data.id,
         });
       }
     );
@@ -856,7 +856,7 @@ const addOutlookCalendarById = async (ctz, appointment, calendar) => {
     const new_event = await client
       .api(`/me/calendars/${appointment.calendar_id}/events`)
       .post(newEvent);
-    console.log('outlook new_event', new_event);
+
     resolve({ new_event_id: new_event.id, new_recurrence_id: new_event.id });
   });
 };
