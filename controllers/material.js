@@ -1625,7 +1625,6 @@ const loadMaterial = async (req, res) => {
 
   const _folder_list = await Folder.find({
     user: currentUser.id,
-    del: false,
   });
 
   const _video_list = await Video.find({ user: currentUser.id, del: false })
@@ -1888,7 +1887,7 @@ const editFolder = async (req, res) => {
 };
 const removeFolder = async (req, res) => {
   const { currentUser } = req;
-  const { _id, mode } = req.body;
+  const { _id, mode, target } = req.body;
 
   const folder = await Folder.findOne({ _id, user: currentUser._id }).catch(
     (err) => {
@@ -1904,6 +1903,46 @@ const removeFolder = async (req, res) => {
       status: false,
       error: 'Not found folder',
     });
+  }
+
+  if (mode === 'remove-all') {
+    const oldFolderData = { ...folder._doc };
+    Folder.deleteOne({ _id })
+      .then(async () => {
+        const {videos, images, pdfs} = oldFolderData;
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else if (mode === 'move-other') {
+    const oldFolderData = { ...folder._doc };
+    Folder.deleteOne({ _id })
+      .then(async () => {
+        if (target) {
+          await Folder.updateOne(
+            { _id: target },
+            {
+              $addToSet: {
+                videos: { $each: oldFolderData.videos },
+                images: { $each: oldFolderData.images },
+                pdfs: { $each: oldFolderData.pdfs },
+              },
+            }
+          );
+        }
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
   }
 
   if (mode === 'only-folder') {
@@ -1925,65 +1964,30 @@ const removeFolder = async (req, res) => {
 const moveMaterials = async (req, res) => {
   const { currentUser } = req;
   const { materials, target, source } = req.body;
-  const { videos, pdfs, images, shared_materials } = materials;
-
-  if (videos.length) {
-    if (target) {
-      await Video.updateMany(
-        { _id: { $in: videos } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await Video.updateMany(
-        { _id: { $in: videos } },
-        { $unset: { folder: undefined } }
-      );
-    }
+  const { videos, pdfs, images } = materials;
+  if (source) {
+    await Folder.updateOne(
+      { _id: source, user: currentUser._id },
+      {
+        $pull: {
+          videos: { $in: videos },
+          pdfs: { $in: pdfs },
+          images: { $in: images },
+        },
+      }
+    );
   }
-
-  if (pdfs.length) {
-    if (target) {
-      await PDF.updateMany(
-        { _id: { $in: pdfs } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await PDF.updateMany(
-        { _id: { $in: pdfs } },
-        { $unset: { folder: undefined } }
-      );
-    }
-  }
-
-  if (images.length) {
-    if (target) {
-      await Image.updateMany(
-        { _id: { $in: images } },
-        { $set: { folder: target } }
-      );
-    } else {
-      await Image.updateMany(
-        { _id: { $in: images } },
-        { $unset: { folder: undefined } }
-      );
-    }
-  }
-
-  if (shared_materials.length) {
-    if (source) {
-      console.log('soruce', source);
-      await Image.updateOne(
-        { _id: source, user: currentUser._id },
-        { $pull: { shared_materials: { $in: shared_materials } } }
-      );
-    }
-    if (target) {
-      console.log('target', target);
-      await Image.updateOne(
-        { _id: target, user: currentUser._id },
-        { $addToSet: { shared_materials: { $each: shared_materials } } }
-      );
-    }
+  if (target) {
+    await Folder.updateOne(
+      { _id: target, user: currentUser._id },
+      {
+        $addToSet: {
+          videos: { $each: videos },
+          images: { $each: images },
+          pdfs: { $each: pdfs },
+        },
+      }
+    );
   }
   return res.send({
     status: true,

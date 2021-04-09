@@ -28,6 +28,7 @@ const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
 const Activity = require('../models/activity');
 const Video = require('../models/video');
+const Folder = require('../models/folder');
 const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
 const Contact = require('../models/contact');
@@ -555,6 +556,13 @@ const createVideo = async (req, res) => {
       console.log('err', err);
     });
 
+  if (req.body.folder) {
+    await Folder.updateOne(
+      { _id: req.body['folder'], user: currentUser._id },
+      { $addToSet: { videos: { $each: [video['_id']] } } }
+    );
+  }
+
   res.send({
     status: true,
     data: _video,
@@ -921,6 +929,13 @@ const updateDetail = async (req, res) => {
     videoHelper.convertUploadVideo(video.id);
   }
 
+  if (editData['folder']) {
+    await Folder.updateOne(
+      { _id: editData['folder'], user: currentUser._id },
+      { $addToSet: { videos: { $each: [video['_id']] } } }
+    );
+  }
+
   video['updated_at'] = new Date();
   video
     .save()
@@ -970,6 +985,8 @@ const updateDefault = async (req, res) => {
   } else {
     garbage['edited_video'] = [id];
   }
+
+  console.log('garbage', garbage);
 
   await garbage.save().catch((err) => {
     return res.status(400).json({

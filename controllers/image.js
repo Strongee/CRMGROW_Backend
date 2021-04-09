@@ -45,6 +45,7 @@ const urls = require('../constants/urls');
 const { PREVIEW_PATH } = require('../config/path');
 const ImageTracker = require('../models/image_tracker');
 const Image = require('../models/image');
+const Folder = require('../models/folder');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
@@ -280,8 +281,13 @@ const updateDetail = async (req, res) => {
     image[key] = editData[key];
   }
 
+  if (editData['folder']) {
+    await Folder.updateOne(
+      { _id: editData['folder'], user: currentUser._id },
+      { $addToSet: { images: { $each: [image['_id']] } } }
+    );
+  }
   image['updated_at'] = new Date();
-
   image.save().then((data) => {
     return res.send({
       status: true,

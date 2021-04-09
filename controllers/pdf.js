@@ -27,6 +27,7 @@ const urls = require('../constants/urls');
 const { PREVIEW_PATH } = require('../config/path');
 const PDFTracker = require('../models/pdf_tracker');
 const PDF = require('../models/pdf');
+const Folder = require('../models/folder');
 const Activity = require('../models/activity');
 const Contact = require('../models/contact');
 const User = require('../models/user');
@@ -276,9 +277,15 @@ const updateDetail = async (req, res) => {
     pdf[key] = editData[key];
   }
 
+  if (editData['folder']) {
+    await Folder.updateOne(
+      { _id: editData['folder'], user: currentUser._id },
+      { $addToSet: { pdfs: { $each: [pdf['_id']] } } }
+    );
+  }
+
   pdf['updated_at'] = new Date();
-  pdf
-    .save()
+  pdf.save()
     .then((_pdf) => {
       return res.send({
         status: true,

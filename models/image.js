@@ -17,7 +17,6 @@ const ImageSchema = new Schema(
     default_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     shared_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     shared_materials: { type: Array, default: [] },
-    folder: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,
