@@ -148,10 +148,50 @@ const get = (req, res) => {
     ],
   })
     .populate([
-      { path: 'owner' },
-      { path: 'members' },
-      { path: 'invites' },
-      { path: 'requests' },
+      {
+        path: 'owner',
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
+      },
+      {
+        path: 'members',
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
+      },
+      {
+        path: 'invites',
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
+      },
+      {
+        path: 'requests',
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
+      },
     ])
     .then(async (data) => {
       if (data && !data.join_link) {
@@ -1934,9 +1974,26 @@ const loadCalls = async (req, res) => {
     .populate([
       {
         path: 'leader',
-        select: { user_name: 1, picture_profile: 1, email: 1 },
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
       },
-      { path: 'user', select: { user_name: 1, picture_profile: 1, email: 1 } },
+      {
+        path: 'user',
+        select: {
+          user_name: 1,
+          picture_profile: 1,
+          email: 1,
+          cell_phone: 1,
+          company: 1,
+          location: 1,
+        },
+      },
       { path: 'contacts' },
     ])
     .skip(skip)

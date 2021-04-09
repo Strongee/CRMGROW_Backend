@@ -1153,16 +1153,29 @@ const remove = async (req, res) => {
     }
 
     // remove activity
-    Appointment.deleteOne({
+    const appointment = await Appointment.findOne({
       user: currentUser.id,
       event_id,
-    })
-      .then((_res) => {
-        console.log('_res remove', _res);
-      })
-      .catch((err) => {
+    }).catch((err) => {
+      console.log('remove appointment find err', err.message);
+    });
+
+    if (appointment) {
+      Activity.deleteMany({
+        appointments: appointment.id,
+        user: currentUser.id,
+      }).catch((err) => {
+        console.log('appointment activity remove', err.message);
+      });
+
+      Appointment.deleteOne({
+        user: currentUser.id,
+        event_id,
+      }).catch((err) => {
         console.log('appointment update err', err.message);
       });
+    }
+
     // const activity = new Activity({
     //   content: 'removed appointment',
     //   contacts: appointment.contact,
