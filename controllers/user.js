@@ -52,6 +52,7 @@ const Team = require('../models/team');
 const PaidDemo = require('../models/paid_demo');
 
 const { getSignalWireNumber, getTwilioNumber } = require('../helpers/text');
+const { sendNotificationEmail } = require('../helpers/email');
 
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -259,14 +260,19 @@ const signUp = async (req, res) => {
             : system_settings.TIME_ZONE;
 
           const data = {
-            id: _res.id,
             email: _res.email,
+            verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
             user_name: _res.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
             password,
             time_zone,
+            required_reply: false,
+            webinar_url: system_settings.WEBINAR_LINK,
+            import_url: urls.IMPORT_CSV_URL,
+            template_url: urls.CONTACT_CSV_URL,
           };
 
-          sendWelcomeEmail(data);
+          sendNotificationEmail(data);
 
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
@@ -569,17 +575,19 @@ const socialSignUp = async (req, res) => {
             : system_settings.TIME_ZONE;
 
           const data = {
-            id: _res.id,
             email: _res.email,
+            verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
             user_name: _res.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
             password: 'No password (use social login)',
             time_zone,
+            required_reply: false,
+            webinar_url: system_settings.WEBINAR_LINK,
+            import_url: urls.IMPORT_CSV_URL,
+            template_url: urls.CONTACT_CSV_URL,
           };
 
-          sendWelcomeEmail(data);
-          // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
-          //   expiresIn: '30d',
-          // });
+          sendNotificationEmail(data);
 
           Team.find({ referrals: email })
             .populate('owner')
@@ -1340,17 +1348,7 @@ const checkAuth = async (req, res, next) => {
       req.guest_loggin = true;
     }
 
-    if (
-      req.currentUser.primary_connected ||
-      req.currentUser.connected_email_type === 'email'
-    ) {
-      next();
-    } else {
-      res.status(402).send({
-        status: false,
-        error: 'not connected',
-      });
-    }
+    next();
   } else {
     console.error('Valid JWT but no user:', decoded);
     res.status(401).send({
@@ -2736,12 +2734,12 @@ const sendWelcomeEmail = async (data) => {
     webinar_url: system_settings.WEBINAR_LINK,
     import_url: urls.IMPORT_CSV_URL,
     template_url: urls.CONTACT_CSV_URL,
+    email,
+    password,
     facebook_url: urls.FACEBOOK_URL,
     login_url: urls.LOGIN_URL,
     terms_url: urls.TERMS_SERVICE_URL,
     privacy_url: urls.PRIVACY_URL,
-    email,
-    password,
   };
 
   const params = {

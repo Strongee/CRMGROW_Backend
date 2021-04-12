@@ -4100,7 +4100,7 @@ const sendEmail = async (data) => {
                   { _id: contacts[i] },
                   { $set: { last_activity: activity.id } }
                 ).catch((err) => {
-                  console.log('err', err.message);
+                  console.log('contact update err', err.message);
                 });
 
                 resolve({

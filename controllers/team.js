@@ -50,7 +50,7 @@ const getAll = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
         },
       },
       {
@@ -60,7 +60,7 @@ const getAll = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
         },
       },
       {
@@ -70,7 +70,7 @@ const getAll = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
         },
       },
     ])
@@ -154,7 +154,7 @@ const get = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -166,7 +166,7 @@ const get = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -178,7 +178,7 @@ const get = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -190,7 +190,7 @@ const get = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -1982,7 +1982,7 @@ const loadCalls = async (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -1994,7 +1994,7 @@ const loadCalls = async (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
           company: 1,
           location: 1,
           time_zone_info: 1,
@@ -2087,7 +2087,7 @@ const getLeaders = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
         },
       },
       {
@@ -2097,7 +2097,7 @@ const getLeaders = (req, res) => {
           user_name: 1,
           picture_profile: 1,
           email: 1,
-          cell_phone: 1,
+          phone: 1,
         },
       },
     ])
@@ -2159,7 +2159,7 @@ const getSharedContacts = async (req, res) => {
       {
         path: 'user',
         select:
-          'user_name email picture_profile cell_phone location time_zone_info company',
+          'user_name email picture_profile phone location time_zone_info company',
       },
       {
         path: 'last_activity',
@@ -2167,7 +2167,7 @@ const getSharedContacts = async (req, res) => {
       {
         path: 'shared_members',
         select:
-          'user_name email picture_profile cell_phone location time_zone_info company',
+          'user_name email picture_profile phone location time_zone_info company',
       },
     ])
     .skip(skip)
@@ -2251,14 +2251,14 @@ const searchContact = async (req, res) => {
       .populate([
         {
           path: 'user',
-          select: 'user_name email picture_profile cell_phone',
+          select: 'user_name email picture_profile phone',
         },
         {
           path: 'last_activity',
         },
         {
           path: 'shared_members',
-          select: 'user_name email picture_profile cell_phone',
+          select: 'user_name email picture_profile phone',
         },
       ])
       .sort({ first_name: 1 });
@@ -2320,14 +2320,14 @@ const searchContact = async (req, res) => {
       .populate([
         {
           path: 'user',
-          select: 'user_name email picture_profile cell_phone',
+          select: 'user_name email picture_profile phone',
         },
         {
           path: 'last_activity',
         },
         {
           path: 'shared_members',
-          select: 'user_name email picture_profile cell_phone',
+          select: 'user_name email picture_profile phone',
         },
       ])
       .sort({ first_name: 1 });
@@ -2566,7 +2566,7 @@ const getAllSharedContacts = async (req, res) => {
     first_name: 1,
     last_name: 1,
     email: 1,
-    cell_phone: 1,
+    phone: 1,
   });
   return res.send({
     status: true,

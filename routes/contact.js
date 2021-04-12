@@ -117,15 +117,15 @@ router.get(
 // Get a Brokerage data
 router.get(
   '/brokerage',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(ContactCtrl.getBrokerages)
 );
 
 // Get Source data
-router.get('/sources', UserCtrl.checkAuth2, catchError(ContactCtrl.getSources));
+router.get('/sources', UserCtrl.checkAuth, catchError(ContactCtrl.getSources));
 
 // Get City data
-router.get('/cities', UserCtrl.checkAuth2, catchError(ContactCtrl.getCities));
+router.get('/cities', UserCtrl.checkAuth, catchError(ContactCtrl.getCities));
 
 // Get a Contact data with ID
 router.get('/get/:id', UserCtrl.checkAuth, catchError(ContactCtrl.getById));

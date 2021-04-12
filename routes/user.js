@@ -44,7 +44,7 @@ router.post('/check', catchError(UserCtrl.checkUser));
 router.post('/logout', UserCtrl.checkAuth, catchError(UserCtrl.logout));
 
 // Edit own profile
-router.get('/me', UserCtrl.checkAuth2, catchError(UserCtrl.getMe));
+router.get('/me', UserCtrl.checkAuth, catchError(UserCtrl.getMe));
 
 // Edit own profile
 router.put('/me', UserCtrl.checkAuthGuest, catchError(UserCtrl.editMe));
@@ -75,48 +75,48 @@ router.post('/reset-password', catchError(UserCtrl.resetPasswordByCode));
 // Synchronize with outlook email
 router.get(
   '/sync-outlook',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.syncOutlook)
 );
 
 // Synchronize with gmail
-router.get('/sync-gmail', UserCtrl.checkAuth2, catchError(UserCtrl.syncGmail));
+router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail));
 
 // Disconnect with gmail
 router.get(
   '/discon-gmail',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.disconnectGmail)
 );
 
 // Synchronize with yahoo
-router.get('/sync-yahoo', UserCtrl.checkAuth2, catchError(UserCtrl.syncYahoo));
+router.get('/sync-yahoo', UserCtrl.checkAuth, catchError(UserCtrl.syncYahoo));
 
 // Outlook Email authorization
 router.get(
   '/authorize-outlook',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.authorizeOutlook)
 );
 
 // Synchorinze other mailer
 router.post(
   '/authorize-mailer',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.authorizeOtherEmailer)
 );
 
 // Gmail authorized
 router.get(
   '/authorize-gmail',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.authorizeGmail)
 );
 
 // Yahoo authorized
 router.get(
   '/authorize-yahoo',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.authorizeYahoo)
 );
 
@@ -190,7 +190,7 @@ router.get(
 // Desktop Notification
 router.post(
   '/desktop-notification',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.desktopNotification)
 );
 
@@ -233,7 +233,7 @@ router.get('/app-outlook-signin', catchError(UserCtrl.appOutlookSignIn));
 // Connect Another Email Service
 router.get(
   '/another-con',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.connectAnotherEmail)
 );
 
@@ -249,7 +249,7 @@ router.post('/search-phone', catchError(UserCtrl.searchPhone));
 // Schedule a paid demo
 router.post(
   '/schedule-demo',
-  UserCtrl.checkAuth2,
+  UserCtrl.checkAuth,
   catchError(UserCtrl.schedulePaidDemo)
 );
 
