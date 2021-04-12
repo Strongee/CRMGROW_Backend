@@ -2029,7 +2029,13 @@ const advanceSearch = async (req, res) => {
     for (const team_id in teamOptions) {
       const teamOption = teamOptions[team_id];
       if (teamOption.flag === 1) {
-        teamQuery['$or'].push({ shared_team: [team_id] });
+        teamQuery['$or'].push({
+          shared_team: [team_id],
+          $or: [
+            { user: currentUser._id },
+            { shared_members: [currentUser._id] },
+          ],
+        });
         continue;
       } else {
         const shareWithQuery = {};
@@ -2055,7 +2061,7 @@ const advanceSearch = async (req, res) => {
       }
     }
   }
-  console.log('teamQuery', teamQuery);
+  console.log('teamQuery', JSON.stringify(teamQuery));
 
   // Material Check
   let watchedVideoContacts = [];
