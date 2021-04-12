@@ -1388,17 +1388,7 @@ const checkAuthGuest = async (req, res, next) => {
       });
     }
 
-    if (
-      req.currentUser.primary_connected ||
-      req.currentUser.connected_email_type === 'email'
-    ) {
-      next();
-    } else {
-      res.status(402).send({
-        status: false,
-        error: 'not connected',
-      });
-    }
+    next();
   } else {
     console.error('Valid JWT but no user:', decoded);
     res.status(401).send({
