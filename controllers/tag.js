@@ -161,9 +161,13 @@ const updateTag = async (req, res) => {
 
 const deleteTag = async (req, res) => {
   const { currentUser } = req;
-  const { tag } = req.body;
+  const { tag, contact } = req.body;
+  const query = { user: mongoose.Types.ObjectId(currentUser.id) };
+  if (contact) {
+    query['_id'] = contact;
+  }
   await Contact.update(
-    { user: mongoose.Types.ObjectId(currentUser.id) },
+    query,
     { $pull: { tags: tag } },
     { multi: true }
   );
