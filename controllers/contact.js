@@ -2061,8 +2061,12 @@ const advanceSearch = async (req, res) => {
         teamQuery['$or'].push(evTeamQuery);
       }
     }
-
     teamContacts = await Contact.find(teamQuery);
+
+    return res.send({
+      status: true,
+      data: teamContacts,
+    });
   }
 
   // Material Check
@@ -3066,7 +3070,6 @@ const advanceSearch = async (req, res) => {
     });
   }
   const count = await Contact.countDocuments({ user: currentUser.id });
-  results = [...teamContacts, ...results];
 
   return res.send({
     status: true,
