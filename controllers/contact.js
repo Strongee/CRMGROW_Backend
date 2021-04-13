@@ -2026,6 +2026,7 @@ const advanceSearch = async (req, res) => {
 
   const teamQuery = { $or: [] };
   let teamContacts = [];
+  const teamContactIds = [];
   if (Object.keys(teamOptions).length) {
     for (const team_id in teamOptions) {
       const teamOption = teamOptions[team_id];
@@ -2062,10 +2063,8 @@ const advanceSearch = async (req, res) => {
       }
     }
     teamContacts = await Contact.find(teamQuery);
-
-    return res.send({
-      status: true,
-      data: teamContacts,
+    teamContacts.forEach((e) => {
+      teamContactIds.push(e._id);
     });
   }
 
@@ -2084,649 +2083,653 @@ const advanceSearch = async (req, res) => {
   let sentImageContacts = [];
 
   const excludeMaterialContacts = [];
-  if (materialCondition['watched_video']['flag']) {
-    let query = [];
-    if (materialCondition['watched_video']['material']) {
-      query = [
-        {
-          type: 'videos',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['watched_video']['material']
-          ),
-        },
-        {
-          type: 'video_trackers',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['watched_video']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'videos' }, { type: 'video_trackers' }];
-    }
-    watchedVideoContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          types: { action: 'video_trackers' },
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['watched_pdf']['flag']) {
-    let query = [];
-    if (materialCondition['watched_pdf']['material']) {
-      query = [
-        {
-          type: 'pdfs',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['watched_pdf']['material']
-          ),
-        },
-        {
-          type: 'pdf_trackers',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['watched_pdf']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
-    }
-    watchedPdfContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          types: { action: 'pdf_trackers' },
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['watched_image']['flag']) {
-    let query = [];
-    if (materialCondition['watched_image']['material']) {
-      query = [
-        {
-          type: 'images',
-          images: mongoose.Types.ObjectId(
-            materialCondition['watched_image']['material']
-          ),
-        },
-        {
-          type: 'image_trackers',
-          images: mongoose.Types.ObjectId(
-            materialCondition['watched_image']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'images' }, { type: 'image_trackers' }];
-    }
-    watchedImageContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          types: { action: 'image_trackers' },
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-
-  if (materialCondition['not_watched_video']['flag']) {
-    let query = [];
-    if (materialCondition['not_watched_video']['material']) {
-      query = [
-        {
-          type: 'videos',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['not_watched_video']['material']
-          ),
-        },
-        {
-          type: 'video_trackers',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['not_watched_video']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'videos' }, { type: 'video_trackers' }];
-    }
-    notWatchedVideoContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          $nor: [{ types: { action: 'video_trackers' } }],
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['not_watched_pdf']['flag']) {
-    let query = [];
-    if (materialCondition['not_watched_pdf']['material']) {
-      query = [
-        {
-          type: 'pdfs',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['not_watched_pdf']['material']
-          ),
-        },
-        {
-          type: 'pdf_trackers',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['not_watched_pdf']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
-    }
-    notWatchedPdfContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          $nor: [{ types: { action: 'pdf_trackers' } }],
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['not_watched_image']['flag']) {
-    let query = [];
-    if (materialCondition['not_watched_image']['material']) {
-      query = [
-        {
-          type: 'images',
-          images: mongoose.Types.ObjectId(
-            materialCondition['not_watched_image']['material']
-          ),
-        },
-        {
-          type: 'image_trackers',
-          images: mongoose.Types.ObjectId(
-            materialCondition['not_watched_image']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'images' }, { type: 'image_trackers' }];
-    }
-    notWatchedImageContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $or: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts', type: '$type' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-          types: { $addToSet: { action: '$_id.type' } },
-        },
-      },
-      {
-        $match: {
-          $nor: [{ types: { action: 'image_trackers' } }],
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-
-  if (materialCondition['not_sent_video']['flag']) {
-    let query = [];
-    if (materialCondition['not_sent_video']['material']) {
-      query = [
-        {
-          type: 'videos',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['not_sent_video']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'videos' }];
-    }
-    notSentVideoContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-    notSentVideoContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) === -1) {
-        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
-      }
-    });
-  }
-  if (materialCondition['not_sent_pdf']['flag']) {
-    let query = [];
-    if (materialCondition['not_sent_pdf']['material']) {
-      query = [
-        {
-          type: 'pdfs',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['not_sent_pdf']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'pdfs' }];
-    }
-    notSentPdfContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-    notSentPdfContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) === -1) {
-        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
-      }
-    });
-  }
-  if (materialCondition['not_sent_image']['flag']) {
-    let query = [];
-    if (materialCondition['not_sent_image']['material']) {
-      query = [
-        {
-          type: 'images',
-          images: mongoose.Types.ObjectId(
-            materialCondition['not_sent_image']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'images' }];
-    }
-    notSentImageContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-    notSentImageContacts.forEach((e) => {
-      if (excludeMaterialContacts.indexOf(e._id) === -1) {
-        e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
-      }
-    });
-  }
-  if (materialCondition['sent_video']['flag']) {
-    let query = [];
-    if (materialCondition['sent_video']['material']) {
-      query = [
-        {
-          type: 'videos',
-          videos: mongoose.Types.ObjectId(
-            materialCondition['sent_video']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'videos' }];
-    }
-    sentVideoContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['sent_pdf']['flag']) {
-    let query = [];
-    if (materialCondition['sent_pdf']['material']) {
-      query = [
-        {
-          type: 'pdfs',
-          pdfs: mongoose.Types.ObjectId(
-            materialCondition['sent_pdf']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'pdfs' }];
-    }
-    sentPdfContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
-  if (materialCondition['sent_image']['flag']) {
-    let query = [];
-    if (materialCondition['sent_image']['material']) {
-      query = [
-        {
-          type: 'images',
-          images: mongoose.Types.ObjectId(
-            materialCondition['sent_image']['material']
-          ),
-        },
-      ];
-    } else {
-      query = [{ type: 'images' }];
-    }
-    sentImageContacts = await Activity.aggregate([
-      {
-        $match: {
-          $and: [
-            { user: mongoose.Types.ObjectId(currentUser._id) },
-            { $and: query },
-          ],
-        },
-      },
-      { $unwind: '$contacts' },
-      {
-        $group: {
-          _id: { contact: '$contacts' },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.contact',
-        },
-      },
-      {
-        $project: { _id: 1 },
-      },
-    ]);
-  }
   const materialContacts = [];
-  watchedVideoContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  watchedPdfContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  watchedImageContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  notWatchedVideoContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  notWatchedPdfContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  notWatchedImageContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  sentVideoContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  sentPdfContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
-  sentImageContacts.forEach((e) => {
-    e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
-  });
   var query = { $and: [{ user: mongoose.Types.ObjectId(currentUser.id) }] };
-
-  const includeMaterialCondition =
-    materialCondition['not_watched_pdf']['flag'] ||
-    materialCondition['not_watched_video']['flag'] ||
-    materialCondition['watched_pdf']['flag'] ||
-    materialCondition['watched_video']['flag'] ||
-    materialCondition['watched_image']['flag'] ||
-    materialCondition['not_watched_image']['flag'] ||
-    materialCondition['sent_video']['flag'] ||
-    materialCondition['sent_pdf']['flag'] ||
-    materialCondition['sent_image']['flag'];
-  const excludeMaterialCondition =
-    materialCondition['not_sent_video']['flag'] ||
-    materialCondition['not_sent_pdf']['flag'] ||
-    materialCondition['not_sent_image']['flag'];
-
-  if (materialContacts.length) {
-    // Exclude Contacts from material contacts
-    let materialQuery = { _id: { $in: materialContacts } };
-    if (excludeMaterialCondition) {
-      if (excludeMaterialContacts.length) {
-        materialQuery = {
-          $or: [
-            { _id: { $in: materialContacts } },
-            { _id: { $nin: excludeMaterialContacts } },
-          ],
-        };
+  if (!Object.keys(teamOptions).length) {
+    if (materialCondition['watched_video']['flag']) {
+      let query = [];
+      if (materialCondition['watched_video']['material']) {
+        query = [
+          {
+            type: 'videos',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['watched_video']['material']
+            ),
+          },
+          {
+            type: 'video_trackers',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['watched_video']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'videos' }, { type: 'video_trackers' }];
       }
+      watchedVideoContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            types: { action: 'video_trackers' },
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
     }
-    query['$and'].push(materialQuery);
-  } else {
-    if (includeMaterialCondition) {
-      if (excludeMaterialContacts.length) {
-        query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
-      } else if (!excludeMaterialCondition) {
-        return res.send({
-          status: true,
-          data: [],
-        });
+    if (materialCondition['watched_pdf']['flag']) {
+      let query = [];
+      if (materialCondition['watched_pdf']['material']) {
+        query = [
+          {
+            type: 'pdfs',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['watched_pdf']['material']
+            ),
+          },
+          {
+            type: 'pdf_trackers',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['watched_pdf']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
       }
+      watchedPdfContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            types: { action: 'pdf_trackers' },
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    if (materialCondition['watched_image']['flag']) {
+      let query = [];
+      if (materialCondition['watched_image']['material']) {
+        query = [
+          {
+            type: 'images',
+            images: mongoose.Types.ObjectId(
+              materialCondition['watched_image']['material']
+            ),
+          },
+          {
+            type: 'image_trackers',
+            images: mongoose.Types.ObjectId(
+              materialCondition['watched_image']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'images' }, { type: 'image_trackers' }];
+      }
+      watchedImageContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            types: { action: 'image_trackers' },
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+
+    if (materialCondition['not_watched_video']['flag']) {
+      let query = [];
+      if (materialCondition['not_watched_video']['material']) {
+        query = [
+          {
+            type: 'videos',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['not_watched_video']['material']
+            ),
+          },
+          {
+            type: 'video_trackers',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['not_watched_video']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'videos' }, { type: 'video_trackers' }];
+      }
+      notWatchedVideoContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            $nor: [{ types: { action: 'video_trackers' } }],
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    if (materialCondition['not_watched_pdf']['flag']) {
+      let query = [];
+      if (materialCondition['not_watched_pdf']['material']) {
+        query = [
+          {
+            type: 'pdfs',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['not_watched_pdf']['material']
+            ),
+          },
+          {
+            type: 'pdf_trackers',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['not_watched_pdf']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'pdfs' }, { type: 'pdf_trackers' }];
+      }
+      notWatchedPdfContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            $nor: [{ types: { action: 'pdf_trackers' } }],
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    if (materialCondition['not_watched_image']['flag']) {
+      let query = [];
+      if (materialCondition['not_watched_image']['material']) {
+        query = [
+          {
+            type: 'images',
+            images: mongoose.Types.ObjectId(
+              materialCondition['not_watched_image']['material']
+            ),
+          },
+          {
+            type: 'image_trackers',
+            images: mongoose.Types.ObjectId(
+              materialCondition['not_watched_image']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'images' }, { type: 'image_trackers' }];
+      }
+      notWatchedImageContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $or: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts', type: '$type' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+            types: { $addToSet: { action: '$_id.type' } },
+          },
+        },
+        {
+          $match: {
+            $nor: [{ types: { action: 'image_trackers' } }],
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+
+    if (materialCondition['not_sent_video']['flag']) {
+      let query = [];
+      if (materialCondition['not_sent_video']['material']) {
+        query = [
+          {
+            type: 'videos',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['not_sent_video']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'videos' }];
+      }
+      notSentVideoContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+      notSentVideoContacts.forEach((e) => {
+        if (excludeMaterialContacts.indexOf(e._id) === -1) {
+          e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+        }
+      });
+    }
+    if (materialCondition['not_sent_pdf']['flag']) {
+      let query = [];
+      if (materialCondition['not_sent_pdf']['material']) {
+        query = [
+          {
+            type: 'pdfs',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['not_sent_pdf']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'pdfs' }];
+      }
+      notSentPdfContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+      notSentPdfContacts.forEach((e) => {
+        if (excludeMaterialContacts.indexOf(e._id) === -1) {
+          e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+        }
+      });
+    }
+    if (materialCondition['not_sent_image']['flag']) {
+      let query = [];
+      if (materialCondition['not_sent_image']['material']) {
+        query = [
+          {
+            type: 'images',
+            images: mongoose.Types.ObjectId(
+              materialCondition['not_sent_image']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'images' }];
+      }
+      notSentImageContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+      notSentImageContacts.forEach((e) => {
+        if (excludeMaterialContacts.indexOf(e._id) === -1) {
+          e._id && excludeMaterialContacts.push(mongoose.Types.ObjectId(e._id));
+        }
+      });
+    }
+    if (materialCondition['sent_video']['flag']) {
+      let query = [];
+      if (materialCondition['sent_video']['material']) {
+        query = [
+          {
+            type: 'videos',
+            videos: mongoose.Types.ObjectId(
+              materialCondition['sent_video']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'videos' }];
+      }
+      sentVideoContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    if (materialCondition['sent_pdf']['flag']) {
+      let query = [];
+      if (materialCondition['sent_pdf']['material']) {
+        query = [
+          {
+            type: 'pdfs',
+            pdfs: mongoose.Types.ObjectId(
+              materialCondition['sent_pdf']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'pdfs' }];
+      }
+      sentPdfContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    if (materialCondition['sent_image']['flag']) {
+      let query = [];
+      if (materialCondition['sent_image']['material']) {
+        query = [
+          {
+            type: 'images',
+            images: mongoose.Types.ObjectId(
+              materialCondition['sent_image']['material']
+            ),
+          },
+        ];
+      } else {
+        query = [{ type: 'images' }];
+      }
+      sentImageContacts = await Activity.aggregate([
+        {
+          $match: {
+            $and: [
+              { user: mongoose.Types.ObjectId(currentUser._id) },
+              { $and: query },
+            ],
+          },
+        },
+        { $unwind: '$contacts' },
+        {
+          $group: {
+            _id: { contact: '$contacts' },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.contact',
+          },
+        },
+        {
+          $project: { _id: 1 },
+        },
+      ]);
+    }
+    watchedVideoContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    watchedPdfContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    watchedImageContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    notWatchedVideoContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    notWatchedPdfContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    notWatchedImageContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    sentVideoContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    sentPdfContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+    sentImageContacts.forEach((e) => {
+      e._id && materialContacts.push(mongoose.Types.ObjectId(e._id));
+    });
+
+    const includeMaterialCondition =
+      materialCondition['not_watched_pdf']['flag'] ||
+      materialCondition['not_watched_video']['flag'] ||
+      materialCondition['watched_pdf']['flag'] ||
+      materialCondition['watched_video']['flag'] ||
+      materialCondition['watched_image']['flag'] ||
+      materialCondition['not_watched_image']['flag'] ||
+      materialCondition['sent_video']['flag'] ||
+      materialCondition['sent_pdf']['flag'] ||
+      materialCondition['sent_image']['flag'];
+    const excludeMaterialCondition =
+      materialCondition['not_sent_video']['flag'] ||
+      materialCondition['not_sent_pdf']['flag'] ||
+      materialCondition['not_sent_image']['flag'];
+
+    if (materialContacts.length) {
+      // Exclude Contacts from material contacts
+      let materialQuery = { _id: { $in: materialContacts } };
+      if (excludeMaterialCondition) {
+        if (excludeMaterialContacts.length) {
+          materialQuery = {
+            $or: [
+              { _id: { $in: materialContacts } },
+              { _id: { $nin: excludeMaterialContacts } },
+            ],
+          };
+        }
+      }
+      query['$and'].push(materialQuery);
     } else {
-      if (excludeMaterialContacts) {
-        query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
+      if (includeMaterialCondition) {
+        if (excludeMaterialContacts.length) {
+          query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
+        } else if (!excludeMaterialCondition) {
+          return res.send({
+            status: true,
+            data: [],
+          });
+        }
+      } else {
+        if (excludeMaterialContacts) {
+          query['$and'].push({ _id: { $nin: excludeMaterialContacts } });
+        }
       }
     }
+  } else {
+    query = { $and: [{ _id: { $in: teamContactIds } }] };
   }
 
   if (searchStr) {
