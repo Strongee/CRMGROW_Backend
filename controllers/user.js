@@ -260,16 +260,20 @@ const signUp = async (req, res) => {
             : system_settings.TIME_ZONE;
 
           const data = {
-            email: _res.email,
-            verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
-            user_name: _res.user_name,
-            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
-            password,
-            time_zone,
+            template_data: {
+              email: _res.email,
+              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              user_name: _res.user_name,
+              created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+              password,
+              time_zone,
+              webinar_url: system_settings.WEBINAR_LINK,
+              import_url: urls.IMPORT_CSV_URL,
+              template_url: urls.CONTACT_CSV_URL,
+            },
+            template_name: 'Welcome',
             required_reply: false,
-            webinar_url: system_settings.WEBINAR_LINK,
-            import_url: urls.IMPORT_CSV_URL,
-            template_url: urls.CONTACT_CSV_URL,
+            email: _res.email,
           };
 
           sendNotificationEmail(data);
@@ -575,16 +579,21 @@ const socialSignUp = async (req, res) => {
             : system_settings.TIME_ZONE;
 
           const data = {
-            email: _res.email,
-            verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
-            user_name: _res.user_name,
-            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
-            password: 'No password (use social login)',
-            time_zone,
+            template_data: {
+              email: _res.email,
+              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              user_name: _res.user_name,
+              created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+              password: 'No password (use social login)',
+              time_zone,
+              required_reply: false,
+              webinar_url: system_settings.WEBINAR_LINK,
+              import_url: urls.IMPORT_CSV_URL,
+              template_url: urls.CONTACT_CSV_URL,
+            },
+            template_name: 'Welcome',
             required_reply: false,
-            webinar_url: system_settings.WEBINAR_LINK,
-            import_url: urls.IMPORT_CSV_URL,
-            template_url: urls.CONTACT_CSV_URL,
+            email: _res.email,
           };
 
           sendNotificationEmail(data);
