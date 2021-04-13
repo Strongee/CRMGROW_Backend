@@ -2017,11 +2017,51 @@ const advanceSearch = async (req, res) => {
     includeTag,
     includeLastActivity,
     includeBrokerage,
+    teamOptions,
   } = req.body;
   let { includeFollowUps } = req.body;
   if (includeFollowUps === null || includeFollowUps === 'undefined') {
     includeFollowUps = true;
   }
+
+  const teamQuery = { $or: [] };
+  if (Object.keys(teamOptions).length) {
+    for (const team_id in teamOptions) {
+      const teamOption = teamOptions[team_id];
+      if (teamOption.flag === 1) {
+        teamQuery['$or'].push({
+          shared_team: [team_id],
+          $or: [
+            { user: currentUser._id },
+            { shared_members: [currentUser._id] },
+          ],
+        });
+        continue;
+      } else {
+        const shareWithQuery = {};
+        const shareByQuery = {};
+        const evTeamQuery = { $or: [] };
+        if (teamOption.share_with.flag !== -1) {
+          shareWithQuery['user'] = currentUser._id;
+          shareWithQuery['shared_team'] = [team_id];
+          if (!teamOption.share_with.flag) {
+            shareWithQuery['shared_members'] = teamOption.share_with.members;
+          }
+          evTeamQuery['$or'].push(shareWithQuery);
+        }
+        if (teamOption.share_by.flag !== -1) {
+          shareByQuery['shared_members'] = [currentUser._id];
+          shareByQuery['shared_team'] = [team_id];
+          if (!teamOption.share_with.flag) {
+            shareByQuery['user'] = { $in: teamOption.share_with.members };
+          }
+          evTeamQuery['$or'].push(shareWithQuery);
+        }
+        teamQuery['$or'].push(evTeamQuery);
+      }
+    }
+  }
+  console.log('teamQuery', JSON.stringify(teamQuery));
 
   // Material Check
   let watchedVideoContacts = [];
