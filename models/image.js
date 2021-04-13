@@ -16,7 +16,6 @@ const ImageSchema = new Schema(
     has_shared: { type: Boolean, default: false },
     default_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     shared_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
-    shared_materials: { type: Array, default: [] },
     del: { type: Boolean, default: false },
     created_at: Date,
     updated_at: Date,
