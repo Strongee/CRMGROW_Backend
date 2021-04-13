@@ -4352,6 +4352,8 @@ const sendNotificationEmail = async (data) => {
     TemplateData: JSON.stringify(templatedData),
   };
 
+  console.log('params', params);
+
   // Create the promise and SES service object
 
   ses.sendTemplatedEmail(params).promise();

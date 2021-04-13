@@ -51,7 +51,7 @@ const Guest = require('../models/guest');
 const Team = require('../models/team');
 const PaidDemo = require('../models/paid_demo');
 
-const { getSignalWireNumber, getTwilioNumber } = require('../helpers/text');
+const { getTwilioNumber } = require('../helpers/text');
 const { sendNotificationEmail } = require('../helpers/email');
 
 const urls = require('../constants/urls');
@@ -205,16 +205,18 @@ const signUp = async (req, res) => {
           });
 
           if (_res.phone) {
-            if (_res.phone.areaCode === 'US' || _res.phone.areaCode === 'CA') {
-              // purchase proxy number
-              const proxy_number = getSignalWireNumber(_res.id);
-              if (proxy_number === api.SIGNALWIRE.DEFAULT_NUMBER) {
-                getTwilioNumber(_res.id);
-              }
-            } else {
-              // purchase twilio number
-              getTwilioNumber(_res.id);
-            }
+            getTwilioNumber(_res.id);
+
+            // if (_res.phone.areaCode === 'US' || _res.phone.areaCode === 'CA') {
+            //   // purchase proxy number
+            //   const proxy_number = getSignalWireNumber(_res.id);
+            //   if (proxy_number === api.SIGNALWIRE.DEFAULT_NUMBER) {
+            //     getTwilioNumber(_res.id);
+            //   }
+            // } else {
+            //   // purchase twilio number
+            //   getTwilioNumber(_res.id);
+            // }
           }
 
           // welcome email
@@ -276,7 +278,16 @@ const signUp = async (req, res) => {
             email: _res.email,
           };
 
-          sendNotificationEmail(data);
+          sendNotificationEmail(data)
+            .then((_res) => {
+              console.log(
+                'welcome email has been sent out succeefully',
+                _res.id
+              );
+            })
+            .catch((err) => {
+              console.log('welcome email send err', err);
+            });
 
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
@@ -535,7 +546,7 @@ const socialSignUp = async (req, res) => {
             console.log('err', err);
           });
           // purchase proxy number
-          getSignalWireNumber(_res.id);
+          getTwilioNumber(_res.id);
 
           // send welcome email
           /**
