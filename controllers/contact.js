@@ -4702,11 +4702,16 @@ const shareContacts = async (req, res) => {
         });
 
       if (!contact) {
+        const _contact = await Contact.findOne({
+          _id: contacts[i],
+        }).catch((err) => {
+          console.log('contact find err', err.message);
+        });
         error.push({
           contact: {
             _id: contacts[i],
-            first_name: contact.first_name,
-            email: contact.email,
+            first_name: _contact.first_name,
+            email: _contact.email,
           },
           error: 'Invalid permission',
         });
