@@ -1510,7 +1510,7 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
-      } else if (video['has_shared']) {
+      } else if (video['shared_video']) {
         Video.updateOne(
           {
             _id: video.shared_video,
