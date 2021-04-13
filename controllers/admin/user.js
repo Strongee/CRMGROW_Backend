@@ -1,8 +1,9 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator/check');
-const sgMail = require('@sendgrid/mail');
+
 const User = require('../../models/user');
+const Garbage = require('../../models/garbage');
 const Payment = require('../../models/payment');
 const Contact = require('../../models/contact');
 const Tag = require('../../models/tag');
@@ -13,6 +14,7 @@ const FollowUp = require('../../models/follow_up');
 const TimeLine = require('../../models/time_line');
 const Team = require('../../models/team');
 const PaymentCtrl = require('../payment');
+const moment = require('moment-timezone');
 const VideoHelper = require('../../helpers/video');
 const { isBlockedEmail } = require('../../helpers/email');
 const api = require('../../config/api');
@@ -20,7 +22,7 @@ const system_settings = require('../../config/system_settings');
 const urls = require('../../constants/urls');
 const mail_contents = require('../../constants/mail_contents');
 const { releaseSignalWireNumber } = require('../../helpers/text');
-const { sendWelcomeEmail } = require('../user');
+const { sendNotificationEmail } = require('../../helpers/email');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -41,8 +43,6 @@ const signUp = async (req, res) => {
     salt,
     hash,
     role: 'admin',
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   user
@@ -362,6 +362,7 @@ const create = async (req, res) => {
   }
   const _user = await User.findOne({
     email: req.body.email,
+    del: false,
   });
 
   if (_user != null) {
@@ -384,62 +385,52 @@ const create = async (req, res) => {
     ...req.body,
     salt,
     hash,
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   user
     .save()
     .then((_res) => {
-      /**
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-      let msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-          user_email: _res.email,
-          user_password: password,
-          contact_link: `<a href="${urls.CONTACT_PAGE_URL}">Click this link - Your Profile</a>`,
-        },
-      };
-
-      sgMail.send(msg).catch((err) => {
-        console.log('err', err);
+      const garbage = new Garbage({
+        user: _res.id,
       });
 
-      msg = {
-        to: _res.email,
-        from: mail_contents.WELCOME_SIGNUP.MAIL,
-        templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-        dynamic_template_data: {
-          first_name: _res.user_name,
-          connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-          upload_avatar: `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
-          upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-          contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-        },
-      };
-
-      sgMail.send(msg).catch((err) => {
-        console.log('err', err.message);
+      garbage.save().catch((err) => {
+        console.log('garbage save err', err.message);
       });
-      */
+
       const time_zone = _res.time_zone_info
         ? JSON.parse(_res.time_zone_info).tz_name
         : system_settings.TIME_ZONE;
 
       const data = {
-        id: _res.id,
+        template_data: {
+          user_email: email,
+          verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+          user_name: _res.user_name,
+          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+          password,
+          time_zone,
+          oneonone_url: urls.ONEONONE_URL,
+          recording_url: urls.INTRO_VIDEO_URL,
+          recording_preview: urls.RECORDING_PREVIEW_URL,
+          webinar_url: system_settings.WEBINAR_LINK,
+          import_url: urls.IMPORT_CSV_URL,
+          template_url: urls.CONTACT_CSV_URL,
+          connect_url: urls.PROFILE_URL,
+        },
+        template_name: 'Welcome',
+        required_reply: true,
         email: _res.email,
-        user_name: _res.user_name,
-        password,
-        time_zone,
       };
 
-      sendWelcomeEmail(data);
+      sendNotificationEmail(data)
+        .then(() => {
+          console.log('welcome email has been sent out succeefully');
+        })
+        .catch((err) => {
+          console.log('welcome email send err', err);
+        });
+
       const myJSON = JSON.stringify(_res);
       const user = JSON.parse(myJSON);
       delete user.hash;
