@@ -4338,6 +4338,7 @@ const sendNotificationEmail = async (data) => {
     login_url: urls.LOGIN_URL,
     terms_url: urls.TERMS_SERVICE_URL,
     privacy_url: urls.PRIVACY_URL,
+    unsubscription_url: urls.UNSUSCRIPTION_URL,
   };
 
   const source_email = required_reply

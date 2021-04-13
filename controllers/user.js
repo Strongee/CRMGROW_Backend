@@ -263,7 +263,7 @@ const signUp = async (req, res) => {
 
           const data = {
             template_data: {
-              email: _res.email,
+              user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
@@ -275,6 +275,7 @@ const signUp = async (req, res) => {
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
+              connect_url: urls.PROFILE_URL,
             },
             template_name: 'Welcome',
             required_reply: true,
@@ -449,76 +450,6 @@ const socialSignUp = async (req, res) => {
 
   const { user_name, email, token, referral } = req.body;
 
-  // if(!token) {
-  //   const user = new User({
-  //     ...req.body,
-  //     updated_at: new Date(),
-  //     created_at: new Date(),
-  //   })
-  //   user.save()
-  //     .then(_res => {
-  //       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY)
-  //       let msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-  //           user_email: _res.email,
-  //           contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-  //         },
-  //       };
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-  //           upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-  //           upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-  //           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-  //         }
-  //       }
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, { expiresIn: '30d' })
-
-  //       const myJSON = JSON.stringify(_res)
-  //       const user = JSON.parse(myJSON);
-
-  //       res.send({
-  //         status: true,
-  //         data: {
-  //           token,
-  //           user
-  //         }
-  //       })
-  //     })
-  //     .catch(e => {
-  //       let errors
-  //       if (e.errors) {
-  //         errors = e.errors.map(err => {
-  //           delete err.instance
-  //           return err
-  //         })
-  //       }
-  //       return res.status(500).send({
-  //         status: false,
-  //         error: errors || e
-  //       })
-  //     });
-  // }
-
   const payment_data = {
     user_name,
     email,
@@ -541,8 +472,6 @@ const socialSignUp = async (req, res) => {
         .then((_res) => {
           const garbage = new Garbage({
             user: _res.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
 
           garbage.save().catch((err) => {
@@ -551,50 +480,13 @@ const socialSignUp = async (req, res) => {
           // purchase proxy number
           getTwilioNumber(_res.id);
 
-          // send welcome email
-          /**
-            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-            let msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-                user_email: _res.email,
-                contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-
-            msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-                upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-                upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-                contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-          */
-
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
             : system_settings.TIME_ZONE;
 
           const data = {
             template_data: {
-              email: _res.email,
+              user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
@@ -607,9 +499,10 @@ const socialSignUp = async (req, res) => {
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
+              connect_url: urls.PROFILE_URL,
             },
             template_name: 'Welcome',
-            required_reply: false,
+            required_reply: true,
             email: _res.email,
           };
 
