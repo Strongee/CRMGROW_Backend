@@ -2025,6 +2025,7 @@ const advanceSearch = async (req, res) => {
   }
 
   const teamQuery = { $or: [] };
+  let teamContacts = [];
   if (Object.keys(teamOptions).length) {
     for (const team_id in teamOptions) {
       const teamOption = teamOptions[team_id];
@@ -2060,8 +2061,9 @@ const advanceSearch = async (req, res) => {
         teamQuery['$or'].push(evTeamQuery);
       }
     }
+
+    teamContacts = await Contact.find(teamQuery);
   }
-  console.log('teamQuery', JSON.stringify(teamQuery));
 
   // Material Check
   let watchedVideoContacts = [];
@@ -3064,6 +3066,7 @@ const advanceSearch = async (req, res) => {
     });
   }
   const count = await Contact.countDocuments({ user: currentUser.id });
+  results = [...teamContacts, ...results];
 
   return res.send({
     status: true,
