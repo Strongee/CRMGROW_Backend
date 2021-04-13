@@ -804,93 +804,6 @@ const importCSV = async (req, res) => {
                 resolve();
                 return;
               }
-              /**
-            const name_contact = await Contact.find({
-              first_name: data['first_name'],
-              last_name: data['last_name'],
-              user: currentUser.id,
-            })
-              .populate('label')
-              .catch((err) => {
-                console.log('contact found err', err.message);
-              });
-            if (name_contact && name_contact.length > 0) {
-              failure.push({ message: 'duplicate', data });
-
-              let existing = false;
-              failure.some((item) => {
-                if (item.data._id == name_contact.id) {
-                  existing = true;
-                }
-              });
-              if (!existing) {
-                failure.push({
-                  message: 'duplicate',
-                  data: name_contact,
-                });
-              }
-              resolve();
-              return;
-            }
-
-            if (data['email']) {
-              const email_contact = await Contact.findOne({
-                email: data['email'],
-                user: currentUser.id,
-              })
-                .populate('label')
-                .catch((err) => {
-                  console.log('contact found err', err.message);
-                });
-              if (email_contact) {
-                failure.push({ message: 'duplicate', data });
-
-                let existing = false;
-                failure.some((item) => {
-                  if (item.data._id == email_contact.id) {
-                    existing = true;
-                  }
-                });
-                if (!existing) {
-                  failure.push({
-                    message: 'duplicate',
-                    data: email_contact,
-                  });
-                }
-                resolve();
-                return;
-              }
-            }
-            if (data['cell_phone']) {
-              cell_phone = phone(data['cell_phone'])[0];
-            }
-            if (cell_phone) {
-              const phone_contact = await Contact.findOne({
-                cell_phone,
-                user: currentUser.id,
-              }).catch((err) => {
-                console.log('contact found err', err.message);
-              });
-              if (phone_contact) {
-                failure.push({ message: 'duplicate', data });
-
-                let existing = false;
-                failure.some((item) => {
-                  if (item.data._id == phone_contact.id) {
-                    existing = true;
-                  }
-                });
-                if (!existing) {
-                  failure.push({
-                    message: 'duplicate',
-                    data: phone_contact,
-                  });
-                }
-                resolve();
-                return;
-              }
-            }
-            * */
 
               if (contact_info['is_limit'] && max_upload_count <= count) {
                 exceed_contacts.push(data);
@@ -983,6 +896,14 @@ const importCSV = async (req, res) => {
                         user: currentUser.id,
                       });
 
+                      note.save().catch((err) => {
+                        console.log(
+                          'contact import note save err',
+                          err.message
+                        );
+                      });
+
+                      /**
                       note.save().then((_note) => {
                         const _activity = new Activity({
                           content: note_content,
@@ -1006,6 +927,7 @@ const importCSV = async (req, res) => {
                             console.log('error', err);
                           });
                       });
+                      */
                     }
                   }
                   resolve();
