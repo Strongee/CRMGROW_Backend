@@ -51,7 +51,7 @@ const Guest = require('../models/guest');
 const Team = require('../models/team');
 const PaidDemo = require('../models/paid_demo');
 
-const { getSignalWireNumber, getTwilioNumber } = require('../helpers/text');
+const { getTwilioNumber } = require('../helpers/text');
 const { sendNotificationEmail } = require('../helpers/email');
 
 const urls = require('../constants/urls');
@@ -79,101 +79,12 @@ const signUp = async (req, res) => {
 
   const { user_name, email, token, referral } = req.body;
 
-  // if (isBlockedEmail(email)) {
-  //   res.status(400).send({
-  //     status: false,
-  //     error: 'Sorry, Apple and Yahoo email is not support type for sign up in our CRM'
-  //   })
-  //   return;
-  // }
-
   const payment_data = {
     user_name,
     email,
     token,
     referral,
   };
-
-  // if(!token) {
-  //   const password = req.body.password
-  //   const salt = crypto.randomBytes(16).toString('hex')
-  //   const hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512').toString('hex')
-
-  //   const user = new User({
-  //     ...req.body,
-  //     salt: salt,
-  //     hash: hash,
-  //     connected_email_type: 'email',
-  //     updated_at: new Date(),
-  //     created_at: new Date(),
-  //   })
-
-  //   user.save()
-  //     .then(_res => {
-  //       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY)
-  //       let msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-  //           user_email: _res.email,
-  //           user_password: req.body.password,
-  //           contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-  //         },
-  //       };
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           connect_email: `Click here to ensure your contact information and profile picture is uploaded correctly to your profile.`,
-  //           upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-  //           upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-  //           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-  //         }
-  //       }
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, { expiresIn: '30d' })
-
-  //       const myJSON = JSON.stringify(_res)
-  //       const user = JSON.parse(myJSON);
-  //       delete user.hash
-  //       delete user.salt
-
-  //       res.send({
-  //         status: true,
-  //         data: {
-  //           token,
-  //           user
-  //         }
-  //       })
-  //     })
-  //     .catch(e => {
-  //       let errors
-  //       if (e.errors) {
-  //         errors = e.errors.map(err => {
-  //           delete err.instance
-  //           return err
-  //         })
-  //       }
-  //       return res.status(500).send({
-  //         status: false,
-  //         error: errors || e
-  //       })
-  //     });
-  // }
 
   PaymentCtrl.create(payment_data)
     .then(async (payment) => {
@@ -196,8 +107,6 @@ const signUp = async (req, res) => {
         .then((_res) => {
           const garbage = new Garbage({
             user: _res.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
 
           garbage.save().catch((err) => {
@@ -205,55 +114,8 @@ const signUp = async (req, res) => {
           });
 
           if (_res.phone) {
-            if (_res.phone.areaCode === 'US' || _res.phone.areaCode === 'CA') {
-              // purchase proxy number
-              const proxy_number = getSignalWireNumber(_res.id);
-              if (proxy_number === api.SIGNALWIRE.DEFAULT_NUMBER) {
-                getTwilioNumber(_res.id);
-              }
-            } else {
-              // purchase twilio number
-              getTwilioNumber(_res.id);
-            }
+            getTwilioNumber(_res.id);
           }
-
-          // welcome email
-          /**
-            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-            let msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-                user_email: _res.email,
-                user_password: req.body.password,
-                contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-
-            msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-                upload_avatar: `<a href="${urls.PROFILE_URL}">Click here to ensure your contact information and profile picture is uploaded correctly to your profile.</a>`,
-                upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-                contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-          */
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -261,22 +123,32 @@ const signUp = async (req, res) => {
 
           const data = {
             template_data: {
-              email: _res.email,
+              user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password,
               time_zone,
+              oneonone_url: urls.ONEONONE_URL,
+              recording_url: urls.INTRO_VIDEO_URL,
+              recording_preview: urls.RECORDING_PREVIEW_URL,
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
+              connect_url: urls.PROFILE_URL,
             },
             template_name: 'Welcome',
-            required_reply: false,
+            required_reply: true,
             email: _res.email,
           };
 
-          sendNotificationEmail(data);
+          sendNotificationEmail(data)
+            .then(() => {
+              console.log('welcome email has been sent out succeefully');
+            })
+            .catch((err) => {
+              console.log('welcome email send err', err);
+            });
 
           // const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, {
           //   expiresIn: '30d',
@@ -425,6 +297,7 @@ const socialSignUp = async (req, res) => {
     email: new RegExp(req.body.email, 'i'),
     del: false,
   });
+
   if (_user !== null) {
     res.status(400).send({
       status: false,
@@ -434,76 +307,6 @@ const socialSignUp = async (req, res) => {
   }
 
   const { user_name, email, token, referral } = req.body;
-
-  // if(!token) {
-  //   const user = new User({
-  //     ...req.body,
-  //     updated_at: new Date(),
-  //     created_at: new Date(),
-  //   })
-  //   user.save()
-  //     .then(_res => {
-  //       sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY)
-  //       let msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-  //           user_email: _res.email,
-  //           contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`
-  //         },
-  //       };
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       msg = {
-  //         to: _res.email,
-  //         from: mail_contents.WELCOME_SIGNUP.MAIL,
-  //         templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-  //         dynamic_template_data: {
-  //           first_name: _res.user_name,
-  //           // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-  //           upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-  //           upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-  //           contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`
-  //         }
-  //       }
-
-  //       sgMail.send(msg).catch(err => {
-  //         console.log('err', err)
-  //       })
-
-  //       const token = jwt.sign({ id: _res.id }, api.JWT_SECRET, { expiresIn: '30d' })
-
-  //       const myJSON = JSON.stringify(_res)
-  //       const user = JSON.parse(myJSON);
-
-  //       res.send({
-  //         status: true,
-  //         data: {
-  //           token,
-  //           user
-  //         }
-  //       })
-  //     })
-  //     .catch(e => {
-  //       let errors
-  //       if (e.errors) {
-  //         errors = e.errors.map(err => {
-  //           delete err.instance
-  //           return err
-  //         })
-  //       }
-  //       return res.status(500).send({
-  //         status: false,
-  //         error: errors || e
-  //       })
-  //     });
-  // }
 
   const payment_data = {
     user_name,
@@ -527,52 +330,13 @@ const socialSignUp = async (req, res) => {
         .then((_res) => {
           const garbage = new Garbage({
             user: _res.id,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
 
           garbage.save().catch((err) => {
             console.log('err', err);
           });
           // purchase proxy number
-          getSignalWireNumber(_res.id);
-
-          // send welcome email
-          /**
-            sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-            let msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_FIRST,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                login_credential: `<a style="font-size: 15px;" href="${urls.LOGIN_URL}">${urls.LOGIN_URL}</a>`,
-                user_email: _res.email,
-                contact_link: `<a href="${urls.PROFILE_URL}">Click this link - Your Profile</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-
-            msg = {
-              to: _res.email,
-              from: mail_contents.WELCOME_SIGNUP.MAIL,
-              templateId: api.SENDGRID.SENDGRID_SIGNUP_FLOW_SECOND,
-              dynamic_template_data: {
-                first_name: _res.user_name,
-                // connect_email: `<a href="${urls.PROFILE_URL}">Connect your email</a>`,
-                upload_avatar: `<a href="${urls.PROFILE_URL}">Load your professional headshot picture</a>`,
-                upload_spread: `<a href="${urls.CONTACT_PAGE_URL}">Upload a spreadsheet</a>`,
-                contact_link: `<a href="${urls.CONTACT_CSV_URL}">Click this link - Download CSV</a>`,
-              },
-            };
-
-            sgMail.send(msg).catch((err) => {
-              console.log('err', err);
-            });
-          */
+          getTwilioNumber(_res.id);
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -580,23 +344,33 @@ const socialSignUp = async (req, res) => {
 
           const data = {
             template_data: {
-              email: _res.email,
+              user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password: 'No password (use social login)',
               time_zone,
-              required_reply: false,
+              required_reply: true,
+              oneonone_url: urls.ONEONONE_URL,
+              recording_preview: urls.RECORDING_PREVIEW_URL,
+              recording_url: urls.INTRO_VIDEO_URL,
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
+              connect_url: urls.PROFILE_URL,
             },
             template_name: 'Welcome',
-            required_reply: false,
+            required_reply: true,
             email: _res.email,
           };
 
-          sendNotificationEmail(data);
+          sendNotificationEmail(data)
+            .then(() => {
+              console.log('welcome email has been sent out succeefully');
+            })
+            .catch((err) => {
+              console.log('welcome email send err', err);
+            });
 
           Team.find({ referrals: email })
             .populate('owner')
