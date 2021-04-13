@@ -270,8 +270,8 @@ const signUp = async (req, res) => {
               password,
               time_zone,
               oneonone_url: urls.ONEONONE_URL,
-              recording_preview: urls.INTRO_VIDEO_URL,
-              recording_url: urls.RECORDING_PREVIEW_URL,
+              recording_url: urls.INTRO_VIDEO_URL,
+              recording_preview: urls.RECORDING_PREVIEW_URL,
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
@@ -283,11 +283,8 @@ const signUp = async (req, res) => {
           };
 
           sendNotificationEmail(data)
-            .then((email_res) => {
-              console.log(
-                'welcome email has been sent out succeefully',
-                email_res.id
-              );
+            .then(() => {
+              console.log('welcome email has been sent out succeefully');
             })
             .catch((err) => {
               console.log('welcome email send err', err);
@@ -494,8 +491,8 @@ const socialSignUp = async (req, res) => {
               time_zone,
               required_reply: true,
               oneonone_url: urls.ONEONONE_URL,
-              recording_preview: urls.INTRO_VIDEO_URL,
-              recording_url: urls.RECORDING_PREVIEW_URL,
+              recording_preview: urls.RECORDING_PREVIEW_URL,
+              recording_url: urls.INTRO_VIDEO_URL,
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
@@ -506,7 +503,11 @@ const socialSignUp = async (req, res) => {
             email: _res.email,
           };
 
-          sendNotificationEmail(data);
+          sendNotificationEmail(data).then(() => {
+            console.log('welcome email has been sent out succeefully');
+          })
+          .catch((err) => {
+            console.log('welcome email send err', err);;
 
           Team.find({ referrals: email })
             .populate('owner')
