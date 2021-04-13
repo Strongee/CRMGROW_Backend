@@ -775,7 +775,7 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default pdf remove err', err.message);
         });
-      } else if (pdf['has_shared']) {
+      } else if (pdf['shared_pdf']) {
         PDF.updateOne(
           {
             _id: pdf.shared_pdf,

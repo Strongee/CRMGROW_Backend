@@ -432,7 +432,7 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default image remove err', err.message);
         });
-      } else if (image['has_shared']) {
+      } else if (image['shared_image']) {
         Image.updateOne(
           {
             _id: image.shared_image,
