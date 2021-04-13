@@ -116,7 +116,7 @@ const signUp = async (req, res) => {
           if (_res.phone) {
             getTwilioNumber(_res.id);
           }
-  
+
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
             : system_settings.TIME_ZONE;
@@ -297,6 +297,7 @@ const socialSignUp = async (req, res) => {
     email: new RegExp(req.body.email, 'i'),
     del: false,
   });
+
   if (_user !== null) {
     res.status(400).send({
       status: false,
@@ -363,11 +364,13 @@ const socialSignUp = async (req, res) => {
             email: _res.email,
           };
 
-          sendNotificationEmail(data).then(() => {
-            console.log('welcome email has been sent out succeefully');
-          })
-          .catch((err) => {
-            console.log('welcome email send err', err);;
+          sendNotificationEmail(data)
+            .then(() => {
+              console.log('welcome email has been sent out succeefully');
+            })
+            .catch((err) => {
+              console.log('welcome email send err', err);
+            });
 
           Team.find({ referrals: email })
             .populate('owner')
