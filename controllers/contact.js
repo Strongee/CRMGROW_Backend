@@ -2055,7 +2055,7 @@ const advanceSearch = async (req, res) => {
           if (!teamOption.share_with.flag) {
             shareByQuery['user'] = { $in: teamOption.share_with.members };
           }
-          evTeamQuery['$or'].push(shareWithQuery);
+          evTeamQuery['$or'].push(shareByQuery);
         }
         teamQuery['$or'].push(evTeamQuery);
       }
