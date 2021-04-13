@@ -1909,7 +1909,8 @@ const removeFolder = async (req, res) => {
     const oldFolderData = { ...folder._doc };
     Folder.deleteOne({ _id })
       .then(async () => {
-        const {videos, images, pdfs} = oldFolderData;
+        const { videos, images, pdfs } = oldFolderData;
+        bulkRemove({ currentUser, body: { videos, images, pdfs } }, res);
       })
       .catch((err) => {
         return res.status(500).send({
