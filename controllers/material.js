@@ -1973,6 +1973,7 @@ const removeFolder = async (req, res) => {
     Folder.deleteOne({ _id })
       .then(async () => {
         const { videos, images, pdfs } = oldFolderData;
+        bulkRemove({ currentUser, body: { videos, images, pdfs } }, res);
       })
       .catch((err) => {
         return res.status(500).send({
@@ -2081,7 +2082,7 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default video remove err', err.message);
             });
-          } else if (video['has_shared']) {
+          } else if (video['shared_video']) {
             Video.updateOne(
               {
                 _id: video.shared_video,
@@ -2164,7 +2165,7 @@ const bulkRemove = async (req, res) => {
         });
 
         if (pdf) {
-          if (pdf['default_edited']) {
+          if (pdf['shared_pdf']) {
             Garbage.updateOne(
               { user: currentUser.id },
               {
@@ -2256,7 +2257,7 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default image remove err', err.message);
             });
-          } else if (image['has_shared']) {
+          } else if (image['shared_image']) {
             Image.updateOne(
               {
                 _id: image.shared_image,
