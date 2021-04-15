@@ -2277,6 +2277,27 @@ const reset_daily_limit = new CronJob(
   'US/Central'
 );
 
+const reset_monthly_limit = new CronJob(
+  '0 3 1 * *',
+  async () => {
+    User.updateMany(
+      { del: false },
+      {
+        $set: {
+          'text_info.count': 0,
+        },
+      }
+    ).catch((err) => {
+      console.log('users found err', err.message);
+    });
+  },
+  function () {
+    console.log('Reminder Job finished.');
+  },
+  false,
+  'US/Central'
+);
+
 const campaign_job = new CronJob(
   '0 * * * *',
   async () => {
@@ -2340,3 +2361,4 @@ notification_check.start();
 task_check.start();
 timesheet_check.start();
 reset_daily_limit.start();
+reset_monthly_limit.start();

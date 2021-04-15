@@ -882,17 +882,36 @@ const bulkText = async (req, res) => {
     }
 
     if (!currentUser['proxy_number'] && !currentUser['twilio_number']) {
-      return res.status(407).json({
+      return res.status(408).json({
         status: false,
         error: 'No phone',
       });
     }
 
-    for (let i = 0; i < contacts.length; i++) {
-      if (i > 0) {
-        await sleep(1000);
+    const text_info = currentUser.text_info;
+    let count = 0;
+    let max_text_count = 0;
+    let additional_sms_credit = 0;
+    if (text_info['is_limit']) {
+      count = await Contact.countDocuments({ user: currentUser.id });
+
+      max_text_count =
+        text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+
+      const { additional_credit } = currentUser.text_info;
+      if (additional_credit) {
+        additional_sms_credit = additional_credit.amount;
       }
 
+      if (max_text_count <= count && !additional_sms_credit) {
+        return res.status(409).json({
+          status: false,
+          error: 'Exceed max sms credit',
+        });
+      }
+    }
+
+    for (let i = 0; i < contacts.length; i++) {
       let text_content = content;
       const activities = [];
 
@@ -1078,6 +1097,21 @@ const bulkText = async (req, res) => {
 
       if (fromNumber) {
         promise = new Promise(async (resolve) => {
+          if (max_text_count <= count && !additional_sms_credit) {
+            error.push({
+              contact: {
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              error: 'Invalid phone number',
+            });
+            resolve(); // Exceet max limit;
+          } else if (max_text_count <= count) {
+            additional_sms_credit -= 1;
+          } else {
+            count += 1;
+          }
+
           const e164Phone = phone(_contact.cell_phone)[0];
           if (!e164Phone) {
             Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
@@ -1092,7 +1126,6 @@ const bulkText = async (req, res) => {
             });
             resolve(); // Invalid phone number
           }
-
           client.messages
             .create({
               from: fromNumber,
@@ -1322,6 +1355,36 @@ const bulkText = async (req, res) => {
 
     Promise.all(promise_array)
       .then(() => {
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                count,
+                additional_credit: additional_sms_credit,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        } else {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                count,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        }
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1909,7 +1972,7 @@ const removeFolder = async (req, res) => {
     const oldFolderData = { ...folder._doc };
     Folder.deleteOne({ _id })
       .then(async () => {
-        const {videos, images, pdfs} = oldFolderData;
+        const { videos, images, pdfs } = oldFolderData;
       })
       .catch((err) => {
         return res.status(500).send({

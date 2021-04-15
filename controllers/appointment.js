@@ -907,7 +907,7 @@ const edit = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
-          return res.status(406).send({
+          return res.status(407).send({
             status: false,
             error: 'not connected',
           });
@@ -1115,7 +1115,7 @@ const remove = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
-          return res.status(406).send({
+          return res.status(407).send({
             status: false,
             error: 'not connected',
           });
@@ -1420,7 +1420,7 @@ const accept = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
-          return res.status(406).send({
+          return res.status(407).send({
             status: false,
             error: 'not connected',
           });
@@ -1640,7 +1640,7 @@ const decline = async (req, res) => {
         })
         .catch((error) => {
           console.log('error', error);
-          return res.status(406).send({
+          return res.status(407).send({
             status: false,
             error: 'not connected',
           });
