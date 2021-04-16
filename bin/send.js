@@ -61,7 +61,7 @@ const sendWelcomeEmail = async (data) => {
 
 const data = {
   id: '6035a9da27952a3187d07276',
-  email: 'matt@crmgrow.com',
+  email: 'test-lpi0l7cv2@srv1.mail-tester.com',
   user_name: 'Matt',
   password: 'password123',
   time_zone: 'America/Cancun',
