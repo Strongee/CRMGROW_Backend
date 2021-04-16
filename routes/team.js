@@ -98,44 +98,6 @@ router.post(
 );
 router.post('/update', UserCtrl.checkAuth, catchError(TeamCtrl.updateTeam));
 
-// Team call for 3 way
-
-router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
-
-router.get(
-  '/nth-call/:id',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getInquireCall)
-);
-
-router.get(
-  '/call/:id',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getDetailInquireCall)
-);
-
-router.get(
-  '/call-planned',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getPlannedCall)
-);
-router.get(
-  '/call-planned/:id',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getPlannedCall)
-);
-
-router.get(
-  '/call-finished',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getFinishedCall)
-);
-router.get(
-  '/call-finished/:id',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.getFinishedCall)
-);
-
 router.post(
   '/shared-contacts',
   UserCtrl.checkAuth,
@@ -148,27 +110,6 @@ router.post(
   catchError(TeamCtrl.searchContact)
 );
 
-router.post(
-  '/request-call',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.requestCall)
-);
-
-router.post(
-  '/accept-call',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.acceptCall)
-);
-
-router.post(
-  '/reject-call',
-  UserCtrl.checkAuth,
-  catchError(TeamCtrl.rejectCall)
-);
-
-router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
-router.delete('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
-router.delete('/call', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
 router.get(
   '/material/:id',
   UserCtrl.checkAuth,
@@ -187,6 +128,5 @@ router.get(
 router.put('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.update));
 router.get('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.get));
 router.delete('/:id', UserCtrl.checkAuth, catchError(TeamCtrl.remove));
-router.post('/load-call', UserCtrl.checkAuth, catchError(TeamCtrl.loadCalls));
 
 module.exports = router;
