@@ -784,83 +784,94 @@ const buyNumbers = async (req, res) => {
 
 const buyCredit = async (req, res) => {
   const { currentUser } = req;
-  const payment = await Payment.findOne({
-    _id: currentUser.payment,
-  }).catch((err) => {
-    console.log('payment find err', err.message);
-  });
+  let payment;
 
-  let price;
-  let amount;
-  const description = 'Buy sms credit';
-
-  if (req.body.option === 1) {
-    price = system_settings.SMS_CREDIT[0].PRICE;
-    amount = system_settings.SMS_CREDIT[0].AMOUNT;
-  } else if (req.body.option === 2) {
-    price = system_settings.SMS_CREDIT[1].PRICE;
-    amount = system_settings.SMS_CREDIT[1].AMOUNT;
-  } else if (req.body.option === 3) {
-    price = system_settings.SMS_CREDIT[2].PRICE;
-    amount = system_settings.SMS_CREDIT[2].AMOUNT;
+  if (!currentUser.is_free && !currentUser.payment) {
+    payment = await Payment.findOne({ _id: currentUser.payment }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
   }
 
-  const data = {
-    card_id: payment.card_id,
-    customer_id: payment.customer_id,
-    receipt_email: currentUser.email,
-    amount: price,
-    description,
-  };
+  if (payment) {
+    let price;
+    let amount;
+    const description = 'Buy sms credit';
 
-  PaymentCtrl.createCharge(data)
-    .then((_res) => {
-      console.log('_res', _res);
-      const { additional_credit } = currentUser.text_info;
-      if (additional_credit) {
-        additional_credit.updated_at = new Date();
-        additional_credit.amount += amount;
-      } else {
-        additional_credit.updated_at = new Date();
-        additional_credit.amount = amount;
-      }
+    if (req.body.option === 1) {
+      price = system_settings.SMS_CREDIT[0].PRICE;
+      amount = system_settings.SMS_CREDIT[0].AMOUNT;
+    } else if (req.body.option === 2) {
+      price = system_settings.SMS_CREDIT[1].PRICE;
+      amount = system_settings.SMS_CREDIT[1].AMOUNT;
+    } else if (req.body.option === 3) {
+      price = system_settings.SMS_CREDIT[2].PRICE;
+      amount = system_settings.SMS_CREDIT[2].AMOUNT;
+    }
 
-      User.updateOne(
-        { _id: currentUser.id },
-        {
-          $set: {
-            'text_info.additional_credit': additional_credit,
-          },
+    const data = {
+      card_id: payment.card_id,
+      customer_id: payment.customer_id,
+      receipt_email: currentUser.email,
+      amount: price,
+      description,
+    };
+
+    PaymentCtrl.createCharge(data)
+      .then((_res) => {
+        console.log('_res', _res);
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          additional_credit.updated_at = new Date();
+          additional_credit.amount += amount;
+        } else {
+          additional_credit.updated_at = new Date();
+          additional_credit.amount = amount;
         }
-      ).catch((err) => {
-        console.log('user paid demo update err', err.message);
+
+        User.updateOne(
+          { _id: currentUser.id },
+          {
+            $set: {
+              'text_info.additional_credit': additional_credit,
+            },
+          }
+        ).catch((err) => {
+          console.log('user paid demo update err', err.message);
+        });
+
+        const time_zone = currentUser.time_zone_info
+          ? JSON.parse(currentUser.time_zone_info).tz_name
+          : system_settings.TIME_ZONE;
+
+        const data = {
+          template_data: {
+            user_name: currentUser.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            last_4_cc: payment.last4,
+            invoice_id: _res.invoice,
+          },
+          template_name: 'PaymentNotification',
+          required_reply: true,
+          email: currentUser.email,
+        };
+
+        sendNotificationEmail(data);
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((_err) => {
+        console.log('new demo err', _err.message);
       });
-
-      const time_zone = currentUser.time_zone_info
-        ? JSON.parse(currentUser.time_zone_info).tz_name
-        : system_settings.TIME_ZONE;
-
-      const data = {
-        template_data: {
-          user_name: currentUser.user_name,
-          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
-          last_4_cc: payment.last4,
-          invoice_id: _res.invoice,
-        },
-        template_name: 'PaymentNotification',
-        required_reply: true,
-        email: currentUser.email,
-      };
-
-      sendNotificationEmail(data);
-
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((_err) => {
-      console.log('new demo err', _err.message);
+  } else {
+    return res.status(400).json({
+      status: false,
+      data: 'Payment information isn`t correct, please contact support team',
     });
+  }
 };
 
 const markAsRead = async (req, res) => {
