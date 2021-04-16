@@ -9,11 +9,13 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'Welcome';
+const templateName = 'TeamRequestDeclined';
 
 const subjects = {
   TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
   TeamRequest: `CRMGROW Team member join request: {{user_name}}`,
+  TeamRequestAccepted: `{{team_name}} has accepted your join request`,
+  TeamRequestDeclined: `{{team_name}} has declined your join request`,
   TeamCallInvitation: `{{user_name}} has accepted your call request`,
   TeamCallInquiryFailed: `{{user_name}} has rejected your call request`,
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,

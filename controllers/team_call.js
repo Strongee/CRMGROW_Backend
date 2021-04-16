@@ -340,10 +340,65 @@ const rejectCall = async (req, res) => {
   }
 };
 
+const updateCall = async (req, res) => {
+  const { currentUser } = req;
+  const team_call = await TeamCall.findOne({
+    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+    _id: req.params.id,
+  });
+
+  if (!team_call) {
+    return res.status(400).json({
+      status: false,
+      error: 'Team call found err',
+    });
+  }
+  TeamCall.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      ...req.body,
+    }
+  )
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call update err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
+const removeCall = async (req, res) => {
+  const { currentUser } = req;
+  TeamCall.deleteOne({
+    _id: req.params.id,
+    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
+  })
+    .then(() => {
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('team call delte err', err.message);
+      return res.send(500).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 module.exports = {
   requestCall,
   acceptCall,
   rejectCall,
   updateCall,
   removeCall,
-}
+};

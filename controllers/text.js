@@ -582,7 +582,7 @@ const searchNumbers = async (req, res) => {
       areaCode: search_code,
     })
     .then(async (response) => {
-      const number = data[0];
+      const number = response[0];
 
       if (typeof number === 'undefined' || number === '+') {
         return res.status(400).json({
@@ -590,9 +590,9 @@ const searchNumbers = async (req, res) => {
           error: 'Numbers not found',
         });
       } else {
-        response.forEach((number) => {
-          data.push(number.phoneNumber);
-        });
+        for (let i = 0; i < 5; i++) {
+          data.push(response[i].phoneNumber);
+        }
         return res.send({
           status: true,
           data,

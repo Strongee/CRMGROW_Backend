@@ -75,6 +75,7 @@ router.use('/label', label);
 router.use('/assets', assets);
 router.use('/affiliate', affiliate);
 router.use('/team', team);
+router.use('/team-call', team_call);
 router.use('/material', material);
 router.use('/developer', developer);
 router.use('/integration', integration);

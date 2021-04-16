@@ -774,7 +774,7 @@ const rejectRequest = async (req, res) => {
           console.log('send message err: ', err);
         });
       */
-  
+
       Notification.updateOne(
         { team: team.id, user: currentUser.id, criteria: 'team_requested' },
         { is_read: true }
@@ -1802,61 +1802,6 @@ const loadCalls = async (req, res) => {
     data,
     total,
   });
-};
-
-const updateCall = async (req, res) => {
-  const { currentUser } = req;
-  const team_call = await TeamCall.findOne({
-    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-    _id: req.params.id,
-  });
-
-  if (!team_call) {
-    return res.status(400).json({
-      status: false,
-      error: 'Team call found err',
-    });
-  }
-  TeamCall.updateOne(
-    {
-      _id: req.params.id,
-    },
-    {
-      ...req.body,
-    }
-  )
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      console.log('team call update err', err.message);
-      return res.send(500).json({
-        status: false,
-        error: err,
-      });
-    });
-};
-
-const removeCall = async (req, res) => {
-  const { currentUser } = req;
-  TeamCall.deleteOne({
-    _id: req.params.id,
-    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-  })
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      console.log('team call delte err', err.message);
-      return res.send(500).json({
-        status: false,
-        error: err,
-      });
-    });
 };
 
 const getLeaders = (req, res) => {
