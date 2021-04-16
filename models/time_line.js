@@ -7,6 +7,7 @@ const TimeLineSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     status: String,
+    error_message: String,
     due_date: Date,
     period: Number,
     action: Object,

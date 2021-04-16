@@ -1408,8 +1408,6 @@ const timesheet_check = new CronJob(
                   user: timeline.user,
                   type: 'notes',
                   notes: _note.id,
-                  created_at: new Date(),
-                  updated_at: new Date(),
                 });
 
                 activity.save().then((_activity) => {
@@ -1450,6 +1448,7 @@ const timesheet_check = new CronJob(
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
+                  timeline['error_message'] = res[0].error;
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1462,6 +1461,7 @@ const timesheet_check = new CronJob(
                   TimeLineCtrl.setEmailTrackTimeline(activity_data);
                 } else {
                   timeline['status'] = 'error';
+                  timeline['error_message'] = res[0].error;
                   timeline['updated_at'] = new Date();
                   timeline.save().catch((err) => {
                     console.log('err', err);
@@ -1520,12 +1520,14 @@ const timesheet_check = new CronJob(
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
                   timeline['updated_at'] = new Date();
+                  timeline['error_message'] = res[0].error;
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
                 } else {
                   timeline['status'] = 'error';
                   timeline['updated_at'] = new Date();
+                  timeline['error_message'] = res[0].error;
                   timeline.save().catch((err) => {
                     console.log('err', err);
                   });
