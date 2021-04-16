@@ -266,7 +266,6 @@ const get = async (req, res) => {
 
     if (count) {
       _activity_list = await Activity.find({
-        user: currentUser.id,
         contacts: req.params.id,
         status: { $ne: 'pending' },
       })
@@ -274,7 +273,6 @@ const get = async (req, res) => {
         .limit(count);
     } else {
       _activity_list = await Activity.find({
-        user: currentUser.id,
         contacts: req.params.id,
         status: { $ne: 'pending' },
       }).sort({ updated_at: 1 });

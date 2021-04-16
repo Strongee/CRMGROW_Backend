@@ -28,6 +28,7 @@ const label = require('./label');
 const assets = require('./assets');
 const affiliate = require('./affiliate');
 const team = require('./team');
+const team_call = require('./team_call');
 const material = require('./material.js');
 const developer = require('./developer');
 const integration = require('./integration');
