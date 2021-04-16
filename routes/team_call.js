@@ -1,71 +1,87 @@
 const express = require('express');
 
 const UserCtrl = require('../controllers/user');
-const TeamCtrl = require('../controllers/team');
+const TeamCallCtrl = require('../controllers/team_call');
 const { catchError } = require('../controllers/error');
 
 const router = express.Router();
 
 // Team call for 3 way
 
-router.get('/call', UserCtrl.checkAuth, catchError(TeamCtrl.getInquireCall));
+router.get(
+  '/call',
+  UserCtrl.checkAuth,
+  catchError(TeamCallCtrl.getInquireCall)
+);
 
 router.get(
   '/nth-call/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getInquireCall)
+  catchError(TeamCallCtrl.getInquireCall)
 );
 
 router.get(
   '/call/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getDetailInquireCall)
+  catchError(TeamCallCtrl.getDetailInquireCall)
 );
 
 router.get(
   '/call-planned',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getPlannedCall)
+  catchError(TeamCallCtrl.getPlannedCall)
 );
 router.get(
   '/call-planned/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getPlannedCall)
+  catchError(TeamCallCtrl.getPlannedCall)
 );
 
 router.get(
   '/call-finished',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getFinishedCall)
+  catchError(TeamCallCtrl.getFinishedCall)
 );
 router.get(
   '/call-finished/:id',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.getFinishedCall)
+  catchError(TeamCallCtrl.getFinishedCall)
 );
 
 router.post(
   '/request-call',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.requestCall)
+  catchError(TeamCallCtrl.requestCall)
 );
 
 router.post(
   '/accept-call',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.acceptCall)
+  catchError(TeamCallCtrl.acceptCall)
 );
 
 router.post(
   '/reject-call',
   UserCtrl.checkAuth,
-  catchError(TeamCtrl.rejectCall)
+  catchError(TeamCallCtrl.rejectCall)
 );
 
-router.put('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.updateCall));
-router.delete('/call/:id', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
-router.delete('/call', UserCtrl.checkAuth, catchError(TeamCtrl.removeCall));
+router.put(
+  '/call/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCallCtrl.updateCall)
+);
+router.delete(
+  '/call/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCallCtrl.removeCall)
+);
+router.delete('/call', UserCtrl.checkAuth, catchError(TeamCallCtrl.removeCall));
 
-router.post('/load-call', UserCtrl.checkAuth, catchError(TeamCtrl.loadCalls));
+router.post(
+  '/load-call',
+  UserCtrl.checkAuth,
+  catchError(TeamCallCtrl.loadCalls)
+);
 
 module.exports = router;
