@@ -28,6 +28,7 @@ const UserSchema = new Schema(
     proxy_number: String,
     proxy_number_id: String,
     twilio_number: String,
+    twilio_number_id: String,
     proxy_phone: {
       number: String,
       is_released: Boolean,

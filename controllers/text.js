@@ -585,13 +585,17 @@ const searchNumbers = async (req, res) => {
       const number = response[0];
 
       if (typeof number === 'undefined' || number === '+') {
-        return res.status(400).json({
-          status: false,
-          error: 'Numbers not found',
+        return res.send({
+          status: true,
+          data: [],
         });
       } else {
         for (let i = 0; i < 5; i++) {
-          data.push(response[i].phoneNumber);
+          data.push({
+            number: response[i].phoneNumber,
+            region: response[i].region,
+            locality: response[i].locality,
+          });
         }
         return res.send({
           status: true,
@@ -717,7 +721,7 @@ const searchNumbers = async (req, res) => {
 };
 
 const buyNumbers = async (req, res) => {
-  const { currentUser } = req.body;
+  const { currentUser } = req;
   // if (req.body.service === 'signalwire') {
   //   client.incomingPhoneNumbers
   //     .create({
