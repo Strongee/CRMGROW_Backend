@@ -686,7 +686,7 @@ const acceptRequest = async (req, res) => {
     });
 };
 
-const rejectRequest = async (req, res) => {
+const declineRequest = async (req, res) => {
   const { currentUser } = req;
   const { team_id, request_id } = req.body;
 
@@ -2072,7 +2072,7 @@ module.exports = {
   bulkInvites,
   acceptInviation,
   acceptRequest,
-  rejectRequest,
+  declineRequest,
   searchUser,
   shareVideos,
   sharePdfs,

@@ -44,6 +44,13 @@ router.post(
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptRequest)
 );
+
+router.post(
+  '/admin-decline',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.declineRequest)
+);
+
 router.post(
   '/share-videos',
   UserCtrl.checkAuth,
