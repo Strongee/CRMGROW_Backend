@@ -818,9 +818,11 @@ const getTransactions = async (req, res) => {
     );
   }
 
+  console.log('payment', payment);
   if (payment) {
     const customer_id = payment.customer_id;
     stripe.charges.list({ customer: customer_id }, function (err, charges) {
+      consoe.log('charges', charges.data);
       if (err) {
         console.log('payment history find err', err);
         return res.status(400).json({

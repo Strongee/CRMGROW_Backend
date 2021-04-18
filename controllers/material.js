@@ -1245,7 +1245,9 @@ const bulkText = async (req, res) => {
           twilio.messages
             .create({
               from: fromNumber,
-              body: text_content + '\n\n' + generateTextUnsubscribeLink(),
+              body:
+                text_content +
+                generateTextUnsubscribeLink(currentUser.id, _contact.id),
               to: e164Phone,
             })
             .then((message) => {

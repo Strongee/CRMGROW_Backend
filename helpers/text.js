@@ -1116,7 +1116,7 @@ const sleep = (ms) => {
 };
 
 const generateUnsubscribeLink = () => {
-  return 'Reply STOP to unsubscribe.';
+  return '\n\nReply STOP to unsubscribe.';
 };
 
 module.exports = {
