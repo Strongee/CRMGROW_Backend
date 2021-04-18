@@ -23,13 +23,8 @@ const TeamCall = require('../models/team_call');
 const TimeLine = require('../models/time_line');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 const { getAvatarName } = require('../helpers/utility');
-
-const ses = new AWS.SES({
-  accessKeyId: api.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
-  region: api.AWS.AWS_SES_REGION,
-  apiVersion: '2010-12-01',
-});
+const { sendNotificationEmail } = require('../helpers/email');
+const system_settings = require('../config/system_settings');
 
 const getAll = (req, res) => {
   const { currentUser } = req;
@@ -650,34 +645,30 @@ const acceptRequest = async (req, res) => {
     }
   )
     .then(async () => {
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      const time_zone = currentUser.time_zone_info
+        ? JSON.parse(currentUser.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
 
-      const msg = {
-        to: request.email,
-        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your request to join ${team.name} in CRMGrow`,
-          team:
-            "<a href='" +
-            urls.TEAM_URL +
-            team.id +
-            "'><img src='" +
-            urls.DOMAIN_URL +
-            "assets/images/team.png'/></a>",
+      const data = {
+        template_data: {
+          user_name: request.user_name,
+          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+          team_name: team.name,
+          team_url: urls.TEAM_URL + team.id,
         },
+        template_name: 'TeamRequestAccepted',
+        required_reply: false,
+        email: request.email,
       };
 
-      sgMail
-        .send(msg)
-        .then()
-        .catch((err) => {
-          console.log('send message err: ', err);
-        });
+      sendNotificationEmail(data);
 
       Notification.updateOne(
-        { team: team.id, user: currentUser.id, criteria: 'team_requested' },
+        {
+          team: team.id,
+          user: currentUser.id,
+          criteria: 'team_requested',
+        },
         { is_read: true }
       ).catch((err) => {
         console.log('err', err.message);
@@ -724,11 +715,7 @@ const rejectRequest = async (req, res) => {
     });
   }
 
-  const members = team.members;
   const requests = team.requests;
-  if (members.indexOf(request_id) === -1) {
-    members.push(request_id);
-  }
 
   if (requests.indexOf(request_id) !== -1) {
     const pos = requests.indexOf(request_id);
@@ -741,39 +728,27 @@ const rejectRequest = async (req, res) => {
     },
     {
       $set: {
-        members,
         requests,
       },
     }
   )
     .then(async () => {
-      /**
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      const time_zone = currentUser.time_zone_info
+        ? JSON.parse(currentUser.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
 
-      const msg = {
-        to: request.email,
-        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your request to join ${team.name} in CRMGrow`,
-          team:
-            "<a href='" +
-            urls.TEAM_URL +
-            team.id +
-            "'><img src='" +
-            urls.DOMAIN_URL +
-            "assets/images/team.png'/></a>",
+      const data = {
+        template_data: {
+          user_name: request.user_name,
+          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+          team_name: team.name,
         },
+        template_name: 'TeamRequestDeclined',
+        required_reply: false,
+        email: request.email,
       };
 
-      sgMail
-        .send(msg)
-        .then()
-        .catch((err) => {
-          console.log('send message err: ', err);
-        });
-      */
+      sendNotificationEmail(data);
 
       Notification.updateOne(
         { team: team.id, user: currentUser.id, criteria: 'team_requested' },
@@ -1262,7 +1237,7 @@ const requestTeam = async (req, res) => {
 
     /**
      *
-     */
+    
     const msg = {
       to: sender.email,
       from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
@@ -1279,28 +1254,45 @@ const requestTeam = async (req, res) => {
           "assets/images/accept.png'/></a>",
       },
     };
-
+ 
     sgMail
       .send(msg)
       .then(() => {
-        /** **********
-         *  Creat dashboard notification to the team owner
-         *  */
-
-        const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
-        const notification = new Notification({
-          user: sender.id,
-          team: team.id,
-          criteria: 'team_requested',
-          content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
-        });
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
       })
       .catch((err) => {
         console.log('send message err: ', err);
       });
+    */
+
+    const time_zone = currentUser.time_zone_info
+      ? JSON.parse(currentUser.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+
+    const data = {
+      template_data: {
+        user_name: request.user_name,
+        created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+        team_name: team.name,
+        team_url: urls.TEAM_URL + team.id,
+      },
+      template_name: 'TeamRequestAccepted',
+      required_reply: false,
+      email: request.email,
+    };
+
+    sendNotificationEmail(data);
+
+    const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
+    const notification = new Notification({
+      user: sender.id,
+      team: team.id,
+      team_requester: currentUser.id,
+      criteria: 'team_requested',
+      content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
+    });
+    notification.save().catch((err) => {
+      console.log('notification save err', err.message);
+    });
   }
 
   if (team.requests.indexOf(currentUser._id) === -1) {
