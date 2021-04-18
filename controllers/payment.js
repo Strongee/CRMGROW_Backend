@@ -810,7 +810,7 @@ const getTransactions = async (req, res) => {
   const { currentUser } = req;
   let payment;
 
-  if (!currentUser.is_free && !currentUser.payment) {
+  if (currentUser.payment) {
     payment = await Payment.findOne({ _id: currentUser.payment }).catch(
       (err) => {
         console.log('err', err);
@@ -822,7 +822,7 @@ const getTransactions = async (req, res) => {
   if (payment) {
     const customer_id = payment.customer_id;
     stripe.charges.list({ customer: customer_id }, function (err, charges) {
-      consoe.log('charges', charges.data);
+      console.log('charges', charges);
       if (err) {
         console.log('payment history find err', err);
         return res.status(400).json({
