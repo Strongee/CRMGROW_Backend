@@ -1218,73 +1218,46 @@ const requestTeam = async (req, res) => {
     });
   }
 
-  let senders;
+  let owners;
   if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
     const editor = await User.findOne({ _id: searchedUser });
-    senders = [editor];
+    owners = [editor];
   } else if (searchedUser && team.owner.indexOf(searchedUser) !== -1) {
     const owner = await User.findOne({ _id: searchUser });
-    senders = [owner];
+    owners = [owner];
   } else {
     const owner = await User.find({ _id: { $in: team.owner } });
-    senders = owner;
+    owners = owner;
   }
 
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-  for (let i = 0; i < senders.length; i++) {
-    const sender = senders[i];
+  for (let i = 0; i < owners.length; i++) {
+    const owner = owners[i];
 
-    /**
-     *
-    
-    const msg = {
-      to: sender.email,
-      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-      dynamic_template_data: {
-        subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-        activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has requested to join your ${team.name} in CRMGrow`,
-        team:
-          "<a href='" +
-          urls.TEAM_ACCEPT_REQUEST_URL +
-          `?team=${team.id}&user=${currentUser.id}` +
-          "'><img src='" +
-          urls.DOMAIN_URL +
-          "assets/images/accept.png'/></a>",
-      },
-    };
- 
-    sgMail
-      .send(msg)
-      .then(() => {
-      })
-      .catch((err) => {
-        console.log('send message err: ', err);
-      });
-    */
-
-    const time_zone = currentUser.time_zone_info
-      ? JSON.parse(currentUser.time_zone_info).tz_name
+    const time_zone = owner.time_zone_info
+      ? JSON.parse(owner.time_zone_info).tz_name
       : system_settings.TIME_ZONE;
 
     const data = {
       template_data: {
-        user_name: request.user_name,
+        owner_name: owner.user_name,
         created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
         team_name: team.name,
         team_url: urls.TEAM_URL + team.id,
+        accept_url: `${urls.TEAM_URL}${team.id}?join=accept&user=${currentUser.id}`,
+        decline_url: `${urls.TEAM_URL}${team.id}?join=decline&user=${currentUser.id}`,
       },
-      template_name: 'TeamRequestAccepted',
+      template_name: 'TeamRequest',
       required_reply: false,
-      email: request.email,
+      email: owner.email,
     };
 
     sendNotificationEmail(data);
 
     const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
     const notification = new Notification({
-      user: sender.id,
+      user: owner.id,
       team: team.id,
       team_requester: currentUser.id,
       criteria: 'team_requested',

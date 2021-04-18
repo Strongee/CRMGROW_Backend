@@ -56,7 +56,6 @@
         }
         .accept {
             width: 90px;
-            height: 40px;
             border: 0;
             border-radius: 3px;
             color: #ffffff;
@@ -65,11 +64,12 @@
             font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.5px;
-            line-height: 22px;
+            display: block;
+            text-align: center;
+            padding: 10px 10px 0px 10px;
         }
         .decline {
             width: 90px;
-            height: 40px;
             border: 0;
             border-radius: 3px;
             color: #ffffff;
@@ -78,8 +78,10 @@
             font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.5px;
-            line-height: 22px;
             margin-left: 15px;
+            display: block;
+            text-align: center;
+            padding: 10px 10px 0px 10px;
         }
         .footer-text {
             color: #101336!important;
@@ -215,8 +217,9 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td style="padding-top: 10px; padding-bottom: 35px;">
-                                                    <a href="{{accept_url}}" class="accept" >Accept</a><a href="{{decline_url}}" class="decline">Decline</a>
+                                                <td style="padding-top: 10px; padding-bottom:35px; display:flex;">
+                                                    <a href="{{accept_url}}" class="accept" >Accept</a>
+                                                    <a href="{{decline_url}}" class="decline">Decline</a>
                                                 </td>
                                             </tr>
                                         </tbody>
