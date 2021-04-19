@@ -31,8 +31,8 @@ const {
   addLinkTracking,
 } = require('../helpers/email');
 const {
-  sleep,
   generateUnsubscribeLink: generateTextUnsubscribeLink,
+  getStatus,
 } = require('../helpers/text');
 const garbageHelper = require('../helpers/garbage.js');
 const mail_contents = require('../constants/mail_contents');
@@ -1126,11 +1126,16 @@ const bulkText = async (req, res) => {
             });
             resolve(); // Invalid phone number
           }
+
+          const body = _contact.texted_unsbcription_link
+            ? text_content
+            : text_content + generateTextUnsubscribeLink();
+
           client.messages
             .create({
               from: fromNumber,
               to: e164Phone,
-              body: text_content + '\n\n' + generateTextUnsubscribeLink(),
+              body,
             })
             .then((message) => {
               if (message.status === 'queued' || message.status === 'sent') {
@@ -1140,6 +1145,7 @@ const bulkText = async (req, res) => {
                   text_content
                 );
 
+                /**
                 const now = moment();
                 const due_date = now.add(1, 'minutes');
                 const timeline = new TimeLine({
@@ -1155,7 +1161,9 @@ const bulkText = async (req, res) => {
                 timeline.save().catch((err) => {
                   console.log('time line save err', err.message);
                 });
+                 */
 
+                /**
                 Activity.updateMany(
                   { _id: { $in: activities } },
                   {
@@ -1176,7 +1184,101 @@ const bulkText = async (req, res) => {
                 notification.save().catch((err) => {
                   console.log('notification save err', err.message);
                 });
-                resolve();
+                 */
+
+                const interval_id = setInterval(function () {
+                  let i = 0;
+                  getStatus(message.sid).then((res) => {
+                    i++;
+                    if (res.status === 'delivered') {
+                      clearInterval(interval_id);
+                      Contact.updateOne(
+                        { _id: contacts[i] },
+                        {
+                          $set: {
+                            last_activity: activity.id,
+                            texted_unsbcription_link: true,
+                          },
+                        }
+                      ).catch((err) => {
+                        console.log('err', err);
+                      });
+
+                      Text.updateOne(
+                        {
+                          _id: text.id,
+                        },
+                        {
+                          $set: {
+                            status: 2,
+                          },
+                        }
+                      ).catch((err) => {
+                        console.log('text update err', err.message);
+                      });
+
+                      resolve();
+                    } else if (res.status === 'sent' && i >= 5) {
+                      clearInterval(interval_id);
+                      Activity.deleteMany({ _id: { $in: activities } }).catch(
+                        (err) => {
+                          console.log('err', err);
+                        }
+                      );
+
+                      Text.updateOne(
+                        {
+                          _id: text.id,
+                        },
+                        {
+                          $set: {
+                            status: 3,
+                          },
+                        }
+                      ).catch((err) => {
+                        console.log('text update err', err.message);
+                      });
+
+                      error.push({
+                        contact: {
+                          first_name: _contact.first_name,
+                          cell_phone: _contact.cell_phone,
+                        },
+                        error: message.error_message,
+                      });
+                      resolve();
+                    } else if (res.status === 'undelivered') {
+                      clearInterval(interval_id);
+                      Activity.deleteMany({ _id: { $in: activities } }).catch(
+                        (err) => {
+                          console.log('err', err);
+                        }
+                      );
+
+                      Text.updateOne(
+                        {
+                          _id: text.id,
+                        },
+                        {
+                          $set: {
+                            status: 4,
+                          },
+                        }
+                      ).catch((err) => {
+                        console.log('text update err', err.message);
+                      });
+
+                      error.push({
+                        contact: {
+                          first_name: _contact.first_name,
+                          cell_phone: _contact.cell_phone,
+                        },
+                        error: message.error_message,
+                      });
+                      resolve();
+                    }
+                  });
+                }, 1000);
               } else if (message.status === 'delivered') {
                 console.log('Message ID: ', message.sid);
                 console.info(
@@ -1186,10 +1288,26 @@ const bulkText = async (req, res) => {
                 Contact.updateOne(
                   { _id: contacts[i] },
                   {
-                    $set: { last_activity: activity.id },
+                    $set: {
+                      last_activity: activity.id,
+                      texted_unsbcription_link: true,
+                    },
                   }
                 ).catch((err) => {
                   console.log('err', err);
+                });
+
+                Text.updateOne(
+                  {
+                    _id: text.id,
+                  },
+                  {
+                    $set: {
+                      status: 2,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('text update err', err.message);
                 });
                 resolve();
               } else {
@@ -1198,6 +1316,20 @@ const bulkText = async (req, res) => {
                     console.log('err', err);
                   }
                 );
+
+                Text.updateOne(
+                  {
+                    _id: text.id,
+                  },
+                  {
+                    $set: {
+                      status: 4,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('text update err', err.message);
+                });
+
                 error.push({
                   contact: {
                     first_name: _contact.first_name,
@@ -1213,6 +1345,20 @@ const bulkText = async (req, res) => {
               Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
                 console.log('err', err);
               });
+
+              Text.updateOne(
+                {
+                  _id: text.id,
+                },
+                {
+                  $set: {
+                    status: 4,
+                  },
+                }
+              ).catch((err) => {
+                console.log('text update err', err.message);
+              });
+
               error.push({
                 contact: {
                   first_name: _contact.first_name,
@@ -1242,12 +1388,14 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
+          const body = _contact.texted_unsbcription_link
+            ? text_content
+            : text_content + generateTextUnsubscribeLink();
+
           twilio.messages
             .create({
               from: fromNumber,
-              body:
-                text_content +
-                generateTextUnsubscribeLink(currentUser.id, _contact.id),
+              body,
               to: e164Phone,
             })
             .then((message) => {
@@ -1263,6 +1411,7 @@ const bulkText = async (req, res) => {
                   text_content
                 );
 
+                /**
                 const now = moment();
                 const due_date = now.add(1, 'minutes');
                 const timeline = new TimeLine({
@@ -1304,6 +1453,59 @@ const bulkText = async (req, res) => {
                   console.log('notification save err', err.message);
                 });
                 resolve();
+                */
+
+                const interval_id = setInterval(function () {
+                  let i = 0;
+                  getStatus(message.sid).then((res) => {
+                    i++;
+                    if (res.status === 'delivered') {
+                      clearInterval(interval_id);
+                      Contact.updateOne(
+                        { _id: contacts[i] },
+                        {
+                          $set: {
+                            last_activity: activity.id,
+                            texted_unsbcription_link: true,
+                          },
+                        }
+                      ).catch((err) => {
+                        console.log('err', err);
+                      });
+                      resolve();
+                    } else if (res.status === 'sent' && i >= 5) {
+                      clearInterval(interval_id);
+                      Activity.deleteMany({ _id: { $in: activities } }).catch(
+                        (err) => {
+                          console.log('err', err);
+                        }
+                      );
+                      error.push({
+                        contact: {
+                          first_name: _contact.first_name,
+                          cell_phone: _contact.cell_phone,
+                        },
+                        error: message.error_message,
+                      });
+                      resolve();
+                    } else if (res.status === 'undelivered') {
+                      clearInterval(interval_id);
+                      Activity.deleteMany({ _id: { $in: activities } }).catch(
+                        (err) => {
+                          console.log('err', err);
+                        }
+                      );
+                      error.push({
+                        contact: {
+                          first_name: _contact.first_name,
+                          cell_phone: _contact.cell_phone,
+                        },
+                        error: message.error_message,
+                      });
+                      resolve();
+                    }
+                  });
+                }, 1000);
               } else if (message.status === 'delivered') {
                 console.log('Message ID: ', message.sid);
                 console.info(
@@ -1325,7 +1527,10 @@ const bulkText = async (req, res) => {
                 Contact.updateOne(
                   { _id: contacts[i] },
                   {
-                    $set: { last_activity: activity.id },
+                    $set: {
+                      last_activity: activity.id,
+                      texted_unsbcription_link: true,
+                    },
                   }
                 ).catch((err) => {
                   console.log('err', err);

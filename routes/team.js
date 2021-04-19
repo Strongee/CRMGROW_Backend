@@ -40,6 +40,12 @@ router.post(
 );
 
 router.post(
+  '/decline/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.declineInviation)
+);
+
+router.post(
   '/admin-accept',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.acceptRequest)

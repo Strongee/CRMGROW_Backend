@@ -594,6 +594,105 @@ const acceptInviation = async (req, res) => {
     });
 };
 
+const declineInviation = async (req, res) => {
+  const { currentUser } = req;
+  const team = await Team.findOne({
+    _id: req.params.id,
+    invites: currentUser.id,
+  })
+    .populate('owner')
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message || 'Team found err',
+      });
+    });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  const members = team.members;
+  const invites = team.invites;
+  if (members.indexOf(currentUser.id) === -1) {
+    members.push(currentUser.id);
+  }
+  if (invites.indexOf(currentUser.id) !== -1) {
+    const pos = invites.indexOf(currentUser.id);
+    invites.splice(pos, 1);
+  }
+
+  Team.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: {
+        members,
+        invites,
+      },
+    }
+  )
+    .then(async () => {
+      /** **********
+       *  Send email accept notification to the inviated users
+       *  */
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+      const owners = team.owner;
+      for (let i = 0; i < owners.length; i++) {
+        const owner = owners[i];
+        const msg = {
+          to: owner.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+          dynamic_template_data: {
+            subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+            activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your invitation to join ${team.name} in CRMGrow`,
+            team:
+              "<a href='" +
+              urls.TEAM_URL +
+              team.id +
+              "'><img src='" +
+              urls.DOMAIN_URL +
+              "assets/images/team.png'/></a>",
+          },
+        };
+
+        sgMail
+          .send(msg)
+          .then()
+          .catch((err) => {
+            console.log('send message err: ', err);
+          });
+      }
+
+      /** **********
+       *  Mark read true dashboard notification for accepted users
+       *  */
+
+      Notification.updateOne(
+        { team: team.id, user: currentUser.id, criteria: 'team_invited' },
+        { is_read: true }
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 const acceptRequest = async (req, res) => {
   const { currentUser } = req;
   const { team_id, request_id } = req.body;
@@ -1245,8 +1344,8 @@ const requestTeam = async (req, res) => {
         created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
         team_name: team.name,
         team_url: urls.TEAM_URL + team.id,
-        accept_url: `${urls.TEAM_URL}${team.id}?join=accept&user=${currentUser.id}`,
-        decline_url: `${urls.TEAM_URL}${team.id}?join=decline&user=${currentUser.id}`,
+        accept_url: `${urls.TEAM_URL}${team.id}/request?join=accept&user=${currentUser.id}`,
+        decline_url: `${urls.TEAM_URL}${team.id}/request?join=decline&user=${currentUser.id}`,
       },
       template_name: 'TeamRequest',
       required_reply: false,
@@ -2071,6 +2170,7 @@ module.exports = {
   remove,
   bulkInvites,
   acceptInviation,
+  declineInviation,
   acceptRequest,
   declineRequest,
   searchUser,

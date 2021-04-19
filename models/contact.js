@@ -23,6 +23,7 @@ const ContactSchema = mongoose.Schema(
     secondary_phone: { type: String, default: '' },
     country: { type: String, default: '' },
     auto_follow_up: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
+    texted_unsbcription_link: Boolean,
     source: String,
     brokerage: String,
     tags: Array,
