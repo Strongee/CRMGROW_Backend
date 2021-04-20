@@ -1798,7 +1798,7 @@ const searchContact = async (req, res) => {
   }
 
   var stringSearchQuery;
-  if (searchStr) {
+  if (search) {
     if (search.split(' ').length > 1) {
       stringSearchQuery = {
         $or: [
@@ -1924,6 +1924,8 @@ const searchContact = async (req, res) => {
   } else if (!teamQuery.length && stringSearchQuery) {
     query = stringSearchQuery;
   }
+
+  console.log('query', query);
 
   contacts = await Contact.find(query)
     .populate([
