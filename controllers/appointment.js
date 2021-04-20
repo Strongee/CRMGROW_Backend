@@ -2051,7 +2051,6 @@ const getGoogleEventById = async (data) => {
         );
         reject(err);
       } else {
-        console.log(response.data);
         resolve(response.data);
       }
     });
