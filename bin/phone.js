@@ -84,8 +84,8 @@ const twilioNumber = async () => {
 
 const sendSMS = () => {
   // const fromNumber = '+16474916957';
-  const fromNumber = '+16474916957';
-  const e164Phone = '+8618204158455';
+  const fromNumber = '+447578103293';
+  const e164Phone = '+13124938446';
   twilio.messages
     .create({
       from: fromNumber,
@@ -120,5 +120,5 @@ const receivedStatus = async () => {
 // +44 1494 506206
 // +44 7911 123456
 // validatePhone('7758158669');
-// sendSMS();
-receivedStatus();
+sendSMS();
+// receivedStatus();

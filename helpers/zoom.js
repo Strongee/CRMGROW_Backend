@@ -3,17 +3,14 @@ const request = require('request-promise');
 const api = require('../config/api');
 const urls = require('../constants/urls');
 
-const requestAuth = () => {
-  var options = {
+const requestAuth = (code) => {
+  const options = {
     method: 'POST',
     url: 'https://zoom.us/oauth/token',
     qs: {
       grant_type: 'authorization_code',
-      // The code below is a sample authorization code. Replace it with your actual authorization code while making requests.
-      code: 'kG9gumOxrl_8nGKq1IyRWCIda5_7Vmycw',
-      // The uri below is a sample redirect_uri. Replace it with your actual redirect_uri while making requests.
-      redirect_uri:
-        'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/profile/zoom',
+      code,
+      redirect_uri: urls.ZOOM_AUTHORIZE_URL,
     },
     headers: {
       /** The credential below is a sample base64 encoded credential. Replace it with "Authorization: 'Basic ' + Buffer.from(your_app_client_id + ':' + your_app_client_secret).toString('base64')"
