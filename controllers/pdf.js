@@ -285,7 +285,8 @@ const updateDetail = async (req, res) => {
   }
 
   pdf['updated_at'] = new Date();
-  pdf.save()
+  pdf
+    .save()
     .then((_pdf) => {
       return res.send({
         status: true,

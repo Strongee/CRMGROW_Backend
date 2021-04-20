@@ -28,6 +28,8 @@ router.post(
   catchError(TextCtrl.buyNumbers)
 );
 
+router.post('/buy-credit', UserCtrl.checkAuth, catchError(TextCtrl.buyCredit));
+
 router.put(
   '/mark-read/:id',
   UserCtrl.checkAuth,

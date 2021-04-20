@@ -56,6 +56,13 @@ router.post(
 
 router.post('/get-detail', UserCtrl.checkAuth, catchError(AutomationCtrl.get));
 
+// Update existing automation
+router.post(
+  '/update-old',
+  UserCtrl.checkAuth,
+  catchError(AutomationCtrl.updateExistingContacts)
+);
+
 // Default Video Edit
 router.post(
   '/update-admin',

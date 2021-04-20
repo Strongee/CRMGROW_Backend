@@ -509,11 +509,12 @@ const bulkEmail = async (data) => {
       let email_subject = subject;
       let promise;
 
-      let _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-        (err) => {
-          console.log('contact found err', err.message);
-        }
-      );
+      let _contact = await Contact.findOne({
+        _id: contacts[i],
+        tags: { $nin: ['unsubscribed'] },
+      }).catch((err) => {
+        console.log('contact found err', err.message);
+      });
 
       if (!_contact) {
         _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
@@ -796,8 +797,6 @@ const bulkVideo = async (data) => {
             user: currentUser.id,
             type: 'videos',
             videos: video._id,
-            created_at: new Date(),
-            updated_at: new Date(),
             subject: video_subject,
             description: video_content,
           });

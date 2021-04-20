@@ -97,8 +97,6 @@ const bulkVideo = async (data) => {
         type: 'videos',
         send_type: 1,
         videos: video._id,
-        created_at: new Date(),
-        updated_at: new Date(),
         description: video_content,
       });
 
@@ -1116,7 +1114,7 @@ const sleep = (ms) => {
 };
 
 const generateUnsubscribeLink = () => {
-  return 'Reply STOP to unsubscribe.';
+  return '\n\nReply STOP to unsubscribe.';
 };
 
 module.exports = {

@@ -324,7 +324,6 @@ const update = async (req, res) => {
               });
           } else {
             stripe.tokens.retrieve(token.id, function (err, _token) {
-              console.log('_token', token);
               // asynchronously called
               if (!_token) {
                 return res.status(400).send({
@@ -343,6 +342,45 @@ const update = async (req, res) => {
                         error: 'Card is not valid',
                       });
                     }
+
+                    stripe.customers
+                      .update(payment['customer_id'], {
+                        default_source: card.id,
+                      })
+                      .then(() => {
+                        try {
+                          stripe.customers.deleteSource(
+                            payment['customer_id'],
+                            payment['card_id'],
+                            function (err, confirmation) {
+                              if (err) {
+                                console.log('delete source err', err);
+                              }
+                            }
+                          );
+                          // Save card information to DB.
+
+                          payment['token'] = token.id;
+                          payment['card_id'] = card.id;
+                          payment['card_name'] = token.card_name;
+                          payment['card_brand'] = token.card.brand;
+                          payment['exp_month'] = token.card.exp_month;
+                          payment['exp_year'] = token.card.exp_year;
+                          payment['last4'] = token.card.last4;
+                          payment['fingerprint'] = card.fingerprint;
+                          payment['updated_at'] = new Date();
+                          payment.save().catch((err) => {
+                            console.log('err', err);
+                          });
+                          return res.send({
+                            status: true,
+                            data: currentUser.payment,
+                          });
+                        } catch (err) {
+                          console.log('delete card err', err);
+                        }
+                      });
+                    /**
                     const pricingPlan = api.STRIPE.PRIOR_PLAN;
                     const bill_amount =
                       system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
@@ -400,6 +438,7 @@ const update = async (req, res) => {
                           eror: err,
                         });
                       });
+                     */
                   }
                 );
               } else {
@@ -767,12 +806,63 @@ const createCharge = async (data) => {
   });
 };
 
+const getTransactions = async (req, res) => {
+  const { currentUser } = req;
+  let payment;
+
+  if (currentUser.payment) {
+    payment = await Payment.findOne({ _id: currentUser.payment }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
+  }
+
+  console.log('payment', payment);
+  if (payment) {
+    const customer_id = payment.customer_id;
+    stripe.charges.list({ customer: customer_id }, function (err, charges) {
+      console.log('charges', charges);
+      if (err) {
+        console.log('payment history find err', err);
+        return res.status(400).json({
+          status: false,
+          error: err,
+        });
+      }
+      const charge_list = charges.data;
+      const data = [];
+      for (let i = 0; i < charge_list.length; i++) {
+        const charge = {
+          id: charge_list[i].id,
+          amount: charge_list[i].amount / 100,
+          status: charge_list[i].status,
+          description: charge_list[i].description,
+          customer: charge_list[i].customer,
+          date: charge_list[i].created * 1000,
+        };
+        data.push(charge);
+      }
+      return res.send({
+        status: true,
+        data,
+      });
+    });
+  } else {
+    return res.send({
+      status: true,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   get,
   create,
   update,
   createCharge,
   cancelCustomer,
+  getTransactions,
   paymentFailed,
   paymentSucceed,
   updateCustomerEmail,

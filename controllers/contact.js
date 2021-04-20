@@ -266,7 +266,6 @@ const get = async (req, res) => {
 
     if (count) {
       _activity_list = await Activity.find({
-        user: currentUser.id,
         contacts: req.params.id,
         status: { $ne: 'pending' },
       })
@@ -274,7 +273,6 @@ const get = async (req, res) => {
         .limit(count);
     } else {
       _activity_list = await Activity.find({
-        user: currentUser.id,
         contacts: req.params.id,
         status: { $ne: 'pending' },
       }).sort({ updated_at: 1 });
@@ -4618,6 +4616,15 @@ const shareContacts = async (req, res) => {
               cell_phone: 1,
             },
           },
+          {
+            path: 'user',
+            select: {
+              user_name: 1,
+              picture_profile: 1,
+              email: 1,
+              cell_phone: 1
+            }
+          }
         ])
         .catch((err) => {
           console.log('contact find err', err.message);

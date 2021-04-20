@@ -54,23 +54,23 @@ const getUpcomingInvoice = async (req, res) => {
     created: '',
     next_payment_attempt: '',
   };
-  stripe.invoices.retrieveUpcoming({ customer: customer_id }, function (
-    err,
-    upcoming
-  ) {
-    if (err) {
-      return res.status(400).send({
-        status: false,
-        error: err,
+  stripe.invoices.retrieveUpcoming(
+    { customer: customer_id },
+    function (err, upcoming) {
+      if (err) {
+        return res.status(400).send({
+          status: false,
+          error: err,
+        });
+      }
+      data.amount_due = upcoming.amount_due / 100;
+      data.created = upcoming.created * 1000;
+      return res.send({
+        data,
+        status: true,
       });
     }
-    data.amount_due = upcoming.amount_due / 100;
-    data.created = upcoming.created * 1000;
-    return res.send({
-      data,
-      status: true,
-    });
-  });
+  );
 };
 
 const getTransactions = async (req, res) => {
@@ -283,23 +283,25 @@ const cancelCustomer = async (req, res) => {
 
 const updateCard = async (req, res) => {
   const { customer_id, card_id, data } = req.body;
-  stripe.customers.updateSource(customer_id, card_id, data, function (
-    err,
-    data
-  ) {
-    if (err) {
-      console.log('err', err);
-      return res.status(400).json({
-        status: false,
-        error: err,
+  stripe.customers.updateSource(
+    customer_id,
+    card_id,
+    data,
+    function (err, data) {
+      if (err) {
+        console.log('err', err);
+        return res.status(400).json({
+          status: false,
+          error: err,
+        });
+      }
+
+      return res.send({
+        status: true,
+        data,
       });
     }
-
-    return res.send({
-      status: true,
-      data,
-    });
-  });
+  );
 };
 /**
  *

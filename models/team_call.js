@@ -14,7 +14,6 @@ const TeamCallSchema = new Schema(
     description: String,
     duration: Number,
     location: String,
-    note: String,
     status: { type: String, default: 'pending' },
     link: String,
     schedule_link: String,

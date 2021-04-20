@@ -12,8 +12,10 @@ AWS.config.update({
 const templateName = 'VideoWatched';
 
 const subjects = {
-  TeamCallRequest: `CRMGROW Team member call join request: {{user_name}}`,
-  TeamRequest: `CRMGROW Team member join request: {{user_name}}`,
+  TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,
+  TeamRequest: `CRMGROW team member join request: {{user_name}}`,
+  TeamRequestAccepted: `{{team_name}} has accepted your join request`,
+  TeamRequestDeclined: `{{team_name}} has declined your join request`,
   TeamCallInvitation: `{{user_name}} has accepted your call request`,
   TeamCallInquiryFailed: `{{user_name}} has rejected your call request`,
   TeamCallAccepted: `{{leader_name}} has accepted your call request`,
@@ -21,6 +23,7 @@ const subjects = {
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
   Welcome: 'Welcome to CRMGrow, {{user_name}}!',
   VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{watched_at}}',
+  PaymentNotification: 'CRMGrow payment notification',
 };
 const htmls = {};
 fs.readFile(
@@ -34,13 +37,13 @@ fs.readFile(
       Template: {
         TemplateName: templateName,
         SubjectPart: subjects[templateName],
-        TextPart: subjects[templateName],
+        TextPart: data,
         HtmlPart: data,
       },
     };
 
     const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-      .createTemplate(createParams)
+      .updateTemplate(createParams)
       .promise();
 
     templatePromise

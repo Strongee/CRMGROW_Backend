@@ -5,6 +5,7 @@ require('dotenv').config({ path: ENV_PATH });
 const { DB_PORT } = require('../config/database');
 const { sendNewMessage } = require('node-outlook/mail-api');
 const api = require('../config/api');
+const TextHelper = require('../helpers/text');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -107,7 +108,17 @@ const validatePhone = (data) => {
   console.log('validate', validate);
 };
 
+const receivedStatus = async () => {
+  // const message_sid = '37153dcc-8ab2-4915-aad0-8e576d6a33d5';
+  const message_sid = 'SM864bf86d09e74616a052b87a52a481c6';
+
+  TextHelper.getStatus(message_sid, 'twilio').then((res) => {
+    console.log('res', res);
+  });
+};
+
 // +44 1494 506206
 // +44 7911 123456
 // validatePhone('7758158669');
-sendSMS();
+// sendSMS();
+receivedStatus();

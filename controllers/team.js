@@ -23,13 +23,8 @@ const TeamCall = require('../models/team_call');
 const TimeLine = require('../models/time_line');
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 const { getAvatarName } = require('../helpers/utility');
-
-const ses = new AWS.SES({
-  accessKeyId: api.AWS.AWS_ACCESS_KEY,
-  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
-  region: api.AWS.AWS_SES_REGION,
-  apiVersion: '2010-12-01',
-});
+const { sendNotificationEmail } = require('../helpers/email');
+const system_settings = require('../config/system_settings');
 
 const getAll = (req, res) => {
   const { currentUser } = req;
@@ -599,6 +594,105 @@ const acceptInviation = async (req, res) => {
     });
 };
 
+const declineInviation = async (req, res) => {
+  const { currentUser } = req;
+  const team = await Team.findOne({
+    _id: req.params.id,
+    invites: currentUser.id,
+  })
+    .populate('owner')
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message || 'Team found err',
+      });
+    });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+
+  const members = team.members;
+  const invites = team.invites;
+  if (members.indexOf(currentUser.id) === -1) {
+    members.push(currentUser.id);
+  }
+  if (invites.indexOf(currentUser.id) !== -1) {
+    const pos = invites.indexOf(currentUser.id);
+    invites.splice(pos, 1);
+  }
+
+  Team.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: {
+        members,
+        invites,
+      },
+    }
+  )
+    .then(async () => {
+      /** **********
+       *  Send email accept notification to the inviated users
+       *  */
+      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+
+      const owners = team.owner;
+      for (let i = 0; i < owners.length; i++) {
+        const owner = owners[i];
+        const msg = {
+          to: owner.email,
+          from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
+          templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
+          dynamic_template_data: {
+            subject: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
+            activity: `${mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your invitation to join ${team.name} in CRMGrow`,
+            team:
+              "<a href='" +
+              urls.TEAM_URL +
+              team.id +
+              "'><img src='" +
+              urls.DOMAIN_URL +
+              "assets/images/team.png'/></a>",
+          },
+        };
+
+        sgMail
+          .send(msg)
+          .then()
+          .catch((err) => {
+            console.log('send message err: ', err);
+          });
+      }
+
+      /** **********
+       *  Mark read true dashboard notification for accepted users
+       *  */
+
+      Notification.updateOne(
+        { team: team.id, user: currentUser.id, criteria: 'team_invited' },
+        { is_read: true }
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 const acceptRequest = async (req, res) => {
   const { currentUser } = req;
   const { team_id, request_id } = req.body;
@@ -650,31 +744,110 @@ const acceptRequest = async (req, res) => {
     }
   )
     .then(async () => {
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      const time_zone = currentUser.time_zone_info
+        ? JSON.parse(currentUser.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
 
-      const msg = {
-        to: request.email,
-        from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-        templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-          activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has accepted your request to join ${team.name} in CRMGrow`,
-          team:
-            "<a href='" +
-            urls.TEAM_URL +
-            team.id +
-            "'><img src='" +
-            urls.DOMAIN_URL +
-            "assets/images/team.png'/></a>",
+      const data = {
+        template_data: {
+          user_name: request.user_name,
+          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+          team_name: team.name,
+          team_url: urls.TEAM_URL + team.id,
         },
+        template_name: 'TeamRequestAccepted',
+        required_reply: false,
+        email: request.email,
       };
 
-      sgMail
-        .send(msg)
-        .then()
-        .catch((err) => {
-          console.log('send message err: ', err);
-        });
+      sendNotificationEmail(data);
+
+      Notification.updateOne(
+        {
+          team: team.id,
+          user: currentUser.id,
+          criteria: 'team_requested',
+        },
+        { is_read: true }
+      ).catch((err) => {
+        console.log('err', err.message);
+      });
+
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(500).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
+const declineRequest = async (req, res) => {
+  const { currentUser } = req;
+  const { team_id, request_id } = req.body;
+
+  const team = await Team.findOne({
+    _id: team_id,
+    $or: [{ owner: currentUser.id }, { editors: currentUser.id }],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team found err',
+    });
+  });
+
+  if (!team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid Permission',
+    });
+  }
+  const request = await User.findOne({ _id: request_id, del: false });
+
+  if (!request) {
+    return res.status(400).send({
+      status: false,
+      error: 'No exist user',
+    });
+  }
+
+  const requests = team.requests;
+
+  if (requests.indexOf(request_id) !== -1) {
+    const pos = requests.indexOf(request_id);
+    requests.splice(pos, 1);
+  }
+
+  Team.updateOne(
+    {
+      _id: team_id,
+    },
+    {
+      $set: {
+        requests,
+      },
+    }
+  )
+    .then(async () => {
+      const time_zone = currentUser.time_zone_info
+        ? JSON.parse(currentUser.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
+
+      const data = {
+        template_data: {
+          user_name: request.user_name,
+          created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+          team_name: team.name,
+        },
+        template_name: 'TeamRequestDeclined',
+        required_reply: false,
+        email: request.email,
+      };
+
+      sendNotificationEmail(data);
 
       Notification.updateOne(
         { team: team.id, user: currentUser.id, criteria: 'team_requested' },
@@ -1144,64 +1317,54 @@ const requestTeam = async (req, res) => {
     });
   }
 
-  let senders;
+  let owners;
   if (searchedUser && team.editors.indexOf(searchedUser) !== -1) {
     const editor = await User.findOne({ _id: searchedUser });
-    senders = [editor];
+    owners = [editor];
   } else if (searchedUser && team.owner.indexOf(searchedUser) !== -1) {
     const owner = await User.findOne({ _id: searchUser });
-    senders = [owner];
+    owners = [owner];
   } else {
     const owner = await User.find({ _id: { $in: team.owner } });
-    senders = owner;
+    owners = owner;
   }
 
   sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
-  for (let i = 0; i < senders.length; i++) {
-    const sender = senders[i];
+  for (let i = 0; i < owners.length; i++) {
+    const owner = owners[i];
 
-    /**
-     *
-     */
-    const msg = {
-      to: sender.email,
-      from: mail_contents.NOTIFICATION_SEND_MATERIAL.MAIL,
-      templateId: api.SENDGRID.TEAM_ACCEPT_NOTIFICATION,
-      dynamic_template_data: {
-        subject: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name}`,
-        activity: `${mail_contents.NOTIFICATION_REQUEST_TEAM_MEMBER_ACCEPT.SUBJECT}${currentUser.user_name} has requested to join your ${team.name} in CRMGrow`,
-        team:
-          "<a href='" +
-          urls.TEAM_ACCEPT_REQUEST_URL +
-          `?team=${team.id}&user=${currentUser.id}` +
-          "'><img src='" +
-          urls.DOMAIN_URL +
-          "assets/images/accept.png'/></a>",
+    const time_zone = owner.time_zone_info
+      ? JSON.parse(owner.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+
+    const data = {
+      template_data: {
+        owner_name: owner.user_name,
+        created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+        team_name: team.name,
+        team_url: urls.TEAM_URL + team.id,
+        accept_url: `${urls.TEAM_URL}${team.id}/request?join=accept&user=${currentUser.id}`,
+        decline_url: `${urls.TEAM_URL}${team.id}/request?join=decline&user=${currentUser.id}`,
       },
+      template_name: 'TeamRequest',
+      required_reply: false,
+      email: owner.email,
     };
 
-    sgMail
-      .send(msg)
-      .then(() => {
-        /** **********
-         *  Creat dashboard notification to the team owner
-         *  */
+    sendNotificationEmail(data);
 
-        const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
-        const notification = new Notification({
-          user: sender.id,
-          team: team.id,
-          criteria: 'team_requested',
-          content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
-        });
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
-      })
-      .catch((err) => {
-        console.log('send message err: ', err);
-      });
+    const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
+    const notification = new Notification({
+      user: owner.id,
+      team: team.id,
+      team_requester: currentUser.id,
+      criteria: 'team_requested',
+      content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
+    });
+    notification.save().catch((err) => {
+      console.log('notification save err', err.message);
+    });
   }
 
   if (team.requests.indexOf(currentUser._id) === -1) {
@@ -1482,590 +1645,6 @@ const updateTeam = (req, res) => {
     .then(res.send({ status: true }))
     .catch((err) => {
       res.status(500).send({ status: false, error: err.message });
-    });
-};
-
-const requestCall = async (req, res) => {
-  const { currentUser } = req;
-  let leader;
-  let contacts;
-
-  if (req.body.leader) {
-    leader = await User.findOne({ _id: req.body.leader }).catch((err) => {
-      console.log('leader find err', err.message);
-    });
-  }
-
-  if (req.body.contacts && req.body.contacts.length > 0) {
-    contacts = await Contact.find({ _id: { $in: req.body.contacts } }).catch(
-      (err) => {
-        console.log('contact find err', err.message);
-      }
-    );
-  }
-
-  const team_call = new TeamCall({
-    user: currentUser.id,
-    ...req.body,
-  });
-
-  team_call
-    .save()
-    .then((data) => {
-      if (leader) {
-        let guests = '';
-        if (contacts) {
-          for (let i = 0; i < contacts.length; i++) {
-            if (contacts[i]) {
-              const first_name = contacts[i].first_name || '';
-              const last_name = contacts[i].last_name || '';
-              const data = {
-                first_name,
-                last_name,
-              };
-
-              const new_activity = new Activity({
-                team_calls: team_call.id,
-                user: currentUser.id,
-                contacts: contacts[i].id,
-                content: 'inquired group call',
-                type: 'team_calls',
-              });
-
-              new_activity.save().catch((err) => {
-                console.log('activity save err', err.message);
-              });
-
-              Contact.updateOne(
-                {
-                  _id: contacts[i].id,
-                },
-                {
-                  $set: { last_activity: new_activity.id },
-                }
-              ).catch((err) => {
-                console.log('contact update err', err.message);
-              });
-
-              const guest = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-                data
-              )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
-              guests += guest;
-            }
-          }
-        }
-
-        const organizer = `<tr><td><span class="icon-user">${getAvatarName({
-          full_name: currentUser.user_name,
-        })}</label></td><td style="padding-left: 5px;">${
-          currentUser.user_name
-        }</td></tr>`;
-
-        const templatedData = {
-          user_name: currentUser.user_name,
-          leader_name: leader.user_name,
-          created_at: moment().format('h:mm MMMM Do, YYYY'),
-          subject: team_call.subject,
-          description: team_call.description || '',
-          organizer,
-          call_url: urls.TEAM_CALLS + team_call.id,
-          guests,
-        };
-
-        const params = {
-          Destination: {
-            ToAddresses: [leader.email],
-          },
-          Source: mail_contents.NO_REPLAY,
-          Template: 'TeamCallRequest',
-          TemplateData: JSON.stringify(templatedData),
-          ReplyToAddresses: [currentUser.email],
-        };
-
-        // Create the promise and SES service object
-        ses
-          .sendTemplatedEmail(params)
-          .promise()
-          .then((response) => {
-            console.log('success', response.MessageId);
-          })
-          .catch((err) => {
-            console.log('ses send err', err);
-          });
-      }
-
-      /** **********
-       *  Creat dashboard notification to the inviated users
-       *  */
-      if (leader) {
-        const notification = new Notification({
-          user: leader.id,
-          team_call: team_call.id,
-          criteria: 'team_call_invited',
-          content: `You've been invited to join a call by ${currentUser.user_name}.`,
-        });
-
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
-      }
-
-      return res.send({
-        status: true,
-        data,
-      });
-    })
-    .catch((err) => {
-      console.log('team save err', err.message);
-      return res.status(400).json({
-        status: false,
-        error: err.message,
-      });
-    });
-};
-
-const acceptCall = async (req, res) => {
-  const { currentUser } = req;
-  const { call_id } = req.body;
-
-  const team_call = await TeamCall.findOne({ _id: call_id })
-    .populate('user')
-    .catch((err) => {
-      console.log('call find error', err.message);
-    });
-
-  if (team_call) {
-    const user = team_call.user;
-    TeamCall.updateOne(
-      {
-        _id: call_id,
-      },
-      {
-        $set: {
-          ...req.body,
-          status: 'planned',
-        },
-      }
-    )
-      .then(() => {
-        const contacts = team_call.contacts;
-        for (let i = 0; i < team_call.length; i++) {
-          const new_activity = new Activity({
-            team_calls: team_call.id,
-            user: currentUser.id,
-            contacts: contacts[i],
-            content: 'accepted a group call',
-            type: 'team_calls',
-          });
-
-          new_activity.save().catch((err) => {
-            console.log('activity save err', err.message);
-          });
-
-          Contact.updateOne(
-            {
-              _id: contacts[i],
-            },
-            {
-              $set: { last_activity: new_activity.id },
-            }
-          ).catch((err) => {
-            console.log('contact update err', err.message);
-          });
-        }
-
-        const templatedData = {
-          leader_name: currentUser.user_name,
-          created_at: moment().format('h:mm MMMM Do, YYYY'),
-          user_name: user.user_name,
-          due_start: moment(team_call.due_start).format('h:mm MMMM Do, YYYY'),
-          organizer: user.user_name,
-          subject: team_call.subject,
-          description: team_call.description,
-        };
-
-        const params = {
-          Destination: {
-            ToAddresses: [user.email],
-          },
-          Source: mail_contents.NO_REPLAY,
-          Template: 'TeamCallInvitation',
-          TemplateData: JSON.stringify(templatedData),
-          ReplyToAddresses: [currentUser.email],
-        };
-
-        // Create the promise and SES service object
-
-        ses.sendTemplatedEmail(params).promise();
-
-        /** **********
-         *  Creat dashboard notification to the inviated users
-         *  */
-
-        const notification = new Notification({
-          user: user.id,
-          team_call: call_id,
-          criteria: 'team_call',
-          content: `${currentUser.user_name} has accepted to join a call.`,
-        });
-
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
-
-        return res.send({
-          status: true,
-        });
-      })
-      .catch((err) => {
-        console.log('team update err', err.message);
-      });
-  }
-};
-
-const rejectCall = async (req, res) => {
-  const { currentUser } = req;
-  const { call_id } = req.body;
-
-  const team_call = await TeamCall.findOne({ _id: call_id })
-    .populate('user')
-    .catch((err) => {
-      console.log('call find error', err.message);
-    });
-
-  if (team_call) {
-    const user = team_call.user;
-    TeamCall.updateOne(
-      {
-        _id: call_id,
-      },
-      {
-        status: 'canceled',
-      }
-    )
-      .then(() => {
-        /** **********
-         *  Send email notification to the inviated users
-         *  */
-        const templatedData = {
-          leader_name: currentUser.user_name,
-          created_at: moment().format('h:mm MMMM Do YYYY'),
-          team_call: team_call.subject,
-          user_name: user.user_name,
-          call_url: urls.TEAM_CALLS + team_call.id,
-        };
-
-        const params = {
-          Destination: {
-            ToAddresses: [user.email],
-          },
-          Source: mail_contents.NO_REPLAY,
-          Template: 'TeamCallInquiryFailed',
-          TemplateData: JSON.stringify(templatedData),
-          ReplyToAddresses: [currentUser.email],
-        };
-
-        // Create the promise and SES service object
-
-        ses.sendTemplatedEmail(params).promise();
-
-        /** **********
-         *  Creat dashboard notification to the inviated users
-         *  */
-
-        const notification = new Notification({
-          user: user.id,
-          team_call: call_id,
-          criteria: 'team_call',
-          content: `${currentUser.user_name} has rejected to join a call.`,
-        });
-
-        notification.save().catch((err) => {
-          console.log('notification save err', err.message);
-        });
-
-        return res.send({
-          status: true,
-        });
-      })
-      .catch((err) => {
-        console.log('team update err', err.message);
-      });
-  }
-};
-
-const getInquireCall = async (req, res) => {
-  const { currentUser } = req;
-  let id = 0;
-
-  if (req.params.id) {
-    id = parseInt(req.params.id);
-  }
-
-  const total = await TeamCall.countDocuments({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['pending'] },
-  });
-
-  const data = await TeamCall.find({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['pending'] },
-  })
-    .populate([
-      {
-        path: 'leader',
-        select: { user_name: 1, picture_profile: 1, email: 1 },
-      },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'contacts' },
-    ])
-    .skip(id)
-    .limit(8);
-
-  return res.send({
-    status: true,
-    data,
-    total,
-  });
-};
-
-const getDetailInquireCall = async (req, res) => {
-  const data = await TeamCall.findOne({
-    _id: req.params.id,
-  }).populate([
-    { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-    { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-    // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
-    { path: 'contacts' },
-  ]);
-
-  return res.send({
-    status: true,
-    data,
-  });
-};
-
-const getPlannedCall = async (req, res) => {
-  const { currentUser } = req;
-  let id = 0;
-  if (req.params.id) {
-    id = parseInt(req.params.id);
-  }
-  const data = await TeamCall.find({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['planned'] },
-  })
-    .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'contacts' },
-    ])
-    .skip(id)
-    .limit(8);
-
-  const total = await TeamCall.countDocuments({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['planned'] },
-  });
-
-  return res.send({
-    status: true,
-    data,
-    total,
-  });
-};
-
-const getFinishedCall = async (req, res) => {
-  const { currentUser } = req;
-  let id = 0;
-  if (req.params.id) {
-    id = parseInt(req.params.id);
-  }
-  const data = await TeamCall.find({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['finished', 'canceled'] },
-  })
-    .populate([
-      { path: 'leader', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'user', select: { user_name: 1, picture_profile: 1 } },
-      // { path: 'guests', select: { user_name: 1, picture_profile: 1 } },
-      { path: 'contacts' },
-    ])
-    .skip(id)
-    .limit(8);
-
-  const total = await TeamCall.countDocuments({
-    $or: [
-      { user: currentUser.id },
-      { leader: currentUser.id },
-      // { guests: currentUser.id },
-    ],
-    status: { $in: ['finished', 'canceled'] },
-  });
-
-  return res.send({
-    status: true,
-    data,
-    total,
-  });
-};
-
-const loadCalls = async (req, res) => {
-  const { currentUser } = req;
-  const { type, skip, count } = req.body;
-  let query;
-  switch (type) {
-    case 'inquiry':
-      query = {
-        leader: currentUser.id,
-        status: 'pending',
-      };
-      break;
-    case 'sent':
-      query = {
-        user: currentUser.id,
-        status: 'pending',
-      };
-      break;
-    case 'scheduled':
-      query = {
-        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-        status: { $in: ['planned'] },
-      };
-      break;
-    case 'completed':
-      query = {
-        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-        status: { $in: ['finished'] },
-      };
-      break;
-    case 'canceled':
-      query = {
-        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-        status: { $in: ['canceled'] },
-      };
-      break;
-    case 'denied':
-      query = {
-        $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-        status: { $in: ['declined'] },
-      };
-      break;
-  }
-  const data = await TeamCall.find(query)
-    .populate([
-      {
-        path: 'leader',
-        select: {
-          user_name: 1,
-          picture_profile: 1,
-          email: 1,
-          phone: 1,
-          company: 1,
-          location: 1,
-          time_zone_info: 1,
-        },
-      },
-      {
-        path: 'user',
-        select: {
-          user_name: 1,
-          picture_profile: 1,
-          email: 1,
-          phone: 1,
-          company: 1,
-          location: 1,
-          time_zone_info: 1,
-        },
-      },
-      { path: 'contacts' },
-    ])
-    .skip(skip)
-    .limit(count || 10);
-
-  const total = await TeamCall.countDocuments(query);
-
-  return res.send({
-    status: true,
-    data,
-    total,
-  });
-};
-
-const updateCall = async (req, res) => {
-  const { currentUser } = req;
-  const team_call = await TeamCall.findOne({
-    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-    _id: req.params.id,
-  });
-
-  if (!team_call) {
-    return res.status(400).json({
-      status: false,
-      error: 'Team call found err',
-    });
-  }
-  TeamCall.updateOne(
-    {
-      _id: req.params.id,
-    },
-    {
-      ...req.body,
-    }
-  )
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      console.log('team call update err', err.message);
-      return res.send(500).json({
-        status: false,
-        error: err,
-      });
-    });
-};
-
-const removeCall = async (req, res) => {
-  const { currentUser } = req;
-  TeamCall.deleteOne({
-    _id: req.params.id,
-    $or: [{ user: currentUser.id }, { leader: currentUser.id }],
-  })
-    .then(() => {
-      return res.send({
-        status: true,
-      });
-    })
-    .catch((err) => {
-      console.log('team call delte err', err.message);
-      return res.send(500).json({
-        status: false,
-        error: err,
-      });
     });
 };
 
@@ -2613,16 +2192,14 @@ module.exports = {
   searchContact,
   getInvitedTeam,
   get,
-  getInquireCall,
-  getPlannedCall,
-  getFinishedCall,
-  getDetailInquireCall,
   create,
   update,
   remove,
   bulkInvites,
   acceptInviation,
+  declineInviation,
   acceptRequest,
+  declineRequest,
   searchUser,
   shareVideos,
   sharePdfs,
@@ -2635,11 +2212,5 @@ module.exports = {
   removeAutomations,
   removeEmailTemplates,
   requestTeam,
-  requestCall,
-  acceptCall,
-  rejectCall,
-  updateCall,
-  removeCall,
   updateTeam,
-  loadCalls
 };

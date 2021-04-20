@@ -15,6 +15,7 @@ const NotificationSchema = new Schema(
     activities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
     followup: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'team' },
+    team_requester: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     message_sid: String,
     status: String,

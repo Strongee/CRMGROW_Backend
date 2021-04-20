@@ -26,6 +26,7 @@ const ses = new AWS.SES({
 
 const { RestClient } = require('@signalwire/node');
 const VideoTracker = require('../models/video_tracker');
+const { sendNotificationEmail } = require('../helpers/email');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -575,6 +576,41 @@ const searchNumbers = async (req, res) => {
 
   const search_code = req.body.searchCode || areaCode;
 
+  twilio
+    .availablePhoneNumbers(countryCode)
+    .local.list({
+      areaCode: search_code,
+    })
+    .then(async (response) => {
+      const number = response[0];
+
+      if (typeof number === 'undefined' || number === '+') {
+        return res.send({
+          status: true,
+          data: [],
+        });
+      } else {
+        for (let i = 0; i < 5; i++) {
+          data.push({
+            number: response[i].phoneNumber,
+            region: response[i].region,
+            locality: response[i].locality,
+          });
+        }
+        return res.send({
+          status: true,
+          data,
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        status: false,
+        error: err.message || err,
+      });
+    });
+
+  /** 
   if (countryCode === 'US' || countryCode === 'CA') {
     client
       .availablePhoneNumbers(countryCode)
@@ -606,9 +642,6 @@ const searchNumbers = async (req, res) => {
             data,
           });
         } else {
-          /**
-           * twilio numbers search
-           *  */
           twilio
             .availablePhoneNumbers(countryCode)
             .local.list({
@@ -684,157 +717,161 @@ const searchNumbers = async (req, res) => {
         });
       });
   }
+  */
 };
 
 const buyNumbers = async (req, res) => {
-  const { currentUser } = req.body;
-  if (req.body.service === 'signalwire') {
-    client.incomingPhoneNumbers
-      .create({
-        friendlyName: currentUser.user_name,
-        phoneNumber: req.body.number,
-        smsUrl: urls.SMS_RECEIVE_URL1,
-      })
-      .then((incoming_phone_number) => {
-        User.updateOne(
-          { _id: currentUser.id },
-          {
-            $set: {
-              proxy_number: req.body.number,
-              proxy_number_id: incoming_phone_number.sid,
-            },
-          }
-        ).catch((err) => {
-          console.log('err', err.message);
-        });
-
-        return res.send({
-          status: true,
-        });
-      })
-      .catch((err) => {
-        return res.status(400).json({
-          status: false,
-          error: err.message,
-        });
-      });
-  } else {
-    twilio.incomingPhoneNumbers
-      .create({
-        friendlyName: currentUser.user_name,
-        phoneNumber: req.body.number,
-        smsUrl: urls.SMS_RECEIVE_URL,
-      })
-      .then((incoming_phone_number) => {
-        User.updateOne(
-          { _id: currentUser.id },
-          {
-            $set: {
-              twilio_number: req.body.number,
-              twilio_number_id: incoming_phone_number.sid,
-            },
-          }
-        ).catch((err) => {
-          console.log('err', err.message);
-        });
-
-        return res.send({
-          status: true,
-        });
-      })
-      .catch((err) => {
-        console.log('proxy number error', err);
-      });
-  }
-};
-
-const buyCredit = async (req, res) => {
   const { currentUser } = req;
-  const payment = await Payment.findOne({
-    _id: currentUser.payment,
-  }).catch((err) => {
-    console.log('payment find err', err.message);
-  });
+  // if (req.body.service === 'signalwire') {
+  //   client.incomingPhoneNumbers
+  //     .create({
+  //       friendlyName: currentUser.user_name,
+  //       phoneNumber: req.body.number,
+  //       smsUrl: urls.SMS_RECEIVE_URL1,
+  //     })
+  //     .then((incoming_phone_number) => {
+  //       User.updateOne(
+  //         { _id: currentUser.id },
+  //         {
+  //           $set: {
+  //             proxy_number: req.body.number,
+  //             proxy_number_id: incoming_phone_number.sid,
+  //           },
+  //         }
+  //       ).catch((err) => {
+  //         console.log('err', err.message);
+  //       });
 
-  let price;
-  let amount;
-  const description = 'Buy sms credit';
-
-  if (req.body.option === 1) {
-    price = system_settings.SMS_CREDIT[0].PRICE;
-    amount = system_settings.SMS_CREDIT[0].AMOUNT;
-  } else if (req.body.option === 2) {
-    price = system_settings.SMS_CREDIT[1].PRICE;
-    amount = system_settings.SMS_CREDIT[1].AMOUNT;
-  } else if (req.body.option === 3) {
-    price = system_settings.SMS_CREDIT[2].PRICE;
-    amount = system_settings.SMS_CREDIT[2].AMOUNT;
-  }
-
-  const data = {
-    card_id: payment.card_id,
-    customer_id: payment.customer_id,
-    receipt_email: currentUser.email,
-    amount: price,
-    description,
-  };
-
-  PaymentCtrl.createCharge(data)
-    .then(() => {
-      const { additional_credit } = currentUser.text_info;
-      if (additional_credit) {
-        additional_credit.updated_at = new Date();
-        additional_credit.amount += amount;
-      } else {
-        additional_credit.updated_at = new Date();
-        additional_credit.amount = amount;
-      }
-
+  //       return res.send({
+  //         status: true,
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       return res.status(400).json({
+  //         status: false,
+  //         error: err.message,
+  //       });
+  //     });
+  // } else {
+  twilio.incomingPhoneNumbers
+    .create({
+      friendlyName: currentUser.user_name,
+      phoneNumber: req.body.number,
+      smsUrl: urls.SMS_RECEIVE_URL,
+    })
+    .then((incoming_phone_number) => {
       User.updateOne(
         { _id: currentUser.id },
         {
           $set: {
-            'text_info.additional_credit': additional_credit,
+            twilio_number: req.body.number,
+            twilio_number_id: incoming_phone_number.sid,
           },
         }
       ).catch((err) => {
-        console.log('user paid demo update err', err.message);
+        console.log('err', err.message);
       });
-
-      /**
-      const templatedData = {
-        user_name: currentUser.user_name,
-        schedule_link,
-      };
-
-      const params = {
-        Destination: {
-          ToAddresses: [currentUser.email],
-        },
-        Source: mail_contents.REPLY,
-        Template: 'OnboardCall',
-        TemplateData: JSON.stringify(templatedData),
-      };
-
-      // Create the promise and SES service object
-      ses
-        .sendTemplatedEmail(params)
-        .promise()
-        .then((response) => {
-          console.log('success', response.MessageId);
-        })
-        .catch((err) => {
-          console.log('ses send err', err);
-        });
-      */
 
       return res.send({
         status: true,
       });
     })
-    .catch((_err) => {
-      console.log('new demo err', _err.message);
+    .catch((err) => {
+      console.log('proxy number error', err);
     });
+  // }
+};
+
+const buyCredit = async (req, res) => {
+  const { currentUser } = req;
+  let payment;
+
+  if (!currentUser.is_free && !currentUser.payment) {
+    payment = await Payment.findOne({ _id: currentUser.payment }).catch(
+      (err) => {
+        console.log('err', err);
+      }
+    );
+  }
+
+  if (payment) {
+    let price;
+    let amount;
+    const description = 'Buy sms credit';
+
+    if (req.body.option === 1) {
+      price = system_settings.SMS_CREDIT[0].PRICE;
+      amount = system_settings.SMS_CREDIT[0].AMOUNT;
+    } else if (req.body.option === 2) {
+      price = system_settings.SMS_CREDIT[1].PRICE;
+      amount = system_settings.SMS_CREDIT[1].AMOUNT;
+    } else if (req.body.option === 3) {
+      price = system_settings.SMS_CREDIT[2].PRICE;
+      amount = system_settings.SMS_CREDIT[2].AMOUNT;
+    }
+
+    const data = {
+      card_id: payment.card_id,
+      customer_id: payment.customer_id,
+      receipt_email: currentUser.email,
+      amount: price,
+      description,
+    };
+
+    PaymentCtrl.createCharge(data)
+      .then((_res) => {
+        console.log('_res', _res);
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          additional_credit.updated_at = new Date();
+          additional_credit.amount += amount;
+        } else {
+          additional_credit.updated_at = new Date();
+          additional_credit.amount = amount;
+        }
+
+        User.updateOne(
+          { _id: currentUser.id },
+          {
+            $set: {
+              'text_info.additional_credit': additional_credit,
+            },
+          }
+        ).catch((err) => {
+          console.log('user paid demo update err', err.message);
+        });
+
+        const time_zone = currentUser.time_zone_info
+          ? JSON.parse(currentUser.time_zone_info).tz_name
+          : system_settings.TIME_ZONE;
+
+        const data = {
+          template_data: {
+            user_name: currentUser.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            last_4_cc: payment.last4,
+            invoice_id: _res.invoice,
+          },
+          template_name: 'PaymentNotification',
+          required_reply: true,
+          email: currentUser.email,
+        };
+
+        sendNotificationEmail(data);
+
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((_err) => {
+        console.log('new demo err', _err.message);
+      });
+  } else {
+    return res.status(400).json({
+      status: false,
+      data: 'Payment information isn`t correct, please contact support team',
+    });
+  }
 };
 
 const markAsRead = async (req, res) => {
