@@ -1923,7 +1923,7 @@ const searchContact = async (req, res) => {
     query = stringSearchQuery;
   }
 
-  console.log('query', query);
+  console.log('query', JSON.stringify(query));
 
   contacts = await Contact.find(query)
     .populate([
