@@ -2042,7 +2042,6 @@ const getGoogleEventById = async (data) => {
   const params = {
     calendarId: calendar_id,
     eventId: remove_id,
-    sendNotifications: true,
   };
   return new Promise((resolve, reject) => {
     calendar.events.get(params, function (err, event) {
@@ -2051,8 +2050,10 @@ const getGoogleEventById = async (data) => {
           `There was an error contacting the Calendar service: ${err}`
         );
         reject(err);
+      } else {
+        console.log(event);
+        resolve(event);
       }
-      resolve(event);
     });
   });
 };
