@@ -1798,118 +1798,120 @@ const searchContact = async (req, res) => {
   }
 
   var stringSearchQuery;
-  if (search.split(' ').length > 1) {
-    stringSearchQuery = {
-      $or: [
-        {
-          first_name: { $regex: search.split(' ')[0], $options: 'i' },
-          last_name: { $regex: search.split(' ')[1], $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          first_name: { $regex: search.split(' ')[0], $options: 'i' },
-          last_name: { $regex: search.split(' ')[1], $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          first_name: { $regex: search, $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          first_name: { $regex: search, $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          last_name: { $regex: search, $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          last_name: { $regex: search, $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          cell_phone: {
-            $regex: '.*' + phoneSearch + '.*',
-            $options: 'i',
+  if (searchStr) {
+    if (search.split(' ').length > 1) {
+      stringSearchQuery = {
+        $or: [
+          {
+            first_name: { $regex: search.split(' ')[0], $options: 'i' },
+            last_name: { $regex: search.split(' ')[1], $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
           },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          cell_phone: {
-            $regex: '.*' + phoneSearch + '.*',
-            $options: 'i',
+          {
+            first_name: { $regex: search.split(' ')[0], $options: 'i' },
+            last_name: { $regex: search.split(' ')[1], $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
           },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-      ],
-    };
-  } else {
-    stringSearchQuery = {
-      $or: [
-        {
-          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-        {
-          cell_phone: {
-            $regex: '.*' + phoneSearch + '.*',
-            $options: 'i',
+          {
+            first_name: { $regex: search, $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
           },
-          user: currentUser.id,
-          shared_team: req.body.team,
-          shared_contact: true,
-        },
-        {
-          cell_phone: {
-            $regex: '.*' + phoneSearch + '.*',
-            $options: 'i',
+          {
+            first_name: { $regex: search, $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
           },
-          shared_members: currentUser.id,
-          shared_team: req.body.team,
-        },
-      ],
-    };
+          {
+            last_name: { $regex: search, $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            last_name: { $regex: search, $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+          {
+            cell_phone: {
+              $regex: '.*' + phoneSearch + '.*',
+              $options: 'i',
+            },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            cell_phone: {
+              $regex: '.*' + phoneSearch + '.*',
+              $options: 'i',
+            },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+        ],
+      };
+    } else {
+      stringSearchQuery = {
+        $or: [
+          {
+            first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            first_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+          {
+            email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+          {
+            last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            last_name: { $regex: search.split(' ')[0] + '.*', $options: 'i' },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+          {
+            cell_phone: {
+              $regex: '.*' + phoneSearch + '.*',
+              $options: 'i',
+            },
+            user: currentUser.id,
+            shared_team: req.body.team,
+            shared_contact: true,
+          },
+          {
+            cell_phone: {
+              $regex: '.*' + phoneSearch + '.*',
+              $options: 'i',
+            },
+            shared_members: currentUser.id,
+            shared_team: req.body.team,
+          },
+        ],
+      };
+    }
   }
 
   var query;
@@ -1922,8 +1924,6 @@ const searchContact = async (req, res) => {
   } else if (!teamQuery.length && stringSearchQuery) {
     query = stringSearchQuery;
   }
-
-  console.log('query', JSON.stringify(query));
 
   contacts = await Contact.find(query)
     .populate([
