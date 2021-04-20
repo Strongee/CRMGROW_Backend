@@ -1880,6 +1880,73 @@ const getCalendarList = async (req, res) => {
   }
 };
 
+const getEventById = async (req, res) => {
+  const { currentUser } = req;
+  if (currentUser.calendar_connected) {
+    const { event_id, recurrence_id, calendar_id, connected_email } = req.body;
+
+    const calendar_list = currentUser.calendar_list;
+    let calendar;
+    calendar_list.some((_calendar) => {
+      if (_calendar.connected_email === connected_email) {
+        calendar = _calendar;
+      }
+    });
+
+    if (!calendar) {
+      return res.status(400).json({
+        status: false,
+        error: 'Invalid calendar',
+      });
+    }
+
+    const remove_id = recurrence_id || event_id;
+    if (calendar.connected_calendar_type === 'outlook') {
+      await getOutlookEventById({ calendar_id, remove_id, calendar })
+        .then((event) => {
+          return res.send({
+            status: true,
+            data: event,
+          });
+        })
+        .catch((err) => {
+          console.log('event getting err', err.message);
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        });
+    } else {
+      const oauth2Client = new google.auth.OAuth2(
+        api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+        api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+        urls.GMAIL_AUTHORIZE_URL
+      );
+      oauth2Client.setCredentials(JSON.parse(calendar.google_refresh_token));
+      const data = { oauth2Client, calendar_id, remove_id };
+      await getGoogleEventById(data)
+        .then((event) => {
+          return res.send({
+            status: true,
+            data: event,
+          });
+        })
+        .catch((err) => {
+          console.log('event getting err', err.message);
+          return res.status(400).json({
+            status: false,
+            error: err,
+          });
+        });
+    }
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Appointment remove error',
+    });
+  }
+};
+
 const removeOutlookCalendarById = async (data) => {
   const { calendar_id, remove_id, calendar } = data;
 
@@ -1925,6 +1992,71 @@ const removeOutlookCalendarById = async (data) => {
   });
 };
 
+const getOutlookEventById = async (data) => {
+  const { calendar_id, remove_id, calendar } = data;
+
+  let accessToken;
+  const token = oauth2.accessToken.create({
+    refresh_token: calendar.outlook_refresh_token,
+    expires_in: 0,
+  });
+
+  return new Promise(async (resolve, reject) => {
+    await new Promise((resolve, reject) => {
+      token.refresh(function (error, result) {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.token);
+        }
+      });
+    })
+      .then((token) => {
+        accessToken = token.access_token;
+      })
+      .catch((error) => {
+        console.log('error', error);
+        reject(error);
+      });
+
+    const client = graph.Client.init({
+      // Use the provided access token to authenticate
+      // requests
+      authProvider: (done) => {
+        done(null, accessToken);
+      },
+    });
+
+    const event = await client
+      .api(`/me/calendars/${calendar_id}/events/${remove_id}`)
+      .get()
+      .catch((err) => {
+        console.log('remove err', err);
+      });
+    resolve(event);
+  });
+};
+const getGoogleEventById = async (data) => {
+  const { oauth2Client, calendar_id, remove_id } = data;
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+  const params = {
+    calendarId: calendar_id,
+    eventId: remove_id,
+    sendNotifications: true,
+  };
+  return new Promise((resolve, reject) => {
+    calendar.events.get(params, function (err, event) {
+      if (err) {
+        console.log(
+          `There was an error contacting the Calendar service: ${err}`
+        );
+        reject(err);
+      }
+      resolve(event);
+    });
+  });
+};
+
 module.exports = {
   getAll,
   get,
@@ -1940,4 +2072,5 @@ module.exports = {
   updateOutlookCalendarById,
   removeGoogleCalendarById,
   removeOutlookCalendarById,
+  getEventById,
 };

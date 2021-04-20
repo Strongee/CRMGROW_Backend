@@ -30,6 +30,12 @@ router.get(
   catchError(AppointmentCtrl.getCalendarList)
 );
 
+router.post(
+  '/detail',
+  UserCtrl.checkAuth,
+  catchError(AppointmentCtrl.getEventById)
+);
+
 // Remove contact and its all related info (activity, followup) by id
 router.post('/delete', UserCtrl.checkAuth, catchError(AppointmentCtrl.remove));
 
