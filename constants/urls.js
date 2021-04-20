@@ -18,7 +18,7 @@ const urls = {
   APP_SIGNIN_URL: `${domain}/social-oauth-callback/`,
   OUTLOOK_AUTHORIZE_URL: `${domain}/profile/outlook`,
   GMAIL_AUTHORIZE_URL: `${domain1}/profile/gmail`,
-  ZOOM_AUTHORIZE_URL: `${domain}/profile/zoom`,
+  ZOOM_AUTHORIZE_URL: `${front}/profile/zoom`,
   GOOGLE_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/google`,
   OUTLOOK_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/outlook`,
   VIDEO_THUMBNAIL_URL: `${domain}/api/video/thumbnail/`,

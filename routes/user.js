@@ -127,6 +127,9 @@ router.get(
   catchError(UserCtrl.authorizeZoom)
 );
 
+// Zoom authorized
+router.get('/sync-zoom', UserCtrl.checkAuth, catchError(UserCtrl.syncZoom));
+
 /**
  * Calendar
  */
