@@ -2044,15 +2044,15 @@ const getGoogleEventById = async (data) => {
     eventId: remove_id,
   };
   return new Promise((resolve, reject) => {
-    calendar.events.get(params, {}, function (err, event) {
+    calendar.events.get(params, {}, function (err, response) {
       if (err) {
         console.log(
           `There was an error contacting the Calendar service: ${err}`
         );
         reject(err);
       } else {
-        console.log(event);
-        resolve(event);
+        console.log(response.data);
+        resolve(response.data);
       }
     });
   });
