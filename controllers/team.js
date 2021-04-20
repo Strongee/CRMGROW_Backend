@@ -1791,7 +1791,7 @@ const searchContact = async (req, res) => {
       shareByQuery['user'] = currentUser._id;
       shareByQuery['shared_team'] = [team];
       if (share_by.members && share_by.members.length) {
-        shareByQuery['shared_members'] = share_by.members;
+        shareByQuery['user'] = { $in: share_by.members };
       }
       teamQuery.push(shareByQuery);
     }
