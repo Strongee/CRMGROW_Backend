@@ -576,40 +576,47 @@ const searchNumbers = async (req, res) => {
 
   const search_code = req.body.searchCode || areaCode;
 
-  twilio
-    .availablePhoneNumbers(countryCode)
-    .local.list({
-      areaCode: search_code,
-    })
-    .then(async (response) => {
-      const number = response[0];
+  if (search_code) {
+    twilio
+      .availablePhoneNumbers(countryCode)
+      .local.list({
+        areaCode: search_code,
+      })
+      .then(async (response) => {
+        const number = response[0];
 
-      if (typeof number === 'undefined' || number === '+') {
-        return res.send({
-          status: true,
-          data: [],
-        });
-      } else {
-        const length = response.length > 5 ? 5: response.length;
-        for (let i = 0; i < length; i++) {
-          data.push({
-            number: response[i].phoneNumber,
-            region: response[i].region,
-            locality: response[i].locality,
+        if (typeof number === 'undefined' || number === '+') {
+          return res.send({
+            status: true,
+            data: [],
+          });
+        } else {
+          const length = response.length > 5 ? 5 : response.length;
+          for (let i = 0; i < length; i++) {
+            data.push({
+              number: response[i].phoneNumber,
+              region: response[i].region,
+              locality: response[i].locality,
+            });
+          }
+          return res.send({
+            status: true,
+            data,
           });
         }
-        return res.send({
-          status: true,
-          data,
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          status: false,
+          error: err.message || err,
         });
-      }
-    })
-    .catch((err) => {
-      return res.status(500).json({
-        status: false,
-        error: err.message || err,
       });
+  } else {
+    return res.send({
+      status: true,
+      data,
     });
+  }
 
   /** 
   if (countryCode === 'US' || countryCode === 'CA') {
