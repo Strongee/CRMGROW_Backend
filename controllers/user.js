@@ -2624,7 +2624,8 @@ const authorizeZoom = async (req, res) => {
 };
 
 const syncZoom = async (req, res) => {
-  const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${urls.ZOOM_CLIENT_ID}&redirect_uri=${urls.ZOOM_AUTHORIZE_URL}`;
+  const url = `https://zoom.us/oauth/authorize?response_type=code&client_id=${api.ZOOM_CLIENT.ZOOM_CLIENT_ID}&redirect_uri=${urls.ZOOM_AUTHORIZE_URL}`;
+  
   return res.send({
     status: true,
     data: url,
