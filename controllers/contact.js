@@ -41,6 +41,7 @@ const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 const { getAvatarName, validateEmail } = require('../helpers/utility');
 const { contacts } = require('node-outlook');
+const { FlowPage } = require('twilio/lib/rest/studio/v1/flow');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -4791,6 +4792,25 @@ const loadByEmails = (req, res) => {
     });
 };
 
+const loadNotes = (req, res) => {
+  const { currentUser } = req;
+  const contactId = req.params.id;
+
+  Note.find({ contact: contactId })
+    .then((notes) => {
+      return res.send({
+        status: true,
+        data: notes,
+      });
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+};
+
 module.exports = {
   getAll,
   getAllByLastActivity,
@@ -4835,4 +4855,5 @@ module.exports = {
   // mergeContacts,
   updateContact,
   loadByEmails,
+  loadNotes,
 };
