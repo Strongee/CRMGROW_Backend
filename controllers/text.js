@@ -787,10 +787,10 @@ const buyCredit = async (req, res) => {
   const { currentUser } = req;
   let payment;
 
-  if (!currentUser.is_free && !currentUser.payment) {
+  if (currentUser.payment) {
     payment = await Payment.findOne({ _id: currentUser.payment }).catch(
       (err) => {
-        console.log('err', err);
+        console.log('by sms credit err', err.message);
       }
     );
   }
@@ -870,7 +870,7 @@ const buyCredit = async (req, res) => {
   } else {
     return res.status(400).json({
       status: false,
-      data: 'Payment information isn`t correct, please contact support team',
+      error: 'Payment information isn`t correct, please contact support team',
     });
   }
 };
