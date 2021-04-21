@@ -251,4 +251,10 @@ router.post(
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 
+router.get(
+  '/load-notes/:id',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.loadNotes)
+);
+
 module.exports = router;
