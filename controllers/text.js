@@ -819,6 +819,7 @@ const buyCredit = async (req, res) => {
       description,
     };
 
+    console.log('data', data);
     PaymentCtrl.createCharge(data)
       .then((_res) => {
         console.log('_res', _res);
@@ -865,7 +866,7 @@ const buyCredit = async (req, res) => {
         });
       })
       .catch((_err) => {
-        console.log('new demo err', _err.message);
+        console.log('buys sms err', _err.message);
       });
   } else {
     return res.status(400).json({
