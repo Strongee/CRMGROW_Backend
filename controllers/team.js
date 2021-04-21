@@ -1750,6 +1750,7 @@ const getSharedContacts = async (req, res) => {
           'user_name email picture_profile phone location time_zone_info company',
       },
     ])
+    .collation({ locale: 'en' })
     .sort(sort)
     .skip(skip)
     .limit(count)
@@ -1944,6 +1945,7 @@ const searchContact = async (req, res) => {
         select: 'user_name email picture_profile phone',
       },
     ])
+    .collation({ locale: 'en' })
     .sort(sort)
     .skip(skip)
     .limit(count);
