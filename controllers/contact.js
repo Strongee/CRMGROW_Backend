@@ -4622,9 +4622,9 @@ const shareContacts = async (req, res) => {
               user_name: 1,
               picture_profile: 1,
               email: 1,
-              cell_phone: 1
-            }
-          }
+              cell_phone: 1,
+            },
+          },
         ])
         .catch((err) => {
           console.log('contact find err', err.message);
