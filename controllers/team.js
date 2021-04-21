@@ -1247,10 +1247,6 @@ const searchUser = async (req, res) => {
   const user_array = await User.find({
     $or: [
       {
-        user_name: { search, $options: 'i' },
-        del: false,
-      },
-      {
         user_name: { $regex: '.*' + search + '.*', $options: 'i' },
         del: false,
       },
