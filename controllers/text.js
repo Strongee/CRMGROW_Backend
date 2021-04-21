@@ -590,7 +590,8 @@ const searchNumbers = async (req, res) => {
           data: [],
         });
       } else {
-        for (let i = 0; i < 5; i++) {
+        const length = response.length > 5 ? 5: response.length;
+        for (let i = 0; i < length; i++) {
           data.push({
             number: response[i].phoneNumber,
             region: response[i].region,
