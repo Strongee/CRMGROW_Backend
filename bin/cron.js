@@ -30,6 +30,7 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const CampaignJob = require('../models/campaign_job');
 const EmailTemplate = require('../models/email_template');
+const Text = require('../models/text');
 const Task = require('../models/task');
 const TimeLineCtrl = require('../controllers/time_line');
 
@@ -1265,7 +1266,6 @@ const timesheet_check = new CronJob(
       status: 'active',
       due_date: { $lte: due_date },
     });
-    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
 
     if (timelines) {
       for (let i = 0; i < timelines.length; i++) {
@@ -1862,124 +1862,8 @@ const timesheet_check = new CronJob(
             });
             break;
           }
-          case 'bulk_sms': {
-            const { message_sid, service, activities } = timeline.action;
-            TextHelper.getStatus(message_sid, service).then((res) => {
-              if (res.status === 'delivered') {
-                Activity.updateMany(
-                  {
-                    _id: { $in: activities },
-                  },
-                  {
-                    $set: { status: 'completed' },
-                  }
-                ).catch((err) => {
-                  console.log('activity save err', err.message);
-                });
-                Notification.updateMany(
-                  { message_sid },
-                  {
-                    $set: { status: 'delivered' },
-                  }
-                ).catch((err) => {
-                  console.log('notification update err', err.message);
-                });
-              } else if (res.status === 'sent') {
-                const beginning_time = moment(timeline.due_date).add(
-                  3,
-                  'minutes'
-                );
-                const now = moment();
-                if (beginning_time.isBefore(now)) {
-                  Activity.deleteMany({
-                    _id: { $in: activities },
-                  }).catch((err) => {
-                    console.log('activity save err', err.message);
-                  });
-
-                  Notification.updateMany(
-                    { message_sid },
-                    {
-                      $set: {
-                        status: 'undelivered',
-                        description:
-                          res.errorMessage ||
-                          'Could`t get delivery result from carrier',
-                        content: 'Failed texting material',
-                      },
-                    }
-                  ).catch((err) => {
-                    console.log('notification update err', err.message);
-                  });
-
-                  TimeLine.deleteOne({
-                    _id: timeline.id,
-                  }).catch((err) => {
-                    console.log('timeline remove err', err.message);
-                  });
-                }
-              } else if (
-                res.status === 'undelivered' ||
-                res.status === 'failed'
-              ) {
-                Activity.deleteMany({
-                  _id: { $in: activities },
-                }).catch((err) => {
-                  console.log('activity save err', err.message);
-                });
-                Notification.updateMany(
-                  { message_sid },
-                  {
-                    $set: {
-                      status: 'undelivered',
-                      description: res.errorMessage,
-                      content: 'Failed texting material',
-                    },
-                  }
-                ).catch((err) => {
-                  console.log('notification update err', err.message);
-                });
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              }
-            });
-            break;
-          }
-          case 'send_email': {
-            const data = {
-              ...timeline.action,
-              contacts: [timeline.contact],
-              user: timeline.user,
-            };
-            EmailHelper.sendEmail(data)
-              .then((res) => {
-                if (res[0] && res[0].status === true) {
-                  timeline['status'] = 'completed';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                } else {
-                  timeline['status'] = 'error';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                }
-              })
-              .catch((err) => {
-                timeline['status'] = 'error';
-                timeline['updated_at'] = new Date();
-                timeline.save().catch((err) => {
-                  console.log('err', err);
-                });
-              });
-            break;
-          }
         }
+
         if (timeline.ref) {
           const next_data = {
             contact: timeline.contact,
@@ -2014,7 +1898,7 @@ const timesheet_check = new CronJob(
 );
 
 const task_check = new CronJob(
-  '*/10 * * * *',
+  '* * * * *',
   async () => {
     const due_date = new Date();
     const tasks = await Task.find({
@@ -2247,6 +2131,152 @@ const task_check = new CronJob(
               console.log('timeline remove err', err.message);
             });
             break;
+          case 'bulk_sms': {
+            const { message_sid, service, activities } = timeline.action;
+            TextHelper.getStatus(message_sid, service).then((res) => {
+              if (res.status === 'delivered') {
+                // register activity
+                Activity.updateMany(
+                  {
+                    _id: { $in: activities },
+                  },
+                  {
+                    $set: { status: 'completed' },
+                  }
+                ).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+
+                // contact update
+                Contact.updateOne(
+                  { _id: timeline.contact },
+                  {
+                    $set: {
+                      last_activity: activities[0],
+                      texted_unsbcription_link: true,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('err', err);
+                });
+
+                // text update
+                Text.updateOne(
+                  {
+                    _id: timeline.text,
+                  },
+                  {
+                    $set: {
+                      status: 2,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('text update err', err.message);
+                });
+
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              } else if (res.status === 'sent') {
+                const beginning_time = moment(timeline.due_date).add(
+                  3,
+                  'minutes'
+                );
+                const now = moment();
+                if (beginning_time.isBefore(now)) {
+                  Activity.deleteMany({
+                    _id: { $in: activities },
+                  }).catch((err) => {
+                    console.log('activity save err', err.message);
+                  });
+
+                  // text update
+                  Text.updateOne(
+                    {
+                      _id: timeline.text,
+                    },
+                    {
+                      $set: {
+                        status: 3,
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('text update err', err.message);
+                  });
+
+                  const notification = new Notification({
+                    user: timeline.user,
+                    contact: timeline.contact,
+                    message_sid,
+                    activities,
+                    criteria: 'bulk_sms',
+                    status: 'sent',
+                    description:
+                      res.errorMessage ||
+                      'Could`t get delivery result from carrier',
+                    content: 'Failed texting material',
+                  });
+
+                  notification.save().catch((err) => {
+                    console.log('notification save err', err.message);
+                  });
+
+                  TimeLine.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                }
+              } else if (
+                res.status === 'undelivered' ||
+                res.status === 'failed'
+              ) {
+                Activity.deleteMany({
+                  _id: { $in: activities },
+                }).catch((err) => {
+                  console.log('activity save err', err.message);
+                });
+
+                // text update
+                Text.updateOne(
+                  {
+                    _id: timeline.text,
+                  },
+                  {
+                    $set: {
+                      status: 4,
+                    },
+                  }
+                ).catch((err) => {
+                  console.log('text update err', err.message);
+                });
+
+                const notification = new Notification({
+                  user: timeline.user,
+                  contact: timeline.contact,
+                  message_sid,
+                  activities,
+                  criteria: 'bulk_sms',
+                  status: 'sent',
+                  description: res.errorMessage,
+                  content: 'Failed texting material',
+                });
+
+                notification.save().catch((err) => {
+                  console.log('notification save err', err.message);
+                });
+
+                TimeLine.deleteOne({
+                  _id: timeline.id,
+                }).catch((err) => {
+                  console.log('timeline remove err', err.message);
+                });
+              }
+            });
+            break;
+          }
         }
       }
     }

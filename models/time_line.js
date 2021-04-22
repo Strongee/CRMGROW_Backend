@@ -19,6 +19,7 @@ const TimeLineSchema = new Schema(
       case: String,
       answer: Boolean,
     },
+    text: { type: mongoose.Schema.Types.ObjectId, ref: 'text' },
     watched_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     watched_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     watched_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },

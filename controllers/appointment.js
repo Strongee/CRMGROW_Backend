@@ -673,7 +673,7 @@ const create = async (req, res) => {
       event_id,
     });
   } else {
-    return res.status(400).json({
+    return res.status(407).json({
       status: false,
       error: 'You must connect gmail/outlook',
     });
