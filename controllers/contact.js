@@ -561,7 +561,6 @@ const edit = async (req, res) => {
     });
   } else {
     const contact = await Contact.findOne({
-      user: currentUser.id,
       _id: req.params.id,
     }).catch((err) => {
       console.log('err', err);

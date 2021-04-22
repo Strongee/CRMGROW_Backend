@@ -818,7 +818,6 @@ const getTransactions = async (req, res) => {
     );
   }
 
-  console.log('payment', payment);
   if (payment) {
     const customer_id = payment.customer_id;
     stripe.charges.list({ customer: customer_id }, function (err, charges) {

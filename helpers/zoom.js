@@ -58,8 +58,32 @@ const removeMeeting = (data) => {
   return request(options);
 };
 
+const refreshToken = (refresh_token) => {
+  const options = {
+    method: 'POST',
+    url: 'https://zoom.us/oauth/token',
+    headers: {
+      Authorization:
+        'Basic ' +
+        Buffer.from(
+          api.ZOOM_CLIENT.ZOOM_CLIENT_ID +
+            ':' +
+            api.ZOOM_CLIENT.ZOOM_CLIENT_SECRET
+        ).toString('base64'),
+      'Content-Type': 'application/json',
+    },
+    qs: {
+      grant_type: 'refresh_token',
+      refresh_token,
+    },
+  };
+
+  return request(options);
+};
+
 module.exports = {
   requestAuth,
+  refreshToken,
   createMeeting,
   removeMeeting,
 };

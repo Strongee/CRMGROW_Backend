@@ -1411,7 +1411,7 @@ const searchUser = async (req, res) => {
     ],
     _id: { $nin: [currentUser.id] },
   })
-    .sort({ first_name: 1 })
+    .sort({ user_name: 1 })
     .skip(skip)
     .limit(8)
     .catch((err) => {
@@ -1847,7 +1847,6 @@ const getSharedContacts = async (req, res) => {
   const { currentUser } = req;
   const count = req.body.count || 50;
   const skip = req.body.skip || 0;
-  const sort = req.body.sort || { first_name: 1 };
 
   const total = await Contact.countDocuments({
     $or: [
@@ -1891,8 +1890,6 @@ const getSharedContacts = async (req, res) => {
           'user_name email picture_profile phone location time_zone_info company',
       },
     ])
-    .collation({ locale: 'en' })
-    .sort(sort)
     .skip(skip)
     .limit(count)
     .catch((err) => {
@@ -1916,9 +1913,6 @@ const searchContact = async (req, res) => {
   let contacts = [];
 
   const { share_by, share_with, team } = req.body;
-  const sort = req.body.sort || { first_name: 1 };
-  const count = req.body.count || 50;
-  const skip = req.body.skip || 0;
   const teamQuery = [];
   if (
     (share_by && share_by.flag !== -1) ||
@@ -2072,6 +2066,8 @@ const searchContact = async (req, res) => {
     query = stringSearchQuery;
   }
 
+  console.log('query', query);
+
   contacts = await Contact.find(query)
     .populate([
       {
@@ -2086,18 +2082,13 @@ const searchContact = async (req, res) => {
         select: 'user_name email picture_profile phone',
       },
     ])
-    .collation({ locale: 'en' })
-    .sort(sort)
-    .skip(skip)
-    .limit(count);
-
-  const total = await Contact.countDocuments(query);
+    .sort({ first_name: 1 });
 
   return res.send({
     status: true,
     data: {
       contacts,
-      count: total,
+      search,
     },
   });
 };
