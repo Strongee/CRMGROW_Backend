@@ -573,7 +573,9 @@ const search = async (req, res) => {
   const company = currentUser.company || 'eXp Realty';
 
   const team_automations = [];
-  const teams = await Team.find({ members: currentUser.id });
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  });
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {
