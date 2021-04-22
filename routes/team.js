@@ -69,6 +69,11 @@ router.post(
   catchError(TeamCtrl.shareImages)
 );
 router.post(
+  '/share-materials',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.shareMaterials)
+);
+router.post(
   '/share-automations',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.shareAutomations)

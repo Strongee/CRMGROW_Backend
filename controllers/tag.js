@@ -166,11 +166,7 @@ const deleteTag = async (req, res) => {
   if (contact) {
     query['_id'] = contact;
   }
-  await Contact.update(
-    query,
-    { $pull: { tags: tag } },
-    { multi: true }
-  );
+  await Contact.update(query, { $pull: { tags: tag } }, { multi: true });
   res.send({
     status: true,
   });
