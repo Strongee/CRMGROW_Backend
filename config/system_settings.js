@@ -78,16 +78,16 @@ const system_settings = {
   ],
   SMS_CREDIT: [
     {
-      PRICE: 800,
-      AMOUNT: 2000,
+      PRICE: 600,
+      AMOUNT: 250,
     },
     {
-      PRICE: 1300,
-      AMOUNT: 2000,
+      PRICE: 1000,
+      AMOUNT: 500,
     },
     {
-      PRICE: 1300,
-      AMOUNT: 2000,
+      PRICE: 1500,
+      AMOUNT: 1000,
     },
   ],
 };
