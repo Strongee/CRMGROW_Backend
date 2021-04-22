@@ -1185,9 +1185,21 @@ const shareMaterials = async (req, res) => {
     const _updatedImageIds = [..._folderImages, ..._imageIds];
     const _updatedPdfIds = [..._folderPdfs, ..._pdfIds];
 
-    const updatedVideos = await Video.find({ _id: { $in: _updatedVideoIds } });
-    const updatedImages = await Image.find({ _id: { $in: _updatedImageIds } });
-    const updatedPdfs = await PDF.find({ _id: { $in: _updatedPdfIds } });
+    const updatedVideos = await Video.find({
+      _id: { $in: _updatedVideoIds },
+      user: currentUser._id,
+      del: false,
+    });
+    const updatedImages = await Image.find({
+      _id: { $in: _updatedImageIds },
+      user: currentUser._id,
+      del: false,
+    });
+    const updatedPdfs = await PDF.find({
+      _id: { $in: _updatedPdfIds },
+      user: currentUser._id,
+      del: false,
+    });
 
     for (let i = 0; i < updatedVideos.length; i++) {
       const video = updatedVideos[i];
