@@ -2193,12 +2193,88 @@ const loadMaterial = async (req, res) => {
     }
   }
 
+  let _folders = [];
+  if (team.folders && team.folders.length) {
+    _folders = await Folder.find({ _id: { $in: team.folders } });
+    let _folderVideos = [];
+    let _folderPdfs = [];
+    let _folderImages = [];
+    _folders.forEach((_folder) => {
+      _folderVideos = [..._folderVideos, ..._folder.videos];
+      _folderImages = [..._folderImages, ..._folder.images];
+      _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
+    });
+
+    const folderVideos = await Video.find({
+      _id: { $in: _folderVideos },
+      user: currentUser._id,
+      del: false,
+    });
+    const folderImages = await Image.find({
+      _id: { $in: _folderImages },
+      user: currentUser._id,
+      del: false,
+    });
+    const folderPdfs = await PDF.find({
+      _id: { $in: _folderPdfs },
+      user: currentUser._id,
+      del: false,
+    });
+
+    for (let i = 0; i < folderVideos.length; i++) {
+      const video = folderVideos[i];
+      if (video) {
+        const views = await VideoTracker.countDocuments({
+          video: video.id,
+          user: currentUser.id,
+        });
+        const video_detail = {
+          ...video._doc,
+          views,
+          material_type: 'video',
+        };
+        video_data.push(video_detail);
+      }
+    }
+    for (let i = 0; i < folderPdfs.length; i++) {
+      const pdf = folderPdfs[i];
+      if (pdf) {
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf.id,
+          user: currentUser.id,
+        });
+        const pdf_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'pdf',
+        };
+        pdf_data.push(pdf_detail);
+      }
+    }
+    for (let i = 0; i < folderImages.length; i++) {
+      const image = folderImages[i];
+      if (image) {
+        const views = await ImageTracker.countDocuments({
+          image: image.id,
+          user: currentUser.id,
+        });
+        const image_detail = {
+          ...image._doc,
+          views,
+          material_type: 'image',
+        };
+        image_data.push(image_detail);
+      }
+    }
+  }
+
   return res.send({
     status: true,
     data: {
       video_data,
       pdf_data,
       image_data,
+      folder_data: _folders,
     },
   });
 };
