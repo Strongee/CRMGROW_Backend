@@ -1151,7 +1151,7 @@ const shareMaterials = async (req, res) => {
     _folders = await Folder.find({ _id: { $in: folders } });
     _folders.forEach((_folder) => {
       _folderVideos = [..._folderVideos, ..._folder.videos];
-      _folderImages = [..._folderImages, ..._folders.images];
+      _folderImages = [..._folderImages, ..._folder.images];
       _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
     });
     _folderIds = _folders.map((e) => e._id);
