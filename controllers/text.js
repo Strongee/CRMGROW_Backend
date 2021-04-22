@@ -830,13 +830,15 @@ const buyCredit = async (req, res) => {
     PaymentCtrl.createCharge(data)
       .then((_res) => {
         console.log('_res', _res);
-        const { additional_credit } = currentUser.text_info;
+        let { additional_credit } = currentUser.text_info;
         if (additional_credit) {
           additional_credit.updated_at = new Date();
           additional_credit.amount += amount;
         } else {
-          additional_credit.updated_at = new Date();
-          additional_credit.amount = amount;
+          additional_credit = {
+            updated_at: new Date(),
+            amount,
+          };
         }
 
         User.updateOne(

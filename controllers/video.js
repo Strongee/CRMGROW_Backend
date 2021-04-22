@@ -3230,7 +3230,7 @@ const autoResend = async (data) => {
 
         time_line = new Task({
           user: activity.user,
-          contact: activity.contacts,
+          contacts: activity.contacts,
           action: {
             type: 'resend_email_video2',
             activity: activity.id,
@@ -3259,7 +3259,7 @@ const autoResend = async (data) => {
         });
         time_line = new Task({
           user: activity.user,
-          contact: activity.contacts,
+          contacts: activity.contacts,
           action: {
             type: 'resend_text_video2',
             activity: activity.id,

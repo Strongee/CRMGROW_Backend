@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const TaskSchema = new Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
+    contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
     status: String,
     due_date: Date,
     period: Number,
