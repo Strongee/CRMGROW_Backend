@@ -12,6 +12,7 @@ const User = require('../models/user');
 const Image = require('../models/image');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
+const Folder = require('../models/folder');
 const Automation = require('../models/automation');
 const EmailTemplate = require('../models/email_template');
 const VideoTracker = require('../models/video_tracker');
@@ -1105,6 +1106,158 @@ const shareImages = async (req, res) => {
     });
 };
 
+const shareMaterials = async (req, res) => {
+  const { currentUser } = req;
+  const { data, team_id } = req.body;
+  const { folders, videos, pdfs, images } = data;
+
+  const _team = await Team.findOne({
+    _id: team_id,
+    $or: [
+      {
+        owner: currentUser.id,
+      },
+      { editors: currentUser.id },
+    ],
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message || 'Team Found Err',
+    });
+  });
+
+  if (!_team) {
+    return res.status(400).send({
+      status: false,
+      error: 'Not Found Team',
+    });
+  }
+  let _folders = [];
+  let _videos = [];
+  let _pdfs = [];
+  let _images = [];
+  let _folderVideos = [];
+  let _folderPdfs = [];
+  let _folderImages = [];
+  let _folderIds = [];
+  let _videoIds = [];
+  let _imageIds = [];
+  let _pdfIds = [];
+  // let _teamVideos = [];
+  // let _teamImages = [];
+  // let _teamPdfs = [];
+
+  if (folders && folders.length) {
+    _folders = await Folder.find({ _id: { $in: folders } });
+    _folders.forEach((_folder) => {
+      _folderVideos = [..._folderVideos, ..._folder.videos];
+      _folderImages = [..._folderImages, ..._folder.images];
+      _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
+    });
+    _folderIds = _folders.map((e) => e._id);
+  }
+  if (videos && videos.length) {
+    _videos = await Video.find({ _id: { $in: videos } });
+    _videoIds = _videos.map((e) => e._id);
+  }
+  if (pdfs && pdfs.length) {
+    _pdfs = await PDF.find({ _id: { $in: pdfs } });
+    _pdfIds = _pdfs.map((e) => e._id);
+  }
+  if (images && images.length) {
+    _images = await Image.find({ _id: { $in: images } });
+    _imageIds = _images.map((e) => e._id);
+  }
+
+  Team.updateOne(
+    { _id: team_id },
+    {
+      $push: {
+        videos: { $each: _videoIds },
+        images: { $each: _imageIds },
+        pdfs: { $each: _pdfIds },
+        folders: { $each: _folderIds },
+      },
+    }
+  ).then(async () => {
+    const responseData = [];
+    const _updatedVideoIds = [..._folderVideos, ..._videoIds];
+    const _updatedImageIds = [..._folderImages, ..._imageIds];
+    const _updatedPdfIds = [..._folderPdfs, ..._pdfIds];
+
+    const updatedVideos = await Video.find({
+      _id: { $in: _updatedVideoIds },
+      user: currentUser._id,
+      del: false,
+    });
+    const updatedImages = await Image.find({
+      _id: { $in: _updatedImageIds },
+      user: currentUser._id,
+      del: false,
+    });
+    const updatedPdfs = await PDF.find({
+      _id: { $in: _updatedPdfIds },
+      user: currentUser._id,
+      del: false,
+    });
+
+    for (let i = 0; i < updatedVideos.length; i++) {
+      const video = updatedVideos[i];
+      if (video) {
+        const views = await VideoTracker.countDocuments({
+          video: video.id,
+          user: currentUser.id,
+        });
+        const video_detail = {
+          ...video._doc,
+          views,
+          material_type: 'video',
+        };
+        responseData.push(video_detail);
+      }
+    }
+    for (let i = 0; i < updatedPdfs.length; i++) {
+      const pdf = updatedPdfs[i];
+      if (pdf) {
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf.id,
+          user: currentUser.id,
+        });
+        const pdf_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'pdf',
+        };
+        responseData.push(pdf_detail);
+      }
+    }
+    for (let i = 0; i < updatedImages.length; i++) {
+      const image = updatedImages[i];
+      if (image) {
+        const views = await ImageTracker.countDocuments({
+          image: image.id,
+          user: currentUser.id,
+        });
+        const image_detail = {
+          ...image._doc,
+          views,
+          material_type: 'image',
+        };
+        responseData.push(image_detail);
+      }
+    }
+    _folders.forEach((e) => {
+      e.material_type = 'folder';
+      responseData.push(e);
+    });
+
+    return res.send({
+      status: true,
+      data: responseData,
+    });
+  });
+};
+
 const shareAutomations = async (req, res) => {
   const { currentUser } = req;
   const { automation_ids, team_id } = req.body;
@@ -2040,12 +2193,88 @@ const loadMaterial = async (req, res) => {
     }
   }
 
+  let _folders = [];
+  if (team.folders && team.folders.length) {
+    _folders = await Folder.find({ _id: { $in: team.folders } });
+    let _folderVideos = [];
+    let _folderPdfs = [];
+    let _folderImages = [];
+    _folders.forEach((_folder) => {
+      _folderVideos = [..._folderVideos, ..._folder.videos];
+      _folderImages = [..._folderImages, ..._folder.images];
+      _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
+    });
+
+    const folderVideos = await Video.find({
+      _id: { $in: _folderVideos },
+      user: currentUser._id,
+      del: false,
+    });
+    const folderImages = await Image.find({
+      _id: { $in: _folderImages },
+      user: currentUser._id,
+      del: false,
+    });
+    const folderPdfs = await PDF.find({
+      _id: { $in: _folderPdfs },
+      user: currentUser._id,
+      del: false,
+    });
+
+    for (let i = 0; i < folderVideos.length; i++) {
+      const video = folderVideos[i];
+      if (video) {
+        const views = await VideoTracker.countDocuments({
+          video: video.id,
+          user: currentUser.id,
+        });
+        const video_detail = {
+          ...video._doc,
+          views,
+          material_type: 'video',
+        };
+        video_data.push(video_detail);
+      }
+    }
+    for (let i = 0; i < folderPdfs.length; i++) {
+      const pdf = folderPdfs[i];
+      if (pdf) {
+        const views = await PDFTracker.countDocuments({
+          pdf: pdf.id,
+          user: currentUser.id,
+        });
+        const pdf_detail = {
+          ...pdf._doc,
+          views,
+          material_type: 'pdf',
+        };
+        pdf_data.push(pdf_detail);
+      }
+    }
+    for (let i = 0; i < folderImages.length; i++) {
+      const image = folderImages[i];
+      if (image) {
+        const views = await ImageTracker.countDocuments({
+          image: image.id,
+          user: currentUser.id,
+        });
+        const image_detail = {
+          ...image._doc,
+          views,
+          material_type: 'image',
+        };
+        image_data.push(image_detail);
+      }
+    }
+  }
+
   return res.send({
     status: true,
     data: {
       video_data,
       pdf_data,
       image_data,
+      folder_data: _folders,
     },
   });
 };
@@ -2217,4 +2446,5 @@ module.exports = {
   removeEmailTemplates,
   requestTeam,
   updateTeam,
+  shareMaterials,
 };

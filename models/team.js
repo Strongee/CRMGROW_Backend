@@ -21,6 +21,7 @@ const TeamSchema = new Schema(
     videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'video' }],
     pdfs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'pdf' }],
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'image' }],
+    folders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'folder' }],
     automations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'automation' }],
     email_templates: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'email_template' },
