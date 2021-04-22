@@ -93,6 +93,7 @@ const play = async (req, res) => {
   let capture_dialog = true;
   let capture_delay = 0;
   let capture_field = {};
+  let additional_fields = [];
 
   if (user) {
     const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
@@ -104,13 +105,16 @@ const play = async (req, res) => {
     let brands = [];
     let intro_video = '';
     if (garbage) {
+      const themeSetting = garbage.material_themes;
+      additional_fields = garbage.additional_fields;
+
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       const capture_images = garbage['capture_images'] || [];
       if (capture_images.indexOf(image_id) === -1) {
         capture_dialog = false;
       }
-      theme = garbage['material_theme'] || theme;
+      theme = (themeSetting && themeSetting[image_id]) || garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
@@ -144,6 +148,7 @@ const play = async (req, res) => {
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
+      additional_fields: additional_fields || [],
       social_link: {},
       setting: {
         logo,
@@ -174,7 +179,12 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const image = activity['images'];
+    let image;
+    if (activity['images'] instanceof Array) {
+      image = activity['images'][0];
+    } else {
+      image = activity['images'];
+    }
 
     const pattern = /^((http|https|ftp):\/\/)/;
     let social_link = {};
@@ -201,11 +211,14 @@ const play1 = async (req, res) => {
     let highlights = [];
     let brands = [];
     if (garbage) {
-      theme = garbage['material_theme'] || theme;
+      const themeSetting = garbage.material_themes;
+      theme = (themeSetting && themeSetting[image._id]) || garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
     }
+
+    console.log('material', image);
 
     res.render('material_' + theme, {
       material: image,
