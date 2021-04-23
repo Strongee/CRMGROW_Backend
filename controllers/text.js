@@ -599,6 +599,7 @@ const searchNumbers = async (req, res) => {
               locality: response[i].locality,
             });
           }
+
           return res.send({
             status: true,
             data,

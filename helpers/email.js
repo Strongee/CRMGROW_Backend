@@ -871,7 +871,6 @@ const bulkVideo = async (data) => {
             '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
             video_content +
             '</tbody></table>' +
-            '<br/>Thank you,<br/>' +
             currentUser.email_signature +
             generateUnsubscribeLink(activity.id) +
             '</body></html>',
@@ -1110,7 +1109,6 @@ const bulkVideo = async (data) => {
           '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
           '</body></html>';
@@ -1387,7 +1385,6 @@ const bulkVideo = async (data) => {
                 '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
                 video_content +
                 '</tbody></table>' +
-                '<br/>Thank you,<br/>' +
                 currentUser.email_signature +
                 generateUnsubscribeLink(activity.id) +
                 '</body></html>',
@@ -1613,7 +1610,6 @@ const bulkPDF = async (data) => {
           '<html><head><title>PDF Invitation</title></head><body><table><tbody>' +
           pdf_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
           '</body></html>',
@@ -1831,7 +1827,6 @@ const bulkPDF = async (data) => {
           '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           pdf_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
           '</body></html>';
@@ -2094,7 +2089,6 @@ const bulkPDF = async (data) => {
               '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
               pdf_content +
               '</tbody></table>' +
-              '<br/>Thank you,<br/>' +
               currentUser.email_signature +
               generateUnsubscribeLink(activity.id) +
               '</body></html>',
@@ -2320,7 +2314,6 @@ const bulkImage = async (data) => {
           '<html><head><title>Image Invitation</title></head><body><table><tbody>' +
           image_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
           '</body></html>',
@@ -2566,7 +2559,6 @@ const bulkImage = async (data) => {
               '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
               image_content +
               '</tbody></table>' +
-              '<br/>Thank you,<br/>' +
               currentUser.email_signature +
               generateUnsubscribeLink(activity.id) +
               '</body></html>',
@@ -2791,7 +2783,6 @@ const bulkImage = async (data) => {
           '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           image_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity.id) +
           '</body></html>';
@@ -3026,7 +3017,6 @@ const resendVideo = async (data) => {
             '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
             video_content +
             '</tbody></table>' +
-            '<br/>Thank you,<br/>' +
             currentUser.email_signature +
             generateUnsubscribeLink(activity) +
             '</body></html>',
@@ -3260,7 +3250,6 @@ const resendVideo = async (data) => {
           '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
           video_content +
           '</tbody></table>' +
-          '<br/>Thank you,<br/>' +
           currentUser.email_signature +
           generateUnsubscribeLink(activity) +
           '</body></html>';
@@ -3533,7 +3522,6 @@ const resendVideo = async (data) => {
                 '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
                 video_content +
                 '</tbody></table>' +
-                '<br/>Thank you,<br/>' +
                 currentUser.email_signature +
                 generateUnsubscribeLink(activity) +
                 '</body></html>',
@@ -3879,7 +3867,10 @@ const sendEmail = async (data) => {
 
           const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
           // const html_preview = `<a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{{${pdf.id}}}`, 'g'), pdf_link);
+          email_content = email_content.replace(
+            new RegExp(`{{${pdf.id}}}`, 'g'),
+            pdf_link
+          );
 
           // const pdf_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${pdf.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${pdf_link}"><img src="${pdf.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // pdf_objects += pdf_object;
@@ -3940,7 +3931,10 @@ const sendEmail = async (data) => {
 
           const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
           // const html_preview = `<a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a>`;
-          email_content.replace(new RegExp(`{${image.id}}`, 'g'), image_link);
+          email_content = email_content.replace(
+            new RegExp(`{${image.id}}`, 'g'),
+            image_link
+          );
 
           // const image_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${image.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${image_link}"><img src="${image.preview}?resize=true" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
           // image_objects += image_object;
