@@ -2203,6 +2203,7 @@ const loadMaterial = async (req, res) => {
       _folderVideos = [..._folderVideos, ..._folder.videos];
       _folderImages = [..._folderImages, ..._folder.images];
       _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
+      _folder.material_type = 'folder';
     });
 
     const folderVideos = await Video.find({
