@@ -115,7 +115,10 @@ const play = async (req, res) => {
       if (capture_images.indexOf(image_id) === -1) {
         capture_dialog = false;
       }
-      theme = (themeSetting && themeSetting[image_id]) || garbage['material_theme'] || theme;
+      theme =
+        (themeSetting && themeSetting[image_id]) ||
+        garbage['material_theme'] ||
+        theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
@@ -220,7 +223,10 @@ const play1 = async (req, res) => {
 
     if (garbage) {
       const themeSetting = garbage.material_themes;
-      theme = (themeSetting && themeSetting[image._id]) || garbage['material_theme'] || theme;
+      theme =
+        (themeSetting && themeSetting[image._id]) ||
+        garbage['material_theme'] ||
+        theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];

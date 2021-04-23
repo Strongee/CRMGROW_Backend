@@ -90,7 +90,7 @@ const play = async (req, res) => {
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
     console.log('err', err.message);
   });
-  
+
   const user = await User.findOne({
     _id: sender_id,
     del: false,
@@ -98,7 +98,7 @@ const play = async (req, res) => {
   }).catch((err) => {
     console.log('err', err.message);
   });
-  
+
   let team;
   if (team_id) {
     team = await Team.findOne({ _id: team_id }).catch((err) => {
@@ -133,7 +133,7 @@ const play = async (req, res) => {
     const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
       console.log('err', err);
     });
-    
+
     let theme = 'theme2';
     let logo;
     let highlights = [];
@@ -152,7 +152,10 @@ const play = async (req, res) => {
         capture_dialog = false;
       }
 
-      theme = (themeSetting && themeSetting[video_id]) || garbage['material_theme'] || theme;
+      theme =
+        (themeSetting && themeSetting[video_id]) ||
+        garbage['material_theme'] ||
+        theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
@@ -271,7 +274,10 @@ const play1 = async (req, res) => {
     if (garbage) {
       const themeSetting = garbage['material_themes'];
 
-      theme = (themeSetting && themeSetting[video._id]) || garbage['material_theme'] || theme;
+      theme =
+        (themeSetting && themeSetting[video._id]) ||
+        garbage['material_theme'] ||
+        theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
