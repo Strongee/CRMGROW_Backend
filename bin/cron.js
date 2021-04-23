@@ -1918,29 +1918,13 @@ const task_check = new CronJob(
           case 'send_email':
             data = {
               user: timeline.user,
-              content: action.content,
-              subject: action.subject,
-              video_ids: action.videos,
-              pdf_ids: action.pdfs,
-              image_ids: action.images,
-              contacts: [timeline.contact],
+              contacts: timeline.contacts,
+              ...action,
             };
 
             EmailHelper.sendEmail(data)
               .then((res) => {
-                if (res[0] && res[0].status === true) {
-                  timeline['status'] = 'completed';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                } else {
-                  timeline['status'] = 'error';
-                  timeline['updated_at'] = new Date();
-                  timeline.save().catch((err) => {
-                    console.log('err', err);
-                  });
-                }
+                
               })
               .catch((err) => {
                 timeline['status'] = 'error';

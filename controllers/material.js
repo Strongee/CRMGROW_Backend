@@ -107,14 +107,17 @@ const bulkEmail = async (req, res) => {
     let delay = 5;
     while (contacts.length > 0) {
       const due_date = moment().add(delay, 'minutes');
-      delay += 5;
+      delay += 1;
 
       for (let i = 0; i < contacts.length; i += 15) {
         const task = new Task({
           user: currentUser.id,
           contacts: contacts.slice(0, 15),
           status: 'active',
-
+          action: {
+            type: 'send_email',
+            ...req.body,
+          },
           due_date,
         });
 
@@ -637,6 +640,7 @@ const bulkEmail = async (req, res) => {
               })
                 .then(async () => {
                   email_count += 1;
+
                   Activity.updateMany(
                     { _id: { $in: activities } },
                     {

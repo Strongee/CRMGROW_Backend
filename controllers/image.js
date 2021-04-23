@@ -104,6 +104,7 @@ const play = async (req, res) => {
     let highlights = [];
     let brands = [];
     let intro_video = '';
+    let calendly;
     if (garbage) {
       const themeSetting = garbage.material_themes;
       additional_fields = garbage.additional_fields;
@@ -119,6 +120,10 @@ const play = async (req, res) => {
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
       intro_video = garbage['intro_video'];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     } else {
       capture_dialog = false;
     }
@@ -150,6 +155,7 @@ const play = async (req, res) => {
       capture_field: capture_field || {},
       additional_fields: additional_fields || [],
       social_link: {},
+      calendly,
       setting: {
         logo,
         highlights,
@@ -210,12 +216,18 @@ const play1 = async (req, res) => {
     let logo;
     let highlights = [];
     let brands = [];
+    let calendly;
+
     if (garbage) {
       const themeSetting = garbage.material_themes;
       theme = (themeSetting && themeSetting[image._id]) || garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     }
 
     console.log('material', image);
@@ -227,6 +239,7 @@ const play1 = async (req, res) => {
       contact: activity['contacts'],
       activity: activity.id,
       social_link,
+      calendly,
       setting: {
         logo,
         highlights,
