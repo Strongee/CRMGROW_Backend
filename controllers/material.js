@@ -2004,7 +2004,12 @@ const loadMaterial = async (req, res) => {
 
   const teams = await Team.find({
     $or: [{ members: currentUser.id }, { owner: currentUser.id }],
-  }).populate([{ path: 'videos' }, { path: 'pdfs' }, { path: 'images' }]);
+  }).populate([
+    { path: 'videos' },
+    { path: 'pdfs' },
+    { path: 'images' },
+    { path: 'folders' },
+  ]);
 
   const materialOwnerIds = [];
   if (teams && teams.length > 0) {
@@ -2013,6 +2018,7 @@ const loadMaterial = async (req, res) => {
       const videos = [];
       const pdfs = [];
       const images = [];
+      const folders = [];
       team['videos'].forEach((e) => {
         videos.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
         materialOwnerIds.push(e.user);
@@ -2025,12 +2031,55 @@ const loadMaterial = async (req, res) => {
         images.push({ ...e._doc, team: { _id: team._id, name: team['name'] } });
         materialOwnerIds.push(e.user);
       });
+      team['folders'].forEach((e) => {
+        folders.push({
+          ...e._doc,
+          team: { _id: team._id, name: team['name'] },
+        });
+        materialOwnerIds.push(e.user);
+      });
 
       Array.prototype.push.apply(_video_list, videos);
       Array.prototype.push.apply(_pdf_list, pdfs);
       Array.prototype.push.apply(_image_list, images);
+      Array.prototype.push.apply(_folder_list, folders);
     }
   }
+
+  const _other_folders = [];
+  const _other_folder_videoIds = [];
+  const _other_folder_imageIds = [];
+  const _other_folder_pdfIds = [];
+  _folder_list.filter((e) => {
+    if (e.user === currentUser._id) {
+      _other_folders.push(e);
+      Array.prototype.push.apply(_other_folder_videoIds, e.videos);
+      Array.prototype.push.apply(_other_folder_imageIds, e.images);
+      Array.prototype.push.apply(_other_folder_pdfIds, e.pdfs);
+      return true;
+    }
+    return false;
+  });
+
+  const _other_folder_images = await Image.find({
+    _id: { $in: _other_folder_imageIds },
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _other_folder_pdfs = await PDF.find({
+    _id: { $in: _other_folder_pdfIds },
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+  const _other_folder_videos = await Video.find({
+    _id: { $in: _other_folder_videoIds },
+  })
+    .sort({ priority: 1 })
+    .sort({ created_at: 1 });
+
+  Array.prototype.push.apply(_video_list, _other_folder_videos);
+  Array.prototype.push.apply(_pdf_list, _other_folder_pdfs);
+  Array.prototype.push.apply(_image_list, _other_folder_images);
 
   const _material_owners = await User.find({
     _id: { $in: materialOwnerIds },
