@@ -100,6 +100,11 @@ router.post(
   catchError(TeamCtrl.removeImages)
 );
 router.post(
+  '/remove-folder/:id',
+  UserCtrl.checkAuth,
+  catchError(TeamCtrl.removeFolders)
+);
+router.post(
   '/remove-templates/:id',
   UserCtrl.checkAuth,
   catchError(TeamCtrl.removeEmailTemplates)

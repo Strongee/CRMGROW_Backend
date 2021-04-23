@@ -1718,6 +1718,35 @@ const removeImages = async (req, res) => {
   });
 };
 
+const removeFolders = async (req, res) => {
+  const { currentUser } = req;
+  const team_id = req.params.id;
+  const { folder } = req.body;
+  const _folder = await Folder.findOne({
+    _id: folder,
+    user: currentUser.id,
+  });
+
+  if (!_folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { _id: team_id },
+    {
+      $pull: { folders: mongoose.Types.ObjectId(folder) },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 const removeAutomations = async (req, res) => {
   const { currentUser } = req;
   const automation = await Automation.findOne({
@@ -2448,6 +2477,7 @@ module.exports = {
   removeVideos,
   removePdfs,
   removeImages,
+  removeFolders,
   removeAutomations,
   removeEmailTemplates,
   requestTeam,
