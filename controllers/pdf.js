@@ -92,6 +92,7 @@ const play = async (req, res) => {
   let capture_dialog = true;
   let capture_delay = 0;
   let capture_field = {};
+  let additional_fields = [];
 
   if (user) {
     const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
@@ -104,13 +105,16 @@ const play = async (req, res) => {
     let intro_video = '';
     let calendly;
     if (garbage) {
+      const themeSetting = garbage.material_themes;
+      additional_fields = garbage.additional_fields;
+
       capture_delay = garbage['capture_delay'];
       capture_field = garbage['capture_field'];
       const capture_pdfs = garbage['capture_pdfs'] || [];
       if (capture_pdfs.indexOf(pdf_id) === -1) {
         capture_dialog = false;
       }
-      theme = garbage['material_theme'] || theme;
+      theme = (themeSetting && themeSetting[pdf_id]) || garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];
@@ -146,6 +150,7 @@ const play = async (req, res) => {
       capture_dialog,
       capture_delay,
       capture_field: capture_field || {},
+      additional_fields: additional_fields || [],
       social_link: {},
       calendly,
       setting: {
@@ -177,7 +182,12 @@ const play1 = async (req, res) => {
     delete user.salt;
     delete user.payment;
 
-    const pdf = activity['pdfs'];
+    let pdf;
+    if (activity['pdfs'] instanceof Array) {
+      pdf = activity['pdfs'][0];
+    } else {
+      pdf = activity['pdfs'];
+    }
 
     const pattern = /^((http|https|ftp):\/\/)/;
     let social_link = {};
@@ -206,7 +216,8 @@ const play1 = async (req, res) => {
     let calendly;
 
     if (garbage) {
-      theme = garbage['material_theme'] || theme;
+      const themeSetting = garbage['material_themes'];
+      theme = (themeSetting && themeSetting[pdf._id]) || garbage['material_theme'] || theme;
       logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
       highlights = garbage['highlights'] || [];
       brands = garbage['brands'] || [];

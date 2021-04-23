@@ -1718,6 +1718,35 @@ const removeImages = async (req, res) => {
   });
 };
 
+const removeFolders = async (req, res) => {
+  const { currentUser } = req;
+  const team_id = req.params.id;
+  const { folder } = req.body;
+  const _folder = await Folder.findOne({
+    _id: folder,
+    user: currentUser.id,
+  });
+
+  if (!_folder) {
+    return res.status(400).send({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+  Team.updateOne(
+    { _id: team_id },
+    {
+      $pull: { folders: mongoose.Types.ObjectId(folder) },
+    }
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
+};
+
 const removeAutomations = async (req, res) => {
   const { currentUser } = req;
   const automation = await Automation.findOne({
@@ -2114,6 +2143,7 @@ const loadMaterial = async (req, res) => {
   const video_data = [];
   const pdf_data = [];
   const image_data = [];
+  const folder_data = [];
 
   if (team.videos && team.videos.length > 0) {
     const video_ids = team.videos;
@@ -2203,21 +2233,26 @@ const loadMaterial = async (req, res) => {
       _folderVideos = [..._folderVideos, ..._folder.videos];
       _folderImages = [..._folderImages, ..._folder.images];
       _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
+      const folder_detail = {
+        ..._folder._doc,
+        material_type: 'folder',
+      };
+      folder_data.push(folder_detail);
     });
 
     const folderVideos = await Video.find({
       _id: { $in: _folderVideos },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
     const folderImages = await Image.find({
       _id: { $in: _folderImages },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
     const folderPdfs = await PDF.find({
       _id: { $in: _folderPdfs },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
 
@@ -2274,7 +2309,7 @@ const loadMaterial = async (req, res) => {
       video_data,
       pdf_data,
       image_data,
-      folder_data: _folders,
+      folder_data,
     },
   });
 };
@@ -2442,6 +2477,7 @@ module.exports = {
   removeVideos,
   removePdfs,
   removeImages,
+  removeFolders,
   removeAutomations,
   removeEmailTemplates,
   requestTeam,
