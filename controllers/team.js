@@ -2114,6 +2114,7 @@ const loadMaterial = async (req, res) => {
   const video_data = [];
   const pdf_data = [];
   const image_data = [];
+  const folder_data = [];
 
   if (team.videos && team.videos.length > 0) {
     const video_ids = team.videos;
@@ -2203,22 +2204,26 @@ const loadMaterial = async (req, res) => {
       _folderVideos = [..._folderVideos, ..._folder.videos];
       _folderImages = [..._folderImages, ..._folder.images];
       _folderPdfs = [..._folderPdfs, ..._folder.pdfs];
-      _folder.material_type = 'folder';
+      const folder_detail = {
+        ..._folder._doc,
+        material_type: 'folder',
+      };
+      folder_data.push(folder_detail);
     });
 
     const folderVideos = await Video.find({
       _id: { $in: _folderVideos },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
     const folderImages = await Image.find({
       _id: { $in: _folderImages },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
     const folderPdfs = await PDF.find({
       _id: { $in: _folderPdfs },
-      user: currentUser._id,
+      role: { $ne: 'admin' },
       del: false,
     });
 
@@ -2275,7 +2280,7 @@ const loadMaterial = async (req, res) => {
       video_data,
       pdf_data,
       image_data,
-      folder_data: _folders,
+      folder_data,
     },
   });
 };
