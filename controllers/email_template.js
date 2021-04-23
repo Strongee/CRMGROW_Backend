@@ -240,7 +240,9 @@ const search = async (req, res) => {
   const option = { ...req.body };
 
   const team_templates = [];
-  const teams = await Team.find({ members: currentUser.id });
+  const teams = await Team.find({
+    $or: [{ members: currentUser.id }, { owner: currentUser.id }],
+  });
 
   if (teams && teams.length > 0) {
     for (let i = 0; i < teams.length; i++) {

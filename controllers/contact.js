@@ -1307,17 +1307,40 @@ const getByIds = async (req, res) => {
 
 const leadContact = async (req, res) => {
   const { user, first_name, email, cell_phone, video, pdf, image } = req.body;
-  let _exist = await Contact.findOne({
-    email,
-    user,
-  }).catch((err) => {
+  const fieldData = {...req.body};
+  delete fieldData['user'];
+  delete fieldData['first_name'];
+  delete fieldData['email'];
+  delete fieldData['cell_phone'];
+  delete fieldData['video'];
+  delete fieldData['pdf'];
+  delete fieldData['image'];
+  let additional_field;
+  if (Object.keys(fieldData).length) {
+    additional_field = {...fieldData}
+  }
+
+  if (!email && !cell_phone) {
     return res.status(400).send({
       status: false,
-      error: err.message,
-    });
-  });
+      error: 'Please input email address or cell_phone'
+    })
+  }
 
-  if (!_exist) {
+  let _exist
+  if (email) {
+    await Contact.findOne({
+      email,
+      user,
+    }).catch((err) => {
+      return res.status(400).send({
+        status: false,
+        error: err.message,
+      });
+    });
+  }
+
+  if (!_exist && cell_phone) {
     _exist = await Contact.findOne({
       cell_phone,
       user,
@@ -1364,6 +1387,13 @@ const leadContact = async (req, res) => {
         console.log('err', err);
       });
 
+    Contact.updateOne(
+      { _id: _exist.id },
+      { $set: { last_activity: activity.id, additional_field } }
+    ).catch((err) => {
+      console.log('contact update err', err.message);
+    });
+
     return res.json({
       status: true,
       data: {
@@ -1382,7 +1412,7 @@ const leadContact = async (req, res) => {
     }
     const e164Phone = phone(cell_phone)[0];
 
-    if (!e164Phone) {
+    if (cell_phone && !e164Phone) {
       return res.status(400).json({
         status: false,
         error: 'Invalid Phone Number',
@@ -1397,6 +1427,7 @@ const leadContact = async (req, res) => {
       label,
       tags: ['leadcapture'],
       user,
+      additional_field
     });
 
     const time_zone = user.time_zone_info

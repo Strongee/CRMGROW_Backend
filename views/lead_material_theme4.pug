@@ -191,6 +191,20 @@ input#capture-delay(type='hidden', value=`${capture_delay}`)
             .form-group.custom-form
               label.form-label Phone
               input.form-control.phone-info(type="tel", name="cell_phone", placeholder="***-***-****", required=capture_field['cell_phone'] ? true : false)
+          each field in additional_fields
+            if field.status
+              .form-group.custom-form
+                label.form-label
+                  | #{field.name}
+                if field.type === 'text'
+                  input.form-control(type="text", name=field.name, placeholder=field.placeholder, required=false)
+                if field.type === 'dropdown'
+                  select.form-control(name=field.name, required=false)
+                    option(value="")
+                      | Select the #{field.name}
+                    for optionItem in field.options
+                      option(value=optionItem.value)
+                        | #{optionItem.label}
           input(type="hidden", name="user", value=`${user._id}`)
           input(type="hidden", name=material_type, value=`${material._id}`)
           p.privacy-link

@@ -761,7 +761,7 @@ const disconnectVideo = async (video_tracker_id) => {
               });
               time_line = new Task({
                 user: currentUser.id,
-                contact: contact.id,
+                contacts: contact.id,
                 action: {
                   type: 'resend_email_video1',
                   activity: _activity.id,
@@ -787,7 +787,7 @@ const disconnectVideo = async (video_tracker_id) => {
               });
               time_line = new Task({
                 user: currentUser.id,
-                contact: contact.id,
+                contacts: contact.id,
                 action: {
                   type: 'resend_text_video1',
                   activity: _activity.id,
