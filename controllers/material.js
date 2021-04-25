@@ -2087,6 +2087,7 @@ const loadMaterial = async (req, res) => {
 
   console.log(
     'other folder data',
+    _folder_list,
     _other_folder_videoIds,
     _other_folder_videos
   );
