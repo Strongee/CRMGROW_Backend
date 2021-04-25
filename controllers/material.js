@@ -2085,6 +2085,12 @@ const loadMaterial = async (req, res) => {
   Array.prototype.push.apply(_pdf_list, _other_folder_pdfs);
   Array.prototype.push.apply(_image_list, _other_folder_images);
 
+  console.log(
+    'other folder data',
+    _other_folder_videoIds,
+    _other_folder_videos
+  );
+
   const _material_owners = await User.find({
     _id: { $in: materialOwnerIds },
   }).select('_id user_name');
