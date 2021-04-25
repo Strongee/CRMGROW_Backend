@@ -2067,16 +2067,19 @@ const loadMaterial = async (req, res) => {
 
   const _other_folder_images = await Image.find({
     _id: { $in: _other_folder_imageIds },
+    del: false,
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
   const _other_folder_pdfs = await PDF.find({
     _id: { $in: _other_folder_pdfIds },
+    del: false,
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
   const _other_folder_videos = await Video.find({
     _id: { $in: _other_folder_videoIds },
+    del: false,
   })
     .sort({ priority: 1 })
     .sort({ created_at: 1 });
@@ -2084,13 +2087,6 @@ const loadMaterial = async (req, res) => {
   Array.prototype.push.apply(_video_list, _other_folder_videos);
   Array.prototype.push.apply(_pdf_list, _other_folder_pdfs);
   Array.prototype.push.apply(_image_list, _other_folder_images);
-
-  console.log(
-    'other folder data',
-    _folder_list,
-    _other_folder_videoIds,
-    _other_folder_videos
-  );
 
   const _material_owners = await User.find({
     _id: { $in: materialOwnerIds },
