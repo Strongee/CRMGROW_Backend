@@ -2200,6 +2200,9 @@ const loadMaterial = async (req, res) => {
     const folder = await Object.assign(_folder, {
       material_type: 'folder',
     });
+    if (_material_owner_objects[folder.user]) {
+      folder.user = _material_owner_objects[folder.user];
+    }
     _folder_detail_list.push(folder);
   }
 
