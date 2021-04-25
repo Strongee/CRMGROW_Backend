@@ -2055,7 +2055,7 @@ const loadMaterial = async (req, res) => {
   const _other_folder_imageIds = [];
   const _other_folder_pdfIds = [];
   _folder_list.filter((e) => {
-    if (e.user === currentUser._id) {
+    if (e.user !== currentUser._id) {
       _other_folders.push(e);
       Array.prototype.push.apply(_other_folder_videoIds, e.videos);
       Array.prototype.push.apply(_other_folder_imageIds, e.images);
