@@ -1307,7 +1307,7 @@ const getByIds = async (req, res) => {
 
 const leadContact = async (req, res) => {
   const { user, first_name, email, cell_phone, video, pdf, image } = req.body;
-  const fieldData = {...req.body};
+  const fieldData = { ...req.body };
   delete fieldData['user'];
   delete fieldData['first_name'];
   delete fieldData['email'];
@@ -1317,17 +1317,17 @@ const leadContact = async (req, res) => {
   delete fieldData['image'];
   let additional_field;
   if (Object.keys(fieldData).length) {
-    additional_field = {...fieldData}
+    additional_field = { ...fieldData };
   }
 
   if (!email && !cell_phone) {
     return res.status(400).send({
       status: false,
-      error: 'Please input email address or cell_phone'
-    })
+      error: 'Please input email address or cell_phone',
+    });
   }
 
-  let _exist
+  let _exist;
   if (email) {
     await Contact.findOne({
       email,
@@ -1427,7 +1427,7 @@ const leadContact = async (req, res) => {
       label,
       tags: ['leadcapture'],
       user,
-      additional_field
+      additional_field,
     });
 
     const time_zone = user.time_zone_info

@@ -827,10 +827,8 @@ const buyCredit = async (req, res) => {
       description,
     };
 
-    console.log('data', data);
     PaymentCtrl.createCharge(data)
       .then((_res) => {
-        console.log('_res', _res);
         let { additional_credit } = currentUser.text_info;
         if (additional_credit) {
           additional_credit.updated_at = new Date();
@@ -863,6 +861,7 @@ const buyCredit = async (req, res) => {
             created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
             last_4_cc: payment.last4,
             invoice_id: _res.invoice,
+            amount: price,
           },
           template_name: 'PaymentNotification',
           required_reply: true,

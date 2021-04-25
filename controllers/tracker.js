@@ -29,6 +29,7 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const { RestClient } = require('@signalwire/node');
 const { generateUnsubscribeLink } = require('../helpers/text');
+const { sendNotificationEmail } = require('../helpers/email');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -607,6 +608,17 @@ const disconnectVideo = async (video_tracker_id) => {
 
       sgMail.send(msg).catch((err) => console.error(err));
        */
+
+      // const data = {
+      //   user_name,
+      //   contact_name,
+      //   material_title,
+      //   duration,
+      //   end_at,
+      //   start_at,
+      // };
+
+      sendNotificationEmail()
     }
 
     const auto_follow_up = garbage.auto_follow_up;

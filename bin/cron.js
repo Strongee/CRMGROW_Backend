@@ -1923,9 +1923,7 @@ const task_check = new CronJob(
             };
 
             EmailHelper.sendEmail(data)
-              .then((res) => {
-                
-              })
+              .then((res) => {})
               .catch((err) => {
                 timeline['status'] = 'error';
                 timeline['updated_at'] = new Date();

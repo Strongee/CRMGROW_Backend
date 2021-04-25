@@ -2053,13 +2053,19 @@ const searchContact = async (req, res) => {
             shared_team: req.body.team,
           },
           {
-            email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+            email: {
+              $regex: '.*' + search.split(' ')[0] + '.*',
+              $options: 'i',
+            },
             user: currentUser.id,
             shared_team: req.body.team,
             shared_contact: true,
           },
           {
-            email: { $regex: '.*' + search.split(' ')[0] + '.*', $options: 'i' },
+            email: {
+              $regex: '.*' + search.split(' ')[0] + '.*',
+              $options: 'i',
+            },
             shared_members: currentUser.id,
             shared_team: req.body.team,
           },
