@@ -1,13 +1,16 @@
 let domain = 'https://app.crmgrow.com';
 const domain1 = 'https://app.crmgrow.com';
-const front =
+let front =
   'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://app.crmgrow.com';
+  front = 'https://app.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
   domain = 'http://3.139.190.87:3000';
+  front = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 } else {
   domain = 'http://localhost:3000';
+  front = 'http://localhost:4201';
 }
 
 const urls = {
@@ -28,10 +31,11 @@ const urls = {
   FILE_URL: `${domain}/api/file/`,
   VIDEO_URL: `${domain}/api/video/pipe/`,
   MATERIAL_VIEW_VIDEO_URL: `${domain}/video1/`,
+  MATERIAL_USER_VIEW_VIDEO_URL: `${domain}/video`,
   MATERIAL_VIEW_PAGE: `${domain}/material`,
   MATERIAL_VIEW_PDF_URL: `${domain}/pdf1/`,
   MATERIAL_VIEW_IMAGE_URL: `${domain}/image/`,
-  CONTACT_PAGE_URL: `${domain}/contacts/`,
+  CONTACT_PAGE_URL: `${front}/contacts/`,
   FOLLOWUP_PAGE_URL: `${domain}/follow-up/`,
   ASSETS_URL: `${domain}/assets/`,
   ACCEPT_INVITATION_URL: `${domain}/api/appointment/accept?`,

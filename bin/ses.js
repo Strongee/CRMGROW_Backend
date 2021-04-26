@@ -22,7 +22,7 @@ const subjects = {
   OnboardCall: `One on one onboarding`,
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
   Welcome: 'Welcome to CRMGrow, {{user_name}}!',
-  VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{watched_at}}',
+  VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{created_at}}',
   PaymentNotification: 'CRMGrow payment notification',
 };
 const htmls = {};

@@ -620,6 +620,8 @@ const disconnectVideo = async (video_tracker_id) => {
           contact_url: urls.CONTACT_PAGE_URL + contact.id,
           contact_name: contact.first_name + contact.last_name,
           material_title: video.title,
+          material_url: `${urls.MATERIAL_USER_VIEW_VIDEO_URL}video=${video.id}&user=${currentUser.id}`,
+          thumbnail_url: `${video.thumbnail}?resize=true`,
           duration: timeWatched,
           end_at: query.end,
           start_at: query.start,
