@@ -609,9 +609,14 @@ const disconnectVideo = async (video_tracker_id) => {
       sgMail.send(msg).catch((err) => console.error(err));
        */
 
+      const created_at = moment(query['created_at'])
+        .tz(time_zone)
+        .format('h:mm: a');
+
       const data = {
         template_data: {
           user_name: currentUser.user_name,
+          created_at,
           contact_url: urls.CONTACT_PAGE_URL + contact.id,
           contact_name: contact.first_name + contact.last_name,
           material_title: video.title,
