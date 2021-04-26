@@ -40,8 +40,8 @@ const urls = {
   ASSETS_URL: `${domain}/assets/`,
   ACCEPT_INVITATION_URL: `${domain}/api/appointment/accept?`,
   DECLINE_INVITATION_URL: `${domain}/api/appointment/decline?`,
-  SMS_RECEIVE_URL: `${domain}/api/sms/receive/`,
-  SMS_RECEIVE_URL1: `${domain}/api/sms/receive1/`,
+  SMS_RECEIVE_URL: `${domain}/api/sms/receive-twilio/`,
+  SMS_RECEIVE_URL1: `${domain}/api/sms/receive-signalwire/`,
   RESET_PASSWORD_URL: `${domain}/reset-password/`,
   AVATAR_URL:
     'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',

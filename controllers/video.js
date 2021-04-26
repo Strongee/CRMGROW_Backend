@@ -3463,6 +3463,36 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const downloadVideo = async (req, res) => {
+  const { currentUser } = req;
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!video) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+
+  if (!video.url) {
+    return res.status(400).json({
+      status: false,
+      error: 'URL not found',
+    });
+  }
+  const options = {
+    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+    Key: video.url.slice(44),
+  };
+
+  res.attachment(video.url.slice(44));
+  const fileStream = s3.getObject(options).createReadStream();
+  fileStream.pipe(res);
+};
+
 module.exports = {
   play,
   play1,
@@ -3489,4 +3519,5 @@ module.exports = {
   bulkOutlook,
   autoResend,
   setupRecording,
+  downloadVideo,
 };
