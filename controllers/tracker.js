@@ -609,16 +609,22 @@ const disconnectVideo = async (video_tracker_id) => {
       sgMail.send(msg).catch((err) => console.error(err));
        */
 
-      // const data = {
-      //   user_name,
-      //   contact_name,
-      //   material_title,
-      //   duration,
-      //   end_at,
-      //   start_at,
-      // };
+      const data = {
+        template_data: {
+          user_name: currentUser.user_name,
+          contact_url: urls.CONTACT_PAGE_URL + contact.id,
+          contact_name: contact.first_name + contact.last_name,
+          material_title: video.title,
+          duration: timeWatched,
+          end_at: query.end,
+          start_at: query.start,
+        },
+        template_name: 'VideoWatched',
+        required_reply: false,
+        email: currentUser.email,
+      };
 
-      sendNotificationEmail()
+      sendNotificationEmail(data);
     }
 
     const auto_follow_up = garbage.auto_follow_up;
