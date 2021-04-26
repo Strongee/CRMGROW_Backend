@@ -609,6 +609,8 @@ const disconnectVideo = async (video_tracker_id) => {
       sgMail.send(msg).catch((err) => console.error(err));
        */
 
+      console.log('video.thumbnail*******', video);
+
       const created_at = moment(query['created_at'])
         .tz(time_zone)
         .format('h:mm: a');
@@ -621,7 +623,7 @@ const disconnectVideo = async (video_tracker_id) => {
           contact_name: contact.first_name + contact.last_name,
           material_title: video.title,
           material_url: `${urls.MATERIAL_USER_VIEW_VIDEO_URL}?video=${video.id}&user=${currentUser.id}`,
-          thumbnail_url: `${video.thumbnail}`,
+          thumbnail_url: video.thumbnail,
           duration: timeWatched,
           end_at: query.end,
           start_at: query.start,
