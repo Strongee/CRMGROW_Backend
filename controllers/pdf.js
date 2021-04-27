@@ -2473,18 +2473,20 @@ const downloadPDF = async (req, res) => {
 
   console.log('pdf.url.slice(44)', pdf.url.slice(44));
 
-  try {
-    res.attachment(pdf.url.slice(44));
-    const fileStream = s3
-      .getObject(options)
-      .createReadStream()
-      .catch((err) => {
-        console.log('s3 stream get err', err.message);
+  res.attachment(pdf.url.slice(44));
+  s3.getObjectMetadata(options)
+    .then(() => {
+      // This will not throw error anymore
+      const fileStream = s3.getObject().createReadStream();
+      fileStream.pipe(res);
+    })
+    .catch((error) => {
+      console.log('s3 file get err', error);
+      return res.status(500).json({
+        status: false,
+        error: 'Internal Server Error',
       });
-    fileStream.pipe(res);
-  } catch (err) {
-    console.log('err', err);
-  }
+    });
 };
 
 module.exports = {
