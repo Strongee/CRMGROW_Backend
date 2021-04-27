@@ -253,11 +253,11 @@ const getDetail = async (req, res) => {
 
     } else {
       notes = await Note.find({ contact: contactId });
-      emails = await Email.find({ contact: contactId });
-      texts = await Text.find({ contact: contactId });
-      appointments = await Appointment.find({ contact: contactId });
+      emails = await Email.find({ contacts: contactId });
+      texts = await Text.find({ contacts: contactId });
+      appointments = await Appointment.find({ contacts: contactId });
       tasks = await FollowUp.find({ contact: contactId });
-      deals = await Deal.find({ contact: contactId });
+      deals = await Deal.find({ contacts: contactId });
     }
 
     const myJSON = JSON.stringify(_contact);
