@@ -11,6 +11,7 @@ const PDFSchema = new Schema(
     type: String,
     url: String,
     role: String,
+    key: String,
     default_edited: { type: Boolean, default: false },
     default_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     has_shared: { type: Boolean, default: false },

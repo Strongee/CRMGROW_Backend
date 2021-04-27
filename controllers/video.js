@@ -455,6 +455,7 @@ const create = async (req, res) => {
       url: urls.VIDEO_URL + file_name,
       type: req.file.mimetype,
       path: req.file.path,
+      key: req.file.key,
       created_at: new Date(),
     });
 
@@ -1540,11 +1541,11 @@ const remove = async (req, res) => {
         });
       } else {
         const url = video.url;
-        if (url.indexOf('teamgrow.s3') > 0) {
+        if (video.key || url.indexOf('teamgrow.s3') > 0) {
           s3.deleteObject(
             {
               Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: url.slice(44),
+              Key: video.key || url.slice(44),
             },
             function (err, data) {
               console.log('err', err);
@@ -3485,7 +3486,7 @@ const downloadVideo = async (req, res) => {
   }
   const options = {
     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: video.url.slice(44),
+    Key: video.key || video.url.slice(44),
   };
 
   try {

@@ -10,6 +10,7 @@ const ImageSchema = new Schema(
     preview: String,
     type: String,
     url: Array,
+    key: Array,
     role: String,
     priority: { type: Number, default: 1000 },
     default_edited: { type: Boolean, default: false },

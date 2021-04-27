@@ -252,11 +252,13 @@ const play1 = async (req, res) => {
 
 const create = async (req, res) => {
   if (req.file) {
+    console.log('req.file', req.file);
     if (req.currentUser) {
       const pdf = new PDF({
         user: req.currentUser.id,
         type: req.file.mimetype,
         url: req.file.location,
+        key: req.file.key,
         role: 'user',
         created_at: new Date(),
       });
@@ -821,12 +823,12 @@ const remove = async (req, res) => {
         });
       } else {
         const url = pdf.url;
-        if (url.indexOf('teamgrow.s3') > 0) {
+        if (pdf.key || url.indexOf('teamgrow.s3') > 0) {
           const url = pdf.url;
           s3.deleteObject(
             {
               Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: url.slice(44),
+              Key: pdf.key || url.slice(44),
             },
             function (err, data) {
               console.log('err', err);
@@ -2468,16 +2470,14 @@ const downloadPDF = async (req, res) => {
   }
   const options = {
     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: pdf.url.slice(44),
+    Key: pdf.key || pdf.url.slice(44),
   };
 
-  console.log('pdf.url.slice(44)', pdf.url.slice(44));
-
   res.attachment(pdf.url.slice(44));
+
   s3.headObject(options)
     .promise()
     .then(() => {
-      // This will not throw error anymore
       const fileStream = s3.getObject().createReadStream();
       fileStream.pipe(res);
     })
@@ -2487,24 +2487,6 @@ const downloadPDF = async (req, res) => {
         error,
       });
     });
-
-  // try {
-  //   res.attachment(pdf.url.slice(44));
-  //   const fileStream = s3
-  //     .getObject(options)
-  //     .createReadStream()
-  //     .on('error', (error) => {
-  //       throw error;
-  //     });
-
-  //   fileStream.pipe(res);
-  // } catch (err) {
-  //   console.log('err', err);
-  //   return res.status(500).json({
-  //     status: false,
-  //     error:
-  //   })
-  // }
 };
 
 module.exports = {
