@@ -248,6 +248,12 @@ router.post(
   catchError(ContactCtrl.loadByEmails)
 );
 
+router.post(
+  '/get-detail/:id',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.getDetail)
+);
+
 // Get a pull contact info for profile page
 router.post('/:id', UserCtrl.checkAuth, catchError(ContactCtrl.get));
 

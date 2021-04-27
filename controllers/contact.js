@@ -24,6 +24,7 @@ const EmailTracker = require('../models/email_tracker');
 const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
 const Image = require('../models/image');
+const Text = require('../models/text');
 const ImageTracker = require('../models/image_tracker');
 const PDFTracker = require('../models/pdf_tracker');
 const VideoTracker = require('../models/video_tracker');
@@ -146,6 +147,143 @@ const getByLastActivity = async (req, res) => {
     },
   });
 };
+
+const getDetail = async (req, res) => {
+  const { currentUser } = req;
+  const { count } = req.body;
+  if (req.params.id === 'null' || req.params.id === 'undefined') {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid Contact',
+    });
+  }
+  const contactId = req.params.id;
+
+  const _contact = await Contact.findOne({
+    _id: contactId,
+    $or: [{ user: currentUser.id }, { shared_members: currentUser.id }],
+  }).catch((err) => {
+    console.log('contact found err', err.message);
+  });
+
+  if (_contact) {
+    // TimeLines
+    const _timelines = await TimeLine.find({
+      user: currentUser.id,
+      contact: req.params.id,
+      automation: { $ne: null },
+    })
+      .sort({ due_date: 1 })
+      .catch((err) => {
+        console.log('err', err);
+      });
+    let automation = {};
+    if (_timelines.length) {
+      automation = await Automation.findOne({
+        _id: _timelines[0]['automation'],
+      })
+        .select({ title: 1 })
+        .catch((err) => {
+          console.log('err', err);
+        });
+    }
+
+    // Contact Activity List
+    let _activity_list;
+
+    if (count) {
+      _activity_list = await Activity.find({
+        contacts: req.params.id,
+        status: { $ne: 'pending' },
+      })
+        .sort({ updated_at: -1 })
+        .limit(count)
+        .populate([{path: 'video_trackers', select: '-_id -user -contact'}, {path: 'image_trackers', select: '-_id -user -contact'}, {path: 'pdf_trackers', select: '-_id -user -contact'}, {path: 'email_trackers', select: '-_id -user -contact'}, {path: 'text_trackers', select: '-_id -user -contact'}])
+    } else {
+      _activity_list = await Activity.find({
+        contacts: req.params.id,
+        status: { $ne: 'pending' },
+      }).sort({ updated_at: 1 })
+      .populate([{path: 'video_trackers', select: '-_id -user -contact'}, {path: 'image_trackers', select: '-_id -user -contact'}, {path: 'pdf_trackers', select: '-_id -user -contact'}, {path: 'email_trackers', select: '-_id -user -contact'}, {path: 'text_trackers', select: '-_id -user -contact'}])
+    }
+
+    // Contact Relative Details
+    const videoIds = [];
+    const imageIds = [];
+    const pdfIds = [];
+    const materials = [];
+    let notes = [];
+    let emails = [];
+    let texts = [];
+    let appointments = [];
+    let tasks = [];
+    let deals = [];
+
+    _activity_list.forEach((e) => {
+      if (e['type'] === 'videos') {
+        if (e['videos'] instanceof Array) {
+          Array.prototype.push.apply(videoIds, e['videos']);
+        } else {
+          videoIds.push(e['videos']);
+        }
+      }
+      if (e['type'] === 'images') {
+        if (e['images'] instanceof Array) {
+          Array.prototype.push.apply(imageIds, e['images']);
+        } else {
+          imageIds.push(e['images']);
+        }
+      }
+      if (e['type'] === 'pdfs') {
+        if (e['pdfs'] instanceof Array) {
+          Array.prototype.push.apply(pdfIds, e['pdfs']);
+        } else {
+          pdfIds.push(e['pdfs']);
+        }
+      }
+    });
+    const videos = await Video.find({ _id: { $in: videoIds } });
+    const pdfs = await PDF.find({ _id: { $in: pdfIds } });
+    const images = await Image.find({ _id: { $in: imageIds } });
+    Array.prototype.push.apply(materials, videos);
+    Array.prototype.push.apply(materials, pdfs);
+    Array.prototype.push.apply(materials, images);
+
+    if (count) {
+
+    } else {
+      notes = await Note.find({ contact: contactId });
+      emails = await Email.find({ contact: contactId });
+      texts = await Text.find({ contact: contactId });
+      appointments = await Appointment.find({ contact: contactId });
+      tasks = await FollowUp.find({ contact: contactId });
+      deals = await Deal.find({ contact: contactId });
+    }
+
+    const myJSON = JSON.stringify(_contact);
+    const contact = JSON.parse(myJSON);
+    const data = await Object.assign(
+      contact,
+      { activity: _activity_list },
+      { time_lines: _timelines },
+      { automation },
+      { details: {
+          materials, notes, emails, texts, appointments, tasks, deals
+        },
+      }
+    );
+
+    return res.send({
+      status: true,
+      data,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Contact not found',
+    });
+  }
+}
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -4886,4 +5024,5 @@ module.exports = {
   updateContact,
   loadByEmails,
   loadNotes,
+  getDetail,
 };
