@@ -2238,6 +2238,40 @@ const updateDefault = async (req, res) => {
   }
 };
 
+const downloadImage = async (req, res) => {
+  const { currentUser } = req;
+  const image = await Image.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!image) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+
+  if (!image.url) {
+    return res.status(400).json({
+      status: false,
+      error: 'URL not found',
+    });
+  }
+  const options = {
+    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+    Key: image.url.slice(44),
+  };
+
+  try {
+    res.attachment(image.url.slice(44));
+    const fileStream = s3.getObject(options).createReadStream();
+    fileStream.pipe(res);
+  } catch (err) {
+    console.log('err', err);
+  }
+};
+
 module.exports = {
   play,
   play1,
@@ -2255,4 +2289,5 @@ module.exports = {
   bulkGmail,
   bulkOutlook,
   remove,
+  downloadImage,
 };
