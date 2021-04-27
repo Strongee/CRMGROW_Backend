@@ -258,6 +258,7 @@ const create = async (req, res) => {
         user: req.currentUser.id,
         type: req.file.mimetype,
         url: req.file.location,
+        key: req.file.key,
         role: 'user',
         created_at: new Date(),
       });
@@ -822,12 +823,12 @@ const remove = async (req, res) => {
         });
       } else {
         const url = pdf.url;
-        if (url.indexOf('teamgrow.s3') > 0) {
+        if (pdf.key || url.indexOf('teamgrow.s3') > 0) {
           const url = pdf.url;
           s3.deleteObject(
             {
               Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: url.slice(44),
+              Key: pdf.key || url.slice(44),
             },
             function (err, data) {
               console.log('err', err);
@@ -2469,7 +2470,7 @@ const downloadPDF = async (req, res) => {
   }
   const options = {
     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: pdf.url.slice(44),
+    Key: pdf.key || pdf.url.slice(44),
   };
 
   res.attachment(pdf.url.slice(44));

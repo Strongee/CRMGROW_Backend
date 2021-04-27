@@ -26,6 +26,11 @@ const VideoSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'material_theme',
     },
+    key: String,
+    material_theme1: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'material_theme',
+    },
     default_edited: { type: Boolean, default: false },
     default_video: { type: mongoose.Schema.Types.ObjectId, ref: 'video' },
     has_shared: { type: Boolean, default: false },

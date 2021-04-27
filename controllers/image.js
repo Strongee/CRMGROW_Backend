@@ -79,6 +79,7 @@ const twilio = require('twilio')(accountSid, authToken);
 const { uploadBase64Image, removeFile } = require('../helpers/fileUpload');
 
 const { RestClient } = require('@signalwire/node');
+const { url } = require('inspector');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -259,14 +260,17 @@ const create = async (req, res) => {
   if (req.files) {
     const files = req.files;
     const url = [];
+    const key = [];
     for (let i = 0; i < files.length; i++) {
       url.push(files[i].location);
+      key.push(files[i].key);
     }
 
     const image = new Image({
       user: req.currentUser.id,
       type: files[0].mimetype,
       url,
+      key,
       role: 'user',
       created_at: new Date(),
     });
@@ -478,17 +482,34 @@ const remove = async (req, res) => {
           console.log('default image remove err', err.message);
         });
       } else {
-        for (let i = 0; i < urls.length; i++) {
-          const url = urls[i];
-          s3.deleteObject(
-            {
-              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: url.slice(44),
-            },
-            function (err, data) {
-              console.log('err', err);
-            }
-          );
+        if (image.key) {
+          const keys = image.key;
+
+          for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            s3.deleteObject(
+              {
+                Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                Key: key,
+              },
+              function (err, data) {
+                console.log('err', err);
+              }
+            );
+          }
+        } else {
+          for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            s3.deleteObject(
+              {
+                Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                Key: url.slice(44),
+              },
+              function (err, data) {
+                console.log('err', err);
+              }
+            );
+          }
         }
       }
 
