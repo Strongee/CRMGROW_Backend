@@ -2471,9 +2471,16 @@ const downloadPDF = async (req, res) => {
     Key: pdf.url.slice(44),
   };
 
+  console.log('pdf.url.slice(44)', pdf.url.slice(44));
+
   try {
     res.attachment(pdf.url.slice(44));
-    const fileStream = s3.getObject(options).createReadStream();
+    const fileStream = s3
+      .getObject(options)
+      .createReadStream()
+      .catch((err) => {
+        console.log('s3 stream get err', err.message);
+      });
     fileStream.pipe(res);
   } catch (err) {
     console.log('err', err);
