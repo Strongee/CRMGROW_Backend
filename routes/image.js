@@ -56,6 +56,12 @@ router.get('/preview/:name', catchError(ImageCtrl.getPreview));
 // Get all image
 router.get('/easy-load', UserCtrl.checkAuth, catchError(ImageCtrl.getEasyLoad));
 
+router.get(
+  '/download/:id',
+  UserCtrl.checkAuth,
+  catchError(ImageCtrl.downloadImage)
+);
+
 // Get all image
 router.get('/', UserCtrl.checkAuth, catchError(ImageCtrl.getAll));
 

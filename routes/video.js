@@ -134,6 +134,7 @@ router.get(
 // Get easy load video
 router.get('/easy-load', UserCtrl.checkAuth, catchError(VideoCtrl.getEasyLoad));
 
+// Download video
 router.get(
   '/download/:id',
   UserCtrl.checkAuth,

@@ -3488,9 +3488,13 @@ const downloadVideo = async (req, res) => {
     Key: video.url.slice(44),
   };
 
-  res.attachment(video.url.slice(44));
-  const fileStream = s3.getObject(options).createReadStream();
-  fileStream.pipe(res);
+  try {
+    res.attachment(video.url.slice(44));
+    const fileStream = s3.getObject(options).createReadStream();
+    fileStream.pipe(res);
+  } catch (err) {
+    console.log('err', err);
+  }
 };
 
 module.exports = {

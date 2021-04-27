@@ -52,8 +52,14 @@ router.put('/:id', UserCtrl.checkAuth, catchError(PDFCtrl.updateDetail));
 // Upload a preview and detail info
 router.get('/preview/:name', catchError(PDFCtrl.getPreview));
 
-// Get easy load video
+// Get easy load pdf
 router.get('/easy-load', UserCtrl.checkAuth, catchError(PDFCtrl.getEasyLoad));
+
+router.get(
+  '/download/:id',
+  UserCtrl.checkAuth,
+  catchError(PDFCtrl.downloadPDF)
+);
 
 // Get all pdf
 router.get('/', UserCtrl.checkAuth, catchError(PDFCtrl.getAll));

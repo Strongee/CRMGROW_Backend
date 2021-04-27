@@ -2446,6 +2446,67 @@ const createPDF = async (req, res) => {
   });
 };
 
+const downloadPDF = async (req, res) => {
+  const { currentUser } = req;
+  const pdf = await PDF.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  });
+
+  if (!pdf) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid permission',
+    });
+  }
+
+  if (!pdf.url) {
+    return res.status(400).json({
+      status: false,
+      error: 'URL not found',
+    });
+  }
+  const options = {
+    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+    Key: pdf.url.slice(44),
+  };
+
+  console.log('pdf.url.slice(44)', pdf.url.slice(44));
+
+  res.attachment(pdf.url.slice(44));
+  s3.headObject(options)
+    .promise()
+    .then(() => {
+      // This will not throw error anymore
+      const fileStream = s3.getObject().createReadStream();
+      fileStream.pipe(res);
+    })
+    .catch((error) => {
+      return res.status(500).json({
+        status: false,
+        error,
+      });
+    });
+
+  // try {
+  //   res.attachment(pdf.url.slice(44));
+  //   const fileStream = s3
+  //     .getObject(options)
+  //     .createReadStream()
+  //     .on('error', (error) => {
+  //       throw error;
+  //     });
+
+  //   fileStream.pipe(res);
+  // } catch (err) {
+  //   console.log('err', err);
+  //   return res.status(500).json({
+  //     status: false,
+  //     error:
+  //   })
+  // }
+};
+
 module.exports = {
   play,
   play1,
@@ -2466,4 +2527,5 @@ module.exports = {
   getHistory,
   bulkOutlook,
   bulkGmail,
+  downloadPDF,
 };
