@@ -1760,7 +1760,7 @@ const receiveEmail = async (req, res) => {
 
           const data = {
             template_data: {
-              user_name: user.name,
+              user_name: user.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               contact_url: urls.CONTACT_PAGE_URL + contact.id,
               contact_name: `${contact.first_name} ${contact.last_name}`,
