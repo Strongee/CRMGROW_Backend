@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'VideoWatched';
+const templateName = 'EmailOpened';
 
 const subjects = {
   TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,
@@ -23,6 +23,7 @@ const subjects = {
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
   Welcome: 'Welcome to CRMGrow, {{user_name}}!',
   VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{created_at}}',
+  EmailOpened: `Opened demail: {{contact_name}} at {{created_at}}`,
   PaymentNotification: 'CRMGrow payment notification',
 };
 const htmls = {};

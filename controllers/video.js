@@ -3484,6 +3484,7 @@ const downloadVideo = async (req, res) => {
       error: 'URL not found',
     });
   }
+
   const options = {
     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
     Key: video.key || video.url.slice(44),
