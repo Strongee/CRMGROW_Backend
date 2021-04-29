@@ -29,6 +29,7 @@ const FollowUpSchema = new Schema(
 
 FollowUpSchema.index({ user: 1, status: 1, due_date: 1 });
 FollowUpSchema.index({ shared_follow_up: 1 });
+FollowUpSchema.index({ contact: 1 });
 const FollowUp = mongoose.model('follow_up', FollowUpSchema);
 
 module.exports = FollowUp;

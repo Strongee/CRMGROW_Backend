@@ -250,7 +250,49 @@ const getDetail = async (req, res) => {
     Array.prototype.push.apply(materials, images);
 
     if (count) {
-
+      const loadedIds = [];
+      const noteIds = [];
+      const emailIds = [];
+      const textIds = [];
+      const apptIds = [];
+      const taskIds = [];
+      const dealIds = [];
+      for (let i = 0; i < _activity_list.length; i++) {
+        if (['notes', 'emails', 'texts', 'appointments', 'follow_ups', 'deals'].indexOf(_activity_list[i].type) !== -1) {
+          let detail_id = _activity_list[i][_activity_list[i].type];
+          if (detail_id instanceof Array) {
+            detail_id = detail_id[0];
+          }
+          if (loadedIds.indexOf(detail_id) === -1) {
+            switch ( _activity_list[i].type ) {
+              case 'notes':
+                noteIds.push(detail_id);
+                break;
+              case 'emails':
+                emailIds.push(detail_id);
+                break;
+              case 'texts':
+                textIds.push(detail_id);
+                break;
+              case 'appointments':
+                apptIds.push(detail_id);
+                break;
+              case 'follow_ups':
+                taskIds.push(detail_id);
+                break;
+              case 'deals':
+                dealIds.push(detail_id);
+                break;
+            }
+          }
+        }
+      }
+      notes = await Note.find({ _id: { $in: noteIds } });
+      emails = await Email.find({ _id: { $in: emailIds } });
+      texts = await Text.find({ _id: { $in: textIds } });
+      appointments = await Appointment.find({ _id: { $in: apptIds } });
+      tasks = await FollowUp.find({ _id: { $in: taskIds } });
+      deals = await Deal.find({ _id: { $in: dealIds } });
     } else {
       notes = await Note.find({ contact: contactId });
       emails = await Email.find({ contacts: contactId });

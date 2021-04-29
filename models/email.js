@@ -24,6 +24,7 @@ const EmailSchema = new Schema(
 );
 
 EmailSchema.index({ message_id: 1 });
+EmailSchema.index({ contacts: 1 });
 const Email = mongoose.model('email', EmailSchema);
 
 module.exports = Email;
