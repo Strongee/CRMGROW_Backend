@@ -17,6 +17,7 @@ const DealSchema = new Schema(
   }
 );
 
+DealSchema.index({ contacts: 1 });
 const Deal = mongoose.model('deal', DealSchema);
 
 module.exports = Deal;
