@@ -50,8 +50,15 @@ const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
 const PaidDemo = require('../models/paid_demo');
+const Reminder = require('../models/reminder');
+const Tag = require('../models/tag');
+const TimeLine = require('../models/time_line');
 
-const { getTwilioNumber } = require('../helpers/text');
+const {
+  getTwilioNumber,
+  releaseSignalWireNumber,
+  releaseTwilioNumber,
+} = require('../helpers/text');
 const { sendNotificationEmail } = require('../helpers/email');
 
 const urls = require('../constants/urls');
@@ -2259,20 +2266,34 @@ const createPassword = async (req, res) => {
 
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
-  const data = await Contact.find({ user: currentUser.id });
-  if (!data) {
-    return false;
+
+  await Contact.deleteMany({ user: currentUser.id });
+  await Activity.deleteMany({ user: currentUser.id });
+  await FollowUp.deleteMany({ user: currentUser.id });
+  await Appointment.deleteMany({ user: currentUser.id });
+  await Reminder.deleteMany({ user: currentUser.id });
+  await Tag.deleteMany({ user: currentUser.id });
+  await TimeLine.deleteMany({ user: currentUser.id });
+
+  if (currentUser.proxy_number_id) {
+    releaseSignalWireNumber(currentUser.proxy_number_id);
   }
 
-  for (let i = 0; i < data.length; i++) {
-    const contact = data[i];
-    await Contact.deleteOne({ _id: contact });
-    await Activity.deleteMany({ contacts: contact });
-    await FollowUp.deleteMany({ contact });
-    await Appointment.deleteMany({ contact });
+  if (currentUser.twilio_number_id) {
+    releaseTwilioNumber(currentUser.twilio_number_id);
   }
 
-  return res.send({
+  if (currentUser.payment) {
+    PaymentCtrl.cancelCustomer(currentUser.payment).catch((err) => {
+      console.log('err', err);
+    });
+  }
+  currentUser.del = true;
+  currentUser.save().catch((err) => {
+    console.log('user delete err', err.message);
+  });
+
+  return res.status({
     status: true,
   });
 };
