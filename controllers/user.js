@@ -2288,6 +2288,7 @@ const closeAccount = async (req, res) => {
       console.log('err', err);
     });
   }
+
   currentUser.del = true;
   currentUser.save().catch((err) => {
     console.log('user delete err', err.message);

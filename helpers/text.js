@@ -1117,6 +1117,19 @@ const generateUnsubscribeLink = () => {
   return '\n\nReply STOP to unsubscribe.';
 };
 
+const releaseTwilioNumber = (phoneNumberSid) => {
+  twilio
+    .incomingPhoneNumbers(phoneNumberSid)
+    .remove()
+    .then(function (deleted) {
+      // Success
+      console.log('twilio number deleted');
+    })
+    .catch(function (error) {
+      // Handle error
+    });
+};
+
 module.exports = {
   bulkVideo,
   bulkPDF,
@@ -1128,5 +1141,6 @@ module.exports = {
   matchUSPhoneNumber,
   generateUnsubscribeLink,
   releaseSignalWireNumber,
+  releaseTwilioNumber,
   sleep,
 };

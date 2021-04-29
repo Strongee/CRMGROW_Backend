@@ -258,7 +258,14 @@ router.post(
 
 router.get('/push-notification/:id', catchError(UserCtrl.pushNotification));
 
+// Search Phonenumber
+router.get(
+  '/cancel-account',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.searchPhone)
+);
+
 // Edit own profile
-router.get('/:id', catchError(UserCtrl.getUser));
+router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));
 
 module.exports = router;
