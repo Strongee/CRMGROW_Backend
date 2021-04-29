@@ -19,6 +19,7 @@ const FollowUpSchema = new Schema(
     type: String,
     set_recurrence: Boolean,
     recurrence_mode: String,
+    remind_at: Date,
     updated_at: Date,
     created_at: Date,
   },

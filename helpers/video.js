@@ -39,6 +39,8 @@ const convertRecordVideo = async (id, area) => {
       file_path,
       '-movflags',
       'faststart',
+      '-preset',
+      'ultrafast',
       '-profile:v',
       'high',
       '-level',
@@ -53,6 +55,8 @@ const convertRecordVideo = async (id, area) => {
       file_path,
       '-movflags',
       'faststart',
+      '-preset',
+      'ultrafast',
       '-profile:v',
       'high',
       '-level',
@@ -291,6 +295,11 @@ const getDuration = async (id) => {
 
 const generateThumbnail = (data) => {
   const { file_name, file_path, area } = data;
+
+  if (!fs.existsSync(THUMBNAILS_PATH)) {
+    fs.mkdirSync(THUMBNAILS_PATH);
+  }
+
   const thumbnail_path = THUMBNAILS_PATH + file_name + '.png';
   let args = [];
   if (area) {

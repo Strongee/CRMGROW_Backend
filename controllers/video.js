@@ -3304,6 +3304,11 @@ const setupRecording = (io) => {
   io.sockets.on('connection', (socket) => {
     socket.on('initVideo', () => {
       const videoId = uuidv1();
+
+      if (!fs.existsSync(TEMP_PATH)) {
+        fs.mkdirSync(TEMP_PATH);
+      }
+
       const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
       fileStreams[videoId] = ws;
       fileStreamSizeStatus[videoId] = 0;

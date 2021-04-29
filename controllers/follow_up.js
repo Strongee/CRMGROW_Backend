@@ -1,11 +1,9 @@
-const { validationResult } = require('express-validator/check');
 const moment = require('moment-timezone');
 const FollowUp = require('../models/follow_up');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
 const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
-const User = require('../models/user');
 const ActivityHelper = require('../helpers/activity');
 const system_settings = require('../config/system_settings');
 
@@ -53,32 +51,18 @@ const create = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
+  const startdate = moment(req.body.due_date);
+  const remind_at = startdate.subtract(reminder_before, 'minutes');
+
   const followUp = new FollowUp({
     ...req.body,
     user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
+    remind_at,
   });
 
   followUp
     .save()
     .then((_followup) => {
-      const startdate = moment(_followup.due_date);
-      const due_date = startdate.subtract(reminder_before, 'minutes');
-      const reminder = new Reminder({
-        contact: _followup.contact,
-        due_date,
-        type: 'follow_up',
-        user: currentUser.id,
-        follow_up: _followup.id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      reminder.save().catch((err) => {
-        console.log('error', err);
-      });
-
       let detail_content = 'added follow up';
       if (req.guest_loggin) {
         detail_content = ActivityHelper.assistantLog(detail_content);
@@ -89,8 +73,6 @@ const create = async (req, res) => {
         user: currentUser.id,
         type: 'follow_ups',
         follow_ups: _followup.id,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
 
       activity
@@ -104,16 +86,14 @@ const create = async (req, res) => {
           ).catch((err) => {
             console.log('err', err);
           });
-          const myJSON = JSON.stringify(_followup);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
+
           return res.send({
             status: true,
-            data,
+            data: { ..._followup._doc, activity: { ..._activity._doc } },
           });
         })
-        .catch((e) => {
-          console.log('follow error', e);
+        .catch((err) => {
+          console.log('follow up activity create error', err.message);
           return res.status().send({
             status: false,
             error: e,
@@ -571,16 +551,20 @@ const bulkUpdate = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
+  let update_query = { ...req.body };
+
   if (req.body.due_date) {
     const startdate = moment(req.body.due_date);
-    const reminder_due_date = startdate.subtract(reminder_before, 'minutes');
+    const reminder_at = startdate.subtract(reminder_before, 'minutes');
 
-    Reminder.updateMany(
-      { follow_up: { $in: ids } },
-      { $set: { due_date: reminder_due_date } }
-    ).catch((err) => {
-      console.log('err', err);
-    });
+    // Reminder.updateMany(
+    //   { follow_up: { $in: ids } },
+    //   { $set: { due_date: reminder_due_date } }
+    // ).catch((err) => {
+    //   console.log('err', err);
+    // });
+
+    update_query = { ...update_query, reminder_at };
   }
 
   if (ids && ids.length) {
@@ -595,6 +579,7 @@ const bulkUpdate = async (req, res) => {
       if (due_date) {
         query['due_date'] = due_date;
       }
+
       FollowUp.updateMany({ _id: { $in: ids } }, { $set: query })
         .then(async (data) => {
           let detail_content = 'updated follow up';
@@ -676,6 +661,9 @@ const bulkCreate = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
+  const startdate = moment(due_date);
+  const remind_at = startdate.subtract(reminder_before, 'minutes');
+
   let detail_content = 'added follow up';
   if (req.guest_loggin) {
     detail_content = ActivityHelper.assistantLog(detail_content);
@@ -690,38 +678,19 @@ const bulkCreate = async (req, res) => {
       contact,
       set_recurrence,
       recurrence_mode,
+      remind_at,
       user: currentUser.id,
-      updated_at: new Date(),
-      created_at: new Date(),
     });
 
     followUp
       .save()
       .then((_followup) => {
-        const startdate = moment(_followup.due_date);
-        const due_date = startdate.subtract(reminder_before, 'minutes');
-        const reminder = new Reminder({
-          contact: _followup.contact,
-          due_date,
-          type: 'follow_up',
-          user: currentUser.id,
-          follow_up: _followup.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-
-        reminder.save().catch((err) => {
-          console.log('error', err);
-        });
-
         const activity = new Activity({
           content: detail_content,
           contacts: _followup.contact,
           user: currentUser.id,
           type: 'follow_ups',
           follow_ups: _followup.id,
-          created_at: new Date(),
-          updated_at: new Date(),
         });
 
         activity
@@ -735,29 +704,28 @@ const bulkCreate = async (req, res) => {
             ).catch((err) => {
               console.log('err', err);
             });
-            const myJSON = JSON.stringify(_followup);
-            const data = JSON.parse(myJSON);
-            data.activity = _activity;
+
+            return res.send({
+              status: true,
+            });
           })
-          .catch((e) => {
-            console.log('follow error', e);
-            return res.status().send({
+          .catch((err) => {
+            console.log('bulk create follow error', err.message);
+            return res.status(500).send({
               status: false,
-              error: e,
+              error: err.message,
             });
           });
       })
-      .catch((e) => {
-        console.log('follow error', e);
+      .catch((err) => {
+        console.log('follow create error', err.message);
+
         return res.status().send({
           status: false,
-          error: e,
+          error: err.message,
         });
       });
   }
-  return res.send({
-    status: true,
-  });
 };
 
 const load = async (req, res) => {
