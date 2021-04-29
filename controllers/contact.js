@@ -271,13 +271,22 @@ const getDetail = async (req, res) => {
       const taskIds = [];
       const dealIds = [];
       for (let i = 0; i < _activity_list.length; i++) {
-        if (['notes', 'emails', 'texts', 'appointments', 'follow_ups', 'deals'].indexOf(_activity_list[i].type) !== -1) {
+        if (
+          [
+            'notes',
+            'emails',
+            'texts',
+            'appointments',
+            'follow_ups',
+            'deals',
+          ].indexOf(_activity_list[i].type) !== -1
+        ) {
           let detail_id = _activity_list[i][_activity_list[i].type];
           if (detail_id instanceof Array) {
             detail_id = detail_id[0];
           }
           if (loadedIds.indexOf(detail_id) === -1) {
-            switch ( _activity_list[i].type ) {
+            switch (_activity_list[i].type) {
               case 'notes':
                 noteIds.push(detail_id);
                 break;
