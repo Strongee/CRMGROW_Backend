@@ -53,9 +53,16 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
 
-const emailHelper = require('../helpers/email');
+const {
+  generateUnsubscribeLink,
+  addLinkTracking,
+  generateOpenTrackLink,
+  sendNotificationEmail,
+} = require('../helpers/email');
 const ActivityHelper = require('../helpers/activity');
-const { generateUnsubscribeLink } = require('../helpers/text');
+const {
+  generateUnsubscribeLink: generateTextUnsubscribeLink,
+} = require('../helpers/text');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -209,19 +216,19 @@ const bulkGmail = async (req, res) => {
         '</td></tr><tr><td>' +
         currentUser.email_signature +
         '</td></tr><tr><td>' +
-        emailHelper.generateUnsubscribeLink(activity.id) +
+        generateUnsubscribeLink(activity.id) +
         '</td></tr></tbody></body></html>';
     } else {
-      email_content = emailHelper.addLinkTracking(email_content, activity.id);
+      email_content = addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><tbody><tr><td>' +
         email_content +
         '</td></tr><tr><td>' +
-        emailHelper.generateOpenTrackLink(activity.id) +
+        generateOpenTrackLink(activity.id) +
         '</td></tr><tr><td>' +
         currentUser.email_signature +
         '</td></tr><tr><td>' +
-        emailHelper.generateUnsubscribeLink(activity.id) +
+        generateUnsubscribeLink(activity.id) +
         '</td></tr></tbody></body></html>';
     }
 
@@ -599,18 +606,18 @@ const bulkOutlook = async (req, res) => {
         email_content +
         '</p><br/><br/>' +
         currentUser.email_signature +
-        emailHelper.generateUnsubscribeLink(activity.id) +
+        generateUnsubscribeLink(activity.id) +
         '</body></html>';
     } else {
       // Add click tracking
-      email_content = emailHelper.addLinkTracking(email_content, activity.id);
+      email_content = addLinkTracking(email_content, activity.id);
       html_content =
         '<html><head><title>Email</title></head><body><p>' +
         email_content +
-        emailHelper.generateOpenTrackLink(activity.id) +
+        generateOpenTrackLink(activity.id) +
         '</p><br/><br/>' +
         currentUser.email_signature +
-        emailHelper.generateUnsubscribeLink(activity.id) +
+        generateUnsubscribeLink(activity.id) +
         '</body></html>';
     }
 
@@ -918,7 +925,8 @@ const openTrack = async (req, res) => {
               from: fromNumber,
               to: e164Phone,
               // body: title + '\n' + time + contact_link,
-              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+              body:
+                title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
             })
             .catch((err) => console.error('send sms err', err));
         }
@@ -1054,7 +1062,7 @@ const bulkEmail = async (req, res) => {
         email_content +
         '<br/><br/>' +
         currentUser.email_signature +
-        emailHelper.generateUnsubscribeLink(activity.id),
+        generateUnsubscribeLink(activity.id),
       text: email_content,
       headers: {
         'List-Unsubscribe': `<${urls.UNSUBSCRIPTION_URL}${activity.id}>`,
@@ -1557,7 +1565,8 @@ const receiveEmailSendGrid = async (req, res) => {
               from: fromNumber,
               to: e164Phone,
               // body: title + '\n' + time + contact_link,
-              body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+              body:
+                title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
             })
             .catch((err) => console.error('send sms err: ', err));
         }
@@ -1607,6 +1616,7 @@ const receiveEmail = async (req, res) => {
 
       let reopened = moment();
       reopened = reopened.subtract(1, 'hours');
+
       const old_activity = await EmailTracker.findOne({
         activity: req.params.id,
         type: 'open',
@@ -1712,6 +1722,7 @@ const receiveEmail = async (req, res) => {
         );
 
         if (email_notification['email']) {
+          /**
           sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
           const msg = {
             to: user.email,
@@ -1741,6 +1752,30 @@ const receiveEmail = async (req, res) => {
             },
           };
           sgMail.send(msg).catch((err) => console.error(err));
+          */
+
+          const time_zone = user.time_zone_info
+            ? JSON.parse(user.time_zone_info).tz_name
+            : system_settings.TIME_ZONE;
+
+          const data = {
+            template_data: {
+              user_name: user.user_name,
+              created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+              contact_url: urls.CONTACT_PAGE_URL + contact.id,
+              contact_name: `${contact.first_name} ${contact.last_name}`,
+              email_subject: _email.subject,
+              email_sent: moment(sent)
+                .tz(time_zone)
+                .format('h:mm MMMM Do, YYYY'),
+              email_opened: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            },
+            template_name: 'EmailOpened',
+            required_reply: false,
+            email: user.email,
+          };
+
+          sendNotificationEmail(data);
         }
 
         const desktop_notification = garbage['desktop_notification'];
@@ -1834,7 +1869,8 @@ const receiveEmail = async (req, res) => {
               .create({
                 from: fromNumber,
                 to: e164Phone,
-                body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+                body:
+                  title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
                 // body: title + '\n' + time + contact_link,
               })
               .catch((err) => console.error('send sms err: ', err));
@@ -2150,7 +2186,7 @@ const unSubscribeEmail = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+            body: title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2440,7 +2476,7 @@ const reSubscribeEmail = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+            body: title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }
@@ -2733,7 +2769,7 @@ const clickEmailLink = async (req, res) => {
             from: fromNumber,
             to: e164Phone,
             // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time + '\n\n' + generateUnsubscribeLink(),
+            body: title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
           })
           .catch((err) => console.error('send sms err: ', err));
       }

@@ -198,13 +198,26 @@ const getDetail = async (req, res) => {
       })
         .sort({ updated_at: -1 })
         .limit(count)
-        .populate([{path: 'video_trackers', select: '-_id -user -contact'}, {path: 'image_trackers', select: '-_id -user -contact'}, {path: 'pdf_trackers', select: '-_id -user -contact'}, {path: 'email_trackers', select: '-_id -user -contact'}, {path: 'text_trackers', select: '-_id -user -contact'}])
+        .populate([
+          { path: 'video_trackers', select: '-_id -user -contact' },
+          { path: 'image_trackers', select: '-_id -user -contact' },
+          { path: 'pdf_trackers', select: '-_id -user -contact' },
+          { path: 'email_trackers', select: '-_id -user -contact' },
+          { path: 'text_trackers', select: '-_id -user -contact' },
+        ]);
     } else {
       _activity_list = await Activity.find({
         contacts: req.params.id,
         status: { $ne: 'pending' },
-      }).sort({ updated_at: 1 })
-      .populate([{path: 'video_trackers', select: '-_id -user -contact'}, {path: 'image_trackers', select: '-_id -user -contact'}, {path: 'pdf_trackers', select: '-_id -user -contact'}, {path: 'email_trackers', select: '-_id -user -contact'}, {path: 'text_trackers', select: '-_id -user -contact'}])
+      })
+        .sort({ updated_at: 1 })
+        .populate([
+          { path: 'video_trackers', select: '-_id -user -contact' },
+          { path: 'image_trackers', select: '-_id -user -contact' },
+          { path: 'pdf_trackers', select: '-_id -user -contact' },
+          { path: 'email_trackers', select: '-_id -user -contact' },
+          { path: 'text_trackers', select: '-_id -user -contact' },
+        ]);
     }
 
     // Contact Relative Details
@@ -309,8 +322,15 @@ const getDetail = async (req, res) => {
       { activity: _activity_list },
       { time_lines: _timelines },
       { automation },
-      { details: {
-          materials, notes, emails, texts, appointments, tasks, deals
+      {
+        details: {
+          materials,
+          notes,
+          emails,
+          texts,
+          appointments,
+          tasks,
+          deals,
         },
       }
     );
@@ -325,7 +345,7 @@ const getDetail = async (req, res) => {
       error: 'Contact not found',
     });
   }
-}
+};
 
 const get = async (req, res) => {
   const { currentUser } = req;
