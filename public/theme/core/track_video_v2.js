@@ -171,7 +171,8 @@ function reportTime() {
           duration: total * 1000,
           material_last: vPlayer.currentTime,
           start: start,
-          end: end
+          end: end,
+          gap: trackingTimes
         });
       }
     } else {
