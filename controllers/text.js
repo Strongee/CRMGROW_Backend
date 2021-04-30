@@ -456,7 +456,7 @@ const receiveTextTwilio = async (req, res) => {
   const from = req.body['From'];
   const to = req.body['To'];
 
-  const currentUser = await User.findOne({ proxy_number: to }).catch((err) => {
+  const currentUser = await User.findOne({ twilio_number: to }).catch((err) => {
     console.log('current user found err sms', err.message);
   });
 

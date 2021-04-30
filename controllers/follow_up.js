@@ -2,7 +2,6 @@ const moment = require('moment-timezone');
 const FollowUp = require('../models/follow_up');
 const Contact = require('../models/contact');
 const Activity = require('../models/activity');
-const Reminder = require('../models/reminder');
 const Garbage = require('../models/garbage');
 const ActivityHelper = require('../helpers/activity');
 const system_settings = require('../config/system_settings');
@@ -123,25 +122,13 @@ const edit = async (req, res) => {
   }
 
   const editData = req.body;
+  let query = { ...req.body };
 
   if (req.body.due_date || req.body.contact) {
-    Reminder.findOne({ follow_up: req.params.id })
-      .then((_reminder) => {
-        if (req.body.due_date) {
-          const startdate = moment(req.body.due_date);
-          const due_date = startdate.subtract(reminder_before, 'minutes');
-          _reminder['due_date'] = due_date;
-        }
-        if (req.body.contact) {
-          _reminder['contact'] = req.body.contact;
-        }
-        _reminder.save().catch((err) => {
-          console.log('err', err);
-        });
-      })
-      .catch((err) => {
-        console.log('err', err);
-      });
+    const startdate = moment(req.body.due_date);
+    const reminder_at = startdate.subtract(reminder_before, 'minutes');
+
+    query = { ...query, reminder_at };
   }
 
   const follow_up = await FollowUp.findOne({ _id: req.params.id }).catch(
@@ -150,13 +137,14 @@ const edit = async (req, res) => {
     }
   );
 
-  for (const key in editData) {
-    follow_up[key] = editData[key];
-  }
-
-  follow_up['updated_at'] = new Date();
-  follow_up
-    .save()
+  FollowUp.updateOne(
+    {
+      _id: req.params.id,
+    },
+    {
+      $set: query,
+    }
+  )
     .then((_follow_up) => {
       let detail_content = 'updated follow up';
       if (req.guest_loggin) {
@@ -169,8 +157,6 @@ const edit = async (req, res) => {
         user: currentUser.id,
         type: 'follow_ups',
         follow_ups: _follow_up.id,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
 
       activity
@@ -184,19 +170,20 @@ const edit = async (req, res) => {
           ).catch((err) => {
             console.log('activity save err', err.message);
           });
-          const myJSON = JSON.stringify(follow_up);
-          const data = JSON.parse(myJSON);
-          data.activity = _activity;
+
           return res.send({
             status: true,
-            data,
+            data: {
+              ...follow_up._doc,
+              activity: _activity._doc,
+            },
           });
         })
-        .catch((e) => {
-          console.log('follow error', e);
+        .catch((err) => {
+          console.log('follow error', err.message);
           return res.status(500).send({
             status: false,
-            error: e.message,
+            error: err.message,
           });
         });
     })
@@ -226,20 +213,12 @@ const completed = async (req, res) => {
         console.log('err', err);
       });
 
-      Reminder.deleteOne({
-        follow_up,
-      }).catch((err) => {
-        console.log('err', err);
-      });
-
       const activity = new Activity({
         content: detail_content,
         contacts: _follow_up.contact,
         user: currentUser.id,
         type: 'follow_ups',
         follow_ups: follow_up,
-        created_at: new Date(),
-        updated_at: new Date(),
       });
 
       activity
@@ -251,8 +230,9 @@ const completed = async (req, res) => {
               $set: { last_activity: _activity.id },
             }
           ).catch((err) => {
-            console.log('err', err);
+            console.log('activity save err', err.message);
           });
+
           const myJSON = JSON.stringify(_follow_up);
           const data = JSON.parse(myJSON);
           data.activity = _activity;
@@ -261,18 +241,18 @@ const completed = async (req, res) => {
             data,
           });
         })
-        .catch((e) => {
-          console.log('follow error', e);
+        .catch((err) => {
+          console.log('follow error', err.message);
           return res.status(400).send({
             status: false,
-            error: e,
+            error: err.message,
           });
         });
     } catch (err) {
       console.log('err', err);
-      return res.status(400).json({
+      return res.status(500).json({
         status: false,
-        error: err,
+        error: err.message || 'Internal Server Error',
       });
     }
   } else {
@@ -287,8 +267,6 @@ const completed = async (req, res) => {
 const getByDate = async (req, res) => {
   const { currentUser } = req;
 
-  // TODO: query condition should be defined in route
-  // TODO: limit access to users
   const allowed_queries = [
     'overdue',
     'today',
@@ -430,24 +408,28 @@ const updateArchived = async (req, res) => {
     try {
       for (let i = 0; i < follow_ups.length; i++) {
         const follow_up = follow_ups[i];
+
         FollowUp.deleteOne({ _id: follow_up }).catch((err) => {
           console.log('follow up delete err', err.message);
         });
-        Reminder.deleteOne({
-          type: 'follow_up',
-          follow_up: follow_up.id,
-        }).catch((err) => {
-          console.log('reminder up delete err', err.message);
-        });
       }
-      res.send({
-        status: true,
-      });
+
+      FollowUp.deleteMany({
+        _id: { $in: follow_ups },
+      })
+        .then(() => {
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          console.log('follow up delete err', err.message);
+        });
     } catch (err) {
       console.log('err', err);
       return res.status(400).json({
         status: false,
-        error: err,
+        error: err.message,
       });
     }
   } else {
@@ -461,6 +443,7 @@ const updateArchived = async (req, res) => {
 const updateChecked = async (req, res) => {
   const { currentUser } = req;
   const { follow_ups } = req.body;
+
   if (follow_ups) {
     let detail_content = 'completed follow up';
     if (req.guest_loggin) {
@@ -470,21 +453,13 @@ const updateChecked = async (req, res) => {
     try {
       for (let i = 0; i < follow_ups.length; i++) {
         const follow_up = follow_ups[i];
-        const _follow_up = await FollowUp.findOne({ _id: follow_up }).catch(
-          (err) => {
-            console.log('err', err);
+        const _follow_up = await FollowUp.updateOne(
+          { _id: follow_up },
+          {
+            $set: { status: 1 },
           }
-        );
-
-        _follow_up.status = 1;
-        _follow_up.save().catch((err) => {
-          console.log('err', err);
-        });
-
-        Reminder.deleteOne({
-          follow_up,
-        }).catch((err) => {
-          console.log('err', err);
+        ).catch((err) => {
+          console.log('followup updatet err', err.message);
         });
 
         const activity = new Activity({
@@ -493,8 +468,6 @@ const updateChecked = async (req, res) => {
           user: currentUser.id,
           type: 'follow_ups',
           follow_ups: follow_up,
-          created_at: new Date(),
-          updated_at: new Date(),
         });
 
         activity
@@ -509,11 +482,11 @@ const updateChecked = async (req, res) => {
               console.log('err', err);
             });
           })
-          .catch((e) => {
-            console.log('follow error', e);
-            return res.status(400).send({
+          .catch((err) => {
+            console.log('follow error', err.message);
+            return res.status(500).send({
               status: false,
-              error: e,
+              error: err.message,
             });
           });
       }
@@ -522,7 +495,7 @@ const updateChecked = async (req, res) => {
       });
     } catch (err) {
       console.log('err', err);
-      return res.status(400).json({
+      return res.status(500).json({
         status: false,
         error: err,
       });
@@ -551,42 +524,26 @@ const bulkUpdate = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
-  let update_query = { ...req.body };
+  let query = { ...req.body };
 
   if (req.body.due_date) {
     const startdate = moment(req.body.due_date);
     const reminder_at = startdate.subtract(reminder_before, 'minutes');
 
-    // Reminder.updateMany(
-    //   { follow_up: { $in: ids } },
-    //   { $set: { due_date: reminder_due_date } }
-    // ).catch((err) => {
-    //   console.log('err', err);
-    // });
-
-    update_query = { ...update_query, reminder_at };
+    query = { ...query, reminder_at };
   }
 
   if (ids && ids.length) {
     try {
-      const query = {};
-      if (content) {
-        query['content'] = content;
-      }
-      if (type) {
-        query['type'] = type;
-      }
-      if (due_date) {
-        query['due_date'] = due_date;
-      }
-
       FollowUp.updateMany({ _id: { $in: ids } }, { $set: query })
         .then(async (data) => {
           let detail_content = 'updated follow up';
           if (req.guest_loggin) {
             detail_content = ActivityHelper.assistantLog(detail_content);
           }
+
           const follow_ups = await FollowUp.find({ _id: { $in: ids } });
+
           for (let i = 0; i < follow_ups.length; i++) {
             const follow_up = follow_ups[i];
             const activity = new Activity({
@@ -613,14 +570,14 @@ const bulkUpdate = async (req, res) => {
                 console.log('follow bulk update error', err.message);
               });
           }
-          res.send({
+          return res.send({
             status: true,
             data,
           });
         })
         .catch((err) => {
           console.log('err', err);
-          res.send({
+          return res.send({
             status: false,
             error: err,
           });
