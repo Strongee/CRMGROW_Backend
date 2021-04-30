@@ -839,8 +839,13 @@ const updateVideo = async (
   duration,
   material_last,
   start,
-  end
+  end,
+  gap
 ) => {
+  const gapData = {};
+  if (gap && gap.length) {
+    gapData['gap'] = gap;
+  }
   await VideoTracker.updateOne(
     { _id: video_tracker_id },
     {
@@ -849,6 +854,7 @@ const updateVideo = async (
         material_last,
         start,
         end,
+        ...gapData,
       },
     }
   );
@@ -1159,15 +1165,15 @@ const setup = (io) => {
     socket.on('update_video', (data) => {
       const video_tracker = socket.video_tracker;
       if (typeof video_tracker !== 'undefined') {
-        const { duration, material_last, start, end } = data;
-        updateVideo(video_tracker._id, duration, material_last, start, end)
+        const { duration, material_last, start, end, gap } = data;
+        updateVideo(video_tracker._id, duration, material_last, start, end, gap)
           .then(() => {})
           .catch((err) => {
             console.log('err', err);
           });
       } else {
-        const { duration, material_last, tracker_id, start, end } = data;
-        updateVideo(tracker_id, duration, material_last, start, end)
+        const { duration, material_last, tracker_id, start, end, gap } = data;
+        updateVideo(tracker_id, duration, material_last, start, end, gap)
           .then(() => {
             VideoTracker.findOne({ _id: tracker_id }).then((tracker) => {
               socket.type = 'video';
