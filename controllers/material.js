@@ -1172,6 +1172,9 @@ const bulkText = async (req, res) => {
             ? text_content
             : text_content + generateTextUnsubscribeLink();
 
+          console.log('_contact', _contact);
+          console.log('text_content', text_content);
+
           client.messages
             .create({
               from: fromNumber,
