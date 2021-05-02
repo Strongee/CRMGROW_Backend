@@ -1172,9 +1172,6 @@ const bulkText = async (req, res) => {
             ? text_content
             : text_content + generateTextUnsubscribeLink();
 
-          console.log('_contact', _contact);
-          console.log('text_content', text_content);
-
           client.messages
             .create({
               from: fromNumber,
@@ -1427,7 +1424,6 @@ const bulkText = async (req, res) => {
             ? text_content
             : text_content + generateTextUnsubscribeLink();
 
-          console.log('text_content', text_content);
           twilio.messages
             .create({
               from: fromNumber,
@@ -1496,6 +1492,7 @@ const bulkText = async (req, res) => {
                           {
                             $set: {
                               status: 2,
+                              texted_unsbcription_link: true,
                             },
                           }
                         ).catch((err) => {
