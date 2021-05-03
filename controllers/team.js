@@ -2173,6 +2173,17 @@ const loadMaterial = async (req, res) => {
         };
 
         video_data.push(video_detail);
+      } else {
+        Team.updateOne(
+          {
+            _id: req.params.id,
+          },
+          {
+            $pull: { videos: { $in: video_ids[i] } },
+          }
+        ).catch((err) => {
+          console.log('team update one', err.message);
+        });
       }
     }
   }
