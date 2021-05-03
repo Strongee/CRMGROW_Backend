@@ -42,7 +42,9 @@ const ContactSchema = mongoose.Schema(
 );
 
 ContactSchema.pre('save', function (next) {
+
   const contact = this;
+
   if (this.isNew) {
     if (contact.state) {
       let state = '';
