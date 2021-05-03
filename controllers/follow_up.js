@@ -41,7 +41,7 @@ const create = async (req, res) => {
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
     (err) => {
-      console.log('err', err);
+      console.log('garbage find err', err.message);
     }
   );
 
@@ -95,15 +95,15 @@ const create = async (req, res) => {
           console.log('follow up activity create error', err.message);
           return res.status().send({
             status: false,
-            error: e,
+            error: err.message,
           });
         });
     })
-    .catch((e) => {
-      console.log('follow error', e);
+    .catch((err) => {
+      console.log('follow error', err.message);
       return res.status(500).send({
         status: false,
-        error: e.message,
+        error: err.message,
       });
     });
 };
@@ -121,14 +121,13 @@ const edit = async (req, res) => {
     reminder_before = garbage.reminder_before;
   }
 
-  const editData = req.body;
   let query = { ...req.body };
 
   if (req.body.due_date || req.body.contact) {
     const startdate = moment(req.body.due_date);
-    const reminder_at = startdate.subtract(reminder_before, 'minutes');
+    const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, reminder_at };
+    query = { ...query, remind_at };
   }
 
   const follow_up = await FollowUp.findOne({ _id: req.params.id }).catch(
@@ -510,7 +509,7 @@ const updateChecked = async (req, res) => {
 };
 
 const bulkUpdate = async (req, res) => {
-  const { ids, content, due_date, type } = req.body;
+  const { ids } = req.body;
 
   const { currentUser } = req;
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
@@ -528,9 +527,9 @@ const bulkUpdate = async (req, res) => {
 
   if (req.body.due_date) {
     const startdate = moment(req.body.due_date);
-    const reminder_at = startdate.subtract(reminder_before, 'minutes');
+    const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, reminder_at };
+    query = { ...query, remind_at };
   }
 
   if (ids && ids.length) {
@@ -576,10 +575,10 @@ const bulkUpdate = async (req, res) => {
           });
         })
         .catch((err) => {
-          console.log('err', err);
+          console.log('follow up update err', err.message);
           return res.send({
             status: false,
-            error: err,
+            error: err.message,
           });
         });
     } catch (err) {

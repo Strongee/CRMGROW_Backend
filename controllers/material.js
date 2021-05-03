@@ -1510,14 +1510,14 @@ const bulkText = async (req, res) => {
                             },
                           }
                         ).catch((err) => {
-                          console.log('err', err);
+                          console.log('contact update err', err.message);
                         });
                         resolve();
                       } else if (res.status === 'sent' && j >= 5) {
                         clearInterval(interval_id);
                         Activity.deleteMany({ _id: { $in: activities } }).catch(
                           (err) => {
-                            console.log('err', err);
+                            console.log('activity update err', err.message);
                           }
                         );
 
