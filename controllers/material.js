@@ -1420,6 +1420,9 @@ const bulkText = async (req, res) => {
             resolve(); // Invalid phone number
           }
 
+          console.log('_contact', _contact);
+          console.log('text_content', text_content);
+
           const body = _contact.texted_unsbcription_link
             ? text_content
             : text_content + generateTextUnsubscribeLink();
@@ -1479,9 +1482,9 @@ const bulkText = async (req, res) => {
                   resolve();
                 } else {
                   const interval_id = setInterval(function () {
-                    let i = 0;
+                    let j = 0;
                     getStatus(message.sid, 'twilio').then((res) => {
-                      i++;
+                      j++;
                       if (res.status === 'delivered') {
                         clearInterval(interval_id);
 
@@ -1507,14 +1510,14 @@ const bulkText = async (req, res) => {
                             },
                           }
                         ).catch((err) => {
-                          console.log('err', err);
+                          console.log('contact update err', err.message);
                         });
                         resolve();
-                      } else if (res.status === 'sent' && i >= 5) {
+                      } else if (res.status === 'sent' && j >= 5) {
                         clearInterval(interval_id);
                         Activity.deleteMany({ _id: { $in: activities } }).catch(
                           (err) => {
-                            console.log('err', err);
+                            console.log('activity update err', err.message);
                           }
                         );
 

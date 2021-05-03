@@ -2294,7 +2294,7 @@ const closeAccount = async (req, res) => {
     console.log('user delete err', err.message);
   });
 
-  return res.status({
+  return res.send({
     status: true,
   });
 };

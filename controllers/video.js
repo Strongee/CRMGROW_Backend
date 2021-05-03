@@ -3470,10 +3470,8 @@ const getEasyLoad = async (req, res) => {
 };
 
 const downloadVideo = async (req, res) => {
-  const { currentUser } = req;
   const video = await Video.findOne({
     _id: req.params.id,
-    user: currentUser.id,
   });
 
   if (!video) {

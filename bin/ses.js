@@ -12,8 +12,9 @@ AWS.config.update({
 const templateName = 'EmailOpened';
 
 const subjects = {
+  TaskReminder: `CRMGrow `,
   TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,
-  TeamRequest: `CRMGROW team member join request: {{user_name}}`,
+  TeamRequest: `CRMGrow team member join request: {{user_name}}`,
   TeamRequestAccepted: `{{team_name}} has accepted your join request`,
   TeamRequestDeclined: `{{team_name}} has declined your join request`,
   TeamCallInvitation: `{{user_name}} has accepted your call request`,

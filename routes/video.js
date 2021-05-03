@@ -141,6 +141,9 @@ router.get(
   catchError(VideoCtrl.downloadVideo)
 );
 
+// Play video
+router.get('/play/:id', catchError(VideoCtrl.downloadVideo));
+
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
 
