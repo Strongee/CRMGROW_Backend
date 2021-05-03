@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Opened</title>
+    <title>Follow up Reminder</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
@@ -142,7 +142,7 @@
                         <tbody>
                             <tr>
                                 <td align="center" style="padding-top: 56px; padding-bottom: 40px;">
-                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-40px.png" width="228" height="37">
+                                    <img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/crmgrow-logo-40px.png" width="228" height="37" alt="logo">
                                 </td>
                             </tr>
                             <tr>
@@ -186,43 +186,26 @@
                                                                                 <td class="email-open-title">
                                                                                     TYPE
                                                                                 </td>
-                                                                                <td class="email-open-title" style="padding-left: 30px">
-                                                                                    SENT ON
+                                                                                <td class="email-open-title" style="padding-left:30px">
+                                                                                    DUE START
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td class="email-open-detail" style="color: #0000FF; font-weight: bold; padding-bottom: 20px;">
-                                                                                    <table>
-                                                                                        <tbody>
-                                                                                            <tr>
-                                                                                                <!-- <td>
-                                                                                                    <img width="22" height="22" style="margin-top: 7px;">
-                                                                                                </td> -->
-                                                                                                <td class="email-open-detail">
-                                                                                                    {{email_subject}}
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </tbody>
-                                                                                    </table>
+                                                                                <td class="email-open-detail" style="color:#0000FF;font-weight:bold;padding-top:0px;">
+                                                                                    <img src="{{follow_up_url}}" width="23" height="23">
                                                                                 </td>
-                                                                                <!-- <td class="email-open-detail" style="padding-left: 30px; padding-bottom: 20px;">
-                                                                                    3:02AM 12 June 2020
-                                                                                </td> -->
+                                                                                <td class="email-open-detail" style="padding-left:30px;padding-bottom:20px;">
+                                                                                    {{due_start}}
+                                                                                </td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td class="email-open-title">
-                                                                                    SENT
-                                                                                </td>
-                                                                                <td class="email-open-title" style="padding-left: 30px">
-                                                                                    OPENED
+                                                                                    DESCRIPTION
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td class="email-open-detail">
-                                                                                    {{email_sent}}
-                                                                                </td>
-                                                                                <td class="email-open-detail" style="padding-left: 30px">
-                                                                                    {{email_opened}}
+                                                                                    {{follow_up_description}}
                                                                                 </td>
                                                                             </tr>
                                                                         </tbody>
@@ -257,7 +240,7 @@
                                                                                     Follow us on
                                                                                 </td>
                                                                                 <td class="td-facebook">
-                                                                                    <a class="btn-facebook" href="{{facebook_url}}" target="_blank"><img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/facebook.png"></a>
+                                                                                    <a class="btn-facebook" href="{{facebook_url}}" target="_blank"><img src="https://teamgrow.s3.us-east-2.amazonaws.com/ses/facebook.png" alt="logo"></a>
                                                                                 </td>
                                                                                 <td>
                                                                                     <a class="btn-redirect" href="{{login_url}}">

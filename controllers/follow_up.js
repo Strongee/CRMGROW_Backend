@@ -535,7 +535,7 @@ const bulkUpdate = async (req, res) => {
   if (ids && ids.length) {
     try {
       FollowUp.updateMany({ _id: { $in: ids } }, { $set: query })
-        .then(async (data) => {
+        .then(async () => {
           let detail_content = 'updated follow up';
           if (req.guest_loggin) {
             detail_content = ActivityHelper.assistantLog(detail_content);
@@ -571,7 +571,6 @@ const bulkUpdate = async (req, res) => {
           }
           return res.send({
             status: true,
-            data,
           });
         })
         .catch((err) => {
