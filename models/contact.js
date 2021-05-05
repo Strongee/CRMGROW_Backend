@@ -1,4 +1,7 @@
+/* eslint-disable prettier/prettier */
 const mongoose = require('mongoose');
+const CountryState = require('../constants/country_state');
+const Countries = require('../constants/country.json');
 
 const ContactSchema = mongoose.Schema(
   {
@@ -39,25 +42,59 @@ const ContactSchema = mongoose.Schema(
 );
 
 ContactSchema.pre('save', function (next) {
+
   const contact = this;
+
   if (this.isNew) {
     if (contact.state) {
-      if (States.indexOf(capitalize(contact.state)) === -1) {
-        contact.state = '';
-      } else {
-        contact.state = capitalize(contact.state);
+      let state = '';
+      let country = '';
+      for (let i = 0; i < CountryState.length; i++) {
+        const keys = Object.keys(CountryState[i]['state']);
+        const values = Object.values(CountryState[i]['state']);
+        if (values.indexOf(capitalize(contact.state)) === -1) {
+          state = '';
+          country = '';
+        } else {
+          state = capitalize(contact.state);
+          country = CountryState[i]['name'];
+          break;
+        }
+        if (keys.indexOf(contact.state.toUpperCase()) === -1) {
+          state = '';
+          country = '';
+        } else {
+          state = CountryState[i]['state'][contact.state.toUpperCase()];
+          country = CountryState[i]['name'];
+          break;
+        }
       }
+      contact.country = country;
+      contact.state = state;
     }
+    // state
+
+    // country
     if (contact.country) {
-      if (Countries[contact.country.toUpperCase()]) {
-        contact.country = Countries[contact.country.toUpperCase()];
+      let country = '';
+      const keys = Object.keys(Countries);
+      const values = Object.values(Countries);
+      if(keys.indexOf(contact.country.toUpperCase()) === -1) {
+        if(values.indexOf(contact.country.toUpperCase()) === -1) {
+          country = '';
+        } else {
+          country = contact.country.toUpperCase();
+        }
+      } else {
+        country = Countries[contact.country.toUpperCase()];
       }
+      contact.country = country;
     }
+    // country
   }
   return next();
 });
 
-const Countries = { 'UNITED STATES': 'US', 'UNITED STATE': 'US', CANADA: 'CA' };
 const LABEL = [
   '',
   'New',
@@ -70,84 +107,17 @@ const LABEL = [
   'Appt Missed',
   'Lead',
 ];
-const States = [
-  '',
-  'Alabama',
-  'Alaska',
-  'Arizona',
-  'Arkansas',
-  'California',
-  'Colorado',
-  'Connecticut',
-  'Delaware',
-  'Florida',
-  'Georgia',
-  'Guam',
-  'Hawaii',
-  'Idaho',
-  'Illinois',
-  'Indiana',
-  'Iowa',
-  'Kansas',
-  'Kentucky',
-  'Louisiana',
-  'Maine',
-  'Maryland',
-  'Massachusetts',
-  'Michigan',
-  'Minnesota',
-  'Mississippi',
-  'Missouri',
-  'Montana',
-  'Nebraska',
-  'Nevada',
-  'New Hampshire',
-  'New Jersey',
-  'New Mexico',
-  'New York',
-  'North Carolina',
-  'North Dakota',
-  'Ohio',
-  'Oklahoma',
-  'Oregon',
-  'Palau',
-  'Pennsylvania',
-  'Puerto Rico',
-  'Rhode Island',
-  'South Carolina',
-  'South Dakota',
-  'Tennessee',
-  'Texas',
-  'Utah',
-  'Vermont',
-  'Virginia',
-  'Washington',
-  'West Virginia',
-  'Wisconsin',
-  'Wyoming',
-  'Alberta',
-  'British Columbia',
-  'Manitoba',
-  'New Brunswick',
-  'Newfoundland and Labrador',
-  'Nova Scotia',
-  'Ontario',
-  'Prince Edward Island',
-  'Quebec',
-  'Saskatchewan',
-];
 
-const capitalize = (s) => {
-  if ((typeof s).toLowerCase() !== 'string') return;
-  if (s.split(' ').length === 2) {
-    const s1 = s.split(' ')[0];
-    const s2 = s.split(' ')[1];
-    return `${
-      s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()
-    } ${s2.charAt(0).toUpperCase()}${s2.slice(1).toLowerCase()}`;
+const capitalize = (str) => {
+  var splitStr = str.toLowerCase().split(' ');
+  for (var i = 0; i < splitStr.length; i++) {
+      // You do not need to check if i is larger than splitStr length, as your for does that for you
+      // Assign it back to the array
+      splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
   }
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-};
+  // Directly return the joined string
+  return splitStr.join(' '); 
+}
 
 ContactSchema.index({ user: 1, first_name: 1, last_name: 1 });
 ContactSchema.index({ user: 1, email: 1 });
