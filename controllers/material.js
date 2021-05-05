@@ -1640,8 +1640,8 @@ const bulkText = async (req, res) => {
             },
             {
               $set: {
-                count,
-                additional_credit: additional_sms_credit,
+                'text_info.count': count,
+                'text_info.additional_credit.amount': additional_sms_credit,
               },
             }
           ).catch((err) => {
@@ -1654,7 +1654,7 @@ const bulkText = async (req, res) => {
             },
             {
               $set: {
-                count,
+                'text_info.count': count,
               },
             }
           ).catch((err) => {
