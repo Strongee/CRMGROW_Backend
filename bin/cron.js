@@ -385,48 +385,7 @@ const reminder_job = new CronJob(
         .format('h:mm a');
 
       if (email_notification['follow_up']) {
-        /**
-        const msg = {
-          to: user.email,
-          from: mail_contents.FOLLOWUP_REMINDER.MAIL,
-          subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-          templateId: api.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
-          dynamic_template_data: {
-            contact:
-              contact.first_name +
-              contact.last_name +
-              ' - ' +
-              contact.email +
-              ' - ' +
-              contact.cell_phone,
-            due_date,
-            content: follow_up.content,
-            detailed_contact:
-              "<a href='" +
-              urls.CONTACT_PAGE_URL +
-              contact.id +
-              "'><img src='" +
-              urls.DOMAIN_URL +
-              "assets/images/contact.png'/></a>",
-          },
-        };
-
-        sgMail
-          .send(msg)
-          .then((res) => {
-            console.log('mailres.errorcode', res[0].statusCode);
-            if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-              console.log('Successful send to ' + msg.to);
-            } else {
-              console.log('email sending err', msg.to + res[0].statusCode);
-            }
-          })
-          .catch((err) => {
-            console.log('err: ', err);
-          });
-        */
-
-        const type = follow_up.typ || 'task';
+        const type = follow_up.type || 'task';
 
         const data = {
           template_data: {
@@ -436,7 +395,7 @@ const reminder_job = new CronJob(
             contact_name: `${contact.first_name} ${contact.last_name}`,
             follow_up_type: type,
             follow_up_description: follow_up.content,
-            due_start: follow_up.due_start,
+            due_start: due_date,
           },
           template_name: 'TaskReminder',
           required_reply: false,
@@ -525,9 +484,7 @@ const reminder_job = new CronJob(
           .sendNotification(subscription, playload)
           .catch((err) => console.error(err));
       }
-      Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
-        console.log('reminder remove err', err.message);
-      });
+
       if (follow_up.set_recurrence) {
         switch (follow_up.recurrence_mode) {
           case 'DAILY': {
@@ -545,17 +502,17 @@ const reminder_job = new CronJob(
               console.log('follow up err', err.message);
             });
 
-            const new_reminder = new Reminder({
-              contact: contact.id,
-              due_date: tomorrow,
-              type: 'follow_up',
-              user: follow_up.user,
-              follow_up: follow_up.id,
-            });
+            // const new_reminder = new Reminder({
+            //   contact: contact.id,
+            //   due_date: tomorrow,
+            //   type: 'follow_up',
+            //   user: follow_up.user,
+            //   follow_up: follow_up.id,
+            // });
 
-            new_reminder.save().catch((err) => {
-              console.log('reminder save err', err.message);
-            });
+            // new_reminder.save().catch((err) => {
+            //   console.log('reminder save err', err.message);
+            // });
             break;
           }
           case 'WEEKLY': {

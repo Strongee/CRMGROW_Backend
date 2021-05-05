@@ -73,7 +73,7 @@ const urls = {
   RECORDING_PREVIEW_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
   ONEONONE_URL: 'https://crmgrow.com/oneonone',
-  FOLLOW_UP_TYPE_URL: {
+  FOLLOWUP_TYPE_URL: {
     task:'https://teamgrow.s3.us-east-2.amazonaws.com/task.svg',
     email: 'https://teamgrow.s3.us-east-2.amazonaws.com/message.svg',
     material: 'https://teamgrow.s3.us-east-2.amazonaws.com/material.svg',
