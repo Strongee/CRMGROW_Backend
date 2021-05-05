@@ -1,3 +1,5 @@
+const { materialize } = require("rxjs/operators");
+
 let domain = 'https://app.crmgrow.com';
 const domain1 = 'https://app.crmgrow.com';
 let front =
@@ -55,7 +57,7 @@ const urls = {
   TRACK_URL: `${domain}/api/email/opened/`,
   UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
   RESUBSCRIPTION_URL: 'https://email.crmgrow.com/resubscribe/',
-  CLICK_REDIRECT_URL: 'https://email.crmgrow.com/redirect',
+  CLICK_REDIRECT_URL: `${domain}/redirect`,
   LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
   DEFAULT_TEMPLATE_PAGE_LOGO: `${domain}/theme/images/default_logo.png`,
   STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
@@ -71,6 +73,13 @@ const urls = {
   RECORDING_PREVIEW_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
   ONEONONE_URL: 'https://crmgrow.com/oneonone',
+  FOLLOW_UP_TYPE_URL: {
+    task:'https://teamgrow.s3.us-east-2.amazonaws.com/task.svg',
+    email: 'https://teamgrow.s3.us-east-2.amazonaws.com/message.svg',
+    material: 'https://teamgrow.s3.us-east-2.amazonaws.com/material.svg',
+    call: 'https://teamgrow.s3.us-east-2.amazonaws.com/phone.svg',
+    meeting: 'https://teamgrow.s3.us-east-2.amazonaws.com/lunch.svg',
+  },
 };
 
 module.exports = urls;

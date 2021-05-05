@@ -426,15 +426,17 @@ const reminder_job = new CronJob(
           });
         */
 
+        const type = follow_up.typ || 'task';
+
         const data = {
           template_data: {
             user_name: user.user_name,
             created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
             contact_url: urls.CONTACT_PAGE_URL + contact.id,
             contact_name: `${contact.first_name} ${contact.last_name}`,
-            follow_up_type: ,
+            follow_up_type: type,
             follow_up_description: moment(sent).tz(time_zone).format('h:mm MMMM Do, YYYY'),
-            due_start: ,
+            due_start: due_start,
           },
           template_name: 'TaskReminder',
           required_reply: false,
