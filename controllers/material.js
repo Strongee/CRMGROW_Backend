@@ -1136,42 +1136,51 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
       let promise;
 
+      if (max_text_count <= count && !additional_sms_credit) {
+        Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+          console.log('activity delete err', err.message);
+        });
+
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            error: 'Additional count required',
+          });
+          resolve(); // Exceet max limit;
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const e164Phone = phone(_contact.cell_phone)[0];
+      if (!e164Phone) {
+        Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+          console.log('activity delete err', err.message);
+        });
+
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            error: 'Invalid number',
+          });
+          resolve(); // Exceet max limit;
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const body = _contact.texted_unsbcription_link
+        ? text_content
+        : text_content + generateTextUnsubscribeLink();
+
       if (fromNumber) {
         promise = new Promise(async (resolve) => {
-          if (max_text_count <= count && !additional_sms_credit) {
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Exceet max limit;
-          } else if (max_text_count <= count) {
-            additional_sms_credit -= 1;
-          } else {
-            count += 1;
-          }
-
-          const e164Phone = phone(_contact.cell_phone)[0];
-          if (!e164Phone) {
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('activity delete err', err.message);
-            });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Invalid phone number
-          }
-
-          const body = _contact.texted_unsbcription_link
-            ? text_content
-            : text_content + generateTextUnsubscribeLink();
-
           client.messages
             .create({
               from: fromNumber,
@@ -1179,6 +1188,11 @@ const bulkText = async (req, res) => {
               body,
             })
             .then((message) => {
+              if (max_text_count <= count) {
+                additional_sms_credit -= 1;
+              } else {
+                count += 1;
+              }
               if (message.status === 'queued' || message.status === 'sent') {
                 console.log('Message ID: ', message.sid);
                 console.info(
@@ -1403,30 +1417,7 @@ const bulkText = async (req, res) => {
         });
       } else {
         fromNumber = currentUser['twilio_number'];
-
         promise = new Promise(async (resolve) => {
-          const e164Phone = phone(_contact.cell_phone)[0];
-          if (!e164Phone) {
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('activity delete err', err.message);
-            });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Invalid phone number
-          }
-
-          console.log('_contact', _contact);
-          console.log('text_content', text_content);
-
-          const body = _contact.texted_unsbcription_link
-            ? text_content
-            : text_content + generateTextUnsubscribeLink();
-
           twilio.messages
             .create({
               from: fromNumber,
@@ -1434,6 +1425,12 @@ const bulkText = async (req, res) => {
               to: e164Phone,
             })
             .then((message) => {
+              if (max_text_count <= count) {
+                additional_sms_credit -= 1;
+              } else {
+                count += 1;
+              }
+
               if (
                 message.status === 'accepted' ||
                 message.status === 'sending' ||

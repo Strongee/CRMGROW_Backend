@@ -716,6 +716,7 @@ const remove = async (req, res) => {
   await Appointment.deleteMany({ contact: req.params.id });
   await Reminder.deleteMany({ contact: req.params.id });
   await TimeLine.deleteMany({ contact: req.params.id });
+  await Text.deleteMany({ contact: req.params.id });
 
   res.send({
     status: true,
@@ -757,6 +758,7 @@ const removeContact = async (user_id, id) => {
   await Appointment.deleteMany({ contact: id });
   await Reminder.deleteMany({ contact: id });
   await TimeLine.deleteMany({ contact: id });
+  await Text.deleteMany({ contact: req.params.id });
   return true;
 };
 
