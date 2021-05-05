@@ -2991,7 +2991,27 @@ const advanceSearch = async (req, res) => {
     } else {
       var tagsQuery;
       if (includeTag) {
-        tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+        const index = tagsCondition.indexOf(-1);
+        console.log(index);
+        if (index > -1) {
+          // if it contain 'No tags'
+          tagsQuery = {
+            $or: [{ tags: [] }, { tags: undefined }],
+          };
+          // splice 'No tags' field.
+          tagsCondition.splice(index, 1);
+          if (tagsCondition.length > 0) {
+            tagsQuery = {
+              $or: [
+                { tags: { $elemMatch: { $in: tagsCondition } } },
+                { tags: [] },
+                { tags: undefined },
+              ],
+            };
+          }
+        } else {
+          tagsQuery = { tags: { $elemMatch: { $in: tagsCondition } } };
+        }
       } else {
         tagsQuery = {
           $or: [
