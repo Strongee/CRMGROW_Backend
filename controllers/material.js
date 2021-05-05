@@ -1136,7 +1136,11 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
       let promise;
 
-      if (max_text_count <= count && !additional_sms_credit) {
+      if (
+        text_info['is_limit'] &&
+        max_text_count <= count &&
+        !additional_sms_credit
+      ) {
         Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
           console.log('activity delete err', err.message);
         });
@@ -1188,7 +1192,7 @@ const bulkText = async (req, res) => {
               body,
             })
             .then((message) => {
-              if (max_text_count <= count) {
+              if (text_info['is_limit'] && max_text_count <= count) {
                 additional_sms_credit -= 1;
               } else {
                 count += 1;
@@ -1425,7 +1429,7 @@ const bulkText = async (req, res) => {
               to: e164Phone,
             })
             .then((message) => {
-              if (max_text_count <= count) {
+              if (text_info['is_limit'] && max_text_count <= count) {
                 additional_sms_credit -= 1;
               } else {
                 count += 1;
