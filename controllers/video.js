@@ -3366,7 +3366,6 @@ const setupRecording = (io) => {
           duration,
           user: decoded.id,
           recording: true,
-          created_at: new Date(),
         });
         video
           .save()

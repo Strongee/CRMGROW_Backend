@@ -40,11 +40,7 @@ const urls = require('../constants/urls');
 const notifications = require('../constants/notification');
 const mail_contents = require('../constants/mail_contents');
 const { VIDEO_PATH, TEMP_PATH } = require('../config/path');
-
-const accountSid = api.TWILIO.TWILIO_SID;
-const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
-const twilio = require('twilio')(accountSid, authToken);
-
+const { sendNotificationEmail } = require('../helpers/email');
 const { RestClient } = require('@signalwire/node');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
@@ -344,297 +340,57 @@ const weekly_report = new CronJob({
 const reminder_job = new CronJob(
   '*/10 * * * 0-6',
   async () => {
-    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
     const due_date = new Date();
     due_date.setSeconds(0);
     due_date.setMilliseconds(0);
 
-    const reminder_array = await Reminder.find({
-      due_date: { $lte: due_date },
-      del: false,
+    const reminder_array = await FollowUp.find({
+      remind_at: { $lte: due_date },
+      status: 0,
     }).catch((err) => {
-      console.log(err);
+      console.log('followup find err', err.message);
     });
 
     for (let i = 0; i < reminder_array.length; i++) {
-      const reminder = reminder_array[i];
-      if (reminder['type'] === 'follow_up') {
-        const follow_up = await FollowUp.findOne({
-          _id: reminder.follow_up,
-          status: 0,
-        }).catch((err) => {
-          console.log('followup find err: ', err.message);
-        });
+      const follow_up = reminder_array[i];
+      const user = await User.findOne({
+        _id: follow_up.user,
+        del: false,
+      }).catch((err) => {
+        console.log('err: ', err);
+      });
 
-        if (follow_up) {
-          const user = await User.findOne({
-            _id: follow_up.user,
-            del: false,
-          }).catch((err) => {
-            console.log('err: ', err);
-          });
+      if (!user) {
+        continue;
+      }
 
-          if (!user) {
-            continue;
-          }
-          const contact = await Contact.findOne({
-            _id: follow_up.contact,
-          }).catch((err) => {
-            console.log('err: ', err.message);
-          });
-          const garbage = await Garbage.findOne({ user: user.id }).catch(
-            (err) => {
-              console.log('err: ', err.message);
-            }
-          );
-          const email_notification = garbage['email_notification'];
-          const time_zone = user.time_zone_info
-            ? JSON.parse(user.time_zone_info).tz_name
-            : system_settings.TIME_ZONE;
-          const due_date = moment(follow_up.due_date)
-            .tz(time_zone)
-            .format('h:mm a');
+      const contact = await Contact.findOne({
+        _id: follow_up.contact,
+      }).catch((err) => {
+        console.log('err: ', err.message);
+      });
 
-          if (email_notification['follow_up']) {
-            const msg = {
-              to: user.email,
-              from: mail_contents.FOLLOWUP_REMINDER.MAIL,
-              subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
-              templateId: api.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
-              dynamic_template_data: {
-                contact:
-                  contact.first_name +
-                  contact.last_name +
-                  ' - ' +
-                  contact.email +
-                  ' - ' +
-                  contact.cell_phone,
-                due_date,
-                content: follow_up.content,
-                detailed_contact:
-                  "<a href='" +
-                  urls.CONTACT_PAGE_URL +
-                  contact.id +
-                  "'><img src='" +
-                  urls.DOMAIN_URL +
-                  "assets/images/contact.png'/></a>",
-              },
-            };
+      const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
+        console.log('err: ', err.message);
+      });
 
-            sgMail
-              .send(msg)
-              .then((res) => {
-                console.log('mailres.errorcode', res[0].statusCode);
-                if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-                  console.log('Successful send to ' + msg.to);
-                } else {
-                  console.log('email sending err', msg.to + res[0].statusCode);
-                }
-              })
-              .catch((err) => {
-                console.log('err: ', err);
-              });
-          }
-          const text_notification = garbage['text_notification'];
-          if (text_notification['follow_up']) {
-            const e164Phone = phone(user.cell_phone)[0];
-            // let fromNumber = user['proxy_number'];
-            // if (!fromNumber) {
-            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-            // }
-            const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-            console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
-            if (!e164Phone) {
-              const error = {
-                error: 'Invalid Phone Number',
-              };
-              throw error; // Invalid phone number
-            }
+      const email_notification = garbage['email_notification'];
 
-            const title =
-              `Follow up task due today at ${due_date} with contact name:` +
-              '\n' +
-              '\n' +
-              contact.first_name +
-              contact.last_name +
-              '\n' +
-              contact.email +
-              '\n' +
-              contact.cell_phone +
-              '\n' +
-              '\n';
-            const body = follow_up.content + '\n';
-            const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+      const time_zone = user.time_zone_info
+        ? JSON.parse(user.time_zone_info).tz_name
+        : system_settings.TIME_ZONE;
 
-            client.messages
-              .create({
-                from: fromNumber,
-                to: e164Phone,
-                body:
-                  title +
-                  body +
-                  '\n' +
-                  contact_link +
-                  '\n\n' +
-                  TextHelper.generateUnsubscribeLink(),
-                // body: title + body,
-              })
-              .then(() => {
-                console.log(`Reminder at: ${due_date}`);
-              })
-              .catch((err) => console.error('send sms err: ', err));
-          }
-          const desktop_notification = garbage['desktop_notification'];
-          if (desktop_notification['follow_up']) {
-            webpush.setVapidDetails(
-              'mailto:support@crmgrow.com',
-              api.VAPID.PUBLIC_VAPID_KEY,
-              api.VAPID.PRIVATE_VAPID_KEY
-            );
+      const due_date = moment(follow_up.due_date)
+        .tz(time_zone)
+        .format('h:mm a');
 
-            const subscription = JSON.parse(
-              user.desktop_notification_subscription
-            );
-            const title = `CRMGrow follow up reminder`;
-            const body =
-              `Follow up task due today at ${due_date} with contact name:` +
-              '\n' +
-              contact.first_name +
-              contact.last_name +
-              '\n' +
-              contact.email +
-              '\n' +
-              contact.cell_phone +
-              '\n' +
-              follow_up.content;
-            const playload = JSON.stringify({
-              notification: {
-                title,
-                body,
-                icon: '/fav.ico',
-                badge: '/fav.ico',
-              },
-            });
-            webpush
-              .sendNotification(subscription, playload)
-              .catch((err) => console.error(err));
-          }
-          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
-            console.log('reminder remove err', err.message);
-          });
-          if (follow_up.set_recurrence) {
-            switch (follow_up.recurrence_mode) {
-              case 'DAILY': {
-                const today = moment(follow_up.due_date);
-                const tomorrow = today.add(1, 'days');
-
-                FollowUp.updateOne(
-                  {
-                    _id: follow_up.id,
-                  },
-                  {
-                    due_date: tomorrow,
-                  }
-                ).catch((err) => {
-                  console.log('follow up err', err.message);
-                });
-
-                const new_reminder = new Reminder({
-                  contact: contact.id,
-                  due_date: tomorrow,
-                  type: 'follow_up',
-                  user: follow_up.user,
-                  follow_up: follow_up.id,
-                });
-
-                new_reminder.save().catch((err) => {
-                  console.log('reminder save err', err.message);
-                });
-                break;
-              }
-              case 'WEEKLY': {
-                const today = moment(follow_up.due_date);
-                const week = today.add(7, 'days');
-                FollowUp.updateOne(
-                  {
-                    _id: follow_up.id,
-                  },
-                  {
-                    due_date: week,
-                  }
-                ).catch((err) => {
-                  console.log('follow up err', err.message);
-                });
-
-                const new_reminder = new Reminder({
-                  contact: contact.id,
-                  due_date: week,
-                  type: 'follow_up',
-                  user: follow_up.user,
-                  follow_up: follow_up.id,
-                });
-
-                new_reminder.save().catch((err) => {
-                  console.log('reminder save err', err.message);
-                });
-                break;
-              }
-              case 'MONTHLY': {
-                const today = moment(follow_up.due_date);
-                const month = today.add(1, 'months');
-                FollowUp.updateOne(
-                  {
-                    _id: follow_up.id,
-                  },
-                  {
-                    due_date: month,
-                  }
-                ).catch((err) => {
-                  console.log('follow up err', err.message);
-                });
-
-                const new_reminder = new Reminder({
-                  contact: contact.id,
-                  due_date: month,
-                  type: 'follow_up',
-                  user: follow_up.user,
-                  follow_up: follow_up.id,
-                });
-
-                new_reminder.save().catch((err) => {
-                  console.log('reminder save err', err.message);
-                });
-                break;
-              }
-            }
-          }
-        } else {
-          Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
-            console.log('reminder remove err', err.message);
-          });
-        }
-      } else {
+      if (email_notification['follow_up']) {
         /**
-        const appointment = await Appointment.findOne({
-          _id: reminder.appointment,
-        }).catch((err) => {
-          console.log('err: ', err);
-        });
-        const user = await User.findOne({ _id: appointment.user }).catch(
-          (err) => {
-            console.log('err: ', err);
-          }
-        );
-        const contact = await Contact.findOne({
-          _id: appointment.contact,
-        }).catch((err) => {
-          console.log('err: ', err);
-        });
         const msg = {
           to: user.email,
-          from: mail_contents.APPOINTMENT_REMINDER.MAIL,
-          subject: mail_contents.APPOINTMENT_REMINDER.SUBJECT,
-          templateId: api.SENDGRID.SENDGRID_APPOINTMENT_REMINDER_TEMPLATE,
+          from: mail_contents.FOLLOWUP_REMINDER.MAIL,
+          subject: mail_contents.FOLLOWUP_REMINDER.SUBJECT,
+          templateId: api.SENDGRID.SENDGRID_FOLLOWUP_REMINDER_TEMPLATE,
           dynamic_template_data: {
             contact:
               contact.first_name +
@@ -643,10 +399,8 @@ const reminder_job = new CronJob(
               contact.email +
               ' - ' +
               contact.cell_phone,
-            due_date: moment(appointment.due_date)
-              .utcOffset(user.time_zone)
-              .format('h:mm a'),
-            content: appointment.content,
+            due_date,
+            content: follow_up.content,
             detailed_contact:
               "<a href='" +
               urls.CONTACT_PAGE_URL +
@@ -670,13 +424,31 @@ const reminder_job = new CronJob(
           .catch((err) => {
             console.log('err: ', err);
           });
+        */
 
+        const data = {
+          template_data: {
+            user_name: user.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            contact_url: urls.CONTACT_PAGE_URL + contact.id,
+            contact_name: `${contact.first_name} ${contact.last_name}`,
+            follow_up_type: ,
+            follow_up_description: moment(sent).tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            due_start: ,
+          },
+          template_name: 'TaskReminder',
+          required_reply: false,
+          email: user.email,
+        };
+
+        sendNotificationEmail(data);
+      }
+
+      const text_notification = garbage['text_notification'];
+      if (text_notification['follow_up']) {
         const e164Phone = phone(user.cell_phone)[0];
-        // let fromNumber = user['proxy_number'];
-        // if (!fromNumber) {
-        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        // }
         const fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+
         console.info(`Send SMS: ${fromNumber} -> ${user.cell_phone} :`);
         if (!e164Phone) {
           const error = {
@@ -686,9 +458,7 @@ const reminder_job = new CronJob(
         }
 
         const title =
-          `Appointment today at ${moment(appointment.due_date)
-            .utcOffset(user.time_zone)
-            .format('h:mm a')} with contact name:` +
+          `Follow up task due today at ${due_date} with contact name:` +
           '\n' +
           '\n' +
           contact.first_name +
@@ -699,30 +469,148 @@ const reminder_job = new CronJob(
           contact.cell_phone +
           '\n' +
           '\n';
-        const body = appointment.content + '\n';
+        const body = follow_up.content + '\n';
         const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
         client.messages
           .create({
             from: fromNumber,
             to: e164Phone,
-            body: title + body + '\n' + contact_link,
+            body:
+              title +
+              body +
+              '\n' +
+              contact_link +
+              '\n\n' +
+              TextHelper.generateUnsubscribeLink(),
+            // body: title + body,
           })
           .then(() => {
-            console.log(
-              `Reminder at: ${moment(appointment.due_date)
-                .utcOffset(user.time_zone)
-                .format('MMMM Do YYYY h:mm a')}`
-            );
+            console.log(`Reminder at: ${due_date}`);
           })
           .catch((err) => console.error('send sms err: ', err));
+      }
+      const desktop_notification = garbage['desktop_notification'];
+      if (desktop_notification['follow_up']) {
+        webpush.setVapidDetails(
+          'mailto:support@crmgrow.com',
+          api.VAPID.PUBLIC_VAPID_KEY,
+          api.VAPID.PRIVATE_VAPID_KEY
+        );
 
-        reminder['del'] = true;
-
-        reminder.save().catch((err) => {
-          console.log(err);
+        const subscription = JSON.parse(user.desktop_notification_subscription);
+        const title = `CRMGrow follow up reminder`;
+        const body =
+          `Follow up task due today at ${due_date} with contact name:` +
+          '\n' +
+          contact.first_name +
+          contact.last_name +
+          '\n' +
+          contact.email +
+          '\n' +
+          contact.cell_phone +
+          '\n' +
+          follow_up.content;
+        const playload = JSON.stringify({
+          notification: {
+            title,
+            body,
+            icon: '/fav.ico',
+            badge: '/fav.ico',
+          },
         });
-         */
+        webpush
+          .sendNotification(subscription, playload)
+          .catch((err) => console.error(err));
+      }
+      Reminder.deleteOne({ _id: reminder.id }).catch((err) => {
+        console.log('reminder remove err', err.message);
+      });
+      if (follow_up.set_recurrence) {
+        switch (follow_up.recurrence_mode) {
+          case 'DAILY': {
+            const today = moment(follow_up.due_date);
+            const tomorrow = today.add(1, 'days');
+
+            FollowUp.updateOne(
+              {
+                _id: follow_up.id,
+              },
+              {
+                due_date: tomorrow,
+              }
+            ).catch((err) => {
+              console.log('follow up err', err.message);
+            });
+
+            const new_reminder = new Reminder({
+              contact: contact.id,
+              due_date: tomorrow,
+              type: 'follow_up',
+              user: follow_up.user,
+              follow_up: follow_up.id,
+            });
+
+            new_reminder.save().catch((err) => {
+              console.log('reminder save err', err.message);
+            });
+            break;
+          }
+          case 'WEEKLY': {
+            const today = moment(follow_up.due_date);
+            const week = today.add(7, 'days');
+            FollowUp.updateOne(
+              {
+                _id: follow_up.id,
+              },
+              {
+                due_date: week,
+              }
+            ).catch((err) => {
+              console.log('follow up err', err.message);
+            });
+
+            const new_reminder = new Reminder({
+              contact: contact.id,
+              due_date: week,
+              type: 'follow_up',
+              user: follow_up.user,
+              follow_up: follow_up.id,
+            });
+
+            new_reminder.save().catch((err) => {
+              console.log('reminder save err', err.message);
+            });
+            break;
+          }
+          case 'MONTHLY': {
+            const today = moment(follow_up.due_date);
+            const month = today.add(1, 'months');
+            FollowUp.updateOne(
+              {
+                _id: follow_up.id,
+              },
+              {
+                due_date: month,
+              }
+            ).catch((err) => {
+              console.log('follow up err', err.message);
+            });
+
+            const new_reminder = new Reminder({
+              contact: contact.id,
+              due_date: month,
+              type: 'follow_up',
+              user: follow_up.user,
+              follow_up: follow_up.id,
+            });
+
+            new_reminder.save().catch((err) => {
+              console.log('reminder save err', err.message);
+            });
+            break;
+          }
+        }
       }
     }
   },
