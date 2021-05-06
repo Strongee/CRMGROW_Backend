@@ -2170,7 +2170,7 @@ const advanceSearch = async (req, res) => {
     zipcodeCondition,
     tagsCondition,
     brokerageCondition,
-    lastMaterial, 
+    lastMaterial,
     materialCondition,
     sourceCondition,
     includeLabel,

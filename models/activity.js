@@ -35,7 +35,6 @@ const ActivitySchema = new Schema(
     contacts: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     material_last: Number,
     full_watched: Boolean,
-    link: String,
     send_type: Number,
     subject: String,
     description: String,

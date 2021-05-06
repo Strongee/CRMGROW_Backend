@@ -2606,6 +2606,7 @@ const clickEmailLink = async (req, res) => {
         contact: contact.id,
         email: activity.emails,
         type: 'click',
+        link,
         activity: activity.id,
       });
 
@@ -2620,7 +2621,6 @@ const clickEmailLink = async (req, res) => {
         content: 'clicked the link on email',
         contacts: contact.id,
         user: user.id,
-        link,
         type: 'email_trackers',
         emails: activity.emails,
         email_trackers: _email_tracker.id,
