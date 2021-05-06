@@ -563,10 +563,32 @@ const removeNote = async (req, res) => {
     console.log('deal note delete err', err.message);
   });
 
-  Note.deleteMany({
+  const notes = await Note.findMany({
     shared_note: req.body.note,
   }).catch((err) => {
-    console.log('deal note delete err', err.message);
+    console.log('deal related note find err', err.message);
+  });
+
+  if (notes && notes.length > 0) {
+    for (let i = 0; i < notes.length; i++) {
+      Activity.deleteOne({
+        notes: notes[i].id,
+        types: 'notes',
+      }).catch((err) => {
+        console.log('activity deal note delete err', err.message);
+      });
+    }
+
+    Note.deleteMany({
+      shared_note: req.body.note,
+    }).catch((err) => {
+      console.log('deal note delete err', err.message);
+    });
+  }
+
+  Activity.deleteOne({
+    notes: req.body.note,
+    type: 'notes',
   });
 
   return res.send({

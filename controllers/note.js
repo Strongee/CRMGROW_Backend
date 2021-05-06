@@ -144,6 +144,14 @@ const remove = async (req, res) => {
   const id = req.params.id;
 
   await Note.deleteOne({ user: currentUser._id, _id: id });
+
+  Activity.deleteOne({
+    type: 'notes',
+    notes: id,
+  }).catch((err) => {
+    console.log('activity remove err', err.message);
+  });
+
   return res.send({
     status: true,
   });

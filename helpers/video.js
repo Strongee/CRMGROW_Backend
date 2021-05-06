@@ -52,13 +52,14 @@ const convertRecordVideo = async (data) => {
 
   if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
-    args.splice(args.length - 1, 0, '-filter:v', crop);
+    args.splice(args.length - 3, 0, '-filter:v', crop);
   }
 
   if (mode === 'mirror') {
-    args.splice(args.length - 1, 0, '-vh', 'hflip');
+    args.splice(args.length - 3, 0, '-vf', 'hflip');
   }
 
+  console.log('args', args);
   if (!fs.existsSync(TEMP_PATH)) {
     fs.mkdirSync(TEMP_PATH);
   }
@@ -316,7 +317,7 @@ const generateThumbnail = (data) => {
       '-ss',
       '00:00:01',
       '-filter:v',
-      '-vh',
+      '-vf',
       'hflip',
       '-vframes',
       '1',
@@ -336,6 +337,7 @@ const generateThumbnail = (data) => {
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function () {
     fs.readFile(thumbnail_path, (err, data) => {
+      console.log('data read successful data', data);
       const today = new Date();
       const year = today.getYear();
       const month = today.getMonth();

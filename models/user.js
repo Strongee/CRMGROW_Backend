@@ -103,6 +103,7 @@ const UserSchema = new Schema(
       attempt_count: { type: Number, default: 0 },
       period: { type: String, default: 'month' },
     },
+    package_level: String,
     paid_demo: { type: Boolean, default: false },
     paid_demo_mode: Number,
     expired_at: Date,
