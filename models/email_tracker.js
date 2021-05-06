@@ -8,6 +8,7 @@ const TrackerSchema = new Schema(
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
     email: { type: mongoose.Schema.Types.ObjectId, ref: 'email' },
     activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
+    link: String,
     type: { type: String, default: 'open' },
     created_at: Date,
     updated_at: Date,
