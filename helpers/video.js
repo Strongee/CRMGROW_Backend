@@ -45,6 +45,8 @@ const convertRecordVideo = async (data) => {
     'high',
     '-level',
     '4.2',
+    '-r',
+    '24',
     new_path,
   ];
 
