@@ -32,7 +32,7 @@ const convertRecordVideo = async (data) => {
   const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  let args = [
+  const args = [
     '-fflags',
     '+genpts',
     '-i',
