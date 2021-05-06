@@ -59,7 +59,6 @@ const convertRecordVideo = async (data) => {
     args.splice(args.length - 1, 0, '-vh', 'hflip');
   }
 
-  console.log('args', args);
   if (!fs.existsSync(TEMP_PATH)) {
     fs.mkdirSync(TEMP_PATH);
   }
