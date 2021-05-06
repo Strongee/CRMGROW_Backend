@@ -288,7 +288,7 @@ const getDuration = async (id) => {
 };
 
 const generateThumbnail = (data) => {
-  const { file_name, file_path, area } = data;
+  const { file_name, file_path, area, mode } = data;
 
   if (!fs.existsSync(THUMBNAILS_PATH)) {
     fs.mkdirSync(THUMBNAILS_PATH);
@@ -296,7 +296,7 @@ const generateThumbnail = (data) => {
 
   const thumbnail_path = THUMBNAILS_PATH + file_name + '.png';
   let args = [];
-  if (area) {
+  if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
     args = [
       '-i',
@@ -305,6 +305,19 @@ const generateThumbnail = (data) => {
       '00:00:01',
       '-filter:v',
       crop,
+      '-vframes',
+      '1',
+      thumbnail_path,
+    ];
+  } else if (mode === 'mirror') {
+    args = [
+      '-i',
+      file_path,
+      '-ss',
+      '00:00:01',
+      '-filter:v',
+      '-vh',
+      'hflip',
       '-vframes',
       '1',
       thumbnail_path,

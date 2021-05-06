@@ -3414,12 +3414,12 @@ const setupRecording = (io) => {
               // CONVERT FFMPEG
             }
 
-            console.log('params', params);
             videoHelper.convertRecordVideo(params);
             const video_data = {
               file_name: _video.id,
               file_path: _video.path,
               area,
+              mode: data.mode,
             };
 
             videoHelper.generateThumbnail(video_data);
