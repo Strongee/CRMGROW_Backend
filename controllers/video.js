@@ -3373,6 +3373,9 @@ const setupRecording = (io) => {
             socket.emit('savedVideo', { video: _video.id });
 
             let area;
+            let params;
+            videoHelper.getDuration(_video.id);
+
             if (data.mode === 'crop') {
               // Crop area
               const screen = data.screen;
@@ -3392,15 +3395,26 @@ const setupRecording = (io) => {
               };
               // CROP AREA USING FFMPEG
               videoHelper.getDuration(_video.id);
-              videoHelper.convertRecordVideo(_video.id, area);
+              params = {
+                id: _video.id,
+                mode: 'crop',
+                area,
+              };
+              videoHelper.convertRecordVideo(data);
             } else if (data.mode === 'mirror') {
-            
+              params = {
+                id: _video.id,
+                mode: 'mirror',
+              };
             } else {
               videoHelper.getDuration(_video.id);
-              videoHelper.convertRecordVideo(_video.id);
+              params = {
+                id: _video.id,
+              };
               // CONVERT FFMPEG
             }
 
+            videoHelper.convertRecordVideo(params);
             const video_data = {
               file_name: _video.id,
               file_path: _video.path,
