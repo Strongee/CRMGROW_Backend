@@ -3393,6 +3393,8 @@ const setupRecording = (io) => {
               // CROP AREA USING FFMPEG
               videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id, area);
+            } else if (data.mode === 'mirror') {
+            
             } else {
               videoHelper.getDuration(_video.id);
               videoHelper.convertRecordVideo(_video.id);

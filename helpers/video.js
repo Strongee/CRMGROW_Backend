@@ -21,7 +21,9 @@ const s3 = new AWS.S3({
   region: api.AWS.AWS_S3_REGION,
 });
 
-const convertRecordVideo = async (id, area) => {
+const convertRecordVideo = async (data) => {
+  const { id, area, mode } = data;
+
   const video = await Video.findOne({ _id: id }).catch((err) => {
     console.log('video convert find video error', err.message);
   });
@@ -30,39 +32,30 @@ const convertRecordVideo = async (id, area) => {
   const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  let args = [];
+  let args = [
+    '-fflags',
+    '+genpts',
+    '-i',
+    file_path,
+    '-movflags',
+    'faststart',
+    '-preset',
+    'ultrafast',
+    '-profile:v',
+    'high',
+    '-level',
+    '4.2',
+    '-filter:v',
+    new_path,
+  ];
 
-  if (area) {
+  if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
-    args = [
-      '-i',
-      file_path,
-      '-movflags',
-      'faststart',
-      '-preset',
-      'ultrafast',
-      '-profile:v',
-      'high',
-      '-level',
-      '4.2',
-      '-filter:v',
-      crop,
-      new_path,
-    ];
-  } else {
-    args = [
-      '-i',
-      file_path,
-      '-movflags',
-      'faststart',
-      '-preset',
-      'ultrafast',
-      '-profile:v',
-      'high',
-      '-level',
-      '4.2',
-      new_path,
-    ];
+    args.splice(args.length - 1, 0, crop);
+  }
+
+  if (mode === 'mirror') {
+    args.splice(args.length - 1, 0, '-vh', 'hflip');
   }
 
   if (!fs.existsSync(TEMP_PATH)) {
