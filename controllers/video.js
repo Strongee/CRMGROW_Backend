@@ -3414,6 +3414,7 @@ const setupRecording = (io) => {
               // CONVERT FFMPEG
             }
 
+            console.log('params', params);
             videoHelper.convertRecordVideo(params);
             const video_data = {
               file_name: _video.id,

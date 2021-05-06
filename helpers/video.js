@@ -45,19 +45,19 @@ const convertRecordVideo = async (data) => {
     'high',
     '-level',
     '4.2',
-    '-filter:v',
     new_path,
   ];
 
   if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
-    args.splice(args.length - 1, 0, crop);
+    args.splice(args.length - 1, 0, '-filter:v', crop);
   }
 
   if (mode === 'mirror') {
     args.splice(args.length - 1, 0, '-vh', 'hflip');
   }
 
+  console.log('args', args);
   if (!fs.existsSync(TEMP_PATH)) {
     fs.mkdirSync(TEMP_PATH);
   }
