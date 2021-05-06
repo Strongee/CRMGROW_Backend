@@ -329,7 +329,6 @@ const generateThumbnail = (data) => {
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function () {
     fs.readFile(thumbnail_path, (err, data) => {
-      console.log('File read was successful***********', data);
       const today = new Date();
       const year = today.getYear();
       const month = today.getMonth();
