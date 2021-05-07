@@ -38,6 +38,7 @@ app.get('/pdf', catchError(PDFCtrl.play));
 app.get('/pdf1/:id', catchError(PDFCtrl.play1));
 app.get('/image', catchError(ImageCtrl.play));
 app.get('/image/:id', catchError(ImageCtrl.play1));
+app.get('/demo', catchError(VideoCtrl.playDemo));
 app.get('/embed/video/:video', catchError(VideoCtrl.embedPlay));
 app.get('/unsubscribe', catchError(EmailCtrl.unSubscribePage));
 app.get('/redirect', catchError(EmailCtrl.clickEmailLink));

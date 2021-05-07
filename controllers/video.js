@@ -211,6 +211,60 @@ const play = async (req, res) => {
   }
 };
 
+const playDemo = async (req, res) => {
+  const video = await Video.findOne({ _id: system_settings.DEMO_VIDEO }).catch(
+    (err) => {
+      console.log('err', err.message);
+    }
+  );
+
+  const user = await User.findOne({
+    email: system_settings.ADMIN_ACCOUNT,
+    del: false,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+  let additional_fields = [];
+
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+
+    if (garbage) {
+      additional_fields = garbage.additional_fields;
+
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_videos = garbage['capture_videos'];
+
+      if (capture_videos.indexOf(system_settings.DEMO_VIDEO) === -1) {
+        capture_dialog = false;
+      }
+    } else {
+      capture_dialog = false;
+    }
+
+    return res.render('demo', {
+      material: video,
+      material_type: 'video',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      additional_fields: additional_fields || [],
+    });
+  } else {
+    return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
+};
+
 const play1 = async (req, res) => {
   const activity = await Activity.findOne({ _id: req.params.id })
     .populate([{ path: 'user' }, { path: 'videos' }])
@@ -3521,6 +3575,7 @@ module.exports = {
   play,
   play1,
   play2,
+  playDemo,
   embedPlay,
   pipe,
   create,
