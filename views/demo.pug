@@ -157,12 +157,12 @@ input#capture-delay(type='hidden', value=`${capture_delay}`)
 #leadModal.modal.fade(role="dialog")
   .modal-dialog
     .modal-content.p-4.info-step
-      if setting.intro_video
-        div.quick-video-wrapper
-          video.intro_video(autoplay=true, loop=true, preload="metadata", playsinline=true, muted)
-            source(src=setting.intro_video, type="video/mp4")
-          button.volume-control
-            img(src='./theme/icons/unmute.png')
+      //- if setting.intro_video
+      //-   div.quick-video-wrapper
+      //-     video.intro_video(autoplay=true, loop=true, preload="metadata", playsinline=true, muted)
+      //-       source(src=setting.intro_video, type="video/mp4")
+      //-     button.volume-control
+      //-       img(src='./theme/icons/unmute.png')
       .modal-header.border-bottom-0
         h4.modal-title Looking forward to your feedback!
       .modal-body
