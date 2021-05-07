@@ -589,6 +589,8 @@ const removeNote = async (req, res) => {
   Activity.deleteOne({
     notes: req.body.note,
     type: 'notes',
+  }).catch((err) => {
+    console.log('deal not activity remove err', err.message);
   });
 
   return res.send({

@@ -1164,7 +1164,7 @@ const updateDefault = async (req, res) => {
 };
 
 const generatePreview = async (data) => {
-  const { file_name, file_path, area, custom_thumbnail } = data;
+  const { file_name, file_path, area, custom_thumbnail, mode } = data;
 
   if (!fs.existsSync(GIF_PATH)) {
     fs.mkdirSync(GIF_PATH);
@@ -1230,7 +1230,7 @@ const generatePreview = async (data) => {
         width = system_settings.THUMBNAIL.WIDTH;
       }
 
-      if (area) {
+      if (mode === 'crop' && area) {
         const { areaX, areaY, areaW, areaH } = area;
         ctx.drawImage(
           image,
@@ -1243,17 +1243,16 @@ const generatePreview = async (data) => {
           width,
           height
         );
+      } else if (mode === 'mirror') {
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, posX, posY, width, height);
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
       } else {
         ctx.drawImage(image, posX, posY, width, height);
       }
-      // ctx.rect(70, 170, 200, 40);
-      // ctx.globalAlpha = 0.7;
-      // ctx.fillStyle = '#333';
-      // ctx.fill();
-      // ctx.globalAlpha = 1.0;
-      // ctx.font = '24px Arial';
-      // ctx.fillStyle = '#ffffff';
-      // ctx.fillText('Play video', 80, 200);
+
       ctx.drawImage(play, 10, 150);
 
       const buf = canvas.toBuffer();

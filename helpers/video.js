@@ -316,7 +316,6 @@ const generateThumbnail = (data) => {
       file_path,
       '-ss',
       '00:00:01',
-      '-filter:v',
       '-vf',
       'hflip',
       '-vframes',

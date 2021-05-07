@@ -63,7 +63,7 @@ const UserSchema = new Schema(
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.CONTACT_UPLOAD_LIMIT.BASIC,
+        default: system_settings.CONTACT_UPLOAD_LIMIT.PRO,
       },
       count: { type: Number, default: 0 },
     },
@@ -85,6 +85,7 @@ const UserSchema = new Schema(
       count: { type: Number, default: 0 },
     },
     automation_info: {
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,

@@ -60,7 +60,7 @@ const {
   releaseTwilioNumber,
 } = require('../helpers/text');
 const { sendNotificationEmail } = require('../helpers/email');
-
+const { setPackage } = require('../helpers/user');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 
@@ -2654,6 +2654,17 @@ const syncZoom = async (req, res) => {
   });
 };
 
+const upgradePackage = (req, res) => {
+  const { currentUser } = req;
+  const { level } = req.body;
+  const data = {
+    user: currentUser.id,
+    level,
+  };
+
+  setPackage(data);
+};
+
 module.exports = {
   signUp,
   login,
@@ -2709,4 +2720,5 @@ module.exports = {
   closeAccount,
   connectAnotherEmail,
   pushNotification,
+  upgradePackage,
 };

@@ -56,6 +56,9 @@ const create = async (req, res) => {
           },
         },
         {
+          $project: { _id: 1 },
+        },
+        {
           $count: 'total',
         },
       ]);

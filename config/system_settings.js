@@ -20,8 +20,9 @@ const system_settings = {
     EXTEND: 3,
   },
   CONTACT_UPLOAD_LIMIT: {
-    BASIC: 3000,
-    EXTEND: 20000,
+    BASIC: 200,
+    PRO: 2000,
+    ELITE: 20000,
   },
   MATERIAL_UPLOAD_LIMIT: {
     BASIC: 15,

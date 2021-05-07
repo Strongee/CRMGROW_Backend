@@ -411,6 +411,13 @@ const updateArchived = async (req, res) => {
         FollowUp.deleteOne({ _id: follow_up }).catch((err) => {
           console.log('follow up delete err', err.message);
         });
+
+        Activity.deleteOne({
+          type: 'note',
+          follow_ups: follow_up.id,
+        }).catch((err) => {
+          console.log('activity note remove err', err.message);
+        });
       }
 
       FollowUp.deleteMany({
