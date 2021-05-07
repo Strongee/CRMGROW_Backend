@@ -34,6 +34,20 @@ const fileStorage = multer.diskStorage({
 
 const upload = multer({ storage: fileStorage });
 
+const bucketStorage = multerS3({
+  s3,
+  bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+  key: (req, file, cb) => {
+    const fileKey =
+      'sources/' + new Date().getTime() + '-' + uuidv1() + '.' + mime.extension(file.mimetype);
+    cb(null, fileKey);
+  },
+});
+
+const s3Upload = multer({
+  storage: bucketStorage,
+});
+
 router.post('/create', UserCtrl.checkAuth, catchError(VideoCtrl.createVideo));
 
 // Upload a video
@@ -154,5 +168,13 @@ router.delete('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.remove));
 
 // Remove videos
 router.post('/remove', UserCtrl.checkAuth, catchError(VideoCtrl.bulkRemove));
+
+router.post(
+  '/upload',
+  UserCtrl.checkAuth,
+  UserCtrl.checkSuspended,
+  s3Upload.single('video'),
+  catchError(VideoCtrl.uploadVideo)
+);
 
 module.exports = router;
