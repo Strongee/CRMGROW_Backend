@@ -2,7 +2,6 @@ const sgMail = require('@sendgrid/mail');
 const mongoose = require('mongoose');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-const AWS = require('aws-sdk');
 const short = require('short-uuid');
 const moment = require('moment');
 const api = require('../config/api');
@@ -2173,6 +2172,17 @@ const loadMaterial = async (req, res) => {
         };
 
         video_data.push(video_detail);
+      } else {
+        Team.updateOne(
+          {
+            _id: req.params.id,
+          },
+          {
+            $pull: { videos: { $in: video_ids[i] } },
+          }
+        ).catch((err) => {
+          console.log('team update one', err.message);
+        });
       }
     }
   }
@@ -2199,6 +2209,17 @@ const loadMaterial = async (req, res) => {
         };
 
         pdf_data.push(pdf_detail);
+      } else {
+        Team.updateOne(
+          {
+            _id: req.params.id,
+          },
+          {
+            $pull: { pdfs: { $in: pdf_ids[i] } },
+          }
+        ).catch((err) => {
+          console.log('team update one', err.message);
+        });
       }
     }
   }
@@ -2225,6 +2246,17 @@ const loadMaterial = async (req, res) => {
         };
 
         image_data.push(image_detail);
+      } else {
+        Team.updateOne(
+          {
+            _id: req.params.id,
+          },
+          {
+            $pull: { images: { $in: image_ids[i] } },
+          }
+        ).catch((err) => {
+          console.log('team update one', err.message);
+        });
       }
     }
   }

@@ -21,7 +21,9 @@ const s3 = new AWS.S3({
   region: api.AWS.AWS_S3_REGION,
 });
 
-const convertRecordVideo = async (id, area) => {
+const convertRecordVideo = async (data) => {
+  const { id, area, mode } = data;
+
   const video = await Video.findOne({ _id: id }).catch((err) => {
     console.log('video convert find video error', err.message);
   });
@@ -30,41 +32,34 @@ const convertRecordVideo = async (id, area) => {
   const new_file = uuidv1() + '.mp4';
   const new_path = TEMP_PATH + new_file;
   // const video_path = 'video.mov'
-  let args = [];
+  const args = [
+    '-fflags',
+    '+genpts',
+    '-i',
+    file_path,
+    '-movflags',
+    'faststart',
+    '-preset',
+    'ultrafast',
+    '-profile:v',
+    'high',
+    '-level',
+    '4.2',
+    '-r',
+    '24',
+    new_path,
+  ];
 
-  if (area) {
+  if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
-    args = [
-      '-i',
-      file_path,
-      '-movflags',
-      'faststart',
-      '-preset',
-      'ultrafast',
-      '-profile:v',
-      'high',
-      '-level',
-      '4.2',
-      '-filter:v',
-      crop,
-      new_path,
-    ];
-  } else {
-    args = [
-      '-i',
-      file_path,
-      '-movflags',
-      'faststart',
-      '-preset',
-      'ultrafast',
-      '-profile:v',
-      'high',
-      '-level',
-      '4.2',
-      new_path,
-    ];
+    args.splice(args.length - 3, 0, '-filter:v', crop);
   }
 
+  if (mode === 'mirror') {
+    args.splice(args.length - 3, 0, '-vf', 'hflip');
+  }
+
+  console.log('args', args);
   if (!fs.existsSync(TEMP_PATH)) {
     fs.mkdirSync(TEMP_PATH);
   }
@@ -294,7 +289,7 @@ const getDuration = async (id) => {
 };
 
 const generateThumbnail = (data) => {
-  const { file_name, file_path, area } = data;
+  const { file_name, file_path, area, mode } = data;
 
   if (!fs.existsSync(THUMBNAILS_PATH)) {
     fs.mkdirSync(THUMBNAILS_PATH);
@@ -302,7 +297,7 @@ const generateThumbnail = (data) => {
 
   const thumbnail_path = THUMBNAILS_PATH + file_name + '.png';
   let args = [];
-  if (area) {
+  if (mode === 'crop' && area) {
     const crop = `crop=${area.areaW}:${area.areaH}:${area.areaX}:${area.areaY}`;
     args = [
       '-i',
@@ -311,6 +306,18 @@ const generateThumbnail = (data) => {
       '00:00:01',
       '-filter:v',
       crop,
+      '-vframes',
+      '1',
+      thumbnail_path,
+    ];
+  } else if (mode === 'mirror') {
+    args = [
+      '-i',
+      file_path,
+      '-ss',
+      '00:00:01',
+      '-vf',
+      'hflip',
       '-vframes',
       '1',
       thumbnail_path,
@@ -329,7 +336,7 @@ const generateThumbnail = (data) => {
   const ffmpegConvert = child_process.spawn(ffmpegPath, args);
   ffmpegConvert.on('close', function () {
     fs.readFile(thumbnail_path, (err, data) => {
-      console.log('File read was successful***********', data);
+      console.log('data read successful data', data);
       const today = new Date();
       const year = today.getYear();
       const month = today.getMonth();

@@ -99,7 +99,9 @@ const getAll = async (req, res) => {
       $sort: { _id: 1 },
     },
   ]);
-
+  //Add 'No tags' tag to last element.( set id to -1 )
+  data.push({ _id: -1 });
+  //Add 'No tags' tag to last element.( set id to -1 )
   res.send({
     status: true,
     data,

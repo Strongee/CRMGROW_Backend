@@ -470,8 +470,6 @@ const create = (req, res) => {
   const automation = new Automation({
     ...req.body,
     user: currentUser.id,
-    created_at: new Date(),
-    updated_at: new Date(),
   });
 
   automation

@@ -63,7 +63,7 @@ const UserSchema = new Schema(
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.CONTACT_UPLOAD_LIMIT.BASIC,
+        default: system_settings.CONTACT_UPLOAD_LIMIT.PRO,
       },
       count: { type: Number, default: 0 },
     },
@@ -85,6 +85,7 @@ const UserSchema = new Schema(
       count: { type: Number, default: 0 },
     },
     automation_info: {
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
@@ -103,6 +104,7 @@ const UserSchema = new Schema(
       attempt_count: { type: Number, default: 0 },
       period: { type: String, default: 'month' },
     },
+    package_level: String,
     paid_demo: { type: Boolean, default: false },
     paid_demo_mode: Number,
     expired_at: Date,

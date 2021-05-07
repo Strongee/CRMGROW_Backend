@@ -55,7 +55,7 @@ const urls = {
   TRACK_URL: `${domain}/api/email/opened/`,
   UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
   RESUBSCRIPTION_URL: 'https://email.crmgrow.com/resubscribe/',
-  CLICK_REDIRECT_URL: 'https://email.crmgrow.com/redirect',
+  CLICK_REDIRECT_URL: `${domain}/redirect`,
   LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
   DEFAULT_TEMPLATE_PAGE_LOGO: `${domain}/theme/images/default_logo.png`,
   STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
@@ -71,6 +71,13 @@ const urls = {
   RECORDING_PREVIEW_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
   ONEONONE_URL: 'https://crmgrow.com/oneonone',
+  FOLLOWUP_TYPE_URL: {
+    task:'https://teamgrow.s3.us-east-2.amazonaws.com/task.png',
+    email: 'https://teamgrow.s3.us-east-2.amazonaws.com/message.png',
+    material: 'https://teamgrow.s3.us-east-2.amazonaws.com/materials+2.png',
+    call: 'https://teamgrow.s3.us-east-2.amazonaws.com/phone.png',
+    meeting: 'https://teamgrow.s3.us-east-2.amazonaws.com/lunch.png',
+  },
 };
 
 module.exports = urls;

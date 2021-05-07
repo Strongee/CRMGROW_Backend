@@ -211,6 +211,60 @@ const play = async (req, res) => {
   }
 };
 
+const playDemo = async (req, res) => {
+  const video = await Video.findOne({ _id: system_settings.DEMO_VIDEO }).catch(
+    (err) => {
+      console.log('err', err.message);
+    }
+  );
+
+  const user = await User.findOne({
+    email: system_settings.ADMIN_ACCOUNT,
+    del: false,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+  let additional_fields = [];
+
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+
+    if (garbage) {
+      additional_fields = garbage.additional_fields;
+
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_videos = garbage['capture_videos'];
+
+      if (capture_videos.indexOf(system_settings.DEMO_VIDEO) === -1) {
+        capture_dialog = false;
+      }
+    } else {
+      capture_dialog = false;
+    }
+
+    return res.render('demo', {
+      material: video,
+      material_type: 'video',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      additional_fields: additional_fields || [],
+    });
+  } else {
+    return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
+};
+
 const play1 = async (req, res) => {
   const activity = await Activity.findOne({ _id: req.params.id })
     .populate([{ path: 'user' }, { path: 'videos' }])
@@ -1164,7 +1218,7 @@ const updateDefault = async (req, res) => {
 };
 
 const generatePreview = async (data) => {
-  const { file_name, file_path, area, custom_thumbnail } = data;
+  const { file_name, file_path, area, custom_thumbnail, mode } = data;
 
   if (!fs.existsSync(GIF_PATH)) {
     fs.mkdirSync(GIF_PATH);
@@ -1230,7 +1284,7 @@ const generatePreview = async (data) => {
         width = system_settings.THUMBNAIL.WIDTH;
       }
 
-      if (area) {
+      if (mode === 'crop' && area) {
         const { areaX, areaY, areaW, areaH } = area;
         ctx.drawImage(
           image,
@@ -1243,17 +1297,16 @@ const generatePreview = async (data) => {
           width,
           height
         );
+      } else if (mode === 'mirror') {
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, posX, posY, width, height);
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
       } else {
         ctx.drawImage(image, posX, posY, width, height);
       }
-      // ctx.rect(70, 170, 200, 40);
-      // ctx.globalAlpha = 0.7;
-      // ctx.fillStyle = '#333';
-      // ctx.fill();
-      // ctx.globalAlpha = 1.0;
-      // ctx.font = '24px Arial';
-      // ctx.fillStyle = '#ffffff';
-      // ctx.fillText('Play video', 80, 200);
+
       ctx.drawImage(play, 10, 150);
 
       const buf = canvas.toBuffer();
@@ -3366,7 +3419,6 @@ const setupRecording = (io) => {
           duration,
           user: decoded.id,
           recording: true,
-          created_at: new Date(),
         });
         video
           .save()
@@ -3374,6 +3426,9 @@ const setupRecording = (io) => {
             socket.emit('savedVideo', { video: _video.id });
 
             let area;
+            let params;
+            videoHelper.getDuration(_video.id);
+
             if (data.mode === 'crop') {
               // Crop area
               const screen = data.screen;
@@ -3393,17 +3448,31 @@ const setupRecording = (io) => {
               };
               // CROP AREA USING FFMPEG
               videoHelper.getDuration(_video.id);
-              videoHelper.convertRecordVideo(_video.id, area);
+              params = {
+                id: _video.id,
+                mode: 'crop',
+                area,
+              };
+              videoHelper.convertRecordVideo(data);
+            } else if (data.mode === 'mirror') {
+              params = {
+                id: _video.id,
+                mode: 'mirror',
+              };
             } else {
               videoHelper.getDuration(_video.id);
-              videoHelper.convertRecordVideo(_video.id);
+              params = {
+                id: _video.id,
+              };
               // CONVERT FFMPEG
             }
 
+            videoHelper.convertRecordVideo(params);
             const video_data = {
               file_name: _video.id,
               file_path: _video.path,
               area,
+              mode: data.mode,
             };
 
             videoHelper.generateThumbnail(video_data);
@@ -3638,6 +3707,7 @@ module.exports = {
   play,
   play1,
   play2,
+  playDemo,
   embedPlay,
   pipe,
   create,

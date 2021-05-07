@@ -1136,42 +1136,55 @@ const bulkText = async (req, res) => {
       let fromNumber = currentUser['proxy_number'];
       let promise;
 
+      if (
+        text_info['is_limit'] &&
+        max_text_count <= count &&
+        !additional_sms_credit
+      ) {
+        Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+          console.log('activity delete err', err.message);
+        });
+
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            error: 'Additional count required',
+          });
+          resolve(); // Exceet max limit;
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const e164Phone = phone(_contact.cell_phone)[0];
+      if (!e164Phone) {
+        Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+          console.log('activity delete err', err.message);
+        });
+
+        promise = new Promise(async (resolve, reject) => {
+          error.push({
+            contact: {
+              first_name: _contact.first_name,
+              cell_phone: _contact.cell_phone,
+            },
+            error: 'Invalid number',
+          });
+          resolve(); // Exceet max limit;
+        });
+        promise_array.push(promise);
+        continue;
+      }
+
+      const body = _contact.texted_unsbcription_link
+        ? text_content
+        : text_content + generateTextUnsubscribeLink();
+
       if (fromNumber) {
         promise = new Promise(async (resolve) => {
-          if (max_text_count <= count && !additional_sms_credit) {
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Exceet max limit;
-          } else if (max_text_count <= count) {
-            additional_sms_credit -= 1;
-          } else {
-            count += 1;
-          }
-
-          const e164Phone = phone(_contact.cell_phone)[0];
-          if (!e164Phone) {
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('activity delete err', err.message);
-            });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Invalid phone number
-          }
-
-          const body = _contact.texted_unsbcription_link
-            ? text_content
-            : text_content + generateTextUnsubscribeLink();
-
           client.messages
             .create({
               from: fromNumber,
@@ -1179,6 +1192,11 @@ const bulkText = async (req, res) => {
               body,
             })
             .then((message) => {
+              if (text_info['is_limit'] && max_text_count <= count) {
+                additional_sms_credit -= 1;
+              } else {
+                count += 1;
+              }
               if (message.status === 'queued' || message.status === 'sent') {
                 console.log('Message ID: ', message.sid);
                 console.info(
@@ -1403,28 +1421,7 @@ const bulkText = async (req, res) => {
         });
       } else {
         fromNumber = currentUser['twilio_number'];
-
         promise = new Promise(async (resolve) => {
-          const e164Phone = phone(_contact.cell_phone)[0];
-          if (!e164Phone) {
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('activity delete err', err.message);
-            });
-            error.push({
-              contact: {
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: 'Invalid phone number',
-            });
-            resolve(); // Invalid phone number
-          }
-
-          const body = _contact.texted_unsbcription_link
-            ? text_content
-            : text_content + generateTextUnsubscribeLink();
-
-          console.log('text_content', text_content);
           twilio.messages
             .create({
               from: fromNumber,
@@ -1432,6 +1429,12 @@ const bulkText = async (req, res) => {
               to: e164Phone,
             })
             .then((message) => {
+              if (text_info['is_limit'] && max_text_count <= count) {
+                additional_sms_credit -= 1;
+              } else {
+                count += 1;
+              }
+
               if (
                 message.status === 'accepted' ||
                 message.status === 'sending' ||
@@ -1480,9 +1483,9 @@ const bulkText = async (req, res) => {
                   resolve();
                 } else {
                   const interval_id = setInterval(function () {
-                    let i = 0;
+                    let j = 0;
                     getStatus(message.sid, 'twilio').then((res) => {
-                      i++;
+                      j++;
                       if (res.status === 'delivered') {
                         clearInterval(interval_id);
 
@@ -1508,14 +1511,14 @@ const bulkText = async (req, res) => {
                             },
                           }
                         ).catch((err) => {
-                          console.log('err', err);
+                          console.log('contact update err', err.message);
                         });
                         resolve();
-                      } else if (res.status === 'sent' && i >= 5) {
+                      } else if (res.status === 'sent' && j >= 5) {
                         clearInterval(interval_id);
                         Activity.deleteMany({ _id: { $in: activities } }).catch(
                           (err) => {
-                            console.log('err', err);
+                            console.log('activity update err', err.message);
                           }
                         );
 
@@ -1637,8 +1640,8 @@ const bulkText = async (req, res) => {
             },
             {
               $set: {
-                count,
-                additional_credit: additional_sms_credit,
+                'text_info.count': count,
+                'text_info.additional_credit.amount': additional_sms_credit,
               },
             }
           ).catch((err) => {
@@ -1651,7 +1654,7 @@ const bulkText = async (req, res) => {
             },
             {
               $set: {
-                count,
+                'text_info.count': count,
               },
             }
           ).catch((err) => {

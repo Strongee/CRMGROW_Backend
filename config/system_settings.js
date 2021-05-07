@@ -20,8 +20,9 @@ const system_settings = {
     EXTEND: 3,
   },
   CONTACT_UPLOAD_LIMIT: {
-    BASIC: 3000,
-    EXTEND: 20000,
+    BASIC: 200,
+    PRO: 2000,
+    ELITE: 20000,
   },
   MATERIAL_UPLOAD_LIMIT: {
     BASIC: 15,
@@ -65,6 +66,7 @@ const system_settings = {
     MICROSOFT: 1000,
     AWS: 5000,
   },
+  DEMO_VIDEO: '5f26f5012e05c365a0db404b',
   WEBINAR_LINK:
     'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',

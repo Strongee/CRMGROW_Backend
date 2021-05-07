@@ -943,7 +943,6 @@ const bulkEmail = async (req, res) => {
 
   const { currentUser } = req;
   const { to, cc, bcc, contacts, content, attachments, subject } = req.body;
-
   const promise_array = [];
   const error = [];
 
@@ -2577,6 +2576,10 @@ const sharePlatform = async (req, res) => {
 
 const clickEmailLink = async (req, res) => {
   const { url, activity_id } = req.query;
+
+  // eliminate http, https, ftp from url.
+  const pattern = /^((http|https|ftp):\/\/)/;
+  const link = url.replace(pattern, '');
   const activity = await Activity.findOne({ _id: activity_id }).catch((err) => {
     console.log('activity finding err', err.message);
   });
@@ -2603,6 +2606,7 @@ const clickEmailLink = async (req, res) => {
         contact: contact.id,
         email: activity.emails,
         type: 'click',
+        link,
         activity: activity.id,
       });
 
