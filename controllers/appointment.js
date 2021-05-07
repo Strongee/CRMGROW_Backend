@@ -1123,7 +1123,6 @@ const remove = async (req, res) => {
 
       const client = graph.Client.init({
         // Use the provided access token to authenticate
-        // requests
         authProvider: (done) => {
           done(null, accessToken);
         },
@@ -1176,49 +1175,6 @@ const remove = async (req, res) => {
       });
     }
 
-    // const activity = new Activity({
-    //   content: 'removed appointment',
-    //   contacts: appointment.contact,
-    //   appointments: appointment.id,
-    //   user: currentUser.id,
-    //   type: 'appointments',
-    //   created_at: new Date(),
-    //   updated_at: new Date(),
-    // });
-
-    // activity
-    //   .save()
-    //   .then((_activity) => {
-    //     Contact.updateOne(
-    //       { _id: appointment.contact },
-    //       {
-    //         $set: { last_activity: _activity.id },
-    //       }
-    //     ).catch((err) => {
-    //       console.log('err', err);
-    //     });
-    //     const myJSON = JSON.stringify(appointment);
-    //     const data = JSON.parse(myJSON);
-    //     data.activity = _activity;
-    //     res.send({
-    //       status: true,
-    //       data,
-    //     });
-    //   })
-    //   .catch((e) => {
-    //     let errors;
-    //     if (e.errors) {
-    //       console.log('e.errors', e.errors);
-    //       errors = e.errors.map((err) => {
-    //         delete err.instance;
-    //         return err;
-    //       });
-    //     }
-    //     return res.status(500).send({
-    //       status: false,
-    //       error: errors || e,
-    //     });
-    //   });
     return res.send({
       status: true,
     });

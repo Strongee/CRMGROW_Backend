@@ -1331,6 +1331,19 @@ const removeAppointment = async (req, res) => {
       removeGoogleCalendarById(data);
     }
 
+    const appointment = Appointment.findOne({
+      user: currentUser.id,
+      event_id: remove_id,
+    }).catch((err) => {
+      console.log('appointment find err', err.message);
+    });
+
+    Activity.deleteOne({
+      _id: appointment.id,
+    }).catch((err) => {
+      console.log('appointment activity err', err.message);
+    });
+
     Appointment.deleteOne({
       user: currentUser.id,
       event_id: remove_id,
