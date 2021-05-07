@@ -27,6 +27,7 @@ const VideoSchema = new Schema(
       ref: 'material_theme',
     },
     key: String,
+    bucket: String,
     material_theme1: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'material_theme',

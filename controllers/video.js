@@ -3502,6 +3502,138 @@ const downloadVideo = async (req, res) => {
   }
 };
 
+const uploadVideo = async (req, res) => {
+  if (req.file) {
+    const key = req.file.key;
+    let fileName = path.basename(key);
+    const extName = path.extname(key);
+    fileName = fileName.replace(extName, '');
+    const video = new Video({
+      key: fileName,
+      bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+      type: req.file.mimetype,
+    });
+
+    const _video = await video
+      .save()
+      .then()
+      .catch((err) => {
+        console.log('err', err);
+      });
+    res.send({
+      status: true,
+      data: _video,
+    });
+  }
+};
+
+const playVideo = async (req, res) => {
+  const video_id = req.query.video;
+  const sender_id = req.query.user;
+  const video = await Video.findOne({ _id: video_id }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  const user = await User.findOne({
+    _id: sender_id,
+    del: false,
+    'subscription.is_suspended': false,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  let capture_dialog = true;
+  let capture_delay = 0;
+  let capture_field = {};
+  let additional_fields = [];
+
+  if (user) {
+    const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
+      console.log('err', err);
+    });
+
+    let theme = 'theme2';
+    let logo;
+    let highlights = [];
+    let brands = [];
+    let intro_video = '';
+    let calendly;
+    if (garbage) {
+      const themeSetting = garbage.material_themes;
+      additional_fields = garbage.additional_fields;
+
+      capture_delay = garbage['capture_delay'];
+      capture_field = garbage['capture_field'];
+      const capture_videos = garbage['capture_videos'];
+
+      if (capture_videos.indexOf(video_id) === -1) {
+        capture_dialog = false;
+      }
+
+      theme =
+        (themeSetting && themeSetting[video_id]) ||
+        garbage['material_theme'] ||
+        theme;
+      logo = garbage['logo'] || urls.DEFAULT_TEMPLATE_PAGE_LOGO;
+      highlights = garbage['highlights'] || [];
+      brands = garbage['brands'] || [];
+      intro_video = garbage['intro_video'];
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
+    } else {
+      capture_dialog = false;
+    }
+
+    const pattern = /^((http|https|ftp):\/\/)/;
+    let social_link = {};
+
+    if (!pattern.test(user.learn_more)) {
+      user.learn_more = 'http://' + user.learn_more;
+    }
+
+    if (user.social_link) {
+      social_link = user.social_link || {};
+      if (social_link.facebook && !pattern.test(social_link.facebook)) {
+        social_link.facebook = 'http://' + social_link.facebook;
+      }
+      if (social_link.twitter && !pattern.test(social_link.twitter)) {
+        social_link.twitter = 'http://' + social_link.twitter;
+      }
+      if (social_link.linkedin && !pattern.test(social_link.linkedin)) {
+        social_link.linkedin = 'http://' + social_link.linkedin;
+      }
+    }
+
+    // Video URL Decryption
+    let material = videoHelper.getVideoPublicUrl(video._doc);
+
+    material = JSON.parse(JSON.stringify(material));
+    return res.render('lead_material_theme1_1', {
+      material,
+      material_type: 'video',
+      user,
+      capture_dialog,
+      capture_delay,
+      capture_field: capture_field || {},
+      additional_fields: additional_fields || [],
+      social_link,
+      calendly,
+      setting: {
+        logo,
+        highlights,
+        brands,
+        intro_video,
+      },
+    });
+  } else {
+    return res.send(
+      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.'
+    );
+  }
+};
+
 module.exports = {
   play,
   play1,
@@ -3529,4 +3661,6 @@ module.exports = {
   autoResend,
   setupRecording,
   downloadVideo,
+  uploadVideo,
+  playVideo,
 };

@@ -431,6 +431,62 @@ const removeVideo = async (user) => {
   }
 };
 
+const getVideoPublicUrl = (video) => {
+  if (video.bucket && video.bucket === api.AWS.AWS_PRIVATE_S3_BUCKET) {
+    video['is_private'] = true;
+    const signer = new AWS.CloudFront.Signer(
+      api.AWS.CLOUDFRONT_ACCESS_KEY,
+      api.AWS.CLOUDFRONT_PUBLIC_KEY
+    );
+    const streamUrl = api.AWS.CLOUDFRONT + '/streamd/' + video.key + '/*';
+    const transcodedUrl =
+      api.AWS.CLOUDFRONT + '/transcoded/' + video.key + '.mp4';
+    const oneDay = 24 * 60 * 60 * 1000;
+    const expires = Math.floor((Date.now() + oneDay) / 1000);
+    const streamPolicy = `
+    {
+        "Statement": [
+            {
+                "Resource": "${streamUrl}",
+                "Condition": {
+                    "DateLessThan": {
+                        "AWS:EpochTime": ${expires}
+                    }
+                }
+            }
+        ]
+    }`;
+    const transcodedPolicy = `
+    {
+        "Statement": [
+            {
+                "Resource": "${transcodedUrl}",
+                "Condition": {
+                    "DateLessThan": {
+                        "AWS:EpochTime": ${expires}
+                    }
+                }
+            }
+        ]
+    }`;
+    const streamSignedUrl = signer.getSignedUrl({
+      url: streamUrl,
+      policy: streamPolicy,
+    });
+    const url = signer.getSignedUrl({
+      url: transcodedUrl,
+      policy: transcodedPolicy,
+    });
+    video['is_stream'] = true;
+    video['stream_url'] = streamSignedUrl;
+    video['converted_url'] = url;
+  } else {
+    video['is_private'] = false;
+    video['is_stream'] = false;
+  }
+  return video;
+};
+
 module.exports = {
   convertRecordVideo,
   convertUploadVideo,
@@ -438,4 +494,5 @@ module.exports = {
   getDuration,
   generateThumbnail,
   removeVideo,
+  getVideoPublicUrl,
 };
