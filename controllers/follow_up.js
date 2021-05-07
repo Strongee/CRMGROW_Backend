@@ -413,10 +413,10 @@ const updateArchived = async (req, res) => {
         });
 
         Activity.deleteOne({
-          type: 'note',
+          type: 'follow_ups',
           follow_ups: follow_up.id,
         }).catch((err) => {
-          console.log('activity note remove err', err.message);
+          console.log('activity follow up remove err', err.message);
         });
       }
 

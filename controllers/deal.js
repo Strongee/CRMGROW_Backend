@@ -914,23 +914,35 @@ const removeFollowUp = async (req, res) => {
     console.log('remove followup err', err.message);
   });
 
+  Activity.deleteOne({
+    follow_ups: req.body.followup,
+    type: 'follow_ups',
+  }).catch((err) => {
+    console.log('followup find err', err.message);
+  });
+
   const follow_ups = await FollowUp.find({
     shared_follow_up: req.body.followup,
   }).catch((err) => {
     console.log('followup find err', err.message);
   });
 
-  FollowUp.deleteMany({
-    shared_follow_up: req.body.followup,
-  }).catch((err) => {
-    console.log('remove followup err', err.message);
-  });
+  if (follow_ups && follow_ups.length) {
+    for (let i = 0; i < follow_ups.length; i++) {
+      Activity.deleteMany({
+        type: 'follow_ups',
+        follow_ups: follow_ups[i].id,
+      }).catch((err) => {
+        console.log('activity remove error', err.message);
+      });
+    }
 
-  Reminder.deleteMany({
-    follow_up: { $in: follow_ups },
-  }).catch((err) => {
-    console.log('remove reminder err', err.message);
-  });
+    FollowUp.deleteMany({
+      shared_follow_up: req.body.followup,
+    }).catch((err) => {
+      console.log('remove followup err', err.message);
+    });
+  }
 
   return res.send({
     status: true,
