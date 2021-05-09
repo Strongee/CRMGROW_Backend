@@ -39,8 +39,9 @@ const system_settings = {
   AUTO_FOLLOW_UP: 'has reviewed material',
   AUTO_FOLLOW_UP2: 'didn`t watch material',
   AUTOMATION_ASSIGN_LIMIT: {
-    BASIC: 300,
-    EXTEND: 2000,
+    BASIC: 0,
+    PRO: 300,
+    ELITE: 3000,
   },
   THUMBNAIL: {
     WIDTH: 400,
@@ -92,6 +93,21 @@ const system_settings = {
       AMOUNT: 1000,
     },
   ],
+  VIDEO_UPLOAD_LIMIT: {
+    BASIC: 3,
+    PRO: 30,
+    ELITE: 1000000,
+  },
+  VIDEO_RECORD_LIMIT: {
+    BASIC: 10,
+    PRO: 120,
+    ELITE: 1000,
+  },
+  PACKAGE_LEVEL: {
+    BASIC: 'lite',
+    PRO: 'pro',
+    ELITE: 'elite'
+  }
 };
 
 module.exports = system_settings;

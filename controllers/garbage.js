@@ -3,6 +3,7 @@ const Template = require('../models/email_template');
 const Task = require('../models/task');
 const { removeFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const data = await Garbage.find({ _id: req.params.id });
@@ -46,6 +47,12 @@ const create = async (req, res) => {
 
 const edit = async (req, res) => {
   const user = req.currentUser;
+  if (user && user.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
   const editData = req.body;
   const garbage = await Garbage.findOne({ user: user._id });
   if (!garbage) {

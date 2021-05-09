@@ -543,7 +543,7 @@ const create = async (req, res) => {
   if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
     max_upload_count =
-      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT[currentUser.package_level];
   }
 
   if (contact_info['is_limit'] && max_upload_count < count) {
@@ -928,7 +928,7 @@ const importCSV = async (req, res) => {
     count = await Contact.countDocuments({ user: currentUser.id });
 
     max_upload_count =
-      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT[currentUser.package_level];
 
     if (max_upload_count <= count) {
       return res.send({
@@ -3586,7 +3586,7 @@ const bulkCreate = async (req, res) => {
   let max_count = 0;
   if (!currentUser.contact) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+    max_count = system_settings.CONTACT_UPLOAD_LIMIT[currentUser.package_level];
   } else {
     count = currentUser.contact.count;
     max_count = currentUser.contact.max_count;
