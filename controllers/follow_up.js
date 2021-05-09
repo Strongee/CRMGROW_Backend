@@ -705,55 +705,62 @@ const load = async (req, res) => {
   } = searchOption;
 
   const query = { user: currentUser._id };
-  types && types.length ? (query.type = { $in: types }) : false;
-  if (types && types.indexOf('task') !== -1) {
-    types.push('');
-    types.push(null);
-  }
-
-  if (typeof status !== 'undefined') {
-    query.status = status;
-  }
-  contact ? (query.contact = contact) : (query.contact = { $ne: null });
-
-  if (start_date) {
-    query.due_date = { $gte: start_date };
-  }
-
-  if (end_date) {
-    if (query.due_date) {
-      query.due_date.$lt = end_date;
-    } else {
-      query.due_date = { $lte: end_date };
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  } else {
+    types && types.length ? (query.type = { $in: types }) : false;
+    if (types && types.indexOf('task') !== -1) {
+      types.push('');
+      types.push(null);
     }
-  }
 
-  if (str) {
-    query.content = { $regex: '.*' + str + '.*', $options: 'i' };
-  }
+    if (typeof status !== 'undefined') {
+      query.status = status;
+    }
+    contact ? (query.contact = contact) : (query.contact = { $ne: null });
 
-  if (labels && labels.length) {
-    const contacts = await Contact.find({
-      user: currentUser._id,
-      label: { $in: labels },
-    }).select('_id');
-    const contact_ids = contacts.map((e) => e._id);
-    query.contact = { $in: contact_ids };
-  }
-  const count = await FollowUp.countDocuments(query);
-  const _follow_ups = await FollowUp.find(query)
-    .sort({ due_date: sortDir })
-    .skip(skip)
-    .limit(pageSize)
-    .populate({ path: 'contact' });
+    if (start_date) {
+      query.due_date = { $gte: start_date };
+    }
 
-  return res.send({
-    status: true,
-    data: {
-      count,
-      tasks: _follow_ups,
-    },
-  });
+    if (end_date) {
+      if (query.due_date) {
+        query.due_date.$lt = end_date;
+      } else {
+        query.due_date = { $lte: end_date };
+      }
+    }
+
+    if (str) {
+      query.content = { $regex: '.*' + str + '.*', $options: 'i' };
+    }
+
+    if (labels && labels.length) {
+      const contacts = await Contact.find({
+        user: currentUser._id,
+        label: { $in: labels },
+      }).select('_id');
+      const contact_ids = contacts.map((e) => e._id);
+      query.contact = { $in: contact_ids };
+    }
+    const count = await FollowUp.countDocuments(query);
+    const _follow_ups = await FollowUp.find(query)
+        .sort({ due_date: sortDir })
+        .skip(skip)
+        .limit(pageSize)
+        .populate({ path: 'contact' });
+
+    return res.send({
+      status: true,
+      data: {
+        count,
+        tasks: _follow_ups,
+      },
+    });
+  }
 };
 
 const selectAll = async (req, res) => {

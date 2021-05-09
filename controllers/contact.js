@@ -2157,6 +2157,14 @@ const isArray = function (a) {
 
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
+
   const {
     searchStr,
     recruitingStageCondition,

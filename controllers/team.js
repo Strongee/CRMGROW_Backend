@@ -1947,6 +1947,13 @@ const getSharedContacts = async (req, res) => {
 
 const searchContact = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
   const searchStr = req.body.search;
   const search = searchStr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
   const phoneSearch = searchStr.replace(/[.*+\-?^${}()|[\]\\\s]/g, '');

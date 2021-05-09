@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator/check');
 const mongoose = require('mongoose');
 const Tag = require('../models/tag');
 const Contact = require('../models/contact');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -146,6 +147,13 @@ const getTagsDetail = async (req, res) => {
 
 const updateTag = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
   const { oldTag, newTag } = req.body;
   await Contact.update(
     { user: mongoose.Types.ObjectId(currentUser.id) },
@@ -163,6 +171,13 @@ const updateTag = async (req, res) => {
 
 const deleteTag = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
   const { tag, contact } = req.body;
   const query = { user: mongoose.Types.ObjectId(currentUser.id) };
   if (contact) {
