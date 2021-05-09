@@ -4,6 +4,7 @@ const Guest = require('../models/guest');
 const api = require('../config/api');
 const mail_contents = require('../constants/mail_contents');
 const urls = require('../constants/urls');
+const system_settings = require('../config/system_settings');
 
 const load = async (req, res) => {
   const { currentUser } = req;
@@ -37,6 +38,13 @@ const get = async (req, res) => {
 
 const create = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
 
   const count = Guest.countDocuments({
     user: currentUser.id,
@@ -101,6 +109,14 @@ const create = async (req, res) => {
 
 const edit = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
+
   const editData = req.body;
   const guest = await Guest.findOne({
     _id: req.params.id,
@@ -147,6 +163,14 @@ const edit = async (req, res) => {
 
 const remove = async (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
+
   const _id = req.params.id;
   await Guest.deleteOne({ _id, user: currentUser.id }).catch((err) => {
     console.log('err', err.message);

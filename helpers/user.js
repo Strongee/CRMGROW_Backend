@@ -10,9 +10,14 @@ const setPackage = async (data) => {
     'contact_info.max_count': system_settings.CONTACT_UPLOAD_LIMIT[level],
   };
 
+  const video_info = {
+    'video_info.upload_max_count': system_settings.VIDEO_UPLOAD_LIMIT[level]
+  };
+
   query = {
     ...query,
-    ...contact_info
+    ...contact_info,
+    ...video_info
   };
 
   User.updateOne(

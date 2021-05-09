@@ -65,7 +65,6 @@ const UserSchema = new Schema(
         type: Number,
         default: system_settings.CONTACT_UPLOAD_LIMIT.PRO,
       },
-      count: { type: Number, default: 0 },
     },
     text_info: {
       is_limit: { type: Boolean, default: true },
@@ -91,7 +90,6 @@ const UserSchema = new Schema(
         type: Number,
         default: system_settings.AUTOMATION_ASSIGN_LIMIT.PRO,
       },
-      assign_count: { type: Number, default: 0 },
     },
     video_info: {
         is_enabled: { type: Boolean, default: true },
@@ -104,8 +102,6 @@ const UserSchema = new Schema(
             type: Number,
             default: system_settings.VIDEO_RECORD_LIMIT.PRO,
         },
-        upload_count: { type: Number, default: 0 },
-        record_length: { type: Number, default: 0 },
     },
     email_verified: Boolean,
     welcome_email: { type: Boolean, default: false },

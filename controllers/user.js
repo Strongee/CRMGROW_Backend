@@ -1229,12 +1229,6 @@ const getMe = async (req, res) => {
     }
   );
 
-  const contactCount = await Contact.countDocuments({ user: currentUser.id });
-  const videoCount = await Video.countDocuments({ user: currentUser.id, uploaded: true });
-  const assignAutomationCount = await TimeLine.countDocuments({ user: currentUser.id, status: 'active' });
-  _user.contact_info.count = contactCount;
-  _user.video_info.upload_count = videoCount;
-  _user.automation_info.assign_count = assignAutomationCount;
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;

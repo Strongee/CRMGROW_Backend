@@ -501,6 +501,18 @@ const pipe = async (req, res) => {
 };
 
 const create = async (req, res) => {
+  const { currentUser } = req;
+
+  const userVideoCount = await Video.countDocuments({ user: currentUser.id, uploaded: true });
+  const max_count = currentUser.video_info.upload_max_count || system_settings.VIDEO_UPLOAD_LIMIT.BASIC;
+
+  if (userVideoCount >= max_count) {
+    res.status(404).send({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
+
   if (req.file) {
     const file_name = req.file.filename;
 
