@@ -1058,7 +1058,9 @@ const edit = async (req, res) => {
           }
         }
 
-        if (contacts && contacts.lengh > 0) {
+        console.log('contacts', contacts);
+
+        if (contacts && contacts.length > 0) {
           Activity.deleteMany({
             contacts: { $in: contacts },
             appointments: appointment._id,
