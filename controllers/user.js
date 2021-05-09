@@ -1284,12 +1284,12 @@ const editMe = async (req, res) => {
         data,
       });
     })
-    .catch((e) => {
-      let errors;
-      
+    .catch((err) => {
+      console.log('user update err', err.message);
+
       return res.status(500).send({
         status: false,
-        error: errors || e,
+        error: err.message,
       });
     });
 };

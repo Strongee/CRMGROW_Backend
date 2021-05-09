@@ -758,7 +758,7 @@ const removeContact = async (user_id, id) => {
   await Appointment.deleteMany({ contact: id });
   await Reminder.deleteMany({ contact: id });
   await TimeLine.deleteMany({ contact: id });
-  await Text.deleteMany({ contact: req.params.id });
+  await Text.deleteMany({ contact: id });
   return true;
 };
 

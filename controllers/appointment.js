@@ -1003,12 +1003,12 @@ const edit = async (req, res) => {
         ).catch((err) => {
           console.log('appointment update err', err.message);
         });
+
+        const contacts = appointment.contacts;
+
         for (let i = 0; i < edit_data.contacts.length; i++) {
           const contact = edit_data.contacts[i];
-          if (
-            appointment.contacts &&
-            appointment.contacts.indexOf(contact) !== -1
-          ) {
+          if (contacts && contacts.indexOf(contact) !== -1) {
             const activity = new Activity({
               content: 'updated appointment',
               contacts: contact,
@@ -1016,6 +1016,8 @@ const edit = async (req, res) => {
               user: currentUser.id,
               type: 'appointments',
             });
+
+            contacts.splice(contacts.indexOf(contact), 1);
 
             activity
               .save()
@@ -1054,6 +1056,16 @@ const edit = async (req, res) => {
               });
             });
           }
+        }
+
+        if (contacts && contacts.lengh > 0) {
+          Activity.deleteMany({
+            contacts: { $in: contacts },
+            appointments: appointment._id,
+            type: 'appointments',
+          }).catch((err) => {
+            console.log('activity remove err', err.message);
+          });
         }
       }
       return res.send({

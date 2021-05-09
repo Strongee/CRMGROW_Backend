@@ -1338,8 +1338,9 @@ const removeAppointment = async (req, res) => {
       console.log('appointment find err', err.message);
     });
 
-    Activity.deleteOne({
-      _id: appointment.id,
+    Activity.deleteMany({
+      appointments: appointment.id,
+      user: currentUser.id,
     }).catch((err) => {
       console.log('appointment activity err', err.message);
     });
