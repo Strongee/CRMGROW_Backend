@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');
 const Team = require('../models/team');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const { id } = req.params;
@@ -104,6 +105,14 @@ const create = async (req, res) => {
   //     error: errors.array()
   //   })
   // }
+
+  currentUser.package_level = 'lite';
+  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please update pricing for this.',
+    });
+  }
 
   const template = new EmailTemplate({
     ...req.body,
