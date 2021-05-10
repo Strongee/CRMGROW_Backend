@@ -231,7 +231,6 @@ const googleCalendarList = (calendar_data) => {
 
                           _gmail_calendar_data.calendar_id = calendars[i].id;
                           _gmail_calendar_data.event_id = event.id;
-                          _gmail_calendar_data.type = 2;
                           calendar_data.items.push(_gmail_calendar_data);
                         }
                         if (recurrence_event.length > 0) {
@@ -1828,7 +1827,6 @@ const getEventById = async (req, res) => {
     if (calendar.connected_calendar_type === 'outlook') {
       await getOutlookEventById({ calendar_id, calendar_event_id, calendar })
         .then(async (event) => {
-          console.log('event***************', event);
           const guests = [];
 
           if (event.attendees && event.attendees.length > 0) {
@@ -1900,6 +1898,7 @@ const getEventById = async (req, res) => {
           } else {
             _outlook_calendar_data.due_end = '';
           }
+
           if (event.organizer) {
             _outlook_calendar_data.organizer =
               event.organizer.emailAddress.address;
@@ -1908,6 +1907,26 @@ const getEventById = async (req, res) => {
             }
           }
 
+          if (event.recurrence) {
+            if (
+              event.recurrence.pattern &&
+              event.recurrence.pattern.type.indexOf('daily') !== -1
+            ) {
+              _outlook_calendar_data.recurrence = 'DAILY';
+            } else if (
+              event.recurrence.pattern &&
+              event.recurrence.pattern.type.indexOf('weekly') !== -1
+            ) {
+              _outlook_calendar_data.recurrence = 'WEEKLY';
+            } else if (
+              event.recurrence.pattern &&
+              event.recurrence.pattern.type.indexOf('monthly') !== -1
+            ) {
+              _outlook_calendar_data.recurrence = 'MONTHLY';
+            }
+          }
+
+          _outlook_calendar_data.calendar_id = calendar_id;
           _outlook_calendar_data.guests = guests;
           _outlook_calendar_data.event_id = event.id;
 
@@ -1933,9 +1952,38 @@ const getEventById = async (req, res) => {
       const data = { oauth2Client, calendar_id, calendar_event_id };
       await getGoogleEventById(data)
         .then((event) => {
+          console.log('event', event);
+          const guests = [];
+
+          if (event.attendees) {
+            for (let j = 0; j < event.attendees.length; j++) {
+              const guest = event.attendees[j].email;
+              const response = event.attendees[j].responseStatus;
+              guests.push({ email: guest, response });
+            }
+          }
+          const _gmail_calendar_data = {};
+          _gmail_calendar_data.title = event.summary;
+          _gmail_calendar_data.description = event.description;
+          _gmail_calendar_data.location = event.location;
+          _gmail_calendar_data.due_start =
+            event.start.dateTime || event.end.date;
+          _gmail_calendar_data.due_end = event.end.dateTime || event.end.date;
+          _gmail_calendar_data.guests = guests;
+
+          if (event.organizer) {
+            _gmail_calendar_data.organizer = event.organizer.email;
+            if (event.organizer.email === connected_email) {
+              _gmail_calendar_data.is_organizer = true;
+            }
+          }
+
+          _gmail_calendar_data.calendar_id = calendar_id;
+          _gmail_calendar_data.event_id = event.id;
+
           return res.send({
             status: true,
-            data: event,
+            data: _gmail_calendar_data,
           });
         })
         .catch((err) => {
