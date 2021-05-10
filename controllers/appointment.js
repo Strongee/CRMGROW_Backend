@@ -140,24 +140,6 @@ const getAll = async (req, res) => {
   }
 };
 
-const get = async (req, res) => {
-  const appointments = await Appointment.find({
-    contact: req.params.id,
-    del: false,
-  }).catch((err) => {
-    console.log('appointment find err', err.message);
-    return res.status(500).json({
-      status: false,
-      error: err.message,
-    });
-  });
-
-  return res.send({
-    status: true,
-    data: appointments,
-  });
-};
-
 const googleCalendarList = (calendar_data) => {
   const { connected_email, auth, date, mode } = calendar_data;
   const data = [];
@@ -211,19 +193,6 @@ const googleCalendarList = (calendar_data) => {
                         for (let j = 0; j < events.length; j++) {
                           const event = events[j];
                           const guests = [];
-                          const contacts = [];
-                          const appointments = await Appointment.find({
-                            event_id: event.id,
-                          })
-                            .select('contact')
-                            .populate({
-                              path: 'contact',
-                              select: 'email first_name last_name',
-                            });
-
-                          appointments.map((appointment) => {
-                            contacts.push(appointment.contact);
-                          });
 
                           if (event.attendees) {
                             for (let j = 0; j < event.attendees.length; j++) {
@@ -262,7 +231,6 @@ const googleCalendarList = (calendar_data) => {
 
                           _gmail_calendar_data.calendar_id = calendars[i].id;
                           _gmail_calendar_data.event_id = event.id;
-                          _gmail_calendar_data.contacts = contacts;
                           _gmail_calendar_data.type = 2;
                           calendar_data.items.push(_gmail_calendar_data);
                         }
@@ -393,20 +361,7 @@ const outlookCalendarList = (calendar_data) => {
 
                   for (let j = 0; j < calendar_events.length; j++) {
                     const guests = [];
-                    const contacts = [];
                     const calendar_event = calendar_events[j];
-                    const appointments = await Appointment.find({
-                      event_id: calendar_event.id,
-                    })
-                      .select('contact')
-                      .populate({
-                        path: 'contact',
-                        select: 'email first_name last_name',
-                      });
-
-                    appointments.map((appointment) => {
-                      contacts.push(appointment.contact);
-                    });
 
                     if (
                       calendar_event.attendees &&
@@ -495,7 +450,6 @@ const outlookCalendarList = (calendar_data) => {
                       }
                     }
 
-                    _outlook_calendar_data.contacts = contacts;
                     _outlook_calendar_data.guests = guests;
                     _outlook_calendar_data.event_id = calendar_event.id;
                     _outlook_calendar_data.calendar_id = calendar.id;
@@ -894,7 +848,7 @@ const edit = async (req, res) => {
       });
 
       await new Promise((resolve, reject) => {
-        token.refresh(function (error, result) {
+        token.refresh((error, result) => {
           if (error) {
             reject(error);
           } else {
@@ -1870,13 +1824,96 @@ const getEventById = async (req, res) => {
       });
     }
 
-    const remove_id = recurrence_id || event_id;
+    const calendar_event_id = recurrence_id || event_id;
     if (calendar.connected_calendar_type === 'outlook') {
-      await getOutlookEventById({ calendar_id, remove_id, calendar })
-        .then((event) => {
+      await getOutlookEventById({ calendar_id, calendar_event_id, calendar })
+        .then(async (event) => {
+          console.log('event***************', event);
+          const guests = [];
+
+          if (event.attendees && event.attendees.length > 0) {
+            const attendees = event.attendees;
+            for (let i = 0; i < attendees.length; i++) {
+              const guest = attendees[i].emailAddress.address;
+              let response = '';
+              switch (attendees[i].status.response) {
+                case 'none':
+                  response = 'needsAction';
+                  break;
+                case 'organizer':
+                  response = 'accepted';
+                  break;
+                case 'declined':
+                  response = 'declined';
+                  break;
+                case 'accepted':
+                  response = 'accepted';
+                  break;
+                case 'tentativelyAccepted':
+                  response = 'tentative';
+                  break;
+                case 'notResponded':
+                  response = 'needsAction';
+                  break;
+                default:
+                  response = 'needsAction';
+                  break;
+              }
+              guests.push({ email: guest, response });
+            }
+          }
+          const _outlook_calendar_data = {};
+          _outlook_calendar_data.title = event.subject;
+          if (event.body) {
+            _outlook_calendar_data.description = event.body.content;
+          } else {
+            _outlook_calendar_data.description = '';
+          }
+          if (event.location) {
+            _outlook_calendar_data.location = event.location.displayName;
+          } else {
+            _outlook_calendar_data.location = '';
+          }
+          if (event.start) {
+            _outlook_calendar_data.due_start = event.start.dateTime;
+            // _outlook_calendar_data.time_zone =
+            //   calendar_event.start.timezone;
+            // _outlook_calendar_data.due_start = moment
+            //   .tz(
+            //     _outlook_calendar_data.due_start,
+            //     _outlook_calendar_data.time_zone
+            //   )
+            //   .toISOString();
+          } else {
+            _outlook_calendar_data.due_start = '';
+          }
+          if (event.end) {
+            _outlook_calendar_data.due_end = event.end.dateTime;
+            // _outlook_calendar_data.time_zone =
+            //   calendar_event.end.timezone;
+            // _outlook_calendar_data.due_end = moment
+            //   .tz(
+            //     _outlook_calendar_data.due_end,
+            //     _outlook_calendar_data.time_zone
+            //   )
+            //   .toISOString();
+          } else {
+            _outlook_calendar_data.due_end = '';
+          }
+          if (event.organizer) {
+            _outlook_calendar_data.organizer =
+              event.organizer.emailAddress.address;
+            if (event.organizer.emailAddress.address === connected_email) {
+              _outlook_calendar_data.is_organizer = true;
+            }
+          }
+
+          _outlook_calendar_data.guests = guests;
+          _outlook_calendar_data.event_id = event.id;
+
           return res.send({
             status: true,
-            data: event,
+            data: _outlook_calendar_data,
           });
         })
         .catch((err) => {
@@ -1893,7 +1930,7 @@ const getEventById = async (req, res) => {
         urls.GMAIL_AUTHORIZE_URL
       );
       oauth2Client.setCredentials(JSON.parse(calendar.google_refresh_token));
-      const data = { oauth2Client, calendar_id, remove_id };
+      const data = { oauth2Client, calendar_id, calendar_event_id };
       await getGoogleEventById(data)
         .then((event) => {
           return res.send({
@@ -1963,7 +2000,7 @@ const removeOutlookCalendarById = async (data) => {
 };
 
 const getOutlookEventById = async (data) => {
-  const { calendar_id, remove_id, calendar } = data;
+  const { calendar_id, calendar_event_id: outlook_event_id, calendar } = data;
 
   let accessToken;
   const token = oauth2.accessToken.create({
@@ -1998,7 +2035,7 @@ const getOutlookEventById = async (data) => {
     });
 
     const event = await client
-      .api(`/me/calendars/${calendar_id}/events/${remove_id}`)
+      .api(`/me/calendars/${calendar_id}/events/${outlook_event_id}`)
       .get()
       .catch((err) => {
         console.log('remove err', err);
@@ -2006,13 +2043,15 @@ const getOutlookEventById = async (data) => {
     resolve(event);
   });
 };
+
 const getGoogleEventById = async (data) => {
-  const { oauth2Client, calendar_id, remove_id } = data;
+  const { oauth2Client, calendar_id, calendar_event_id } = data;
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const params = {
     calendarId: calendar_id,
-    eventId: remove_id,
+    eventId: calendar_event_id,
   };
+
   return new Promise((resolve, reject) => {
     calendar.events.get(params, {}, function (err, response) {
       if (err) {
@@ -2029,7 +2068,6 @@ const getGoogleEventById = async (data) => {
 
 module.exports = {
   getAll,
-  get,
   getCalendarList,
   create,
   edit,
