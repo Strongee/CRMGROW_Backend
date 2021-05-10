@@ -1952,7 +1952,6 @@ const getEventById = async (req, res) => {
       const data = { oauth2Client, calendar_id, calendar_event_id };
       await getGoogleEventById(data)
         .then((event) => {
-          console.log('event', event);
           const guests = [];
 
           if (event.attendees) {
@@ -1978,6 +1977,16 @@ const getEventById = async (req, res) => {
             }
           }
 
+          if (event.recurrence) {
+            if (event.recurrence[0].indexOf('DAILY') !== -1) {
+              _gmail_calendar_data.recurrence = 'DAILY';
+            } else if (event.recurrence[0].indexOf('WEEKLY') !== -1) {
+              _gmail_calendar_data.recurrence = 'WEEKLY';
+            } else if (event.recurrence[0].indexOf('MONTHLY') !== -1) {
+              _gmail_calendar_data.recurrence = 'MONTHLY';
+            }
+          }
+
           _gmail_calendar_data.calendar_id = calendar_id;
           _gmail_calendar_data.event_id = event.id;
 
@@ -1988,9 +1997,9 @@ const getEventById = async (req, res) => {
         })
         .catch((err) => {
           console.log('event getting err', err.message);
-          return res.status(400).json({
+          return res.status(500).json({
             status: false,
-            error: err,
+            error: err.message,
           });
         });
     }
