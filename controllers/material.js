@@ -934,7 +934,7 @@ const bulkText = async (req, res) => {
     let max_text_count = 0;
     let additional_sms_credit = 0;
     if (text_info['is_limit']) {
-      count = await Contact.countDocuments({ user: currentUser.id });
+      count = await Text.countDocuments({ user: currentUser.id });
 
       max_text_count =
         text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;

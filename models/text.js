@@ -6,6 +6,7 @@ const TextSchema = new Schema(
   {
     user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'contact' }],
+    deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     phone: String,
     content: String,
     from: String,

@@ -29,7 +29,8 @@ const {
   removeGoogleCalendarById,
   removeOutlookCalendarById,
 } = require('./appointment');
-const EmailHelper = require('../helpers/email');
+const { sendEmail } = require('../helpers/email');
+const { sendText } = require('../helpers/text');
 const api = require('../config/api');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -516,14 +517,12 @@ const getActivity = async (req, res) => {
     texts = await Text.find({ _id: { $in: textIds } });
     appointments = await Appointment.find({ _id: { $in: apptIds } });
     tasks = await FollowUp.find({ _id: { $in: taskIds } });
-    deals = await Deal.find({ _id: { $in: dealIds } });
   } else {
     notes = await Note.find({ deal: req.body.deal });
-    emails = await Email.find({ contacts: req.body.deal });
-    texts = await Text.find({ contacts: req.body.deal });
-    appointments = await Appointment.find({ contacts: req.body.deal });
-    tasks = await FollowUp.find({ contact: req.body.deal });
-    deals = await Deal.find({ contacts: req.body.deal });
+    emails = await Email.find({ deal: req.body.deal });
+    texts = await Text.find({ deal: req.body.deal });
+    appointments = await Appointment.find({ deal: req.body.deal });
+    tasks = await FollowUp.find({ deal: req.body.deal });
   }
 
   const data = {
@@ -1055,7 +1054,7 @@ const removeFollowUp = async (req, res) => {
   });
 };
 
-const sendEmail = async (req, res) => {
+const sendEmails = async (req, res) => {
   const { currentUser } = req;
   const { subject, content, cc, bcc, deal } = req.body;
   const error = [];
@@ -1092,9 +1091,8 @@ const sendEmail = async (req, res) => {
     ...req.body,
   };
 
-  EmailHelper.sendEmail(data)
+  sendEmail(data)
     .then((_res) => {
-      console.log('_res', _res);
       _res.forEach((response) => {
         if (!response.status) {
           error.push({
@@ -1616,6 +1614,98 @@ const createTeamCall = async (req, res) => {
     });
 };
 
+const sendTexts = async (req, res) => {
+  const { currentUser } = req;
+  const { content, deal } = req.body;
+  const error = [];
+
+  const text_info = currentUser.text_info;
+  let count = 0;
+  let max_text_count = 0;
+  let additional_sms_credit = 0;
+
+  if (!currentUser['proxy_number'] && !currentUser['twilio_number']) {
+    return res.status(408).json({
+      status: false,
+      error: 'No phone',
+    });
+  }
+
+  if (text_info['is_limit']) {
+    count = await Text.countDocuments({ user: currentUser.id });
+
+    max_text_count =
+      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+
+    const { additional_credit } = currentUser.text_info;
+    if (additional_credit) {
+      additional_sms_credit = additional_credit.amount;
+    }
+
+    if (max_text_count <= count && !additional_sms_credit) {
+      return res.status(409).json({
+        status: false,
+        error: 'Exceed max sms credit',
+      });
+    }
+  }
+
+  const text = new Text({
+    user: currentUser.id,
+    type: 0,
+    content,
+    deal,
+  });
+
+  text.save().catch((err) => {
+    console.log('new email save err', err.message);
+  });
+
+  const activity_content = 'sent text';
+
+  const activity = new Activity({
+    user: currentUser.id,
+    content: activity_content,
+    deals: deal,
+    type: 'texts',
+    texts: text.id,
+  });
+
+  activity.save().catch((err) => {
+    console.log('deal text activity save err', err.message);
+  });
+
+  const data = {
+    user: currentUser.id,
+    ...req.body,
+  };
+
+  sendText(data)
+    .then((_res) => {
+      _res.forEach((response) => {
+        if (!response.status) {
+          error.push({
+            contact: response.contact,
+            error: response.error,
+          });
+        }
+      });
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      } else {
+        return res.send({
+          status: true,
+        });
+      }
+    })
+    .catch((err) => {
+      console.log('email send error', err);
+    });
+};
+
 module.exports = {
   getAll,
   getActivity,
@@ -1639,7 +1729,8 @@ module.exports = {
   updateFollowUp,
   removeFollowUp,
   createTeamCall,
-  sendEmail,
+  sendEmails,
   getEmails,
+  sendTexts,
   updateContact,
 };

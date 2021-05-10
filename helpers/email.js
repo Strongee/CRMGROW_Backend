@@ -346,8 +346,6 @@ const bulkEmail = async (data) => {
           subject: email_subject,
           contacts: contacts[i],
           user: currentUser.id,
-          updated_at: new Date(),
-          created_at: new Date(),
         });
 
         const _email = await email
@@ -363,8 +361,6 @@ const bulkEmail = async (data) => {
           user: currentUser.id,
           type: 'emails',
           emails: _email.id,
-          created_at: new Date(),
-          updated_at: new Date(),
         });
 
         const activity = await _activity
