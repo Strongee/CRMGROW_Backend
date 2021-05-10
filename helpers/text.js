@@ -1417,7 +1417,7 @@ const sendText = async (data) => {
                 text_content
               );
 
-              if (contacts.length > 1) {
+              if (contacts.length > 5) {
                 const now = moment();
                 const due_date = now.add(1, 'minutes');
 
@@ -1658,7 +1658,7 @@ const sendText = async (data) => {
                 text_content
               );
 
-              if (contacts.length > 1) {
+              if (contacts.length > 5) {
                 const now = moment();
                 const due_date = now.add(1, 'minutes');
                 const task = new Task({

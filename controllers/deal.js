@@ -21,6 +21,7 @@ const Reminder = require('../models/reminder');
 const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
+const Task = require('../models/task');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -1056,7 +1057,7 @@ const removeFollowUp = async (req, res) => {
 
 const sendEmails = async (req, res) => {
   const { currentUser } = req;
-  const { subject, content, cc, bcc, deal } = req.body;
+  const { subject, content, cc, bcc, deal, contacts } = req.body;
   const error = [];
 
   const email = new Email({
@@ -1067,6 +1068,13 @@ const sendEmails = async (req, res) => {
     bcc,
     deal,
   });
+
+  if (!currentUser.primary_connected) {
+    return res.status(406).json({
+      status: false,
+      error: 'no connected',
+    });
+  }
 
   email.save().catch((err) => {
     console.log('new email save err', err.message);
@@ -1086,35 +1094,66 @@ const sendEmails = async (req, res) => {
     console.log('activity save err', err.message);
   });
 
-  const data = {
-    user: currentUser.id,
-    ...req.body,
-  };
+  if (contacts.length > 15) {
+    let delay = 5;
+    while (contacts.length > 0) {
+      const due_date = moment().add(delay, 'minutes');
+      delay += 1;
 
-  sendEmail(data)
-    .then((_res) => {
-      _res.forEach((response) => {
-        if (!response.status) {
-          error.push({
-            contact: response.contact,
-            error: response.error,
+      for (let i = 0; i < contacts.length; i += 15) {
+        const task = new Task({
+          user: currentUser.id,
+          contacts: contacts.slice(0, 15),
+          status: 'active',
+          action: {
+            type: 'send_email',
+            ...req.body,
+          },
+          due_date,
+        });
+
+        task.save().catch((err) => {
+          console.log('campaign job save err', err.message);
+        });
+
+        contacts.splice(0, 15);
+      }
+    }
+
+    return res.send({
+      status: true,
+    });
+  } else {
+    const data = {
+      user: currentUser.id,
+      ...req.body,
+    };
+
+    sendEmail(data)
+      .then((_res) => {
+        _res.forEach((response) => {
+          if (!response.status) {
+            error.push({
+              contact: response.contact,
+              error: response.error,
+            });
+          }
+        });
+        if (error.length > 0) {
+          return res.status(405).json({
+            status: false,
+            error,
+          });
+        } else {
+          return res.send({
+            status: true,
           });
         }
+      })
+      .catch((err) => {
+        console.log('email send error', err);
       });
-      if (error.length > 0) {
-        return res.status(405).json({
-          status: false,
-          error,
-        });
-      } else {
-        return res.send({
-          status: true,
-        });
-      }
-    })
-    .catch((err) => {
-      console.log('email send error', err);
-    });
+  }
 };
 
 const getEmails = async (req, res) => {

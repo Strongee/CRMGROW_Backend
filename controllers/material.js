@@ -128,6 +128,9 @@ const bulkEmail = async (req, res) => {
         contacts.splice(0, 15);
       }
     }
+    return res.send({
+      status: true,
+    });
   } else {
     for (let i = 0; i < contacts.length; i++) {
       let promise;
