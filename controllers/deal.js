@@ -12,11 +12,15 @@ const Note = require('../models/note');
 const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
 const Email = require('../models/email');
+const Text = require('../models/text');
 const Appointment = require('../models/appointment');
 const TeamCall = require('../models/team_call');
 const Notification = require('../models/notification');
 const Garbage = require('../models/garbage');
 const Reminder = require('../models/reminder');
+const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const Image = require('../models/image');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -384,58 +388,160 @@ const getDetail = (req, res) => {
 const getActivity = async (req, res) => {
   const { currentUser } = req;
   const { count } = req.body;
+  // TimeLines
 
-  let activity_list;
+  // Contact Activity List
+  let _activity_list;
+
   if (count) {
-    activity_list = await Activity.find({
+    _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
     })
       .sort({ updated_at: -1 })
       .limit(count)
-      .catch((err) => {
-        console.log('activity get err', err.message);
-      });
+      .populate([
+        { path: 'video_trackers', select: '-_id -user -contact' },
+        { path: 'image_trackers', select: '-_id -user -contact' },
+        { path: 'pdf_trackers', select: '-_id -user -contact' },
+        { path: 'email_trackers', select: '-_id -user -contact' },
+        { path: 'text_trackers', select: '-_id -user -contact' },
+      ]);
   } else {
-    activity_list = await Activity.find({
+    _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
     })
       .sort({ updated_at: 1 })
-      .catch((err) => {
-        console.log('activity get err', err.message);
-      });
+      .populate([
+        { path: 'video_trackers', select: '-_id -user -contact' },
+        { path: 'image_trackers', select: '-_id -user -contact' },
+        { path: 'pdf_trackers', select: '-_id -user -contact' },
+        { path: 'email_trackers', select: '-_id -user -contact' },
+        { path: 'text_trackers', select: '-_id -user -contact' },
+      ]);
   }
 
-  const activity_detail_list = [];
+  // Contact Relative Details
+  const videoIds = [];
+  const imageIds = [];
+  const pdfIds = [];
+  const materials = [];
+  let notes = [];
+  let emails = [];
+  let texts = [];
+  let appointments = [];
+  let tasks = [];
+  let deals = [];
 
-  for (let i = 0; i < activity_list.length; i++) {
-    const activity_detail = await Activity.aggregate([
-      {
-        $lookup: {
-          from:
-            activity_list[i].type !== 'deals'
-              ? activity_list[i].type
-              : 'contacts',
-          localField:
-            activity_list[i].type !== 'deals'
-              ? activity_list[i].type
-              : 'contacts',
-          foreignField: '_id',
-          as: 'activity_detail',
-        },
-      },
-      {
-        $match: { _id: activity_list[i]._id },
-      },
-    ]);
+  _activity_list.forEach((e) => {
+    if (e['type'] === 'videos') {
+      if (e['videos'] instanceof Array) {
+        Array.prototype.push.apply(videoIds, e['videos']);
+      } else {
+        videoIds.push(e['videos']);
+      }
+    }
+    if (e['type'] === 'images') {
+      if (e['images'] instanceof Array) {
+        Array.prototype.push.apply(imageIds, e['images']);
+      } else {
+        imageIds.push(e['images']);
+      }
+    }
+    if (e['type'] === 'pdfs') {
+      if (e['pdfs'] instanceof Array) {
+        Array.prototype.push.apply(pdfIds, e['pdfs']);
+      } else {
+        pdfIds.push(e['pdfs']);
+      }
+    }
+  });
+  const videos = await Video.find({ _id: { $in: videoIds } });
+  const pdfs = await PDF.find({ _id: { $in: pdfIds } });
+  const images = await Image.find({ _id: { $in: imageIds } });
+  Array.prototype.push.apply(materials, videos);
+  Array.prototype.push.apply(materials, pdfs);
+  Array.prototype.push.apply(materials, images);
 
-    activity_detail_list.push(activity_detail[0]);
+  if (count) {
+    const loadedIds = [];
+    const noteIds = [];
+    const emailIds = [];
+    const textIds = [];
+    const apptIds = [];
+    const taskIds = [];
+    const dealIds = [];
+    for (let i = 0; i < _activity_list.length; i++) {
+      if (
+        [
+          'notes',
+          'emails',
+          'texts',
+          'appointments',
+          'follow_ups',
+          'deals',
+        ].indexOf(_activity_list[i].type) !== -1
+      ) {
+        let detail_id = _activity_list[i][_activity_list[i].type];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        if (loadedIds.indexOf(detail_id) === -1) {
+          switch (_activity_list[i].type) {
+            case 'notes':
+              noteIds.push(detail_id);
+              break;
+            case 'emails':
+              emailIds.push(detail_id);
+              break;
+            case 'texts':
+              textIds.push(detail_id);
+              break;
+            case 'appointments':
+              apptIds.push(detail_id);
+              break;
+            case 'follow_ups':
+              taskIds.push(detail_id);
+              break;
+            case 'deals':
+              dealIds.push(detail_id);
+              break;
+          }
+        }
+      }
+    }
+    notes = await Note.find({ _id: { $in: noteIds } });
+    emails = await Email.find({ _id: { $in: emailIds } });
+    texts = await Text.find({ _id: { $in: textIds } });
+    appointments = await Appointment.find({ _id: { $in: apptIds } });
+    tasks = await FollowUp.find({ _id: { $in: taskIds } });
+    deals = await Deal.find({ _id: { $in: dealIds } });
+  } else {
+    notes = await Note.find({ deal: req.body.deal });
+    emails = await Email.find({ contacts: req.body.deal });
+    texts = await Text.find({ contacts: req.body.deal });
+    appointments = await Appointment.find({ contacts: req.body.deal });
+    tasks = await FollowUp.find({ contact: req.body.deal });
+    deals = await Deal.find({ contacts: req.body.deal });
   }
+
+  const data = {
+    activity: _activity_list,
+    details: {
+      materials,
+      notes,
+      emails,
+      texts,
+      appointments,
+      tasks,
+      deals,
+    },
+  };
 
   return res.send({
     status: true,
-    data: activity_detail_list,
+    data,
   });
 };
 
