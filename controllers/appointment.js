@@ -697,8 +697,8 @@ const addGoogleCalendarById = async (auth, ctz, appointment) => {
         }
 
         resolve({
-          event_id: event.data.id,
-          recurrence_id: event.data.id,
+          new_event_id: event.data.id,
+          new_recurrence_id: event.data.id,
         });
       }
     );
