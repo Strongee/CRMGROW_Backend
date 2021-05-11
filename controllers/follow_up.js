@@ -155,7 +155,7 @@ const edit = async (req, res) => {
         contacts: req.body.contact,
         user: currentUser.id,
         type: 'follow_ups',
-        follow_ups: _follow_up.id,
+        follow_ups: follow_up.id,
       });
 
       activity

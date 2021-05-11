@@ -66,6 +66,12 @@ router.put(
   catchError(VideoCtrl.updateDetail)
 );
 
+router.put(
+  '/converting/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.updateConvertStatus)
+);
+
 // Upload a thumbnail and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update));
 
@@ -160,6 +166,12 @@ router.get('/play/:id', catchError(VideoCtrl.downloadVideo));
 
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
+
+router.get(
+  '/download/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.downloadVideo)
+);
 
 router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
 
