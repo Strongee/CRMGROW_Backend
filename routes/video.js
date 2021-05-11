@@ -167,6 +167,12 @@ router.get('/play/:id', catchError(VideoCtrl.downloadVideo));
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
 
+router.get(
+  '/download/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.downloadVideo)
+);
+
 router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
 
 // Delete a video

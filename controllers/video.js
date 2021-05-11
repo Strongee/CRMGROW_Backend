@@ -3460,38 +3460,38 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
-const downloadVideo = async (req, res) => {
-  const video = await Video.findOne({
-    _id: req.params.id,
-  });
+// const downloadVideo = async (req, res) => {
+//   const video = await Video.findOne({
+//     _id: req.params.id,
+//   });
 
-  if (!video) {
-    return res.status(400).json({
-      status: false,
-      error: 'Invalid permission',
-    });
-  }
+//   if (!video) {
+//     return res.status(400).json({
+//       status: false,
+//       error: 'Invalid permission',
+//     });
+//   }
 
-  if (!video.url) {
-    return res.status(400).json({
-      status: false,
-      error: 'URL not found',
-    });
-  }
+//   if (!video.url) {
+//     return res.status(400).json({
+//       status: false,
+//       error: 'URL not found',
+//     });
+//   }
 
-  const options = {
-    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: video.key || video.url.slice(44),
-  };
+//   const options = {
+//     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+//     Key: video.key || video.url.slice(44),
+//   };
 
-  try {
-    res.attachment(video.url.slice(44));
-    const fileStream = s3.getObject(options).createReadStream();
-    fileStream.pipe(res);
-  } catch (err) {
-    console.log('err', err);
-  }
-};
+//   try {
+//     res.attachment(video.url.slice(44));
+//     const fileStream = s3.getObject(options).createReadStream();
+//     fileStream.pipe(res);
+//   } catch (err) {
+//     console.log('err', err);
+//   }
+// };
 
 const uploadVideo = async (req, res) => {
   const { currentUser } = req;
@@ -3628,6 +3628,27 @@ const playVideo = async (req, res) => {
   }
 };
 
+const downloadVideo = async (req, res) => {
+  const { currentUser } = req;
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser._id
+  });
+
+  if (video && video.bucket) {
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
+    if (material['is_converted']) {
+      return res.send({
+        status: true,
+        data: material['converted_url'],
+      });
+    }
+  }
+  return res.send({
+    status: false,
+  });
+};
+
 const bulkRemove = (req, res) => {};
 
 module.exports = {
@@ -3662,4 +3683,5 @@ module.exports = {
   playVideo,
   bulkRemove,
   updateConvertStatus,
+  downloadVideo,
 };
