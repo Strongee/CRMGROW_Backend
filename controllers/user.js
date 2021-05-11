@@ -251,17 +251,10 @@ const signUp = async (req, res) => {
             },
           });
         })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
+        .catch((err) => {
           return res.status(500).send({
             status: false,
-            error: errors || e,
+            error: err.message,
           });
         });
     })
