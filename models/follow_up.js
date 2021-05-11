@@ -13,6 +13,7 @@ const FollowUpSchema = new Schema(
       ref: 'follow_up',
     },
     has_shared: Boolean,
+    deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     status: { type: Number, default: 0 },
     reminder: Number,
     reminder_type: String,

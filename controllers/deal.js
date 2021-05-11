@@ -434,7 +434,6 @@ const getActivity = async (req, res) => {
   let texts = [];
   let appointments = [];
   let tasks = [];
-  let deals = [];
 
   _activity_list.forEach((e) => {
     if (e['type'] === 'videos') {
@@ -459,6 +458,8 @@ const getActivity = async (req, res) => {
       }
     }
   });
+
+  console.log('videoIds', videoIds);
   const videos = await Video.find({ _id: { $in: videoIds } });
   const pdfs = await PDF.find({ _id: { $in: pdfIds } });
   const images = await Image.find({ _id: { $in: imageIds } });
@@ -535,7 +536,6 @@ const getActivity = async (req, res) => {
       texts,
       appointments,
       tasks,
-      deals,
     },
   };
 
