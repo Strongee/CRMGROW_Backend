@@ -865,7 +865,6 @@ const updateDetail = async (req, res) => {
   delete editData.site_image;
   delete editData.thumbnail;
   const { currentUser } = req;
-  let thumbnail_path = '';
   const video = await Video.findOne({
     _id: req.params.id,
     user: currentUser.id,
@@ -907,139 +906,11 @@ const updateDetail = async (req, res) => {
       console.error('Upload Video Thumbnail Image', error);
     }
   }
-  const file_name = req.params.id;
-  let custom_thumbnail = false;
-  if (req.body.thumbnail) {
-    // base 64 image
-
-    if (!fs.existsSync(THUMBNAILS_PATH)) {
-      fs.mkdirSync(THUMBNAILS_PATH);
-    }
-
-    thumbnail_path = base64Img.imgSync(
-      req.body.thumbnail,
-      THUMBNAILS_PATH,
-      file_name
-    );
-    if (fs.existsSync(thumbnail_path) && req.body.custom_thumbnail) {
-      // Thumbnail
-      custom_thumbnail = true;
-      const play = await loadImage(PLAY_BUTTON_PATH);
-
-      const canvas = createCanvas(
-        system_settings.THUMBNAIL.WIDTH,
-        system_settings.THUMBNAIL.HEIGHT
-      );
-      const ctx = canvas.getContext('2d');
-      const image = await loadImage(thumbnail_path);
-
-      let height = image.height;
-      let width = image.width;
-      if (height > width) {
-        ctx.rect(
-          0,
-          0,
-          system_settings.THUMBNAIL.WIDTH,
-          system_settings.THUMBNAIL.HEIGHT
-        );
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
-        height = system_settings.THUMBNAIL.HEIGHT;
-        ctx.drawImage(
-          image,
-          (system_settings.THUMBNAIL.WIDTH - width) / 2,
-          0,
-          width,
-          height
-        );
-      } else {
-        height = system_settings.THUMBNAIL.HEIGHT;
-        width = system_settings.THUMBNAIL.WIDTH;
-        ctx.drawImage(image, 0, 0, width, height);
-      }
-
-      // ctx.rect(70, 170, 200, 40);
-      // ctx.globalAlpha = 0.7;
-      // ctx.fillStyle = '#333';
-      // ctx.fill();
-      // ctx.globalAlpha = 1.0;
-      // ctx.font = '24px Arial';
-      // ctx.fillStyle = '#ffffff';
-      // ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 150);
-      const buf = canvas.toBuffer();
-
-      for (let i = 0; i < 20; i++) {
-        if (i < 10) {
-          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-        } else {
-          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-        }
-      }
-
-      /**
-      sharp(thumbnail_path)
-      .resize(250, 140)
-      .toBuffer()
-      .then(data => {
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-            Body: data,
-            ACL: 'public-read'
-          };
-          
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            }
-          })
-      });
-      */
-    }
-  }
 
   for (const key in editData) {
     video[key] = editData[key];
   }
-
-  if (video['path'] && req.body.thumbnail) {
-    const data = {
-      file_name: req.params.id,
-      file_path: video['path'],
-      custom_thumbnail,
-    };
-
-    generatePreview(data)
-      .then((res) => {
-        Video.updateOne(
-          { _id: req.params.id },
-          { $set: { preview: res } }
-        ).catch((err) => {
-          console.log('update preview err', err.message);
-        });
-      })
-      .catch((err) => {
-        console.log('generate preview err', err.message);
-      });
-  }
-
-  if (video['type'] === 'video/webm') {
-    video['converted'] = 'progress';
-    videoHelper.convertRecordVideo(video.id);
-  } else if (
-    video['type'] === 'video/mp4' ||
-    video['type'] === 'video/quicktime'
-  ) {
-    video['converted'] = 'progress';
-    videoHelper.convertUploadVideo(video.id);
-  }
+  video['converted'] = 'progress';
 
   if (editData['folder']) {
     await Folder.updateOne(
@@ -3461,6 +3332,7 @@ const setupRecording = (io) => {
           duration,
           user: decoded.id,
           recording: true,
+          bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
         });
         video
           .save()
@@ -3495,7 +3367,6 @@ const setupRecording = (io) => {
                 mode: 'crop',
                 area,
               };
-              videoHelper.convertRecordVideo(data);
             } else if (data.mode === 'mirror') {
               params = {
                 id: _video.id,
@@ -3508,37 +3379,43 @@ const setupRecording = (io) => {
               };
               // CONVERT FFMPEG
             }
+            // Upload the Meta Data and Video to the S3
+            var videoKey = _video.id;
+            if (params.mode) {
+              s3.putObject({
+                Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+                Key: 'meta/' + videoKey + '.txt',
+                Body: JSON.stringify(params),
+                ContentType: 'text/plain',
+              }).promise();
+            }
+            const fileStream = fs.createReadStream(
+              TEMP_PATH + videoId + `.webm`
+            );
+            const uploadParams = {
+              Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+              Key: 'sources/' + videoKey + '.webm',
+              Body: fileStream,
+              ContentType: 'video/webm',
+            };
+            s3.upload(uploadParams)
+              .promise()
+              .then(() => {
+                _video['key'] = _video._id;
+                _video.save();
 
-            videoHelper.convertRecordVideo(params);
+                if (fs.existsSync(TEMP_PATH + videoId + `.webm`)) {
+                  fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+                }
+              });
+
             const video_data = {
               file_name: _video.id,
               file_path: _video.path,
               area,
               mode: data.mode,
             };
-
             videoHelper.generateThumbnail(video_data);
-            generatePreview(video_data)
-              .then((res) => {
-                Video.updateOne(
-                  { _id: _video.id },
-                  { $set: { preview: res } }
-                ).catch((err) => {
-                  console.log('update preview err', err.message);
-                });
-              })
-              .catch((err) => {
-                console.log('generate preview err', err.message);
-              });
-
-            Video.updateOne(
-              { _id: _video.id },
-              {
-                converted: 'progress',
-              }
-            ).catch((err) => {
-              console.log('video update err', err.message);
-            });
           })
           .catch((err) => {
             console.log('Faield SAVE VIDEO', err);
@@ -3548,7 +3425,9 @@ const setupRecording = (io) => {
     });
     socket.on('cancelRecord', (data) => {
       const videoId = data.videoId;
-      fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      if (fs.existsSync(TEMP_PATH + videoId + `.webm`)) {
+        fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      }
       socket.emit('removedVideo');
     });
   });
@@ -3720,7 +3599,7 @@ const playVideo = async (req, res) => {
     }
 
     // Video URL Decryption
-    let material = videoHelper.getVideoPublicUrl(video._doc);
+    let material = await videoHelper.getVideoPublicUrl(video._doc);
 
     material = JSON.parse(JSON.stringify(material));
     return res.render('lead_material_theme1_1', {
