@@ -659,15 +659,17 @@ const updateConvertStatus = async (req, res) => {
   if (status) {
     if (status['preview']) {
       video['preview'] =
-        api.AWS.CLOUDFRONT + '/preview/' + video['key'] + '.gif';
+        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' + video['key'] + '.gif';
     }
     if (status['converted'] === 100) {
       video['url'] =
         api.AWS.CLOUDFRONT + '/transcoded/' + video['key'] + '.mp4';
+      video['converted'] = 'completed';
     }
     if (status['streamd'] === 100) {
       video['url'] =
         api.AWS.CLOUDFRONT + '/streamd/' + video['key'] + '/' + video['key'] + '.m3u8';
+      video['converted'] = 'completed';
     }
 
     video.save().then(() => {
@@ -3778,5 +3780,5 @@ module.exports = {
   uploadVideo,
   playVideo,
   bulkRemove,
-  updateConvertStatus
+  updateConvertStatus,
 };
