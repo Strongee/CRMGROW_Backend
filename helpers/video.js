@@ -438,7 +438,7 @@ const removeVideo = async (user) => {
   }
 };
 
-const getVideoPublicUrl = (video) => {
+const getVideoPublicUrl = async (video) => {
   if (video.bucket && video.bucket === api.AWS.AWS_PRIVATE_S3_BUCKET) {
     video['is_private'] = true;
     const signer = new AWS.CloudFront.Signer(
@@ -484,7 +484,32 @@ const getVideoPublicUrl = (video) => {
       url: transcodedUrl,
       policy: transcodedPolicy,
     });
-    video['is_stream'] = true;
+    try {
+      const convertedMeta = await s3
+        .headObject({
+          Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+          Key: 'transcoded/' + video.key + '.mp4',
+        })
+        .promise();
+      if (convertedMeta) {
+        video['is_converted'] = true;
+      }
+    } catch (err) {
+      video['is_converted'] = false;
+    }
+    try {
+      const streamMeta = await s3
+        .headObject({
+          Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+          Key: 'streamd/' + video.key + '/' + video.key + '.m3u8',
+        })
+        .promise();
+      if (streamMeta) {
+        video['is_stream'] = true;
+      }
+    } catch (err) {
+      video['is_stream'] = false;
+    }
     video['stream_url'] = streamSignedUrl;
     video['converted_url'] = url;
   } else {

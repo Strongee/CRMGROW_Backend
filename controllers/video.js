@@ -3572,6 +3572,7 @@ const downloadVideo = async (req, res) => {
 };
 
 const uploadVideo = async (req, res) => {
+  const { currentUser } = req;
   if (req.file) {
     const key = req.file.key;
     let fileName = path.basename(key);
@@ -3581,6 +3582,7 @@ const uploadVideo = async (req, res) => {
       key: fileName,
       bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
       type: req.file.mimetype,
+      user: currentUser._id,
     });
 
     const _video = await video
@@ -3703,6 +3705,8 @@ const playVideo = async (req, res) => {
   }
 };
 
+const bulkRemove = (req, res) => {};
+
 module.exports = {
   play,
   play1,
@@ -3733,4 +3737,5 @@ module.exports = {
   downloadVideo,
   uploadVideo,
   playVideo,
+  bulkRemove,
 };
