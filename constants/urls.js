@@ -1,10 +1,10 @@
-let domain = 'https://app.crmgrow.com';
-const domain1 = 'https://app.crmgrow.com';
+let domain = 'https://ecsbe.crmgrow.com';
+const domain1 = 'https://ecsbe.crmgrow.com';
 let front =
   'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
 if (process.env.NODE_ENV === 'production') {
-  domain = 'https://app.crmgrow.com';
-  front = 'https://app.crmgrow.com';
+  domain = 'https://ecsbe.crmgrow.com';
+  front = 'https://pilot.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
   domain = 'http://3.139.190.87:3000';
   front = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
