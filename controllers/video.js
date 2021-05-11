@@ -639,6 +639,46 @@ const createVideo = async (req, res) => {
   });
 };
 
+const updateConvertStatus = async (req, res) => {
+  const { currentUser } = req;
+  const status = { ...req.body };
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  if (!video) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid_permission',
+    });
+  }
+
+  if (status) {
+    if (status['preview']) {
+      video['preview'] =
+        api.AWS.CLOUDFRONT + '/preview/' + video['key'] + '.gif';
+    }
+    if (status['converted'] === 100) {
+      video['url'] =
+        api.AWS.CLOUDFRONT + '/transcoded/' + video['key'] + '.mp4';
+    }
+    if (status['streamd'] === 100) {
+      video['url'] =
+        api.AWS.CLOUDFRONT + '/streamd/' + video['key'] + '/' + video['key'] + '.m3u8';
+    }
+
+    video.save().then(() => {
+      return res.send({
+        status: true,
+        data: video._doc,
+      });
+    });
+  }
+};
+
 const update = async (req, res) => {
   const editData = { ...req.body };
   delete editData.site_image;
@@ -3738,4 +3778,5 @@ module.exports = {
   uploadVideo,
   playVideo,
   bulkRemove,
+  updateConvertStatus
 };

@@ -66,6 +66,12 @@ router.put(
   catchError(VideoCtrl.updateDetail)
 );
 
+router.put(
+  '/converting/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.updateConvertStatus)
+);
+
 // Upload a thumbnail and detail info
 router.put('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.update));
 
