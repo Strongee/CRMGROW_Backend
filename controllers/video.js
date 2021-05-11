@@ -3333,6 +3333,7 @@ const setupRecording = (io) => {
           user: decoded.id,
           recording: true,
           bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+          converted: 'progress',
         });
         video
           .save()
@@ -3504,6 +3505,7 @@ const uploadVideo = async (req, res) => {
       bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
       type: req.file.mimetype,
       user: currentUser._id,
+      converted: 'progress',
     });
 
     const _video = await video
