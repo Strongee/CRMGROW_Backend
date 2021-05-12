@@ -3625,6 +3625,8 @@ const sendEmail = async (data) => {
     bcc,
     mode,
     attachments,
+    shared_email,
+    has_shared,
   } = data;
 
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
@@ -3655,7 +3657,7 @@ const sendEmail = async (data) => {
         console.log('contact found err', err.message);
       });
       if (contact) {
-        promise = new Promise(async (resolve, reject) => {
+        promise = new Promise(async (resolve) => {
           resolve({
             status: false,
             contact: {
@@ -3959,6 +3961,8 @@ const sendEmail = async (data) => {
         content: email_content,
         cc,
         bcc,
+        shared_email,
+        has_shared,
         contacts: contacts[i],
       });
 

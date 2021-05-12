@@ -401,27 +401,12 @@ const getActivity = async (req, res) => {
       deals: req.body.deal,
     })
       .sort({ updated_at: -1 })
-      .limit(count)
-      .populate([
-        { path: 'video_trackers', select: '-_id -user -contact' },
-        { path: 'image_trackers', select: '-_id -user -contact' },
-        { path: 'pdf_trackers', select: '-_id -user -contact' },
-        { path: 'email_trackers', select: '-_id -user -contact' },
-        { path: 'text_trackers', select: '-_id -user -contact' },
-      ]);
+      .limit(count);
   } else {
     _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
-    })
-      .sort({ updated_at: 1 })
-      .populate([
-        { path: 'video_trackers', select: '-_id -user -contact' },
-        { path: 'image_trackers', select: '-_id -user -contact' },
-        { path: 'pdf_trackers', select: '-_id -user -contact' },
-        { path: 'email_trackers', select: '-_id -user -contact' },
-        { path: 'text_trackers', select: '-_id -user -contact' },
-      ]);
+    }).sort({ updated_at: 1 });
   }
 
   // Contact Relative Details
@@ -1108,6 +1093,8 @@ const sendEmails = async (req, res) => {
           action: {
             type: 'send_email',
             ...req.body,
+            shared_email: email.id,
+            has_shared: true,
           },
           due_date,
         });
@@ -1127,6 +1114,8 @@ const sendEmails = async (req, res) => {
     const data = {
       user: currentUser.id,
       ...req.body,
+      shared_email: email.id,
+      has_shared: true,
     };
 
     sendEmail(data)
