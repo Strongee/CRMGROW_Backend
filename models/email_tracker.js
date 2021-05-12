@@ -18,6 +18,7 @@ const TrackerSchema = new Schema(
   }
 );
 
+TrackerSchema.index({ activity: 1 });
 const EmailTracker = mongoose.model('email_tracker', TrackerSchema);
 
 module.exports = EmailTracker;

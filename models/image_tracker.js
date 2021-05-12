@@ -18,6 +18,7 @@ const TrackerSchema = new Schema(
   }
 );
 
+TrackerSchema.index({ activity: 1 });
 const ImageTracker = mongoose.model('image_tracker', TrackerSchema);
 
 module.exports = ImageTracker;
