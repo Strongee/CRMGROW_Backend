@@ -83,6 +83,13 @@ const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 
 const twilio = require('twilio')(accountSid, authToken);
 
+var limitTime = 0;
+const timeBounce = 10 * 60 * 1000;
+const alertBounce = 60 * 1000;
+var counterDirection = 1;
+let recordDuration = 0;
+let max_duration = 0;
+
 const play = async (req, res) => {
   const video_id = req.query.video;
   const sender_id = req.query.user;
@@ -3367,21 +3374,67 @@ const setupRecording = (io) => {
   const fileStreams = {};
   const fileStreamSizeStatus = {};
   io.sockets.on('connection', (socket) => {
-    socket.on('initVideo', () => {
+    socket.on('initVideo', async (userId) => {
       const videoId = uuidv1();
-
       if (!fs.existsSync(TEMP_PATH)) {
         fs.mkdirSync(TEMP_PATH);
       }
 
-      const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
-      fileStreams[videoId] = ws;
-      fileStreamSizeStatus[videoId] = 0;
-      socket.emit('createdVideo', { video: videoId });
+      // console.log("on init video ============>", videoId, userId);
+
+      const user = await User.findOne({ _id: userId }).catch((err) => {
+        console.log('user find err', err.message);
+      });
+
+      // max_duration = user.video_info.record_max_duration;
+      max_duration = 7520000;
+      const recordVideos = await Video.find({ user: user._id, recording: true });
+      recordDuration = 0;
+
+      if (recordVideos && recordVideos.length > 0) {
+        for (const recordVideo of recordVideos) {
+          if (recordVideo.duration > 0) {
+            recordDuration += recordVideo.duration;
+          }
+        }
+      }
+
+      console.log("record duration 2 *************>", max_duration, recordDuration);
+      if (recordDuration >= max_duration) {
+        socket.emit('timeout', {maxOverflow: true});
+      } else {
+        limitTime = max_duration - recordDuration;
+        if (limitTime > timeBounce) {    // more than 10min counter is up else down
+          counterDirection = 1;
+          const data = {
+            counterDirection: 1,
+            limitTime
+          };
+          socket.emit('counterDirection', data);
+        } else {
+          counterDirection = -1;
+          const data = {
+            counterDirection: -1,
+            limitTime
+          };
+          socket.emit('counterDirection', data);
+        }
+        const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
+        fileStreams[videoId] = ws;
+        fileStreamSizeStatus[videoId] = 0;
+        // console.log("emit create video =============>", videoId);
+        socket.emit('createdVideo', { video: videoId });
+      }
     });
     socket.on('pushVideoData', (data) => {
       const videoId = data.videoId;
       const blob = data.data;
+      const recordTime = data.recordTime || 0;
+
+      if (counterDirection == -1 && recordTime < 0) {
+        console.log("emit timeout ************>");
+        socket.emit("timeout", {timeOverflow: true});
+      }
       if (!fileStreams[videoId]) {
         fileStreams[videoId] = fs.createWriteStream(
           TEMP_PATH + videoId + `.webm`,
@@ -3389,8 +3442,10 @@ const setupRecording = (io) => {
         );
         const stats = fs.statSync(TEMP_PATH + videoId + `.webm`);
         fileStreamSizeStatus[videoId] = stats.size;
+        // console.log("on push video data =============>", fileStreamSizeStatus[videoId]);
       }
       if (data.sentSize === fileStreamSizeStatus[videoId]) {
+        // console.log("emit received video data1 ===========>", fileStreamSizeStatus[videoId], recordTime);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -3401,6 +3456,17 @@ const setupRecording = (io) => {
           bufferSize += e.length;
         });
         fileStreamSizeStatus[videoId] += bufferSize;
+
+        const estimateTime = max_duration - recordDuration - recordTime;
+        if (estimateTime <= timeBounce && counterDirection == 1) {
+          counterDirection = -1;
+          const data = {
+            counterDirection: -1,
+            limitTime: estimateTime
+          };
+          socket.emit("counterDirection", data);
+        }
+        // console.log("emit received video data2 ===========>", estimateTime, counterDirection, recordTime);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -3413,20 +3479,23 @@ const setupRecording = (io) => {
 
       const token = data.token;
       let decoded;
+      // console.log("on save video ===========>", duration, token);
       try {
         decoded = jwt.verify(token, api.JWT_SECRET);
       } catch (err) {
+        // console.log("emit failed save video 1 ==========>");
         socket.emit('failedSaveVideo');
       }
       if (token) {
         const user = await User.findOne({ _id: decoded.id }).catch((err) => {
           console.log('user find err', err.message);
         });
+
         const video = new Video({
           url: urls.VIDEO_URL + videoId + `.webm`,
           path: TEMP_PATH + videoId + `.webm`,
           title: `${moment().format('MMMM Do YYYY')} - ${
-            user.user_name
+              user.user_name
           } Recording`,
           duration,
           user: decoded.id,
@@ -3435,6 +3504,7 @@ const setupRecording = (io) => {
         video
           .save()
           .then((_video) => {
+            // console.log("emit saved video =============>", _video.id);
             socket.emit('savedVideo', { video: _video.id });
 
             let area;
@@ -3446,7 +3516,7 @@ const setupRecording = (io) => {
               const screen = data.screen;
               const videoWidth = 1440;
               const videoHeight = Math.floor(
-                (videoWidth * screen.height) / screen.width
+                  (videoWidth * screen.height) / screen.width
               );
               const areaX = (data.area.startX * videoWidth) / screen.width;
               const areaY = (data.area.startY * videoHeight) / screen.height;
@@ -3489,23 +3559,23 @@ const setupRecording = (io) => {
 
             videoHelper.generateThumbnail(video_data);
             generatePreview(video_data)
-              .then((res) => {
-                Video.updateOne(
-                  { _id: _video.id },
-                  { $set: { preview: res } }
-                ).catch((err) => {
-                  console.log('update preview err', err.message);
+                .then((res) => {
+                  Video.updateOne(
+                      { _id: _video.id },
+                      { $set: { preview: res } }
+                  ).catch((err) => {
+                    console.log('update preview err', err.message);
+                  });
+                })
+                .catch((err) => {
+                  console.log('generate preview err', err.message);
                 });
-              })
-              .catch((err) => {
-                console.log('generate preview err', err.message);
-              });
 
             Video.updateOne(
-              { _id: _video.id },
-              {
-                converted: 'progress',
-              }
+                { _id: _video.id },
+                {
+                  converted: 'progress',
+                }
             ).catch((err) => {
               console.log('video update err', err.message);
             });
@@ -3517,8 +3587,10 @@ const setupRecording = (io) => {
       }
     });
     socket.on('cancelRecord', (data) => {
+      // console.log("on cancel record ===========>", data.videoId);
       const videoId = data.videoId;
       fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      // console.log("emit remove video ===============>");
       socket.emit('removedVideo');
     });
   });

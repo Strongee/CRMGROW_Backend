@@ -11,7 +11,8 @@ const setPackage = async (data) => {
   };
 
   const video_info = {
-    'video_info.upload_max_count': system_settings.VIDEO_UPLOAD_LIMIT[level]
+    'video_info.upload_max_count': system_settings.VIDEO_UPLOAD_LIMIT[level],
+    'video_info.record_max_duration': system_settings.VIDEO_RECORD_LIMIT[level]
   };
 
   query = {

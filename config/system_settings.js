@@ -99,9 +99,9 @@ const system_settings = {
     ELITE: 1000000,
   },
   VIDEO_RECORD_LIMIT: {
-    BASIC: 10,
-    PRO: 120,
-    ELITE: 1000,
+    BASIC: 600000,
+    PRO: 7200000,
+    ELITE: 60000000,
   },
   PACKAGE_LEVEL: {
     BASIC: 'lite',

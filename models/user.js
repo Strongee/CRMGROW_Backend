@@ -98,9 +98,9 @@ const UserSchema = new Schema(
             type: Number,
             default: system_settings.VIDEO_UPLOAD_LIMIT.PRO,
         },
-        record_max_length: {
+        record_max_duration: {
             type: Number,
-            default: system_settings.VIDEO_RECORD_LIMIT.PRO,
+            default: 7720000,
         },
     },
     email_verified: Boolean,
