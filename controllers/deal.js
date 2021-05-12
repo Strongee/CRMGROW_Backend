@@ -1042,7 +1042,17 @@ const removeFollowUp = async (req, res) => {
 
 const sendEmails = async (req, res) => {
   const { currentUser } = req;
-  const { subject, content, cc, bcc, deal, contacts } = req.body;
+  const {
+    subject,
+    content,
+    cc,
+    bcc,
+    deal,
+    contacts,
+    video_ids,
+    pdf_ids,
+    image_ids,
+  } = req.body;
   const error = [];
 
   const email = new Email({
@@ -1073,6 +1083,9 @@ const sendEmails = async (req, res) => {
     deals: deal,
     type: 'emails',
     emails: email.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
   });
 
   activity.save().catch((err) => {
