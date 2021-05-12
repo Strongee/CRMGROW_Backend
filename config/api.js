@@ -94,10 +94,11 @@ const api = {
   },
   STRIPE: {
     SECRET_KEY: process.env.SECRET_KEY,
-    PRODUCT_ID: process.env.PRODUCT_ID,
-    PRIMARY_PLAN: process.env.PRIMARY_PLAN,
-    PRIOR_PLAN: process.env.PRIOR_PLAN,
-    LIMIT: process.env.LIMIT,
+    PLAN: {
+      BASIC: process.env.STRIPE_PLAN_BASIC,
+      PRO: process.env.STRIPE_PLAN_PRO,
+      ELITE: process.env.STRIPE_PLAN_ELITE,
+    },
   },
   EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
   REWARDFUL_API_KEY: process.env.REWARDFUL_API_KEY,

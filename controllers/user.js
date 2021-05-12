@@ -75,8 +75,11 @@ const signUp = async (req, res) => {
   const _user = await User.findOne({
     email: new RegExp(req.body.email, 'i'),
     del: false,
+  }).catch((err) => {
+    console.log('user find err in signup', err.message);
   });
-  if (_user !== null) {
+
+  if (_user) {
     res.status(400).send({
       status: false,
       error: 'User already exists',
@@ -84,12 +87,13 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral } = req.body;
+  const { user_name, email, token, referral, level } = req.body;
 
   const payment_data = {
     user_name,
     email,
     token,
+    level,
     referral,
   };
 

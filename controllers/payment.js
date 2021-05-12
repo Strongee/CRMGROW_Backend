@@ -47,13 +47,13 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { user_name, email, token, referral } = payment_data;
+    const { user_name, email, token, referral, level } = payment_data;
     createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
         { source: token.id },
         function (err, card) {
-          if (card == null || typeof card === 'undefined') {
+          if (!card) {
             reject('Card is null');
             return;
           }
@@ -62,8 +62,8 @@ const create = async (payment_data) => {
             return;
           }
 
-          const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
-          const pricingPlan = api.STRIPE.PRIOR_PLAN;
+          const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN[level];
+          const pricingPlan = api.STRIPE.PLAN[level];
           createSubscription(customer.id, pricingPlan, card.id)
             .then(async (subscripition) => {
               // Save card information to DB.
@@ -83,8 +83,6 @@ const create = async (payment_data) => {
                 last4: token.card.last4,
                 active: true,
                 referral,
-                updated_at: new Date(),
-                created_at: new Date(),
               });
 
               const _payment = await payment
