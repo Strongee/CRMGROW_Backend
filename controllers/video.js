@@ -187,8 +187,9 @@ const play = async (req, res) => {
         social_link.linkedin = 'http://' + social_link.linkedin;
       }
     }
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('lead_material_' + theme, {
-      material: video,
+      material,
       material_type: 'video',
       user,
       capture_dialog,
@@ -341,8 +342,9 @@ const play1 = async (req, res) => {
       }
     }
 
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('material_' + theme, {
-      material: video,
+      material,
       material_type: 'video',
       user,
       contact: activity['contacts'],
@@ -3601,9 +3603,7 @@ const playVideo = async (req, res) => {
     }
 
     // Video URL Decryption
-    let material = await videoHelper.getVideoPublicUrl(video._doc);
-
-    material = JSON.parse(JSON.stringify(material));
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('lead_material_theme1_1', {
       material,
       material_type: 'video',
