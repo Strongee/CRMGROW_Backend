@@ -487,7 +487,6 @@ const getActivity = async (req, res) => {
     tasks = await FollowUp.find({ deal: req.body.deal });
   }
 
-  console.log('end time', new Date().getTime() - startTime);
   for (let i = 0; i < _activity_list.length; i++) {
     const e = _activity_list[i];
     if (
@@ -538,7 +537,6 @@ const getActivity = async (req, res) => {
         }).catch((err) => {
           console.log('deal image tracker find err', err.message);
         });
-        console.log('email send activity ids', send_activityIds, emailIds);
       } else {
         detail_id = e['texts'];
         if (detail_id instanceof Array) {
