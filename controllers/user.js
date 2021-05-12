@@ -124,6 +124,13 @@ const signUp = async (req, res) => {
             console.log('garbage save err', err.message);
           });
 
+          const package_data = {
+            user: _res.id,
+            level,
+          };
+
+          setPackage(package_data);
+
           if (_res.phone) {
             getTwilioNumber(_res.id);
           }
@@ -132,7 +139,7 @@ const signUp = async (req, res) => {
             ? JSON.parse(_res.time_zone_info).tz_name
             : system_settings.TIME_ZONE;
 
-          const data = {
+          const email_data = {
             template_data: {
               user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
@@ -152,7 +159,7 @@ const signUp = async (req, res) => {
             email: _res.email,
           };
 
-          sendNotificationEmail(data)
+          sendNotificationEmail(email_data)
             .then(() => {
               console.log('welcome email has been sent out succeefully');
             })
