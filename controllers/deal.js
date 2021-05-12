@@ -22,6 +22,10 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
 const Task = require('../models/task');
+const VideoTracker = require('../models/video_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const ImageTracker = require('../models/image_tracker');
+const EmailTracker = require('../models/email_tracker');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -414,37 +418,33 @@ const getActivity = async (req, res) => {
   const imageIds = [];
   const pdfIds = [];
   const materials = [];
+  const trackers = {};
   let notes = [];
   let emails = [];
   let texts = [];
   let appointments = [];
   let tasks = [];
 
-  _activity_list.forEach((e) => {
-    if (e['type'] === 'videos') {
+  _activity_list.forEach(async (e) => {
+    if (e['type'] === 'emails' && e['emails']) {
       if (e['videos'] instanceof Array) {
         Array.prototype.push.apply(videoIds, e['videos']);
       } else {
         videoIds.push(e['videos']);
       }
-    }
-    if (e['type'] === 'images') {
-      if (e['images'] instanceof Array) {
-        Array.prototype.push.apply(imageIds, e['images']);
-      } else {
-        imageIds.push(e['images']);
-      }
-    }
-    if (e['type'] === 'pdfs') {
       if (e['pdfs'] instanceof Array) {
         Array.prototype.push.apply(pdfIds, e['pdfs']);
+      } else {
+        pdfIds.push(e['pdfs']);
+      }
+      if (e['images'] instanceof Array) {
+        Array.prototype.push.apply(imageIds, e['images']);
       } else {
         pdfIds.push(e['pdfs']);
       }
     }
   });
 
-  console.log('videoIds', videoIds);
   const videos = await Video.find({ _id: { $in: videoIds } });
   const pdfs = await PDF.find({ _id: { $in: pdfIds } });
   const images = await Image.find({ _id: { $in: imageIds } });
@@ -480,12 +480,93 @@ const getActivity = async (req, res) => {
             case 'notes':
               noteIds.push(detail_id);
               break;
-            case 'emails':
+            case 'emails': {
               emailIds.push(detail_id);
+
+              const emails = await Email.find({
+                shared_email: detail_id,
+              }).catch((err) => {
+                console.log('deal email find err', err.message);
+              });
+
+              const send_activities = await Activity.find({
+                emails: { $in: emails },
+              }).select('_id');
+
+              const send_activityIds = send_activities.map((e) => e._id);
+
+              const video_trackers = await VideoTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal video tracker find err', err.message);
+              });
+
+              const pdf_trackers = await PDFTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal pdf tracker find err', err.message);
+              });
+
+              const image_trackers = await ImageTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal image tracker find err', err.message);
+              });
+
+              trackers[detail_id] = {
+                video_trackers,
+                pdf_trackers,
+                image_trackers,
+              };
               break;
-            case 'texts':
+            }
+            case 'texts': {
               textIds.push(detail_id);
+
+              const texts = await Text.find({
+                shared_text: detail_id,
+              }).catch((err) => {
+                console.log('deal text find err', err.message);
+              });
+
+              const send_activities = await Activity.find({
+                texts: { $in: texts },
+              }).select('_id');
+
+              const send_activityIds = send_activities.map((e) => e._id);
+
+              const video_trackers = await VideoTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal video tracker find err', err.message);
+              });
+
+              const pdf_trackers = await PDFTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal pdf tracker find err', err.message);
+              });
+
+              const image_trackers = await ImageTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal image tracker find err', err.message);
+              });
+
+              const email_trackers = await EmailTracker.find({
+                activity: { $in: send_activityIds },
+              }).catch((err) => {
+                console.log('deal email tracker find err', err.message);
+              });
+
+              trackers[detail_id] = {
+                video_trackers,
+                pdf_trackers,
+                image_trackers,
+                email_trackers,
+              };
               break;
+            }
             case 'appointments':
               apptIds.push(detail_id);
               break;
@@ -514,12 +595,14 @@ const getActivity = async (req, res) => {
 
   const data = {
     activity: _activity_list,
+
     details: {
       materials,
       notes,
       emails,
       texts,
       appointments,
+      trackers,
       tasks,
     },
   };
@@ -1657,7 +1740,7 @@ const createTeamCall = async (req, res) => {
 
 const sendTexts = async (req, res) => {
   const { currentUser } = req;
-  const { content, deal } = req.body;
+  const { content, deal, video_ids, pdf_ids, image_ids } = req.body;
   const error = [];
 
   const text_info = currentUser.text_info;
@@ -1710,6 +1793,9 @@ const sendTexts = async (req, res) => {
     deals: deal,
     type: 'texts',
     texts: text.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
   });
 
   activity.save().catch((err) => {
@@ -1719,6 +1805,8 @@ const sendTexts = async (req, res) => {
   const data = {
     user: currentUser.id,
     ...req.body,
+    shared_text: text.id,
+    has_shared: true,
   };
 
   sendText(data)

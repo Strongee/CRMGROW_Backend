@@ -12,6 +12,11 @@ const TextSchema = new Schema(
     from: String,
     type: Number,
     status: Number,
+    has_shared: Boolean,
+    shared_text: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'text',
+    },
     updated_at: Date,
     created_at: Date,
   },
