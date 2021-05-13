@@ -52,7 +52,7 @@ const UserSchema = new Schema(
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.ASSISTANT_INFO.PRO,
+        default: system_settings.ASSISTANT_LIMIT.PRO,
       },
     },
     contact_info: {

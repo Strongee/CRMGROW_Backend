@@ -39,22 +39,20 @@ const get = async (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
+  let count = 0;
+  let max_upload_count = 0;
 
-  const count = Guest.countDocuments({
+  count = Guest.countDocuments({
     user: currentUser.id,
   });
 
-  const assistant_info = currentUser.assistant_info;
-  if (assistant_info.is_limit && count >= assistant_info.max_count) {
-    return res.status(400).json({
+  max_upload_count =
+    currentUser.assistant_info.max_count || system_settings.ASSISTANT_LIMIT.PRO;
+
+  if (currentUser.assistant_info['is_limit'] && max_upload_count <= count) {
+    return res.status(410).send({
       status: false,
-      error: 'Can`t add more seat',
+      error: 'Exceed assistant access',
     });
   }
 
@@ -110,13 +108,6 @@ const create = async (req, res) => {
 const edit = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
-
   const editData = req.body;
   const guest = await Guest.findOne({
     _id: req.params.id,
@@ -163,13 +154,6 @@ const edit = async (req, res) => {
 
 const remove = async (req, res) => {
   const { currentUser } = req;
-
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
 
   const _id = req.params.id;
   await Guest.deleteOne({ _id, user: currentUser.id }).catch((err) => {

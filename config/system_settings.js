@@ -17,6 +17,7 @@ const system_settings = {
     ELITE: 1000,
   },
   ASSISTANT_LIMIT: {
+    BASIC: 0,
     PRO: 1,
     ELITE: 3,
   },

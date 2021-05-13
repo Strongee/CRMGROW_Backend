@@ -28,6 +28,7 @@ const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
 const Activity = require('../models/activity');
 const Video = require('../models/video');
+const PDF = require('../models/pdf');
 const Folder = require('../models/folder');
 const VideoTracker = require('../models/video_tracker');
 const Garbage = require('../models/garbage');
@@ -510,14 +511,28 @@ const pipe = async (req, res) => {
 const create = async (req, res) => {
   const { currentUser } = req;
 
-  const userVideoCount = await Video.countDocuments({ user: currentUser.id, uploaded: true });
-  const max_count = currentUser.video_info.upload_max_count || system_settings.VIDEO_UPLOAD_LIMIT.BASIC;
+  let count = 0;
+  let max_upload_count = 0;
 
-  if (userVideoCount >= max_count) {
-    res.status(404).send({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
+  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
+    if (currentUser.material_info['is_limit']) {
+      const userVideoCount = await Video.countDocuments({
+        user: currentUser.id,
+        uploaded: true,
+      });
+      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+      count = userVideoCount + userPDFCount;
+      max_upload_count =
+        currentUser.material_info.upload_max_count ||
+        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+    }
+
+    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+      return res.status(410).send({
+        status: false,
+        error: 'Exceed upload max materials',
+      });
+    }
   }
 
   if (req.file) {
@@ -3388,7 +3403,10 @@ const setupRecording = (io) => {
 
       // max_duration = user.video_info.record_max_duration;
       max_duration = 7520000;
-      const recordVideos = await Video.find({ user: user._id, recording: true });
+      const recordVideos = await Video.find({
+        user: user._id,
+        recording: true,
+      });
       recordDuration = 0;
 
       if (recordVideos && recordVideos.length > 0) {
@@ -3399,23 +3417,28 @@ const setupRecording = (io) => {
         }
       }
 
-      console.log("record duration 2 *************>", max_duration, recordDuration);
+      console.log(
+        'record duration 2 *************>',
+        max_duration,
+        recordDuration
+      );
       if (recordDuration >= max_duration) {
-        socket.emit('timeout', {maxOverflow: true});
+        socket.emit('timeout', { maxOverflow: true });
       } else {
         limitTime = max_duration - recordDuration;
-        if (limitTime > timeBounce) {    // more than 10min counter is up else down
+        if (limitTime > timeBounce) {
+          // more than 10min counter is up else down
           counterDirection = 1;
           const data = {
             counterDirection: 1,
-            limitTime
+            limitTime,
           };
           socket.emit('counterDirection', data);
         } else {
           counterDirection = -1;
           const data = {
             counterDirection: -1,
-            limitTime
+            limitTime,
           };
           socket.emit('counterDirection', data);
         }
@@ -3432,8 +3455,8 @@ const setupRecording = (io) => {
       const recordTime = data.recordTime || 0;
 
       if (counterDirection == -1 && recordTime < 0) {
-        console.log("emit timeout ************>");
-        socket.emit("timeout", {timeOverflow: true});
+        console.log('emit timeout ************>');
+        socket.emit('timeout', { timeOverflow: true });
       }
       if (!fileStreams[videoId]) {
         fileStreams[videoId] = fs.createWriteStream(
@@ -3462,9 +3485,9 @@ const setupRecording = (io) => {
           counterDirection = -1;
           const data = {
             counterDirection: -1,
-            limitTime: estimateTime
+            limitTime: estimateTime,
           };
-          socket.emit("counterDirection", data);
+          socket.emit('counterDirection', data);
         }
         // console.log("emit received video data2 ===========>", estimateTime, counterDirection, recordTime);
         socket.emit('receivedVideoData', {
@@ -3495,7 +3518,7 @@ const setupRecording = (io) => {
           url: urls.VIDEO_URL + videoId + `.webm`,
           path: TEMP_PATH + videoId + `.webm`,
           title: `${moment().format('MMMM Do YYYY')} - ${
-              user.user_name
+            user.user_name
           } Recording`,
           duration,
           user: decoded.id,
@@ -3516,7 +3539,7 @@ const setupRecording = (io) => {
               const screen = data.screen;
               const videoWidth = 1440;
               const videoHeight = Math.floor(
-                  (videoWidth * screen.height) / screen.width
+                (videoWidth * screen.height) / screen.width
               );
               const areaX = (data.area.startX * videoWidth) / screen.width;
               const areaY = (data.area.startY * videoHeight) / screen.height;
@@ -3559,23 +3582,23 @@ const setupRecording = (io) => {
 
             videoHelper.generateThumbnail(video_data);
             generatePreview(video_data)
-                .then((res) => {
-                  Video.updateOne(
-                      { _id: _video.id },
-                      { $set: { preview: res } }
-                  ).catch((err) => {
-                    console.log('update preview err', err.message);
-                  });
-                })
-                .catch((err) => {
-                  console.log('generate preview err', err.message);
+              .then((res) => {
+                Video.updateOne(
+                  { _id: _video.id },
+                  { $set: { preview: res } }
+                ).catch((err) => {
+                  console.log('update preview err', err.message);
                 });
+              })
+              .catch((err) => {
+                console.log('generate preview err', err.message);
+              });
 
             Video.updateOne(
-                { _id: _video.id },
-                {
-                  converted: 'progress',
-                }
+              { _id: _video.id },
+              {
+                converted: 'progress',
+              }
             ).catch((err) => {
               console.log('video update err', err.message);
             });
@@ -3656,6 +3679,32 @@ const downloadVideo = async (req, res) => {
 };
 
 const uploadVideo = async (req, res) => {
+  const { currentUser } = req;
+
+  let count = 0;
+  let max_upload_count = 0;
+
+  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
+    if (currentUser.material_info['is_limit']) {
+      const userVideoCount = await Video.countDocuments({
+        user: currentUser.id,
+        uploaded: true,
+      });
+      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+      count = userVideoCount + userPDFCount;
+      max_upload_count =
+        currentUser.material_info.upload_max_count ||
+        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+    }
+
+    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+      return res.status(410).send({
+        status: false,
+        error: 'Exceed upload max materials',
+      });
+    }
+  }
+
   if (req.file) {
     const key = req.file.key;
     let fileName = path.basename(key);

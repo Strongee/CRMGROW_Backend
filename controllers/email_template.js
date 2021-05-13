@@ -106,14 +106,6 @@ const create = async (req, res) => {
   //   })
   // }
 
-  currentUser.package_level = 'lite';
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
-
   const template = new EmailTemplate({
     ...req.body,
     user: currentUser.id,

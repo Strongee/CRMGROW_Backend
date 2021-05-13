@@ -100,9 +100,9 @@ const getAll = async (req, res) => {
       $sort: { _id: 1 },
     },
   ]);
-  //Add 'No tags' tag to last element.( set id to -1 )
+  // Add 'No tags' tag to last element.( set id to -1 )
   data.push({ _id: -1 });
-  //Add 'No tags' tag to last element.( set id to -1 )
+  // Add 'No tags' tag to last element.( set id to -1 )
   res.send({
     status: true,
     data,
@@ -148,12 +148,6 @@ const getTagsDetail = async (req, res) => {
 const updateTag = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
   const { oldTag, newTag } = req.body;
   await Contact.update(
     { user: mongoose.Types.ObjectId(currentUser.id) },
@@ -172,12 +166,6 @@ const updateTag = async (req, res) => {
 const deleteTag = async (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
-      status: false,
-      error: 'Please update pricing for this.',
-    });
-  }
   const { tag, contact } = req.body;
   const query = { user: mongoose.Types.ObjectId(currentUser.id) };
   if (contact) {

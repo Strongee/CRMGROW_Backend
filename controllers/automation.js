@@ -469,10 +469,13 @@ const getPage = async (req, res) => {
 const create = (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
+  if (
+    currentUser.automation_info['is_limit'] &&
+    !currentUser.automation_info['is_enabled']
+  ) {
+    return res.status(410).send({
       status: false,
-      error: 'Please update pricing for this.',
+      error: 'Exceed automations',
     });
   }
 

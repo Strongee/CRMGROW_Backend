@@ -47,12 +47,14 @@ const create = async (req, res) => {
 
 const edit = async (req, res) => {
   const user = req.currentUser;
-  if (user && user.package_level == system_settings.PACKAGE_LEVEL.BASIC) {
-    return res.status(400).json({
+
+  if (user && !user.capture_enabled) {
+    return res.status(410).json({
       status: false,
-      error: 'Please update pricing for this.',
+      error: 'Exceed Lead capture.',
     });
   }
+
   const editData = req.body;
   const garbage = await Garbage.findOne({ user: user._id });
   if (!garbage) {
