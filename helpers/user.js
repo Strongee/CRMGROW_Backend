@@ -3,7 +3,6 @@ const system_settings = require('../config/system_settings');
 
 const setPackage = async (data) => {
   const { user, level } = data;
-  let query = {};
 
   // contact info
   const contact_info = {
@@ -12,13 +11,12 @@ const setPackage = async (data) => {
 
   const video_info = {
     'video_info.upload_max_count': system_settings.VIDEO_UPLOAD_LIMIT[level],
-    'video_info.record_max_duration': system_settings.VIDEO_RECORD_LIMIT[level]
+    'video_info.record_max_duration': system_settings.VIDEO_RECORD_LIMIT[level],
   };
 
-  query = {
-    ...query,
+  const query = {
     ...contact_info,
-    ...video_info
+    ...video_info,
   };
 
   User.updateOne(

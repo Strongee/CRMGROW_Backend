@@ -16,8 +16,8 @@ const system_settings = {
     BASIC: 250,
   },
   ASSISTANT_INFO: {
-    BASIC: 1,
-    EXTEND: 3,
+    PRO: 1,
+    ELITE: 3,
   },
   CONTACT_UPLOAD_LIMIT: {
     BASIC: 200,
@@ -106,8 +106,8 @@ const system_settings = {
   PACKAGE_LEVEL: {
     BASIC: 'lite',
     PRO: 'pro',
-    ELITE: 'elite'
-  }
+    ELITE: 'elite',
+  },
 };
 
 module.exports = system_settings;
