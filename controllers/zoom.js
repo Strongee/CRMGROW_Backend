@@ -17,7 +17,7 @@ const create = async (req, res) => {
   const { old_refresh_token } = currentUser.zoom;
 
   const auth_client = await refreshToken(old_refresh_token).catch((err) => {
-    console.log('zoom refresh token err', err);
+    console.log('zoom refresh token err', err.message);
   });
 
   const { refresh_token, access_token } = auth_client;
