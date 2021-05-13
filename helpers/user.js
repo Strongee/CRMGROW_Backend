@@ -9,14 +9,37 @@ const setPackage = async (data) => {
     'contact_info.max_count': system_settings.CONTACT_UPLOAD_LIMIT[level],
   };
 
-  const video_info = {
-    'video_info.upload_max_count': system_settings.VIDEO_UPLOAD_LIMIT[level],
-    'video_info.record_max_duration': system_settings.VIDEO_RECORD_LIMIT[level],
-  };
+  let material_info;
+  let automation_info;
+
+  if (level === 'ELITE') {
+    material_info = {
+      'material_info.is_limit': false,
+    };
+  } else {
+    material_info = {
+      'material_info.upload_max_count':
+        system_settings.MATERIAL_UPLOAD_LIMIT[level],
+      'material_info.record_max_duration':
+        system_settings.VIDEO_RECORD_LIMIT[level],
+    };
+  }
+
+  if (level === 'BASIC') {
+    automation_info = {
+      'automation_info.is_enabled': false,
+    };
+  } else {
+    automation_info = {
+      'automation_info.max_count':
+        system_settings.AUTOMATION_ASSIGN_LIMIT[level],
+    };
+  }
 
   const query = {
     ...contact_info,
-    ...video_info,
+    ...material_info,
+    ...automation_info,
   };
 
   User.updateOne(

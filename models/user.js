@@ -48,11 +48,11 @@ const UserSchema = new Schema(
     desktop_notification_subscription: String,
     text_notification: Boolean,
     assistant_info: {
-      is_enabled: Boolean,
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.ASSISTANT_INFO.BASIC,
+        default: system_settings.ASSISTANT_INFO.PRO,
       },
     },
     contact_info: {
@@ -63,17 +63,17 @@ const UserSchema = new Schema(
       },
     },
     text_info: {
-      is_enabled: Boolean,
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.TEXT_MONTHLY_LIMIT.BASIC,
+        default: system_settings.TEXT_MONTHLY_LIMIT.PRO,
       },
       count: Number,
       additional_credit: Object,
     },
     email_info: {
-      mass_enable: Boolean,
+      mass_enable: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
@@ -82,30 +82,33 @@ const UserSchema = new Schema(
       count: Number,
     },
     automation_info: {
-      is_enabled: Boolean,
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
-      max_count: Number,
+      max_count: {
+        type: Number,
+        default: system_settings.ASSISTANT_LIMIT.PRO,
+      },
     },
-    video_info: {
+    material_info: {
       is_enabled: Boolean,
       is_limit: { type: Boolean, default: true },
       upload_max_count: Number,
       record_max_duration: Number,
     },
     team_info: {
-      owner_enabled: Boolean,
+      owner_enabled: { type: Boolean, default: true },
     },
-    capture_enabled: Boolean,
+    capture_enabled: { type: Boolean, default: true },
     email_verified: Boolean,
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },
-    is_free: { type: Boolean, default: false },
+    is_free: Boolean,
     subscription: {
-      is_failed: { type: Boolean, default: false },
+      is_failed: Boolean,
       updated_at: Date,
-      is_suspended: { type: Boolean, default: false },
+      is_suspended: Boolean,
       suspended_at: Date,
-      attempt_count: { type: Number, default: 0 },
+      attempt_count: Number,
       period: { type: String, default: 'month' },
     },
     package_level: String,
