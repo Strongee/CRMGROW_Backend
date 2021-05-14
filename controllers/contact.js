@@ -1621,6 +1621,8 @@ const leadContact = async (req, res) => {
         });
       });
 
+      console.log('verified', verified);
+      
       if (!verified) {
         return;
       }
