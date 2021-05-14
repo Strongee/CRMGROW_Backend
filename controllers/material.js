@@ -2722,11 +2722,12 @@ const removeFolders = async (req, res) => {
   let videos = [];
   let pdfs = [];
   let images = [];
-  folders.forEach((e) => {
+  for (let i = 0; i < folders.length; i++) {
+    const e = folders[i];
     videos = [...videos, ...e.videos];
     pdfs = [...pdfs, ...e.pdfs];
     images = [...images, ...e.images];
-  });
+  }
 
   if (mode === 'remove-all') {
     Folder.deleteMany({
