@@ -1615,16 +1615,18 @@ const leadContact = async (req, res) => {
   } else {
     if (email) {
       const verified = await verifyEmail(email).catch((err) => {
+        console.log('email verify err', err.message);
+      });
+
+      console.log('verified', verified);
+
+      if (!verified) {
+        return;
+      } else {
         return res.status(400).json({
           status: false,
           error: err.message,
         });
-      });
-
-      console.log('verified', verified);
-      
-      if (!verified) {
-        return;
       }
     }
     const e164Phone = phone(cell_phone)[0];
@@ -3753,7 +3755,7 @@ const verifyEmail = async (email) => {
   return new Promise((resolve, reject) => {
     verifier.verify(email, (err, data) => {
       if (err) {
-        reject({ message: err.msg || err.message });
+        reject(false);
       }
       if (
         data['formatCheck'] === 'true' &&
@@ -3762,7 +3764,7 @@ const verifyEmail = async (email) => {
       ) {
         resolve(true);
       } else {
-        reject({ message: 'Email is not valid one' });
+        reject(false);
       }
     });
   });
