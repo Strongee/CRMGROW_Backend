@@ -93,12 +93,11 @@ const play = async (req, res) => {
 
   const user = await User.findOne({
     _id: sender_id,
-    $or: [{ del: false }, { 'subscription.is_suspended': false }],
+    del: false,
+    'subscription.is_suspended': false,
   }).catch((err) => {
     console.log('user find err', err.message);
   });
-
-  console.log('user', user);
 
   let team;
   if (team_id) {
