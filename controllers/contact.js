@@ -1614,12 +1614,16 @@ const leadContact = async (req, res) => {
     });
   } else {
     if (email) {
-      await verifyEmail(email).catch((err) => {
+      const verified = await verifyEmail(email).catch((err) => {
         return res.status(400).json({
           status: false,
           error: err.message,
         });
       });
+
+      if (!verified) {
+        return;
+      }
     }
     const e164Phone = phone(cell_phone)[0];
 
@@ -3754,7 +3758,7 @@ const verifyEmail = async (email) => {
         data['smtpCheck'] === 'true' &&
         data['dnsCheck'] === 'true'
       ) {
-        resolve();
+        resolve(true);
       } else {
         reject({ message: 'Email is not valid one' });
       }
