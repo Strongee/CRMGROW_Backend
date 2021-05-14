@@ -39,7 +39,12 @@ const bucketStorage = multerS3({
   bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
   key: (req, file, cb) => {
     const fileKey =
-      'sources/' + new Date().getTime() + '-' + uuidv1() + '.' + mime.extension(file.mimetype);
+      'sources/' +
+      new Date().getTime() +
+      '-' +
+      uuidv1() +
+      '.' +
+      mime.extension(file.mimetype);
     cb(null, fileKey);
   },
 });

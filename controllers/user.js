@@ -45,7 +45,11 @@ const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
-const { create: createPayment } = require('./payment');
+const {
+  create: createPayment,
+  createCharge,
+  cancelCustomer,
+} = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
@@ -326,7 +330,7 @@ const socialSignUp = async (req, res) => {
     referral,
   };
 
-  PaymentCtrl.create(payment_data)
+  createPayment(payment_data)
     .then(async (payment) => {
       const user = new User({
         ...req.body,
@@ -2284,7 +2288,7 @@ const closeAccount = async (req, res) => {
   }
 
   if (currentUser.payment) {
-    PaymentCtrl.cancelCustomer(currentUser.payment).catch((err) => {
+    cancelCustomer(currentUser.payment).catch((err) => {
       console.log('err', err);
     });
   }
@@ -2450,7 +2454,7 @@ const schedulePaidDemo = async (req, res) => {
     description,
   };
 
-  PaymentCtrl.createCharge(data)
+  createCharge(data)
     .then(() => {
       User.updateOne(
         { _id: currentUser.id },
@@ -2658,7 +2662,6 @@ const upgradePackage = (req, res) => {
   const { currentUser } = req;
   const { level } = req.body;
 
-  
   const data = {
     user: currentUser.id,
     level,

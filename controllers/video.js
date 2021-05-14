@@ -88,15 +88,14 @@ const play = async (req, res) => {
   const sender_id = req.query.user;
   const team_id = req.query.team;
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
-    console.log('err', err.message);
+    console.log('video find err', err.message);
   });
 
   const user = await User.findOne({
     _id: sender_id,
-    del: false,
-    'subscription.is_suspended': false,
+    $or: [{ del: false }, { 'subscription.is_suspended': false }],
   }).catch((err) => {
-    console.log('err', err.message);
+    console.log('user find err', err.message);
   });
 
   let team;
@@ -661,7 +660,9 @@ const updateConvertStatus = async (req, res) => {
   if (status) {
     if (status['preview']) {
       video['preview'] =
-        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' + video['key'] + '.gif';
+        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' +
+        video['key'] +
+        '.gif';
     }
     if (status['converted'] === 100) {
       video['url'] =
@@ -670,7 +671,12 @@ const updateConvertStatus = async (req, res) => {
     }
     if (status['streamd'] === 100) {
       video['url'] =
-        api.AWS.CLOUDFRONT + '/streamd/' + video['key'] + '/' + video['key'] + '.m3u8';
+        api.AWS.CLOUDFRONT +
+        '/streamd/' +
+        video['key'] +
+        '/' +
+        video['key'] +
+        '.m3u8';
       video['converted'] = 'completed';
     }
 
@@ -3632,7 +3638,7 @@ const downloadVideo = async (req, res) => {
   const { currentUser } = req;
   const video = await Video.findOne({
     _id: req.params.id,
-    user: currentUser._id
+    user: currentUser._id,
   });
 
   if (video && video.bucket) {
@@ -3683,5 +3689,4 @@ module.exports = {
   playVideo,
   bulkRemove,
   updateConvertStatus,
-  downloadVideo,
 };
