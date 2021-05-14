@@ -98,6 +98,8 @@ const play = async (req, res) => {
     console.log('user find err', err.message);
   });
 
+  console.log('user', user);
+
   let team;
   if (team_id) {
     team = await Team.findOne({ _id: team_id }).catch((err) => {
@@ -272,13 +274,13 @@ const play1 = async (req, res) => {
       console.log('err', err);
     });
 
-  if (!activity.user) {
-    return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
-    );
-  }
-
   if (activity) {
+    if (!activity.user) {
+      return res.send(
+        'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
+      );
+    }
+
     const data = activity['user'];
     const myJSON = JSON.stringify(data);
     const user = JSON.parse(myJSON);
