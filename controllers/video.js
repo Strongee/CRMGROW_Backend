@@ -3683,5 +3683,4 @@ module.exports = {
   playVideo,
   bulkRemove,
   updateConvertStatus,
-  downloadVideo,
 };
