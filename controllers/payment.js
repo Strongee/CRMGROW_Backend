@@ -112,7 +112,14 @@ const update = async (req, res) => {
           customer.id,
           { source: token.id },
           function (err, card) {
-            if (card == null || typeof card === 'undefined') {
+            if (!card) {
+              return res.status(400).send({
+                status: false,
+                error: 'Card is not valid',
+              });
+            }
+
+            if (card['cvc_check'] === 'unchecked') {
               return res.status(400).send({
                 status: false,
                 error: 'Card is not valid',
@@ -140,8 +147,6 @@ const update = async (req, res) => {
                   bill_amount,
                   fingerprint: card.fingerprint,
                   active: true,
-                  updated_at: new Date(),
-                  created_at: new Date(),
                 });
 
                 payment.save().then((_payment) => {

@@ -45,7 +45,7 @@ const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
-const PaymentCtrl = require('./payment');
+const { create: createPayment } = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
@@ -72,6 +72,7 @@ const signUp = async (req, res) => {
       error: errors.array(),
     });
   }
+
   const _user = await User.findOne({
     email: new RegExp(req.body.email, 'i'),
     del: false,
@@ -97,7 +98,7 @@ const signUp = async (req, res) => {
     referral,
   };
 
-  PaymentCtrl.create(payment_data)
+  createPayment(payment_data)
     .then(async (payment) => {
       const password = req.body.password;
       const salt = crypto.randomBytes(16).toString('hex');
@@ -271,7 +272,7 @@ const signUp = async (req, res) => {
     })
     .catch((err) => {
       console.log('signup payment create err', err);
-      res.status(500).send({
+      res.status(400).send({
         status: false,
         error: err,
       });
@@ -2656,6 +2657,8 @@ const syncZoom = async (req, res) => {
 const upgradePackage = (req, res) => {
   const { currentUser } = req;
   const { level } = req.body;
+
+  
   const data = {
     user: currentUser.id,
     level,
