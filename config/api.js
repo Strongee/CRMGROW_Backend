@@ -9,7 +9,8 @@ const api = {
     CLOUDFRONT_ACCESS_KEY: process.env.CLOUDFRONT_ACCESS_KEY,
     CLOUDFRONT_PUBLIC_KEY: process.env.CLOUDFRONT_PUBLIC_KEY,
     CLOUDFRONT: process.env.CLOUDFRONT,
-    API_GATEWAY: process.env.API_GATEWAY ||
+    API_GATEWAY:
+      process.env.API_GATEWAY ||
       'https://f8nhu9b8o4.execute-api.us-east-2.amazonaws.com',
   },
   OUTLOOK_CLIENT: {

@@ -88,7 +88,7 @@ const play = async (req, res) => {
   const sender_id = req.query.user;
   const team_id = req.query.team;
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
-    console.log('err', err.message);
+    console.log('video find err', err.message);
   });
 
   const user = await User.findOne({
@@ -96,7 +96,7 @@ const play = async (req, res) => {
     del: false,
     'subscription.is_suspended': false,
   }).catch((err) => {
-    console.log('err', err.message);
+    console.log('user find err', err.message);
   });
 
   let team;
@@ -273,13 +273,13 @@ const play1 = async (req, res) => {
       console.log('err', err);
     });
 
-  if (!activity.user) {
-    return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
-    );
-  }
-
   if (activity) {
+    if (!activity.user) {
+      return res.send(
+        'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
+      );
+    }
+
     const data = activity['user'];
     const myJSON = JSON.stringify(data);
     const user = JSON.parse(myJSON);
@@ -661,7 +661,9 @@ const updateConvertStatus = async (req, res) => {
   if (status) {
     if (status['preview']) {
       video['preview'] =
-        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' + video['key'] + '.gif';
+        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' +
+        video['key'] +
+        '.gif';
     }
     if (status['converted'] === 100) {
       video['url'] =
@@ -670,7 +672,12 @@ const updateConvertStatus = async (req, res) => {
     }
     if (status['streamd'] === 100) {
       video['url'] =
-        api.AWS.CLOUDFRONT + '/streamd/' + video['key'] + '/' + video['key'] + '.m3u8';
+        api.AWS.CLOUDFRONT +
+        '/streamd/' +
+        video['key'] +
+        '/' +
+        video['key'] +
+        '.m3u8';
       video['converted'] = 'completed';
     }
 
@@ -3632,7 +3639,7 @@ const downloadVideo = async (req, res) => {
   const { currentUser } = req;
   const video = await Video.findOne({
     _id: req.params.id,
-    user: currentUser._id
+    user: currentUser._id,
   });
 
   if (video && video.bucket) {

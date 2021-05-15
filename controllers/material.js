@@ -2679,6 +2679,107 @@ const bulkRemove = async (req, res) => {
     });
 };
 
+const updateFolders = async (req, res) => {
+  const { currentUser } = req;
+  const { ids, data } = req.body;
+  const { title } = data;
+  const folders = await Folder.find({
+    _id: { $in: ids },
+    user: currentUser._id,
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+  for (let i = 0; i < folders.length; i++) {
+    let _title = title;
+    if (i) {
+      _title = title + ` (${i})`;
+    }
+    folders[i]['title'] = _title;
+    await folders[i].save();
+  }
+
+  return res.send({
+    status: true,
+  });
+};
+const removeFolders = async (req, res) => {
+  const { currentUser } = req;
+  const { ids, mode, target } = req.body;
+
+  const folders = await Folder.find({
+    _id: { $in: ids },
+    user: currentUser._id,
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  let videos = [];
+  let pdfs = [];
+  let images = [];
+  for (let i = 0; i < folders.length; i++) {
+    const e = folders[i];
+    videos = [...videos, ...e.videos];
+    pdfs = [...pdfs, ...e.pdfs];
+    images = [...images, ...e.images];
+  }
+
+  if (mode === 'remove-all') {
+    Folder.deleteMany({
+      _id: { $in: ids },
+      user: currentUser._id,
+    })
+      .then(() => {
+        bulkRemove(
+          {
+            currentUser,
+            body: { videos, pdfs, images },
+          },
+          res
+        );
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else if (mode === 'move-other') {
+    Folder.deleteMany({
+      _id: { $in: ids },
+      user: currentUser._id,
+    })
+      .then(async () => {
+        if (target) {
+          await Folder.updateOne(
+            { _id: target },
+            {
+              $addToSet: {
+                videos: { $each: videos },
+                images: { $each: images },
+                pdfs: { $each: pdfs },
+              },
+            }
+          );
+        }
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  }
+};
+
 module.exports = {
   bulkEmail,
   bulkText,
@@ -2690,4 +2791,6 @@ module.exports = {
   removeFolder,
   moveMaterials,
   bulkRemove,
+  updateFolders,
+  removeFolders,
 };
