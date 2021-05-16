@@ -2822,7 +2822,7 @@ const removeFolders = async (req, res) => {
   }
 };
 
-function emptyBucket(bucketName, folder, callback) {
+const emptyBucket = (bucketName, folder, callback) => {
   var params = {
     Bucket: bucketName,
     Prefix: folder,
@@ -2859,4 +2859,5 @@ module.exports = {
   bulkRemove,
   updateFolders,
   removeFolders,
+  emptyBucket,
 };
