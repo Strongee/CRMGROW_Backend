@@ -2777,13 +2777,19 @@ const removeFolders = async (req, res) => {
       user: currentUser._id,
     })
       .then(() => {
-        bulkRemove(
-          {
-            currentUser,
-            body: { videos, pdfs, images },
-          },
-          res
-        );
+        if (videos.length + pdfs.length + images.length) {
+          bulkRemove(
+            {
+              currentUser,
+              body: { videos, pdfs, images },
+            },
+            res
+          );
+        } else {
+          return res.send({
+            status: true,
+          });
+        }
       })
       .catch((err) => {
         return res.status(500).send({
