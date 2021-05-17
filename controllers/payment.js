@@ -823,8 +823,7 @@ const getTransactions = async (req, res) => {
 
   if (payment) {
     const customer_id = payment.customer_id;
-    stripe.charges.list({ customer: customer_id }, function (err, charges) {
-      console.log('charges', charges);
+    stripe.charges.list({ customer: customer_id }, async (err, charges) => {
       if (err) {
         console.log('payment history find err', err);
         return res.status(400).json({
@@ -835,15 +834,31 @@ const getTransactions = async (req, res) => {
       const charge_list = charges.data;
       const data = [];
       for (let i = 0; i < charge_list.length; i++) {
-        const charge = {
-          id: charge_list[i].id,
-          amount: charge_list[i].amount / 100,
-          status: charge_list[i].status,
-          description: charge_list[i].description,
-          customer: charge_list[i].customer,
-          date: charge_list[i].created * 1000,
-        };
-        data.push(charge);
+        if (charge_list[i].invoice) {
+          const invoice = await stripe.invoices.retrieve(
+            charge_list[i].invoice
+          );
+          const charge = {
+            id: charge_list[i].id,
+            amount: charge_list[i].amount / 100,
+            status: charge_list[i].status,
+            description: charge_list[i].description,
+            customer: charge_list[i].customer,
+            date: charge_list[i].created * 1000,
+            inovice_pdf: invoice.invoice_pdf,
+          };
+          data.push(charge);
+        } else {
+          const charge = {
+            id: charge_list[i].id,
+            amount: charge_list[i].amount / 100,
+            status: charge_list[i].status,
+            description: charge_list[i].description,
+            customer: charge_list[i].customer,
+            date: charge_list[i].created * 1000,
+          };
+          data.push(charge);
+        }
       }
       return res.send({
         status: true,
