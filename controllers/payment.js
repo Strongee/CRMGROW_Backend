@@ -834,6 +834,7 @@ const getTransactions = async (req, res) => {
       const charge_list = charges.data;
       const data = [];
       for (let i = 0; i < charge_list.length; i++) {
+        console.log('charge_list[i]', charge_list[i]);
         if (charge_list[i].invoice) {
           const invoice = await stripe.invoices.retrieve(
             charge_list[i].invoice
