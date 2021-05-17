@@ -258,11 +258,11 @@ router.post(
 
 router.get('/push-notification/:id', catchError(UserCtrl.pushNotification));
 
-// Search Phonenumber
-router.get(
+// Cancel account
+router.post(
   '/cancel-account',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.searchPhone)
+  catchError(UserCtrl.closeAccount)
 );
 
 // Edit own profile

@@ -2268,6 +2268,7 @@ const createPassword = async (req, res) => {
 
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
+  const { close_reason, close_feedback } = req.body;
 
   await Contact.deleteMany({ user: currentUser.id });
   await Activity.deleteMany({ user: currentUser.id });
@@ -2276,6 +2277,23 @@ const closeAccount = async (req, res) => {
   await Reminder.deleteMany({ user: currentUser.id });
   await Tag.deleteMany({ user: currentUser.id });
   await TimeLine.deleteMany({ user: currentUser.id });
+
+  const data = {
+    template_data: {
+      user_name: currentUser.user_name,
+      created_at: moment()
+        .tz(currentUser.time_zone)
+        .format('h:mm MMMM Do, YYYY'),
+      close_reason,
+      close_feedback,
+    },
+    cc: mail_contents.REPLY,
+    template_name: 'Close Account',
+    required_reply: false,
+    email: currentUser.email,
+  };
+
+  sendNotificationEmail(data);
 
   if (currentUser.proxy_number_id) {
     releaseSignalWireNumber(currentUser.proxy_number_id);
