@@ -50,6 +50,7 @@ const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
+const { emptyBucket } = require('./material');
 
 const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
@@ -1501,7 +1502,8 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
-      } else if (video['shared_video']) {
+      }
+      if (video['shared_video']) {
         Video.updateOne(
           {
             _id: video.shared_video,
@@ -1514,30 +1516,7 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
-      } else {
-        const url = video.url;
-        if (video.key || url.indexOf('teamgrow.s3') > 0) {
-          s3.deleteObject(
-            {
-              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: video.key || url.slice(44),
-            },
-            function (err, data) {
-              console.log('err', err);
-            }
-          );
-        } else {
-          try {
-            const file_path = video.path;
-            if (file_path) {
-              fs.unlinkSync(file_path);
-            }
-          } catch (err) {
-            console.log('err', err);
-          }
-        }
       }
-
       if (video.role === 'team') {
         Team.updateOne(
           { videos: req.params.id },
@@ -1549,14 +1528,85 @@ const remove = async (req, res) => {
         });
       }
 
-      Video.updateOne({ _id: req.params.id }, { $set: { del: true } }).catch(
-        (err) => {
+      Video.updateOne({ _id: req.params.id }, { $set: { del: true } })
+        .then(async () => {
+          let hasSameVideo = false;
+          if (video['bucket']) {
+            const sameVideos = await Video.find({
+              del: false,
+              key: video['key'],
+            }).catch((err) => {
+              console.log('same video getting error');
+            });
+            if (sameVideos && sameVideos.length) {
+              hasSameVideo = true;
+            }
+          } else {
+            const sameVideos = await Video.find({
+              del: false,
+              url: video['url'],
+            }).catch((err) => {
+              console.log('same video getting error');
+            });
+            if (sameVideos && sameVideos.length) {
+              hasSameVideo = true;
+            }
+          }
+          if (!hasSameVideo) {
+            if (video['bucket']) {
+              s3.deleteObject(
+                {
+                  Bucket: video['bucket'],
+                  Key: 'transcoded/' + video['key'] + '.mp4',
+                },
+                function (err, data) {
+                  console.log('transcoded video removing error', err);
+                }
+              );
+              emptyBucket(
+                video['bucket'],
+                'streamd/' + video['key'] + '/',
+                (err) => {
+                  if (err) {
+                    console.log('Removing files error in bucket');
+                  }
+                }
+              );
+            } else {
+              const url = video['url'];
+              if (url.indexOf('teamgrow.s3') > 0) {
+                s3.deleteObject(
+                  {
+                    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                    Key: url.slice(44),
+                  },
+                  function (err, data) {
+                    console.log('err', err);
+                  }
+                );
+              } else {
+                try {
+                  const file_path = video.path;
+                  if (file_path) {
+                    fs.unlinkSync(file_path);
+                  }
+                } catch (err) {
+                  console.log('err', err);
+                }
+              }
+            }
+          }
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
           console.log('err', err.message);
-        }
-      );
-      return res.send({
-        status: true,
-      });
+          return res.status(500).send({
+            status: true,
+            error: err.message,
+          });
+        });
     } else {
       res.status(400).send({
         status: false,
