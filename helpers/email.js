@@ -4324,7 +4324,7 @@ const sendEmail = async (data) => {
 };
 
 const sendNotificationEmail = async (data) => {
-  const { email, template_data, template_name, required_reply } = data;
+  const { email, template_data, template_name, cc, required_reply } = data;
   const templatedData = {
     ...template_data,
     facebook_url: urls.FACEBOOK_URL,
@@ -4337,18 +4337,16 @@ const sendNotificationEmail = async (data) => {
   const source_email = required_reply
     ? mail_contents.REPLY
     : mail_contents.NO_REPLAY;
+
   const params = {
     Destination: {
       ToAddresses: [email],
+      CcAddresses: [cc],
     },
     Source: source_email,
     Template: template_name,
     TemplateData: JSON.stringify(templatedData),
   };
-
-  console.log('params', params);
-
-  // Create the promise and SES service object
 
   ses.sendTemplatedEmail(params).promise();
 };
