@@ -45,7 +45,11 @@ const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
-const PaymentCtrl = require('./payment');
+const {
+  create: createPayment,
+  createCharge,
+  cancelCustomer,
+} = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
 const Team = require('../models/team');
@@ -72,11 +76,15 @@ const signUp = async (req, res) => {
       error: errors.array(),
     });
   }
+
   const _user = await User.findOne({
     email: new RegExp(req.body.email, 'i'),
     del: false,
+  }).catch((err) => {
+    console.log('user find err in signup', err.message);
   });
-  if (_user !== null) {
+
+  if (_user) {
     res.status(400).send({
       status: false,
       error: 'User already exists',
@@ -84,16 +92,17 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral } = req.body;
+  const { user_name, email, token, referral, level } = req.body;
 
   const payment_data = {
     user_name,
     email,
     token,
+    level,
     referral,
   };
 
-  PaymentCtrl.create(payment_data)
+  createPayment(payment_data)
     .then(async (payment) => {
       const password = req.body.password;
       const salt = crypto.randomBytes(16).toString('hex');
@@ -120,6 +129,13 @@ const signUp = async (req, res) => {
             console.log('garbage save err', err.message);
           });
 
+          const package_data = {
+            user: _res.id,
+            level,
+          };
+
+          setPackage(package_data);
+
           if (_res.phone) {
             getTwilioNumber(_res.id);
           }
@@ -128,7 +144,7 @@ const signUp = async (req, res) => {
             ? JSON.parse(_res.time_zone_info).tz_name
             : system_settings.TIME_ZONE;
 
-          const data = {
+          const email_data = {
             template_data: {
               user_email: email,
               verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
@@ -148,7 +164,7 @@ const signUp = async (req, res) => {
             email: _res.email,
           };
 
-          sendNotificationEmail(data)
+          sendNotificationEmail(email_data)
             .then(() => {
               console.log('welcome email has been sent out succeefully');
             })
@@ -251,23 +267,16 @@ const signUp = async (req, res) => {
             },
           });
         })
-        .catch((e) => {
-          let errors;
-          if (e.errors) {
-            errors = e.errors.map((err) => {
-              delete err.instance;
-              return err;
-            });
-          }
+        .catch((err) => {
           return res.status(500).send({
             status: false,
-            error: errors || e,
+            error: err.message,
           });
         });
     })
     .catch((err) => {
       console.log('signup payment create err', err);
-      res.status(500).send({
+      res.status(400).send({
         status: false,
         error: err,
       });
@@ -321,7 +330,7 @@ const socialSignUp = async (req, res) => {
     referral,
   };
 
-  PaymentCtrl.create(payment_data)
+  createPayment(payment_data)
     .then(async (payment) => {
       const user = new User({
         ...req.body,
@@ -2279,7 +2288,7 @@ const closeAccount = async (req, res) => {
   }
 
   if (currentUser.payment) {
-    PaymentCtrl.cancelCustomer(currentUser.payment).catch((err) => {
+    cancelCustomer(currentUser.payment).catch((err) => {
       console.log('err', err);
     });
   }
@@ -2445,7 +2454,7 @@ const schedulePaidDemo = async (req, res) => {
     description,
   };
 
-  PaymentCtrl.createCharge(data)
+  createCharge(data)
     .then(() => {
       User.updateOne(
         { _id: currentUser.id },
@@ -2652,6 +2661,7 @@ const syncZoom = async (req, res) => {
 const upgradePackage = (req, res) => {
   const { currentUser } = req;
   const { level } = req.body;
+
   const data = {
     user: currentUser.id,
     level,

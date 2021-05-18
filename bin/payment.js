@@ -1,37 +1,15 @@
-// const mongoose = require('mongoose');
-// const Payment = require('../models/payment')
-// const { DB_PORT } = require('../config/database');
-
-// mongoose.set('useCreateIndex', true)
-// mongoose.connect(DB_PORT, {useNewUrlParser: true})
-// .then(() => console.log('Connecting to database successful'))
-// .catch(err => console.error('Could not connect to mongo DB', err))
-// //Fetch or read data from
-// const migrate = async() => {
-//   const payments = await Payment.find({}).catch(err=>{
-//     console.log('err', err)
-//   })
-//   for(let i=0; i<payments.length; i++){
-//     const payment = payments[i]
-//     if(payment['card']){
-//       payment['card_id'] = payment['card']
-//       payment.save().catch(err=>{
-//         console.log('err', err)
-//       })
-//     }
-//   }
-// }
-// migrate();
-
 const mongoose = require('mongoose');
 const stripeImport = require('stripe');
-const config = require('../config/config');
 
-const stripeKey = config.STRIPE.SECRET_KEY;
-const stripe = stripeImport(stripeKey);
+const { ENV_PATH } = require('../config/path');
+require('dotenv').config({ path: ENV_PATH });
+const { DB_PORT } = require('../config/database');
+const api = require('../config/api');
 const Payment = require('../models/payment');
 const User = require('../models/user');
-const { DB_PORT } = require('../config/database');
+
+const stripeKey = api.STRIPE.SECRET_KEY;
+const stripe = stripeImport(stripeKey);
 
 mongoose.set('useCreateIndex', true);
 mongoose
@@ -83,6 +61,7 @@ const migrate = async () => {
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
     if (user.payment) {
+      /**
       const payment = await Payment.findOne({ _id: user.payment }).catch(
         (err) => {
           console.log('err', err);
@@ -90,6 +69,7 @@ const migrate = async () => {
       );
 
       const customer_id = payment['customer_id'];
+
       stripe.customers.retrieve(customer_id, function (err, customer) {
         if (err) {
           console.log('err1', user.email);
@@ -98,29 +78,7 @@ const migrate = async () => {
             const subscription = customer.subscriptions['data'][0];
             if (subscription && subscription['plan']) {
               if (subscription['plan'].id !== 'plan_FFnfPJc8bPYCZi') {
-                stripe.subscriptions.update(
-                  payment['subscription'],
-                  {
-                    cancel_at_period_end: false,
-                    items: [
-                      {
-                        id: subscription.items.data[0].id,
-                        plan: 'plan_FFnfPJc8bPYCZi',
-                      },
-                    ],
-                  },
-                  function (err) {
-                    if (err) {
-                      console.log('err', err);
-                    } else {
-                      payment['plan_id'] = 'plan_FFnfPJc8bPYCZi';
-                      payment['bill_amount'] = '29';
-                      payment.save().catch((err) => {
-                        console.log('err', err);
-                      });
-                    }
-                  }
-                );
+                console.log('other tiers', user.email);
                 // stripe.subscriptions.del(payment['subscription'], function (err, confirmation) {
                 //   if (err !==null)  {
                 //     console.log('deleting subscription err', err)
@@ -183,6 +141,9 @@ const migrate = async () => {
       //           }else{
       //             console.log('err3', customer)
       //           }
+       */
+    } else {
+      console.log(user.email);
     }
   }
   //     );

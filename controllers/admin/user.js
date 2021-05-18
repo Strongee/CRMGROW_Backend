@@ -463,6 +463,7 @@ const closeAccount = async (req, res) => {
   const user = await User.findOne({ _id: req.params.id }).catch((err) => {
     console.log('err', err);
   });
+
   if (user) {
     await Contact.deleteMany({ user: user.id });
     await Activity.deleteMany({ user: user.id });
@@ -471,25 +472,33 @@ const closeAccount = async (req, res) => {
     await Reminder.deleteMany({ user: user.id });
     await Tag.deleteMany({ user: user.id });
     await Team.deleteMany({ user: user.id });
-  }
 
-  if (user.proxy_number_id) {
-    releaseSignalWireNumber(user.proxy_number_id);
-  }
+    Team.updateMany(
+      { members: user.id },
+      {
+        $pull: { members: { $in: [user.id] } },
+      }
+    );
+    VideoHelper.removeVideo(user.id);
 
-  if (user.payment) {
-    PaymentCtrl.cancelCustomer(user.payment).catch((err) => {
+    if (user.proxy_number_id) {
+      releaseSignalWireNumber(user.proxy_number_id);
+    }
+
+    if (user.payment) {
+      PaymentCtrl.cancelCustomer(user.payment).catch((err) => {
+        console.log('err', err);
+      });
+    }
+    user.del = true;
+    user.save().catch((err) => {
       console.log('err', err);
     });
-  }
-  user.del = true;
-  user.save().catch((err) => {
-    console.log('err', err);
-  });
 
-  return res.send({
-    status: true,
-  });
+    return res.send({
+      status: true,
+    });
+  }
 };
 
 const disableUser = async (req, res) => {

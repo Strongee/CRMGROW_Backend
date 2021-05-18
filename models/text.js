@@ -12,6 +12,11 @@ const TextSchema = new Schema(
     from: String,
     type: Number,
     status: Number,
+    has_shared: Boolean,
+    shared_text: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'text',
+    },
     updated_at: Date,
     created_at: Date,
   },
@@ -21,6 +26,7 @@ const TextSchema = new Schema(
 );
 
 TextSchema.index({ contacts: 1 });
+TextSchema.index({ deal: 1 });
 const Text = mongoose.model('text', TextSchema);
 
 module.exports = Text;

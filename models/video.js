@@ -22,12 +22,12 @@ const VideoSchema = new Schema(
     duration: Number,
     url: String,
     role: String,
+    key: String,
+    bucket: String,
     material_theme: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'material_theme',
     },
-    key: String,
-    bucket: String,
     material_theme1: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'material_theme',

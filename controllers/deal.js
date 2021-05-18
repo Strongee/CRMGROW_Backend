@@ -22,6 +22,10 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
 const Task = require('../models/task');
+const VideoTracker = require('../models/video_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const ImageTracker = require('../models/image_tracker');
+const EmailTracker = require('../models/email_tracker');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -390,7 +394,7 @@ const getDetail = (req, res) => {
 const getActivity = async (req, res) => {
   const { currentUser } = req;
   const { count } = req.body;
-  // TimeLines
+  const startTime = new Date().getTime();
 
   // Contact Activity List
   let _activity_list;
@@ -401,27 +405,12 @@ const getActivity = async (req, res) => {
       deals: req.body.deal,
     })
       .sort({ updated_at: -1 })
-      .limit(count)
-      .populate([
-        { path: 'video_trackers', select: '-_id -user -contact' },
-        { path: 'image_trackers', select: '-_id -user -contact' },
-        { path: 'pdf_trackers', select: '-_id -user -contact' },
-        { path: 'email_trackers', select: '-_id -user -contact' },
-        { path: 'text_trackers', select: '-_id -user -contact' },
-      ]);
+      .limit(count);
   } else {
     _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
-    })
-      .sort({ updated_at: 1 })
-      .populate([
-        { path: 'video_trackers', select: '-_id -user -contact' },
-        { path: 'image_trackers', select: '-_id -user -contact' },
-        { path: 'pdf_trackers', select: '-_id -user -contact' },
-        { path: 'email_trackers', select: '-_id -user -contact' },
-        { path: 'text_trackers', select: '-_id -user -contact' },
-      ]);
+    }).sort({ updated_at: 1 });
   }
 
   // Contact Relative Details
@@ -429,42 +418,12 @@ const getActivity = async (req, res) => {
   const imageIds = [];
   const pdfIds = [];
   const materials = [];
+  const trackers = {};
   let notes = [];
   let emails = [];
   let texts = [];
   let appointments = [];
   let tasks = [];
-  let deals = [];
-
-  _activity_list.forEach((e) => {
-    if (e['type'] === 'videos') {
-      if (e['videos'] instanceof Array) {
-        Array.prototype.push.apply(videoIds, e['videos']);
-      } else {
-        videoIds.push(e['videos']);
-      }
-    }
-    if (e['type'] === 'images') {
-      if (e['images'] instanceof Array) {
-        Array.prototype.push.apply(imageIds, e['images']);
-      } else {
-        imageIds.push(e['images']);
-      }
-    }
-    if (e['type'] === 'pdfs') {
-      if (e['pdfs'] instanceof Array) {
-        Array.prototype.push.apply(pdfIds, e['pdfs']);
-      } else {
-        pdfIds.push(e['pdfs']);
-      }
-    }
-  });
-  const videos = await Video.find({ _id: { $in: videoIds } });
-  const pdfs = await PDF.find({ _id: { $in: pdfIds } });
-  const images = await Image.find({ _id: { $in: imageIds } });
-  Array.prototype.push.apply(materials, videos);
-  Array.prototype.push.apply(materials, pdfs);
-  Array.prototype.push.apply(materials, images);
 
   if (count) {
     const loadedIds = [];
@@ -494,12 +453,14 @@ const getActivity = async (req, res) => {
             case 'notes':
               noteIds.push(detail_id);
               break;
-            case 'emails':
+            case 'emails': {
               emailIds.push(detail_id);
               break;
-            case 'texts':
+            }
+            case 'texts': {
               textIds.push(detail_id);
               break;
+            }
             case 'appointments':
               apptIds.push(detail_id);
               break;
@@ -526,16 +487,123 @@ const getActivity = async (req, res) => {
     tasks = await FollowUp.find({ deal: req.body.deal });
   }
 
+  for (let i = 0; i < _activity_list.length; i++) {
+    const e = _activity_list[i];
+    if (
+      (e['type'] === 'emails' && e['emails']) ||
+      (e['type'] === 'texts' && e['texts'])
+    ) {
+      if (e['videos'] instanceof Array) {
+        Array.prototype.push.apply(videoIds, e['videos']);
+      } else {
+        videoIds.push(e['videos']);
+      }
+      if (e['pdfs'] instanceof Array) {
+        Array.prototype.push.apply(pdfIds, e['pdfs']);
+      } else {
+        pdfIds.push(e['pdfs']);
+      }
+      if (e['images'] instanceof Array) {
+        Array.prototype.push.apply(imageIds, e['images']);
+      } else {
+        imageIds.push(e['images']);
+      }
+
+      let send_activityIds = [];
+      let detail_id;
+      let video_trackers;
+      let pdf_trackers;
+      let image_trackers;
+      let email_trackers;
+      if (e['type'] === 'emails') {
+        detail_id = e['emails'];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        const emails = await Email.find({
+          shared_email: detail_id,
+        }).catch((err) => {
+          console.log('deal email find err', err.message);
+        });
+        const emailIds = (emails || []).map((e) => e._id);
+
+        const send_activities = await Activity.find({
+          emails: { $in: emailIds },
+        }).select('_id');
+
+        send_activityIds = send_activities.map((e) => e._id);
+        email_trackers = await EmailTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal image tracker find err', err.message);
+        });
+      } else {
+        detail_id = e['texts'];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        const texts = await Text.find({
+          shared_text: detail_id,
+        }).catch((err) => {
+          console.log('deal text find err', err.message);
+        });
+        const textIds = (texts || []).map((e) => e._id);
+
+        const send_activities = await Activity.find({
+          texts: { $in: textIds },
+        }).select('_id');
+
+        send_activityIds = send_activities.map((e) => e._id);
+      }
+      if (e['videos'] && e['videos'].length) {
+        video_trackers = await VideoTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal video tracker find err', err.message);
+        });
+      }
+      if (e['pdfs'] && e['pdfs'].length) {
+        pdf_trackers = await PDFTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal pdf tracker find err', err.message);
+        });
+      }
+      if (e['images'] && e['images'].length) {
+        image_trackers = await ImageTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal image tracker find err', err.message);
+        });
+      }
+
+      trackers[detail_id] = {
+        video_trackers,
+        pdf_trackers,
+        image_trackers,
+        email_trackers,
+      };
+    }
+  }
+
+  const videos = await Video.find({ _id: { $in: videoIds } });
+  const pdfs = await PDF.find({ _id: { $in: pdfIds } });
+  const images = await Image.find({ _id: { $in: imageIds } });
+  Array.prototype.push.apply(materials, videos);
+  Array.prototype.push.apply(materials, pdfs);
+  Array.prototype.push.apply(materials, images);
+
   const data = {
     activity: _activity_list,
+
     details: {
       materials,
       notes,
       emails,
       texts,
       appointments,
+      trackers,
       tasks,
-      deals,
     },
   };
 
@@ -1057,7 +1125,17 @@ const removeFollowUp = async (req, res) => {
 
 const sendEmails = async (req, res) => {
   const { currentUser } = req;
-  const { subject, content, cc, bcc, deal, contacts } = req.body;
+  const {
+    subject,
+    content,
+    cc,
+    bcc,
+    deal,
+    contacts,
+    video_ids,
+    pdf_ids,
+    image_ids,
+  } = req.body;
   const error = [];
 
   const email = new Email({
@@ -1088,6 +1166,9 @@ const sendEmails = async (req, res) => {
     deals: deal,
     type: 'emails',
     emails: email.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
   });
 
   activity.save().catch((err) => {
@@ -1108,6 +1189,8 @@ const sendEmails = async (req, res) => {
           action: {
             type: 'send_email',
             ...req.body,
+            shared_email: email.id,
+            has_shared: true,
           },
           due_date,
         });
@@ -1127,6 +1210,8 @@ const sendEmails = async (req, res) => {
     const data = {
       user: currentUser.id,
       ...req.body,
+      shared_email: email.id,
+      has_shared: true,
     };
 
     sendEmail(data)
@@ -1655,7 +1740,7 @@ const createTeamCall = async (req, res) => {
 
 const sendTexts = async (req, res) => {
   const { currentUser } = req;
-  const { content, deal } = req.body;
+  const { content, deal, video_ids, pdf_ids, image_ids } = req.body;
   const error = [];
 
   const text_info = currentUser.text_info;
@@ -1708,6 +1793,9 @@ const sendTexts = async (req, res) => {
     deals: deal,
     type: 'texts',
     texts: text.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
   });
 
   activity.save().catch((err) => {
@@ -1717,6 +1805,8 @@ const sendTexts = async (req, res) => {
   const data = {
     user: currentUser.id,
     ...req.body,
+    shared_text: text.id,
+    has_shared: true,
   };
 
   sendText(data)

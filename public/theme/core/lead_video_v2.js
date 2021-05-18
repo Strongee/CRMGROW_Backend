@@ -300,3 +300,27 @@ if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
 } else { 
   deviceType = 'desktop'
 }
+
+const material = window['config'];
+if (material['stream_url']) {
+  var fragmentExtension = '.ts';
+  const cookieStr = material['stream_url'].split('?')[1];
+  var url = 'https://d1lpx38wzlailf.cloudfront.net/streamd/' + material.key + '/' + material.key + '.m3u8?' + cookieStr;
+
+  var originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function() {
+      if (arguments[1].endsWith(fragmentExtension)){
+          arguments[1] = arguments[1] + '?' + cookieStr;
+      }
+      originalOpen.apply(this, arguments);
+  }
+  var video = document.querySelector('#player');
+  var hls = new Hls();
+  hls.attachMedia(video);
+  hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+    hls.loadSource(url);
+    hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+      console.log("manifest loaded, found " + data.levels.length + " quality level");
+    });
+  });
+}

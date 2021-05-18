@@ -1144,6 +1144,8 @@ const sendText = async (data) => {
     contacts,
     mode,
     max_text_count,
+    shared_text,
+    has_shared,
   } = data;
 
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
@@ -1325,6 +1327,8 @@ const sendText = async (data) => {
       content: text_content,
       contacts: contacts[i],
       type: 0,
+      shared_text,
+      has_shared,
     });
 
     text.save().catch((err) => {

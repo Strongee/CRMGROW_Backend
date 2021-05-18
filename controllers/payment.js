@@ -47,13 +47,13 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { user_name, email, token, referral } = payment_data;
+    const { user_name, email, token, referral, level } = payment_data;
     createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
         { source: token.id },
         function (err, card) {
-          if (card == null || typeof card === 'undefined') {
+          if (!card) {
             reject('Card is null');
             return;
           }
@@ -62,8 +62,8 @@ const create = async (payment_data) => {
             return;
           }
 
-          const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
-          const pricingPlan = api.STRIPE.PRIOR_PLAN;
+          const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN[level];
+          const pricingPlan = api.STRIPE.PLAN[level];
           createSubscription(customer.id, pricingPlan, card.id)
             .then(async (subscripition) => {
               // Save card information to DB.
@@ -83,8 +83,6 @@ const create = async (payment_data) => {
                 last4: token.card.last4,
                 active: true,
                 referral,
-                updated_at: new Date(),
-                created_at: new Date(),
               });
 
               const _payment = await payment
@@ -114,7 +112,14 @@ const update = async (req, res) => {
           customer.id,
           { source: token.id },
           function (err, card) {
-            if (card == null || typeof card === 'undefined') {
+            if (!card) {
+              return res.status(400).send({
+                status: false,
+                error: 'Card is not valid',
+              });
+            }
+
+            if (card['cvc_check'] === 'unchecked') {
               return res.status(400).send({
                 status: false,
                 error: 'Card is not valid',
@@ -142,8 +147,6 @@ const update = async (req, res) => {
                   bill_amount,
                   fingerprint: card.fingerprint,
                   active: true,
-                  updated_at: new Date(),
-                  created_at: new Date(),
                 });
 
                 payment.save().then((_payment) => {
@@ -820,8 +823,7 @@ const getTransactions = async (req, res) => {
 
   if (payment) {
     const customer_id = payment.customer_id;
-    stripe.charges.list({ customer: customer_id }, function (err, charges) {
-      console.log('charges', charges);
+    stripe.charges.list({ customer: customer_id }, async (err, charges) => {
       if (err) {
         console.log('payment history find err', err);
         return res.status(400).json({
@@ -832,15 +834,32 @@ const getTransactions = async (req, res) => {
       const charge_list = charges.data;
       const data = [];
       for (let i = 0; i < charge_list.length; i++) {
-        const charge = {
-          id: charge_list[i].id,
-          amount: charge_list[i].amount / 100,
-          status: charge_list[i].status,
-          description: charge_list[i].description,
-          customer: charge_list[i].customer,
-          date: charge_list[i].created * 1000,
-        };
-        data.push(charge);
+        console.log('charge_list[i]', charge_list[i]);
+        if (charge_list[i].invoice) {
+          const invoice = await stripe.invoices.retrieve(
+            charge_list[i].invoice
+          );
+          const charge = {
+            id: charge_list[i].id,
+            amount: charge_list[i].amount / 100,
+            status: charge_list[i].status,
+            description: charge_list[i].description,
+            customer: charge_list[i].customer,
+            date: charge_list[i].created * 1000,
+            inovice_pdf: invoice.invoice_pdf,
+          };
+          data.push(charge);
+        } else {
+          const charge = {
+            id: charge_list[i].id,
+            amount: charge_list[i].amount / 100,
+            status: charge_list[i].status,
+            description: charge_list[i].description,
+            customer: charge_list[i].customer,
+            date: charge_list[i].created * 1000,
+          };
+          data.push(charge);
+        }
       }
       return res.send({
         status: true,

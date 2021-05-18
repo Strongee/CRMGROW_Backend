@@ -2408,19 +2408,22 @@ const bulkRemove = async (req, res) => {
         });
 
         if (video) {
-          if (video['default_edited']) {
+          // Duplicated Admin Video: Garbage Update
+          if (video['default_video'] || video['default_edited']) {
             Garbage.updateOne(
               { user: currentUser.id },
               {
-                $pull: { edited_video: { $in: [video.default_video] } },
+                $pull: { edited_video: { $in: [video['default_video']] } },
               }
             ).catch((err) => {
               console.log('default video remove err', err.message);
             });
-          } else if (video['shared_video']) {
+          }
+          // Duplicated Normal Video
+          if (video['shared_video']) {
             Video.updateOne(
               {
-                _id: video.shared_video,
+                _id: video['shared_video'],
                 user: currentUser.id,
               },
               {
@@ -2430,31 +2433,9 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default video remove err', err.message);
             });
-          } else {
-            const url = video.url;
-            if (url.indexOf('teamgrow.s3') > 0) {
-              s3.deleteObject(
-                {
-                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-                  Key: url.slice(44),
-                },
-                function (err, data) {
-                  console.log('err', err);
-                }
-              );
-            } else {
-              try {
-                const file_path = video.path;
-                if (file_path) {
-                  fs.unlinkSync(file_path);
-                }
-              } catch (err) {
-                console.log('err', err);
-              }
-            }
           }
-
-          if (video.role === 'team') {
+          // Team Video Remove
+          if (video['role'] === 'team') {
             Team.updateOne(
               { videos: videos[i] },
               {
@@ -2464,13 +2445,80 @@ const bulkRemove = async (req, res) => {
               console.log('err', err.message);
             });
           }
-
-          Video.updateOne({ _id: videos[i] }, { $set: { del: true } }).catch(
-            (err) => {
+          // Implement the Video Logic && File Remove
+          Video.updateOne({ _id: videos[i] }, { $set: { del: true } })
+            .then(async () => {
+              let hasSameVideo = false;
+              if (video['bucket']) {
+                const sameVideos = await Video.find({
+                  del: false,
+                  key: video['key'],
+                }).catch((err) => {
+                  console.log('same video getting error');
+                });
+                if (sameVideos && sameVideos.length) {
+                  hasSameVideo = true;
+                }
+              } else {
+                const sameVideos = await Video.find({
+                  del: false,
+                  url: video['url'],
+                }).catch((err) => {
+                  console.log('same video getting error');
+                });
+                if (sameVideos && sameVideos.length) {
+                  hasSameVideo = true;
+                }
+              }
+              if (!hasSameVideo) {
+                if (video['bucket']) {
+                  s3.deleteObject(
+                    {
+                      Bucket: video['bucket'],
+                      Key: 'transcoded/' + video['key'] + '.mp4',
+                    },
+                    function (err, data) {
+                      console.log('transcoded video removing error', err);
+                    }
+                  );
+                  emptyBucket(
+                    video['bucket'],
+                    'streamd/' + video['key'] + '/',
+                    (err) => {
+                      if (err) {
+                        console.log('Removing files error in bucket');
+                      }
+                    }
+                  );
+                } else {
+                  const url = video['url'];
+                  if (url.indexOf('teamgrow.s3') > 0) {
+                    s3.deleteObject(
+                      {
+                        Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                        Key: url.slice(44),
+                      },
+                      function (err, data) {
+                        console.log('err', err);
+                      }
+                    );
+                  } else {
+                    try {
+                      const file_path = video.path;
+                      if (file_path) {
+                        fs.unlinkSync(file_path);
+                      }
+                    } catch (err) {
+                      console.log('err', err);
+                    }
+                  }
+                }
+              }
+              resolve();
+            })
+            .catch((err) => {
               console.log('err', err.message);
-            }
-          );
-          resolve();
+            });
         } else {
           const video = await Video.findOne({
             _id: videos[i],
@@ -2479,11 +2527,10 @@ const bulkRemove = async (req, res) => {
           error.push({
             video: {
               _id: videos[i],
-              title: video.title,
+              title: video['title'],
             },
             error: 'Invalid Permission',
           });
-
           resolve();
         }
       });
@@ -2500,19 +2547,22 @@ const bulkRemove = async (req, res) => {
         });
 
         if (pdf) {
-          if (pdf['shared_pdf']) {
+          // Duplicated Admin PDF: Garbage Update
+          if (pdf['default_pdf'] || pdf['default_edited']) {
             Garbage.updateOne(
               { user: currentUser.id },
               {
-                $pull: { edited_pdf: { $in: [pdf.default_pdf] } },
+                $pull: { edited_pdf: { $in: [pdf['default_pdf']] } },
               }
             ).catch((err) => {
               console.log('default pdf remove err', err.message);
             });
-          } else if (pdf['has_shared']) {
+          }
+          // Duplicated Normal PDF
+          if (pdf['shared_pdf']) {
             PDF.updateOne(
               {
-                _id: pdf.shared_pdf,
+                _id: pdf['shared_pdf'],
                 user: currentUser.id,
               },
               {
@@ -2522,22 +2572,9 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default pdf remove err', err.message);
             });
-          } else {
-            const url = pdf.url;
-            if (url.indexOf('teamgrow.s3') > 0) {
-              s3.deleteObject(
-                {
-                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-                  Key: url.slice(44),
-                },
-                function (err, data) {
-                  console.log('err', err);
-                }
-              );
-            }
           }
-
-          if (pdf.role === 'team') {
+          // Team PDF Remove
+          if (pdf['role'] === 'team') {
             Team.updateOne(
               { pdfs: pdfs[i] },
               {
@@ -2547,13 +2584,38 @@ const bulkRemove = async (req, res) => {
               console.log('err', err.message);
             });
           }
-
-          PDF.updateOne({ _id: pdfs[i] }, { $set: { del: true } }).catch(
-            (err) => {
+          // Implement the PDF Logic && File Remove
+          PDF.updateOne({ _id: pdfs[i] }, { $set: { del: true } })
+            .then(async () => {
+              let hasSamePDF = false;
+              const samePdfs = await PDF.find({
+                del: false,
+                url: pdf['url'],
+              }).catch((err) => {
+                console.log('same pdf getting error');
+              });
+              if (samePdfs && samePdfs.length) {
+                hasSamePDF = true;
+              }
+              if (!hasSamePDF) {
+                const url = pdf['url'];
+                if (url.indexOf('teamgrow.s3') > 0) {
+                  s3.deleteObject(
+                    {
+                      Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                      Key: url.slice(44),
+                    },
+                    function (err, data) {
+                      console.log('err', err);
+                    }
+                  );
+                }
+              }
+              resolve();
+            })
+            .catch((err) => {
               console.log('err', err.message);
-            }
-          );
-          resolve();
+            });
         } else {
           const pdf = await PDF.findOne({
             _id: pdfs[i],
@@ -2562,11 +2624,10 @@ const bulkRemove = async (req, res) => {
           error.push({
             pdf: {
               _id: pdfs[i],
-              title: pdf.title,
+              title: pdf['title'],
             },
             error: 'Invalid Permission',
           });
-
           resolve();
         }
       });
@@ -2592,7 +2653,8 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default image remove err', err.message);
             });
-          } else if (image['shared_image']) {
+          }
+          if (image['shared_image']) {
             Image.updateOne(
               {
                 _id: image.shared_image,
@@ -2605,21 +2667,7 @@ const bulkRemove = async (req, res) => {
             ).catch((err) => {
               console.log('default image remove err', err.message);
             });
-          } else {
-            const url = image.url;
-            if (url.indexOf('teamgrow.s3') > 0) {
-              s3.deleteObject(
-                {
-                  Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-                  Key: url.slice(44),
-                },
-                function (err, data) {
-                  console.log('err', err);
-                }
-              );
-            }
           }
-
           if (image.role === 'team') {
             Team.updateOne(
               { images: images[i] },
@@ -2659,16 +2707,10 @@ const bulkRemove = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
-      if (error.length > 0) {
-        return res.status(405).json({
-          status: false,
-          error,
-        });
-      } else {
-        return res.send({
-          status: true,
-        });
-      }
+      return res.json({
+        status: true,
+        failed: error,
+      });
     })
     .catch((err) => {
       console.log('material bulk remove err', err.message);
@@ -2678,6 +2720,137 @@ const bulkRemove = async (req, res) => {
       });
     });
 };
+
+const updateFolders = async (req, res) => {
+  const { currentUser } = req;
+  const { ids, data } = req.body;
+  const { title } = data;
+  const folders = await Folder.find({
+    _id: { $in: ids },
+    user: currentUser._id,
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+  for (let i = 0; i < folders.length; i++) {
+    let _title = title;
+    if (i) {
+      _title = title + ` (${i})`;
+    }
+    folders[i]['title'] = _title;
+    await folders[i].save();
+  }
+
+  return res.send({
+    status: true,
+  });
+};
+const removeFolders = async (req, res) => {
+  const { currentUser } = req;
+  const { ids, mode, target } = req.body;
+
+  const folders = await Folder.find({
+    _id: { $in: ids },
+    user: currentUser._id,
+  }).catch((err) => {
+    return res.status(500).send({
+      status: false,
+      error: err.message,
+    });
+  });
+
+  let videos = [];
+  let pdfs = [];
+  let images = [];
+  for (let i = 0; i < folders.length; i++) {
+    const e = folders[i];
+    videos = [...videos, ...e.videos];
+    pdfs = [...pdfs, ...e.pdfs];
+    images = [...images, ...e.images];
+  }
+
+  if (mode === 'remove-all') {
+    Folder.deleteMany({
+      _id: { $in: ids },
+      user: currentUser._id,
+    })
+      .then(() => {
+        if (videos.length + pdfs.length + images.length) {
+          bulkRemove(
+            {
+              currentUser,
+              body: { videos, pdfs, images },
+            },
+            res
+          );
+        } else {
+          return res.send({
+            status: true,
+          });
+        }
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  } else if (mode === 'move-other') {
+    Folder.deleteMany({
+      _id: { $in: ids },
+      user: currentUser._id,
+    })
+      .then(async () => {
+        if (target) {
+          await Folder.updateOne(
+            { _id: target },
+            {
+              $addToSet: {
+                videos: { $each: videos },
+                images: { $each: images },
+                pdfs: { $each: pdfs },
+              },
+            }
+          );
+        }
+        return res.send({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          status: false,
+          error: err.message,
+        });
+      });
+  }
+};
+
+const emptyBucket = (bucketName, folder, callback) => {
+  var params = {
+    Bucket: bucketName,
+    Prefix: folder,
+  };
+
+  s3.listObjects(params, (err, data) => {
+    if (err) return callback(err);
+
+    if (data.Contents.length === 0) callback();
+
+    const delParams = { Bucket: bucketName, Delete: { Objects: [] } };
+
+    data.Contents.forEach((content) => {
+      delParams.Delete.Objects.push({ Key: content.Key });
+    });
+
+    s3.deleteObjects(delParams, (err, data) => {
+      if (err) return callback(err);
+      else callback();
+    });
+  });
+}
 
 module.exports = {
   bulkEmail,
@@ -2690,4 +2863,7 @@ module.exports = {
   removeFolder,
   moveMaterials,
   bulkRemove,
+  updateFolders,
+  removeFolders,
+  emptyBucket,
 };

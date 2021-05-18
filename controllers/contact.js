@@ -1614,12 +1614,18 @@ const leadContact = async (req, res) => {
     });
   } else {
     if (email) {
-      await verifyEmail(email).catch((err) => {
+      const verified = await verifyEmail(email).catch((err) => {
+        console.log('email verify err', err.message);
+      });
+
+      console.log('verified', verified);
+
+      if (!verified) {
         return res.status(400).json({
           status: false,
-          error: err.message,
+          error: 'Invalid Email',
         });
-      });
+      }
     }
     const e164Phone = phone(cell_phone)[0];
 
@@ -3747,16 +3753,16 @@ const verifyEmail = async (email) => {
   return new Promise((resolve, reject) => {
     verifier.verify(email, (err, data) => {
       if (err) {
-        reject({ message: err.msg || err.message });
+        reject(false);
       }
       if (
         data['formatCheck'] === 'true' &&
         data['smtpCheck'] === 'true' &&
         data['dnsCheck'] === 'true'
       ) {
-        resolve();
+        resolve(true);
       } else {
-        reject({ message: 'Email is not valid one' });
+        reject(false);
       }
     });
   });

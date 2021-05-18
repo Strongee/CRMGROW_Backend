@@ -18,6 +18,7 @@ const TrackerSchema = new Schema(
   }
 );
 
+TrackerSchema.index({ activity: 1 });
 const PDFTracker = mongoose.model('pdf_tracker', TrackerSchema);
 
 module.exports = PDFTracker;

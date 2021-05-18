@@ -50,6 +50,7 @@ const urls = require('../constants/urls');
 const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
+const { emptyBucket } = require('./material');
 
 const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
@@ -88,7 +89,7 @@ const play = async (req, res) => {
   const sender_id = req.query.user;
   const team_id = req.query.team;
   const video = await Video.findOne({ _id: video_id }).catch((err) => {
-    console.log('err', err.message);
+    console.log('video find err', err.message);
   });
 
   const user = await User.findOne({
@@ -96,7 +97,7 @@ const play = async (req, res) => {
     del: false,
     'subscription.is_suspended': false,
   }).catch((err) => {
-    console.log('err', err.message);
+    console.log('user find err', err.message);
   });
 
   let team;
@@ -187,8 +188,9 @@ const play = async (req, res) => {
         social_link.linkedin = 'http://' + social_link.linkedin;
       }
     }
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('lead_material_' + theme, {
-      material: video,
+      material,
       material_type: 'video',
       user,
       capture_dialog,
@@ -272,13 +274,13 @@ const play1 = async (req, res) => {
       console.log('err', err);
     });
 
-  if (!activity.user) {
-    return res.send(
-      'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
-    );
-  }
-
   if (activity) {
+    if (!activity.user) {
+      return res.send(
+        'Sorry! This video link is expired for some reason. Please try ask to sender to send again.1'
+      );
+    }
+
     const data = activity['user'];
     const myJSON = JSON.stringify(data);
     const user = JSON.parse(myJSON);
@@ -341,8 +343,9 @@ const play1 = async (req, res) => {
       }
     }
 
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('material_' + theme, {
-      material: video,
+      material,
       material_type: 'video',
       user,
       contact: activity['contacts'],
@@ -639,6 +642,55 @@ const createVideo = async (req, res) => {
   });
 };
 
+const updateConvertStatus = async (req, res) => {
+  const { currentUser } = req;
+  const status = { ...req.body };
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('err', err.message);
+  });
+
+  if (!video) {
+    return res.status(400).json({
+      status: false,
+      error: 'Invalid_permission',
+    });
+  }
+
+  if (status) {
+    if (status['preview']) {
+      video['preview'] =
+        'https://teamgrow.s3.us-east-2.amazonaws.com/preview/' +
+        video['key'] +
+        '.gif';
+    }
+    if (status['converted'] === 100) {
+      video['url'] =
+        api.AWS.CLOUDFRONT + '/transcoded/' + video['key'] + '.mp4';
+      video['converted'] = 'completed';
+    }
+    if (status['streamd'] === 100) {
+      video['url'] =
+        api.AWS.CLOUDFRONT +
+        '/streamd/' +
+        video['key'] +
+        '/' +
+        video['key'] +
+        '.m3u8';
+      video['converted'] = 'completed';
+    }
+
+    video.save().then(() => {
+      return res.send({
+        status: true,
+        data: video._doc,
+      });
+    });
+  }
+};
+
 const update = async (req, res) => {
   const editData = { ...req.body };
   delete editData.site_image;
@@ -823,7 +875,6 @@ const updateDetail = async (req, res) => {
   delete editData.site_image;
   delete editData.thumbnail;
   const { currentUser } = req;
-  let thumbnail_path = '';
   const video = await Video.findOne({
     _id: req.params.id,
     user: currentUser.id,
@@ -865,139 +916,11 @@ const updateDetail = async (req, res) => {
       console.error('Upload Video Thumbnail Image', error);
     }
   }
-  const file_name = req.params.id;
-  let custom_thumbnail = false;
-  if (req.body.thumbnail) {
-    // base 64 image
-
-    if (!fs.existsSync(THUMBNAILS_PATH)) {
-      fs.mkdirSync(THUMBNAILS_PATH);
-    }
-
-    thumbnail_path = base64Img.imgSync(
-      req.body.thumbnail,
-      THUMBNAILS_PATH,
-      file_name
-    );
-    if (fs.existsSync(thumbnail_path) && req.body.custom_thumbnail) {
-      // Thumbnail
-      custom_thumbnail = true;
-      const play = await loadImage(PLAY_BUTTON_PATH);
-
-      const canvas = createCanvas(
-        system_settings.THUMBNAIL.WIDTH,
-        system_settings.THUMBNAIL.HEIGHT
-      );
-      const ctx = canvas.getContext('2d');
-      const image = await loadImage(thumbnail_path);
-
-      let height = image.height;
-      let width = image.width;
-      if (height > width) {
-        ctx.rect(
-          0,
-          0,
-          system_settings.THUMBNAIL.WIDTH,
-          system_settings.THUMBNAIL.HEIGHT
-        );
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-        width = (system_settings.THUMBNAIL.HEIGHT * width) / height;
-        height = system_settings.THUMBNAIL.HEIGHT;
-        ctx.drawImage(
-          image,
-          (system_settings.THUMBNAIL.WIDTH - width) / 2,
-          0,
-          width,
-          height
-        );
-      } else {
-        height = system_settings.THUMBNAIL.HEIGHT;
-        width = system_settings.THUMBNAIL.WIDTH;
-        ctx.drawImage(image, 0, 0, width, height);
-      }
-
-      // ctx.rect(70, 170, 200, 40);
-      // ctx.globalAlpha = 0.7;
-      // ctx.fillStyle = '#333';
-      // ctx.fill();
-      // ctx.globalAlpha = 1.0;
-      // ctx.font = '24px Arial';
-      // ctx.fillStyle = '#ffffff';
-      // ctx.fillText('Play video', 80, 200);
-      ctx.drawImage(play, 10, 150);
-      const buf = canvas.toBuffer();
-
-      for (let i = 0; i < 20; i++) {
-        if (i < 10) {
-          fs.writeFileSync(GIF_PATH + file_name + `-0${i}.png`, buf);
-        } else {
-          fs.writeFileSync(GIF_PATH + file_name + `-${i}.png`, buf);
-        }
-      }
-
-      /**
-      sharp(thumbnail_path)
-      .resize(250, 140)
-      .toBuffer()
-      .then(data => {
-          const today = new Date()
-          const year = today.getYear()
-          const month = today.getMonth()
-          const params = {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME, // pass your bucket name
-            Key: 'thumbnail' +  year + '/' + month + '/' + file_name, 
-            Body: data,
-            ACL: 'public-read'
-          };
-          
-          s3.upload(params, async (s3Err, upload)=>{
-            if (s3Err){
-              console.log('upload s3 error', s3Err)
-            } else {
-              console.log(`File uploaded successfully at ${upload.Location}`)
-            }
-          })
-      });
-      */
-    }
-  }
 
   for (const key in editData) {
     video[key] = editData[key];
   }
-
-  if (video['path'] && req.body.thumbnail) {
-    const data = {
-      file_name: req.params.id,
-      file_path: video['path'],
-      custom_thumbnail,
-    };
-
-    generatePreview(data)
-      .then((res) => {
-        Video.updateOne(
-          { _id: req.params.id },
-          { $set: { preview: res } }
-        ).catch((err) => {
-          console.log('update preview err', err.message);
-        });
-      })
-      .catch((err) => {
-        console.log('generate preview err', err.message);
-      });
-  }
-
-  if (video['type'] === 'video/webm') {
-    video['converted'] = 'progress';
-    videoHelper.convertRecordVideo(video.id);
-  } else if (
-    video['type'] === 'video/mp4' ||
-    video['type'] === 'video/quicktime'
-  ) {
-    video['converted'] = 'progress';
-    videoHelper.convertUploadVideo(video.id);
-  }
+  video['converted'] = 'progress';
 
   if (editData['folder']) {
     await Folder.updateOne(
@@ -1579,7 +1502,8 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
-      } else if (video['shared_video']) {
+      }
+      if (video['shared_video']) {
         Video.updateOne(
           {
             _id: video.shared_video,
@@ -1592,30 +1516,7 @@ const remove = async (req, res) => {
         ).catch((err) => {
           console.log('default video remove err', err.message);
         });
-      } else {
-        const url = video.url;
-        if (video.key || url.indexOf('teamgrow.s3') > 0) {
-          s3.deleteObject(
-            {
-              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-              Key: video.key || url.slice(44),
-            },
-            function (err, data) {
-              console.log('err', err);
-            }
-          );
-        } else {
-          try {
-            const file_path = video.path;
-            if (file_path) {
-              fs.unlinkSync(file_path);
-            }
-          } catch (err) {
-            console.log('err', err);
-          }
-        }
       }
-
       if (video.role === 'team') {
         Team.updateOne(
           { videos: req.params.id },
@@ -1627,14 +1528,85 @@ const remove = async (req, res) => {
         });
       }
 
-      Video.updateOne({ _id: req.params.id }, { $set: { del: true } }).catch(
-        (err) => {
+      Video.updateOne({ _id: req.params.id }, { $set: { del: true } })
+        .then(async () => {
+          let hasSameVideo = false;
+          if (video['bucket']) {
+            const sameVideos = await Video.find({
+              del: false,
+              key: video['key'],
+            }).catch((err) => {
+              console.log('same video getting error');
+            });
+            if (sameVideos && sameVideos.length) {
+              hasSameVideo = true;
+            }
+          } else {
+            const sameVideos = await Video.find({
+              del: false,
+              url: video['url'],
+            }).catch((err) => {
+              console.log('same video getting error');
+            });
+            if (sameVideos && sameVideos.length) {
+              hasSameVideo = true;
+            }
+          }
+          if (!hasSameVideo) {
+            if (video['bucket']) {
+              s3.deleteObject(
+                {
+                  Bucket: video['bucket'],
+                  Key: 'transcoded/' + video['key'] + '.mp4',
+                },
+                function (err, data) {
+                  console.log('transcoded video removing error', err);
+                }
+              );
+              emptyBucket(
+                video['bucket'],
+                'streamd/' + video['key'] + '/',
+                (err) => {
+                  if (err) {
+                    console.log('Removing files error in bucket');
+                  }
+                }
+              );
+            } else {
+              const url = video['url'];
+              if (url.indexOf('teamgrow.s3') > 0) {
+                s3.deleteObject(
+                  {
+                    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+                    Key: url.slice(44),
+                  },
+                  function (err, data) {
+                    console.log('err', err);
+                  }
+                );
+              } else {
+                try {
+                  const file_path = video.path;
+                  if (file_path) {
+                    fs.unlinkSync(file_path);
+                  }
+                } catch (err) {
+                  console.log('err', err);
+                }
+              }
+            }
+          }
+          return res.send({
+            status: true,
+          });
+        })
+        .catch((err) => {
           console.log('err', err.message);
-        }
-      );
-      return res.send({
-        status: true,
-      });
+          return res.status(500).send({
+            status: true,
+            error: err.message,
+          });
+        });
     } else {
       res.status(400).send({
         status: false,
@@ -3419,6 +3391,8 @@ const setupRecording = (io) => {
           duration,
           user: decoded.id,
           recording: true,
+          bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+          converted: 'progress',
         });
         video
           .save()
@@ -3453,7 +3427,6 @@ const setupRecording = (io) => {
                 mode: 'crop',
                 area,
               };
-              videoHelper.convertRecordVideo(data);
             } else if (data.mode === 'mirror') {
               params = {
                 id: _video.id,
@@ -3466,37 +3439,43 @@ const setupRecording = (io) => {
               };
               // CONVERT FFMPEG
             }
+            // Upload the Meta Data and Video to the S3
+            var videoKey = _video.id;
+            if (params.mode) {
+              s3.putObject({
+                Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+                Key: 'meta/' + videoKey + '.txt',
+                Body: JSON.stringify(params),
+                ContentType: 'text/plain',
+              }).promise();
+            }
+            const fileStream = fs.createReadStream(
+              TEMP_PATH + videoId + `.webm`
+            );
+            const uploadParams = {
+              Bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
+              Key: 'sources/' + videoKey + '.webm',
+              Body: fileStream,
+              ContentType: 'video/webm',
+            };
+            s3.upload(uploadParams)
+              .promise()
+              .then(() => {
+                _video['key'] = _video._id;
+                _video.save();
 
-            videoHelper.convertRecordVideo(params);
+                if (fs.existsSync(TEMP_PATH + videoId + `.webm`)) {
+                  fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+                }
+              });
+
             const video_data = {
               file_name: _video.id,
               file_path: _video.path,
               area,
               mode: data.mode,
             };
-
             videoHelper.generateThumbnail(video_data);
-            generatePreview(video_data)
-              .then((res) => {
-                Video.updateOne(
-                  { _id: _video.id },
-                  { $set: { preview: res } }
-                ).catch((err) => {
-                  console.log('update preview err', err.message);
-                });
-              })
-              .catch((err) => {
-                console.log('generate preview err', err.message);
-              });
-
-            Video.updateOne(
-              { _id: _video.id },
-              {
-                converted: 'progress',
-              }
-            ).catch((err) => {
-              console.log('video update err', err.message);
-            });
           })
           .catch((err) => {
             console.log('Faield SAVE VIDEO', err);
@@ -3506,7 +3485,9 @@ const setupRecording = (io) => {
     });
     socket.on('cancelRecord', (data) => {
       const videoId = data.videoId;
-      fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      if (fs.existsSync(TEMP_PATH + videoId + `.webm`)) {
+        fs.unlinkSync(TEMP_PATH + videoId + `.webm`);
+      }
       socket.emit('removedVideo');
     });
   });
@@ -3538,40 +3519,41 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
-const downloadVideo = async (req, res) => {
-  const video = await Video.findOne({
-    _id: req.params.id,
-  });
+// const downloadVideo = async (req, res) => {
+//   const video = await Video.findOne({
+//     _id: req.params.id,
+//   });
 
-  if (!video) {
-    return res.status(400).json({
-      status: false,
-      error: 'Invalid permission',
-    });
-  }
+//   if (!video) {
+//     return res.status(400).json({
+//       status: false,
+//       error: 'Invalid permission',
+//     });
+//   }
 
-  if (!video.url) {
-    return res.status(400).json({
-      status: false,
-      error: 'URL not found',
-    });
-  }
+//   if (!video.url) {
+//     return res.status(400).json({
+//       status: false,
+//       error: 'URL not found',
+//     });
+//   }
 
-  const options = {
-    Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-    Key: video.key || video.url.slice(44),
-  };
+//   const options = {
+//     Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+//     Key: video.key || video.url.slice(44),
+//   };
 
-  try {
-    res.attachment(video.url.slice(44));
-    const fileStream = s3.getObject(options).createReadStream();
-    fileStream.pipe(res);
-  } catch (err) {
-    console.log('err', err);
-  }
-};
+//   try {
+//     res.attachment(video.url.slice(44));
+//     const fileStream = s3.getObject(options).createReadStream();
+//     fileStream.pipe(res);
+//   } catch (err) {
+//     console.log('err', err);
+//   }
+// };
 
 const uploadVideo = async (req, res) => {
+  const { currentUser } = req;
   if (req.file) {
     const key = req.file.key;
     let fileName = path.basename(key);
@@ -3581,6 +3563,8 @@ const uploadVideo = async (req, res) => {
       key: fileName,
       bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
       type: req.file.mimetype,
+      user: currentUser._id,
+      converted: 'progress',
     });
 
     const _video = await video
@@ -3676,9 +3660,7 @@ const playVideo = async (req, res) => {
     }
 
     // Video URL Decryption
-    let material = videoHelper.getVideoPublicUrl(video._doc);
-
-    material = JSON.parse(JSON.stringify(material));
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('lead_material_theme1_1', {
       material,
       material_type: 'video',
@@ -3702,6 +3684,29 @@ const playVideo = async (req, res) => {
     );
   }
 };
+
+const downloadVideo = async (req, res) => {
+  const { currentUser } = req;
+  const video = await Video.findOne({
+    _id: req.params.id,
+    user: currentUser._id,
+  });
+
+  if (video && video.bucket) {
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
+    if (material['is_converted']) {
+      return res.send({
+        status: true,
+        data: material['converted_url'],
+      });
+    }
+  }
+  return res.send({
+    status: false,
+  });
+};
+
+const bulkRemove = (req, res) => {};
 
 module.exports = {
   play,
@@ -3733,4 +3738,6 @@ module.exports = {
   downloadVideo,
   uploadVideo,
   playVideo,
+  bulkRemove,
+  updateConvertStatus,
 };
