@@ -2288,7 +2288,7 @@ const closeAccount = async (req, res) => {
       close_feedback,
     },
     cc: mail_contents.REPLY,
-    template_name: 'Close Account',
+    template_name: 'CloseAccount',
     required_reply: false,
     email: currentUser.email,
   };
