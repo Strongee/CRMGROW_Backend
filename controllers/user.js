@@ -92,13 +92,14 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, level } = req.body;
+  const { user_name, email, token, referral, level, mode } = req.body;
 
   const payment_data = {
     user_name,
     email,
     token,
     level,
+    mode,
     referral,
   };
 
