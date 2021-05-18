@@ -2284,8 +2284,8 @@ const closeAccount = async (req, res) => {
       created_at: moment()
         .tz(currentUser.time_zone)
         .format('h:mm MMMM Do, YYYY'),
-      reason: close_reason,
-      feedback: close_feedback,
+      close_reason,
+      close_feedback,
     },
     template_name: 'CancelAccount',
     required_reply: false,
