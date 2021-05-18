@@ -265,6 +265,8 @@ router.get(
   catchError(UserCtrl.searchPhone)
 );
 
+router.get('/get-call-token', UserCtrl.getCallToken);
+
 // Edit own profile
 router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));
 

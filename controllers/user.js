@@ -2670,6 +2670,20 @@ const upgradePackage = (req, res) => {
   setPackage(data);
 };
 
+const getCallToken = (req, res) => {
+  const signature =
+    'q6Oggy7to8EEgSyJTwvinjslHitdRjuC76UEtw8kxyGRDAlF1ogg3hc4WzW2vnzc';
+  const payload = {
+    userId: '123456',
+  };
+  const issuer = 'k8d8BvqFWV9rSTwZyGed64Dc0SbjSQ6D';
+  const token = jwt.sign(payload, signature, { issuer, expiresIn: 3600 });
+  return res.send({
+    status: true,
+    token,
+  });
+};
+
 module.exports = {
   signUp,
   login,
@@ -2726,4 +2740,5 @@ module.exports = {
   connectAnotherEmail,
   pushNotification,
   upgradePackage,
+  getCallToken,
 };
