@@ -2284,16 +2284,23 @@ const closeAccount = async (req, res) => {
       created_at: moment()
         .tz(currentUser.time_zone)
         .format('h:mm MMMM Do, YYYY'),
-      close_reason,
-      close_feedback,
+      reason: close_reason,
+      feedback: close_feedback,
     },
-    cc: mail_contents.REPLY,
-    template_name: 'Close Account',
+    template_name: 'CancelAccount',
     required_reply: false,
     email: currentUser.email,
   };
 
-  sendNotificationEmail(data);
+  console.log('cancel account =========>', data);
+
+  sendNotificationEmail(data)
+    .then(() => {
+      console.log('cancel account email has been sent out successfully');
+    })
+    .catch((err) => {
+      console.log('cancel account email send err', err);
+    });
 
   if (currentUser.proxy_number_id) {
     releaseSignalWireNumber(currentUser.proxy_number_id);
