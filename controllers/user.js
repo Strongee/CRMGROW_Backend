@@ -2284,15 +2284,14 @@ const closeAccount = async (req, res) => {
       created_at: moment()
         .tz(currentUser.time_zone)
         .format('h:mm MMMM Do, YYYY'),
-      close_reason,
-      close_feedback,
+      reason: close_reason,
+      feedback: close_feedback,
     },
     template_name: 'CancelAccount',
     required_reply: false,
-    email: currentUser.email,
+    cc: currentUser.email,
+    email: mail_contents.REPLY,
   };
-
-  console.log('cancel account =========>', data);
 
   sendNotificationEmail(data)
     .then(() => {
