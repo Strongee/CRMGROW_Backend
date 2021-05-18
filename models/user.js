@@ -102,6 +102,7 @@ const UserSchema = new Schema(
       is_suspended: Boolean,
       suspended_at: Date,
       attempt_count: Number,
+      amount: Number,
       period: { type: String, default: 'month' },
     },
     package_level: String,

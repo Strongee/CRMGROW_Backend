@@ -47,7 +47,7 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { user_name, email, token, referral, level } = payment_data;
+    const { user_name, email, token, referral, level, is_trial } = payment_data;
     createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
@@ -64,7 +64,7 @@ const create = async (payment_data) => {
 
           const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN[level];
           const pricingPlan = api.STRIPE.PLAN[level];
-          createSubscription(customer.id, pricingPlan, card.id)
+          createSubscription(customer.id, pricingPlan, card.id, is_trial)
             .then(async (subscripition) => {
               // Save card information to DB.
               const payment = new Payment({
@@ -596,23 +596,31 @@ const createCustomer = async (user_name, email, referral) => {
   });
 };
 
-const createSubscription = async (customerId, planId, cardId) => {
+const createSubscription = async (customerId, planId, cardId, is_trial) => {
+  let data;
+  if (is_trial) {
+    data = {
+      customer: customerId,
+      items: [{ plan: planId }],
+      trial_period_days: system_settings.SUBSCRIPTION_FREE_TRIAL,
+      default_source: cardId,
+    };
+  } else {
+    data = {
+      customer: customerId,
+      items: [{ plan: planId }],
+      default_source: cardId,
+    };
+  }
+
   return new Promise(function (resolve, reject) {
-    stripe.subscriptions.create(
-      {
-        customer: customerId,
-        items: [{ plan: planId }],
-        trial_period_days: 7,
-        default_source: cardId,
-      },
-      function (err, subscription) {
-        console.log('creating subscription err', err);
-        if (err != null) {
-          return reject(err);
-        }
-        resolve(subscription);
+    stripe.subscriptions.create(data, function (err, subscription) {
+      console.log('creating subscription err', err);
+      if (err != null) {
+        return reject(err);
       }
-    );
+      resolve(subscription);
+    });
   });
 };
 
@@ -763,19 +771,32 @@ const paymentSucceed = async (req, res) => {
     }
   );
 
+  user['subscription']['is_failed'] = false;
+  user['subscription']['attempt_count'] = 0;
+  user['subscription']['is_suspended'] = false;
+  user['subscription']['updated_at'] = new Date();
+
   if (user) {
-    user['subscription']['is_failed'] = false;
-    user['subscription']['attempt_count'] = 0;
-    user['subscription']['is_suspended'] = false;
-    user['subscription']['updated_at'] = new Date();
+    const subscription = {
+      is_false: false,
+      attempt_count: 0,
+      is_suspended: false,
+      updated_at: new Date(),
+      amount: invoice['object']['amount_paid'],
+    };
 
-    const max_text_count =
-      user['text_info']['max_count'] ||
-      system_settings.TEXT_MONTHLY_LIMIT.BASIC;
-    user['text_info']['count'] = max_text_count;
-
-    user.save().catch((err) => {
-      console.log('user save err', err.message);
+    User.updateOne(
+      {
+        _id: user.id,
+      },
+      {
+        $set: {
+          is_trial: false,
+          subscription,
+        },
+      }
+    ).catch((err) => {
+      console.log('user update subscription err', err.message);
     });
 
     Notification.deleteMany({
