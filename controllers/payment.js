@@ -47,7 +47,7 @@ const get = async (req, res) => {
 
 const create = async (payment_data) => {
   return new Promise(function (resolve, reject) {
-    const { user_name, email, token, referral, level } = payment_data;
+    const { user_name, email, token, referral, level, is_trial } = payment_data;
     createCustomer(user_name, email, referral).then((customer) => {
       stripe.customers.createSource(
         customer.id,
@@ -64,7 +64,7 @@ const create = async (payment_data) => {
 
           const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN[level];
           const pricingPlan = api.STRIPE.PLAN[level];
-          createSubscription(customer.id, pricingPlan, card.id)
+          createSubscription(customer.id, pricingPlan, card.id, is_trial)
             .then(async (subscripition) => {
               // Save card information to DB.
               const payment = new Payment({
@@ -103,79 +103,40 @@ const create = async (payment_data) => {
 };
 
 const update = async (req, res) => {
-  const { token } = req.body;
+  const { token, level } = req.body;
   const { currentUser } = req;
+
   if (!currentUser.payment) {
-    createCustomer(currentUser.user_name, currentUser.email)
-      .then(async (customer) => {
-        stripe.customers.createSource(
-          customer.id,
-          { source: token.id },
-          function (err, card) {
-            if (!card) {
-              return res.status(400).send({
-                status: false,
-                error: 'Card is not valid',
-              });
-            }
+    const payment_data = {
+      user_name: currentUser.user_name,
+      email: currentUser.email,
+      token,
+      level: level || system_settings.DEFAULT_PACKAGE,
+    };
 
-            if (card['cvc_check'] === 'unchecked') {
-              return res.status(400).send({
-                status: false,
-                error: 'Card is not valid',
-              });
-            }
+    create(payment_data)
+      .then((payment) => {
+        // Save card information to DB.
 
-            const pricingPlan = api.STRIPE.PRIOR_PLAN;
-            const bill_amount = system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
-            updateSubscription(customer.id, pricingPlan, card.id)
-              .then((subscription) => {
-                // Save card information to DB.
-
-                const payment = new Payment({
-                  email: currentUser.email,
-                  customer_id: customer.id,
-                  plan_id: pricingPlan,
-                  token: token.id,
-                  card_id: card.id,
-                  subscription: subscription.id,
-                  card_brand: token.card.brand,
-                  card_name: token.card_name,
-                  exp_month: token.card.exp_month,
-                  exp_year: token.card.exp_year,
-                  last4: token.card.last4,
-                  bill_amount,
-                  fingerprint: card.fingerprint,
-                  active: true,
-                });
-
-                payment.save().then((_payment) => {
-                  currentUser['payment'] = _payment.id;
-                  currentUser
-                    .save()
-                    .then(() => {
-                      return res.send({
-                        status: true,
-                        data: _payment.id,
-                      });
-                    })
-                    .catch((err) => {
-                      console.log('err', err);
-                    });
-                });
-              })
-              .catch((err) => {
-                console.log('creating subscripition error', err);
-                return res.status(400).send({
-                  status: false,
-                  eror: err,
-                });
-              });
-          }
-        );
+        currentUser['payment'] = payment.id;
+        currentUser
+          .save()
+          .then(() => {
+            return res.send({
+              status: true,
+              data: payment,
+            });
+          })
+          .catch((err) => {
+            console.log('err', err);
+          });
       })
       .catch((err) => {
-        console.log('err', err);
+        console.log('creating subscripition error', err);
+        return res.status(400).send({
+          status: false,
+          error: err.type,
+        });
       });
   }
 
@@ -187,71 +148,36 @@ const update = async (req, res) => {
     );
 
     if (!payment) {
-      createCustomer(currentUser.user_name, currentUser.email)
-        .then(async (customer) => {
-          stripe.customers.createSource(
-            customer.id,
-            { source: token.id },
-            function (err, card) {
-              if (!card) {
-                return res.status(400).send({
-                  status: false,
-                  error: 'Card is not valid',
-                });
-              }
+      const payment_data = {
+        user_name: currentUser.user_name,
+        email: currentUser.email,
+        token,
+        level: level || system_settings.DEFAULT_PACKAGE,
+      };
 
-              const pricingPlan = api.STRIPE.PRIOR_PLAN;
-              const bill_amount =
-                system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
-              updateSubscription(customer.id, pricingPlan, card.id)
-                .then((subscription) => {
-                  // Save card information to DB.
-                  const payment = new Payment({
-                    email: currentUser.email,
-                    customer_id: customer.id,
-                    plan_id: pricingPlan,
-                    token: token.id,
-                    card_id: card.id,
-                    subscription: subscription.id,
-                    card_brand: token.card.brand,
-                    card_name: token.card_name,
-                    exp_month: token.card.exp_month,
-                    exp_year: token.card.exp_year,
-                    fingerprint: card.fingerprint,
-                    last4: token.card.last4,
-                    bill_amount,
-                    active: true,
-                    updated_at: new Date(),
-                    created_at: new Date(),
-                  });
+      create(payment_data)
+        .then((payment) => {
+          // Save card information to DB.
 
-                  payment.save().then((_payment) => {
-                    currentUser['payment'] = _payment.id;
-                    currentUser
-                      .save()
-                      .then(() => {
-                        return res.send({
-                          status: true,
-                          data: _payment.id,
-                        });
-                      })
-                      .catch((err) => {
-                        console.log('err', err);
-                      });
-                  });
-                })
-                .catch((err) => {
-                  console.log('creating subscripition error', err);
-                  return res.status(400).send({
-                    status: false,
-                    eror: err,
-                  });
-                });
-            }
-          );
+          currentUser['payment'] = payment.id;
+          currentUser
+            .save()
+            .then(() => {
+              return res.send({
+                status: true,
+                data: payment,
+              });
+            })
+            .catch((err) => {
+              console.log('err', err);
+            });
         })
         .catch((err) => {
-          console.log('err', err);
+          console.log('creating subscripition error', err);
+          return res.status(400).send({
+            status: false,
+            error: err.type,
+          });
         });
     } else {
       stripe.customers.retrieve(
@@ -259,71 +185,36 @@ const update = async (req, res) => {
         function (err, customer) {
           if (err || customer['deleted']) {
             console.log('customer retrieve error', err);
-            createCustomer(currentUser.user_name, currentUser.email)
-              .then(async (customer) => {
-                stripe.customers.createSource(
-                  customer.id,
-                  { source: token.id },
-                  function (err, card) {
-                    if (!card) {
-                      return res.status(400).send({
-                        status: false,
-                        error: 'Card is not valid',
-                      });
-                    }
+            const payment_data = {
+              user_name: currentUser.user_name,
+              email: currentUser.email,
+              token,
+              level: level || system_settings.DEFAULT_PACKAGE,
+            };
 
-                    const pricingPlan = api.STRIPE.PRIOR_PLAN;
-                    const bill_amount =
-                      system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
-                    updateSubscription(customer.id, pricingPlan, card.id)
-                      .then((subscription) => {
-                        // Save card information to DB.
-                        const payment = new Payment({
-                          email: currentUser.email,
-                          customer_id: customer.id,
-                          plan_id: pricingPlan,
-                          token: token.id,
-                          card_id: card.id,
-                          subscription: subscription.id,
-                          card_brand: token.card.brand,
-                          card_name: token.card_name,
-                          exp_month: token.card.exp_month,
-                          exp_year: token.card.exp_year,
-                          fingerprint: card.fingerprint,
-                          last4: token.card.last4,
-                          bill_amount,
-                          active: true,
-                          updated_at: new Date(),
-                          created_at: new Date(),
-                        });
+            create(payment_data)
+              .then((payment) => {
+                // Save card information to DB.
 
-                        payment.save().then((_payment) => {
-                          currentUser['payment'] = _payment.id;
-                          currentUser
-                            .save()
-                            .then(() => {
-                              return res.send({
-                                status: true,
-                                data: _payment.id,
-                              });
-                            })
-                            .catch((err) => {
-                              console.log('err', err);
-                            });
-                        });
-                      })
-                      .catch((err) => {
-                        console.log('creating subscripition error', err);
-                        return res.status(400).send({
-                          status: false,
-                          eror: err,
-                        });
-                      });
-                  }
-                );
+                currentUser['payment'] = payment.id;
+                currentUser
+                  .save()
+                  .then(() => {
+                    return res.send({
+                      status: true,
+                      data: payment,
+                    });
+                  })
+                  .catch((err) => {
+                    console.log('err', err);
+                  });
               })
               .catch((err) => {
-                console.log('err', err);
+                console.log('creating subscripition error', err);
+                return res.status(400).send({
+                  status: false,
+                  error: err,
+                });
               });
           } else {
             stripe.tokens.retrieve(token.id, function (err, _token) {
@@ -363,22 +254,113 @@ const update = async (req, res) => {
                           );
                           // Save card information to DB.
 
-                          payment['token'] = token.id;
-                          payment['card_id'] = card.id;
-                          payment['card_name'] = token.card_name;
-                          payment['card_brand'] = token.card.brand;
-                          payment['exp_month'] = token.card.exp_month;
-                          payment['exp_year'] = token.card.exp_year;
-                          payment['last4'] = token.card.last4;
-                          payment['fingerprint'] = card.fingerprint;
-                          payment['updated_at'] = new Date();
-                          payment.save().catch((err) => {
-                            console.log('err', err);
-                          });
-                          return res.send({
-                            status: true,
-                            data: currentUser.payment,
-                          });
+                          if (customer.subscriptions) {
+                            const subscription =
+                              customer.subscriptions['data'][0];
+                            if (subscription && subscription['plan']) {
+                              payment['card_id'] = card.id;
+                              payment['card_name'] = token.card_name;
+                              payment['card_brand'] = token.card.brand;
+                              payment['exp_month'] = token.card.exp_month;
+                              payment['exp_year'] = token.card.exp_year;
+                              payment['last4'] = token.card.last4;
+                              payment['fingerprint'] = card.fingerprint;
+                              payment['updated_at'] = new Date();
+                              payment.save().catch((err) => {
+                                console.log('err', err);
+                              });
+
+                              return res.send({
+                                status: true,
+                                data: currentUser.payment,
+                              });
+                            } else {
+                              const bill_amount =
+                                system_settings.SUBSCRIPTION_MONTHLY_PLAN[
+                                  level
+                                ];
+                              const pricingPlan = api.STRIPE.PLAN[level];
+
+                              createSubscription(
+                                customer.id,
+                                pricingPlan,
+                                card.id
+                              )
+                                .then(async (subscripition) => {
+                                  // Save card information to DB.
+                                  payment['subscription'] = subscripition.id;
+                                  payment['bill_amount'] = bill_amount;
+                                  payment['card_id'] = card.id;
+                                  payment['card_name'] = token.card_name;
+                                  payment['card_brand'] = token.card.brand;
+                                  payment['exp_month'] = token.card.exp_month;
+                                  payment['exp_year'] = token.card.exp_year;
+                                  payment['last4'] = token.card.last4;
+                                  payment['fingerprint'] = card.fingerprint;
+                                  payment['updated_at'] = new Date();
+                                  payment.save().catch((err) => {
+                                    console.log('err', err);
+                                  });
+
+                                  payment
+                                    .save()
+                                    .then()
+                                    .catch((err) => {
+                                      console.log('err', err);
+                                    });
+
+                                  payment.save().catch((err) => {
+                                    console.log('err', err);
+                                  });
+
+                                  return res.send({
+                                    status: true,
+                                    data: currentUser.payment,
+                                  });
+                                })
+                                .catch((err) => {
+                                  return res.status(400).send({
+                                    status: false,
+                                    error: err.type,
+                                  });
+                                });
+                            }
+                          } else {
+                            const payment_data = {
+                              user_name: currentUser.user_name,
+                              email: currentUser.email,
+                              token,
+                              level: level || system_settings.DEFAULT_PACKAGE,
+                            };
+
+                            create(payment_data)
+                              .then((payment) => {
+                                // Save card information to DB.
+
+                                currentUser['payment'] = payment.id;
+                                currentUser
+                                  .save()
+                                  .then(() => {
+                                    return res.send({
+                                      status: true,
+                                      data: payment,
+                                    });
+                                  })
+                                  .catch((err) => {
+                                    console.log('err', err);
+                                  });
+                              })
+                              .catch((err) => {
+                                console.log(
+                                  'creating subscripition error',
+                                  err
+                                );
+                                return res.status(400).send({
+                                  status: false,
+                                  error: err,
+                                });
+                              });
+                          }
                         } catch (err) {
                           console.log('delete card err', err);
                         }
@@ -467,23 +449,17 @@ const update = async (req, res) => {
                           const bill_amount =
                             system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
 
-                          updateSubscription(
+                          createSubscription(
                             payment['customer_id'],
                             pricingPlan,
                             card.id
                           )
                             .then((subscription) => {
                               console.log('update Subscription', subscription);
-                              cancelSubscription(payment['subscription']).catch(
-                                (err) => {
-                                  console.log('cancel subscription err', err);
-                                }
-                              );
                               try {
                                 // Save card information to DB.
                                 payment['plan_id'] = pricingPlan;
                                 payment['bill_amount'] = bill_amount;
-                                payment['token'] = token.id;
                                 payment['card_id'] = card.id;
                                 payment['card_name'] = token.card_name;
                                 payment['card_brand'] = token.card.brand;
@@ -508,7 +484,7 @@ const update = async (req, res) => {
                               console.log('creating subscripition error', err);
                               return res.status(400).send({
                                 status: false,
-                                eror: err,
+                                error: err,
                               });
                             });
                         }
@@ -596,32 +572,40 @@ const createCustomer = async (user_name, email, referral) => {
   });
 };
 
-const createSubscription = async (customerId, planId, cardId) => {
+const createSubscription = async (customerId, planId, cardId, is_trial) => {
+  let data;
+  if (is_trial) {
+    data = {
+      customer: customerId,
+      items: [{ price: planId }],
+      trial_period_days: system_settings.SUBSCRIPTION_FREE_TRIAL,
+      default_source: cardId,
+    };
+  } else {
+    data = {
+      customer: customerId,
+      items: [{ price: planId }],
+      default_source: cardId,
+    };
+  }
+
   return new Promise(function (resolve, reject) {
-    stripe.subscriptions.create(
-      {
-        customer: customerId,
-        items: [{ plan: planId }],
-        trial_period_days: 7,
-        default_source: cardId,
-      },
-      function (err, subscription) {
-        console.log('creating subscription err', err);
-        if (err != null) {
-          return reject(err);
-        }
-        resolve(subscription);
+    stripe.subscriptions.create(data, function (err, subscription) {
+      console.log('creating subscription err', err);
+      if (err != null) {
+        return reject(err);
       }
-    );
+      resolve(subscription);
+    });
   });
 };
 
 const updateSubscription = async (customerId, planId, cardId) => {
   return new Promise(function (resolve, reject) {
-    stripe.subscriptions.create(
+    stripe.subscriptions.update(
       {
         customer: customerId,
-        items: [{ plan: planId }],
+        items: [{ price: planId }],
         default_source: cardId,
       },
       function (err, subscription) {
@@ -763,19 +747,32 @@ const paymentSucceed = async (req, res) => {
     }
   );
 
+  user['subscription']['is_failed'] = false;
+  user['subscription']['attempt_count'] = 0;
+  user['subscription']['is_suspended'] = false;
+  user['subscription']['updated_at'] = new Date();
+
   if (user) {
-    user['subscription']['is_failed'] = false;
-    user['subscription']['attempt_count'] = 0;
-    user['subscription']['is_suspended'] = false;
-    user['subscription']['updated_at'] = new Date();
+    const subscription = {
+      is_false: false,
+      attempt_count: 0,
+      is_suspended: false,
+      updated_at: new Date(),
+      amount: invoice['object']['amount_paid'],
+    };
 
-    const max_text_count =
-      user['text_info']['max_count'] ||
-      system_settings.TEXT_MONTHLY_LIMIT.BASIC;
-    user['text_info']['count'] = max_text_count;
-
-    user.save().catch((err) => {
-      console.log('user save err', err.message);
+    User.updateOne(
+      {
+        _id: user.id,
+      },
+      {
+        $set: {
+          is_trial: false,
+          subscription,
+        },
+      }
+    ).catch((err) => {
+      console.log('user update subscription err', err.message);
     });
 
     Notification.deleteMany({
@@ -877,6 +874,7 @@ module.exports = {
   get,
   create,
   update,
+  updateSubscription,
   createCharge,
   cancelCustomer,
   getTransactions,

@@ -4,6 +4,8 @@ const system_settings = {
     PRO: '49',
     ELITE: '99',
   },
+  SUBSCRIPTION_FREE_TRIAL: 14,
+  DEFAULT_PACKAGE: 'PRO',
   EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
     BASIC: 500,
