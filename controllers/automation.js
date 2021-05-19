@@ -470,8 +470,7 @@ const create = (req, res) => {
   const { currentUser } = req;
 
   if (
-    currentUser.automation_info['is_limit'] &&
-    !currentUser.automation_info['is_enabled']
+    currentUser.automation_info['is_enabled']
   ) {
     return res.status(410).send({
       status: false,
