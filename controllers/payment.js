@@ -135,7 +135,7 @@ const update = async (req, res) => {
         console.log('creating subscripition error', err);
         return res.status(400).send({
           status: false,
-          error: err,
+          error: err.type,
         });
       });
   }
