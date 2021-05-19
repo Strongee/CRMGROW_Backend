@@ -103,7 +103,8 @@ const create = async (payment_data) => {
 };
 
 const update = async (req, res) => {
-  const { token, level } = req.body;
+  const { token } = req.body;
+  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
   const { currentUser } = req;
 
   if (!currentUser.payment) {
@@ -111,7 +112,7 @@ const update = async (req, res) => {
       user_name: currentUser.user_name,
       email: currentUser.email,
       token,
-      level: level || system_settings.DEFAULT_PACKAGE,
+      level,
     };
 
     create(payment_data)
@@ -152,7 +153,7 @@ const update = async (req, res) => {
         user_name: currentUser.user_name,
         email: currentUser.email,
         token,
-        level: level || system_settings.DEFAULT_PACKAGE,
+        level,
       };
 
       create(payment_data)
@@ -189,7 +190,7 @@ const update = async (req, res) => {
               user_name: currentUser.user_name,
               email: currentUser.email,
               token,
-              level: level || system_settings.DEFAULT_PACKAGE,
+              level,
             };
 
             create(payment_data)
@@ -275,7 +276,6 @@ const update = async (req, res) => {
                                 data: currentUser.payment,
                               });
                             } else {
-                              console.log('level', level);
                               const bill_amount =
                                 system_settings.SUBSCRIPTION_MONTHLY_PLAN[
                                   level
@@ -331,7 +331,7 @@ const update = async (req, res) => {
                               user_name: currentUser.user_name,
                               email: currentUser.email,
                               token,
-                              level: level || system_settings.DEFAULT_PACKAGE,
+                              level,
                             };
 
                             create(payment_data)
@@ -446,9 +446,10 @@ const update = async (req, res) => {
                               error: 'Card is not valid',
                             });
                           }
-                          const pricingPlan = api.STRIPE.PRIOR_PLAN;
+
                           const bill_amount =
-                            system_settings.SUBSCRIPTION_MONTHLY_PLAN.BASIC;
+                            system_settings.SUBSCRIPTION_MONTHLY_PLAN[level];
+                          const pricingPlan = api.STRIPE.PLAN[level];
 
                           createSubscription(
                             payment['customer_id'],
