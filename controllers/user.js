@@ -2659,7 +2659,7 @@ const syncZoom = async (req, res) => {
   });
 };
 
-const upgradePackage = async (req, res) => {
+const updatePackage = async (req, res) => {
   const { currentUser } = req;
   const { level } = req.body;
 
@@ -2769,6 +2769,6 @@ module.exports = {
   closeAccount,
   connectAnotherEmail,
   pushNotification,
-  upgradePackage,
+  updatePackage,
   getCallToken,
 };
