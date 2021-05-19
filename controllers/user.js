@@ -49,6 +49,7 @@ const {
   create: createPayment,
   createCharge,
   cancelCustomer,
+  updateSubscription,
 } = require('./payment');
 const UserLog = require('../models/user_log');
 const Guest = require('../models/guest');
@@ -338,8 +339,6 @@ const socialSignUp = async (req, res) => {
         ...req.body,
         connected_email: email,
         payment: payment.id,
-        updated_at: new Date(),
-        created_at: new Date(),
       });
 
       user
@@ -2660,16 +2659,45 @@ const syncZoom = async (req, res) => {
   });
 };
 
-const upgradePackage = (req, res) => {
+const upgradePackage = async (req, res) => {
   const { currentUser } = req;
   const { level } = req.body;
 
-  const data = {
-    user: currentUser.id,
-    level,
+  if (!currentUser.payment) {
+    return res.status(400).json({
+      status: false,
+      error: 'Please connect card',
+    });
+  }
+  const payment = await Payment.findOne({ _id: currentUser.payment }).catch(
+    (err) => {
+      console.log('payment find err', err.message);
+    }
+  );
+
+  const planId = api.STRIPE.PLAN[level];
+
+  const subscription_data = {
+    customerId: payment.customer_id,
+    planId,
+    cardId: payment.card_id,
   };
 
-  setPackage(data);
+  updateSubscription(subscription_data)
+    .then((subscription) => {
+      const data = {
+        user: currentUser.id,
+        level,
+      };
+
+      setPackage(data);
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('subscription update err', err.message);
+    });
 };
 
 const getCallToken = (req, res) => {

@@ -61,7 +61,7 @@ const migrate = async () => {
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
     if (user.payment) {
-      /**
+      /** */
       const payment = await Payment.findOne({ _id: user.payment }).catch(
         (err) => {
           console.log('err', err);
@@ -141,9 +141,8 @@ const migrate = async () => {
       //           }else{
       //             console.log('err3', customer)
       //           }
-       */
     } else {
-      console.log(user.email);
+      console.log('free users', user.email);
     }
   }
   //     );
