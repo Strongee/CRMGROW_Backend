@@ -324,13 +324,15 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral } = req.body;
+  const { user_name, email, token, referral, level, is_trial } = req.body;
 
   const payment_data = {
     user_name,
     email,
     token,
     referral,
+    level,
+    is_trial,
   };
 
   createPayment(payment_data)
