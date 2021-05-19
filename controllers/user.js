@@ -2289,10 +2289,9 @@ const closeAccount = async (req, res) => {
     },
     template_name: 'CancelAccount',
     required_reply: false,
-    email: currentUser.email,
+    cc: currentUser.email,
+    email: mail_contents.REPLY,
   };
-
-  console.log('cancel account =========>', data);
 
   sendNotificationEmail(data)
     .then(() => {
@@ -2320,6 +2319,15 @@ const closeAccount = async (req, res) => {
   currentUser.save().catch((err) => {
     console.log('user delete err', err.message);
   });
+
+  return res.send({
+    status: true,
+  });
+};
+
+const overflowPlan = async (req, res) => {
+  const { currentUser } = req;
+  const { selectedPackage } = req.body;
 
   return res.send({
     status: true,
@@ -2748,4 +2756,5 @@ module.exports = {
   connectAnotherEmail,
   pushNotification,
   upgradePackage,
+  overflowPlan
 };
