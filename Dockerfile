@@ -30,5 +30,5 @@ RUN npm install
 
 
 EXPOSE 3000 22
-# CMD ["./dockerCMD.sh"]
+# CMD ["./dockerCMD.sh"] test
 CMD /usr/sbin/sshd && npm run start
