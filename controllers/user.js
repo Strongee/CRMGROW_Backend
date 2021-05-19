@@ -2325,6 +2325,15 @@ const closeAccount = async (req, res) => {
   });
 };
 
+const overflowPlan = async (req, res) => {
+  const { currentUser } = req;
+  const { selectedPackage } = req.body;
+
+  return res.send({
+    status: true,
+  });
+};
+
 const checkSuspended = async (req, res, next) => {
   const { currentUser } = req;
 
@@ -2747,4 +2756,5 @@ module.exports = {
   connectAnotherEmail,
   pushNotification,
   upgradePackage,
+  overflowPlan
 };

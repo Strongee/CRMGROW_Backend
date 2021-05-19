@@ -3395,8 +3395,6 @@ const setupRecording = (io) => {
         fs.mkdirSync(TEMP_PATH);
       }
 
-      // console.log("on init video ============>", videoId, userId);
-
       const user = await User.findOne({ _id: userId }).catch((err) => {
         console.log('user find err', err.message);
       });
@@ -3445,7 +3443,6 @@ const setupRecording = (io) => {
         const ws = fs.createWriteStream(TEMP_PATH + videoId + `.webm`);
         fileStreams[videoId] = ws;
         fileStreamSizeStatus[videoId] = 0;
-        // console.log("emit create video =============>", videoId);
         socket.emit('createdVideo', { video: videoId });
       }
     });
@@ -3465,10 +3462,8 @@ const setupRecording = (io) => {
         );
         const stats = fs.statSync(TEMP_PATH + videoId + `.webm`);
         fileStreamSizeStatus[videoId] = stats.size;
-        // console.log("on push video data =============>", fileStreamSizeStatus[videoId]);
       }
       if (data.sentSize === fileStreamSizeStatus[videoId]) {
-        // console.log("emit received video data1 ===========>", fileStreamSizeStatus[videoId], recordTime);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -3489,7 +3484,6 @@ const setupRecording = (io) => {
           };
           socket.emit('counterDirection', data);
         }
-        // console.log("emit received video data2 ===========>", estimateTime, counterDirection, recordTime);
         socket.emit('receivedVideoData', {
           receivedSize: fileStreamSizeStatus[videoId],
         });
@@ -3502,11 +3496,9 @@ const setupRecording = (io) => {
 
       const token = data.token;
       let decoded;
-      // console.log("on save video ===========>", duration, token);
       try {
         decoded = jwt.verify(token, api.JWT_SECRET);
       } catch (err) {
-        // console.log("emit failed save video 1 ==========>");
         socket.emit('failedSaveVideo');
       }
       if (token) {
