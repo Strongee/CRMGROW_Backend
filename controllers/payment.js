@@ -577,14 +577,14 @@ const createSubscription = async (customerId, planId, cardId, is_trial) => {
   if (is_trial) {
     data = {
       customer: customerId,
-      items: [{ plan: planId }],
+      items: [{ product: planId }],
       trial_period_days: system_settings.SUBSCRIPTION_FREE_TRIAL,
       default_source: cardId,
     };
   } else {
     data = {
       customer: customerId,
-      items: [{ plan: planId }],
+      items: [{ product: planId }],
       default_source: cardId,
     };
   }
@@ -605,7 +605,7 @@ const updateSubscription = async (customerId, planId, cardId) => {
     stripe.subscriptions.update(
       {
         customer: customerId,
-        items: [{ plan: planId }],
+        items: [{ product: planId }],
         default_source: cardId,
       },
       function (err, subscription) {

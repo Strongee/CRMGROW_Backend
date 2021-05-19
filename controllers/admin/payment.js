@@ -314,7 +314,7 @@ const updateSubscription = async (req, res) => {
   stripe.subscriptions.create(
     {
       customer: customer_id,
-      items: [{ plan: plan_id }],
+      items: [{ produc: plan_id }],
       default_source: card_id,
     },
     function (err, data) {
