@@ -12,6 +12,8 @@ const TaskSchema = new Schema(
     action: Object,
     ref: String,
     parent_ref: String,
+    type: { type: String },
+    process: { type: String },
     activity: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
     condition: {
       case: String,
@@ -21,6 +23,7 @@ const TaskSchema = new Schema(
     watched_pdf: { type: mongoose.Schema.Types.ObjectId, ref: 'pdf' },
     watched_image: { type: mongoose.Schema.Types.ObjectId, ref: 'image' },
     opened_email: { type: mongoose.Schema.Types.ObjectId, ref: 'activity' },
+    exec_result: Object,
     created_at: Date,
     updated_at: Date,
   },
