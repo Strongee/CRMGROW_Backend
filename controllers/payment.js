@@ -135,7 +135,7 @@ const update = async (req, res) => {
         console.log('creating subscripition error', err);
         return res.status(400).send({
           status: false,
-          eror: err,
+          error: err,
         });
       });
   }
@@ -176,7 +176,7 @@ const update = async (req, res) => {
           console.log('creating subscripition error', err);
           return res.status(400).send({
             status: false,
-            eror: err,
+            error: err.type,
           });
         });
     } else {
@@ -213,7 +213,7 @@ const update = async (req, res) => {
                 console.log('creating subscripition error', err);
                 return res.status(400).send({
                   status: false,
-                  eror: err,
+                  error: err,
                 });
               });
           } else {
@@ -321,7 +321,7 @@ const update = async (req, res) => {
                                 .catch((err) => {
                                   return res.status(400).send({
                                     status: false,
-                                    eror: err,
+                                    error: err.type,
                                   });
                                 });
                             }
@@ -357,7 +357,7 @@ const update = async (req, res) => {
                                 );
                                 return res.status(400).send({
                                   status: false,
-                                  eror: err,
+                                  error: err,
                                 });
                               });
                           }
@@ -484,7 +484,7 @@ const update = async (req, res) => {
                               console.log('creating subscripition error', err);
                               return res.status(400).send({
                                 status: false,
-                                eror: err,
+                                error: err,
                               });
                             });
                         }
@@ -577,14 +577,14 @@ const createSubscription = async (customerId, planId, cardId, is_trial) => {
   if (is_trial) {
     data = {
       customer: customerId,
-      items: [{ product: planId }],
+      items: [{ price: planId }],
       trial_period_days: system_settings.SUBSCRIPTION_FREE_TRIAL,
       default_source: cardId,
     };
   } else {
     data = {
       customer: customerId,
-      items: [{ product: planId }],
+      items: [{ price: planId }],
       default_source: cardId,
     };
   }
@@ -605,7 +605,7 @@ const updateSubscription = async (customerId, planId, cardId) => {
     stripe.subscriptions.update(
       {
         customer: customerId,
-        items: [{ product: planId }],
+        items: [{ price: planId }],
         default_source: cardId,
       },
       function (err, subscription) {
