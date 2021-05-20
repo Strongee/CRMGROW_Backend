@@ -1766,7 +1766,7 @@ const createTextCheckTasks = (
       service,
       activity: text_activity,
     },
-    contact: contact._id,
+    contacts: [contact._id],
     text: text_id,
     due_date: time,
     process: process_id,

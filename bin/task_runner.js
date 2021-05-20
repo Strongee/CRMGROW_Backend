@@ -320,11 +320,11 @@ const task_check = new CronJob(
                           const failed = [];
                           _allTasks.forEach((e) => {
                             if (e.status === 'delivered') {
-                              succeed.push(e.contact);
+                              succeed.push(e.contacts[0]);
                             }
                             if (e.status === 'failed' || e.status === 'sent') {
                               failed.push({
-                                contact: e.contact,
+                                contact: e.contacts[0],
                                 exec_result: e.exec_result,
                               });
                             }
