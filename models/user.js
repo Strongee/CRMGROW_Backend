@@ -72,6 +72,14 @@ const UserSchema = new Schema(
       count: Number,
       additional_credit: Object,
     },
+    calendar_info: {
+      is_enabled: { type: Boolean, default: true },
+      is_limit: { type: Boolean, default: true },
+      max_count: {
+        type: Number,
+        default: system_settings.TEXT_MONTHLY_LIMIT.PRO,
+      },
+    },
     email_info: {
       mass_enable: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
