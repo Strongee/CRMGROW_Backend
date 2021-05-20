@@ -208,7 +208,8 @@ const task_check = new CronJob(
               message_sid,
               service,
               activities,
-              activity
+              activity,
+              text,
             } = timeline.action;
             TextHelper.getStatus(message_sid, service)
               .then(async (res) => {
@@ -217,7 +218,7 @@ const task_check = new CronJob(
                     timeline.contact,
                     activities,
                     activity,
-                    timeline.text
+                    text
                   );
 
                   timeline.status = 'delivered';
@@ -234,7 +235,7 @@ const task_check = new CronJob(
                     TextHelper.handleFailedText(
                       activities,
                       activity,
-                      timeline.text,
+                      text,
                       3
                     );
 
@@ -274,7 +275,7 @@ const task_check = new CronJob(
                   TextHelper.handleFailedText(
                     activities,
                     activity,
-                    timeline.text,
+                    text,
                     4
                   );
 
@@ -367,7 +368,7 @@ const task_check = new CronJob(
               })
               .catch((err) => {
                 console.log('Getting SMS Status is failed', err);
-              })
+              });
             break;
           case 'auto_follow_up2': {
             let follow_due_date;
