@@ -247,6 +247,7 @@ const bulkEmail = async (req, res) => {
         }
       })
       .catch((err) => {
+        console.log('bulk email sending is failed', err);
         return res.status(500).json({
           status: false,
           error: err,

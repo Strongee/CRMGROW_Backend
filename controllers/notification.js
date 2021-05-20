@@ -1,4 +1,6 @@
 const Notification = require('../models/notification');
+const Task = require('../models/task');
+const Text = require('../models/text');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -143,6 +145,70 @@ const getDelivery = async (req, res) => {
   });
 };
 
+const getStatus = async (req, res) => {
+  const { currentUser } = req;
+
+  const emailTasks = await Task.find({
+    user: currentUser._id,
+    type: 'send_email',
+  }).catch((err) => {
+    console.log('Emailing tasks getting is failed', err);
+  });
+
+  const textTasks = await Task.find({
+    user: currentUser._id,
+    type: 'bulk_sms',
+  }).catch((err) => {
+    console.log('Text checking tasks getting is failed', err);
+  });
+
+  const receivedTexts = await Text.countDocuments({
+    user: currentUser._id,
+    type: 1,
+    status: 0,
+  }).catch((err) => {
+    console.log('received text count getting is failed', err);
+  });
+
+  const response = {
+    emails: emailTasks,
+    texts: textTasks,
+    unread: receivedTexts,
+  };
+
+  let notifications = await Notification.find({
+    $or: [{ user: currentUser._id }, { owner: [currentUser._id] }],
+    is_read: false,
+  })
+    .sort({ created_at: 1 })
+    .limit(6)
+    .catch((err) => {
+      console.log('Getting unread notifications', err);
+    });
+  if (notifications && notifications.length) {
+    response.notifications = notifications;
+  } else {
+    notifications = await Notification.find({
+      $or: [{ user: currentUser._id }, { owner: [currentUser._id] }]
+    })
+      .sort({ created_at: 1 })
+      .limit(5)
+      .catch((err) => {
+        console.log('Getting Latest notifications', err);
+      });
+    response.notifications = notifications;
+  }
+
+  const system_notifications = await Notification.find({
+    type: 'global',
+    del: false,
+  }).sort({ updated_at: -1 });
+
+  response.system_notifications = system_notifications;
+
+  return res.send(response);
+};
+
 module.exports = {
   get,
   getPage,
@@ -150,4 +216,5 @@ module.exports = {
   bulkRead,
   bulkUnread,
   bulkRemove,
+  getStatus,
 };
