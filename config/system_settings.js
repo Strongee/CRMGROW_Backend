@@ -16,11 +16,16 @@ const system_settings = {
   },
   TEXT_ONE_TIME: 15,
   TEXT_MONTHLY_LIMIT: {
-    BASIC: 250,
+    PRO: 250,
+    ELITE: 1000,
   },
-  ASSISTANT_INFO: {
-    BASIC: 1,
-    EXTEND: 3,
+  ASSISTANT_LIMIT: {
+    PRO: 1,
+    ELITE: 3,
+  },
+  CALENDAR_LIMIT: {
+    PRO: 1,
+    ELITE: 3,
   },
   CONTACT_UPLOAD_LIMIT: {
     BASIC: 200,
@@ -28,7 +33,13 @@ const system_settings = {
     ELITE: 20000,
   },
   MATERIAL_UPLOAD_LIMIT: {
-    BASIC: 15,
+    BASIC: 10,
+    PRO: 100,
+  },
+  VIDEO_RECORD_LIMIT: {
+    BASIC: 600000,
+    PRO: 7200000,
+    ELITE: 60000000,
   },
   PASSWORD: {
     USER: process.env.DEFAULT_PASS || 'user123',
@@ -42,8 +53,8 @@ const system_settings = {
   AUTO_FOLLOW_UP: 'has reviewed material',
   AUTO_FOLLOW_UP2: 'didn`t watch material',
   AUTOMATION_ASSIGN_LIMIT: {
-    BASIC: 300,
-    EXTEND: 2000,
+    PRO: 300,
+    ELITE: 3000,
   },
   THUMBNAIL: {
     WIDTH: 400,
@@ -95,6 +106,11 @@ const system_settings = {
       AMOUNT: 1000,
     },
   ],
+  PACKAGE_LEVEL: {
+    BASIC: 'lite',
+    PRO: 'pro',
+    ELITE: 'elite',
+  },
 };
 
 module.exports = system_settings;

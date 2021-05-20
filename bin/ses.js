@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'TaskReminder';
+const templateName = 'CancelAccount';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
@@ -24,8 +24,9 @@ const subjects = {
   WebinarInvitation: `Live "how to use" crmgrow webinar`,
   Welcome: 'Welcome to CRMGrow, {{user_name}}!',
   VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{created_at}}',
-  EmailOpened: `Opened demail: {{contact_name}} at {{created_at}}`,
+  EmailOpened: `Opened email: {{contact_name}} at {{created_at}}`,
   PaymentNotification: 'CRMGrow payment notification',
+  CancelAccount: 'CRMGrow cancel notification',
 };
 const htmls = {};
 fs.readFile(

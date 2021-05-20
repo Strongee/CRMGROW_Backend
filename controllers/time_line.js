@@ -41,7 +41,7 @@ const create = async (req, res) => {
     if (automation_info['is_limit']) {
       max_assign_count =
         automation_info.max_count ||
-        system_settings.AUTOMATION_ASSIGN_LIMIT.BASIC;
+        system_settings.AUTOMATION_ASSIGN_LIMIT.PRO;
 
       const timeline = await TimeLine.aggregate([
         {
@@ -86,17 +86,21 @@ const create = async (req, res) => {
         continue;
       }
 
-      if (automation_info['is_limit'] && max_assign_count < count) {
-        const contact = await Contact.findOne({ _id: contacts[i] });
-        error.push({
-          contact: {
-            first_name: contact.first_name,
-            email: contact.email,
-          },
-          error: 'Exceed automation max contacts',
+      if (automation_info['is_limit'] && max_assign_count <= count) {
+        return res.status(410).send({
+          status: false,
+          error: 'Exceed upload max materials',
         });
-        continue;
       }
+      // const errorContact = await Contact.findOne({ _id: contacts[i] });
+      // error.push({
+      //   contact: {
+      //     first_name: errorContact.first_name,
+      //     email: errorContact.email,
+      //   },
+      //   error: 'Exceed automation max contacts',
+      // });
+      // continue;
 
       const contact = await Contact.findOne({ _id: contacts[i] }).populate(
         'last_activity',

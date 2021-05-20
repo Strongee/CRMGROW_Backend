@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const EmailTemplate = require('../models/email_template');
 const Garbage = require('../models/garbage');
 const Team = require('../models/team');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const { id } = req.params;

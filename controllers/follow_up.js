@@ -705,6 +705,7 @@ const load = async (req, res) => {
   } = searchOption;
 
   const query = { user: currentUser._id };
+
   types && types.length ? (query.type = { $in: types }) : false;
   if (types && types.indexOf('task') !== -1) {
     types.push('');

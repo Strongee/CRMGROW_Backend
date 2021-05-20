@@ -6,6 +6,7 @@ const api = require('../config/api');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
+const { sendNotificationEmail } = require('../helpers/email');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -59,7 +60,7 @@ const sendWelcomeEmail = async (data) => {
     });
 };
 
-const data = {
+const data1 = {
   id: '6035a9da27952a3187d07276',
   email: 'test-lpi0l7cv2@srv1.mail-tester.com',
   user_name: 'Matt',
@@ -67,4 +68,18 @@ const data = {
   time_zone: 'America/Cancun',
 };
 
-sendWelcomeEmail(data);
+const data = {
+  template_data: {
+    user_name: 'Garrett',
+    created_at: moment().tz('America/Cancun').format('h:mm MMMM Do, YYYY'),
+    reason: 'New reason',
+    feedback: 'Feedback',
+  },
+  template_name: 'CancelAccount',
+  required_reply: false,
+  email: mail_contents.REPLY,
+  cc: 'super@crmgrow.com',
+};
+
+// sendWelcomeEmail(data);
+sendNotificationEmail(data);
