@@ -144,9 +144,9 @@ const signUp = async (req, res) => {
             console.log('user set package err', err.message);
           });
 
-          // if (_res.phone) {
-          //   getTwilioNumber(_res.id);
-          // }
+          if (_res.phone) {
+            getTwilioNumber(_res.id);
+          }
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -329,7 +329,8 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, level, is_trial } = req.body;
+  const { user_name, email, token, referral, is_trial } = req.body;
+  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
     user_name,
@@ -358,8 +359,15 @@ const socialSignUp = async (req, res) => {
           garbage.save().catch((err) => {
             console.log('err', err);
           });
-          // purchase proxy number
-          getTwilioNumber(_res.id);
+
+          const package_data = {
+            user: _res.id,
+            level,
+          };
+
+          setPackage(package_data).catch((err) => {
+            console.log('user set package err', err.message);
+          });
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -2719,12 +2727,11 @@ const updatePackage = async (req, res) => {
   const planId = api.STRIPE.PLAN[level];
 
   const subscription_data = {
-    customerId: payment.customer_id,
+    subscriptionId: payment.subscription,
     planId,
-    cardId: payment.card_id,
   };
 
-  updateSubscription(payment.customer_id, planId, payment.card_id)
+  updateSubscription(subscription_data)
     .then((subscription) => {
       const data = {
         user: currentUser.id,

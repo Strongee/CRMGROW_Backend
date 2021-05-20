@@ -651,17 +651,18 @@ const createSubscription = async (customerId, planId, cardId, is_trial) => {
   });
 };
 
-const updateSubscription = async (customerId, planId, cardId) => {
+const updateSubscription = async (data) => {
+  const { planId, subscriptionId } = data;
+
   return new Promise(function (resolve, reject) {
     stripe.subscriptions.update(
+      subscriptionId,
       {
-        customer: customerId,
         items: [{ price: planId }],
-        default_source: cardId,
       },
       function (err, subscription) {
-        console.log('creating subscription err', err);
-        if (err != null) {
+        if (err) {
+          console.log('update subscription error', err);
           return reject(err);
         }
         resolve(subscription);
