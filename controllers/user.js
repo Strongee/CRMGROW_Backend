@@ -140,7 +140,9 @@ const signUp = async (req, res) => {
             level,
           };
 
-          setPackage(package_data);
+          setPackage(package_data).catch((err) => {
+            console.log('user set package err', err.message);
+          });
 
           // if (_res.phone) {
           //   getTwilioNumber(_res.id);

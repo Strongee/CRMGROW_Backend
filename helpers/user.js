@@ -46,6 +46,8 @@ const setPackage = async (data) => {
     assist_info = {
       'assistant_info.is_enabled': false,
     };
+    capture_enabled = false;
+    link_track_enabled = false;
   } else {
     automation_info = {
       'automation_info.max_count':
@@ -63,8 +65,8 @@ const setPackage = async (data) => {
     assist_info = {
       'assistant_info.max_count': system_settings.ASSISTANT_LIMIT[level],
     };
-    capture_enabled = false;
-    link_track_enabled = false;
+    capture_enabled = true;
+    link_track_enabled = true;
   }
 
   const query = {
@@ -80,7 +82,7 @@ const setPackage = async (data) => {
 
   console.log('query', query);
 
-  User.updateOne(
+  return User.updateOne(
     {
       _id: user,
     },
