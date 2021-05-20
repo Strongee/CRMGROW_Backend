@@ -2733,7 +2733,6 @@ const updatePackage = async (req, res) => {
 
   updateSubscription(subscription_data)
     .then((subscription) => {
-      console.log('subscription', subscription);
       User.updateOne(
         {
           _id: currentUser.id,

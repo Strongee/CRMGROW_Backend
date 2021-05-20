@@ -15,6 +15,7 @@ const Video = require('../models/video');
 const PDF = require('../models/pdf');
 const Image = require('../models/image');
 const Garbage = require('../models/garbage');
+const Task = require('../models/task');
 const ActivityHelper = require('./activity');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
@@ -32,6 +33,7 @@ const oauth2 = require('simple-oauth2')(credentials);
 const cheerio = require('cheerio');
 
 const AWS = require('aws-sdk');
+const moment = require('moment-timezone');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -4182,7 +4184,12 @@ const sendEmail = async (data) => {
             .then(async () => {
               email_count += 1;
 
-              handleSuccessEmailing(contact._id, activities, activity._id, email._id);
+              handleSuccessEmailing(
+                contact._id,
+                activities,
+                activity._id,
+                email._id
+              );
 
               resolve({
                 status: true,
@@ -4283,7 +4290,7 @@ const sendEmail = async (data) => {
             });
           });
 
-         revertEmailing(activities, activity._id, email._id);
+          revertEmailing(activities, activity._id, email._id);
           promise_array.push(promise);
         });
 
@@ -4360,7 +4367,12 @@ const sendEmail = async (data) => {
           .post(sendMail)
           .then(async () => {
             email_count += 1;
-            handleSuccessEmailing(contact._id, activities, activity._id, email._id);
+            handleSuccessEmailing(
+              contact._id,
+              activities,
+              activity._id,
+              email._id
+            );
 
             resolve({
               status: true,

@@ -18,7 +18,7 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const request = require('request-promise');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 const urls = require('../constants/urls');
 const { RestClient } = require('@signalwire/node');
