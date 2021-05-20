@@ -5,6 +5,12 @@ const setPackage = async (data) => {
   const { user, level } = data;
   const query = {};
 
+  console.log('level', level);
+  console.log(
+    'system_settings.CONTACT_UPLOAD_LIMIT[level]',
+    system_settings.CONTACT_UPLOAD_LIMIT[level]
+  );
+
   // contact info
   const contact_info = {
     'contact_info.max_count': system_settings.CONTACT_UPLOAD_LIMIT[level],
