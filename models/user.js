@@ -77,7 +77,7 @@ const UserSchema = new Schema(
       is_limit: { type: Boolean, default: true },
       max_count: {
         type: Number,
-        default: system_settings.TEXT_MONTHLY_LIMIT.PRO,
+        default: system_settings.CALENDAR_LIMIT.PRO,
       },
     },
     email_info: {
@@ -107,6 +107,7 @@ const UserSchema = new Schema(
       owner_enabled: { type: Boolean, default: true },
     },
     capture_enabled: { type: Boolean, default: true },
+    link_track_enabled: { type: Boolean, default: true },
     email_verified: Boolean,
     welcome_email: { type: Boolean, default: false },
     is_trial: { type: Boolean, default: true },

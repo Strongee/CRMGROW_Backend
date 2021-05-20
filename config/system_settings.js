@@ -17,7 +17,10 @@ const system_settings = {
     ELITE: 1000,
   },
   ASSISTANT_LIMIT: {
-    BASIC: 0,
+    PRO: 1,
+    ELITE: 3,
+  },
+  CALENDAR_LIMIT: {
     PRO: 1,
     ELITE: 3,
   },
@@ -47,7 +50,6 @@ const system_settings = {
   AUTO_FOLLOW_UP: 'has reviewed material',
   AUTO_FOLLOW_UP2: 'didn`t watch material',
   AUTOMATION_ASSIGN_LIMIT: {
-    BASIC: 0,
     PRO: 300,
     ELITE: 3000,
   },
