@@ -94,7 +94,7 @@ const create = async (payment_data) => {
               resolve(_payment);
             })
             .catch((err) => {
-              reject(err);
+              reject(err.type);
             });
         }
       );
