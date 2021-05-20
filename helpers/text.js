@@ -1712,7 +1712,7 @@ const handleDeliveredText = (
   });
 
   Activity.updateMany(
-    { _id: { $in: activities } },
+    { _id: { $in: [...activities, text_activity] } },
     {
       $set: { texts: text_id, status: 'completed' },
     }
