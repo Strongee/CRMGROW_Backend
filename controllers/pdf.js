@@ -257,25 +257,30 @@ const create = async (req, res) => {
   let count = 0;
   let max_upload_count = 0;
 
-  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
-    if (currentUser.material_info['is_limit']) {
-      const userVideoCount = await Video.countDocuments({
-        user: currentUser.id,
-        uploaded: true,
-      });
-      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
-      count = userVideoCount + userPDFCount;
-      max_upload_count =
-        currentUser.material_info.upload_max_count ||
-        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
-    }
+  if (!currentUser.material_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Disable create pdf',
+    });
+  }
 
-    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
-      return res.status(410).send({
-        status: false,
-        error: 'Exceed upload max materials',
-      });
-    }
+  if (currentUser.material_info['is_limit']) {
+    const userVideoCount = await Video.countDocuments({
+      user: currentUser.id,
+      uploaded: true,
+    });
+    const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+    count = userVideoCount + userPDFCount;
+    max_upload_count =
+      currentUser.material_info.upload_max_count ||
+      system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+  }
+
+  if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+    return res.status(410).send({
+      status: false,
+      error: 'Exceed upload max materials',
+    });
   }
 
   if (req.file) {
@@ -2413,25 +2418,30 @@ const createPDF = async (req, res) => {
   let count = 0;
   let max_upload_count = 0;
 
-  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
-    if (currentUser.material_info['is_limit']) {
-      const userVideoCount = await Video.countDocuments({
-        user: currentUser.id,
-        uploaded: true,
-      });
-      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
-      count = userVideoCount + userPDFCount;
-      max_upload_count =
-        currentUser.material_info.upload_max_count ||
-        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
-    }
+  if (!currentUser.material_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Disable materials',
+    });
+  }
 
-    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
-      return res.status(410).send({
-        status: false,
-        error: 'Exceed upload max materials',
-      });
-    }
+  if (currentUser.material_info['is_limit']) {
+    const userVideoCount = await Video.countDocuments({
+      user: currentUser.id,
+      uploaded: true,
+    });
+    const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+    count = userVideoCount + userPDFCount;
+    max_upload_count =
+      currentUser.material_info.upload_max_count ||
+      system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+  }
+
+  if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+    return res.status(410).send({
+      status: false,
+      error: 'Exceed upload max materials',
+    });
   }
 
   if (req.body.preview && req.body.preview.indexOf('teamgrow.s3') === -1) {

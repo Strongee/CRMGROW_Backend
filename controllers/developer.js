@@ -28,11 +28,11 @@ const addContact = async (req, res) => {
   if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
     max_upload_count =
-      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.LITE;
   }
 
   if (contact_info['is_limit'] && max_upload_count < count) {
-    return res.status(400).send({
+    return res.status(410).send({
       status: false,
       error: 'You are exceed for max contacts',
     });

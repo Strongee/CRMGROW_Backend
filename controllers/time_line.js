@@ -38,6 +38,13 @@ const create = async (req, res) => {
 
     const automation_info = currentUser.automation_info;
 
+    if (!automation_info['is_enabled']) {
+      return res.status(410).send({
+        status: false,
+        error: 'Disable create automations',
+      });
+    }
+
     if (automation_info['is_limit']) {
       max_assign_count =
         automation_info.max_count ||
@@ -89,7 +96,7 @@ const create = async (req, res) => {
       if (automation_info['is_limit'] && max_assign_count <= count) {
         return res.status(410).send({
           status: false,
-          error: 'Exceed upload max materials',
+          error: 'Exceed max active automations',
         });
       }
       // const errorContact = await Contact.findOne({ _id: contacts[i] });

@@ -51,7 +51,7 @@ const edit = async (req, res) => {
   if (user && !user.capture_enabled) {
     return res.status(410).json({
       status: false,
-      error: 'Exceed Lead capture.',
+      error: 'Disable Lead capture.',
     });
   }
 
