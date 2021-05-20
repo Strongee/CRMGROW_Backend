@@ -2733,12 +2733,27 @@ const updatePackage = async (req, res) => {
 
   updateSubscription(subscription_data)
     .then((subscription) => {
+      console.log('subscription', subscription);
+      User.updateOne(
+        {
+          _id: currentUser.id,
+        },
+        {
+          package_level: level,
+        }
+      ).catch((err) => {
+        console.log('set package err', err.message);
+      });
+
       const data = {
         user: currentUser.id,
         level,
       };
 
-      setPackage(data);
+      setPackage(data).catch((err) => {
+        console.log('set package err', err.message);
+      });
+
       return res.send({
         status: true,
       });
