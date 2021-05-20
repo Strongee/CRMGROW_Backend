@@ -1455,7 +1455,12 @@ const sendText = async (data) => {
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
                       // Handle delivered text
-                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
+                      handleDeliveredText(
+                        _contact._id,
+                        activities,
+                        activity._id,
+                        text._id
+                      );
 
                       resolve({
                         status: true,
@@ -1499,7 +1504,12 @@ const sendText = async (data) => {
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                 text_content
               );
-              handleDeliveredText(_contact._id, activities, activity._id, text._id);
+              handleDeliveredText(
+                _contact._id,
+                activities,
+                activity._id,
+                text._id
+              );
 
               resolve({
                 status: true,
@@ -1590,7 +1600,12 @@ const sendText = async (data) => {
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
                       // Handle delivered Text
-                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
+                      handleDeliveredText(
+                        _contact._id,
+                        activities,
+                        activity._id,
+                        text._id
+                      );
                       resolve({
                         status: true,
                         contact: _contact,
@@ -1634,7 +1649,12 @@ const sendText = async (data) => {
                 text_content
               );
               // Handle delivered Text
-              handleDeliveredText(_contact._id, activities, activity._id, text._id);
+              handleDeliveredText(
+                _contact._id,
+                activities,
+                activity._id,
+                text._id
+              );
               resolve({
                 status: true,
               });

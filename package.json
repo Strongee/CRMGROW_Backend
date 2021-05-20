@@ -4,7 +4,7 @@
   "description": "Teamgrow backend",
   "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=staging node ./bin/www",
+    "start": "node --max_old_space_size=8000 ./bin/www",
     "staging": "NODE_ENV=staging node --max_old_space_size=8000 ./bin/www",
     "dev": "nodemon --max_old_space_size=8000 ./bin/www",
     "lint": "eslint '*.js' --quiet --fix",
