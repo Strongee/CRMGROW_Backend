@@ -98,7 +98,7 @@ const UserSchema = new Schema(
       },
     },
     material_info: {
-      is_enabled: Boolean,
+      is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
       upload_max_count: Number,
       record_max_duration: Number,
