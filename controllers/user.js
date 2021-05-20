@@ -2685,7 +2685,7 @@ const updatePackage = async (req, res) => {
     cardId: payment.card_id,
   };
 
-  updateSubscription(subscription_data)
+  updateSubscription(payment.customer_id, planId, payment.card_id)
     .then((subscription) => {
       const data = {
         user: currentUser.id,
