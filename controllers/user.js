@@ -94,7 +94,8 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, level, is_trial } = req.body;
+  const { user_name, email, token, referral, is_trial } = req.body;
+  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
     user_name,
@@ -116,6 +117,7 @@ const signUp = async (req, res) => {
       const user = new User({
         ...req.body,
         is_trial,
+        package_level: level,
         connected_email: email,
         payment: payment.id,
         salt,

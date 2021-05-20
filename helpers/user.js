@@ -80,6 +80,8 @@ const setPackage = async (data) => {
     ...calendar_info,
     ...text_info,
     ...assist_info,
+    capture_enabled,
+    link_track_enabled,
   };
 
   User.updateOne(
