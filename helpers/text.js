@@ -1172,6 +1172,16 @@ const sendText = async (data) => {
 
     let promise;
 
+    if (!text_info['is_enabled']) {
+      promise = new Promise(async (resolve) => {
+        resolve({
+          status: false,
+          error: 'Disable send sms',
+        });
+      });
+      promise_array.push(promise);
+      continue;
+    }
     if (
       text_info['is_limit'] &&
       max_text_count <= count &&

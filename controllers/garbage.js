@@ -3,6 +3,7 @@ const Template = require('../models/email_template');
 const Task = require('../models/task');
 const { removeFile } = require('../helpers/fileUpload');
 const urls = require('../constants/urls');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const data = await Garbage.find({ _id: req.params.id });
@@ -46,6 +47,14 @@ const create = async (req, res) => {
 
 const edit = async (req, res) => {
   const user = req.currentUser;
+
+  if (user && !user.capture_enabled) {
+    return res.status(410).json({
+      status: false,
+      error: 'Disable Lead capture.',
+    });
+  }
+
   const editData = req.body;
   delete editData['_id'];
   const garbage = await Garbage.findOne({ user: user._id });

@@ -96,7 +96,7 @@ const api = {
   STRIPE: {
     SECRET_KEY: process.env.SECRET_KEY,
     PLAN: {
-      BASIC: process.env.STRIPE_PLAN_BASIC,
+      LITE: process.env.STRIPE_PLAN_LITE,
       PRO: process.env.STRIPE_PLAN_PRO,
       ELITE: process.env.STRIPE_PLAN_ELITE,
     },

@@ -58,6 +58,7 @@ const PaidDemo = require('../models/paid_demo');
 const Reminder = require('../models/reminder');
 const Tag = require('../models/tag');
 const TimeLine = require('../models/time_line');
+const Video = require('../models/video');
 
 const {
   getTwilioNumber,
@@ -93,7 +94,8 @@ const signUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, level, is_trial } = req.body;
+  const { user_name, email, token, referral, is_trial } = req.body;
+  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
     user_name,
@@ -115,6 +117,7 @@ const signUp = async (req, res) => {
       const user = new User({
         ...req.body,
         is_trial,
+        package_level: level,
         connected_email: email,
         payment: payment.id,
         salt,
@@ -137,7 +140,9 @@ const signUp = async (req, res) => {
             level,
           };
 
-          setPackage(package_data);
+          setPackage(package_data).catch((err) => {
+            console.log('user set package err', err.message);
+          });
 
           if (_res.phone) {
             getTwilioNumber(_res.id);
@@ -324,7 +329,8 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, level, is_trial } = req.body;
+  const { user_name, email, token, referral, is_trial } = req.body;
+  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
     user_name,
@@ -353,8 +359,15 @@ const socialSignUp = async (req, res) => {
           garbage.save().catch((err) => {
             console.log('err', err);
           });
-          // purchase proxy number
-          getTwilioNumber(_res.id);
+
+          const package_data = {
+            user: _res.id,
+            level,
+          };
+
+          setPackage(package_data).catch((err) => {
+            console.log('user set package err', err.message);
+          });
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -1239,6 +1252,7 @@ const getMe = async (req, res) => {
       console.log('err', err);
     }
   );
+
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;
@@ -2273,6 +2287,7 @@ const createPassword = async (req, res) => {
 
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
+  const { close_reason, close_feedback } = req.body;
 
   await Contact.deleteMany({ user: currentUser.id });
   await Activity.deleteMany({ user: currentUser.id });
@@ -2281,6 +2296,29 @@ const closeAccount = async (req, res) => {
   await Reminder.deleteMany({ user: currentUser.id });
   await Tag.deleteMany({ user: currentUser.id });
   await TimeLine.deleteMany({ user: currentUser.id });
+
+  const data = {
+    template_data: {
+      user_name: currentUser.user_name,
+      created_at: moment()
+        .tz(currentUser.time_zone)
+        .format('h:mm MMMM Do, YYYY'),
+      reason: close_reason,
+      feedback: close_feedback,
+    },
+    template_name: 'CancelAccount',
+    required_reply: false,
+    cc: currentUser.email,
+    email: mail_contents.REPLY,
+  };
+
+  sendNotificationEmail(data)
+    .then(() => {
+      console.log('cancel account email has been sent out successfully');
+    })
+    .catch((err) => {
+      console.log('cancel account email send err', err);
+    });
 
   if (currentUser.proxy_number_id) {
     releaseSignalWireNumber(currentUser.proxy_number_id);
@@ -2300,6 +2338,15 @@ const closeAccount = async (req, res) => {
   currentUser.save().catch((err) => {
     console.log('user delete err', err.message);
   });
+
+  return res.send({
+    status: true,
+  });
+};
+
+const overflowPlan = async (req, res) => {
+  const { currentUser } = req;
+  const { selectedPackage } = req.body;
 
   return res.send({
     status: true,
@@ -2680,19 +2727,33 @@ const updatePackage = async (req, res) => {
   const planId = api.STRIPE.PLAN[level];
 
   const subscription_data = {
-    customerId: payment.customer_id,
+    subscriptionId: payment.subscription,
     planId,
-    cardId: payment.card_id,
   };
 
   updateSubscription(subscription_data)
     .then((subscription) => {
+      console.log('subscription', subscription);
+      User.updateOne(
+        {
+          _id: currentUser.id,
+        },
+        {
+          package_level: level,
+        }
+      ).catch((err) => {
+        console.log('set package err', err.message);
+      });
+
       const data = {
         user: currentUser.id,
         level,
       };
 
-      setPackage(data);
+      setPackage(data).catch((err) => {
+        console.log('set package err', err.message);
+      });
+
       return res.send({
         status: true,
       });
@@ -2771,6 +2832,7 @@ module.exports = {
   closeAccount,
   connectAnotherEmail,
   pushNotification,
+  overflowPlan,
   updatePackage,
   getCallToken,
 };

@@ -543,13 +543,13 @@ const create = async (req, res) => {
   if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
     max_upload_count =
-      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.PRO;
   }
 
-  if (contact_info['is_limit'] && max_upload_count < count) {
-    return res.status(400).send({
+  if (contact_info['is_limit'] && max_upload_count <= count) {
+    return res.status(410).send({
       status: false,
-      error: 'You are exceed for max contacts',
+      error: 'Exceed upload max contacts',
     });
   }
 
@@ -928,7 +928,7 @@ const importCSV = async (req, res) => {
     count = await Contact.countDocuments({ user: currentUser.id });
 
     max_upload_count =
-      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.PRO;
 
     if (max_upload_count <= count) {
       return res.send({
@@ -2163,6 +2163,7 @@ const isArray = function (a) {
 
 const advanceSearch = async (req, res) => {
   const { currentUser } = req;
+
   const {
     searchStr,
     recruitingStageCondition,
@@ -3589,13 +3590,12 @@ const bulkCreate = async (req, res) => {
   const { contacts } = req.body;
   const { currentUser } = req;
   let count = 0;
-  let max_count = 0;
-  if (!currentUser.contact) {
+  let max_upload_count = 0;
+  const contact_info = currentUser.contact_info;
+  if (contact_info['is_limit']) {
     count = await Contact.countDocuments({ user: currentUser.id });
-    max_count = system_settings.CONTACT_UPLOAD_LIMIT.BASIC;
-  } else {
-    count = currentUser.contact.count;
-    max_count = currentUser.contact.max_count;
+    max_upload_count =
+      contact_info.max_count || system_settings.CONTACT_UPLOAD_LIMIT.PRO;
   }
 
   const failure = [];
@@ -3610,7 +3610,7 @@ const bulkCreate = async (req, res) => {
     const promise = new Promise(async (resolve, reject) => {
       const data = { ...contacts[i] };
       count += 1;
-      if (max_count < count) {
+      if (max_upload_count <= count) {
         const field = {
           data,
           message: 'Exceed upload max contacts',
@@ -3728,7 +3728,7 @@ const bulkCreate = async (req, res) => {
   Promise.all(promise_array).then(function () {
     const contact_info = {
       count,
-      max_count,
+      max_upload_count,
     };
     currentUser.contact = contact_info;
     currentUser.save().catch((err) => {
