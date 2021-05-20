@@ -69,6 +69,7 @@ const { sendNotificationEmail } = require('../helpers/email');
 const { setPackage } = require('../helpers/user');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
+const { Pay } = require('twilio/lib/twiml/VoiceResponse');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -2718,6 +2719,14 @@ const updatePackage = async (req, res) => {
       error: 'Please connect card',
     });
   }
+
+  if (level === currentUser.package_level) {
+    return res.status(400).json({
+      status: false,
+      error: 'You are in current same plan',
+    });
+  }
+
   const payment = await Payment.findOne({ _id: currentUser.payment }).catch(
     (err) => {
       console.log('payment find err', err.message);
@@ -2732,7 +2741,7 @@ const updatePackage = async (req, res) => {
   };
 
   updateSubscription(subscription_data)
-    .then((subscription) => {
+    .then(() => {
       User.updateOne(
         {
           _id: currentUser.id,
@@ -2741,7 +2750,18 @@ const updatePackage = async (req, res) => {
           package_level: level,
         }
       ).catch((err) => {
-        console.log('set package err', err.message);
+        console.log('user updae package err', err.message);
+      });
+
+      Payment.updateOne(
+        {
+          user: currentUser.id,
+        },
+        {
+          plan_id: planId,
+        }
+      ).catch((err) => {
+        console.log('payment set package err', err.message);
       });
 
       const data = {
@@ -2759,6 +2779,10 @@ const updatePackage = async (req, res) => {
     })
     .catch((err) => {
       console.log('subscription update err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: 'Please correct your cc info',
+      });
     });
 };
 
