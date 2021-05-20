@@ -142,9 +142,9 @@ const signUp = async (req, res) => {
 
           setPackage(package_data);
 
-          if (_res.phone) {
-            getTwilioNumber(_res.id);
-          }
+          // if (_res.phone) {
+          //   getTwilioNumber(_res.id);
+          // }
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name

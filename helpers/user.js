@@ -78,9 +78,11 @@ const setPackage = async (data) => {
     link_track_enabled,
   };
 
+  console.log('query', query);
+
   User.updateOne(
     {
-      _id: user.id,
+      _id: user,
     },
     {
       $set: query,
