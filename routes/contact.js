@@ -242,6 +242,13 @@ router.post(
   catchError(ContactCtrl.shareContacts)
 );
 
+// Stop Share contact
+router.post(
+  '/stop-share',
+  UserCtrl.checkAuth,
+  catchError(ContactCtrl.stopShare)
+);
+
 router.post(
   '/load-by-emails',
   UserCtrl.checkAuth,

@@ -933,11 +933,10 @@ const getTwilioNumber = async (id) => {
       return fromNumber;
     });
 
+  /**
   if (fromNumber) {
     return fromNumber;
   }
-
-  let number = data[0];
 
   if (typeof number === 'undefined' || number === '+') {
     const areaCode1 = areaCode.slice(1);
@@ -958,11 +957,11 @@ const getTwilioNumber = async (id) => {
   if (fromNumber) {
     return fromNumber;
   }
-
-  if (typeof number !== 'undefined' && number !== '+') {
+  */
+  if (data[0] && data[0] !== '+') {
     const proxy_number = await twilio.incomingPhoneNumbers
       .create({
-        phoneNumber: number.phoneNumber,
+        phoneNumber: data[0].phoneNumber,
         smsUrl: urls.SMS_RECEIVE_URL,
       })
       .then()
@@ -970,16 +969,18 @@ const getTwilioNumber = async (id) => {
         console.log('proxy number error', err);
       });
 
-    user['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = proxy_number.phoneNumber;
-    user.save().catch((err) => {
+    User.updateOne(
+      { _id: id },
+      {
+        $set: {
+          twilio_number: proxy_number.phoneNumber,
+          twilio_number_id: proxy_number.id,
+        },
+      }
+    ).catch((err) => {
       console.log('err', err.message);
     });
-  } else {
-    fromNumber = api.TWILIO.TWILIO_NUMBER;
   }
-
-  return fromNumber;
 };
 
 const getSignalWireNumber = async (id) => {

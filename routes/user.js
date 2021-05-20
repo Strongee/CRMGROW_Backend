@@ -84,9 +84,9 @@ router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail));
 
 // Disconnect with gmail
 router.get(
-  '/discon-gmail',
+  '/discon-email',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.disconnectGmail)
+  catchError(UserCtrl.disconnectEmail)
 );
 
 // Synchronize with yahoo

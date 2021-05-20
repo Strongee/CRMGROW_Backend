@@ -119,7 +119,6 @@ const signUp = async (req, res) => {
         ...req.body,
         is_trial,
         package_level: level,
-        connected_email: email,
         payment: payment.id,
         salt,
         hash,
@@ -145,9 +144,9 @@ const signUp = async (req, res) => {
             console.log('user set package err', err.message);
           });
 
-          if (_res.phone) {
-            getTwilioNumber(_res.id);
-          }
+          // if (_res.phone) {
+          //   getTwilioNumber(_res.id);
+          // }
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -346,7 +345,7 @@ const socialSignUp = async (req, res) => {
     .then(async (payment) => {
       const user = new User({
         ...req.body,
-        connected_email: email,
+        package_level: level,
         payment: payment.id,
       });
 
@@ -2412,16 +2411,28 @@ const connectAnotherEmail = async (req, res) => {
   });
 };
 
-const disconnectGmail = async (req, res) => {
+const disconnectEmail = async (req, res) => {
   const { currentUser } = req;
-  const oauth2Client = new google.auth.OAuth2(
-    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.GMAIL_AUTHORIZE_URL
-  );
-  const token = JSON.parse(currentUser.google_refresh_token);
-  oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-  await oauth2Client.disconnect();
+
+  User.updateOne(
+    {
+      _id: currentUser.id,
+    },
+    {
+      $set: { primary_connected: false },
+      $unset: { 
+        connected_email: true,
+        outlook_refresh_token: true,
+        google_refresh_token: true,
+      },
+    }
+  ).catch((err) => {
+    console.log('user disconnect email update err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
 };
 
 const searchUserEmail = (req, res) => {
@@ -2845,7 +2856,7 @@ module.exports = {
   desktopNotification,
   disconDaily,
   disconWeekly,
-  disconnectGmail,
+  disconnectEmail,
   weeklyReport,
   checkAuth,
   checkAuth2,
