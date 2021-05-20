@@ -1146,6 +1146,8 @@ const sendText = async (data) => {
     max_text_count,
     shared_text,
     has_shared,
+    is_guest,
+    textProcessId,
   } = data;
 
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
@@ -1153,7 +1155,6 @@ const sendText = async (data) => {
   });
 
   const promise_array = [];
-  const error = [];
 
   const text_info = currentUser.text_info;
   let count = 0;
@@ -1168,6 +1169,45 @@ const sendText = async (data) => {
         console.log('contact update err', err.messgae);
       }
     );
+
+    let promise;
+
+    if (
+      text_info['is_limit'] &&
+      max_text_count <= count &&
+      !additional_sms_credit
+    ) {
+      promise = new Promise(async (resolve) => {
+        resolve({
+          status: false,
+          contact: {
+            _id: _contact._id,
+            first_name: _contact.first_name,
+            cell_phone: _contact.cell_phone,
+          },
+          error: 'Additional count required',
+        });
+      });
+      promise_array.push(promise);
+      continue;
+    }
+
+    const e164Phone = phone(_contact.cell_phone)[0];
+    if (!e164Phone) {
+      promise = new Promise(async (resolve) => {
+        resolve({
+          status: false,
+          contact: {
+            _id: _contact._id,
+            first_name: _contact.first_name,
+            cell_phone: _contact.cell_phone,
+          },
+          error: 'Invalid number',
+        });
+      });
+      promise_array.push(promise);
+      continue;
+    }
 
     text_content = text_content
       .replace(/{user_name}/gi, currentUser.user_name)
@@ -1310,6 +1350,10 @@ const sendText = async (data) => {
 
     let activity_content = 'sent text';
 
+    if (is_guest) {
+      activity_content = ActivityHelper.assistantLog(activity_content);
+    }
+
     switch (mode) {
       case 'automation':
         activity_content = ActivityHelper.automationLog(activity_content);
@@ -1351,51 +1395,6 @@ const sendText = async (data) => {
     });
 
     let fromNumber = currentUser['proxy_number'];
-    let promise;
-
-    if (
-      text_info['is_limit'] &&
-      max_text_count <= count &&
-      !additional_sms_credit
-    ) {
-      Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-        console.log('activity delete err', err.message);
-      });
-
-      promise = new Promise(async (resolve, reject) => {
-        error.push({
-          contact: {
-            first_name: _contact.first_name,
-            cell_phone: _contact.cell_phone,
-          },
-          error: 'Additional count required',
-        });
-        resolve(); // Exceet max limit;
-      });
-      promise_array.push(promise);
-      continue;
-    }
-
-    const e164Phone = phone(_contact.cell_phone)[0];
-    if (!e164Phone) {
-      Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-        console.log('activity delete err', err.message);
-      });
-
-      promise = new Promise(async (resolve, reject) => {
-        error.push({
-          contact: {
-            first_name: _contact.first_name,
-            cell_phone: _contact.cell_phone,
-          },
-          error: 'Invalid number',
-        });
-        resolve(); // Exceet max limit;
-      });
-      promise_array.push(promise);
-      continue;
-    }
-
     const body = _contact.texted_unsbcription_link
       ? text_content
       : text_content + generateUnsubscribeLink();
@@ -1421,36 +1420,23 @@ const sendText = async (data) => {
                 text_content
               );
 
-              if (contacts.length > 5) {
-                const now = moment();
-                const due_date = now.add(1, 'minutes');
-
-                const task = new Task({
-                  user: currentUser.id,
-                  status: 'active',
-                  action: {
-                    type: 'bulk_sms',
-                    message_sid: message.sid,
-                    activities,
-                  },
-                  contact: contacts[i],
-                  text: text.id,
-                  due_date,
+              if (contacts.length > 1) {
+                const time = moment().add(1, 'minutes');
+                createTextCheckTasks(
+                  currentUser,
+                  _contact,
+                  message,
+                  'signal',
+                  activities,
+                  activity._id,
+                  text._id,
+                  textProcessId,
+                  time
+                );
+                resolve({
+                  status: true,
+                  contact: _contact,
                 });
-
-                task.save().catch((err) => {
-                  console.log('time line save err', err.message);
-                });
-
-                Activity.updateMany(
-                  { _id: { $in: activities } },
-                  {
-                    $set: { status: 'pending' },
-                  }
-                ).catch((err) => {
-                  console.log('activity err', err.message);
-                });
-                resolve();
               } else {
                 const interval_id = setInterval(function () {
                   let j = 0;
@@ -1458,90 +1444,41 @@ const sendText = async (data) => {
                     j++;
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
-                      Contact.updateOne(
-                        { _id: contacts[i] },
-                        {
-                          $set: {
-                            last_activity: activity.id,
-                            texted_unsbcription_link: true,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('err', err);
-                      });
+                      // Handle delivered text
+                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
 
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 2,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
+                      resolve({
+                        status: true,
+                        contact: _contact,
                       });
-
-                      resolve();
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
-                      Activity.deleteMany({ _id: { $in: activities } }).catch(
-                        (err) => {
-                          console.log('err', err);
-                        }
-                      );
+                      // Handle failed text with status 3
+                      handleFailedText(activities, activity._id, text._id, 3);
 
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 3,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
-                      });
-
-                      error.push({
+                      resolve({
+                        status: false,
                         contact: {
+                          _id: _contact._id,
                           first_name: _contact.first_name,
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
                       });
-                      resolve();
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
-                      Activity.deleteMany({ _id: { $in: activities } }).catch(
-                        (err) => {
-                          console.log('err', err);
-                        }
-                      );
+                      // Handle with 4 status
+                      handleFailedText(activities, activity._id, text._id, 4);
 
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 4,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
-                      });
-
-                      error.push({
+                      resolve({
+                        status: false,
                         contact: {
+                          _id: _contact._id,
                           first_name: _contact.first_name,
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
                       });
-                      resolve();
                     }
                   });
                 }, 1000);
@@ -1552,86 +1489,41 @@ const sendText = async (data) => {
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                 text_content
               );
-              Contact.updateOne(
-                { _id: contacts[i] },
-                {
-                  $set: {
-                    last_activity: activity.id,
-                    texted_unsbcription_link: true,
-                  },
-                }
-              ).catch((err) => {
-                console.log('err', err);
-              });
+              handleDeliveredText(_contact._id, activities, activity._id, text._id);
 
-              Text.updateOne(
-                {
-                  _id: text.id,
-                },
-                {
-                  $set: {
-                    status: 2,
-                  },
-                }
-              ).catch((err) => {
-                console.log('text update err', err.message);
+              resolve({
+                status: true,
+                contact: _contact,
               });
-              resolve();
             } else {
-              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-                console.log('err', err);
-              });
+              // Handle Failed Text
+              handleFailedText(activities, activity._id, text._id, 4);
 
-              Text.updateOne(
-                {
-                  _id: text.id,
-                },
-                {
-                  $set: {
-                    status: 4,
-                  },
-                }
-              ).catch((err) => {
-                console.log('text update err', err.message);
-              });
-
-              error.push({
+              resolve({
+                status: false,
                 contact: {
+                  _id: _contact._id,
                   first_name: _contact.first_name,
                   cell_phone: _contact.cell_phone,
                 },
-                error: message.error_message,
+                error: message.error_message || 'message response is lost',
               });
-              resolve();
             }
           })
           .catch((err) => {
             console.log('video message send err', err);
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('err', err);
-            });
+            // Handle Failed Text
+            revertTexting(activities, activity._id, text._id);
 
-            Text.updateOne(
-              {
-                _id: text.id,
-              },
-              {
-                $set: {
-                  status: 4,
-                },
-              }
-            ).catch((err) => {
-              console.log('text update err', err.message);
-            });
-
-            error.push({
+            resolve({
+              status: false,
               contact: {
+                _id: _contact._id,
                 first_name: _contact.first_name,
                 cell_phone: _contact.cell_phone,
               },
-              err,
+              error: err.message || 'Message creating is failed',
             });
-            resolve();
           });
       });
     } else {
@@ -1662,41 +1554,23 @@ const sendText = async (data) => {
                 text_content
               );
 
-              if (contacts.length > 5) {
-                const now = moment();
-                const due_date = now.add(1, 'minutes');
-                const task = new Task({
-                  user: currentUser.id,
-                  status: 'active',
-                  action: {
-                    type: 'bulk_sms',
-                    message_sid: message.sid,
-                    activities,
-                    service: 'twilio',
-                  },
-                  contact: contacts[i],
-                  text: text.id,
-                  due_date,
-                });
-
-                task.save().catch((err) => {
-                  console.log('time line save err', err.message);
-                });
-
-                Activity.updateMany(
-                  { _id: { $in: activities } },
-                  {
-                    $set: {
-                      status: 'pending',
-                      texts: text.id,
-                    },
-                  }
-                ).catch((err) => {
-                  console.log('activity err', err.message);
-                });
+              if (contacts.length > 1) {
+                const time = moment().add(1, 'minutes');
+                createTextCheckTasks(
+                  currentUser,
+                  _contact,
+                  message,
+                  'signal',
+                  activities,
+                  activity._id,
+                  text._id,
+                  textProcessId,
+                  time
+                );
 
                 resolve({
                   status: true,
+                  contact: _contact,
                 });
               } else {
                 const interval_id = setInterval(function () {
@@ -1705,59 +1579,21 @@ const sendText = async (data) => {
                     j++;
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
-
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 2,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
-                      });
-
-                      Contact.updateOne(
-                        { _id: contacts[i] },
-                        {
-                          $set: {
-                            last_activity: activity.id,
-                            texted_unsbcription_link: true,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('contact update err', err.message);
-                      });
-
+                      // Handle delivered Text
+                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
                       resolve({
                         status: true,
+                        contact: _contact,
                       });
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
-                      Activity.deleteMany({ _id: { $in: activities } }).catch(
-                        (err) => {
-                          console.log('activity update err', err.message);
-                        }
-                      );
-
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 3,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
-                      });
+                      // Handle Failed Text with Status 3
+                      handleFailedText(activities, activity._id, text._id, 3);
 
                       resolve({
                         status: false,
                         contact: {
+                          _id: _contact._id,
                           first_name: _contact.first_name,
                           cell_phone: _contact.cell_phone,
                         },
@@ -1765,28 +1601,13 @@ const sendText = async (data) => {
                       });
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
-                      Activity.deleteMany({ _id: { $in: activities } }).catch(
-                        (err) => {
-                          console.log('err', err);
-                        }
-                      );
-
-                      Text.updateOne(
-                        {
-                          _id: text.id,
-                        },
-                        {
-                          $set: {
-                            status: 4,
-                          },
-                        }
-                      ).catch((err) => {
-                        console.log('text update err', err.message);
-                      });
+                      // Handle Failed Text with Status 4
+                      handleFailedText(activities, activity._id, text._id, 4);
 
                       resolve({
                         status: false,
                         contact: {
+                          _id: _contact._id,
                           first_name: _contact.first_name,
                           cell_phone: _contact.cell_phone,
                         },
@@ -1802,54 +1623,181 @@ const sendText = async (data) => {
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                 text_content
               );
-
-              Activity.updateMany(
-                { _id: { $in: activities } },
-                {
-                  $set: {
-                    texts: text.id,
-                  },
-                }
-              ).catch((err) => {
-                console.log('activity err', err.message);
+              // Handle delivered Text
+              handleDeliveredText(_contact._id, activities, activity._id, text._id);
+              resolve({
+                status: true,
               });
-
-              Contact.updateOne(
-                { _id: contacts[i] },
-                {
-                  $set: {
-                    last_activity: activity.id,
-                    texted_unsbcription_link: true,
-                  },
-                }
-              ).catch((err) => {
-                console.log('err', err);
-              });
-              resolve();
             } else {
-              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-                console.log('err', err);
-              });
-
+              handleFailedText(activities, activity._id, text._id, 4);
               resolve({
                 status: false,
                 contact: {
+                  _id: _contact._id,
                   first_name: _contact.first_name,
                   cell_phone: _contact.cell_phone,
                 },
-                error: message.error_message,
+                error: message.error_message || 'message response is lost',
               });
             }
           })
           .catch((err) => {
-            console.log('send sms error: ', err);
+            revertTexting(activities, activity._id, text._id);
+
+            resolve({
+              status: false,
+              contact: {
+                _id: _contact._id,
+                first_name: _contact.first_name,
+                cell_phone: _contact.cell_phone,
+              },
+              error: err.message || 'Message creating is failed',
+            });
           });
       });
     }
     promise_array.push(promise);
   }
 
+  promise_array.push(
+    new Promise((resolve) => {
+      resolve({
+        type: 'exec_result',
+        count,
+        additional_sms_credit,
+      });
+    })
+  );
   return Promise.all(promise_array);
+};
+
+const handleFailedText = (activities, text_activity, text_id, status) => {
+  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+    console.log('text material activity delete err', err.message);
+  });
+
+  // TODO: Update the Text Activity with error or consider about this.
+
+  Text.updateOne(
+    {
+      _id: text_id,
+    },
+    {
+      $set: {
+        status,
+      },
+    }
+  ).catch((err) => {
+    console.log('text update err', err.message);
+  });
+};
+
+const handleDeliveredText = (
+  contact_id,
+  activities,
+  text_activity,
+  text_id
+) => {
+  Text.updateOne(
+    {
+      _id: text_id,
+    },
+    {
+      $set: {
+        status: 2,
+      },
+    }
+  ).catch((err) => {
+    console.log('text update err', err.message);
+  });
+
+  Activity.updateMany(
+    { _id: { $in: [...activities, text_activity] } },
+    {
+      $set: { texts: text_id, status: 'completed' },
+    }
+  ).catch((err) => {
+    console.log('activity update err', err.message);
+  });
+
+  Contact.updateOne(
+    { _id: contact_id },
+    {
+      $set: {
+        last_activity: text_activity,
+        texted_unsbcription_link: true,
+      },
+    }
+  ).catch((err) => {
+    console.log('contact update err', err.message);
+  });
+};
+
+const revertTexting = (activities, text_activity, text_id) => {
+  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+    console.log('text material activity delete err', err.message);
+  });
+  Activity.deleteOne({ _id: text_activity }).catch((err) => {
+    console.log('text activity delete err', err.message);
+  });
+  Text.deleteOne({ _id: text_id }).catch((err) => {
+    console.log('activity delete err', err.message);
+  });
+};
+
+const createTextCheckTasks = (
+  user,
+  contact,
+  message,
+  service,
+  activities,
+  text_activity,
+  text_id,
+  process_id,
+  time
+) => {
+  const task = new Task({
+    user: user.id,
+    status: 'active',
+    type: 'bulk_sms',
+    action: {
+      message_sid: message.sid,
+      activities,
+      service,
+      activity: text_activity,
+      text: text_id,
+    },
+    contacts: [contact._id],
+    due_date: time,
+    process: process_id,
+  });
+
+  task.save().catch((err) => {
+    console.log('time line save err', err.message);
+  });
+
+  Activity.updateOne(
+    { _id: text_activity },
+    {
+      $set: {
+        status: 'pending',
+      },
+    }
+  ).catch((err) => {
+    console.log('activity err', err.message);
+  });
+
+  Activity.updateMany(
+    { _id: { $in: activities } },
+    {
+      $set: {
+        status: 'pending',
+        texts: text_id,
+      },
+    }
+  ).catch((err) => {
+    console.log('activity err', err.message);
+  });
 };
 
 module.exports = {
@@ -1866,4 +1814,6 @@ module.exports = {
   releaseSignalWireNumber,
   releaseTwilioNumber,
   sleep,
+  handleDeliveredText,
+  handleFailedText,
 };

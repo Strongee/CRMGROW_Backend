@@ -677,6 +677,42 @@ const bulkEmail = async (data) => {
   }
 };
 
+const revertEmailing = (activities, email_activity, email_id) => {
+  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
+    console.log('email material activity delete err', err.message);
+  });
+  Activity.deleteOne({ _id: email_activity }).catch((err) => {
+    console.log('email activity delete err', err.message);
+  });
+  Email.deleteOne({ _id: email_id }).catch((err) => {
+    console.log('activity delete err', err.message);
+  });
+  // TODO: Auto Follow REMOVE
+};
+
+const handleSuccessEmailing = (
+  contact,
+  activities,
+  email_activity,
+  email_id
+) => {
+  Activity.updateMany(
+    { _id: { $in: activities } },
+    {
+      $set: { emails: email_id },
+    }
+  ).catch((err) => {
+    console.log('activity update err', err.message);
+  });
+
+  Contact.updateOne(
+    { _id: contact },
+    { $set: { last_activity: email_activity } }
+  ).catch((err) => {
+    console.log('err', err.message);
+  });
+};
+
 const bulkVideo = async (data) => {
   const { user, content, subject, videos, contacts } = data;
   const currentUser = await User.findOne({ _id: user, del: false }).catch(
@@ -3628,6 +3664,7 @@ const sendEmail = async (data) => {
     attachments,
     shared_email,
     has_shared,
+    is_guest,
   } = data;
 
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
@@ -3744,6 +3781,9 @@ const sendEmail = async (data) => {
       );
 
       let activity_content = 'sent video using email';
+      if (is_guest) {
+        activity_content = ActivityHelper.assistantLog(activity_content);
+      }
       switch (mode) {
         case 'automation':
           activity_content = ActivityHelper.automationLog(activity_content);
@@ -3803,6 +3843,9 @@ const sendEmail = async (data) => {
 
       let activity_content = 'sent pdf using email';
 
+      if (is_guest) {
+        activity_content = ActivityHelper.assistantLog(activity_content);
+      }
       switch (mode) {
         case 'automation':
           activity_content = ActivityHelper.automationLog(activity_content);
@@ -3859,6 +3902,9 @@ const sendEmail = async (data) => {
 
       let activity_content = 'sent image using email';
 
+      if (is_guest) {
+        activity_content = ActivityHelper.assistantLog(activity_content);
+      }
       switch (mode) {
         case 'automation':
           activity_content = ActivityHelper.automationLog(activity_content);
@@ -3910,6 +3956,9 @@ const sendEmail = async (data) => {
 
     let activity_content = 'sent email';
 
+    if (is_guest) {
+      activity_content = ActivityHelper.assistantLog(activity_content);
+    }
     switch (mode) {
       case 'automation':
         activity_content = ActivityHelper.automationLog(activity_content);
@@ -3976,7 +4025,6 @@ const sendEmail = async (data) => {
         '</td></tr></tbody></body></html>';
     }
 
-    // AUTO FOLLOW UP REGISTER
     if (
       (video_ids && video_ids.length) ||
       (pdf_ids && pdf_ids.length) ||
@@ -4092,13 +4140,7 @@ const sendEmail = async (data) => {
         promise_array.push(promise);
 
         // Remove created activity and email
-        Activity.deleteOne({ _id: activity.id }).catch((err) => {
-          console.log('activity delete err', err.message);
-        });
-
-        Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-          console.log('activity delete err', err.message);
-        });
+        revertEmailing(activities, activity._id, email._id);
         continue;
       }
       const attachment_array = [];
@@ -4140,21 +4182,7 @@ const sendEmail = async (data) => {
             .then(async () => {
               email_count += 1;
 
-              Activity.updateMany(
-                { _id: { $in: activities } },
-                {
-                  $set: { emails: email.id },
-                }
-              ).catch((err) => {
-                console.log('activity update err', err.message);
-              });
-
-              Contact.updateOne(
-                { _id: contacts[i] },
-                { $set: { last_activity: activity.id } }
-              ).catch((err) => {
-                console.log('contact update err', err.message);
-              });
+              handleSuccessEmailing(contact._id, activities, activity._id, email._id);
 
               resolve({
                 status: true,
@@ -4163,18 +4191,13 @@ const sendEmail = async (data) => {
                   email: contact.email,
                   first_name: contact.first_name,
                 },
+                data: activities,
               });
             })
             .catch((err) => {
               console.log('gmail video send err', err.message);
 
-              Activity.deleteOne({ _id: activity.id }).catch((err) => {
-                console.log('activity delete err', err.message);
-              });
-
-              Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-                console.log('activity delete err', err.message);
-              });
+              revertEmailing(activities, activity._id, email._id);
               if (err.statusCode === 403) {
                 // no_connected = true;
                 resolve({
@@ -4211,13 +4234,7 @@ const sendEmail = async (data) => {
         } catch (err) {
           console.log('gmail video send err', err.message);
 
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('activity delete err', err.message);
-          });
-
-          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-            console.log('activieis delete err', err.message);
-          });
+          revertEmailing(activities, activity._id, email._id);
           resolve({
             status: false,
             contact: {
@@ -4266,13 +4283,7 @@ const sendEmail = async (data) => {
             });
           });
 
-          Activity.deleteOne({ _id: activity.id }).catch((err) => {
-            console.log('activity delete err', err.message);
-          });
-
-          Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-            console.log('activieis delete err', err.message);
-          });
+         revertEmailing(activities, activity._id, email._id);
           promise_array.push(promise);
         });
 
@@ -4349,23 +4360,7 @@ const sendEmail = async (data) => {
           .post(sendMail)
           .then(async () => {
             email_count += 1;
-            Contact.updateOne(
-              { _id: contacts[i] },
-              {
-                $set: { last_activity: activity.id },
-              }
-            ).catch((err) => {
-              console.log('err', err);
-            });
-
-            Activity.updateMany(
-              { _id: { $in: activities } },
-              {
-                $set: { emails: email.id },
-              }
-            ).catch((err) => {
-              console.log('activity update err', err.message);
-            });
+            handleSuccessEmailing(contact._id, activities, activity._id, email._id);
 
             resolve({
               status: true,
@@ -4374,16 +4369,11 @@ const sendEmail = async (data) => {
                 email: contact.email,
                 first_name: contact.first_name,
               },
+              data: activities,
             });
           })
           .catch((err) => {
-            Activity.deleteOne({ _id: activity.id }).catch((err) => {
-              console.log('activity delete err', err.message);
-            });
-
-            Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-              console.log('error', err.message);
-            });
+            revertEmailing(activities, activity._id, email._id);
             console.log('microsoft email send error', err.message);
             resolve({
               status: false,
@@ -4444,4 +4434,6 @@ module.exports = {
   addLinkTracking,
   generateUnsubscribeLink,
   generateOpenTrackLink,
+  revertEmailing,
+  handleSuccessEmailing,
 };
