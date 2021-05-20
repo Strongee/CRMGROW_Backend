@@ -264,16 +264,23 @@ router.post(
 
 router.get('/push-notification/:id', catchError(UserCtrl.pushNotification));
 
-// Search Phonenumber
-router.get(
+// Cancel account
+router.post(
   '/cancel-account',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.searchPhone)
+  catchError(UserCtrl.closeAccount)
 );
 
 router.get('/get-call-token', UserCtrl.getCallToken);
 
 // Edit own profile
 router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));
+
+// Get overflow plan status
+router.post(
+    '/overflow-plan',
+    UserCtrl.checkAuth,
+    catchError(UserCtrl.overflowPlan)
+);
 
 module.exports = router;

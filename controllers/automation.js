@@ -5,6 +5,7 @@ const Contact = require('../models/contact');
 const Video = require('../models/video');
 const Team = require('../models/team');
 const garbageHelper = require('../helpers/garbage');
+const system_settings = require('../config/system_settings');
 
 const get = async (req, res) => {
   const { id } = req.body;
@@ -467,6 +468,14 @@ const getPage = async (req, res) => {
 
 const create = (req, res) => {
   const { currentUser } = req;
+
+  if (currentUser.automation_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Exceed automations',
+    });
+  }
+
   const automation = new Automation({
     ...req.body,
     user: currentUser.id,

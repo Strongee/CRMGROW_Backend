@@ -34,6 +34,7 @@ const User = require('../models/user');
 const Team = require('../models/team');
 const TimeLine = require('../models/time_line');
 const Notification = require('../models/notification');
+const Video = require('../models/video');
 
 const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
@@ -251,6 +252,32 @@ const play1 = async (req, res) => {
 };
 
 const create = async (req, res) => {
+  const { currentUser } = req;
+
+  let count = 0;
+  let max_upload_count = 0;
+
+  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
+    if (currentUser.material_info['is_limit']) {
+      const userVideoCount = await Video.countDocuments({
+        user: currentUser.id,
+        uploaded: true,
+      });
+      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+      count = userVideoCount + userPDFCount;
+      max_upload_count =
+        currentUser.material_info.upload_max_count ||
+        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+    }
+
+    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+      return res.status(410).send({
+        status: false,
+        error: 'Exceed upload max materials',
+      });
+    }
+  }
+
   if (req.file) {
     console.log('req.file', req.file);
     if (req.currentUser) {
@@ -2382,6 +2409,31 @@ const getEasyLoad = async (req, res) => {
 const createPDF = async (req, res) => {
   let preview;
   const { currentUser } = req;
+
+  let count = 0;
+  let max_upload_count = 0;
+
+  if (currentUser.package_level !== system_settings.PACKAGE_LEVEL.ELITE) {
+    if (currentUser.material_info['is_limit']) {
+      const userVideoCount = await Video.countDocuments({
+        user: currentUser.id,
+        uploaded: true,
+      });
+      const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+      count = userVideoCount + userPDFCount;
+      max_upload_count =
+        currentUser.material_info.upload_max_count ||
+        system_settings.MATERIAL_UPLOAD_LIMIT.PRO;
+    }
+
+    if (currentUser.material_info['is_limit'] && max_upload_count <= count) {
+      return res.status(410).send({
+        status: false,
+        error: 'Exceed upload max materials',
+      });
+    }
+  }
+
   if (req.body.preview && req.body.preview.indexOf('teamgrow.s3') === -1) {
     try {
       const today = new Date();

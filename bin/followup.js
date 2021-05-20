@@ -29,7 +29,7 @@ const followup_test = async () => {
     console.log('followup find err', err.message);
   });
 
-  for (let i = 0; i < reminder_array.length; i++) {
+  for (let i = 0; i < 1; i++) {
     const follow_up = reminder_array[i];
     const user = await User.findOne({
       _id: follow_up.user,
@@ -74,6 +74,7 @@ const followup_test = async () => {
           follow_up_type_url: urls.FOLLOWUP_TYPE_URL[type],
           due_start: due_date,
         },
+        cc: 'superwebtop@outlook.com',
         template_name: 'TaskReminder',
         required_reply: false,
         email: user.email,

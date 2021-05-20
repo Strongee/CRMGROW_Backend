@@ -58,6 +58,7 @@ const PaidDemo = require('../models/paid_demo');
 const Reminder = require('../models/reminder');
 const Tag = require('../models/tag');
 const TimeLine = require('../models/time_line');
+const Video = require('../models/video');
 
 const {
   getTwilioNumber,
@@ -1239,6 +1240,7 @@ const getMe = async (req, res) => {
       console.log('err', err);
     }
   );
+
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;
@@ -2273,6 +2275,7 @@ const createPassword = async (req, res) => {
 
 const closeAccount = async (req, res) => {
   const { currentUser } = req;
+  const { close_reason, close_feedback } = req.body;
 
   await Contact.deleteMany({ user: currentUser.id });
   await Activity.deleteMany({ user: currentUser.id });
@@ -2281,6 +2284,29 @@ const closeAccount = async (req, res) => {
   await Reminder.deleteMany({ user: currentUser.id });
   await Tag.deleteMany({ user: currentUser.id });
   await TimeLine.deleteMany({ user: currentUser.id });
+
+  const data = {
+    template_data: {
+      user_name: currentUser.user_name,
+      created_at: moment()
+        .tz(currentUser.time_zone)
+        .format('h:mm MMMM Do, YYYY'),
+      reason: close_reason,
+      feedback: close_feedback,
+    },
+    template_name: 'CancelAccount',
+    required_reply: false,
+    cc: currentUser.email,
+    email: mail_contents.REPLY,
+  };
+
+  sendNotificationEmail(data)
+    .then(() => {
+      console.log('cancel account email has been sent out successfully');
+    })
+    .catch((err) => {
+      console.log('cancel account email send err', err);
+    });
 
   if (currentUser.proxy_number_id) {
     releaseSignalWireNumber(currentUser.proxy_number_id);
@@ -2300,6 +2326,15 @@ const closeAccount = async (req, res) => {
   currentUser.save().catch((err) => {
     console.log('user delete err', err.message);
   });
+
+  return res.send({
+    status: true,
+  });
+};
+
+const overflowPlan = async (req, res) => {
+  const { currentUser } = req;
+  const { selectedPackage } = req.body;
 
   return res.send({
     status: true,
@@ -2771,6 +2806,7 @@ module.exports = {
   closeAccount,
   connectAnotherEmail,
   pushNotification,
+  overflowPlan,
   updatePackage,
   getCallToken,
 };
