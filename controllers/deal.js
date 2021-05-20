@@ -41,6 +41,8 @@ const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const { getAvatarName } = require('../helpers/utility');
+const uuidv1 = require('uuid/v1');
+const _ = require('lodash');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -1131,7 +1133,7 @@ const sendEmails = async (req, res) => {
     cc,
     bcc,
     deal,
-    contacts,
+    contacts: inputContacts,
     video_ids,
     pdf_ids,
     image_ids,
@@ -1175,38 +1177,70 @@ const sendEmails = async (req, res) => {
     console.log('activity save err', err.message);
   });
 
-  if (contacts.length > 15) {
-    let delay = 5;
-    while (contacts.length > 0) {
-      const due_date = moment().add(delay, 'minutes');
-      delay += 1;
+  const taskProcessId = new Date().getTime() + uuidv1();
+  let newTaskId;
+  let contacts = [...inputContacts];
+  let contactsToTemp = [];
+  const CHUNK_COUNT = 2;
 
-      for (let i = 0; i < contacts.length; i += 15) {
-        const task = new Task({
-          user: currentUser.id,
-          contacts: contacts.slice(0, 15),
-          status: 'active',
-          action: {
-            type: 'send_email',
-            ...req.body,
-            shared_email: email.id,
-            has_shared: true,
-          },
-          due_date,
-        });
+  if (inputContacts.length > CHUNK_COUNT) {
+    const currentTasks = await Task.find({
+      user: currentUser._id,
+      type: 'send_email',
+      status: 'active',
+    })
+      .sort({ due_date: -1 })
+      .limit(1)
+      .catch((err) => {
+        console.log('Getting Last Email Tasks', err);
+      });
+    let last_due;
+    if (currentTasks && currentTasks.length) {
+      // Split From Here
+      last_due = currentTasks[0].due_date;
+      contactsToTemp = [...contacts];
+      contacts = [];
+    } else {
+      // Handle First Chunk and Create With Anothers
+      last_due = new Date();
+      contactsToTemp = contacts.slice(CHUNK_COUNT);
+      contacts = contacts.slice(0, CHUNK_COUNT);
+    }
 
-        task.save().catch((err) => {
-          console.log('campaign job save err', err.message);
-        });
+    let delay = 2;
+    for (let i = 0; i < contactsToTemp.length; i += CHUNK_COUNT) {
+      const due_date = moment(last_due).add(delay, 'minutes');
+      delay++;
 
-        contacts.splice(0, 15);
+      const task = new Task({
+        user: currentUser.id,
+        contacts: contactsToTemp.slice(i, i + CHUNK_COUNT),
+        status: 'active',
+        process: taskProcessId,
+        type: 'send_email',
+        action: {
+          ...req.body,
+        },
+        due_date,
+      });
+
+      task.save().catch((err) => {
+        console.log('campaign job save err', err.message);
+      });
+
+      if (!newTaskId) {
+        newTaskId = task._id;
       }
     }
 
-    return res.send({
-      status: true,
-    });
-  } else {
+    if (!contacts.length) {
+      return res.send({
+        status: true,
+        message: 'All are in queue.',
+      });
+    }
+  }
+  if (contacts.length) {
     const data = {
       user: currentUser.id,
       ...req.body,
@@ -1215,7 +1249,7 @@ const sendEmails = async (req, res) => {
     };
 
     sendEmail(data)
-      .then((_res) => {
+      .then(async (_res) => {
         _res.forEach((response) => {
           if (!response.status) {
             error.push({
@@ -1224,6 +1258,43 @@ const sendEmails = async (req, res) => {
             });
           }
         });
+
+        // Create Notification and With Success and Failed
+        if (contactsToTemp) {
+          // Failed Contacts && Total Contacts Count
+          if (error.length) {
+            const notification = new Notification({
+              user: currentUser._id,
+              criteria: 'bulk_email',
+              status: 'pending',
+              process: taskProcessId,
+              deliver_status: {
+                failed: error,
+                contacts,
+              },
+              detail: { ...req.body },
+            });
+            notification.save().catch((err) => {
+              console.log('Email Notification Create Failed');
+            });
+          }
+          // Task Update
+          const task = await Task.findById(newTaskId).catch(() => {
+            console.log('Initialize First Task Processing Status Failed');
+          });
+          if (task) {
+            const failedContacts = error.map((e) => e.contact && e.contact._id);
+            const succeedContacts = _.difference(contacts, failedContacts);
+            task.exec_result = {
+              failed: error,
+              succeed: succeedContacts,
+            };
+            task.save().catch(() => {
+              console.log('Updating First Task Processing Status Failed');
+            });
+          }
+        }
+
         if (error.length > 0) {
           return res.status(405).json({
             status: false,
@@ -1802,33 +1873,71 @@ const sendTexts = async (req, res) => {
     console.log('deal text activity save err', err.message);
   });
 
+  const textProcessId = new Date().getTime() + '_' + uuidv1();
+
   const data = {
     user: currentUser.id,
     ...req.body,
     shared_text: text.id,
     has_shared: true,
+    max_text_count,
+    textProcessId,
   };
 
   sendText(data)
     .then((_res) => {
-      _res.forEach((response) => {
-        if (!response.status) {
-          error.push({
-            contact: response.contact,
-            error: response.error,
-          });
+      const errors = [];
+      let execResult;
+      _res.forEach((e) => {
+        if (!e.status && !e.type) {
+          errors.push(e);
+        }
+        if (e.type === 'exec_result') {
+          execResult = e;
         }
       });
-      if (error.length > 0) {
+
+      if (execResult) {
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                'text_info.count': execResult.count,
+                'text_info.additional_credit.amount': execResult.additional_sms_credit,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        } else {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                'text_info.count': execResult.count,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        }
+      }
+
+      if (errors.length > 0) {
         return res.status(405).json({
           status: false,
-          error,
-        });
-      } else {
-        return res.send({
-          status: true,
+          error: errors,
         });
       }
+      return res.send({
+        status: true,
+      });
     })
     .catch((err) => {
       console.log('email send error', err);

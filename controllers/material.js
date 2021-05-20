@@ -20,6 +20,8 @@ const Garbage = require('../models/garbage');
 const Task = require('../models/task');
 const Notification = require('../models/notification');
 const ActivityHelper = require('../helpers/activity');
+const EmailHelper = require('../helpers/email');
+const TextHelper = require('../helpers/text');
 const api = require('../config/api');
 const request = require('request-promise');
 const createBody = require('gmail-api-create-message-body');
@@ -83,17 +85,11 @@ const bulkEmail = async (req, res) => {
     attachments,
   } = req.body;
 
-  const CHUNK_COUNT = 15;
+  const CHUNK_COUNT = 2;
 
-  let email_count = currentUser['email_info']['count'] || 0;
   const max_email_count =
     currentUser['email_info']['max_count'] ||
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
-  const email_info = currentUser['email_info'] || {};
-
-  let html_content = '';
-  let no_connected = false;
-  const promise_array = [];
 
   if (!currentUser.primary_connected) {
     return res.status(406).json({
@@ -176,655 +172,22 @@ const bulkEmail = async (req, res) => {
 
   // TODO: Update the Response if temp contacts exist.
   if (contacts.length) {
-    for (let i = 0; i < contacts.length; i++) {
-      let promise;
-      const activities = [];
-
-      const contact = await Contact.findOne({
-        _id: contacts[i],
-      }).catch((err) => {
-        console.log('contact found err', err.message);
-      });
-
-      if (!contact) {
-        promise = new Promise((resolve) => {
-          resolve({
-            status: false,
-            contact: {
-              _id: contacts[i],
-            },
-            error: 'Contact was removed.',
-          });
-        });
-
-        promise_array.push(promise);
-        continue;
-      }
-
-      if (contact.tags.indexOf('unsubscribed') !== -1) {
-        promise = new Promise((resolve) => {
-          resolve({
-            status: false,
-            contact: {
-              _id: contacts[i],
-              first_name: contact.first_name,
-              email: contact.email,
-            },
-            error: 'contact email unsubscribed',
-          });
-        });
-
-        promise_array.push(promise);
-        continue;
-      }
-
-      if (email_info['is_limit'] && email_count > max_email_count) {
-        promise = new Promise((resolve) => {
-          resolve({
-            status: false,
-            contact: {
-              _id: contact._id,
-              first_name: contact.first_name,
-              email: contact.email,
-            },
-            error: 'email daily limit exceed!',
-          });
-        });
-        promise_array.push(promise);
-        continue;
-      }
-
-      let email_subject = subject;
-      let email_content = content || '';
-      let material_title;
-
-      email_subject = email_subject
-        .replace(/{user_name}/gi, currentUser.user_name)
-        .replace(/{user_email}/gi, currentUser.connected_email)
-        .replace(/{user_phone}/gi, currentUser.cell_phone)
-        .replace(/{contact_first_name}/gi, contact.first_name)
-        .replace(/{contact_last_name}/gi, contact.last_name)
-        .replace(/{contact_email}/gi, contact.email)
-        .replace(/{contact_phone}/gi, contact.cell_phone);
-
-      email_content = email_content
-        .replace(/{user_name}/gi, currentUser.user_name)
-        .replace(/{user_email}/gi, currentUser.connected_email)
-        .replace(/{user_phone}/gi, currentUser.cell_phone)
-        .replace(/{contact_first_name}/gi, contact.first_name)
-        .replace(/{contact_last_name}/gi, contact.last_name)
-        .replace(/{contact_email}/gi, contact.email)
-        .replace(/{contact_phone}/gi, contact.cell_phone);
-
-      if (
-        (video_ids && video_ids.length && pdf_ids && pdf_ids.length) ||
-        (video_ids && video_ids.length && image_ids && image_ids.length) ||
-        (pdf_ids && pdf_ids.length && image_ids && image_ids.length)
-      ) {
-        material_title = mail_contents.MATERIAL_TITLE;
-        email_subject = email_subject.replace(
-          /{material_title}/gi,
-          material_title
-        );
-      }
-
-      if (video_ids && video_ids.length > 0) {
-        let video_titles = '';
-        const videos = await Video.find({ _id: { $in: video_ids } }).catch(
-          (err) => {
-            console.log('video find error', err.message);
-          }
-        );
-
-        let activity_content = 'sent video using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
-        }
-
-        if (videos.length >= 2) {
-          video_titles = mail_contents.VIDEO_TITLE;
-        } else {
-          video_titles = videos[0].title;
-        }
-
-        if (!material_title) {
-          email_subject = email_subject.replace(
-            /{material_title}/gi,
-            video_titles
-          );
-        }
-
-        for (let j = 0; j < videos.length; j++) {
-          const video = videos[j];
-
-          const activity = new Activity({
-            content: activity_content,
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: video.id,
-            subject: video.title,
-          });
-
-          activity.save().catch((err) => {
-            console.log('activity save err', err.message);
-          });
-
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-          email_content = email_content.replace(
-            new RegExp(`{{${video.id}}}`, 'g'),
-            video_link
-          );
-
-          activities.push(activity.id);
-        }
-      }
-
-      if (pdf_ids && pdf_ids.length > 0) {
-        let pdf_titles = '';
-        const pdfs = await PDF.find({ _id: { $in: pdf_ids } }).catch((err) => {
-          console.log('pdf find error', err.message);
-        });
-
-        let activity_content = 'sent pdf using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
-        }
-
-        if (pdfs.length >= 2) {
-          pdf_titles = mail_contents.PDF_TITLE;
-        } else {
-          pdf_titles = pdfs[0].title;
-        }
-
-        if (!material_title) {
-          email_subject = email_subject.replace(
-            /{material_title}/gi,
-            pdf_titles
-          );
-        }
-        for (let j = 0; j < pdfs.length; j++) {
-          const pdf = pdfs[j];
-          const activity = new Activity({
-            content: activity_content,
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'pdfs',
-            pdfs: pdf.id,
-            subject: email_subject,
-          });
-
-          activity.save().catch((err) => {
-            console.log('activity save err', err.message);
-          });
-
-          const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
-          email_content = email_content.replace(
-            new RegExp(`{{${pdf.id}}}`, 'g'),
-            pdf_link
-          );
-
-          activities.push(activity.id);
-        }
-      }
-
-      if (image_ids && image_ids.length > 0) {
-        let image_titles = '';
-        const images = await Image.find({ _id: { $in: image_ids } }).catch(
-          (err) => {
-            console.log('image find error', err.message);
-          }
-        );
-
-        let activity_content = 'sent image using email';
-        if (req.guest_loggin) {
-          activity_content = ActivityHelper.assistantLog(activity_content);
-        }
-
-        if (images.length >= 2) {
-          image_titles = mail_contents.IMAGE_TITLE;
-        } else {
-          image_titles = images[0].title;
-        }
-
-        if (!material_title) {
-          email_subject = email_subject.replace(
-            /{material_title}/gi,
-            image_titles
-          );
-        }
-        for (let j = 0; j < images.length; j++) {
-          const image = images[j];
-          const activity = new Activity({
-            content: activity_content,
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'images',
-            images: image.id,
-            subject: email_subject,
-          });
-
-          activity.save().catch((err) => {
-            console.log('activity image err', err.message);
-          });
-
-          const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
-          email_content = email_content.replace(
-            new RegExp(`{{${image.id}}}`, 'g'),
-            image_link
-          );
-
-          activities.push(activity.id);
-        }
-      }
-
-      let activity_content = 'sent email';
-      if (req.guest_loggin) {
-        activity_content = ActivityHelper.assistantLog(activity_content);
-      }
-
-      const email = new Email({
-        user: currentUser.id,
-        subject: email_subject,
-        content: email_content,
-        cc,
-        bcc,
-        contacts: contacts[i],
-      });
-
-      email.save().catch((err) => {
-        console.log('email save err', err.message);
-      });
-
-      const activity = new Activity({
-        content: activity_content,
-        contacts: contacts[i],
-        user: currentUser.id,
-        type: 'emails',
-        subject: email_subject,
-        emails: email.id,
-        videos: video_ids,
-        pdfs: pdf_ids,
-        images: image_ids,
-      });
-
-      activity.save().catch((err) => {
-        console.log('email send err', err.message);
-      });
-
-      if (cc.length > 0 || bcc.length > 0) {
-        html_content =
-          '<html><head><title>Email</title></head><body><tbody><tr><td>' +
-          email_content +
-          '</td></tr><tr><td>' +
-          currentUser.email_signature +
-          '</td></tr><tr><td>' +
-          generateUnsubscribeLink(activity.id) +
-          '</td></tr></tbody></body></html>';
-      } else {
-        email_content = addLinkTracking(email_content, activity.id);
-        html_content =
-          '<html><head><title>Email</title></head><body><tbody><tr><td>' +
-          email_content +
-          '</td></tr><tr><td>' +
-          generateOpenTrackLink(activity.id) +
-          '</td></tr><tr><td>' +
-          currentUser.email_signature +
-          '</td></tr><tr><td>' +
-          generateUnsubscribeLink(activity.id) +
-          '</td></tr></tbody></body></html>';
-      }
-
-      if (
-        (video_ids && video_ids.length) ||
-        (pdf_ids && pdf_ids.length) ||
-        (image_ids && image_ids.length)
-      ) {
-        const garbage = await Garbage.findOne({
-          user: currentUser.id,
-        }).catch((err) => {
-          console.log('garbage find err', err.message);
-        });
-
-        if (garbage && garbage.auto_follow_up2) {
-          const auto_follow_up2 = garbage.auto_follow_up2;
-          if (auto_follow_up2['enabled']) {
-            const now = moment();
-            const period = auto_follow_up2['period'];
-            const content = auto_follow_up2['content'];
-            const due_date = now.add(period, 'hours');
-
-            for (let j = 0; j < video_ids.length; j++) {
-              const task = new Task({
-                user: currentUser.id,
-                action: {
-                  type: 'auto_follow_up2',
-                  due_date,
-                  content,
-                },
-                watched_video: video_ids[j],
-                'condition.case': 'watched_video',
-                'condition.answer': false,
-                status: 'active',
-                contact: contacts[i],
-              });
-
-              task.save().catch((err) => {
-                console.log('task save err', err.message);
-              });
-            }
-
-            for (let j = 0; j < pdf_ids.length; j++) {
-              const task = new Task({
-                user: currentUser.id,
-                action: {
-                  type: 'auto_follow_up2',
-                  due_date,
-                  content,
-                },
-                watched_pdf: pdf_ids[j],
-                'condition.case': 'watched_pdf',
-                'condition.answer': false,
-                status: 'active',
-                contact: contacts[i],
-              });
-
-              task.save().catch((err) => {
-                console.log('task save err', err.message);
-              });
-            }
-
-            for (let j = 0; j < image_ids.length; j++) {
-              const task = new Task({
-                user: currentUser.id,
-                action: {
-                  type: 'auto_follow_up2',
-                  due_date,
-                  content,
-                },
-                watched_image: image_ids[j],
-                'condition.case': 'watched_image',
-                'condition.answer': false,
-                status: 'active',
-                contact: contacts[i],
-              });
-
-              task.save().catch((err) => {
-                console.log('task save err', err.message);
-              });
-            }
-          }
-        }
-      }
-
-      if (
-        currentUser.connected_email_type === 'gmail' ||
-        currentUser.connected_email_type === 'gsuit'
-      ) {
-        const oauth2Client = new google.auth.OAuth2(
-          api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-          api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-          urls.GMAIL_AUTHORIZE_URL
-        );
-
-        const token = JSON.parse(currentUser.google_refresh_token);
-        oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-
-        await oauth2Client.getAccessToken().catch((err) => {
-          console.log('get access err', err.message);
-        });
-
-        if (!oauth2Client.credentials.access_token) {
-          promise_array.push(
-            new Promise((resolve) => {
-              resolve({
-                status: false,
-                contact: {
-                  _id: contact._id,
-                  first_name: contact.first_name,
-                  email: contact.email,
-                },
-                error: 'google access token invalid!',
-              });
-            })
-          );
-
-          // Remove created activity and email
-          revertEmailing(activities, activity._id, email._id);
-          continue;
-        }
-
-        const attachment_array = [];
-        if (attachments) {
-          for (let i = 0; i < attachments.length; i++) {
-            attachment_array.push({
-              type: attachments[i].type,
-              name: attachments[i].filename,
-              data: attachments[i].content,
-            });
-          }
-        }
-
-        promise = new Promise((resolve) => {
-          try {
-            const body = createBody({
-              headers: {
-                To: contact.email,
-                From: `${currentUser.user_name} <${currentUser.connected_email}>`,
-                Subject: email_subject,
-                Cc: cc,
-                Bcc: bcc,
-              },
-              textHtml: html_content,
-              textPlain: email_content,
-              attachments: attachment_array,
-            });
-
-            request({
-              method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-              headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-                'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
-              },
-              body,
-            })
-              .then(async () => {
-                email_count += 1;
-                handleSuccessEmailing(contact._id, activities, activity._id, email._id);
-
-                resolve({
-                  status: true,
-                  data: activities,
-                });
-              })
-              .catch((err) => {
-                revertEmailing(activities, activity._id, email._id);
-                if (err.statusCode === 403) {
-                  no_connected = true;
-                  resolve({
-                    status: false,
-                    contact: {
-                      _id: contact._id,
-                      first_name: contact.first_name,
-                      email: contact.email,
-                    },
-                    error: 'No Connected Gmail',
-                  });
-                } else if (err.statusCode === 400) {
-                  resolve({
-                    status: false,
-                    contact: {
-                      _id: contact._id,
-                      first_name: contact.first_name,
-                      email: contact.email,
-                    },
-                    error: err.message,
-                  });
-                } else {
-                  console.log('recipience err', err);
-                  resolve({
-                    status: false,
-                    contact: {
-                      _id: contact._id,
-                      first_name: contact.first_name,
-                      email: contact.email,
-                    },
-                    error: 'Recipient address required',
-                  });
-                }
-              });
-          } catch (err) {
-            console.log('gmail video send err', err.message);
-
-            revertEmailing(activities, activity._id, email._id);
-            resolve({
-              status: false,
-              contact: {
-                _id: contact._id,
-                first_name: contact.first_name,
-                email: contact.email,
-              },
-              error: err.message,
-            });
-          }
-        });
-        promise_array.push(promise);
-      } else if (
-        currentUser.connected_email_type === 'outlook' ||
-        currentUser.connected_email_type === 'microsoft'
-      ) {
-        const token = oauth2.accessToken.create({
-          refresh_token: currentUser.outlook_refresh_token,
-          expires_in: 0,
-        });
-
-        let accessToken;
-
-        await new Promise((resolve, reject) => {
-          token.refresh(function (error, result) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result.token);
-            }
-          });
-        })
-          .then((token) => {
-            accessToken = token.access_token;
-          })
-          .catch((error) => {
-            console.log('error', error);
-            promise = new Promise(async (resolve) => {
-              resolve({
-                status: false,
-                contact: {
-                  _id: contact._id,
-                  first_name: contact.first_name,
-                  email: contact.email,
-                },
-                error: 'not connected',
-              });
-            });
-
-            revertEmailing(activities, activity._id, email._id);
-            promise_array.push(promise);
-          });
-
-        const client = graph.Client.init({
-          authProvider: (done) => {
-            done(null, accessToken);
-          },
-        });
-
-        const attachment_array = [];
-        const cc_array = [];
-        const bcc_array = [];
-
-        if (attachments) {
-          for (let i = 0; i < attachments.length; i++) {
-            const attachment = attachments[i];
-            attachment_array.push({
-              '@odata.type': '#microsoft.graph.fileAttachment',
-              name: attachment.filename,
-              contentType: attachment.type,
-              contentBytes: attachment.content.replace(/^data:.+;base64,/, ''),
-            });
-          }
-        }
-
-        if (cc) {
-          for (let i = 0; i < cc.length; i++) {
-            cc_array.push({
-              emailAddress: {
-                address: cc[i],
-              },
-            });
-          }
-        }
-
-        if (bcc) {
-          for (let i = 0; i < bcc.length; i++) {
-            bcc_array.push({
-              emailAddress: {
-                address: bcc[i],
-              },
-            });
-          }
-        }
-
-        const sendMail = {
-          message: {
-            subject: email_subject,
-            body: {
-              contentType: 'HTML',
-              content: email_content,
-            },
-            toRecipients: [
-              {
-                emailAddress: {
-                  address: contact.email,
-                },
-              },
-            ],
-            ccRecipients: cc_array,
-            bccRecipients: bcc_array,
-            attachments: attachment_array,
-          },
-          saveToSentItems: 'true',
-        };
-
-        promise = new Promise((resolve) => {
-          client
-            .api('/me/sendMail')
-            .post(sendMail)
-            .then(async () => {
-              email_count += 1;
-              handleSuccessEmailing(contact._id, activities, activity._id, email._id);
-              resolve({
-                status: true,
-                data: activities,
-              });
-            })
-            .catch((err) => {
-              console.log('microsoft email send error', err.message);
-              revertEmailing(activities, activity._id, email._id);
-              resolve({
-                status: false,
-                contact: {
-                  _id: contact._id,
-                  first_name: contact.first_name,
-                  email: contact.email,
-                },
-                error: err.message || err.msg,
-              });
-            });
-        });
-        promise_array.push(promise);
-      }
-    }
-    Promise.all(promise_array)
+    EmailHelper.sendEmail({
+      uesr: currentUser._id,
+      contacts,
+      video_ids,
+      pdf_ids,
+      image_ids,
+      content,
+      subject,
+      cc,
+      bcc,
+      attachments,
+      // mode,
+      // shared_email,
+      // has_shared,
+      is_guest: req.guest_loggin,
+    })
       .then(async (result) => {
         const error = [];
         result.forEach((_res) => {
@@ -839,20 +202,22 @@ const bulkEmail = async (req, res) => {
         // Create Notification and With Success and Failed
         if (contactsToTemp) {
           // Failed Contacts && Total Contacts Count
-          const notification = new Notification({
-            user: currentUser._id,
-            criteria: 'bulk_email',
-            status: 'pending',
-            process: taskProcessId,
-            deliver_status: {
-              total: inputContacts.length,
-              failed: error,
-            },
-            detail: { ...req.body },
-          });
-          notification.save().catch((err) => {
-            console.log('Email Notification Create Failed');
-          });
+          if (error.length) {
+            const notification = new Notification({
+              user: currentUser._id,
+              criteria: 'bulk_email',
+              status: 'pending',
+              process: taskProcessId,
+              deliver_status: {
+                failed: error,
+                contacts,
+              },
+              detail: { ...req.body },
+            });
+            notification.save().catch((err) => {
+              console.log('Email Notification Create Failed');
+            });
+          }
           // Task Update
           const task = await Task.findById(newTaskId).catch(() => {
             console.log('Initialize First Task Processing Status Failed');
@@ -862,7 +227,7 @@ const bulkEmail = async (req, res) => {
             const succeedContacts = _.difference(contacts, failedContacts);
             task.exec_result = {
               failed: error,
-              success: succeedContacts,
+              succeed: succeedContacts,
             };
             task.save().catch(() => {
               console.log('Updating First Task Processing Status Failed');
@@ -890,56 +255,18 @@ const bulkEmail = async (req, res) => {
   }
 };
 
-const revertEmailing = (activities, email_activity, email_id) => {
-  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-    console.log('email material activity delete err', err.message);
-  });
-  Activity.deleteOne({ _id: email_activity }).catch((err) => {
-    console.log('email activity delete err', err.message);
-  });
-  Email.deleteOne({ _id: email_id }).catch((err) => {
-    console.log('activity delete err', err.message);
-  });
-  // TODO: Auto Follow Rest
-};
-
-const handleSuccessEmailing = (
-  contact,
-  activities,
-  email_activity,
-  email_id
-) => {
-  Activity.updateMany(
-    { _id: { $in: activities } },
-    {
-      $set: { emails: email_id },
-    }
-  ).catch((err) => {
-    console.log('activity update err', err.message);
-  });
-
-  Contact.updateOne(
-    { _id: contact },
-    { $set: { last_activity: email_activity } }
-  ).catch((err) => {
-    console.log('err', err.message);
-  });
-};
-
 // TODO: AUTO FOLLOW UP
 const bulkText = async (req, res) => {
   const { currentUser } = req;
   const { video_ids, pdf_ids, image_ids, content, contacts, mode } = req.body;
 
-  const promise_array = [];
-  const error = [];
   if (!contacts || !contacts.length) {
     return res.status(400).json({
       status: false,
       error: 'Contacts not found',
     });
   }
-  
+
   if (contacts.length > system_settings.TEXT_ONE_TIME) {
     return res.status(400).json({
       status: false,
@@ -978,507 +305,68 @@ const bulkText = async (req, res) => {
   }
 
   const textProcessId = new Date().getTime() + '_' + uuidv1();
-  for (let i = 0; i < contacts.length; i++) {
-    let text_content = content;
-    const activities = [];
-
-    const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-      (err) => {
-        console.log('contact update err', err.messgae);
-      }
-    );
-
-    let promise;
-    if (
-      text_info['is_limit'] &&
-      max_text_count <= count &&
-      !additional_sms_credit
-    ) {
-      promise = new Promise(async (resolve) => {
-        resolve({
-          status: false,
-          contact: {
-            _id: _contact._id,
-            first_name: _contact.first_name,
-            cell_phone: _contact.cell_phone,
-          },
-          error: 'Additional count required',
-        });
+  TextHelper.sendText({
+    user: currentUser._id,
+    video_ids,
+    pdf_ids,
+    image_ids,
+    content,
+    contacts,
+    mode,
+    max_text_count,
+    // shared_text,
+    // has_shared,
+    is_guest: req.guest_loggin,
+    textProcessId,
+  })
+    .then((_res) => {
+      const errors = [];
+      let execResult;
+      _res.forEach((e) => {
+        if (!e.status && !e.type) {
+          errors.push(e);
+        }
+        if (e.type === 'exec_result') {
+          execResult = e;
+        }
       });
-      promise_array.push(promise);
-      continue;
-    }
 
-    const e164Phone = phone(_contact.cell_phone)[0];
-    if (!e164Phone) {
-      promise = new Promise(async (resolve) => {
-        resolve({
-          status: false,
-          contact: {
-            _id: _contact._id,
-            first_name: _contact.first_name,
-            cell_phone: _contact.cell_phone,
-          },
-          error: 'Invalid number',
-        });
-      });
-      promise_array.push(promise);
-      continue;
-    }
-
-    text_content = text_content
-      .replace(/{user_name}/gi, currentUser.user_name)
-      .replace(/{user_email}/gi, currentUser.connected_email)
-      .replace(/{user_phone}/gi, currentUser.cell_phone)
-      .replace(/{contact_first_name}/gi, _contact.first_name)
-      .replace(/{contact_last_name}/gi, _contact.last_name)
-      .replace(/{contact_email}/gi, _contact.email)
-      .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-    if (video_ids && video_ids.length > 0) {
-      let activity_content = 'sent video using sms';
-
-      switch (mode) {
-        case 'automation':
-          activity_content = ActivityHelper.automationLog(activity_content);
-          break;
-        case 'campaign':
-          activity_content = ActivityHelper.campaignLog(activity_content);
-          break;
-        case 'api':
-          activity_content = ActivityHelper.apiLog(activity_content);
-          break;
-      }
-
-      for (let j = 0; j < video_ids.length; j++) {
-        const video = await Video.findOne({ _id: video_ids[j] }).catch(
-          (err) => {
-            console.log('video find error', err.message);
-          }
-        );
-
-        const activity = new Activity({
-          content: activity_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'videos',
-          videos: video.id,
-        });
-
-        activity.save().catch((err) => {
-          console.log('email send err', err.message);
-        });
-
-        const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity.id;
-        text_content = text_content.replace(
-          new RegExp(`{{${video.id}}}`, 'g'),
-          video_link
-        );
-
-        activities.push(activity.id);
-      }
-    }
-
-    if (pdf_ids && pdf_ids.length > 0) {
-      let activity_content = 'sent pdf using sms';
-
-      switch (mode) {
-        case 'automation':
-          activity_content = ActivityHelper.automationLog(activity_content);
-          break;
-        case 'campaign':
-          activity_content = ActivityHelper.campaignLog(activity_content);
-          break;
-        case 'api':
-          activity_content = ActivityHelper.apiLog(activity_content);
-          break;
-      }
-
-      for (let j = 0; j < pdf_ids.length; j++) {
-        const pdf = await PDF.findOne({ _id: pdf_ids[j] }).catch((err) => {
-          console.log('pdf find error', err.message);
-        });
-
-        const activity = new Activity({
-          content: activity_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'pdfs',
-          pdfs: pdf.id,
-        });
-
-        activity.save().catch((err) => {
-          console.log('email send err', err.message);
-        });
-
-        const pdf_link = urls.MATERIAL_VIEW_PDF_URL + activity.id;
-        text_content = text_content.replace(
-          new RegExp(`{{${pdf.id}}}`, 'g'),
-          pdf_link
-        );
-
-        activities.push(activity.id);
-      }
-    }
-
-    if (image_ids && image_ids.length > 0) {
-      let activity_content = 'sent image using email';
-
-      switch (mode) {
-        case 'automation':
-          activity_content = ActivityHelper.automationLog(activity_content);
-          break;
-        case 'campaign':
-          activity_content = ActivityHelper.campaignLog(activity_content);
-          break;
-        case 'api':
-          activity_content = ActivityHelper.apiLog(activity_content);
-          break;
-      }
-
-      for (let j = 0; j < image_ids.length; j++) {
-        const image = await Image.findOne({ _id: image_ids[j] }).catch(
-          (err) => {
-            console.log('image find error', err.message);
-          }
-        );
-
-        const activity = new Activity({
-          content: activity_content,
-          contacts: contacts[i],
-          user: currentUser.id,
-          type: 'images',
-          images: image.id,
-        });
-
-        activity.save().catch((err) => {
-          console.log('email send err', err.message);
-        });
-
-        const image_link = urls.MATERIAL_VIEW_IMAGE_URL + activity.id;
-        text_content = text_content.replace(
-          new RegExp(`{{${image.id}}}`, 'g'),
-          image_link
-        );
-
-        activities.push(activity.id);
-      }
-    }
-
-    let activity_content = 'sent text';
-
-    if (req.guest_loggin) {
-      activity_content = ActivityHelper.assistantLog(activity_content);
-    }
-
-    const text = new Text({
-      user: currentUser.id,
-      content: text_content,
-      contacts: contacts[i],
-      type: 0,
-    });
-
-    text.save().catch((err) => {
-      console.log('text save err', err.message);
-    });
-
-    const activity = new Activity({
-      content: activity_content,
-      contacts: contacts[i],
-      user: currentUser.id,
-      type: 'texts',
-      texts: text.id,
-      videos: video_ids,
-      pdfs: pdf_ids,
-      images: image_ids,
-    });
-
-    activity.save().catch((err) => {
-      console.log('text send err', err.message);
-    });
-
-    let fromNumber = currentUser['proxy_number'];
-    const body = _contact.texted_unsbcription_link
-      ? text_content
-      : text_content + generateTextUnsubscribeLink();
-
-    if (fromNumber) {
-      promise = new Promise(async (resolve) => {
-        client.messages
-          .create({
-            from: fromNumber,
-            to: e164Phone,
-            body,
-          })
-          .then((message) => {
-            if (text_info['is_limit'] && max_text_count <= count) {
-              additional_sms_credit -= 1;
-            } else {
-              count += 1;
-            }
-            if (message.status === 'queued' || message.status === 'sent') {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                text_content
-              );
-
-              if (contacts.length > 1) {
-                const time = moment().add(1, 'minutes');
-                createTextCheckTasks(currentUser, _contact, message, 'signal', activities, activity._id, text._id, textProcessId, time);
-                
-                resolve({
-                  status: true,
-                  contact: _contact
-                });
-              } else {
-                const interval_id = setInterval(function () {
-                  let j = 0;
-                  getStatus(message.sid).then((res) => {
-                    j++;
-                    if (res.status === 'delivered') {
-                      clearInterval(interval_id);
-                      // Handle delivered text
-                      handleDeliveredText(_contact, activities, activity._id, text._id);
-
-                      resolve({
-                        status: true,
-                        contact: _contact,
-                      });
-                    } else if (res.status === 'sent' && j >= 5) {
-                      clearInterval(interval_id);
-                      // Handle failed text with status 3
-                      handleFailedText(activities, activity._id, text._id, 3);
-
-                      resolve({
-                        status: false,
-                        contact: {
-                          _id: _contact._id,
-                          first_name: _contact.first_name,
-                          cell_phone: _contact.cell_phone,
-                        },
-                        error: message.error_message,
-                      });
-                    } else if (res.status === 'undelivered') {
-                      clearInterval(interval_id);
-                      // Handle with 4 status
-                      handleFailedText(activities, activity._id, text._id, 4);
-
-                      resolve({
-                        status: false,
-                        contact: {
-                          _id: _contact._id,
-                          first_name: _contact.first_name,
-                          cell_phone: _contact.cell_phone,
-                        },
-                        error: message.error_message,
-                      });
-                    }
-                  });
-                }, 1000);
-              }
-            } else if (message.status === 'delivered') {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                text_content
-              );
-              handleDeliveredText(_contact, activities, activity._id, text._id);
-
-              resolve({
-                status: true,
-                contact: _contact,
-              });
-            } else {
-              // Handle Failed Text
-              handleFailedText(activities, activity._id, text._id, 4);
-
-              resolve({
-                status: false,
-                contact: {
-                  _id: _contact._id,
-                  first_name: _contact.first_name,
-                  cell_phone: _contact.cell_phone,
-                },
-                error: message.error_message || 'message response is lost',
-              });
-            }
-          })
-          .catch((err) => {
-            console.log('video message send err', err);
-            // Handle Failed Text
-            handleFailedText(activities, activity._id, text._id, 4);
-
-            resolve({
-              status: false,
-              contact: {
-                _id: _contact._id,
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: err.message || 'Message creating is failed' ,
-            });
-          });
-      });
-    } else {
-      fromNumber = currentUser['twilio_number'];
-      promise = new Promise(async (resolve) => {
-        twilio.messages
-          .create({
-            from: fromNumber,
-            body,
-            to: e164Phone,
-          })
-          .then((message) => {
-            if (text_info['is_limit'] && max_text_count <= count) {
-              additional_sms_credit -= 1;
-            } else {
-              count += 1;
-            }
-
-            if (
-              message.status === 'accepted' ||
-              message.status === 'sending' ||
-              message.status === 'queued' ||
-              message.status === 'sent'
-            ) {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                text_content
-              );
-
-              if (contacts.length > 1) {
-                const time = moment().add(1, 'minutes');
-                createTextCheckTasks(currentUser, _contact, message, 'twillio', activities, activity._id, text._id, textProcessId, time);
-
-                resolve({
-                  status: true,
-                  contact: _contact,
-                });
-              } else {
-                const interval_id = setInterval(function () {
-                  let j = 0;
-                  getStatus(message.sid, 'twilio').then((res) => {
-                    j++;
-                    if (res.status === 'delivered') {
-                      clearInterval(interval_id);
-                      // Handle delivered Text
-                      handleDeliveredText(_contact, activities, activity._id, text._id);
-                      resolve({
-                        status: true,
-                        contact: _contact,
-                      });
-                    } else if (res.status === 'sent' && j >= 5) {
-                      clearInterval(interval_id);
-                      // Handle Failed Text with Status 3
-                      handleFailedText(activities, activity._id, text._id, 3);
-
-                      resolve({
-                        status: false,
-                        contact: {
-                          _id: _contact._id,
-                          first_name: _contact.first_name,
-                          cell_phone: _contact.cell_phone,
-                        },
-                        error: message.error_message,
-                      });
-                    } else if (res.status === 'undelivered') {
-                      clearInterval(interval_id);
-                      // Handle Failed Text with Status 4
-                      handleFailedText(activities, activity._id, text._id, 4);
-
-                      resolve({
-                        status: false,
-                        contact: {
-                          _id: _contact._id,
-                          first_name: _contact.first_name,
-                          cell_phone: _contact.cell_phone,
-                        },
-                        error: message.error_message,
-                      });
-                    }
-                  });
-                }, 1000);
-              }
-            } else if (message.status === 'delivered') {
-              console.log('Message ID: ', message.sid);
-              console.info(
-                `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
-                text_content
-              );
-              // Handle delivered Text
-              handleDeliveredText(_contact, activities, activity._id, text._id);
-              resolve({
-                status: true,
-              });
-            } else {
-              handleFailedText(activities, activity._id, text._id, 4);
-              resolve({
-                status: false,
-                contact: {
-                  _id: _contact._id,
-                  first_name: _contact.first_name,
-                  cell_phone: _contact.cell_phone,
-                },
-                error: message.error_message || 'message response is lost',
-              });
-            }
-          })
-          .catch((err) => {
-            handleFailedText(activities, activity._id, text._id, 4);
-
-            resolve({
-              status: false,
-              contact: {
-                _id: _contact._id,
-                first_name: _contact.first_name,
-                cell_phone: _contact.cell_phone,
-              },
-              error: err.message || 'Message creating is failed' ,
-            });
-          });
-      });
-    }
-    promise_array.push(promise);
-  }
-
-  Promise.all(promise_array)
-    .then(() => {
-      const { additional_credit } = currentUser.text_info;
-      if (additional_credit) {
-        User.updateOne(
-          {
-            _id: currentUser.id,
-          },
-          {
-            $set: {
-              'text_info.count': count,
-              'text_info.additional_credit.amount': additional_sms_credit,
+      if (execResult) {
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          User.updateOne(
+            {
+              _id: currentUser.id,
             },
-          }
-        ).catch((err) => {
-          console.log('user sms count updaet error: ', err);
-        });
-      } else {
-        User.updateOne(
-          {
-            _id: currentUser.id,
-          },
-          {
-            $set: {
-              'text_info.count': count,
+            {
+              $set: {
+                'text_info.count': execResult.count,
+                'text_info.additional_credit.amount': execResult.additional_sms_credit,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        } else {
+          User.updateOne(
+            {
+              _id: currentUser.id,
             },
-          }
-        ).catch((err) => {
-          console.log('user sms count updaet error: ', err);
-        });
+            {
+              $set: {
+                'text_info.count': execResult.count,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        }
       }
 
-      if (error.length > 0) {
+      if (errors.length > 0) {
         return res.status(405).json({
           status: false,
-          error,
+          error: errors,
         });
       }
       return res.send({
@@ -1492,119 +380,6 @@ const bulkText = async (req, res) => {
         error: err,
       });
     });
-};
-
-const handleFailedText = (activities, text_activity, text_id, status) => {
-  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-    console.log('text material activity delete err', err.message);
-  });
-
-  // TODO: Update the Text Activity with error or consider about this.
-
-  Text.updateOne(
-    {
-      _id: text_id,
-    },
-    {
-      $set: {
-        status,
-      },
-    }
-  ).catch((err) => {
-    console.log('text update err', err.message);
-  });
-};
-
-const handleDeliveredText = (contact, activities, text_activity, text_id) => {
-  Text.updateOne(
-    {
-      _id: text_id,
-    },
-    {
-      $set: {
-        status: 2,
-      },
-    }
-  ).catch((err) => {
-    console.log('text update err', err.message);
-  });
-
-  Activity.updateMany(
-    { _id: { $in: activities } },
-    {
-      $set: { texts: text_id },
-    }
-  ).catch((err) => {
-    console.log('activity update err', err.message);
-  });
-
-  Contact.updateOne(
-    { _id: contact._id },
-    {
-      $set: {
-        last_activity: text_activity,
-        texted_unsbcription_link: true,
-      },
-    }
-  ).catch((err) => {
-    console.log('contact update err', err.message);
-  });
-};
-
-const revertTexting = (activities, text_activity, text_id) => {
-  Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
-    console.log('text material activity delete err', err.message);
-  });
-  Activity.deleteOne({ _id: text_activity }).catch((err) => {
-    console.log('text activity delete err', err.message);
-  });
-  Text.deleteOne({ _id: text_id }).catch((err) => {
-    console.log('activity delete err', err.message);
-  });
-};
-
-const createTextCheckTasks = (user, contact, message, service, activities, text_activity, text_id, process_id, time) => {
-  const task = new Task({
-    user: user.id,
-    status: 'active',
-    type: 'bulk_sms',
-    action: {
-      message_sid: message.sid,
-      activities,
-      service,
-    },
-    contact: contact._id,
-    text: text_id,
-    due_date: time,
-    process: process_id,
-  });
-
-  task.save().catch((err) => {
-    console.log('time line save err', err.message);
-  });
-
-  Activity.updateOne(
-    { _id: text_activity },
-    {
-      $set: {
-        status: 'pending',
-      },
-    }
-  ).catch((err) => {
-    console.log('activity err', err.message);
-  });
-
-  Activity.updateMany(
-    { _id: { $in: activities } },
-    {
-      $set: {
-        status: 'pending',
-        texts: text_id,
-      },
-    }
-  ).catch((err) => {
-    console.log('activity err', err.message);
-  });
 };
 
 const socialShare = async (req, res) => {

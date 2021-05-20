@@ -119,30 +119,6 @@ const task_check = new CronJob(
                 });
                 if (anotherProcessTasks && anotherProcessTasks.length) {
                   timeline['status'] = 'completed';
-                  // notification update or create
-                  const notification = await Notification.findOne({
-                    process: timeline.process,
-                  });
-                  if (notification) {
-                    notification.deliver_status.failed = [
-                      ...notification.deliver_status.failed,
-                      ...errors,
-                    ];
-                    notification.save();
-                  } else {
-                    const newNotification = new Notification({
-                      user: timeline.user,
-                      criteria: 'bulk_email',
-                      status: 'pending',
-                      process: timeline.process,
-                      deliver_status: {
-                        total: action.contacts.length,
-                        failed: errors,
-                      },
-                      detail: action,
-                    });
-                    newNotification.save();
-                  }
                   if (timeline.exec_result && timeline.exec_result.failed) {
                     timeline.exec_result.failed = [
                       ...timeline.exec_result.failed,
@@ -154,38 +130,68 @@ const task_check = new CronJob(
                     };
                   }
                   timeline.save();
-                } else {
-                  // Remove all same tasks
-                  Task.deleteMany({ process: timeline.process }).catch(
-                    (err) => {
-                      console.log('Delete tasks error: ', err);
-                    }
-                  );
-                  // Notification Update or Create for completed
-                  const notification = await Notification.findOne({
-                    process: timeline.process,
-                  });
-                  if (notification) {
-                    notification.deliver_status.failed = [
-                      ...notification.deliver_status.failed,
-                      ...errors,
-                    ];
-                    notification.status = 'delivered';
-                    notification.save();
-                  } else {
+                  // notification update or create
+                  if (errors.length) {
                     const newNotification = new Notification({
                       user: timeline.user,
                       criteria: 'bulk_email',
-                      status: 'delivered',
+                      status: 'pending',
                       process: timeline.process,
                       deliver_status: {
-                        total: action.contacts.length,
+                        contacts: action.contacts,
                         failed: errors,
                       },
                       detail: action,
                     });
                     newNotification.save();
                   }
+                } else {
+                  Task.find({
+                    process: timeline.process,
+                  })
+                    .then((_tasks) => {
+                      let contacts = [];
+                      let failed = errors;
+                      _tasks.forEach((_task) => {
+                        contacts = [...contacts, ..._task.contacts];
+                        if (
+                          timeline.exec_result &&
+                          timeline.exec_result.failed &&
+                          timeline.exec_result.failed.length
+                        ) {
+                          failed = [...failed, ...timeline.exec_result.failed];
+                        }
+                      });
+                      // Remove all same tasks
+                      Task.deleteMany({ process: timeline.process }).catch(
+                        (err) => {
+                          console.log('Delete tasks error: ', err);
+                        }
+                      );
+                      Notification.deleteMany({ process: timeline.process })
+                        .then(() => {
+                          const newNotification = new Notification({
+                            user: timeline.user,
+                            criteria: 'bulk_email',
+                            status: 'completed',
+                            process: timeline.process,
+                            deliver_status: {
+                              contacts,
+                              failed,
+                            },
+                            detail: action,
+                          });
+                          newNotification.save().catch((err) => {
+                            console.log('completed notification saving failed', err);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('Delete tasks error: ', err);
+                        });
+                    })
+                    .catch((err) => {
+                      console.log('completed tasks process failed', err);
+                    });
                 }
               })
               .catch((err) => {
@@ -204,7 +210,7 @@ const task_check = new CronJob(
               activities,
               activity
             } = timeline.action;
-            TextHelper.getStatus(message_sid, service).then((res) => {
+            TextHelper.getStatus(message_sid, service).then(async (res) => {
               if (res.status === 'delivered') {
                 TextHelper.handleDeliveredText(
                   timeline.contact,
@@ -213,9 +219,8 @@ const task_check = new CronJob(
                   timeline.text
                 );
 
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
+                timeline.status = 'delivered';
+                await timeline.save().catch((err) => {
                   console.log('timeline remove err', err.message);
                 });
               } else if (res.status === 'sent') {
@@ -249,9 +254,15 @@ const task_check = new CronJob(
                     console.log('notification save err', err.message);
                   });
 
-                  TimeLine.deleteOne({
-                    _id: timeline.id,
-                  }).catch((err) => {
+                  timeline.status = 'sent';
+                  timeline.exec_result = {
+                    description:
+                      res.errorMessage ||
+                      'Could`t get delivery result from carrier',
+                    content: 'Failed texting material',
+                    status: 'sent',
+                  };
+                  await timeline.save().catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
                 }
@@ -281,12 +292,77 @@ const task_check = new CronJob(
                   console.log('notification save err', err.message);
                 });
 
-                TimeLine.deleteOne({
-                  _id: timeline.id,
-                }).catch((err) => {
+                timeline.status = 'failed';
+                timeline.exec_result = {
+                  description:
+                    res.errorMessage ||
+                    'Could`t get delivery result from carrier',
+                  content: 'Failed texting material',
+                  status: 'failed',
+                };
+                await timeline.save().catch((err) => {
                   console.log('timeline remove err', err.message);
                 });
               }
+
+              Task.find({
+                process: timeline.process,
+                status: 'active',
+              })
+                .then((_tasks) => {
+                  if (!_tasks.length) {
+                    Task.find({
+                      process: timeline.process,
+                    })
+                      .then((_allTasks) => {
+                        const succeed = [];
+                        const failed = [];
+                        _allTasks.forEach((e) => {
+                          if (e.status === 'delivered') {
+                            succeed.push(e.contact);
+                          }
+                          if (e.status === 'failed' || e.status === 'sent') {
+                            failed.push({
+                              contact: e.contact,
+                              exec_result: e.exec_result,
+                            });
+                          }
+                        });
+                        Notification.deleteMany({
+                          process: timeline.process
+                        })
+                          .then(() => {
+                            const notification = new Notification({
+                              user: timeline.user,
+                              process: timeline.process,
+                              criteria: 'bulk_sms',
+                              status: 'completed',
+                              deliver_status: {
+                                succeed,
+                                failed
+                              },
+                            });
+                            notification.save().catch((err) => {
+                              console.log('Bulk texting complete notification creating is failed', err);
+                            });
+                          })
+                          .catch((err) => {
+                            console.log('remove the previous notification remove', err);
+                          });
+                        Task.deleteMany({
+                          process: timeline.process,
+                        }).catch((err) => {
+                          console.log('Bulk texting tasks removing is failed', err);
+                        });
+                      })
+                      .catch((err) => {
+                        console.log('Same tasks are completed', err);
+                      });
+                  }
+                })
+                .catch((err) => {
+                  console.log('Same process are failed.', err);
+                });
             });
             break;
           }
