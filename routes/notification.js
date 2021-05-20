@@ -34,4 +34,10 @@ router.get(
   catchError(NotificationCtrl.getPage)
 );
 
+router.get(
+  '/status',
+  UserCtrl.checkAuth,
+  catchError(NotificationCtrl.getStatus)
+);
+
 module.exports = router;

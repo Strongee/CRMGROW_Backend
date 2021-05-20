@@ -1181,7 +1181,7 @@ const sendEmails = async (req, res) => {
   let newTaskId;
   let contacts = [...inputContacts];
   let contactsToTemp = [];
-  const CHUNK_COUNT = 2;
+  const CHUNK_COUNT = 15;
 
   if (inputContacts.length > CHUNK_COUNT) {
     const currentTasks = await Task.find({
@@ -1826,11 +1826,18 @@ const sendTexts = async (req, res) => {
     });
   }
 
+  if (!text_info['is_enabled']) {
+    return res.status(410).json({
+      status: false,
+      error: 'Disable send sms',
+    });
+  }
+
   if (text_info['is_limit']) {
     count = await Text.countDocuments({ user: currentUser.id });
 
     max_text_count =
-      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.PRO;
 
     const { additional_credit } = currentUser.text_info;
     if (additional_credit) {

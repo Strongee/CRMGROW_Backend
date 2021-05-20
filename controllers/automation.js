@@ -469,10 +469,10 @@ const getPage = async (req, res) => {
 const create = (req, res) => {
   const { currentUser } = req;
 
-  if (currentUser.automation_info['is_enabled']) {
+  if (!currentUser.automation_info['is_enabled']) {
     return res.status(410).send({
       status: false,
-      error: 'Exceed automations',
+      error: 'Disable automations',
     });
   }
 

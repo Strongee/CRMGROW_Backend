@@ -7,7 +7,7 @@ const system_settings = {
   DEFAULT_PACKAGE: 'PRO',
   EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
-    LITE: 500,
+    BASIC: 500,
     GMAIL: 500,
     GSUIT: 1500,
     OUTLOOK: 300,

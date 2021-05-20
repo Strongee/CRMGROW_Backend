@@ -85,7 +85,7 @@ const bulkEmail = async (req, res) => {
     attachments,
   } = req.body;
 
-  const CHUNK_COUNT = 2;
+  const CHUNK_COUNT = 15;
 
   const max_email_count =
     currentUser['email_info']['max_count'] ||
@@ -173,7 +173,7 @@ const bulkEmail = async (req, res) => {
   // TODO: Update the Response if temp contacts exist.
   if (contacts.length) {
     EmailHelper.sendEmail({
-      uesr: currentUser._id,
+      user: currentUser._id,
       contacts,
       video_ids,
       pdf_ids,
@@ -247,6 +247,7 @@ const bulkEmail = async (req, res) => {
         }
       })
       .catch((err) => {
+        console.log('bulk email sending is failed', err);
         return res.status(500).json({
           status: false,
           error: err,
@@ -285,11 +286,19 @@ const bulkText = async (req, res) => {
   let count = 0;
   let max_text_count = 0;
   let additional_sms_credit = 0;
+
+  if (!text_info['is_enabled']) {
+    return res.status(410).json({
+      status: false,
+      error: 'Disable send sms',
+    });
+  }
+
   if (text_info['is_limit']) {
     count = await Text.countDocuments({ user: currentUser.id });
 
     max_text_count =
-      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.PRO;
 
     const { additional_credit } = currentUser.text_info;
     if (additional_credit) {

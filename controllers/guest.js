@@ -46,13 +46,20 @@ const create = async (req, res) => {
     user: currentUser.id,
   });
 
+  if (!currentUser.assistant_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Disable assistant access',
+    });
+  }
+
   max_upload_count =
     currentUser.assistant_info.max_count || system_settings.ASSISTANT_LIMIT.PRO;
 
   if (currentUser.assistant_info['is_limit'] && max_upload_count <= count) {
     return res.status(410).send({
       status: false,
-      error: 'Exceed assistant access',
+      error: 'Exceed max assistant access',
     });
   }
 
