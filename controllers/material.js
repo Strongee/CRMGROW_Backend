@@ -85,7 +85,7 @@ const bulkEmail = async (req, res) => {
     attachments,
   } = req.body;
 
-  const CHUNK_COUNT = 2;
+  const CHUNK_COUNT = 15;
 
   const max_email_count =
     currentUser['email_info']['max_count'] ||
@@ -173,7 +173,7 @@ const bulkEmail = async (req, res) => {
   // TODO: Update the Response if temp contacts exist.
   if (contacts.length) {
     EmailHelper.sendEmail({
-      uesr: currentUser._id,
+      user: currentUser._id,
       contacts,
       video_ids,
       pdf_ids,
