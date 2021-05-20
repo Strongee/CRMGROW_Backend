@@ -203,38 +203,79 @@ const task_check = new CronJob(
                 });
               });
             break;
-          case 'bulk_sms': {
+          case 'bulk_sms':
             const {
               message_sid,
               service,
               activities,
               activity
             } = timeline.action;
-            TextHelper.getStatus(message_sid, service).then(async (res) => {
-              if (res.status === 'delivered') {
-                TextHelper.handleDeliveredText(
-                  timeline.contact,
-                  activities,
-                  activity,
-                  timeline.text
-                );
+            TextHelper.getStatus(message_sid, service)
+              .then(async (res) => {
+                if (res.status === 'delivered') {
+                  TextHelper.handleDeliveredText(
+                    timeline.contact,
+                    activities,
+                    activity,
+                    timeline.text
+                  );
 
-                timeline.status = 'delivered';
-                await timeline.save().catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              } else if (res.status === 'sent') {
-                const beginning_time = moment(timeline.due_date).add(
-                  3,
-                  'minutes'
-                );
-                const now = moment();
-                if (beginning_time.isBefore(now)) {
+                  timeline.status = 'delivered';
+                  await timeline.save().catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                } else if (res.status === 'sent') {
+                  const beginning_time = moment(timeline.due_date).add(
+                    3,
+                    'minutes'
+                  );
+                  const now = moment();
+                  if (beginning_time.isBefore(now)) {
+                    TextHelper.handleFailedText(
+                      activities,
+                      activity,
+                      timeline.text,
+                      3
+                    );
+
+                    const notification = new Notification({
+                      user: timeline.user,
+                      contact: timeline.contact,
+                      message_sid,
+                      activities,
+                      criteria: 'bulk_sms',
+                      status: 'sent',
+                      description:
+                        res.errorMessage ||
+                        'Could`t get delivery result from carrier',
+                      content: 'Failed texting material',
+                    });
+
+                    notification.save().catch((err) => {
+                      console.log('notification save err', err.message);
+                    });
+
+                    timeline.status = 'sent';
+                    timeline.exec_result = {
+                      description:
+                        res.errorMessage ||
+                        'Could`t get delivery result from carrier',
+                      content: 'Failed texting material',
+                      status: 'sent',
+                    };
+                    await timeline.save().catch((err) => {
+                      console.log('timeline remove err', err.message);
+                    });
+                  }
+                } else if (
+                  res.status === 'undelivered' ||
+                  res.status === 'failed'
+                ) {
                   TextHelper.handleFailedText(
                     activities,
                     activity,
                     timeline.text,
-                    3
+                    4
                   );
 
                   const notification = new Notification({
@@ -244,9 +285,7 @@ const task_check = new CronJob(
                     activities,
                     criteria: 'bulk_sms',
                     status: 'sent',
-                    description:
-                      res.errorMessage ||
-                      'Could`t get delivery result from carrier',
+                    description: res.errorMessage,
                     content: 'Failed texting material',
                   });
 
@@ -254,118 +293,82 @@ const task_check = new CronJob(
                     console.log('notification save err', err.message);
                   });
 
-                  timeline.status = 'sent';
+                  timeline.status = 'failed';
                   timeline.exec_result = {
                     description:
                       res.errorMessage ||
                       'Could`t get delivery result from carrier',
                     content: 'Failed texting material',
-                    status: 'sent',
+                    status: 'failed',
                   };
                   await timeline.save().catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
                 }
-              } else if (
-                res.status === 'undelivered' ||
-                res.status === 'failed'
-              ) {
-                TextHelper.handleFailedText(
-                  activities,
-                  activity,
-                  timeline.text,
-                  4
-                );
 
-                const notification = new Notification({
-                  user: timeline.user,
-                  contact: timeline.contact,
-                  message_sid,
-                  activities,
-                  criteria: 'bulk_sms',
-                  status: 'sent',
-                  description: res.errorMessage,
-                  content: 'Failed texting material',
-                });
-
-                notification.save().catch((err) => {
-                  console.log('notification save err', err.message);
-                });
-
-                timeline.status = 'failed';
-                timeline.exec_result = {
-                  description:
-                    res.errorMessage ||
-                    'Could`t get delivery result from carrier',
-                  content: 'Failed texting material',
-                  status: 'failed',
-                };
-                await timeline.save().catch((err) => {
-                  console.log('timeline remove err', err.message);
-                });
-              }
-
-              Task.find({
-                process: timeline.process,
-                status: 'active',
-              })
-                .then((_tasks) => {
-                  if (!_tasks.length) {
-                    Task.find({
-                      process: timeline.process,
-                    })
-                      .then((_allTasks) => {
-                        const succeed = [];
-                        const failed = [];
-                        _allTasks.forEach((e) => {
-                          if (e.status === 'delivered') {
-                            succeed.push(e.contact);
-                          }
-                          if (e.status === 'failed' || e.status === 'sent') {
-                            failed.push({
-                              contact: e.contact,
-                              exec_result: e.exec_result,
-                            });
-                          }
-                        });
-                        Notification.deleteMany({
-                          process: timeline.process
-                        })
-                          .then(() => {
-                            const notification = new Notification({
-                              user: timeline.user,
-                              process: timeline.process,
-                              criteria: 'bulk_sms',
-                              status: 'completed',
-                              deliver_status: {
-                                succeed,
-                                failed
-                              },
-                            });
-                            notification.save().catch((err) => {
-                              console.log('Bulk texting complete notification creating is failed', err);
-                            });
-                          })
-                          .catch((err) => {
-                            console.log('remove the previous notification remove', err);
-                          });
-                        Task.deleteMany({
-                          process: timeline.process,
-                        }).catch((err) => {
-                          console.log('Bulk texting tasks removing is failed', err);
-                        });
-                      })
-                      .catch((err) => {
-                        console.log('Same tasks are completed', err);
-                      });
-                  }
+                Task.find({
+                  process: timeline.process,
+                  status: 'active',
                 })
-                .catch((err) => {
-                  console.log('Same process are failed.', err);
-                });
-            });
+                  .then((_tasks) => {
+                    if (!_tasks.length) {
+                      Task.find({
+                        process: timeline.process,
+                      })
+                        .then((_allTasks) => {
+                          const succeed = [];
+                          const failed = [];
+                          _allTasks.forEach((e) => {
+                            if (e.status === 'delivered') {
+                              succeed.push(e.contact);
+                            }
+                            if (e.status === 'failed' || e.status === 'sent') {
+                              failed.push({
+                                contact: e.contact,
+                                exec_result: e.exec_result,
+                              });
+                            }
+                          });
+                          Notification.deleteMany({
+                            process: timeline.process
+                          })
+                            .then(() => {
+                              const notification = new Notification({
+                                user: timeline.user,
+                                process: timeline.process,
+                                criteria: 'bulk_sms',
+                                status: 'completed',
+                                deliver_status: {
+                                  succeed,
+                                  failed
+                                },
+                              });
+                              notification.save().catch((err) => {
+                                console.log('Bulk texting complete notification creating is failed', err);
+                              });
+                            })
+                            .catch((err) => {
+                              console.log('remove the previous notification remove', err);
+                            });
+                          Task.deleteMany({
+                            process: timeline.process,
+                          }).catch((err) => {
+                            console.log('Bulk texting tasks removing is failed', err);
+                          });
+                        })
+                        .catch((err) => {
+                          console.log('Same tasks are completed', err);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('Same process are failed.', err);
+                  });
+              })
+              .catch((err) => {
+                console.log('Getting SMS Status is failed', err);
+              })
             break;
-          }
           case 'auto_follow_up2': {
             let follow_due_date;
             if (action.due_date) {
