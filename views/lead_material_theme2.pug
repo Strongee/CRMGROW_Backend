@@ -31,6 +31,8 @@ head
   script(src='https://kit.fontawesome.com/a076d05399.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
   script(type='text/javascript', src='./theme/plugins/galleria/galleria.min.js')
+  script(type='text/javascript').
+    var config = !{JSON.stringify(material)};
 header
   .profile.container.cs-container
     .avatar-social
@@ -77,8 +79,15 @@ section.material-section
             if material.type === 'youtube' || material.type === 'vimeo'
               div#player(data-plyr-provider=`${material.type}` data-plyr-embed-id=`${material.url}`)
             else 
-              video#player(poster=`${material.thumbnail}`, controls, name="media")
-                source(src=`${material.url}`, type=`video/mp4`)
+              if !material.is_private
+                video#player(poster=`${material.thumbnail}`, controls, name="media")
+                  source(src=`${material.url}`, type=`video/mp4`)
+              else
+                if !material.is_stream
+                  video#player(poster=`${material.thumbnail}`, controls, name="media")
+                    source(src=`${material.converted_url}`, type=`video/mp4`)
+                else
+                  video#player(poster=`${material.thumbnail}`, controls, name="media")
             .watched-time
               | 00:00
             if material.converted === 'progress'
@@ -231,6 +240,7 @@ script(src='theme/plugins/slick-carousel/slick/slick.min.js')
 script(src='theme/theme-js/theme1.js')
 //- Video Track JS
 if material_type === 'video'
+  script(type='text/javascript', src='https://cdn.jsdelivr.net/npm/hls.js@latest')
   script(src='theme/plugins/plyr/plyr.min.js')
   script(type='text/javascript', src='./theme/core/lead_video_v2.js')
 if material_type === 'image'

@@ -56,6 +56,7 @@ const edit = async (req, res) => {
   }
 
   const editData = req.body;
+  delete editData['_id'];
   const garbage = await Garbage.findOne({ user: user._id });
   if (!garbage) {
     const newGarbage = new Garbage({

@@ -118,6 +118,7 @@ const UserSchema = new Schema(
       is_suspended: Boolean,
       suspended_at: Date,
       attempt_count: Number,
+      amount: Number,
       period: { type: String, default: 'month' },
     },
     package_level: String,
@@ -128,8 +129,8 @@ const UserSchema = new Schema(
     updated_at: Date,
     last_logged: Date,
     del: { type: Boolean, default: false },
-    admin_loggin: { type: Boolean, default: false },
-    guest_loggin: { type: Boolean, default: false },
+    admin_loggin: Boolean,
+    guest_loggin: Boolean,
     sub_domain: String,
     social_link: {
       facebook: String,

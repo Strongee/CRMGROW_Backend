@@ -1,8 +1,11 @@
 const system_settings = {
   SUBSCRIPTION_MONTHLY_PLAN: {
     BASIC: '29',
-    TEAM: '25',
+    PRO: '49',
+    ELITE: '99',
   },
+  SUBSCRIPTION_FREE_TRIAL: 14,
+  DEFAULT_PACKAGE: 'PRO',
   EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
     BASIC: 500,

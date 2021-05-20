@@ -39,7 +39,12 @@ const bucketStorage = multerS3({
   bucket: api.AWS.AWS_PRIVATE_S3_BUCKET,
   key: (req, file, cb) => {
     const fileKey =
-      'sources/' + new Date().getTime() + '-' + uuidv1() + '.' + mime.extension(file.mimetype);
+      'sources/' +
+      new Date().getTime() +
+      '-' +
+      uuidv1() +
+      '.' +
+      mime.extension(file.mimetype);
     cb(null, fileKey);
   },
 });
@@ -64,6 +69,12 @@ router.put(
   '/detail/:id',
   UserCtrl.checkAuth,
   catchError(VideoCtrl.updateDetail)
+);
+
+router.put(
+  '/converting/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.updateConvertStatus)
 );
 
 // Upload a thumbnail and detail info
@@ -160,6 +171,12 @@ router.get('/play/:id', catchError(VideoCtrl.downloadVideo));
 
 // Get all video
 router.get('/', UserCtrl.checkAuth, catchError(VideoCtrl.getAll));
+
+router.get(
+  '/download/:id',
+  UserCtrl.checkAuth,
+  catchError(VideoCtrl.downloadVideo)
+);
 
 router.get('/:id', UserCtrl.checkAuth, catchError(VideoCtrl.get));
 

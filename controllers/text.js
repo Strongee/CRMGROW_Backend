@@ -117,8 +117,6 @@ const send = async (req, res) => {
     to: e164Phone,
     from: fromNumber,
     user: currentUser.id,
-    updated_at: new Date(),
-    created_at: new Date(),
   });
 
   new_text

@@ -249,6 +249,12 @@ router.post('/search-nickname', catchError(UserCtrl.searchNickName));
 // Search Phonenumber
 router.post('/search-phone', catchError(UserCtrl.searchPhone));
 
+// update package
+router.post(
+  '/update-package',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.updatePackage)
+);
 // Schedule a paid demo
 router.post(
   '/schedule-demo',
@@ -264,6 +270,8 @@ router.post(
   UserCtrl.checkAuth,
   catchError(UserCtrl.closeAccount)
 );
+
+router.get('/get-call-token', UserCtrl.getCallToken);
 
 // Edit own profile
 router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));

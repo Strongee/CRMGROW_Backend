@@ -13,6 +13,7 @@ const FollowUpSchema = new Schema(
       ref: 'follow_up',
     },
     has_shared: Boolean,
+    deal: { type: mongoose.Schema.Types.ObjectId, ref: 'deal' },
     status: { type: Number, default: 0 },
     reminder: Number,
     reminder_type: String,
@@ -31,6 +32,7 @@ const FollowUpSchema = new Schema(
 FollowUpSchema.index({ user: 1, status: 1, due_date: 1 });
 FollowUpSchema.index({ shared_follow_up: 1 });
 FollowUpSchema.index({ contact: 1 });
+FollowUpSchema.index({ deal: 1 });
 const FollowUp = mongoose.model('follow_up', FollowUpSchema);
 
 module.exports = FollowUp;

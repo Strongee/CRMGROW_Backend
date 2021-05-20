@@ -58,8 +58,9 @@ router.post(
   catchError(DealCtrl.moveDeal)
 );
 
-router.post('/send-email', UserCtrl.checkAuth, catchError(DealCtrl.sendEmail));
+router.post('/send-email', UserCtrl.checkAuth, catchError(DealCtrl.sendEmails));
 router.post('/get-email', UserCtrl.checkAuth, catchError(DealCtrl.getEmails));
+router.post('/send-text', UserCtrl.checkAuth, catchError(DealCtrl.sendTexts));
 
 router.post(
   '/create-appointment',

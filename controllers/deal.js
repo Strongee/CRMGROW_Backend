@@ -12,11 +12,20 @@ const Note = require('../models/note');
 const FollowUp = require('../models/follow_up');
 const ActivityHelper = require('../helpers/activity');
 const Email = require('../models/email');
+const Text = require('../models/text');
 const Appointment = require('../models/appointment');
 const TeamCall = require('../models/team_call');
 const Notification = require('../models/notification');
 const Garbage = require('../models/garbage');
 const Reminder = require('../models/reminder');
+const Video = require('../models/video');
+const PDF = require('../models/pdf');
+const Image = require('../models/image');
+const Task = require('../models/task');
+const VideoTracker = require('../models/video_tracker');
+const PDFTracker = require('../models/pdf_tracker');
+const ImageTracker = require('../models/image_tracker');
+const EmailTracker = require('../models/email_tracker');
 const {
   addGoogleCalendarById,
   addOutlookCalendarById,
@@ -25,12 +34,15 @@ const {
   removeGoogleCalendarById,
   removeOutlookCalendarById,
 } = require('./appointment');
-const EmailHelper = require('../helpers/email');
+const { sendEmail } = require('../helpers/email');
+const { sendText } = require('../helpers/text');
 const api = require('../config/api');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
 const { getAvatarName } = require('../helpers/utility');
+const uuidv1 = require('uuid/v1');
+const _ = require('lodash');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -384,58 +396,222 @@ const getDetail = (req, res) => {
 const getActivity = async (req, res) => {
   const { currentUser } = req;
   const { count } = req.body;
+  const startTime = new Date().getTime();
 
-  let activity_list;
+  // Contact Activity List
+  let _activity_list;
+
   if (count) {
-    activity_list = await Activity.find({
+    _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
     })
       .sort({ updated_at: -1 })
-      .limit(count)
-      .catch((err) => {
-        console.log('activity get err', err.message);
-      });
+      .limit(count);
   } else {
-    activity_list = await Activity.find({
+    _activity_list = await Activity.find({
       user: currentUser.id,
       deals: req.body.deal,
-    })
-      .sort({ updated_at: 1 })
-      .catch((err) => {
-        console.log('activity get err', err.message);
-      });
+    }).sort({ updated_at: 1 });
   }
 
-  const activity_detail_list = [];
+  // Contact Relative Details
+  const videoIds = [];
+  const imageIds = [];
+  const pdfIds = [];
+  const materials = [];
+  const trackers = {};
+  let notes = [];
+  let emails = [];
+  let texts = [];
+  let appointments = [];
+  let tasks = [];
 
-  for (let i = 0; i < activity_list.length; i++) {
-    const activity_detail = await Activity.aggregate([
-      {
-        $lookup: {
-          from:
-            activity_list[i].type !== 'deals'
-              ? activity_list[i].type
-              : 'contacts',
-          localField:
-            activity_list[i].type !== 'deals'
-              ? activity_list[i].type
-              : 'contacts',
-          foreignField: '_id',
-          as: 'activity_detail',
-        },
-      },
-      {
-        $match: { _id: activity_list[i]._id },
-      },
-    ]);
-
-    activity_detail_list.push(activity_detail[0]);
+  if (count) {
+    const loadedIds = [];
+    const noteIds = [];
+    const emailIds = [];
+    const textIds = [];
+    const apptIds = [];
+    const taskIds = [];
+    const dealIds = [];
+    for (let i = 0; i < _activity_list.length; i++) {
+      if (
+        [
+          'notes',
+          'emails',
+          'texts',
+          'appointments',
+          'follow_ups',
+          'deals',
+        ].indexOf(_activity_list[i].type) !== -1
+      ) {
+        let detail_id = _activity_list[i][_activity_list[i].type];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        if (loadedIds.indexOf(detail_id) === -1) {
+          switch (_activity_list[i].type) {
+            case 'notes':
+              noteIds.push(detail_id);
+              break;
+            case 'emails': {
+              emailIds.push(detail_id);
+              break;
+            }
+            case 'texts': {
+              textIds.push(detail_id);
+              break;
+            }
+            case 'appointments':
+              apptIds.push(detail_id);
+              break;
+            case 'follow_ups':
+              taskIds.push(detail_id);
+              break;
+            case 'deals':
+              dealIds.push(detail_id);
+              break;
+          }
+        }
+      }
+    }
+    notes = await Note.find({ _id: { $in: noteIds } });
+    emails = await Email.find({ _id: { $in: emailIds } });
+    texts = await Text.find({ _id: { $in: textIds } });
+    appointments = await Appointment.find({ _id: { $in: apptIds } });
+    tasks = await FollowUp.find({ _id: { $in: taskIds } });
+  } else {
+    notes = await Note.find({ deal: req.body.deal });
+    emails = await Email.find({ deal: req.body.deal });
+    texts = await Text.find({ deal: req.body.deal });
+    appointments = await Appointment.find({ deal: req.body.deal });
+    tasks = await FollowUp.find({ deal: req.body.deal });
   }
+
+  for (let i = 0; i < _activity_list.length; i++) {
+    const e = _activity_list[i];
+    if (
+      (e['type'] === 'emails' && e['emails']) ||
+      (e['type'] === 'texts' && e['texts'])
+    ) {
+      if (e['videos'] instanceof Array) {
+        Array.prototype.push.apply(videoIds, e['videos']);
+      } else {
+        videoIds.push(e['videos']);
+      }
+      if (e['pdfs'] instanceof Array) {
+        Array.prototype.push.apply(pdfIds, e['pdfs']);
+      } else {
+        pdfIds.push(e['pdfs']);
+      }
+      if (e['images'] instanceof Array) {
+        Array.prototype.push.apply(imageIds, e['images']);
+      } else {
+        imageIds.push(e['images']);
+      }
+
+      let send_activityIds = [];
+      let detail_id;
+      let video_trackers;
+      let pdf_trackers;
+      let image_trackers;
+      let email_trackers;
+      if (e['type'] === 'emails') {
+        detail_id = e['emails'];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        const emails = await Email.find({
+          shared_email: detail_id,
+        }).catch((err) => {
+          console.log('deal email find err', err.message);
+        });
+        const emailIds = (emails || []).map((e) => e._id);
+
+        const send_activities = await Activity.find({
+          emails: { $in: emailIds },
+        }).select('_id');
+
+        send_activityIds = send_activities.map((e) => e._id);
+        email_trackers = await EmailTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal image tracker find err', err.message);
+        });
+      } else {
+        detail_id = e['texts'];
+        if (detail_id instanceof Array) {
+          detail_id = detail_id[0];
+        }
+        const texts = await Text.find({
+          shared_text: detail_id,
+        }).catch((err) => {
+          console.log('deal text find err', err.message);
+        });
+        const textIds = (texts || []).map((e) => e._id);
+
+        const send_activities = await Activity.find({
+          texts: { $in: textIds },
+        }).select('_id');
+
+        send_activityIds = send_activities.map((e) => e._id);
+      }
+      if (e['videos'] && e['videos'].length) {
+        video_trackers = await VideoTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal video tracker find err', err.message);
+        });
+      }
+      if (e['pdfs'] && e['pdfs'].length) {
+        pdf_trackers = await PDFTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal pdf tracker find err', err.message);
+        });
+      }
+      if (e['images'] && e['images'].length) {
+        image_trackers = await ImageTracker.find({
+          activity: { $in: send_activityIds },
+        }).catch((err) => {
+          console.log('deal image tracker find err', err.message);
+        });
+      }
+
+      trackers[detail_id] = {
+        video_trackers,
+        pdf_trackers,
+        image_trackers,
+        email_trackers,
+      };
+    }
+  }
+
+  const videos = await Video.find({ _id: { $in: videoIds } });
+  const pdfs = await PDF.find({ _id: { $in: pdfIds } });
+  const images = await Image.find({ _id: { $in: imageIds } });
+  Array.prototype.push.apply(materials, videos);
+  Array.prototype.push.apply(materials, pdfs);
+  Array.prototype.push.apply(materials, images);
+
+  const data = {
+    activity: _activity_list,
+
+    details: {
+      materials,
+      notes,
+      emails,
+      texts,
+      appointments,
+      trackers,
+      tasks,
+    },
+  };
 
   return res.send({
     status: true,
-    data: activity_detail_list,
+    data,
   });
 };
 
@@ -949,9 +1125,19 @@ const removeFollowUp = async (req, res) => {
   });
 };
 
-const sendEmail = async (req, res) => {
+const sendEmails = async (req, res) => {
   const { currentUser } = req;
-  const { subject, content, cc, bcc, deal } = req.body;
+  const {
+    subject,
+    content,
+    cc,
+    bcc,
+    deal,
+    contacts: inputContacts,
+    video_ids,
+    pdf_ids,
+    image_ids,
+  } = req.body;
   const error = [];
 
   const email = new Email({
@@ -962,6 +1148,13 @@ const sendEmail = async (req, res) => {
     bcc,
     deal,
   });
+
+  if (!currentUser.primary_connected) {
+    return res.status(406).json({
+      status: false,
+      error: 'no connected',
+    });
+  }
 
   email.save().catch((err) => {
     console.log('new email save err', err.message);
@@ -975,42 +1168,148 @@ const sendEmail = async (req, res) => {
     deals: deal,
     type: 'emails',
     emails: email.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
   });
 
   activity.save().catch((err) => {
     console.log('activity save err', err.message);
   });
 
-  const data = {
-    user: currentUser.id,
-    ...req.body,
-  };
+  const taskProcessId = new Date().getTime() + uuidv1();
+  let newTaskId;
+  let contacts = [...inputContacts];
+  let contactsToTemp = [];
+  const CHUNK_COUNT = 2;
 
-  EmailHelper.sendEmail(data)
-    .then((_res) => {
-      console.log('_res', _res);
-      _res.forEach((response) => {
-        if (!response.status) {
-          error.push({
-            contact: response.contact,
-            error: response.error,
+  if (inputContacts.length > CHUNK_COUNT) {
+    const currentTasks = await Task.find({
+      user: currentUser._id,
+      type: 'send_email',
+      status: 'active',
+    })
+      .sort({ due_date: -1 })
+      .limit(1)
+      .catch((err) => {
+        console.log('Getting Last Email Tasks', err);
+      });
+    let last_due;
+    if (currentTasks && currentTasks.length) {
+      // Split From Here
+      last_due = currentTasks[0].due_date;
+      contactsToTemp = [...contacts];
+      contacts = [];
+    } else {
+      // Handle First Chunk and Create With Anothers
+      last_due = new Date();
+      contactsToTemp = contacts.slice(CHUNK_COUNT);
+      contacts = contacts.slice(0, CHUNK_COUNT);
+    }
+
+    let delay = 2;
+    for (let i = 0; i < contactsToTemp.length; i += CHUNK_COUNT) {
+      const due_date = moment(last_due).add(delay, 'minutes');
+      delay++;
+
+      const task = new Task({
+        user: currentUser.id,
+        contacts: contactsToTemp.slice(i, i + CHUNK_COUNT),
+        status: 'active',
+        process: taskProcessId,
+        type: 'send_email',
+        action: {
+          ...req.body,
+        },
+        due_date,
+      });
+
+      task.save().catch((err) => {
+        console.log('campaign job save err', err.message);
+      });
+
+      if (!newTaskId) {
+        newTaskId = task._id;
+      }
+    }
+
+    if (!contacts.length) {
+      return res.send({
+        status: true,
+        message: 'All are in queue.',
+      });
+    }
+  }
+  if (contacts.length) {
+    const data = {
+      user: currentUser.id,
+      ...req.body,
+      shared_email: email.id,
+      has_shared: true,
+    };
+
+    sendEmail(data)
+      .then(async (_res) => {
+        _res.forEach((response) => {
+          if (!response.status) {
+            error.push({
+              contact: response.contact,
+              error: response.error,
+            });
+          }
+        });
+
+        // Create Notification and With Success and Failed
+        if (contactsToTemp) {
+          // Failed Contacts && Total Contacts Count
+          if (error.length) {
+            const notification = new Notification({
+              user: currentUser._id,
+              criteria: 'bulk_email',
+              status: 'pending',
+              process: taskProcessId,
+              deliver_status: {
+                failed: error,
+                contacts,
+              },
+              detail: { ...req.body },
+            });
+            notification.save().catch((err) => {
+              console.log('Email Notification Create Failed');
+            });
+          }
+          // Task Update
+          const task = await Task.findById(newTaskId).catch(() => {
+            console.log('Initialize First Task Processing Status Failed');
+          });
+          if (task) {
+            const failedContacts = error.map((e) => e.contact && e.contact._id);
+            const succeedContacts = _.difference(contacts, failedContacts);
+            task.exec_result = {
+              failed: error,
+              succeed: succeedContacts,
+            };
+            task.save().catch(() => {
+              console.log('Updating First Task Processing Status Failed');
+            });
+          }
+        }
+
+        if (error.length > 0) {
+          return res.status(405).json({
+            status: false,
+            error,
+          });
+        } else {
+          return res.send({
+            status: true,
           });
         }
+      })
+      .catch((err) => {
+        console.log('email send error', err);
       });
-      if (error.length > 0) {
-        return res.status(405).json({
-          status: false,
-          error,
-        });
-      } else {
-        return res.send({
-          status: true,
-        });
-      }
-    })
-    .catch((err) => {
-      console.log('email send error', err);
-    });
+  }
 };
 
 const getEmails = async (req, res) => {
@@ -1331,6 +1630,20 @@ const removeAppointment = async (req, res) => {
       removeGoogleCalendarById(data);
     }
 
+    const appointment = Appointment.findOne({
+      user: currentUser.id,
+      event_id: remove_id,
+    }).catch((err) => {
+      console.log('appointment find err', err.message);
+    });
+
+    Activity.deleteMany({
+      appointments: appointment.id,
+      user: currentUser.id,
+    }).catch((err) => {
+      console.log('appointment activity err', err.message);
+    });
+
     Appointment.deleteOne({
       user: currentUser.id,
       event_id: remove_id,
@@ -1496,6 +1809,141 @@ const createTeamCall = async (req, res) => {
     });
 };
 
+const sendTexts = async (req, res) => {
+  const { currentUser } = req;
+  const { content, deal, video_ids, pdf_ids, image_ids } = req.body;
+  const error = [];
+
+  const text_info = currentUser.text_info;
+  let count = 0;
+  let max_text_count = 0;
+  let additional_sms_credit = 0;
+
+  if (!currentUser['proxy_number'] && !currentUser['twilio_number']) {
+    return res.status(408).json({
+      status: false,
+      error: 'No phone',
+    });
+  }
+
+  if (text_info['is_limit']) {
+    count = await Text.countDocuments({ user: currentUser.id });
+
+    max_text_count =
+      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.BASIC;
+
+    const { additional_credit } = currentUser.text_info;
+    if (additional_credit) {
+      additional_sms_credit = additional_credit.amount;
+    }
+
+    if (max_text_count <= count && !additional_sms_credit) {
+      return res.status(409).json({
+        status: false,
+        error: 'Exceed max sms credit',
+      });
+    }
+  }
+
+  const text = new Text({
+    user: currentUser.id,
+    type: 0,
+    content,
+    deal,
+  });
+
+  text.save().catch((err) => {
+    console.log('new email save err', err.message);
+  });
+
+  const activity_content = 'sent text';
+
+  const activity = new Activity({
+    user: currentUser.id,
+    content: activity_content,
+    deals: deal,
+    type: 'texts',
+    texts: text.id,
+    videos: video_ids,
+    pdfs: pdf_ids,
+    images: image_ids,
+  });
+
+  activity.save().catch((err) => {
+    console.log('deal text activity save err', err.message);
+  });
+
+  const textProcessId = new Date().getTime() + '_' + uuidv1();
+
+  const data = {
+    user: currentUser.id,
+    ...req.body,
+    shared_text: text.id,
+    has_shared: true,
+    max_text_count,
+    textProcessId,
+  };
+
+  sendText(data)
+    .then((_res) => {
+      const errors = [];
+      let execResult;
+      _res.forEach((e) => {
+        if (!e.status && !e.type) {
+          errors.push(e);
+        }
+        if (e.type === 'exec_result') {
+          execResult = e;
+        }
+      });
+
+      if (execResult) {
+        const { additional_credit } = currentUser.text_info;
+        if (additional_credit) {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                'text_info.count': execResult.count,
+                'text_info.additional_credit.amount': execResult.additional_sms_credit,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        } else {
+          User.updateOne(
+            {
+              _id: currentUser.id,
+            },
+            {
+              $set: {
+                'text_info.count': execResult.count,
+              },
+            }
+          ).catch((err) => {
+            console.log('user sms count updaet error: ', err);
+          });
+        }
+      }
+
+      if (errors.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error: errors,
+        });
+      }
+      return res.send({
+        status: true,
+      });
+    })
+    .catch((err) => {
+      console.log('email send error', err);
+    });
+};
+
 module.exports = {
   getAll,
   getActivity,
@@ -1519,7 +1967,8 @@ module.exports = {
   updateFollowUp,
   removeFollowUp,
   createTeamCall,
-  sendEmail,
+  sendEmails,
   getEmails,
+  sendTexts,
   updateContact,
 };

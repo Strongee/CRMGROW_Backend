@@ -9,6 +9,9 @@ const api = {
     CLOUDFRONT_ACCESS_KEY: process.env.CLOUDFRONT_ACCESS_KEY,
     CLOUDFRONT_PUBLIC_KEY: process.env.CLOUDFRONT_PUBLIC_KEY,
     CLOUDFRONT: process.env.CLOUDFRONT,
+    API_GATEWAY:
+      process.env.API_GATEWAY ||
+      'https://f8nhu9b8o4.execute-api.us-east-2.amazonaws.com',
   },
   OUTLOOK_CLIENT: {
     OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
@@ -92,10 +95,11 @@ const api = {
   },
   STRIPE: {
     SECRET_KEY: process.env.SECRET_KEY,
-    PRODUCT_ID: process.env.PRODUCT_ID,
-    PRIMARY_PLAN: process.env.PRIMARY_PLAN,
-    PRIOR_PLAN: process.env.PRIOR_PLAN,
-    LIMIT: process.env.LIMIT,
+    PLAN: {
+      BASIC: process.env.STRIPE_PLAN_BASIC,
+      PRO: process.env.STRIPE_PLAN_PRO,
+      ELITE: process.env.STRIPE_PLAN_ELITE,
+    },
   },
   EMAIL_VERIFICATION_KEY: process.env.EMAIL_VERIFICATION_KEY,
   REWARDFUL_API_KEY: process.env.REWARDFUL_API_KEY,
