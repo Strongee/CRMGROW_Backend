@@ -7,7 +7,7 @@ const system_settings = {
   DEFAULT_PACKAGE: 'PRO',
   EMAIL_ONE_TIME: 15,
   EMAIL_DAILY_LIMIT: {
-    BASIC: 500,
+    LITE: 500,
     GMAIL: 500,
     GSUIT: 1500,
     OUTLOOK: 300,
@@ -27,16 +27,16 @@ const system_settings = {
     ELITE: 3,
   },
   CONTACT_UPLOAD_LIMIT: {
-    BASIC: 200,
+    LITE: 200,
     PRO: 2000,
     ELITE: 20000,
   },
   MATERIAL_UPLOAD_LIMIT: {
-    BASIC: 10,
+    LITE: 10,
     PRO: 100,
   },
   VIDEO_RECORD_LIMIT: {
-    BASIC: 600000,
+    LITE: 600000,
     PRO: 7200000,
     ELITE: 60000000,
   },

@@ -4,12 +4,6 @@ const system_settings = require('../config/system_settings');
 const setPackage = async (data) => {
   const { user, level } = data;
 
-  console.log('level', level);
-  console.log(
-    'system_settings.CONTACT_UPLOAD_LIMIT[level]',
-    system_settings.CONTACT_UPLOAD_LIMIT[level]
-  );
-
   // contact info
   const contact_info = {
     'contact_info.max_count': system_settings.CONTACT_UPLOAD_LIMIT[level],
@@ -36,7 +30,7 @@ const setPackage = async (data) => {
     };
   }
 
-  if (level === 'BASIC') {
+  if (level === 'LITE') {
     automation_info = {
       'automation_info.is_enabled': false,
     };
