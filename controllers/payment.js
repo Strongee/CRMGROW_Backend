@@ -658,6 +658,8 @@ const updateSubscription = async (data) => {
     stripe.subscriptions.update(
       subscriptionId,
       {
+        cancel_at_period_end: false,
+        proration_behavior: 'create_prorations',
         items: [{ price: planId }],
       },
       function (err, subscription) {
