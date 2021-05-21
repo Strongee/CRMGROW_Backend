@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Added</title>
+    <title>Share Contact</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
@@ -49,6 +49,24 @@
             font-weight: 600;
             letter-spacing: 0;
             line-height: 22px;
+        }
+        .icon-user {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            font-family: 'Nunito';
+            font-weight: normal;
+            border-radius: 50%;
+            color: #ffffff;
+            background-color: #0000FF;
+            letter-spacing: 0;
+            line-height: 18px;
+        }
+        .contact-name {
+            font-size: 16px;
         }
         .email-open-detail {
             color:#101336;
@@ -164,15 +182,23 @@
                                                                     </span>
                                             </td>
                                         </tr>
+                                        <tr>
                                         </tbody>
                                     </table>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="watch-description">
-                                    <a href="{{contact_url}}">{{contact_name}}</a> Contact Added.
+                                    {{team_member_name}} has shared following contacts with you in {{team_name}}
                                 </td>
                             </tr>
+                            <tr>
+                                <td>
+                                    <table style="margin-bottom: 30px;">
+                                        {{html}}
+                                    </table>
+                                </td>
+
                             </tbody>
                         </table>
                     </td>
