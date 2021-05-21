@@ -191,12 +191,13 @@ const disconnectCalendly = async (req, res) => {
 };
 
 const addDialer = async (req, res) => {
+  const { currentUser } = req;
   const body = {
-    id: '123456',
-    email: 'super@crmgrow.com',
-    firstName: 'Garrett',
-    lastName: 'Steve',
-    phone: '3127678603',
+    id: currentUser.id,
+    email: currentUser.email,
+    firstName: currentUser.user_name.split(' ')[0],
+    lastName: currentUser.user_name.split(' ')[1] || '',
+    phone: currentUser.id,
     address1: '442 w elm st',
     city: 'Chicago',
     state: 'IL',
