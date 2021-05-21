@@ -1,9 +1,9 @@
 name: Cron Build to ECR
 on:
   push:
-    branches: [master]
+    branches: [master1]
   pull_request:
-    branches: [master]
+    branches: [master1]
 
 jobs:
   deploy:
