@@ -573,7 +573,12 @@ const signUpOutlook = async (req, res) => {
 
 const socialGmail = async (req, res) => {
   const code = req.query.code;
-  const oauth2Client = new google.auth.OAuth2(api.GMAIL_CLIENT.GMAIL_CLIENT_ID);
+
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
+  );
 
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
