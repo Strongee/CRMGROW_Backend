@@ -36,6 +36,7 @@ const UserSchema = new Schema(
     outlook_refresh_token: String,
     google_refresh_token: String,
     yahoo_refresh_token: String,
+    wavv_dialer_token: String,
     other_emailer: Object,
     connected_email_type: String,
     calendar_connected: Boolean,
@@ -105,6 +106,9 @@ const UserSchema = new Schema(
     },
     team_info: {
       owner_enabled: { type: Boolean, default: true },
+    },
+    dial_info: {
+      is_enabled: Boolean,
     },
     capture_enabled: { type: Boolean, default: true },
     link_track_enabled: { type: Boolean, default: true },

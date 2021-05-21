@@ -62,7 +62,7 @@ const create = async (req, res) => {
   followUp
     .save()
     .then((_followup) => {
-      let detail_content = 'added follow up';
+      let detail_content = 'added task';
       if (req.guest_loggin) {
         detail_content = ActivityHelper.assistantLog(detail_content);
       }
@@ -145,7 +145,7 @@ const edit = async (req, res) => {
     }
   )
     .then((_follow_up) => {
-      let detail_content = 'updated follow up';
+      let detail_content = 'updated task';
       if (req.guest_loggin) {
         detail_content = ActivityHelper.assistantLog(detail_content);
       }
@@ -195,7 +195,7 @@ const completed = async (req, res) => {
   const { currentUser } = req;
   const { follow_up } = req.body;
   if (follow_up) {
-    let detail_content = 'completed follow up';
+    let detail_content = 'completed task';
     if (req.guest_loggin) {
       detail_content = ActivityHelper.assistantLog(detail_content);
     }
@@ -451,7 +451,7 @@ const updateChecked = async (req, res) => {
   const { follow_ups } = req.body;
 
   if (follow_ups) {
-    let detail_content = 'completed follow up';
+    let detail_content = 'completed task';
     if (req.guest_loggin) {
       detail_content = ActivityHelper.assistantLog(detail_content);
     }
@@ -543,7 +543,7 @@ const bulkUpdate = async (req, res) => {
     try {
       FollowUp.updateMany({ _id: { $in: ids } }, { $set: query })
         .then(async () => {
-          let detail_content = 'updated follow up';
+          let detail_content = 'updated task';
           if (req.guest_loggin) {
             detail_content = ActivityHelper.assistantLog(detail_content);
           }
@@ -626,7 +626,7 @@ const bulkCreate = async (req, res) => {
   const startdate = moment(due_date);
   const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-  let detail_content = 'added follow up';
+  let detail_content = 'added task';
   if (req.guest_loggin) {
     detail_content = ActivityHelper.assistantLog(detail_content);
   }

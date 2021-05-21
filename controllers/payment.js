@@ -258,7 +258,7 @@ const update = async (req, res) => {
                           if (customer.subscriptions) {
                             const subscription =
                               customer.subscriptions['data'][0];
-                            if (subscription && subscription['plan']) {
+                            if (subscription) {
                               payment['card_id'] = card.id;
                               payment['card_name'] = token.card_name;
                               payment['card_brand'] = token.card.brand;
@@ -494,7 +494,7 @@ const update = async (req, res) => {
                     } else {
                       if (customer.subscriptions) {
                         const subscription = customer.subscriptions['data'][0];
-                        if (subscription && subscription['plan']) {
+                        if (subscription) {
                           const card = {
                             name: token.card.name,
                             exp_month: token.card.exp_month,
@@ -652,24 +652,35 @@ const createSubscription = async (customerId, planId, cardId, is_trial) => {
 };
 
 const updateSubscription = async (data) => {
-  const { planId, subscriptionId } = data;
+  const { customerId, planId, subscriptionId } = data;
 
   return new Promise(function (resolve, reject) {
-    stripe.subscriptions.update(
-      subscriptionId,
-      {
-        cancel_at_period_end: false,
-        proration_behavior: 'create_prorations',
-        items: [{ price: planId }],
-      },
-      function (err, subscription) {
-        if (err) {
-          console.log('update subscription error', err);
-          return reject(err);
-        }
-        resolve(subscription);
+    stripe.customers.retrieve(customerId, function (err, customer) {
+      if (err) {
+        console.log('update subscription error', err);
+        return reject(err.type);
       }
-    );
+      stripe.subscriptions.update(
+        subscriptionId,
+        {
+          cancel_at_period_end: false,
+          proration_behavior: 'create_prorations',
+          items: [
+            {
+              id: customer.subscriptions['data'][0].id,
+              price: planId,
+            },
+          ],
+        },
+        function (err, subscription) {
+          if (err) {
+            console.log('update subscription error', err);
+            return reject(err.type);
+          }
+          resolve(subscription);
+        }
+      );
+    });
   });
 };
 

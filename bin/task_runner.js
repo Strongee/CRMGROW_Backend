@@ -418,7 +418,7 @@ const task_check = new CronJob(
                   console.log('error', err);
                 });
 
-                let detail_content = 'added follow up';
+                let detail_content = 'added task';
                 detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({
                   content: detail_content,

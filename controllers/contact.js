@@ -4861,6 +4861,10 @@ const shareContacts = async (req, res) => {
   const error = [];
   let contacts_html = '';
 
+  const shareTeam = await Team.findOne({_id: req.body.team}).catch((err) => {
+    console.log('team not found', err.message);
+  });
+
   const user = await User.findOne({
     _id: req.body.user,
   }).catch((err) => {
@@ -4950,10 +4954,17 @@ const shareContacts = async (req, res) => {
             first_name,
             last_name,
           };
-
-          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-            name
-          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+          const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+          const contact_html = `<tr style="margin-bottom:10px;">
+                                  <td>
+                                    <span class="icon-user">${getAvatarName(
+                                      name
+                                    )}</span>
+                                  </td>
+                                  <td style="padding-left:5px;">
+                                    <a class="contact-name" href="${contact_link}">${first_name} ${last_name}</a>
+                                  </td>
+                                </tr>`;
           contacts_html += contact_html;
 
           const myJSON = JSON.stringify(contact);
@@ -4979,17 +4990,19 @@ const shareContacts = async (req, res) => {
       if (data.length > 0) {
         const templatedData = {
           user_name: currentUser.user_name,
-          sharer_name: user.user_name,
+          team_member_name: user.user_name,
+          team_name: shareTeam.name,
           created_at: moment().format('h:mm MMMM Do, YYYY'),
-          contacts_html,
+          html: contacts_html,
         };
 
+        console.log("user email =============>", templatedData);
         const params = {
           Destination: {
             ToAddresses: [user.email],
           },
           Source: mail_contents.NO_REPLAY,
-          Template: 'ContactAdd',
+          Template: 'ShareContact',
           TemplateData: JSON.stringify(templatedData),
           ReplyToAddresses: [currentUser.email],
         };
@@ -5146,11 +5159,6 @@ const stopShare = async (req, res) => {
             first_name,
             last_name,
           };
-
-          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-            name
-          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
-          contacts_html += contact_html;
 
           const myJSON = JSON.stringify(contact);
           const _contact = JSON.parse(myJSON);

@@ -35,4 +35,10 @@ router.post(
   catchError(IntegrationCtrl.connectSMTP)
 );
 
+router.post(
+  '/dialer',
+  UserCtrl.checkAuth,
+  catchError(IntegrationCtrl.addDiaier)
+);
+
 module.exports = router;

@@ -116,6 +116,10 @@ const api = {
   UNLAYER: {
     PROJECT_ID: process.env.UNLAYER_PROJECT_ID,
   },
+  DIALER: {
+    VENDOR_ID: process.env.WAVV_VENDOR_ID,
+    API_KEY: process.env.WAVV_API_KEY,
+  },
 };
 
 module.exports = api;

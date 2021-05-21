@@ -573,7 +573,12 @@ const signUpOutlook = async (req, res) => {
 
 const socialGmail = async (req, res) => {
   const code = req.query.code;
-  const oauth2Client = new google.auth.OAuth2(api.GMAIL_CLIENT.GMAIL_CLIENT_ID);
+
+  const oauth2Client = new google.auth.OAuth2(
+    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
+    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
+    urls.SOCIAL_SIGNUP_URL + 'gmail'
+  );
 
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
@@ -2747,6 +2752,7 @@ const updatePackage = async (req, res) => {
   const planId = api.STRIPE.PLAN[level];
 
   const subscription_data = {
+    customerId: payment.customer_id,
     subscriptionId: payment.subscription,
     planId,
   };
@@ -2792,7 +2798,7 @@ const updatePackage = async (req, res) => {
       console.log('subscription update err', err.message);
       return res.status(400).json({
         status: false,
-        error: 'Please correct your cc info',
+        error: 'Please correct your card',
       });
     });
 };
