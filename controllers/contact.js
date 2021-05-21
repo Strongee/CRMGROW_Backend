@@ -4861,7 +4861,7 @@ const shareContacts = async (req, res) => {
   const error = [];
   let contacts_html = '';
 
-  const shareTeam = await Team.findOne({_id: req.body.team}).catch((err) => {
+  const shareTeam = await Team.findOne({ _id: req.body.team }).catch((err) => {
     console.log('team not found', err.message);
   });
 
@@ -5008,7 +5008,7 @@ const shareContacts = async (req, res) => {
           html: contacts_html,
         };
 
-        console.log("user email =============>", templatedData);
+        console.log('user email =============>', templatedData);
         const params = {
           Destination: {
             ToAddresses: [user.email],
