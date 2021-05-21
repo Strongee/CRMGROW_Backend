@@ -789,7 +789,7 @@ const createFollowUp = async (req, res) => {
     console.log('new follow up save err', err.message);
   });
 
-  const activity_content = 'added follow up';
+  const activity_content = 'added task';
   const activity = new Activity({
     content: activity_content,
     type: 'follow_ups',
@@ -878,7 +878,7 @@ const updateFollowUp = async (req, res) => {
     console.log('deal followup update err', err.message);
   });
 
-  const activity_content = 'updated follow up';
+  const activity_content = 'updated task';
 
   const activity = new Activity({
     content: activity_content,
@@ -900,7 +900,7 @@ const updateFollowUp = async (req, res) => {
       $set: { ...editData },
     }
   ).catch((err) => {
-    console.log('contact deal update followup', err.message);
+    console.log('contact deal update task', err.message);
   });
 
   let due_date;
@@ -997,7 +997,7 @@ const completeFollowUp = async (req, res) => {
     console.log('deal followup update err', err.message);
   });
 
-  const activity_content = 'completed follow up';
+  const activity_content = 'completed task';
 
   const activity = new Activity({
     content: activity_content,
@@ -1019,7 +1019,7 @@ const completeFollowUp = async (req, res) => {
       $set: { status: 1 },
     }
   ).catch((err) => {
-    console.log('contact deal update followup', err.message);
+    console.log('contact deal update task', err.message);
   });
 
   const followups = await FollowUp.find({

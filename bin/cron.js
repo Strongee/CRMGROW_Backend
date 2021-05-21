@@ -1177,7 +1177,7 @@ const timesheet_check = new CronJob(
                   console.log('error', err);
                 });
 
-                let detail_content = 'added follow up';
+                let detail_content = 'added task';
                 detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({
                   content: detail_content,
@@ -1622,7 +1622,7 @@ const timesheet_check = new CronJob(
                         console.log('reminder delete err', err.message);
                       });
 
-                      let detail_content = 'updated follow up';
+                      let detail_content = 'updated task';
                       detail_content = ActivityHelper.automationLog(
                         detail_content
                       );
@@ -1650,7 +1650,7 @@ const timesheet_check = new CronJob(
                     }
                   })
                   .catch((err) => {
-                    console.log('update follow up cron err', err.message);
+                    console.log('update task cron err', err.message);
                   });
                 break;
               }
@@ -1670,7 +1670,7 @@ const timesheet_check = new CronJob(
                       console.log('reminder delete err', err.message);
                     });
 
-                    let detail_content = 'completed follow up';
+                    let detail_content = 'completed task';
                     detail_content = ActivityHelper.automationLog(
                       detail_content
                     );
@@ -1697,7 +1697,7 @@ const timesheet_check = new CronJob(
                       });
                   })
                   .catch((err) => {
-                    console.log('update follow up cron err', err.message);
+                    console.log('update task cron err', err.message);
                   });
                 break;
               }
@@ -1827,7 +1827,7 @@ const task_check = new CronJob(
                   console.log('error', err);
                 });
 
-                let detail_content = 'added follow up';
+                let detail_content = 'added task';
                 detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({
                   content: detail_content,

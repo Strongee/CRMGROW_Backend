@@ -2792,7 +2792,7 @@ const updatePackage = async (req, res) => {
       console.log('subscription update err', err.message);
       return res.status(400).json({
         status: false,
-        error: 'Please correct your cc info',
+        error: 'Please correct your card',
       });
     });
 };

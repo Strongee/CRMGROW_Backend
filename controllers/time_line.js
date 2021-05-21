@@ -311,7 +311,7 @@ const runTimeline = async (id) => {
               console.log('error', err);
             });
 
-            let detail_content = 'added follow up';
+            let detail_content = 'added task';
             detail_content = ActivityHelper.automationLog(detail_content);
 
             const activity = new Activity({

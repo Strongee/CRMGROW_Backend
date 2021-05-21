@@ -5145,11 +5145,6 @@ const stopShare = async (req, res) => {
             last_name,
           };
 
-          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
-            name
-          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
-          contacts_html += contact_html;
-
           const notification = new Notification({
             user: req.body.user,
             sharer: req.body.user,

@@ -20,8 +20,16 @@ router.post(
 
 router.post('/social-share', catchError(MaterialCtrl.socialShare));
 router.post('/thumbs-up', catchError(MaterialCtrl.thumbsUp));
-router.post('/update-folders', UserCtrl.checkAuth, catchError(MaterialCtrl.updateFolders));
-router.post('/remove-folders', UserCtrl.checkAuth, catchError(MaterialCtrl.removeFolders));
+router.post(
+  '/update-folders',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.updateFolders)
+);
+router.post(
+  '/remove-folders',
+  UserCtrl.checkAuth,
+  catchError(MaterialCtrl.removeFolders)
+);
 router.get('/load', UserCtrl.checkAuth, catchError(MaterialCtrl.loadMaterial));
 router.post(
   '/folder',

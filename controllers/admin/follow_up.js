@@ -48,7 +48,7 @@ const create = async (req, res) => {
     .save()
     .then((_followup) => {
       const activity = new Activity({
-        content: `${currentUser.user_name} added follow up`,
+        content: `${currentUser.user_name} added task`,
         contacts: _followup.contact,
         user: currentUser.id,
         type: 'follow_ups',

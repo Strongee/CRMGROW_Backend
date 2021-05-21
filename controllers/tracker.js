@@ -676,7 +676,7 @@ const disconnectVideo = async (video_tracker_id) => {
           console.log('reminder update error', err.message);
         });
 
-        let detail_content = 'updated follow up';
+        let detail_content = 'updated task';
         detail_content = ActivityHelper.autoSettingLog(detail_content);
 
         const activity = new Activity({
@@ -737,7 +737,7 @@ const disconnectVideo = async (video_tracker_id) => {
               console.log('contact update error', err.message);
             });
 
-            let detail_content = 'added follow up';
+            let detail_content = 'added task';
             detail_content = ActivityHelper.autoSettingLog(detail_content);
 
             const activity = new Activity({

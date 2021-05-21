@@ -2,6 +2,8 @@ const User = require('../models/user');
 const Garbage = require('../models/garbage');
 const request = require('request-promise');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const api = require('../config/api');
 
 const checkAuthCalendly = async (req, res) => {
   const { token } = req.body;
@@ -188,10 +190,63 @@ const disconnectCalendly = async (req, res) => {
     });
 };
 
+const addDialer = async (req, res) => {
+  const body = {
+    id: '123456',
+    email: 'super@crmgrow.com',
+    firstName: 'Garrett',
+    lastName: 'Steve',
+    phone: '3127678603',
+    address1: '442 w elm st',
+    city: 'Chicago',
+    state: 'IL',
+    zip: '60610',
+    subscriptions: {
+      multi: true,
+      sms: true,
+    },
+    test: true,
+  };
+
+  const options = {
+    method: 'POST',
+    url: 'https://app.stormapp.com/api/customers',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    auth: {
+      user: api.DIALER.VENDOR_ID,
+      password: api.DIALER.API_KEY,
+    },
+    body,
+    json: true,
+  };
+
+  request(options, function (error, response, data) {
+    if (error) throw new Error(error);
+    const payload = {
+      userId: '123456',
+    };
+
+    const token = jwt.sign(payload, api.DIALER.API_KEY, {
+      issuer: api.DIALER.VENDOR_ID,
+      expiresIn: 3600,
+    });
+
+    console.log(data);
+  });
+
+  return res.send({
+    status: true,
+    token,
+  });
+};
+
 module.exports = {
   checkAuthCalendly,
   setEventCalendly,
   getCalendly,
   disconnectCalendly,
   connectSMTP,
+  addDialer,
 };
