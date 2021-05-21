@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'CancelAccount';
+const templateName = 'ShareContact';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
@@ -27,6 +27,7 @@ const subjects = {
   EmailOpened: `Opened email: {{contact_name}} at {{created_at}}`,
   PaymentNotification: 'CRMGrow payment notification',
   CancelAccount: 'CRMGrow cancel notification',
+  ShareContact: 'CRMGrow share contact notification',
 };
 const htmls = {};
 fs.readFile(
