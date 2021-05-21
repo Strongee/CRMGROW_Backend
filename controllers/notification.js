@@ -148,32 +148,88 @@ const getDelivery = async (req, res) => {
 const getStatus = async (req, res) => {
   const { currentUser } = req;
 
-  const emailTasks = await Task.find({
-    user: currentUser._id,
-    type: 'send_email',
-  }).catch((err) => {
-    console.log('Emailing tasks getting is failed', err);
-  });
+  const emailTasks = await Task.aggregate([
+    {
+      $match: {
+        user: currentUser._id,
+        type: 'send_email',
+      },
+    },
+    {
+      $group: {
+        _id: '$process',
+        details: { $last: '$action' },
+        tasks: {
+          $push: {
+            _id: '$_id',
+            contacts: '$contacts',
+            exec_result: '$exec_result',
+            status: '$status',
+            updated_at: '$updated_at',
+            created_at: '$created_at',
+            due_date: '$due_date',
+          },
+        },
+        exp_end: { $last: '$due_date' },
+        exp_start: { $first: '$due_date' },
+      },
+    },
+  ]);
 
-  const textTasks = await Task.find({
-    user: currentUser._id,
-    type: 'bulk_sms',
-  }).catch((err) => {
-    console.log('Text checking tasks getting is failed', err);
-  });
+  const textTasks = await Task.aggregate([
+    {
+      $match: {
+        user: currentUser._id,
+        type: 'bulk_sms',
+      },
+    },
+    {
+      $group: {
+        _id: '$process',
+        details: { $last: '$action' },
+        tasks: {
+          $push: {
+            _id: '$_id',
+            contacts: '$contacts',
+            exec_result: '$exec_result',
+            status: '$status',
+            updated_at: '$updated_at',
+            created_at: '$created_at',
+            due_date: '$due_date',
+          },
+        },
+        exp_time: { $last: '$due_date' },
+      },
+    },
+  ]);
 
-  const receivedTexts = await Text.countDocuments({
+  const unreadCount = await Text.countDocuments({
     user: currentUser._id,
     type: 1,
     status: 0,
   }).catch((err) => {
     console.log('received text count getting is failed', err);
   });
+  let unreadMessages = [];
+  if (unreadCount) {
+    unreadMessages = await Text.find({
+      user: currentUser._id,
+      type: 1,
+      status: 0,
+    })
+      .sort({ created_at: -1 })
+      .limit(10)
+      .populate('contacts', '_id first_name last_name email cell_phone')
+      .catch((err) => {
+        console.log('received text count getting is failed', err);
+      });
+  }
 
   const response = {
     emails: emailTasks,
     texts: textTasks,
-    unread: receivedTexts,
+    unread: unreadCount,
+    unreadMessages,
   };
 
   let notifications = await Notification.find({

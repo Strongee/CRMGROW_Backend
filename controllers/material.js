@@ -85,7 +85,7 @@ const bulkEmail = async (req, res) => {
     attachments,
   } = req.body;
 
-  const CHUNK_COUNT = 15;
+  const CHUNK_COUNT = 2;
 
   const max_email_count =
     currentUser['email_info']['max_count'] ||
