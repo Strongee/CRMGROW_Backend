@@ -4956,18 +4956,6 @@ const shareContacts = async (req, res) => {
           )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
           contacts_html += contact_html;
 
-          const notification = new Notification({
-            user: req.body.user,
-            sharer: req.body.user,
-            criteria: 'contact_shared',
-            content: `${user.user_name} have shared a contact in CRMGrow`,
-          });
-
-          // Notification
-          notification.save().catch((err) => {
-            console.log('notification save err', err.message);
-          });
-
           const myJSON = JSON.stringify(contact);
           const _contact = JSON.parse(myJSON);
           _contact.shared_members.push({
@@ -5016,6 +5004,20 @@ const shareContacts = async (req, res) => {
           .catch((err) => {
             console.log('ses send err', err);
           });
+
+        const sharedContacts = data.map((e) => e._id);
+        const notification = new Notification({
+          creator: currentUser._id,
+          user: req.body.user,
+          criteria: 'contact_shared',
+          contacts: sharedContacts,
+          content: `${currentUser.user_name} have shared a contact in CRMGrow`,
+        });
+
+        // Notification
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
       }
       if (error.length > 0) {
         return res.status(405).json({
@@ -5150,18 +5152,6 @@ const stopShare = async (req, res) => {
           )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
           contacts_html += contact_html;
 
-          const notification = new Notification({
-            user: req.body.user,
-            sharer: req.body.user,
-            criteria: 'contact_shared',
-            content: `${user.user_name} have shared a contact in CRMGrow`,
-          });
-
-          // Notification
-          notification.save().catch((err) => {
-            console.log('notification save err', err.message);
-          });
-
           const myJSON = JSON.stringify(contact);
           const _contact = JSON.parse(myJSON);
           _contact.shared_members.push({
@@ -5213,6 +5203,21 @@ const stopShare = async (req, res) => {
           });
       }
        */
+      if (data.length) {
+        const stoppedContact = data.map((e) => e._id);
+        const notification = new Notification({
+          creator: currentUser._id,
+          user: req.body.user,
+          criteria: 'stop_share_contact',
+          contacts: stoppedContact,
+          content: `${user.user_name} has stop the contact sharing in CRMGrow`,
+        });
+
+        // Notification
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
+      }
       if (error.length > 0) {
         return res.status(405).json({
           status: false,

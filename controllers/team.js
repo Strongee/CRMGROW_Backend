@@ -474,10 +474,11 @@ const bulkInvites = async (req, res) => {
         const invite = invitedUsers[i];
         const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
         const notification = new Notification({
-          user: invite.id,
+          creator: currentUser._id,
+          user: invite,
           team: team.id,
           criteria: 'team_invited',
-          content: `You've been invited to join team ${team_url} in CRMGrow`,
+          content: `${currentUser.user_name} has invited you to join team ${team_url} in CRMGrow`,
         });
         notification.save().catch((err) => {
           console.log('notification save err', err.message);
@@ -575,12 +576,41 @@ const acceptInviation = async (req, res) => {
        *  Mark read true dashboard notification for accepted users
        *  */
 
-      Notification.updateOne(
-        { team: team.id, user: currentUser.id, criteria: 'team_invited' },
-        { is_read: true }
-      ).catch((err) => {
-        console.log('err', err.message);
+      const inviteNotification = await Notification.findOne({
+        team: team.id,
+        user: currentUser.id,
+        criteria: 'team_invited',
+      }).catch((err) => {
+        console.log('invite notification getting err', err);
       });
+      if (inviteNotification) {
+        inviteNotification['is_read'] = true;
+        inviteNotification.save().catch((err) => {
+          console.log('mark as read failed', err);
+        });
+
+        const acceptNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: inviteNotification['creator'],
+          criteria: 'team_accept',
+        });
+        acceptNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      } else {
+        for (let i = 0; i < owners.length; i++) {
+          const acceptNotification = new Notification({
+            team: team.id,
+            creator: currentUser._id,
+            user: owners[i]._id,
+            criteria: 'team_accept',
+          });
+          acceptNotification.save().catch((err) => {
+            console.log('accept notification is failed.', err);
+          });
+        }
+      }
 
       return res.send({
         status: true,
@@ -673,13 +703,41 @@ const declineInviation = async (req, res) => {
       /** **********
        *  Mark read true dashboard notification for accepted users
        *  */
-
-      Notification.updateOne(
-        { team: team.id, user: currentUser.id, criteria: 'team_invited' },
-        { is_read: true }
-      ).catch((err) => {
-        console.log('err', err.message);
+      const inviteNotification = await Notification.findOne({
+        team: team.id,
+        user: currentUser.id,
+        criteria: 'team_invited',
+      }).catch((err) => {
+        console.log('invite notification getting err', err);
       });
+      if (inviteNotification) {
+        inviteNotification['is_read'] = true;
+        inviteNotification.save().catch((err) => {
+          console.log('mark as read failed', err);
+        });
+
+        const rejectNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: inviteNotification['creator'],
+          criteria: 'team_reject',
+        });
+        rejectNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      } else {
+        for (let i = 0; i < owners.length; i++) {
+          const rejectNotification = new Notification({
+            team: team.id,
+            creator: currentUser._id,
+            user: owners[i]._id,
+            criteria: 'team_reject',
+          });
+          rejectNotification.save().catch((err) => {
+            console.log('accept notification is failed.', err);
+          });
+        }
+      }
 
       return res.send({
         status: true,
@@ -762,16 +820,42 @@ const acceptRequest = async (req, res) => {
 
       sendNotificationEmail(data);
 
-      Notification.updateOne(
-        {
-          team: team.id,
-          user: currentUser.id,
-          criteria: 'team_requested',
-        },
-        { is_read: true }
-      ).catch((err) => {
-        console.log('err', err.message);
+      /** **********
+       *  Mark read true dashboard notification for accepted users
+       *  */
+      const requestNotification = await Notification.findOne({
+        team: team.id,
+        user: currentUser.id,
+        criteria: 'team_requested',
+      }).catch((err) => {
+        console.log('invite notification getting err', err);
       });
+      if (requestNotification) {
+        requestNotification['is_read'] = true;
+        requestNotification.save().catch((err) => {
+          console.log('mark as read failed', err);
+        });
+
+        const acceptNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: request.id,
+          criteria: 'join_accept',
+        });
+        acceptNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      } else {
+        const acceptNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: request.id,
+          criteria: 'join_accept',
+        });
+        acceptNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      }
 
       return res.send({
         status: true,
@@ -849,12 +933,43 @@ const declineRequest = async (req, res) => {
 
       sendNotificationEmail(data);
 
-      Notification.updateOne(
-        { team: team.id, user: currentUser.id, criteria: 'team_requested' },
-        { is_read: true }
-      ).catch((err) => {
-        console.log('err', err.message);
+
+      /** **********
+       *  Mark read true dashboard notification for accepted users
+       *  */
+      const requestNotification = await Notification.findOne({
+        team: team.id,
+        user: currentUser.id,
+        criteria: 'team_requested',
+      }).catch((err) => {
+        console.log('invite notification getting err', err);
       });
+      if (requestNotification) {
+        requestNotification['is_read'] = true;
+        requestNotification.save().catch((err) => {
+          console.log('mark as read failed', err);
+        });
+
+        const rejectNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: request.id,
+          criteria: 'join_reject',
+        });
+        rejectNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      } else {
+        const rejectNotification = new Notification({
+          team: team.id,
+          creator: currentUser._id,
+          user: request.id,
+          criteria: 'join_reject',
+        });
+        rejectNotification.save().catch((err) => {
+          console.log('accept notification is failed.', err);
+        });
+      }
 
       return res.send({
         status: true,
@@ -943,6 +1058,29 @@ const shareVideos = async (req, res) => {
         }
       }
 
+      /**
+       * Create Notification for the Material Share
+       */
+      let team_owners = [];
+      if (team.owner instanceof Array) {
+        team_owners = team.owner;
+      } else {
+        team_owners = [team.owner];
+      }
+      const notification = new Notification({
+        creator: currentUser._id,
+        owner: [...team.members, ...team_owners],
+        criteria: 'share_material',
+        team: team.id,
+        action: {
+          object: 'video',
+          video: newTeamVideos,
+        },
+      });
+      notification.save().catch((err) => {
+        console.log('video sharing notification is failed', err);
+      });
+
       res.send({
         status: true,
         data,
@@ -1027,6 +1165,29 @@ const sharePdfs = async (req, res) => {
         data.push(video_detail);
       }
 
+      /**
+       * Create Notification for the Material Share
+       */
+      let team_owners = [];
+      if (team.owner instanceof Array) {
+        team_owners = team.owner;
+      } else {
+        team_owners = [team.owner];
+      }
+      const notification = new Notification({
+        creator: currentUser._id,
+        owner: [...team.members, ...team_owners],
+        criteria: 'share_material',
+        team: team.id,
+        action: {
+          object: 'pdf',
+          pdf: newTeamPdfs,
+        },
+      });
+      notification.save().catch((err) => {
+        console.log('video sharing notification is failed', err);
+      });
+
       return res.send({
         status: true,
         data,
@@ -1091,6 +1252,30 @@ const shareImages = async (req, res) => {
   )
     .then(async (_data) => {
       const updatedImages = await Image.find({ _id: { $in: newTeamImages } });
+
+      /**
+       * Create Notification for the Material Share
+       */
+      let team_owners = [];
+      if (team.owner instanceof Array) {
+        team_owners = team.owner;
+      } else {
+        team_owners = [team.owner];
+      }
+      const notification = new Notification({
+        creator: currentUser._id,
+        owner: [...team.members, ...team_owners],
+        criteria: 'share_material',
+        team: team.id,
+        action: {
+          object: 'image',
+          image: newTeamImages,
+        },
+      });
+      notification.save().catch((err) => {
+        console.log('video sharing notification is failed', err);
+      });
+
       res.send({
         status: true,
         data: updatedImages,
@@ -1250,6 +1435,28 @@ const shareMaterials = async (req, res) => {
       responseData.push(e);
     });
 
+    let team_owners = [];
+    if (_team.owner instanceof Array) {
+      team_owners = _team.owner;
+    } else {
+      team_owners = [_team.owner];
+    }
+    const notification = new Notification({
+      creator: currentUser._id,
+      owner: [..._team.members, ...team_owners],
+      criteria: 'share_material',
+      team: _team.id,
+      action: {
+        video: videos,
+        pdf: pdfs,
+        image: images,
+        folder: folders,
+      },
+    });
+    notification.save().catch((err) => {
+      console.log('video sharing notification is failed', err);
+    });
+
     return res.send({
       status: true,
       data: responseData,
@@ -1309,6 +1516,30 @@ const shareAutomations = async (req, res) => {
       const updatedAutomations = await Automation.find({
         _id: { $in: newTeamAutomations },
       });
+
+      /**
+       * Create Notifications
+       */
+      let team_owners = [];
+      if (team.owner instanceof Array) {
+        team_owners = team.owner;
+      } else {
+        team_owners = [team.owner];
+      }
+      const notification = new Notification({
+        creator: currentUser._id,
+        owner: [...team.members, ...team_owners],
+        criteria: 'share_automation',
+        team: team.id,
+        action: {
+          object: 'automation',
+          automation: newTeamAutomations,
+        },
+      });
+      notification.save().catch((err) => {
+        console.log('automation sharing notification is failed', err);
+      });
+
       res.send({
         status: true,
         data: updatedAutomations,
@@ -1377,6 +1608,30 @@ const shareEmailTemplates = async (req, res) => {
       const updatedTemplates = await EmailTemplate.find({
         _id: { $in: newTeamTemplates },
       });
+
+      /**
+       * Create Notifications
+       */
+      let team_owners = [];
+      if (team.owner instanceof Array) {
+        team_owners = team.owner;
+      } else {
+        team_owners = [team.owner];
+      }
+      const notification = new Notification({
+        creator: currentUser._id,
+        owner: [...team.members, ...team_owners],
+        criteria: 'share_template',
+        team: team.id,
+        action: {
+          object: 'template',
+          templates: newTeamTemplates,
+        },
+      });
+      notification.save().catch((err) => {
+        console.log('automation sharing notification is failed', err);
+      });
+
       res.send({
         status: true,
         data: updatedTemplates,
@@ -1508,9 +1763,9 @@ const requestTeam = async (req, res) => {
 
     const team_url = `<a href="${urls.TEAM_URL}">${team.name}</a>`;
     const notification = new Notification({
-      user: owner.id,
+      creator: currentUser._id,
       team: team.id,
-      team_requester: currentUser.id,
+      user: owner.id,
       criteria: 'team_requested',
       content: `${currentUser.user_name} has requested to join your ${team_url} in CRMGrow`,
     });
@@ -1619,6 +1874,11 @@ const removeVideos = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ videos: req.params.id }).catch((err) => {
+    console.log('team finding error', err);
+  });
+
   Team.updateOne(
     { videos: req.params.id },
     {
@@ -1636,6 +1896,29 @@ const removeVideos = async (req, res) => {
     { $unset: { role: true } }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_material',
+    team: team.id,
+    action: {
+      object: 'video',
+      video: [req.params.id],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('video stop sharing notification is failed', err);
   });
 
   return res.send({
@@ -1656,6 +1939,11 @@ const removePdfs = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ pdfs: req.params.id }).catch((err) => {
+    console.log('team finding error', err);
+  });
+
   Team.updateOne(
     { pdfs: req.params.id },
     {
@@ -1673,6 +1961,29 @@ const removePdfs = async (req, res) => {
     { $unset: { role: true } }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_material',
+    team: team.id,
+    action: {
+      object: 'pdf',
+      pdf: [req.params.id],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('pdf stop sharing notification is failed', err);
   });
 
   return res.send({
@@ -1693,6 +2004,11 @@ const removeImages = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ images: req.params.id }).catch((err) => {
+    console.log('team finding error', err);
+  });
+
   Team.updateOne(
     { images: req.params.id },
     {
@@ -1710,6 +2026,29 @@ const removeImages = async (req, res) => {
     { $unset: { role: true } }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_material',
+    team: team.id,
+    action: {
+      object: 'image',
+      image: [req.params.id],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('image stop sharing notification is failed', err);
   });
 
   return res.send({
@@ -1732,6 +2071,11 @@ const removeFolders = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ _id: team_id }).catch((err) => {
+    console.log('team finding error', err);
+  });
+
   Team.updateOne(
     { _id: team_id },
     {
@@ -1739,6 +2083,29 @@ const removeFolders = async (req, res) => {
     }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_material',
+    team: team.id,
+    action: {
+      object: 'folder',
+      folder: [folder],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('folder stop sharing notification is failed', err);
   });
 
   return res.send({
@@ -1759,6 +2126,13 @@ const removeAutomations = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ automations: req.params.id }).catch(
+    (err) => {
+      console.log('team finding error', err);
+    }
+  );
+
   Team.updateOne(
     { automations: req.params.id },
     {
@@ -1776,6 +2150,29 @@ const removeAutomations = async (req, res) => {
     { $unset: { role: true } }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_automation',
+    team: team.id,
+    action: {
+      object: 'automation',
+      automation: [req.params.id],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('folder stop sharing notification is failed', err);
   });
 
   return res.send({
@@ -1796,6 +2193,13 @@ const removeEmailTemplates = async (req, res) => {
       error: 'Invalid permission',
     });
   }
+
+  const team = await Team.findOne({ email_templates: req.params.id }).catch(
+    (err) => {
+      console.log('team finding error', err);
+    }
+  );
+
   Team.updateOne(
     { email_templates: req.params.id },
     {
@@ -1813,6 +2217,29 @@ const removeEmailTemplates = async (req, res) => {
     { $unset: { role: true } }
   ).catch((err) => {
     console.log('err', err.message);
+  });
+
+  /**
+   * Create Notifications
+   */
+  let team_owners = [];
+  if (team.owner instanceof Array) {
+    team_owners = team.owner;
+  } else {
+    team_owners = [team.owner];
+  }
+  const notification = new Notification({
+    creator: currentUser._id,
+    owner: [...team.members, ...team_owners],
+    criteria: 'stop_share_template',
+    team: team.id,
+    action: {
+      object: 'template',
+      template: [req.params.id],
+    },
+  });
+  notification.save().catch((err) => {
+    console.log('folder stop sharing notification is failed', err);
   });
 
   return res.send({
