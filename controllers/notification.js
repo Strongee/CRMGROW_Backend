@@ -148,12 +148,33 @@ const getDelivery = async (req, res) => {
 const getStatus = async (req, res) => {
   const { currentUser } = req;
 
-  const emailTasks = await Task.find({
-    user: currentUser._id,
-    type: 'send_email',
-  }).catch((err) => {
-    console.log('Emailing tasks getting is failed', err);
-  });
+  const emailTasks = await Task.aggregate([
+    {
+      $match: {
+        user: currentUser._id,
+        type: 'send_email',
+      },
+    },
+    {
+      $group: {
+        _id: '$process',
+        details: { $last: '$action' },
+        tasks: {
+          $push: {
+            _id: '$_id',
+            contacts: '$contacts',
+            exec_result: '$exec_result',
+            status: '$status',
+            updated_at: '$updated_at',
+            created_at: '$created_at',
+            due_date: '$due_date',
+          },
+        },
+        exp_end: { $last: '$due_date' },
+        exp_start: { $first: '$due_date' },
+      },
+    },
+  ]);
 
   const textTasks = await Task.find({
     user: currentUser._id,

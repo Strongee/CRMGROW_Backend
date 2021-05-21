@@ -1181,7 +1181,7 @@ const sendEmails = async (req, res) => {
   let newTaskId;
   let contacts = [...inputContacts];
   let contactsToTemp = [];
-  const CHUNK_COUNT = 15;
+  const CHUNK_COUNT = 2;
 
   if (inputContacts.length > CHUNK_COUNT) {
     const currentTasks = await Task.find({
