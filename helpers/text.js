@@ -22,6 +22,7 @@ const moment = require('moment-timezone');
 
 const urls = require('../constants/urls');
 const { RestClient } = require('@signalwire/node');
+const { Action } = require('rxjs/internal/scheduler/Action');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -1151,6 +1152,14 @@ const sendText = async (data) => {
     textProcessId,
   } = data;
 
+  const taskDetail = {
+    video_ids,
+    pdf_ids,
+    image_ids,
+    content,
+    contacts,
+  };
+
   const currentUser = await User.findOne({ _id: user }).catch((err) => {
     console.log('user find err', err.message);
   });
@@ -1442,6 +1451,7 @@ const sendText = async (data) => {
                   activity._id,
                   text._id,
                   textProcessId,
+                  taskDetail,
                   time
                 );
                 resolve({
@@ -1586,6 +1596,7 @@ const sendText = async (data) => {
                   activity._id,
                   text._id,
                   textProcessId,
+                  taskDetail,
                   time
                 );
 
@@ -1785,6 +1796,7 @@ const createTextCheckTasks = (
   text_activity,
   text_id,
   process_id,
+  detail,
   time
 ) => {
   const task = new Task({
@@ -1797,6 +1809,7 @@ const createTextCheckTasks = (
       service,
       activity: text_activity,
       text: text_id,
+      ...detail,
     },
     contacts: [contact._id],
     due_date: time,
