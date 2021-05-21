@@ -18,7 +18,7 @@ const accountSid = api.TWILIO.TWILIO_SID;
 const authToken = api.TWILIO.TWILIO_AUTH_TOKEN;
 const twilio = require('twilio')(accountSid, authToken);
 const request = require('request-promise');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 const urls = require('../constants/urls');
 const { RestClient } = require('@signalwire/node');
@@ -933,11 +933,10 @@ const getTwilioNumber = async (id) => {
       return fromNumber;
     });
 
+  /**
   if (fromNumber) {
     return fromNumber;
   }
-
-  let number = data[0];
 
   if (typeof number === 'undefined' || number === '+') {
     const areaCode1 = areaCode.slice(1);
@@ -958,11 +957,11 @@ const getTwilioNumber = async (id) => {
   if (fromNumber) {
     return fromNumber;
   }
-
-  if (typeof number !== 'undefined' && number !== '+') {
+  */
+  if (data[0] && data[0] !== '+') {
     const proxy_number = await twilio.incomingPhoneNumbers
       .create({
-        phoneNumber: number.phoneNumber,
+        phoneNumber: data[0].phoneNumber,
         smsUrl: urls.SMS_RECEIVE_URL,
       })
       .then()
@@ -970,16 +969,18 @@ const getTwilioNumber = async (id) => {
         console.log('proxy number error', err);
       });
 
-    user['proxy_number'] = proxy_number.phoneNumber;
-    fromNumber = proxy_number.phoneNumber;
-    user.save().catch((err) => {
+    User.updateOne(
+      { _id: id },
+      {
+        $set: {
+          twilio_number: proxy_number.phoneNumber,
+          twilio_number_id: proxy_number.id,
+        },
+      }
+    ).catch((err) => {
       console.log('err', err.message);
     });
-  } else {
-    fromNumber = api.TWILIO.TWILIO_NUMBER;
   }
-
-  return fromNumber;
 };
 
 const getSignalWireNumber = async (id) => {
@@ -1455,7 +1456,12 @@ const sendText = async (data) => {
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
                       // Handle delivered text
-                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
+                      handleDeliveredText(
+                        _contact._id,
+                        activities,
+                        activity._id,
+                        text._id
+                      );
 
                       resolve({
                         status: true,
@@ -1499,7 +1505,12 @@ const sendText = async (data) => {
                 `Send SMS: ${fromNumber} -> ${_contact.cell_phone} :`,
                 text_content
               );
-              handleDeliveredText(_contact._id, activities, activity._id, text._id);
+              handleDeliveredText(
+                _contact._id,
+                activities,
+                activity._id,
+                text._id
+              );
 
               resolve({
                 status: true,
@@ -1590,7 +1601,12 @@ const sendText = async (data) => {
                     if (res.status === 'delivered') {
                       clearInterval(interval_id);
                       // Handle delivered Text
-                      handleDeliveredText(_contact._id, activities, activity._id, text._id);
+                      handleDeliveredText(
+                        _contact._id,
+                        activities,
+                        activity._id,
+                        text._id
+                      );
                       resolve({
                         status: true,
                         contact: _contact,
@@ -1634,7 +1650,12 @@ const sendText = async (data) => {
                 text_content
               );
               // Handle delivered Text
-              handleDeliveredText(_contact._id, activities, activity._id, text._id);
+              handleDeliveredText(
+                _contact._id,
+                activities,
+                activity._id,
+                text._id
+              );
               resolve({
                 status: true,
               });

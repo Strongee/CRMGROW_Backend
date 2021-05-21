@@ -69,6 +69,7 @@ const { sendNotificationEmail } = require('../helpers/email');
 const { setPackage } = require('../helpers/user');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
+const { Pay } = require('twilio/lib/twiml/VoiceResponse');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -118,7 +119,6 @@ const signUp = async (req, res) => {
         ...req.body,
         is_trial,
         package_level: level,
-        connected_email: email,
         payment: payment.id,
         salt,
         hash,
@@ -144,9 +144,9 @@ const signUp = async (req, res) => {
             console.log('user set package err', err.message);
           });
 
-          if (_res.phone) {
-            getTwilioNumber(_res.id);
-          }
+          // if (_res.phone) {
+          //   getTwilioNumber(_res.id);
+          // }
 
           const time_zone = _res.time_zone_info
             ? JSON.parse(_res.time_zone_info).tz_name
@@ -345,7 +345,7 @@ const socialSignUp = async (req, res) => {
     .then(async (payment) => {
       const user = new User({
         ...req.body,
-        connected_email: email,
+        package_level: level,
         payment: payment.id,
       });
 
@@ -2411,16 +2411,28 @@ const connectAnotherEmail = async (req, res) => {
   });
 };
 
-const disconnectGmail = async (req, res) => {
+const disconnectEmail = async (req, res) => {
   const { currentUser } = req;
-  const oauth2Client = new google.auth.OAuth2(
-    api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
-    api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
-    urls.GMAIL_AUTHORIZE_URL
-  );
-  const token = JSON.parse(currentUser.google_refresh_token);
-  oauth2Client.setCredentials({ refresh_token: token.refresh_token });
-  await oauth2Client.disconnect();
+
+  User.updateOne(
+    {
+      _id: currentUser.id,
+    },
+    {
+      $set: { primary_connected: false },
+      $unset: { 
+        connected_email: true,
+        outlook_refresh_token: true,
+        google_refresh_token: true,
+      },
+    }
+  ).catch((err) => {
+    console.log('user disconnect email update err', err.message);
+  });
+
+  return res.send({
+    status: true,
+  });
 };
 
 const searchUserEmail = (req, res) => {
@@ -2718,6 +2730,14 @@ const updatePackage = async (req, res) => {
       error: 'Please connect card',
     });
   }
+
+  if (level === currentUser.package_level) {
+    return res.status(400).json({
+      status: false,
+      error: 'You are in current same plan',
+    });
+  }
+
   const payment = await Payment.findOne({ _id: currentUser.payment }).catch(
     (err) => {
       console.log('payment find err', err.message);
@@ -2732,8 +2752,7 @@ const updatePackage = async (req, res) => {
   };
 
   updateSubscription(subscription_data)
-    .then((subscription) => {
-      console.log('subscription', subscription);
+    .then(() => {
       User.updateOne(
         {
           _id: currentUser.id,
@@ -2742,7 +2761,18 @@ const updatePackage = async (req, res) => {
           package_level: level,
         }
       ).catch((err) => {
-        console.log('set package err', err.message);
+        console.log('user updae package err', err.message);
+      });
+
+      Payment.updateOne(
+        {
+          user: currentUser.id,
+        },
+        {
+          plan_id: planId,
+        }
+      ).catch((err) => {
+        console.log('payment set package err', err.message);
       });
 
       const data = {
@@ -2760,6 +2790,10 @@ const updatePackage = async (req, res) => {
     })
     .catch((err) => {
       console.log('subscription update err', err.message);
+      return res.status(400).json({
+        status: false,
+        error: 'Please correct your cc info',
+      });
     });
 };
 
@@ -2822,7 +2856,7 @@ module.exports = {
   desktopNotification,
   disconDaily,
   disconWeekly,
-  disconnectGmail,
+  disconnectEmail,
   weeklyReport,
   checkAuth,
   checkAuth2,

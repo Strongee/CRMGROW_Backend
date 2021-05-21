@@ -1914,7 +1914,8 @@ const sendTexts = async (req, res) => {
             {
               $set: {
                 'text_info.count': execResult.count,
-                'text_info.additional_credit.amount': execResult.additional_sms_credit,
+                'text_info.additional_credit.amount':
+                  execResult.additional_sms_credit,
               },
             }
           ).catch((err) => {

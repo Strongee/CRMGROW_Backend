@@ -1,10 +1,9 @@
 let domain = 'https://ecsbe.crmgrow.com';
-const domain1 = 'https://ecsbe.crmgrow.com';
-let front =
-  'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
+const domain1 = 'https://app-v2.crmgrow.com';
+let front = 'https://app-v2.crmgrow.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://ecsbe.crmgrow.com';
-  front = 'https://pilot.crmgrow.com';
+  front = 'https://app-v2.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
   domain = 'http://3.139.190.87:3000';
   front = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
@@ -16,15 +15,15 @@ if (process.env.NODE_ENV === 'production') {
 const urls = {
   DOMAIN_URL: `${domain}/`,
   API_URL: `${domain}/api/`,
-  LOGIN_URL: `${domain}/login`,
-  PROFILE_URL: `${domain}/profile/`,
-  SOCIAL_SIGNUP_URL: `${domain}/signup/`,
-  APP_SIGNIN_URL: `${domain}/social-oauth-callback/`,
-  OUTLOOK_AUTHORIZE_URL: `${domain}/profile/outlook`,
-  GMAIL_AUTHORIZE_URL: `${domain1}/profile/gmail`,
+  LOGIN_URL: `${front}/login`,
+  PROFILE_URL: `${front}/profile/`,
+  SOCIAL_SIGNUP_URL: `${front}/signup/`,
+  APP_SIGNIN_URL: `${front}/social-oauth-callback/`,
+  OUTLOOK_AUTHORIZE_URL: `${front}/profile/outlook`,
+  GMAIL_AUTHORIZE_URL: `${front}/profile/gmail`,
   ZOOM_AUTHORIZE_URL: `${front}/profile/zoom`,
-  GOOGLE_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/google`,
-  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${domain1}/calendar/outlook`,
+  GOOGLE_CALENDAR_AUTHORIZE_URL: `${front}/calendar/google`,
+  OUTLOOK_CALENDAR_AUTHORIZE_URL: `${front}/calendar/outlook`,
   VIDEO_THUMBNAIL_URL: `${domain}/api/video/thumbnail/`,
   PDF_PREVIEW_URL: `${domain}/api/pdf/preview/`,
   IMAGE_PREVIEW_URL: `${domain}/api/image/preview/`,
@@ -36,13 +35,13 @@ const urls = {
   MATERIAL_VIEW_PDF_URL: `${domain}/pdf1/`,
   MATERIAL_VIEW_IMAGE_URL: `${domain}/image/`,
   CONTACT_PAGE_URL: `${front}/contacts/`,
-  FOLLOWUP_PAGE_URL: `${domain}/follow-up/`,
+  FOLLOWUP_PAGE_URL: `${front}/follow-up/`,
   ASSETS_URL: `${domain}/assets/`,
   ACCEPT_INVITATION_URL: `${domain}/api/appointment/accept?`,
   DECLINE_INVITATION_URL: `${domain}/api/appointment/decline?`,
   SMS_RECEIVE_URL: `${domain}/api/sms/receive-twilio/`,
   SMS_RECEIVE_URL1: `${domain}/api/sms/receive-signalwire/`,
-  RESET_PASSWORD_URL: `${domain}/reset-password/`,
+  RESET_PASSWORD_URL: `${front}/reset-password/`,
   AVATAR_URL:
     'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
   CONTACT_CSV_URL:
@@ -53,21 +52,21 @@ const urls = {
   // INTRO_VIDEO_URL: `${domain}/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc`,
   GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
   TRACK_URL: `${domain}/api/email/opened/`,
-  UNSUBSCRIPTION_URL: 'https://email.crmgrow.com/unsubscribe',
-  RESUBSCRIPTION_URL: 'https://email.crmgrow.com/resubscribe/',
+  UNSUBSCRIPTION_URL: `${domain}/unsubscribe`,
+  RESUBSCRIPTION_URL: `${domain}/resubscribe/`,
   CLICK_REDIRECT_URL: `${domain}/redirect`,
   LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
   DEFAULT_TEMPLATE_PAGE_LOGO: `${domain}/theme/images/default_logo.png`,
   STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
-  TEAM_URL: `${domain}/team/`,
-  TEAM_ACCEPT_URL: `${domain}/team/accept/`,
-  TEAM_ACCEPT_REQUEST_URL: `${domain}/team/accept-request`,
-  TEAM_CALLS: `${domain}/team/calls/`,
-  BILLING_URL: `${domain}/profile/billing`,
+  TEAM_URL: `${front}/team/`,
+  TEAM_ACCEPT_URL: `${front}/team/accept/`,
+  TEAM_ACCEPT_REQUEST_URL: `${front}/team/accept-request`,
+  TEAM_CALLS: `${front}/team/calls/`,
+  BILLING_URL: `${front}/profile/billing`,
   FACEBOOK_URL: 'https://www.facebook.com/crmgrow',
   TERMS_SERVICE_URL: 'https://crmgrow.com/terms_of_service.html',
   PRIVACY_URL: 'https://crmgrow.com/privacy.html',
-  UNSUSCRIPTION_URL: `${domain}`,
+  UNSUSCRIPTION_URL: `${front}`,
   RECORDING_PREVIEW_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
   ONEONONE_URL: 'https://crmgrow.com/oneonone',

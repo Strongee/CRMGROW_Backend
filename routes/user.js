@@ -84,9 +84,9 @@ router.get('/sync-gmail', UserCtrl.checkAuth, catchError(UserCtrl.syncGmail));
 
 // Disconnect with gmail
 router.get(
-  '/discon-gmail',
+  '/discon-email',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.disconnectGmail)
+  catchError(UserCtrl.disconnectEmail)
 );
 
 // Synchronize with yahoo
@@ -278,9 +278,9 @@ router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));
 
 // Get overflow plan status
 router.post(
-    '/overflow-plan',
-    UserCtrl.checkAuth,
-    catchError(UserCtrl.overflowPlan)
+  '/overflow-plan',
+  UserCtrl.checkAuth,
+  catchError(UserCtrl.overflowPlan)
 );
 
 module.exports = router;

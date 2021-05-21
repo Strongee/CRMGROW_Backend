@@ -5037,6 +5037,202 @@ const shareContacts = async (req, res) => {
     });
 };
 
+const stopShare = async (req, res) => {
+  const { currentUser } = req;
+  const { contacts } = req.body;
+  const promise_array = [];
+  const data = [];
+  const error = [];
+
+  const user = await User.findOne({
+    _id: req.body.user,
+  }).catch((err) => {
+    console.log('user find err', err.message);
+  });
+
+  for (let i = 0; i < contacts.length; i++) {
+    const promise = new Promise(async (resolve, reject) => {
+      const contact = await Contact.findOne({
+        _id: contacts[i],
+        user: currentUser.id,
+      })
+        .populate([
+          { path: 'last_activity' },
+          {
+            path: 'shared_members',
+            select: {
+              user_name: 1,
+              picture_profile: 1,
+              email: 1,
+              cell_phone: 1,
+            },
+          },
+          {
+            path: 'user',
+            select: {
+              user_name: 1,
+              picture_profile: 1,
+              email: 1,
+              cell_phone: 1,
+            },
+          },
+        ])
+        .catch((err) => {
+          console.log('contact find err', err.message);
+        });
+
+      if (!contact) {
+        const _contact = await Contact.findOne({
+          _id: contacts[i],
+        }).catch((err) => {
+          console.log('contact find err', err.message);
+        });
+        error.push({
+          contact: {
+            _id: contacts[i],
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          error: 'Invalid permission',
+        });
+
+        resolve();
+      }
+
+      const activity_content = 'stopped sharing contact';
+      const activity = new Activity({
+        user: currentUser.id,
+        contacts: contacts[i],
+        content: activity_content,
+        users: req.body.user,
+        type: 'users',
+      });
+
+      activity.save().catch((err) => {
+        console.log('activity save err', err.message);
+      });
+
+      let query;
+      if (contact.shared_members && contact.shared_members.length > 1) {
+        query = {
+          $pull: {
+            shared_members: req.body.user,
+          },
+        };
+      } else {
+        query = {
+          $unset: {
+            shared_contact: true,
+            shared_team: true,
+            shared_members: true,
+          },
+        };
+      }
+
+      Contact.updateOne(
+        {
+          _id: contacts[i],
+        },
+        {
+          ...query,
+        }
+      )
+        .then(() => {
+          const first_name = contact.first_name || '';
+          const last_name = contact.last_name || '';
+          const name = {
+            first_name,
+            last_name,
+          };
+
+          const contact_html = `<tr style="margin-bottom:10px;"><td><span class="icon-user">${getAvatarName(
+            name
+          )}</label></td><td style="padding-left:5px;">${first_name} ${last_name}</td></tr>`;
+          contacts_html += contact_html;
+
+          const notification = new Notification({
+            user: req.body.user,
+            sharer: req.body.user,
+            criteria: 'contact_shared',
+            content: `${user.user_name} have shared a contact in CRMGrow`,
+          });
+
+          // Notification
+          notification.save().catch((err) => {
+            console.log('notification save err', err.message);
+          });
+
+          const myJSON = JSON.stringify(contact);
+          const _contact = JSON.parse(myJSON);
+          _contact.shared_members.push({
+            user_name: user.user_name,
+            picture_profile: user.picture_profile,
+            email: user.email,
+            cell_phone: user.cell_phone,
+          });
+          data.push(_contact);
+          resolve();
+        })
+        .catch((err) => {
+          console.log('contact update err', err.message);
+        });
+    });
+    promise_array.push(promise);
+  }
+
+  Promise.all(promise_array)
+    .then(() => {
+      /**
+      if (data.length > 0) {
+        const templatedData = {
+          user_name: currentUser.user_name,
+          sharer_name: user.user_name,
+          created_at: moment().format('h:mm MMMM Do, YYYY'),
+          contacts_html,
+        };
+
+        const params = {
+          Destination: {
+            ToAddresses: [user.email],
+          },
+          Source: mail_contents.NO_REPLAY,
+          Template: 'ContactAdd',
+          TemplateData: JSON.stringify(templatedData),
+          ReplyToAddresses: [currentUser.email],
+        };
+
+        // Create the promise and SES service object
+        ses
+          .sendTemplatedEmail(params)
+          .promise()
+          .then((response) => {
+            console.log('success', response.MessageId);
+          })
+          .catch((err) => {
+            console.log('ses send err', err);
+          });
+      }
+       */
+      if (error.length > 0) {
+        return res.status(405).json({
+          status: false,
+          error,
+        });
+      }
+      return res.send({
+        status: true,
+        data,
+      });
+    })
+    .catch((err) => {
+      console.log('contact share err', err);
+      return res.status(400).json({
+        status: false,
+        error: err,
+      });
+    });
+};
+
 const loadByEmails = (req, res) => {
   const { currentUser } = req;
   const { emails } = req.body;
@@ -5118,6 +5314,7 @@ module.exports = {
   interestSubmitContact,
   getSharedContact,
   shareContacts,
+  stopShare,
   mergeContact,
   // mergeContacts,
   updateContact,
