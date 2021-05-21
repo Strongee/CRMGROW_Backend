@@ -2747,6 +2747,7 @@ const updatePackage = async (req, res) => {
   const planId = api.STRIPE.PLAN[level];
 
   const subscription_data = {
+    customerId: payment.customer_id,
     subscriptionId: payment.subscription,
     planId,
   };
