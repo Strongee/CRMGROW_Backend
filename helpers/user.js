@@ -23,6 +23,7 @@ const setPackage = async (data) => {
     };
   } else {
     material_info = {
+      'material_info.is_limit': true,
       'material_info.upload_max_count':
         system_settings.MATERIAL_UPLOAD_LIMIT[level],
       'material_info.record_max_duration':
@@ -50,19 +51,23 @@ const setPackage = async (data) => {
     link_track_enabled = false;
   } else {
     automation_info = {
+      'automation_info.is_enabled': true,
       'automation_info.max_count':
         system_settings.AUTOMATION_ASSIGN_LIMIT[level],
     };
 
     calendar_info = {
+      'calendar_info.is_enabled': true,
       'calendar_info.max_count': system_settings.CALENDAR_LIMIT[level],
     };
 
     text_info = {
+      'text_info.is_enabled': true,
       'text_info.max_count': system_settings.TEXT_MONTHLY_LIMIT[level],
     };
 
     assist_info = {
+      'assistant_info.is_enabled': true,
       'assistant_info.max_count': system_settings.ASSISTANT_LIMIT[level],
     };
     capture_enabled = true;
@@ -79,8 +84,6 @@ const setPackage = async (data) => {
     capture_enabled,
     link_track_enabled,
   };
-
-  console.log('query', query);
 
   return User.updateOne(
     {

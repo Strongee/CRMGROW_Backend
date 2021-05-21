@@ -660,7 +660,12 @@ const updateSubscription = async (data) => {
       {
         cancel_at_period_end: false,
         proration_behavior: 'create_prorations',
-        items: [{ price: planId }],
+        items: [
+          {
+            id: 'si_JWIuVqCExjlABy',
+            price: planId,
+          },
+        ],
       },
       function (err, subscription) {
         if (err) {
