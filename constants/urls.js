@@ -58,6 +58,7 @@ const urls = {
   LOGO_URL: 'https://teamgrow.s3.us-east-2.amazonaws.com/image.png',
   DEFAULT_TEMPLATE_PAGE_LOGO: `${domain}/theme/images/default_logo.png`,
   STORAGE_BASE: 'https://teamgrow.s3.us-east-2.amazonaws.com',
+  TEAM_LIST_URL: `${front}/teams/`,
   TEAM_URL: `${front}/team/`,
   TEAM_ACCEPT_URL: `${front}/team/accept/`,
   TEAM_ACCEPT_REQUEST_URL: `${front}/team/accept-request`,
