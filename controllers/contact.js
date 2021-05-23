@@ -5180,37 +5180,6 @@ const stopShare = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
-      /**
-      if (data.length > 0) {
-        const templatedData = {
-          user_name: currentUser.user_name,
-          sharer_name: user.user_name,
-          created_at: moment().format('h:mm MMMM Do, YYYY'),
-          contacts_html,
-        };
-
-        const params = {
-          Destination: {
-            ToAddresses: [user.email],
-          },
-          Source: mail_contents.NO_REPLAY,
-          Template: 'ContactAdd',
-          TemplateData: JSON.stringify(templatedData),
-          ReplyToAddresses: [currentUser.email],
-        };
-
-        // Create the promise and SES service object
-        ses
-          .sendTemplatedEmail(params)
-          .promise()
-          .then((response) => {
-            console.log('success', response.MessageId);
-          })
-          .catch((err) => {
-            console.log('ses send err', err);
-          });
-      }
-       */
       if (data.length) {
         const stoppedContact = data.map((e) => e._id);
         const notification = new Notification({
@@ -5218,7 +5187,7 @@ const stopShare = async (req, res) => {
           user: req.body.user,
           criteria: 'stop_share_contact',
           contacts: stoppedContact,
-          content: `${user.user_name} has stop the contact sharing in CRMGrow`,
+          content: `${currentUser.user_name} has stop the contact sharing in CRMGrow`,
         });
 
         // Notification
