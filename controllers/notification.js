@@ -91,6 +91,190 @@ const bulkRemove = (req, res) => {
     });
 };
 
+const getNotificationDetails = async (notifications) => {
+  const promise_array = [];
+
+  for (let i = 0; i < notifications.length; i++) {
+    const notification = notifications[i];
+    let detailNotification;
+    let promise;
+    let pathField;
+    let selectField;
+    switch (notification['criteria']) {
+      case 'bulk_sms':
+        // TODO: 5 contacts populate for succeed and failed
+        promise = new Promise((resolve) => {
+          resolve(notification);
+        });
+        break;
+      case 'bulk_email':
+        // TODO: 5 contacts populate for succeed and failed
+        promise = new Promise((resolve) => {
+          resolve(notification);
+        });
+        break;
+      case 'team_invited':
+      case 'team_accept':
+      case 'team_reject':
+      case 'team_requested':
+      case 'join_accept':
+      case 'join_reject':
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'creator',
+            select: '_id user_name email cell_phone picture_profile',
+          })
+          .populate({
+            path: 'team',
+            select: '_id name picture',
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      case 'share_automation':
+      case 'stop_share_automation':
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'creator',
+            select: '_id user_name email cell_phone picture_profile',
+          })
+          .populate({
+            path: 'team',
+            select: '_id name picture',
+          })
+          .populate({
+            path: 'action.automation',
+            select: '_id title',
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      case 'share_template':
+      case 'stop_share_template':
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'creator',
+            select: '_id user_name email cell_phone picture_profile',
+          })
+          .populate({
+            path: 'team',
+            select: '_id name picture',
+          })
+          .populate({
+            path: 'action.template',
+            select: '_id title subject',
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      case 'share_material':
+      case 'stop_share_material':
+        if (notification.action.object) {
+          pathField = 'action.' + notification.action.object;
+          detailNotification = await Notification.findById(notification['_id'])
+            .populate({
+              path: 'creator',
+              select: '_id user_name email cell_phone picture_profile',
+            })
+            .populate({
+              path: 'team',
+              select: '_id name picture',
+            })
+            .populate({
+              path: pathField,
+              select: '_id title preview thumbnail',
+            });
+          promise = new Promise((resolve) => {
+            resolve(detailNotification);
+          });
+        } else {
+          detailNotification = await Notification.findById(notification['_id'])
+            .populate({
+              path: 'creator',
+              select: '_id user_name email cell_phone picture_profile',
+            })
+            .populate({
+              path: 'team',
+              select: '_id name picture',
+            })
+            .populate({
+              path: 'action.pdf',
+              select: '_id title preview thumbnail',
+            })
+            .populate({
+              path: 'action.video',
+              select: '_id title preview thumbnail',
+            })
+            .populate({
+              path: 'action.image',
+              select: '_id title preview thumbnail',
+            })
+            .populate({
+              path: 'action.folder',
+              select: '_id title preview thumbnail',
+            });
+          promise = new Promise((resolve) => {
+            resolve(detailNotification);
+          });
+        }
+        break;
+      case 'share_contact':
+      case 'stop_share_contact':
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'creator',
+            select: '_id user_name email cell_phone picture_profile',
+          })
+          .populate({
+            path: 'team',
+            select: '_id name picture',
+          })
+          .populate({
+            path: 'contacts',
+            select: '_id first_name last_name email cell_phone',
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      case 'open_email':
+      case 'click_link':
+      case 'unsubscribe':
+      case 'material_track':
+        pathField = 'action.' + notification.action.object;
+        selectField = '';
+        if (notification.action.object === 'email') {
+          selectField = '_id subject content';
+        } else {
+          selectField = '_id title preview thumbnail';
+        }
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'creator',
+            select: '_id user_name email cell_phone picture_profile',
+          })
+          .populate({
+            path: pathField,
+            select: selectField,
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      default:
+        promise = new Promise((resolve) => {
+          resolve(notification);
+        });
+    }
+    promise_array.push(promise);
+  }
+
+  return Promise.all(promise_array);
+};
+
 const getPage = async (req, res) => {
   const { currentUser } = req;
   const { page } = req.params;
@@ -99,14 +283,17 @@ const getPage = async (req, res) => {
     $or: [
       {
         user: currentUser.id,
-        is_read: false,
+      },
+      {
+        owner: currentUser.id,
       },
       {
         type: 'global',
-        del: false,
       },
     ],
+    del: false,
   })
+    .sort({ updated_at: -1 })
     .skip((page - 1) * 15)
     .limit(15);
 
@@ -115,15 +302,27 @@ const getPage = async (req, res) => {
       {
         user: currentUser.id,
       },
-      { type: 'global' },
+      {
+        owner: currentUser.id,
+      },
+      {
+        type: 'global',
+      },
     ],
+    del: false,
   });
 
-  return res.json({
-    status: true,
-    notifications,
-    total,
-  });
+  getNotificationDetails(notifications)
+    .then((_notifications) => {
+      return res.json({
+        status: true,
+        notifications: _notifications,
+        total,
+      });
+    })
+    .catch((err) => {
+      console.log('Notifications detail getting is failed', err);
+    });
 };
 
 const getDelivery = async (req, res) => {
@@ -236,23 +435,25 @@ const getStatus = async (req, res) => {
     $or: [{ user: currentUser._id }, { owner: [currentUser._id] }],
     is_read: false,
   })
-    .sort({ created_at: 1 })
+    .sort({ updated_at: -1 })
     .limit(6)
     .catch((err) => {
       console.log('Getting unread notifications', err);
     });
   if (notifications && notifications.length) {
     response.notifications = notifications;
+    response.unreadNotifications = notifications.length;
   } else {
     notifications = await Notification.find({
       $or: [{ user: currentUser._id }, { owner: [currentUser._id] }]
     })
-      .sort({ created_at: 1 })
+      .sort({ updated_at: -1 })
       .limit(5)
       .catch((err) => {
         console.log('Getting Latest notifications', err);
       });
     response.notifications = notifications;
+    response.unreadNotifications = 0;
   }
 
   const system_notifications = await Notification.find({

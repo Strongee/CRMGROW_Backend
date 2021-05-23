@@ -4967,18 +4967,6 @@ const shareContacts = async (req, res) => {
                                 </tr>`;
           contacts_html += contact_html;
 
-          const notification = new Notification({
-            user: req.body.user,
-            sharer: req.body.user,
-            criteria: 'contact_shared',
-            content: `${user.user_name} have shared a contact in CRMGrow`,
-          });
-
-          // Notification
-          notification.save().catch((err) => {
-            console.log('notification save err', err.message);
-          });
-
           const myJSON = JSON.stringify(contact);
           const _contact = JSON.parse(myJSON);
           _contact.shared_members.push({
@@ -5029,6 +5017,20 @@ const shareContacts = async (req, res) => {
           .catch((err) => {
             console.log('ses send err', err);
           });
+
+        const sharedContacts = data.map((e) => e._id);
+        const notification = new Notification({
+          creator: currentUser._id,
+          user: req.body.user,
+          criteria: 'contact_shared',
+          contacts: sharedContacts,
+          content: `${currentUser.user_name} have shared a contact in CRMGrow`,
+        });
+
+        // Notification
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
       }
       if (error.length > 0) {
         return res.status(405).json({
@@ -5158,18 +5160,6 @@ const stopShare = async (req, res) => {
             last_name,
           };
 
-          const notification = new Notification({
-            user: req.body.user,
-            sharer: req.body.user,
-            criteria: 'contact_shared',
-            content: `${user.user_name} have shared a contact in CRMGrow`,
-          });
-
-          // Notification
-          notification.save().catch((err) => {
-            console.log('notification save err', err.message);
-          });
-
           const myJSON = JSON.stringify(contact);
           const _contact = JSON.parse(myJSON);
           _contact.shared_members.push({
@@ -5190,37 +5180,21 @@ const stopShare = async (req, res) => {
 
   Promise.all(promise_array)
     .then(() => {
-      /**
-      if (data.length > 0) {
-        const templatedData = {
-          user_name: currentUser.user_name,
-          sharer_name: user.user_name,
-          created_at: moment().format('h:mm MMMM Do, YYYY'),
-          contacts_html,
-        };
+      if (data.length) {
+        const stoppedContact = data.map((e) => e._id);
+        const notification = new Notification({
+          creator: currentUser._id,
+          user: req.body.user,
+          criteria: 'stop_share_contact',
+          contacts: stoppedContact,
+          content: `${currentUser.user_name} has stop the contact sharing in CRMGrow`,
+        });
 
-        const params = {
-          Destination: {
-            ToAddresses: [user.email],
-          },
-          Source: mail_contents.NO_REPLAY,
-          Template: 'ContactAdd',
-          TemplateData: JSON.stringify(templatedData),
-          ReplyToAddresses: [currentUser.email],
-        };
-
-        // Create the promise and SES service object
-        ses
-          .sendTemplatedEmail(params)
-          .promise()
-          .then((response) => {
-            console.log('success', response.MessageId);
-          })
-          .catch((err) => {
-            console.log('ses send err', err);
-          });
+        // Notification
+        notification.save().catch((err) => {
+          console.log('notification save err', err.message);
+        });
       }
-       */
       if (error.length > 0) {
         return res.status(405).json({
           status: false,
