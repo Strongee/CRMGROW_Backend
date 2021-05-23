@@ -865,7 +865,6 @@ const createCharge = async (data) => {
   return stripe.charges.create({
     amount,
     currency: 'usd',
-    source: card_id,
     customer: customer_id,
     description,
   });

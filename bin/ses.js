@@ -9,6 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
+
 const templateName = 'TeamInvitation';
 
 const subjects = {
