@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'ShareContact';
+const templateName = 'TeamInvitation';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
@@ -28,6 +28,7 @@ const subjects = {
   PaymentNotification: 'CRMGrow payment notification',
   CancelAccount: 'CRMGrow cancel notification',
   ShareContact: 'CRMGrow share contact notification',
+  TeamInvitation: `You've been invited to join team {{team_name}} in CRMGrow`,
 };
 const htmls = {};
 fs.readFile(
