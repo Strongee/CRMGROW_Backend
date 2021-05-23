@@ -36,7 +36,6 @@ const UserSchema = new Schema(
     outlook_refresh_token: String,
     google_refresh_token: String,
     yahoo_refresh_token: String,
-    wavv_dialer_token: String,
     other_emailer: Object,
     connected_email_type: String,
     calendar_connected: Boolean,
@@ -107,7 +106,7 @@ const UserSchema = new Schema(
     team_info: {
       owner_enabled: { type: Boolean, default: true },
     },
-    dial_info: {
+    dialer_info: {
       is_enabled: Boolean,
     },
     capture_enabled: { type: Boolean, default: true },
@@ -125,7 +124,7 @@ const UserSchema = new Schema(
       amount: Number,
       period: { type: String, default: 'month' },
     },
-    package_level: String,
+    package_level: { type: String, default: 'PRO' },
     paid_demo: { type: Boolean, default: false },
     paid_demo_mode: Number,
     expired_at: Date,

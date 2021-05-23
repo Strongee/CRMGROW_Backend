@@ -4,6 +4,9 @@ const request = require('request-promise');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const api = require('../config/api');
+const { createSubscription } = require('./payment');
+const system_settings = require('../config/system_settings');
+const Payment = require('../models/payment');
 
 const checkAuthCalendly = async (req, res) => {
   const { token } = req.body;
@@ -192,41 +195,89 @@ const disconnectCalendly = async (req, res) => {
 
 const addDialer = async (req, res) => {
   const { currentUser } = req;
-  const body = {
-    id: currentUser.id,
-    email: currentUser.email,
-    firstName: currentUser.user_name.split(' ')[0],
-    lastName: currentUser.user_name.split(' ')[1] || '',
-    phone: currentUser.id,
-    address1: '442 w elm st',
-    city: 'Chicago',
-    state: 'IL',
-    zip: '60610',
-    subscriptions: {
-      multi: true,
-      sms: true,
-    },
-    test: true,
+  let amount;
+  let description;
+  let schedule_link;
+
+  const payment = await Payment.findOne({
+    _id: currentUser.payment,
+  }).catch((err) => {
+    console.log('payment find err', err.message);
+  });
+
+  if (req.body.demo === 1) {
+    amount = system_settings.ONBOARD_PRICING_30_MINS;
+    description = 'Schedule one on one onboarding 30mins';
+    schedule_link = system_settings.SCHEDULE_LINK_30_MINS;
+  } else if (req.body.demo === 2) {
+    amount = system_settings.ONBOARD_PRICING_1_HOUR;
+    description = 'Schedule one on one onboarding 1 hour';
+    schedule_link = system_settings.SCHEDULE_LINK_1_HOUR;
+  } else if (req.body.demo === 3) {
+    amount = system_settings.ONBOARD_PRICING_1_HOUR;
+    description = 'Schedule one on one onboarding 1 hour';
+    schedule_link = system_settings.SCHEDULE_LINK_1_HOUR;
+  }
+
+  const data = {
+    customer_id: payment.customer_id,
+    receipt_email: currentUser.email,
+    amount,
+    description,
   };
 
-  const options = {
-    method: 'POST',
-    url: 'https://app.stormapp.com/api/customers',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    auth: {
-      user: api.DIALER.VENDOR_ID,
-      password: api.DIALER.API_KEY,
-    },
-    body,
-    json: true,
-  };
+  createSubscription(data).then(() => {
+    const body = {
+      id: currentUser.id,
+      email: currentUser.email,
+      firstName: currentUser.user_name.split(' ')[0],
+      lastName: currentUser.user_name.split(' ')[1] || '',
+      subscriptions: {
+        multi: true,
+        sms: true,
+      },
+      test: true,
+    };
 
-  request(options, function (error, response, data) {
-    if (error) throw new Error(error);
+    const options = {
+      method: 'POST',
+      url: 'https://app.stormapp.com/api/customers',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        user: api.DIALER.VENDOR_ID,
+        password: api.DIALER.API_KEY,
+      },
+      body,
+      json: true,
+    };
+
+    request(options, function (error, response, data) {
+      if (error) throw new Error(error);
+      const payload = {
+        userId: currentUser.id,
+      };
+
+      const token = jwt.sign(payload, api.DIALER.API_KEY, {
+        issuer: api.DIALER.VENDOR_ID,
+        expiresIn: 3600,
+      });
+
+      return res.send({
+        status: true,
+        data: token,
+      });
+    });
+  });
+};
+
+const getDialerToken = async (req, res) => {
+  const { currentUser } = req;
+
+  if (currentUser.dialer_info && currentUser.dialer_info.is_enabled) {
     const payload = {
-      userId: '123456',
+      userId: currentUser.id,
     };
 
     const token = jwt.sign(payload, api.DIALER.API_KEY, {
@@ -234,19 +285,23 @@ const addDialer = async (req, res) => {
       expiresIn: 3600,
     });
 
-    console.log(data);
-  });
-
-  return res.send({
-    status: true,
-    token,
-  });
+    return res.send({
+      status: true,
+      data: token,
+    });
+  } else {
+    return res.status(400).json({
+      status: false,
+      error: 'Dialer is not enabled in your account',
+    });
+  }
 };
 
 module.exports = {
   checkAuthCalendly,
   setEventCalendly,
   getCalendly,
+  getDialerToken,
   disconnectCalendly,
   connectSMTP,
   addDialer,

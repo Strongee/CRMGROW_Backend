@@ -9,7 +9,7 @@ AWS.config.update({
   secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
   region: api.AWS.AWS_SES_REGION,
 });
-const templateName = 'ShareContact';
+const templateName = 'Welcome';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,

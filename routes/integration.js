@@ -41,4 +41,10 @@ router.post(
   catchError(IntegrationCtrl.addDiaier)
 );
 
+router.get(
+  '/dialer-token',
+  UserCtrl.checkAuth,
+  catchError(IntegrationCtrl.getDialerToken)
+);
+
 module.exports = router;
