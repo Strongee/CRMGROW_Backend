@@ -1428,7 +1428,7 @@ const syncOutlookCalendar = async (req, res) => {
     });
   }
 
-  if (!currentUser.calendar_info['is_limit']) {
+  if (currentUser.calendar_info['is_limit']) {
     const calendar_info = currentUser.calendar_info;
     const max_calendar_count = calendar_info['max_count'];
 
@@ -1880,7 +1880,7 @@ const syncGoogleCalendar = async (req, res) => {
     });
   }
 
-  if (!currentUser.calendar_info['is_limit']) {
+  if (currentUser.calendar_info['is_limit']) {
     const calendar_info = currentUser.calendar_info;
     const max_calendar_count = calendar_info['max_count'];
 
