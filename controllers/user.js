@@ -59,6 +59,7 @@ const Reminder = require('../models/reminder');
 const Tag = require('../models/tag');
 const TimeLine = require('../models/time_line');
 const Video = require('../models/video');
+const PDF = require('../models/pdf');
 
 const {
   getTwilioNumber,
@@ -2410,9 +2411,175 @@ const closeAccount = async (req, res) => {
   });
 };
 
-const overflowPlan = async (req, res) => {
+const checkDowngrade = async (req, res) => {
   const { currentUser } = req;
   const { selectedPackage } = req.body;
+  const currentPackage = currentUser.package_level || 'PRO';
+
+  if (currentPackage === 'LITE') {
+    return res.send({
+      status: true,
+    });
+  } else {
+    const currentContactsCount = await Contact.countDocuments({
+      user: currentUser.id,
+    });
+    const currentVideoCount = await Video.countDocuments({
+      user: currentUser.id,
+      uploaded: true,
+    });
+    const currentPDFCount = await PDF.countDocuments({
+      user: currentUser.id,
+      del: false,
+    });
+    const currentMaterialCount = currentVideoCount + currentPDFCount;
+    const currentVideos = await Video.find({
+      user: currentUser.id,
+      recording: true,
+    });
+    let currentVideoRecordingDuration = 0;
+    if (currentVideos.length > 0) {
+      for (const video of currentVideos) {
+        currentVideoRecordingDuration += video.duration ? video.duration : 0;
+      }
+    }
+    const currentAssistantCount = await Guest.countDocuments({
+      user: currentUser.id,
+    });
+    const currentActiveAutomationCount = await TimeLine.countDocuments({
+      user: currentUser.id,
+    });
+    const ownTeam = (await Team.find({ owner: currentUser.id })) || [];
+    const currentHasOwnTeam = ownTeam.length;
+    const currentSMSCount = currentUser.text_info.count;
+    const currentCalendarCount = currentUser.calendar_list.length || 0;
+    let overflowMessage = 'Exceed max of ';
+    if (
+      (currentPackage === 'PRO' && selectedPackage === 'LITE') ||
+      (currentPackage === 'ELITE' &&
+        (selectedPackage === 'LITE' || selectedPackage === 'PRO')) ||
+      currentPackage === 'CUSTOM'
+    ) {
+      let isValid = true;
+      if (
+        currentContactsCount >
+        system_settings.CONTACT_UPLOAD_LIMIT[selectedPackage]
+      ) {
+        overflowMessage += 'Contacts';
+        isValid = false;
+      }
+      if (
+        currentMaterialCount >
+        system_settings.MATERIAL_UPLOAD_LIMIT[selectedPackage]
+      ) {
+        overflowMessage += isValid ? 'Material Uploads' : ', Material Uploads';
+        isValid = false;
+      }
+      if (
+        currentVideoRecordingDuration >
+        system_settings.VIDEO_RECORD_LIMIT[selectedPackage]
+      ) {
+        overflowMessage += isValid ? 'Video Recording' : ', Video Recording';
+        isValid = false;
+      }
+      if (
+        currentActiveAutomationCount >
+        (system_settings.AUTOMATION_ASSIGN_LIMIT[selectedPackage] || 0)
+      ) {
+        overflowMessage += isValid
+          ? 'Active Automations'
+          : ', Active Automations';
+        isValid = false;
+      }
+      if (
+        currentAssistantCount >
+        (system_settings.ASSISTANT_LIMIT[selectedPackage] || 0)
+      ) {
+        overflowMessage += isValid ? 'Assistant' : ', Assistant';
+        isValid = false;
+      }
+      if (
+        currentSMSCount >
+        (system_settings.TEXT_MONTHLY_LIMIT[selectedPackage] || 0)
+      ) {
+        overflowMessage += isValid ? 'SMS' : ', SMS';
+        isValid = false;
+      }
+      if (
+        currentCalendarCount >
+        (system_settings.CALENDAR_LIMIT[selectedPackage] || 0)
+      ) {
+        overflowMessage += isValid
+          ? 'Calendar Connection'
+          : ', Calendar Connection';
+        isValid = false;
+      }
+      if (currentHasOwnTeam > 0 && selectedPackage === 'LITE') {
+        overflowMessage += isValid ? 'Create Own Team' : ', Create Own Team';
+        isValid = false;
+      }
+
+      if (!isValid) {
+        overflowMessage += '.';
+        return res.send({
+          status: false,
+          error: overflowMessage,
+        });
+      }
+    }
+    // else if (selectedPackage === 'CUSTOM') {
+    //   let isValid = true;
+    //   if (currentContactsCount > currentUser.contact_info.max_count) {
+    //     overflowMessage += 'Contacts';
+    //     isValid = false;
+    //   }
+    //   if (currentMaterialCount > currentUser.material_info.max_count) {
+    //     overflowMessage += isValid ? 'Material Uploads' : ', Material Uploads';
+    //     isValid = false;
+    //   }
+    //   if (
+    //     currentVideoRecordingDuration >
+    //     currentUser.material_info.record_max_duration
+    //   ) {
+    //     overflowMessage += isValid ? 'Video Recording' : ', Video Recording';
+    //     isValid = false;
+    //   }
+    //   if (
+    //     currentActiveAutomationCount > currentUser.automation_info.max_count
+    //   ) {
+    //     overflowMessage += isValid
+    //       ? 'Active Automations'
+    //       : ', Active Automations';
+    //     isValid = false;
+    //   }
+    //   if (currentAssistantCount > currentUser.assistant_info.max_count) {
+    //     overflowMessage += isValid ? 'Assistant' : ', Assistant';
+    //     isValid = false;
+    //   }
+    //   if (currentSMSCount > currentUser.text_info.max_count) {
+    //     overflowMessage += isValid ? 'SMS' : ', SMS';
+    //     isValid = false;
+    //   }
+    //   if (currentCalendarCount > currentUser.calendar_info.max_count) {
+    //     overflowMessage += isValid
+    //       ? 'Calendar Connection'
+    //       : ', Calendar Connection';
+    //     isValid = false;
+    //   }
+    //   if (currentHasOwnTeam > 0 && !currentUser.team_info.owner_enabled) {
+    //     overflowMessage += isValid ? 'Create Own Team' : ', Create Own Team';
+    //     isValid = false;
+    //   }
+    //
+    //   if (!isValid) {
+    //     overflowMessage += '.';
+    //     return res.send({
+    //       status: false,
+    //       error: overflowMessage,
+    //     });
+    //   }
+    // }
+  }
 
   return res.send({
     status: true,
@@ -2933,7 +3100,7 @@ module.exports = {
   closeAccount,
   connectAnotherEmail,
   pushNotification,
-  overflowPlan,
+  checkDowngrade,
   updatePackage,
   getCallToken,
 };
