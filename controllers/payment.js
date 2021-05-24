@@ -107,7 +107,7 @@ const update = async (req, res) => {
   const { currentUser } = req;
   let level;
   if (currentUser.user_version === 'v1') {
-    if (currentUser.level === 'PRO') {
+    if (currentUser.package_level === 'PRO') {
       level = 'LITE';
     } else {
       return res.status(400).json({
