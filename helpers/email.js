@@ -3681,6 +3681,8 @@ const sendEmail = async (data) => {
 
   const promise_array = [];
 
+  console.log('contacts in helper', contacts);
+
   for (let i = 0; i < contacts.length; i++) {
     let promise;
     const activities = [];
@@ -4183,6 +4185,7 @@ const sendEmail = async (data) => {
           })
             .then(async () => {
               email_count += 1;
+              console.log('message sending api is called.', contact);
 
               handleSuccessEmailing(
                 contact._id,
@@ -4257,6 +4260,8 @@ const sendEmail = async (data) => {
       currentUser.connected_email_type === 'outlook' ||
       currentUser.connected_email_type === 'microsoft'
     ) {
+      console.log('CREATE TOKEN IS FAILED outlook', contact);
+
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
@@ -4277,7 +4282,6 @@ const sendEmail = async (data) => {
           accessToken = token.access_token;
         })
         .catch((error) => {
-          console.log('error', error);
           promise = new Promise(async (resolve) => {
             resolve({
               status: false,
@@ -4294,8 +4298,8 @@ const sendEmail = async (data) => {
           promise_array.push(promise);
         });
 
-      if (promise_array.length > 0) {
-        return Promise.all(promise_array);
+      if (!accessToken) {
+        continue;
       }
 
       const client = graph.Client.init({
@@ -4367,6 +4371,9 @@ const sendEmail = async (data) => {
           .post(sendMail)
           .then(async () => {
             email_count += 1;
+
+            console.log('Email sending outlook', contact);
+
             handleSuccessEmailing(
               contact._id,
               activities,

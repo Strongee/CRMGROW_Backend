@@ -63,6 +63,7 @@ const ActivityHelper = require('../helpers/activity');
 const {
   generateUnsubscribeLink: generateTextUnsubscribeLink,
 } = require('../helpers/text');
+const Notification = require('../models/notification');
 
 const bulkGmail = async (req, res) => {
   const { currentUser } = req;
@@ -799,6 +800,20 @@ const openTrack = async (req, res) => {
         console.log('err', err);
       });
 
+      const notification = new Notification({
+        criteria: 'open_email',
+        contact: [contact.id],
+        user: user.id,
+        action: {
+          object: 'email',
+          email: _email.id
+        },
+        email_trackers: _email_tracker.id
+      });
+      notification.save().catch((err) => {
+        console.log('email open notification is failed', err);
+      });
+
       const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
         console.log('err', err);
       });
@@ -1282,6 +1297,20 @@ const receiveEmailSendGrid = async (req, res) => {
             console.log('err', err);
           });
 
+          const notification = new Notification({
+            criteria: 'open_email',
+            contact: [contact.id],
+            user: user.id,
+            action: {
+              object: 'email',
+              email: _email.id
+            },
+            email_trackers: _email_tracker.id
+          });
+          notification.save().catch((err) => {
+            console.log('open email notification is failed', err);
+          });
+
           /**
            * Automation checking
            */
@@ -1386,6 +1415,20 @@ const receiveEmailSendGrid = async (req, res) => {
         ).catch((err) => {
           console.log('err', err);
         });
+
+        const notification = new Notification({
+          criteria: 'click_link',
+          contact: [contact.id],
+          user: user.id,
+          action: {
+            object: 'email',
+            email: _email.id
+          },
+          email_trackers: _email_tracker.id
+        });
+        notification.save().catch((err) => {
+          console.log('click link notification is failed', err);
+        });
       }
       if (event === 'unsubscribe') {
         action = 'unsubscribed';
@@ -1437,6 +1480,20 @@ const receiveEmailSendGrid = async (req, res) => {
           }
         ).catch((err) => {
           console.log('err', err);
+        });
+
+        const notification = new Notification({
+          criteria: 'unsubscribe',
+          contact: [contact.id],
+          user: user.id,
+          action: {
+            object: 'email',
+            email: _email.id
+          },
+          email_trackers: _email_tracker.id
+        });
+        notification.save().catch((err) => {
+          console.log('unsubscribe email notification is failed', err);
         });
       }
       const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
@@ -1665,6 +1722,20 @@ const receiveEmail = async (req, res) => {
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
           console.log('err', err);
+        });
+
+        const notification = new Notification({
+          criteria: 'open_email',
+          contact: [contact.id],
+          user: user.id,
+          action: {
+            object: 'email',
+            email: activity.emails,
+          },
+          email_trackers: _email_tracker.id
+        });
+        notification.save().catch((err) => {
+          console.log('open email notification is failed', err);
         });
 
         /**
@@ -2053,6 +2124,14 @@ const unSubscribeEmail = async (req, res) => {
       }
     ).catch((err) => {
       console.log('err', err);
+    });
+    const notification = new Notification({
+      criteria: 'unsubscribe',
+      contact: [contact.id],
+      user: user.id,
+    });
+    notification.save().catch((err) => {
+      console.log('unsubscribe email notification is failed', err);
     });
 
     const unsubscribed = new Date();
@@ -2624,6 +2703,20 @@ const clickEmailLink = async (req, res) => {
         type: 'email_trackers',
         emails: activity.emails,
         email_trackers: _email_tracker.id,
+      });
+
+      const notification = new Notification({
+        criteria: 'click_link',
+        contact: [contact.id],
+        user: user.id,
+        action: {
+          object: 'email',
+          email: activity.emails,
+        },
+        email_trackers: _email_tracker.id
+      });
+      notification.save().catch((err) => {
+        console.log('click link notification is failed', err);
       });
     }
 
