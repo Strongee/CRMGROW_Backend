@@ -1286,12 +1286,11 @@ const timesheet_check = new CronJob(
           case 'email':
             data = {
               user: timeline.user,
-              video: action.video,
               subject: action.subject,
               content: action.content,
               contacts: [timeline.contact],
             };
-            EmailHelper.bulkEmail(data)
+            EmailHelper.sendEmail(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1326,11 +1325,11 @@ const timesheet_check = new CronJob(
           case 'send_text_video':
             data = {
               user: timeline.user,
-              videos: [action.video],
+              video_ids: [action.video],
               content: action.content,
               contacts: [timeline.contact],
             };
-            TextHelper.bulkVideo(data)
+            TextHelper.sendText(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1359,10 +1358,10 @@ const timesheet_check = new CronJob(
               user: timeline.user,
               content: action.content,
               subject: action.subject,
-              videos: [action.video],
+              video_ids: [action.video],
               contacts: [timeline.contact],
             };
-            EmailHelper.bulkVideo(data)
+            EmailHelper.sendEmail(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1392,10 +1391,10 @@ const timesheet_check = new CronJob(
             data = {
               user: timeline.user,
               content: action.content,
-              pdfs: [action.pdf],
+              pdf_ids: [action.pdf],
               contacts: [timeline.contact],
             };
-            TextHelper.bulkPDF(data)
+            TextHelper.sendText(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1424,10 +1423,10 @@ const timesheet_check = new CronJob(
               user: timeline.user,
               content: action.content,
               subject: action.subject,
-              pdfs: [action.pdf],
+              pdf_ids: [action.pdf],
               contacts: [timeline.contact],
             };
-            EmailHelper.bulkPDF(data)
+            EmailHelper.sendEmail(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1455,10 +1454,10 @@ const timesheet_check = new CronJob(
             data = {
               user: timeline.user,
               content: action.content,
-              images: [action.image],
+              image_ids: [action.image],
               contacts: [timeline.contact],
             };
-            TextHelper.bulkImage(data)
+            TextHelper.sendText(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';
@@ -1486,11 +1485,11 @@ const timesheet_check = new CronJob(
             data = {
               user: timeline.user,
               content: action.content,
-              images: [action.image],
+              image_ids: [action.image],
               subject: action.subject,
               contacts: [timeline.contact],
             };
-            EmailHelper.bulkImage(data)
+            EmailHelper.sendText(data)
               .then((res) => {
                 if (res[0] && res[0].status === true) {
                   timeline['status'] = 'completed';

@@ -19,19 +19,19 @@ const ImageTracker = require('../models/image_tracker');
 const Garbage = require('../models/garbage');
 const Task = require('../models/task');
 const Notification = require('../models/notification');
-const ActivityHelper = require('../helpers/activity');
+// const ActivityHelper = require('../helpers/activity');
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const api = require('../config/api');
-const request = require('request-promise');
-const createBody = require('gmail-api-create-message-body');
-const { google } = require('googleapis');
-const graph = require('@microsoft/microsoft-graph-client');
-const {
-  generateUnsubscribeLink,
-  generateOpenTrackLink,
-  addLinkTracking,
-} = require('../helpers/email');
+// const request = require('request-promise');
+// const createBody = require('gmail-api-create-message-body');
+// const { google } = require('googleapis');
+// const graph = require('@microsoft/microsoft-graph-client');
+// const {
+//   generateUnsubscribeLink,
+//   generateOpenTrackLink,
+//   addLinkTracking,
+// } = require('../helpers/email');
 const {
   generateUnsubscribeLink: generateTextUnsubscribeLink,
   getStatus,
@@ -295,7 +295,7 @@ const bulkText = async (req, res) => {
   }
 
   if (text_info['is_limit']) {
-    count = await Text.countDocuments({ user: currentUser.id });
+    count = currentUser.text_info.count || 0;
 
     max_text_count =
       text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.PRO;

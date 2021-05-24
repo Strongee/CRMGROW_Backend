@@ -1834,7 +1834,7 @@ const sendTexts = async (req, res) => {
   }
 
   if (text_info['is_limit']) {
-    count = await Text.countDocuments({ user: currentUser.id });
+    count = currentUser.text_info.count || 0;
 
     max_text_count =
       text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.PRO;
