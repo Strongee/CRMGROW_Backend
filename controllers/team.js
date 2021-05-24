@@ -448,22 +448,29 @@ const bulkInvites = async (req, res) => {
         const user_name = invite.user_name
           ? invite.user_name.split(' ')[0]
           : '';
-        const msg = {
-          to: invite.email,
-          from: mail_contents.NOTIFICATION_INVITE_TEAM_MEMBER_ACCEPT.MAIL,
-          templateId: api.SENDGRID.NOTIFICATION_INVITE_TEAM_MEMBER,
-          dynamic_template_data: {
-            LOGO_URL: urls.LOGO_URL,
-            subject: `You've been invited to join team ${team.name} in CRMGrow`,
+        const data = {
+          template_data: {
             user_name,
-            owner_name: currentUser.user_name,
+            created_at: moment()
+              .tz(currentUser.time_zone)
+              .format('h:mm MMMM Do, YYYY'),
             team_name: team.name,
-            ACCEPT_URL: urls.TEAM_ACCEPT_URL + team.id,
+            site_url: urls.LOGIN_URL,
+            team_url: urls.TEAM_LIST_URL,
           },
+          template_name: 'TeamInvitation',
+          required_reply: false,
+          cc: invite.email,
+          email: mail_contents.REPLY,
         };
-        sgMail.send(msg).catch((err) => {
-          console.log('team invitation email err', err);
-        });
+
+        sendNotificationEmail(data)
+          .then(() => {
+            console.log('invite team email has been sent out successfully');
+          })
+          .catch((err) => {
+            console.log('invite team email send err', err);
+          });
       }
 
       /** **********
@@ -932,7 +939,6 @@ const declineRequest = async (req, res) => {
       };
 
       sendNotificationEmail(data);
-
 
       /** **********
        *  Mark read true dashboard notification for accepted users

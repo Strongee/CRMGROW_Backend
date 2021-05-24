@@ -1261,9 +1261,23 @@ const getMe = async (req, res) => {
   const myJSON = JSON.stringify(_user);
   const user = JSON.parse(myJSON);
   user.garbage = _garbage;
+
   if (user.hash && user.salt) {
     user.hasPassword = true;
   }
+
+  if (user.dialer_info && user.dialer_info.is_enabled) {
+    const payload = {
+      userId: currentUser.id,
+    };
+
+    const dialer_token = jwt.sign(payload, api.DIALER.API_KEY, {
+      issuer: api.DIALER.VENDOR_ID,
+      expiresIn: 3600,
+    });
+    user.dialer_token = dialer_token;
+  }
+
   delete user.hash;
   delete user.salt;
   res.send({
@@ -1399,12 +1413,35 @@ const syncOutlook = async (req, res) => {
 };
 
 const syncOutlookCalendar = async (req, res) => {
+  const { currentUser } = req;
   const scopes = [
     'openid',
     'profile',
     'offline_access',
     'https://graph.microsoft.com/calendars.readwrite',
   ];
+
+  if (!currentUser.calendar_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Disable calendar access',
+    });
+  }
+
+  if (currentUser.calendar_info['is_limit']) {
+    const calendar_info = currentUser.calendar_info;
+    const max_calendar_count = calendar_info['max_count'];
+
+    if (
+      currentUser.calendar_list &&
+      max_calendar_count >= currentUser.calendar_list.length
+    ) {
+      return res.status(410).send({
+        status: false,
+        error: 'You are exceed for max calendar connection',
+      });
+    }
+  }
 
   // Authorization uri definition
   const authorizationUri = oauth2.authCode.authorizeURL({
@@ -1828,11 +1865,35 @@ const authorizeGmail = async (req, res) => {
 };
 
 const syncGoogleCalendar = async (req, res) => {
+  const { currentUser } = req;
+
   const oauth2Client = new google.auth.OAuth2(
     api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
     api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
     urls.GOOGLE_CALENDAR_AUTHORIZE_URL
   );
+
+  if (!currentUser.calendar_info['is_enabled']) {
+    return res.status(410).send({
+      status: false,
+      error: 'Disable calendar access',
+    });
+  }
+
+  if (currentUser.calendar_info['is_limit']) {
+    const calendar_info = currentUser.calendar_info;
+    const max_calendar_count = calendar_info['max_count'];
+
+    if (
+      currentUser.calendar_list &&
+      max_calendar_count >= currentUser.calendar_list.length
+    ) {
+      return res.status(410).send({
+        status: false,
+        error: 'You are exceed for max calendar connection',
+      });
+    }
+  }
 
   // generate a url that asks permissions for Blogger and Google Calendar scopes
   const scopes = [
@@ -2425,7 +2486,7 @@ const disconnectEmail = async (req, res) => {
     },
     {
       $set: { primary_connected: false },
-      $unset: { 
+      $unset: {
         connected_email: true,
         outlook_refresh_token: true,
         google_refresh_token: true,

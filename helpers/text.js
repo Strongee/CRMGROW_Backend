@@ -1167,7 +1167,7 @@ const sendText = async (data) => {
   const promise_array = [];
 
   const text_info = currentUser.text_info;
-  let count = 0;
+  let count = text_info.count || 0;
   let additional_sms_credit = 0;
 
   for (let i = 0; i < contacts.length; i++) {
