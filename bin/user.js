@@ -49,6 +49,9 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const Contact = require('../models/contact');
+const { ENV_PATH } = require('../config/path');
+
+require('dotenv').config({ path: ENV_PATH });
 const { DB_PORT } = require('../config/database');
 
 mongoose.set('useCreateIndex', true);
@@ -56,19 +59,20 @@ mongoose
   .connect(DB_PORT, { useNewUrlParser: true })
   .then(() => console.log('Connecting to database successful'))
   .catch((err) => console.error('Could not connect to mongo DB', err));
+
 // Fetch or read data from
 const migrate = async () => {
-  const users = await User.find({ del: false }).catch((err) => {
-    console.log('err', err);
-  });
-  let total = 0;
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i];
-    const counts = await Contact.countDocuments({ user: user.id });
-    if (counts >= 1000) {
-      total++;
+  User.updateMany(
+    {
+      del: false,
+    },
+    {
+      $set: {
+        user_version: 'v1',
+      },
     }
-  }
-  console.log('total', total);
+  ).catch((err) => {
+    console.log('user update err', err.message);
+  });
 };
 migrate();
