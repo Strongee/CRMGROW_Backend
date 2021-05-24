@@ -1433,7 +1433,7 @@ const syncOutlookCalendar = async (req, res) => {
     const calendar_info = currentUser.calendar_info;
     const max_calendar_count = calendar_info['max_count'];
 
-    console.log('currentUser.calendar_list', currentUser.calendar_list, max_calendar_count);
+    console.log('currentUser.calendar_list', currentUser.calendar_list, currentUser.calendar_list.length);
     if (
       currentUser.calendar_list &&
       max_calendar_count >= currentUser.calendar_list.length
