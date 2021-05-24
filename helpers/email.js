@@ -4260,8 +4260,6 @@ const sendEmail = async (data) => {
       currentUser.connected_email_type === 'outlook' ||
       currentUser.connected_email_type === 'microsoft'
     ) {
-      console.log('CREATE TOKEN IS FAILED outlook', contact);
-
       const token = oauth2.accessToken.create({
         refresh_token: currentUser.outlook_refresh_token,
         expires_in: 0,
@@ -4371,8 +4369,6 @@ const sendEmail = async (data) => {
           .post(sendMail)
           .then(async () => {
             email_count += 1;
-
-            console.log('Email sending outlook', contact);
 
             handleSuccessEmailing(
               contact._id,

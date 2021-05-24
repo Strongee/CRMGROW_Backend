@@ -278,9 +278,9 @@ router.get('/:id', UserCtrl.checkAuth, catchError(UserCtrl.getUser));
 
 // Get overflow plan status
 router.post(
-  '/overflow-plan',
+  '/check-downgrade',
   UserCtrl.checkAuth,
-  catchError(UserCtrl.overflowPlan)
+  catchError(UserCtrl.checkDowngrade)
 );
 
 module.exports = router;

@@ -16,10 +16,14 @@ const setPackage = async (data) => {
   let assist_info;
   let capture_enabled;
   let link_track_enabled;
+  let email_info;
+  let team_info;
 
   if (level === 'ELITE') {
     material_info = {
       'material_info.is_limit': false,
+      'material_info.record_max_duration':
+        system_settings.VIDEO_RECORD_LIMIT[level],
     };
   } else {
     material_info = {
@@ -47,6 +51,15 @@ const setPackage = async (data) => {
     assist_info = {
       'assistant_info.is_enabled': false,
     };
+
+    email_info = {
+      'email_info.mass_enable': false,
+    };
+
+    team_info = {
+      'team_info.owner_enabled': false,
+    };
+
     capture_enabled = false;
     link_track_enabled = false;
   } else {
@@ -70,6 +83,15 @@ const setPackage = async (data) => {
       'assistant_info.is_enabled': true,
       'assistant_info.max_count': system_settings.ASSISTANT_LIMIT[level],
     };
+
+    email_info = {
+      'email_info.mass_enable': true,
+    };
+
+    team_info = {
+      'team_info.owner_enabled': true,
+    };
+
     capture_enabled = true;
     link_track_enabled = true;
   }
@@ -81,6 +103,8 @@ const setPackage = async (data) => {
     ...calendar_info,
     ...text_info,
     ...assist_info,
+    ...email_info,
+    ...team_info,
     capture_enabled,
     link_track_enabled,
   };

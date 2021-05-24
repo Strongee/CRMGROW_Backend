@@ -529,7 +529,10 @@ const create = async (req, res) => {
       user: currentUser.id,
       uploaded: true,
     });
-    const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+    const userPDFCount = await PDF.countDocuments({
+      user: currentUser.id,
+      del: false,
+    });
     count = userVideoCount + userPDFCount;
     max_upload_count =
       currentUser.material_info.upload_max_count ||
@@ -3674,7 +3677,10 @@ const uploadVideo = async (req, res) => {
       user: currentUser.id,
       uploaded: true,
     });
-    const userPDFCount = await PDF.countDocuments({ user: currentUser.id });
+    const userPDFCount = await PDF.countDocuments({
+      user: currentUser.id,
+      del: false,
+    });
     count = userVideoCount + userPDFCount;
     max_upload_count =
       currentUser.material_info.upload_max_count ||
