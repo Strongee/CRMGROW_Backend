@@ -1433,11 +1433,11 @@ const syncOutlookCalendar = async (req, res) => {
     const calendar_info = currentUser.calendar_info;
     const max_calendar_count = calendar_info['max_count'];
 
-    console.log('currentUser.calendar_list', currentUser.calendar_list, currentUser.calendar_list.length);
     if (
       currentUser.calendar_list &&
-      max_calendar_count >= currentUser.calendar_list.length
+      max_calendar_count <= currentUser.calendar_list.length
     ) {
+      console.log('no error');
       return res.status(410).send({
         status: false,
         error: 'You are exceed for max calendar connection',
@@ -1888,7 +1888,7 @@ const syncGoogleCalendar = async (req, res) => {
 
     if (
       currentUser.calendar_list &&
-      max_calendar_count >= currentUser.calendar_list.length
+      max_calendar_count <= currentUser.calendar_list.length
     ) {
       return res.status(410).send({
         status: false,
