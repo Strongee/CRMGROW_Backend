@@ -104,8 +104,21 @@ const create = async (payment_data) => {
 
 const update = async (req, res) => {
   const { token } = req.body;
-  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
   const { currentUser } = req;
+  let level;
+  if (currentUser.user_version === 'v1') {
+    if (currentUser.level === 'PRO') {
+      level = 'LITE';
+    } else {
+      return res.status(400).json({
+        status: false,
+        error:
+          'Please contact support team because your plan is different than others',
+      });
+    }
+  } else {
+    level = currentUser.package_level || system_settings.DEFAULT_PACKAGE;
+  }
 
   if (!currentUser.payment) {
     const payment_data = {
