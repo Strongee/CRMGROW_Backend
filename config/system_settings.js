@@ -16,7 +16,7 @@ const system_settings = {
   TEXT_ONE_TIME: 15,
   TEXT_MONTHLY_LIMIT: {
     PRO: 250,
-    ELITE: 1000,
+    ELITE: 750,
   },
   ASSISTANT_LIMIT: {
     PRO: 1,
