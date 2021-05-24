@@ -92,7 +92,7 @@ const task_check = new CronJob(
           continue;
         }
         switch (timeline.type) {
-          case 'send_email':
+          case 'send_email': {
             data = {
               ...action,
               user: timeline.user,
@@ -182,7 +182,10 @@ const task_check = new CronJob(
                             detail: action,
                           });
                           newNotification.save().catch((err) => {
-                            console.log('completed notification saving failed', err);
+                            console.log(
+                              'completed notification saving failed',
+                              err
+                            );
                           });
                         })
                         .catch((err) => {
@@ -203,7 +206,8 @@ const task_check = new CronJob(
                 });
               });
             break;
-          case 'bulk_sms':
+          }
+          case 'bulk_sms': {
             const {
               message_sid,
               service,
@@ -232,12 +236,7 @@ const task_check = new CronJob(
                   );
                   const now = moment();
                   if (beginning_time.isBefore(now)) {
-                    TextHelper.handleFailedText(
-                      activities,
-                      activity,
-                      text,
-                      3
-                    );
+                    TextHelper.handleFailedText(activities, activity, text, 3);
 
                     const notification = new Notification({
                       user: timeline.user,
@@ -272,12 +271,7 @@ const task_check = new CronJob(
                   res.status === 'undelivered' ||
                   res.status === 'failed'
                 ) {
-                  TextHelper.handleFailedText(
-                    activities,
-                    activity,
-                    text,
-                    4
-                  );
+                  TextHelper.handleFailedText(activities, activity, text, 4);
 
                   const notification = new Notification({
                     user: timeline.user,
@@ -331,7 +325,7 @@ const task_check = new CronJob(
                             }
                           });
                           Notification.deleteMany({
-                            process: timeline.process
+                            process: timeline.process,
                           })
                             .then(() => {
                               const notification = new Notification({
@@ -341,20 +335,29 @@ const task_check = new CronJob(
                                 status: 'completed',
                                 deliver_status: {
                                   succeed,
-                                  failed
+                                  failed,
                                 },
                               });
                               notification.save().catch((err) => {
-                                console.log('Bulk texting complete notification creating is failed', err);
+                                console.log(
+                                  'Bulk texting complete notification creating is failed',
+                                  err
+                                );
                               });
                             })
                             .catch((err) => {
-                              console.log('remove the previous notification remove', err);
+                              console.log(
+                                'remove the previous notification remove',
+                                err
+                              );
                             });
                           Task.deleteMany({
                             process: timeline.process,
                           }).catch((err) => {
-                            console.log('Bulk texting tasks removing is failed', err);
+                            console.log(
+                              'Bulk texting tasks removing is failed',
+                              err
+                            );
                           });
                         })
                         .catch((err) => {
@@ -370,6 +373,7 @@ const task_check = new CronJob(
                 console.log('Getting SMS Status is failed', err);
               });
             break;
+          }
           case 'auto_follow_up2': {
             let follow_due_date;
             if (action.due_date) {
@@ -380,44 +384,31 @@ const task_check = new CronJob(
               follow_due_date = now.add(action.due_duration, 'hours');
               follow_due_date.set({ second: 0, millisecond: 0 });
             }
+
+            const garbage = await Garbage.findOne({
+              user: timeline.user,
+            }).catch((err) => {
+              console.log('err', err);
+            });
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+            const startdate = moment(follow_due_date);
+            const remind_at = startdate.subtract(reminder_before, 'mins');
+
             const followUp = new FollowUp({
               content: action.content,
               contact: timeline.contact,
               user: timeline.user,
               type: action.task_type,
               due_date: follow_due_date,
+              remind_at,
             });
 
             followUp
               .save()
               .then(async (_followup) => {
-                const garbage = await Garbage.findOne({
-                  user: timeline.user,
-                }).catch((err) => {
-                  console.log('err', err);
-                });
-                let reminder_before = 30;
-                if (garbage) {
-                  reminder_before = garbage.reminder_before;
-                }
-                const startdate = moment(_followup.due_date);
-                const reminder_due_date = startdate.subtract(
-                  reminder_before,
-                  'mins'
-                );
-
-                const reminder = new Reminder({
-                  contact: timeline.contact,
-                  due_date: reminder_due_date,
-                  type: 'follow_up',
-                  user: timeline.user,
-                  follow_up: _followup.id,
-                });
-
-                reminder.save().catch((err) => {
-                  console.log('error', err);
-                });
-
                 let detail_content = 'added task';
                 detail_content = ActivityHelper.automationLog(detail_content);
                 const activity = new Activity({

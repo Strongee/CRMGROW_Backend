@@ -674,37 +674,25 @@ const disconnectVideo = async (video_tracker_id) => {
       if (contact.auto_follow_up) {
         follow_up = await FollowUp.findOne({ _id: contact.auto_follow_up });
       }
+
+      let reminder_before = 30;
+      if (garbage) {
+        reminder_before = garbage.reminder_before;
+      }
+
+      const startdate = moment(follow_due_date);
+      const remind_at = startdate.subtract(reminder_before, 'mins');
+
       if (follow_up) {
         FollowUp.updateOne(
           {
             _id: contact.auto_follow_up,
           },
           {
-            $set: { due_date: follow_due_date },
+            $set: { due_date: follow_due_date, remind_at },
           }
         ).catch((err) => {
           console.log('follow error', err.message);
-        });
-
-        let reminder_before = 30;
-        if (garbage) {
-          reminder_before = garbage.reminder_before;
-        }
-
-        const startdate = moment(follow_due_date);
-        const reminder_due_date = startdate.subtract(reminder_before, 'mins');
-
-        Reminder.updateOne(
-          {
-            follow_up: contact.auto_follow_up,
-          },
-          {
-            $set: {
-              due_date: reminder_due_date,
-            },
-          }
-        ).catch((err) => {
-          console.log('reminder update error', err.message);
         });
 
         let detail_content = 'updated task';
@@ -727,34 +715,12 @@ const disconnectVideo = async (video_tracker_id) => {
           contact: contact.id,
           content: auto_follow_up['content'],
           due_date: follow_due_date,
+          remind_at,
         });
 
         follow_up
           .save()
           .then(async (_followup) => {
-            let reminder_before = 30;
-            if (garbage) {
-              reminder_before = garbage.reminder_before;
-            }
-
-            const startdate = moment(_followup.due_date);
-            const reminder_due_date = startdate.subtract(
-              reminder_before,
-              'mins'
-            );
-
-            const reminder = new Reminder({
-              contact: contact.id,
-              due_date: reminder_due_date,
-              type: 'follow_up',
-              user: currentUser.id,
-              follow_up: _followup.id,
-            });
-
-            reminder.save().catch((err) => {
-              console.log('reminder save error', err.message);
-            });
-
             Contact.updateOne(
               {
                 _id: contact.id,
