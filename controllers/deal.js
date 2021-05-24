@@ -802,6 +802,20 @@ const createFollowUp = async (req, res) => {
     console.log('activity save err', err.message);
   });
 
+  const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
+    (err) => {
+      console.log('err', err);
+    }
+  );
+
+  let reminder_before = 30;
+  if (garbage) {
+    reminder_before = garbage.reminder_before;
+  }
+
+  const startdate = moment(due_date);
+  const remind_at = startdate.subtract(reminder_before, 'minutes');
+
   const { contacts } = req.body;
   for (let i = 0; i < contacts.length; i++) {
     const contact = contacts[i];
@@ -813,36 +827,12 @@ const createFollowUp = async (req, res) => {
       content,
       due_date,
       type,
+      remind_at,
       user: currentUser.id,
     });
 
     new_followup.save().catch((err) => {
       console.log('new follow up save err', err.message);
-    });
-
-    const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
-      (err) => {
-        console.log('err', err);
-      }
-    );
-
-    let reminder_before = 30;
-    if (garbage) {
-      reminder_before = garbage.reminder_before;
-    }
-
-    const startdate = moment(due_date);
-    const remind_due_date = startdate.subtract(reminder_before, 'minutes');
-    const reminder = new Reminder({
-      contact,
-      due_date: remind_due_date,
-      type: 'follow_up',
-      user: currentUser.id,
-      follow_up: new_followup.id,
-    });
-
-    reminder.save().catch((err) => {
-      console.log('error', err);
     });
 
     const new_activity = new Activity({
@@ -852,6 +842,7 @@ const createFollowUp = async (req, res) => {
       type: 'follow_ups',
       follow_ups: new_followup.id,
     });
+
     new_activity.save().catch((err) => {
       console.log('activity save err', err.message);
     });
