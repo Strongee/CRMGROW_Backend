@@ -5023,7 +5023,8 @@ const shareContacts = async (req, res) => {
           creator: currentUser._id,
           user: req.body.user,
           criteria: 'contact_shared',
-          contacts: sharedContacts,
+          contact: sharedContacts,
+          team: shareTeam._id,
           content: `${currentUser.user_name} have shared a contact in CRMGrow`,
         });
 
@@ -5058,6 +5059,10 @@ const stopShare = async (req, res) => {
   const promise_array = [];
   const data = [];
   const error = [];
+
+  const shareTeam = await Team.findOne({_id: req.body.team}).catch((err) => {
+    console.log('team not found', err.message);
+  });
 
   const user = await User.findOne({
     _id: req.body.user,
@@ -5117,7 +5122,7 @@ const stopShare = async (req, res) => {
       const activity_content = 'stopped sharing contact';
       const activity = new Activity({
         user: currentUser.id,
-        contacts: contacts[i],
+        contact: contacts[i],
         content: activity_content,
         users: req.body.user,
         type: 'users',
@@ -5186,7 +5191,8 @@ const stopShare = async (req, res) => {
           creator: currentUser._id,
           user: req.body.user,
           criteria: 'stop_share_contact',
-          contacts: stoppedContact,
+          contact: stoppedContact,
+          team: shareTeam ? shareTeam._id : '',
           content: `${currentUser.user_name} has stop the contact sharing in CRMGrow`,
         });
 

@@ -30,6 +30,7 @@ const twilio = require('twilio')(accountSid, authToken);
 const { RestClient } = require('@signalwire/node');
 const { generateUnsubscribeLink } = require('../helpers/text');
 const { sendNotificationEmail } = require('../helpers/email');
+const Notification = require('../models/notification');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -293,7 +294,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
 
   activity
     .save()
-    .then((_activity) => {
+    .then(async (_activity) => {
       Contact.updateOne(
         { _id: query.contact },
         {
@@ -301,6 +302,21 @@ const disconnectPDF = async (pdf_tracker_id) => {
         }
       ).catch((err) => {
         console.log('err', err.message);
+      });
+
+      await Notification.deleteMany({ pdf_tracker: query.id });
+      const newNotification = new Notification({
+        criteria: 'material_track',
+        user: currentUser._id,
+        contact: query.contact,
+        action: {
+          object: 'pdf',
+          pdf: [pdf.id],
+        },
+        pdf_tracker: query.id
+      });
+      newNotification.save().catch((err) => {
+        console.log('PDF Watch Notification creating is failed.', err);
       });
     })
     .catch((err) => {
@@ -370,12 +386,27 @@ const disconnectVideo = async (video_tracker_id) => {
 
     activity
       .save()
-      .then((_activity) => {
+      .then(async (_activity) => {
         Contact.updateOne(
           { _id: query.contact },
           { $set: { last_activity: _activity.id } }
         ).catch((err) => {
           console.log('err', err.message);
+        });
+
+        await Notification.deleteMany({ video_tracker: query.id });
+        const newNotification = new Notification({
+          criteria: 'material_track',
+          user: currentUser._id,
+          contact: query.contact,
+          action: {
+            object: 'video',
+            video: [video.id],
+          },
+          video_tracker: query.id
+        });
+        newNotification.save().catch((err) => {
+          console.log('Video Watch Notification creating is failed.', err);
         });
       })
       .catch((err) => {
@@ -859,7 +890,7 @@ const disconnectImage = async (image_tracker_id) => {
 
   activity
     .save()
-    .then((_activity) => {
+    .then(async (_activity) => {
       Contact.updateOne(
         { _id: query.contact },
         {
@@ -867,6 +898,20 @@ const disconnectImage = async (image_tracker_id) => {
         }
       ).catch((err) => {
         console.log('err', err);
+      });
+      await Notification.deleteMany({ image_tracker: query.id });
+      const newNotification = new Notification({
+        criteria: 'material_track',
+        user: currentUser._id,
+        contact: query.contact,
+        action: {
+          object: 'image',
+          image: [image.id],
+        },
+        image_tracker: query.id
+      });
+      newNotification.save().catch((err) => {
+        console.log('Image Watch Notification creating is failed.', err);
       });
     })
     .catch((err) => {

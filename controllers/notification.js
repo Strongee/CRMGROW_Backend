@@ -100,6 +100,7 @@ const getNotificationDetails = async (notifications) => {
     let promise;
     let pathField;
     let selectField;
+    let trackField;
     switch (notification['criteria']) {
       case 'bulk_sms':
         // TODO: 5 contacts populate for succeed and failed
@@ -221,7 +222,7 @@ const getNotificationDetails = async (notifications) => {
           });
         }
         break;
-      case 'share_contact':
+      case 'contact_shared':
       case 'stop_share_contact':
         detailNotification = await Notification.findById(notification['_id'])
           .populate({
@@ -233,7 +234,7 @@ const getNotificationDetails = async (notifications) => {
             select: '_id name picture',
           })
           .populate({
-            path: 'contacts',
+            path: 'contact',
             select: '_id first_name last_name email cell_phone',
           });
         promise = new Promise((resolve) => {
@@ -243,7 +244,6 @@ const getNotificationDetails = async (notifications) => {
       case 'open_email':
       case 'click_link':
       case 'unsubscribe':
-      case 'material_track':
         pathField = 'action.' + notification.action.object;
         selectField = '';
         if (notification.action.object === 'email') {
@@ -253,12 +253,40 @@ const getNotificationDetails = async (notifications) => {
         }
         detailNotification = await Notification.findById(notification['_id'])
           .populate({
-            path: 'creator',
-            select: '_id user_name email cell_phone picture_profile',
+            path: 'contact',
+            select: '_id first_name last_name email cell_phone',
           })
           .populate({
             path: pathField,
             select: selectField,
+          })
+          .populate({
+            path: 'email_tracker',
+          });
+        promise = new Promise((resolve) => {
+          resolve(detailNotification);
+        });
+        break;
+      case 'material_track':
+        pathField = 'action.' + notification.action.object;
+        selectField = '';
+        trackField = notification.action.object + '_tracker';
+        if (notification.action.object === 'email') {
+          selectField = '_id subject content';
+        } else {
+          selectField = '_id title preview thumbnail';
+        }
+        detailNotification = await Notification.findById(notification['_id'])
+          .populate({
+            path: 'contact',
+            select: '_id first_name last_name email cell_phone',
+          })
+          .populate({
+            path: pathField,
+            select: selectField,
+          })
+          .populate({
+            path: trackField,
           });
         promise = new Promise((resolve) => {
           resolve(detailNotification);
@@ -432,7 +460,7 @@ const getStatus = async (req, res) => {
   };
 
   let notifications = await Notification.find({
-    $or: [{ user: currentUser._id }, { owner: [currentUser._id] }],
+    $or: [{ user: currentUser._id }, { owner: currentUser._id }],
     is_read: false,
   })
     .sort({ updated_at: -1 })
@@ -441,20 +469,24 @@ const getStatus = async (req, res) => {
       console.log('Getting unread notifications', err);
     });
   if (notifications && notifications.length) {
-    response.notifications = notifications;
     response.unreadNotifications = notifications.length;
   } else {
     notifications = await Notification.find({
-      $or: [{ user: currentUser._id }, { owner: [currentUser._id] }]
+      $or: [{ user: currentUser._id }, { owner: currentUser._id }]
     })
       .sort({ updated_at: -1 })
       .limit(5)
       .catch((err) => {
         console.log('Getting Latest notifications', err);
       });
-    response.notifications = notifications;
     response.unreadNotifications = 0;
   }
+  const formatted_notifications = await getNotificationDetails(
+    notifications
+  ).catch((err) => {
+    console.log('Notification Detail getting is failed', err);
+  });
+  response.notifications = formatted_notifications;
 
   const system_notifications = await Notification.find({
     type: 'global',

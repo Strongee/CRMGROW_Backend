@@ -36,6 +36,22 @@ const NotificationSchema = new Schema(
     status: String,
     process: String,
     deliver_status: Object,
+    video_tracker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'video_tracker',
+    },
+    pdf_tracker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'pdf_tracker',
+    },
+    image_tracker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'image_tracker',
+    },
+    email_tracker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'email_tracker',
+    },
     sharer: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     activities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'activity' }],
     followup: { type: mongoose.Schema.Types.ObjectId, ref: 'follow_up' },
