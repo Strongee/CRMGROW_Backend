@@ -880,6 +880,11 @@ const getTransactions = async (req, res) => {
         console.log('err', err);
       }
     );
+  } else {
+    return res.send({
+      status: true,
+      data: [],
+    });
   }
 
   if (payment) {

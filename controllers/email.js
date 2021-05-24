@@ -806,9 +806,9 @@ const openTrack = async (req, res) => {
         user: user.id,
         action: {
           object: 'email',
-          email: _email.id
+          email: _email.id,
         },
-        email_trackers: _email_tracker.id
+        email_trackers: _email_tracker.id,
       });
       notification.save().catch((err) => {
         console.log('email open notification is failed', err);
@@ -1303,9 +1303,9 @@ const receiveEmailSendGrid = async (req, res) => {
             user: user.id,
             action: {
               object: 'email',
-              email: _email.id
+              email: _email.id,
             },
-            email_trackers: _email_tracker.id
+            email_trackers: _email_tracker.id,
           });
           notification.save().catch((err) => {
             console.log('open email notification is failed', err);
@@ -1422,9 +1422,9 @@ const receiveEmailSendGrid = async (req, res) => {
           user: user.id,
           action: {
             object: 'email',
-            email: _email.id
+            email: _email.id,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('click link notification is failed', err);
@@ -1488,9 +1488,9 @@ const receiveEmailSendGrid = async (req, res) => {
           user: user.id,
           action: {
             object: 'email',
-            email: _email.id
+            email: _email.id,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('unsubscribe email notification is failed', err);
@@ -1732,7 +1732,7 @@ const receiveEmail = async (req, res) => {
             object: 'email',
             email: activity.emails,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('open email notification is failed', err);
@@ -1837,8 +1837,10 @@ const receiveEmail = async (req, res) => {
               email_subject: _email.subject,
               email_sent: moment(sent)
                 .tz(time_zone)
-                .format('h:mm MMMM Do, YYYY'),
-              email_opened: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+                .format('MMMM Do, YYYY - hh:mm A'),
+              email_opened: moment()
+                .tz(time_zone)
+                .format('MMMM Do, YYYY - hh:mm A'),
             },
             template_name: 'EmailOpened',
             required_reply: false,
@@ -2713,7 +2715,7 @@ const clickEmailLink = async (req, res) => {
           object: 'email',
           email: activity.emails,
         },
-        email_trackers: _email_tracker.id
+        email_trackers: _email_tracker.id,
       });
       notification.save().catch((err) => {
         console.log('click link notification is failed', err);
