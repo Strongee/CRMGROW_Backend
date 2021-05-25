@@ -3386,11 +3386,11 @@ const setupRecording = (io) => {
         console.log('user find err', err.message);
       });
 
-      // max_duration = user.video_info.record_max_duration;
-      max_duration = 7520000;
+      max_duration = user.material_info.record_max_duration;
       const recordVideos = await Video.find({
         user: user._id,
         recording: true,
+        del: false,
       });
       recordDuration = 0;
 
@@ -3402,11 +3402,6 @@ const setupRecording = (io) => {
         }
       }
 
-      console.log(
-        'record duration 2 *************>',
-        max_duration,
-        recordDuration
-      );
       if (recordDuration >= max_duration) {
         socket.emit('timeout', { maxOverflow: true });
       } else {
@@ -3439,7 +3434,6 @@ const setupRecording = (io) => {
       const recordTime = data.recordTime || 0;
 
       if (counterDirection === -1 && recordTime < 0) {
-        console.log('emit timeout ************>');
         socket.emit('timeout', { timeOverflow: true });
       }
       if (!fileStreams[videoId]) {
