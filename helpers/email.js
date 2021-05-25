@@ -3633,7 +3633,7 @@ const addLinkTracking = (content, activity) => {
     if (!pattern.test(url)) {
       url = 'http://' + url;
     }
-    if (url.indexOf('app.crmgrow.com') === -1) {
+    if (url.indexOf(urls.DOMAIN_NAME) === -1) {
       const attached_link =
         urls.CLICK_REDIRECT_URL + `?url=${url}&activity_id=${activity}`;
       $(elem).attr('href', attached_link);

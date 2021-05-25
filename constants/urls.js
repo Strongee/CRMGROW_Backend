@@ -1,5 +1,5 @@
 let domain = 'https://ecsbe.crmgrow.com';
-const domain1 = 'https://app-v2.crmgrow.com';
+const DOMAIN_NAME = 'ecsbe.crmgrow.com';
 let front = 'https://app-v2.crmgrow.com';
 if (process.env.NODE_ENV === 'production') {
   domain = 'https://ecsbe.crmgrow.com';
@@ -13,6 +13,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const urls = {
+  DOMAIN_NAME,
   DOMAIN_URL: `${domain}/`,
   API_URL: `${domain}/api/`,
   LOGIN_URL: `${front}/login`,
