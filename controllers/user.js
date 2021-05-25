@@ -2292,7 +2292,7 @@ const forgotPassword = async (req, res) => {
       template_data: {
         code,
       },
-      template_name: 'Forgot Password',
+      template_name: 'ForgotPassword',
       required_reply: false,
       email: _user['email'],
     };

@@ -79,7 +79,7 @@ const system_settings = {
     MICROSOFT: 1000,
     AWS: 5000,
   },
-  DEMO_VIDEO: '5f26f5012e05c365a0db404b',
+  DEMO_VIDEO: '60ad6077af664b0016ebb176',
   WEBINAR_LINK:
     'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
   TIME_ZONE: 'America/New York',
