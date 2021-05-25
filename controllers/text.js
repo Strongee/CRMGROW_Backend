@@ -27,6 +27,11 @@ const ses = new AWS.SES({
 const { RestClient } = require('@signalwire/node');
 const VideoTracker = require('../models/video_tracker');
 const { sendNotificationEmail } = require('../helpers/email');
+const PDFTracker = require('../models/pdf_tracker');
+const ImageTracker = require('../models/image_tracker');
+const Video = require('../models/video');
+const Image = require('../models/image');
+const PDF = require('../models/pdf');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -38,34 +43,33 @@ const getAll = async (req, res) => {
   const contacts = await Text.aggregate([
     {
       $match: {
-        user: mongoose.Types.ObjectId(currentUser._id),
+        user: currentUser._id,
       },
     },
     {
       $group: {
         _id: '$contacts',
+        content: { $last: '$content' },
+        created_at: { $last: '$created_at' },
+        updated_at: { $last: '$updated_at' },
+        type: { $last: '$type' },
+        text_id: { $last: '$id' },
+        status: { $last: '$status' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'contacts',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'contacts',
       },
     },
   ]);
 
-  if (contacts && contacts.length > 0) {
-    for (let i = 0; i < contacts.length; i++) {
-      if (contacts[i]._id) {
-        const contact = contacts[i]._id[0];
-        const text = await Text.findOne({
-          contacts: contact,
-        })
-          .sort({ _id: -1 })
-          .populate('contacts');
-
-        data.push(text);
-      }
-    }
-  }
-
   return res.send({
     status: true,
-    data,
+    data: contacts,
   });
 };
 
@@ -905,16 +909,112 @@ const markAsRead = async (req, res) => {
 
 const loadFiles = async (req, res) => {
   const { currentUser } = req;
-  const { activities, contact } = req.body;
+  const { contact } = req.body;
 
-  VideoTracker.find({ contact, activity: { $in: activities } })
-    .populate([{ path: 'video' }, { path: 'pdf' }, { path: 'image' }])
-    .then((videos) => {
-      return res.send({
-        status: true,
-        data: videos,
-      });
+  const videoIds = [];
+  const pdfIds = [];
+  const imageIds = [];
+  let videos = [];
+  let pdfs = [];
+  let images = [];
+  let videoTrackers = [];
+  let imageTrackers = [];
+  let pdfTrackers = [];
+  const videoActivities = [];
+  const pdfActivities = [];
+  const imageActivities = [];
+  const texts = await Text.find({
+    user: currentUser._id,
+    contacts: contact,
+  })
+    .select('_id')
+    .catch((err) => {
+      console.log('Finding contact text is failed', err);
     });
+  if (texts && texts.length) {
+    const textIds = texts.map((e) => e._id);
+    const sendActivities = await Activity.find({
+      texts: { $in: textIds },
+      type: { $in: ['videos', 'pdfs', 'images'] },
+    }).catch((err) => {
+      console.log('Sending Activity getting is failed', err);
+    });
+
+    sendActivities.forEach((e) => {
+      switch (e.type) {
+        case 'videos':
+          videoIds.push(e.videos[0]);
+          videoActivities.push(e._id);
+          break;
+        case 'pdfs':
+          pdfIds.push(e.pdfs[0]);
+          pdfActivities.push(e._id);
+          break;
+        case 'images':
+          imageIds.push(e.images[0]);
+          imageActivities.push(e._id);
+          break;
+      }
+    });
+
+    if (videoActivities.length) {
+      videoTrackers = await VideoTracker.find({
+        contact,
+        activity: { $in: videoActivities },
+      }).catch((err) => {
+        console.log('Video Tracking getting failed');
+      });
+      videos = await Video.find({
+        _id: { $in: videoIds },
+      })
+        .select('_id title preview thumbnail duration')
+        .catch((err) => {
+          console.log('video getting failed');
+        });
+    }
+    if (pdfActivities.length) {
+      pdfTrackers = PDFTracker.find({
+        contact,
+        activity: { $in: pdfActivities },
+      }).catch((err) => {
+        console.log('PDF Tracking getting failed');
+      });
+      pdfs = await PDF.find({
+        _id: { $in: pdfIds },
+      })
+        .select('_id title preview')
+        .catch((err) => {
+          console.log('pdf getting failed');
+        });
+    }
+    if (imageActivities.length) {
+      imageTrackers = ImageTracker.find({
+        contact,
+        activity: { $in: imageActivities },
+      }).catch((err) => {
+        console.log('Image Tracking getting failed');
+      });
+      images = await Image.find({
+        _id: { $in: imageIds },
+      })
+        .select('_id title preview')
+        .catch((err) => {
+          console.log('image getting failed');
+        });
+    }
+  }
+
+  return res.send({
+    status: true,
+    data: {
+      videos,
+      pdfs,
+      images,
+      videoTrackers,
+      imageTrackers,
+      pdfTrackers,
+    },
+  });
 };
 
 module.exports = {

@@ -3681,8 +3681,6 @@ const sendEmail = async (data) => {
 
   const promise_array = [];
 
-  console.log('contacts in helper', contacts);
-
   for (let i = 0; i < contacts.length; i++) {
     let promise;
     const activities = [];
