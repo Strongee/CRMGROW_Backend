@@ -53,6 +53,9 @@ const create = async (payment_data) => {
         customer.id,
         { source: token.id },
         function (err, card) {
+          if (err) {
+            console.log('card error', err);
+          }
           if (!card) {
             reject('Card is null');
             return;
