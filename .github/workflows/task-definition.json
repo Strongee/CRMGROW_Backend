@@ -3,16 +3,24 @@
     "executionRoleArn": "arn:aws:iam::013236793350:role/ecsTaskExecutionRole",
     "containerDefinitions": [
       {
+        "essential": true,
+        "image": "533243300146.dkr.ecr.us-east-2.amazonaws.com/newrelic/logging-firelens-fluentbit",
+        "name": "log_router",
+        "firelensConfiguration": {
+            "type": "fluentbit",
+            "options": {
+                "enable-ecs-log-metadata": "true"
+            }
+        }
+     },
+      {
         "dnsSearchDomains": null,
         "environmentFiles": null,
         "logConfiguration": {
-          "logDriver": "awslogs",
-          "secretOptions": null,
+          "logDriver":"awsfirelens",
           "options": {
-            "awslogs-group": "/ecs/crmg-webapi",
-            "awslogs-region": "us-east-2",
-            "awslogs-stream-prefix": "ecs"
-          }
+             "Name": "newrelic",
+             "apiKey": "NRII-WDmGN5zRX8JPmVX8KPaJU9ephzhLR9Ys"
         },
         "entryPoint": null,
         "portMappings": [
