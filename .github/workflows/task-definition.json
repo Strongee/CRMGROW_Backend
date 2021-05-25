@@ -21,7 +21,8 @@
           "options": {
              "Name": "newrelic",
              "apiKey": "NRII-WDmGN5zRX8JPmVX8KPaJU9ephzhLR9Ys"
-        },
+        }
+      },
         "entryPoint": null,
         "portMappings": [
           {
