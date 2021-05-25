@@ -53,6 +53,15 @@ const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
 
+const AWS = require('aws-sdk');
+
+const ses = new AWS.SES({
+  accessKeyId: api.AWS.AWS_ACCESS_KEY,
+  secretAccessKey: api.AWS.AWS_SECRET_ACCESS_KEY,
+  region: api.AWS.AWS_SES_REGION,
+  apiVersion: '2010-12-01',
+});
+
 const {
   generateUnsubscribeLink,
   addLinkTracking,
@@ -2756,29 +2765,18 @@ const clickEmailLink = async (req, res) => {
         const email_notification = garbage['email_notification'];
 
         if (email_notification['email']) {
-          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-          const msg = {
-            to: user.email,
-            from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
-            templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-            dynamic_template_data: {
-              subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
-              first_name: contact.first_name,
-              last_name: contact.last_name,
-              phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-              email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-              activity:
-                contact.first_name + ' ' + action + ' email at ' + created_at,
-              detailed_activity:
-                "<a href='" +
-                urls.CONTACT_PAGE_URL +
-                contact.id +
-                "'><img src='" +
-                urls.DOMAIN_URL +
-                "assets/images/contact.png'/></a>",
+          const data = {
+            template_data: {
+              contact_name: contact.first_name + ' ' + contact.last_name,
+              clicked_at: created_at,
+              contact_url: urls.CONTACT_PAGE_URL + contact._id,
             },
+            template_name: 'EmailClicked',
+            required_reply: false,
+            email: user.email,
           };
-          sgMail.send(msg).catch((err) => console.error(err));
+
+          sendNotificationEmail(data);
         }
 
         const desktop_notification = garbage['desktop_notification'];

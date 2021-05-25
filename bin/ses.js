@@ -10,7 +10,7 @@ AWS.config.update({
   region: api.AWS.AWS_SES_REGION,
 });
 
-const templateName = 'EmailOpened';
+const templateName = 'ForgotPassword';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
@@ -30,6 +30,8 @@ const subjects = {
   CancelAccount: 'CRMGrow cancel notification',
   ShareContact: 'CRMGrow share contact notification',
   TeamInvitation: `You've been invited to join team {{team_name}} in CRMGrow`,
+  EmailClicked: `Email clicked: {{contact_name}} at {{clicked_at}}`,
+  ForgotPassword: `CRMGrow forgot password notification`,
 };
 const htmls = {};
 fs.readFile(
@@ -49,7 +51,7 @@ fs.readFile(
     };
 
     const templatePromise = new AWS.SES({ apiVersion: '2010-12-01' })
-      .updateTemplate(createParams)
+      .createTemplate(createParams)
       .promise();
 
     templatePromise
