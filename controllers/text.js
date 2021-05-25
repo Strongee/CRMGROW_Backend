@@ -923,6 +923,7 @@ const loadFiles = async (req, res) => {
   const videoActivities = [];
   const pdfActivities = [];
   const imageActivities = [];
+  const sendAtIndex = {};
   const texts = await Text.find({
     user: currentUser._id,
     contacts: contact,
@@ -945,14 +946,29 @@ const loadFiles = async (req, res) => {
         case 'videos':
           videoIds.push(e.videos[0]);
           videoActivities.push(e._id);
+          if (sendAtIndex[e.videos[0]]) {
+            sendAtIndex[e.videos[0]].push(e.updated_at);
+          } else {
+            sendAtIndex[e.videos[0]] = [e.updated_at];
+          }
           break;
         case 'pdfs':
           pdfIds.push(e.pdfs[0]);
           pdfActivities.push(e._id);
+          if (sendAtIndex[e.pdfs[0]]) {
+            sendAtIndex[e.pdfs[0]].push(e.updated_at);
+          } else {
+            sendAtIndex[e.pdfs[0]] = [e.updated_at];
+          }
           break;
         case 'images':
           imageIds.push(e.images[0]);
           imageActivities.push(e._id);
+          if (sendAtIndex[e.images[0]]) {
+            sendAtIndex[e.images[0]].push(e.updated_at);
+          } else {
+            sendAtIndex[e.images[0]] = [e.updated_at];
+          }
           break;
       }
     });
@@ -1013,6 +1029,7 @@ const loadFiles = async (req, res) => {
       videoTrackers,
       imageTrackers,
       pdfTrackers,
+      sendAtIndex,
     },
   });
 };

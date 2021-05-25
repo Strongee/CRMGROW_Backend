@@ -11,7 +11,6 @@ AWS.config.update({
 });
 
 const templateName = 'ForgotPassword';
-
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
   TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,

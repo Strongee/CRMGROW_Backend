@@ -53,43 +53,46 @@ header.header
         a.btn.btn-secondary(href='http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/login') Login
       li
         a.btn.btn-primary(href='http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com/signup') Try it free
-section.material-section
-  .container.cs-container
-    div
-      h1.material-title.text-center.mb-1
-        | #{material.title}
-      p.material-description.text-center
-        != material.description
-    .row.material-profile-wrapper
-      .material-wrapper.mx-2
-        if material_type === 'video'
-          .video-player-wrapper
-            if material.type === 'youtube' || material.type === 'vimeo'
-              div#player(data-plyr-provider=`${material.type}` data-plyr-embed-id=`${material.url}`)
-            else 
-              video#player(poster=`${material.thumbnail}`, controls, name="media")
-                source(src=`${material.url}`, type=`video/mp4`)
-            .watched-time
-              | 00:00
-            if material.converted === 'progress'
-              div.convertStatus
-                div.progressBar.progress
-                  div.progress-bar.progress-bar-striped.progress-bar-animated.bg-secondary
-        if material_type === 'image'
-          .gallery-wrapper
-            #galleria
-              each url in material.url
-                a(href=url)
-                  img(src=url)
-            #gallery-container.d-none
-              each url in material.url
-                a(href=url)
-                  img(src=url)
-        if material_type === 'pdf'
-          .pdf-wrapper
-            #pdf-container
-              img(src=material.preview)
-            input#pdfpath(type="hidden" value=material.url)
+section.main-container
+  .material-section
+    .container.cs-container
+      div
+        h1.material-title.text-center.mb-1
+          | #{material.title}
+        p.material-description.text-center
+          != material.description
+      .row.material-profile-wrapper
+        .material-wrapper.mx-2
+          if material_type === 'video'
+            .video-player-wrapper
+              if material.type === 'youtube' || material.type === 'vimeo'
+                div#player(data-plyr-provider=`${material.type}` data-plyr-embed-id=`${material.url}`)
+              else 
+                video#player(poster=`${material.thumbnail}`, controls, name="media")
+                  source(src=`${material.url}`, type=`video/mp4`)
+              .watched-time
+                | 00:00
+              if material.converted === 'progress'
+                div.convertStatus
+                  div.progressBar.progress
+                    div.progress-bar.progress-bar-striped.progress-bar-animated.bg-secondary
+          if material_type === 'image'
+            .gallery-wrapper
+              #galleria
+                each url in material.url
+                  a(href=url)
+                    img(src=url)
+              #gallery-container.d-none
+                each url in material.url
+                  a(href=url)
+                    img(src=url)
+          if material_type === 'pdf'
+            .pdf-wrapper
+              #pdf-container
+                img(src=material.preview)
+              input#pdfpath(type="hidden" value=material.url)
+  if calendly
+      iframe.calendly(width='100%', height='100%', frameBorder="0", src=calendly)
 section.ready-section
   img.for-desktop(src='./theme/images/ready_started.svg' alt='ready')
   img.for-mobile(src='./theme/images/ready_start_mobile.svg' alt='ready')
