@@ -2288,28 +2288,16 @@ const forgotPassword = async (req, res) => {
     _user['updated_at'] = new Date();
     _user.save();
 
-    const html = `<html>
-    <title>CRMGROW</title>
-      <body style="font-family:sans-serif;">
-        <h3>We received a request to reset your password</h3>
-        <p>
-          <h3>CRMGrow Support</h3>
-          Please use this code in your app: <b>${code}</b> to reset your password.
-        </p>
-      </body>
-      </html>`;
-
-    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-
-    const msg = {
-      to: _user['email'],
-      from: `CRMGROW <support@crmgrow.com>`,
-      subject: mail_contents.RESET_PASSWORD.SUBJECT,
-      html,
+    const data = {
+      template_data: {
+        code,
+      },
+      template_name: 'Forgot Password',
+      required_reply: false,
+      email: _user['email'],
     };
-    sgMail.send(msg).catch((err) => {
-      console.log('err', err);
-    });
+
+    sendNotificationEmail(data);
 
     res.send({
       status: true,
