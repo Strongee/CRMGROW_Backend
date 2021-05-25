@@ -53,6 +53,9 @@ const create = async (payment_data) => {
         customer.id,
         { source: token.id },
         function (err, card) {
+          if (err) {
+            console.log('card error', err);
+          }
           if (!card) {
             reject('Card is null');
             return;
@@ -104,8 +107,21 @@ const create = async (payment_data) => {
 
 const update = async (req, res) => {
   const { token } = req.body;
-  const level = req.body.level || system_settings.DEFAULT_PACKAGE;
   const { currentUser } = req;
+  let level;
+  if (currentUser.user_version === 'v1') {
+    if (currentUser.package_level === 'PRO') {
+      level = 'LITE';
+    } else {
+      return res.status(400).json({
+        status: false,
+        error:
+          'Please contact support team because your plan is different than others',
+      });
+    }
+  } else {
+    level = currentUser.package_level || system_settings.DEFAULT_PACKAGE;
+  }
 
   if (!currentUser.payment) {
     const payment_data = {
@@ -880,6 +896,11 @@ const getTransactions = async (req, res) => {
         console.log('err', err);
       }
     );
+  } else {
+    return res.send({
+      status: true,
+      data: [],
+    });
   }
 
   if (payment) {

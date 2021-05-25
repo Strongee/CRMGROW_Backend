@@ -806,9 +806,9 @@ const openTrack = async (req, res) => {
         user: user.id,
         action: {
           object: 'email',
-          email: _email.id
+          email: _email.id,
         },
-        email_trackers: _email_tracker.id
+        email_trackers: _email_tracker.id,
       });
       notification.save().catch((err) => {
         console.log('email open notification is failed', err);
@@ -1303,9 +1303,9 @@ const receiveEmailSendGrid = async (req, res) => {
             user: user.id,
             action: {
               object: 'email',
-              email: _email.id
+              email: _email.id,
             },
-            email_trackers: _email_tracker.id
+            email_trackers: _email_tracker.id,
           });
           notification.save().catch((err) => {
             console.log('open email notification is failed', err);
@@ -1422,9 +1422,9 @@ const receiveEmailSendGrid = async (req, res) => {
           user: user.id,
           action: {
             object: 'email',
-            email: _email.id
+            email: _email.id,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('click link notification is failed', err);
@@ -1488,9 +1488,9 @@ const receiveEmailSendGrid = async (req, res) => {
           user: user.id,
           action: {
             object: 'email',
-            email: _email.id
+            email: _email.id,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('unsubscribe email notification is failed', err);
@@ -1732,7 +1732,7 @@ const receiveEmail = async (req, res) => {
             object: 'email',
             email: activity.emails,
           },
-          email_trackers: _email_tracker.id
+          email_trackers: _email_tracker.id,
         });
         notification.save().catch((err) => {
           console.log('open email notification is failed', err);
@@ -1837,8 +1837,10 @@ const receiveEmail = async (req, res) => {
               email_subject: _email.subject,
               email_sent: moment(sent)
                 .tz(time_zone)
-                .format('h:mm MMMM Do, YYYY'),
-              email_opened: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+                .format('MMMM Do, YYYY - hh:mm A'),
+              email_opened: moment()
+                .tz(time_zone)
+                .format('MMMM Do, YYYY - hh:mm A'),
             },
             template_name: 'EmailOpened',
             required_reply: false,
@@ -2680,195 +2682,201 @@ const clickEmailLink = async (req, res) => {
     const action = 'clicked the link on';
 
     if (user && contact) {
-      const email_tracker = new EmailTracker({
-        user: user.id,
-        contact: contact.id,
-        email: activity.emails,
-        type: 'click',
-        link,
-        activity: activity.id,
-      });
-
-      const _email_tracker = await email_tracker
-        .save()
-        .then()
-        .catch((err) => {
-          console.log('email tracker save error', err.message);
+      if (user.link_track_enabled) {
+        const email_tracker = new EmailTracker({
+          user: user.id,
+          contact: contact.id,
+          email: activity.emails,
+          type: 'click',
+          link,
+          activity: activity.id,
         });
 
-      _activity = new Activity({
-        content: 'clicked the link on email',
-        contacts: contact.id,
-        user: user.id,
-        type: 'email_trackers',
-        emails: activity.emails,
-        email_trackers: _email_tracker.id,
-      });
+        const _email_tracker = await email_tracker
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('email tracker save error', err.message);
+          });
 
-      const notification = new Notification({
-        criteria: 'click_link',
-        contact: [contact.id],
-        user: user.id,
-        action: {
-          object: 'email',
-          email: activity.emails,
-        },
-        email_trackers: _email_tracker.id
-      });
-      notification.save().catch((err) => {
-        console.log('click link notification is failed', err);
-      });
-    }
+        _activity = new Activity({
+          content: 'clicked the link on email',
+          contacts: contact.id,
+          user: user.id,
+          type: 'email_trackers',
+          emails: activity.emails,
+          email_trackers: _email_tracker.id,
+        });
 
-    const last_activity = await _activity
-      .save()
-      .then()
-      .catch((err) => {
-        console.log('activity save err', err.message);
-      });
+        const notification = new Notification({
+          criteria: 'click_link',
+          contact: [contact.id],
+          user: user.id,
+          action: {
+            object: 'email',
+            email: activity.emails,
+          },
+          email_trackers: _email_tracker.id,
+        });
+        notification.save().catch((err) => {
+          console.log('click link notification is failed', err);
+        });
+        const last_activity = await _activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('activity save err', err.message);
+          });
 
-    Contact.updateOne(
-      { _id: contact.id },
-      {
-        $set: { last_activity: last_activity.id },
-      }
-    ).catch((err) => {
-      console.log('contact update err', err.message);
-    });
+        Contact.updateOne(
+          { _id: contact.id },
+          {
+            $set: { last_activity: last_activity.id },
+          }
+        ).catch((err) => {
+          console.log('contact update err', err.message);
+        });
 
-    const clicked = new Date();
-    // const created_at = moment(clicked)
-    //   .utcOffset(user.time_zone)
-    //   .format('h:mm a');
+        const clicked = new Date();
+        // const created_at = moment(clicked)
+        //   .utcOffset(user.time_zone)
+        //   .format('h:mm a');
 
-    const time_zone = user.time_zone_info
-      ? JSON.parse(user.time_zone_info).tz_name
-      : system_settings.TIME_ZONE;
-    const created_at = moment(clicked).tz(time_zone).format('h:mm a');
+        const time_zone = user.time_zone_info
+          ? JSON.parse(user.time_zone_info).tz_name
+          : system_settings.TIME_ZONE;
+        const created_at = moment(clicked).tz(time_zone).format('h:mm a');
 
-    const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
-      console.log('garbage found err', err.message);
-    });
+        const garbage = await Garbage.findOne({ user: user.id }).catch(
+          (err) => {
+            console.log('garbage found err', err.message);
+          }
+        );
 
-    const email_notification = garbage['email_notification'];
+        const email_notification = garbage['email_notification'];
 
-    if (email_notification['email']) {
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-      const msg = {
-        to: user.email,
-        from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
-        templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
-        dynamic_template_data: {
-          subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
-          first_name: contact.first_name,
-          last_name: contact.last_name,
-          phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
-          email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
-          activity:
-            contact.first_name + ' ' + action + ' email at ' + created_at,
-          detailed_activity:
-            "<a href='" +
-            urls.CONTACT_PAGE_URL +
-            contact.id +
-            "'><img src='" +
-            urls.DOMAIN_URL +
-            "assets/images/contact.png'/></a>",
-        },
-      };
-      sgMail.send(msg).catch((err) => console.error(err));
-    }
+        if (email_notification['email']) {
+          sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+          const msg = {
+            to: user.email,
+            from: mail_contents.NOTIFICATION_CLICKED_EMAIL.MAIL,
+            templateId: api.SENDGRID.SENDGRID_NOTICATION_TEMPLATE,
+            dynamic_template_data: {
+              subject: `${mail_contents.NOTIFICATION_CLICKED_EMAIL.SUBJECT} ${contact.first_name} ${contact.last_name} at ${created_at}`,
+              first_name: contact.first_name,
+              last_name: contact.last_name,
+              phone_number: `<a href="tel:${contact.cell_phone}">${contact.cell_phone}</a>`,
+              email: `<a href="mailto:${contact.email}">${contact.email}</a>`,
+              activity:
+                contact.first_name + ' ' + action + ' email at ' + created_at,
+              detailed_activity:
+                "<a href='" +
+                urls.CONTACT_PAGE_URL +
+                contact.id +
+                "'><img src='" +
+                urls.DOMAIN_URL +
+                "assets/images/contact.png'/></a>",
+            },
+          };
+          sgMail.send(msg).catch((err) => console.error(err));
+        }
 
-    const desktop_notification = garbage['desktop_notification'];
+        const desktop_notification = garbage['desktop_notification'];
 
-    if (desktop_notification['email']) {
-      webpush.setVapidDetails(
-        'mailto:support@crmgrow.com',
-        api.VAPID.PUBLIC_VAPID_KEY,
-        api.VAPID.PRIVATE_VAPID_KEY
-      );
+        if (desktop_notification['email']) {
+          webpush.setVapidDetails(
+            'mailto:support@crmgrow.com',
+            api.VAPID.PUBLIC_VAPID_KEY,
+            api.VAPID.PRIVATE_VAPID_KEY
+          );
 
-      const subscription = JSON.parse(user.desktop_notification_subscription);
-      const title =
-        contact.first_name +
-        ' ' +
-        contact.last_name +
-        ' - ' +
-        contact.email +
-        ' ' +
-        action +
-        ' email';
-      // const created_at =
-      //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-      //   ' at ' +
-      //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
-      const body =
-        contact.first_name +
-        ' ' +
-        contact.last_name +
-        ' - ' +
-        contact.email +
-        ' ' +
-        action +
-        ' email: ' +
-        ' on ' +
-        created_at;
-      const playload = JSON.stringify({
-        notification: {
-          title,
-          body,
-          icon: '/fav.ico',
-          badge: '/fav.ico',
-        },
-      });
-      webpush
-        .sendNotification(subscription, playload)
-        .catch((err) => console.error(err));
-    }
-    const text_notification = garbage['text_notification'];
-    if (text_notification['email']) {
-      const e164Phone = phone(user.cell_phone)[0];
+          const subscription = JSON.parse(
+            user.desktop_notification_subscription
+          );
+          const title =
+            contact.first_name +
+            ' ' +
+            contact.last_name +
+            ' - ' +
+            contact.email +
+            ' ' +
+            action +
+            ' email';
+          // const created_at =
+          //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+          //   ' at ' +
+          //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+          const body =
+            contact.first_name +
+            ' ' +
+            contact.last_name +
+            ' - ' +
+            contact.email +
+            ' ' +
+            action +
+            ' email: ' +
+            ' on ' +
+            created_at;
+          const playload = JSON.stringify({
+            notification: {
+              title,
+              body,
+              icon: '/fav.ico',
+              badge: '/fav.ico',
+            },
+          });
+          webpush
+            .sendNotification(subscription, playload)
+            .catch((err) => console.error(err));
+        }
+        const text_notification = garbage['text_notification'];
+        if (text_notification['email']) {
+          const e164Phone = phone(user.cell_phone)[0];
 
-      if (!e164Phone) {
-        const error = {
-          error: 'Invalid Phone Number',
-        };
+          if (!e164Phone) {
+            const error = {
+              error: 'Invalid Phone Number',
+            };
 
-        throw error; // Invalid phone number
-      } else {
-        // let fromNumber = user['proxy_number'];
-        // if (!fromNumber) {
-        //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
-        // }
-        const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
+            throw error; // Invalid phone number
+          } else {
+            // let fromNumber = user['proxy_number'];
+            // if (!fromNumber) {
+            //   fromNumber = api.SIGNALWIRE.DEFAULT_NUMBER;
+            // }
+            const fromNumber = api.SIGNALWIRE.EMAIL_NUMBER;
 
-        const title =
-          contact.first_name +
-          ' ' +
-          contact.last_name +
-          '\n' +
-          contact.email +
-          '\n' +
-          contact.cell_phone +
-          '\n' +
-          '\n' +
-          action +
-          ' email:' +
-          '\n';
-        // const created_at =
-        //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
-        //   ' at ' +
-        //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
-        const time = ' on ' + created_at + '\n ';
-        // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
+            const title =
+              contact.first_name +
+              ' ' +
+              contact.last_name +
+              '\n' +
+              contact.email +
+              '\n' +
+              contact.cell_phone +
+              '\n' +
+              '\n' +
+              action +
+              ' email:' +
+              '\n';
+            // const created_at =
+            //   moment(clicked).utcOffset(user.time_zone).format('MM/DD/YYYY') +
+            //   ' at ' +
+            //   moment(clicked).utcOffset(user.time_zone).format('h:mm a');
+            const time = ' on ' + created_at + '\n ';
+            // const contact_link = urls.CONTACT_PAGE_URL + contact.id;
 
-        client.messages
-          .create({
-            from: fromNumber,
-            to: e164Phone,
-            // body: title + '\n' + time + contact_link,
-            body: title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
-          })
-          .catch((err) => console.error('send sms err: ', err));
+            client.messages
+              .create({
+                from: fromNumber,
+                to: e164Phone,
+                // body: title + '\n' + time + contact_link,
+                body:
+                  title + '\n' + time + '\n\n' + generateTextUnsubscribeLink(),
+              })
+              .catch((err) => console.error('send sms err: ', err));
+          }
+        }
       }
     }
   }

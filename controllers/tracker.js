@@ -313,7 +313,7 @@ const disconnectPDF = async (pdf_tracker_id) => {
           object: 'pdf',
           pdf: [pdf.id],
         },
-        pdf_tracker: query.id
+        pdf_tracker: query.id,
       });
       newNotification.save().catch((err) => {
         console.log('PDF Watch Notification creating is failed.', err);
@@ -403,7 +403,7 @@ const disconnectVideo = async (video_tracker_id) => {
             object: 'video',
             video: [video.id],
           },
-          video_tracker: query.id
+          video_tracker: query.id,
         });
         newNotification.save().catch((err) => {
           console.log('Video Watch Notification creating is failed.', err);
@@ -908,7 +908,7 @@ const disconnectImage = async (image_tracker_id) => {
           object: 'image',
           image: [image.id],
         },
-        image_tracker: query.id
+        image_tracker: query.id,
       });
       newNotification.save().catch((err) => {
         console.log('Image Watch Notification creating is failed.', err);
