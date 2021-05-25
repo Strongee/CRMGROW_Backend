@@ -239,6 +239,7 @@ const playDemo = async (req, res) => {
   let capture_delay = 0;
   let capture_field = {};
   let additional_fields = [];
+  let calendly;
 
   if (user) {
     const garbage = await Garbage.findOne({ user: user._id }).catch((err) => {
@@ -255,16 +256,22 @@ const playDemo = async (req, res) => {
       if (capture_videos.indexOf(system_settings.DEMO_VIDEO) === -1) {
         capture_dialog = false;
       }
+
+      if (garbage['calendly'] && garbage['calendly'].link) {
+        calendly = garbage['calendly'].link;
+      }
     } else {
       capture_dialog = false;
     }
 
+    console.log('calendly', calendly);
     return res.render('demo', {
       material: video,
       material_type: 'video',
       user,
       capture_dialog,
       capture_delay,
+      calendly,
       capture_field: capture_field || {},
       additional_fields: additional_fields || [],
     });
@@ -3431,7 +3438,7 @@ const setupRecording = (io) => {
       const blob = data.data;
       const recordTime = data.recordTime || 0;
 
-      if (counterDirection == -1 && recordTime < 0) {
+      if (counterDirection === -1 && recordTime < 0) {
         console.log('emit timeout ************>');
         socket.emit('timeout', { timeOverflow: true });
       }
@@ -3456,7 +3463,7 @@ const setupRecording = (io) => {
         fileStreamSizeStatus[videoId] += bufferSize;
 
         const estimateTime = max_duration - recordDuration - recordTime;
-        if (estimateTime <= timeBounce && counterDirection == 1) {
+        if (estimateTime <= timeBounce && counterDirection === 1) {
           counterDirection = -1;
           const data = {
             counterDirection: -1,
