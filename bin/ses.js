@@ -10,7 +10,7 @@ AWS.config.update({
   region: api.AWS.AWS_SES_REGION,
 });
 
-const templateName = 'EmailOpened';
+const templateName = 'VideoWatched';
 
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,

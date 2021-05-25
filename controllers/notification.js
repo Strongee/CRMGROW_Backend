@@ -472,7 +472,7 @@ const getStatus = async (req, res) => {
     response.unreadNotifications = notifications.length;
   } else {
     notifications = await Notification.find({
-      $or: [{ user: currentUser._id }, { owner: currentUser._id }]
+      $or: [{ user: currentUser._id }, { owner: currentUser._id }],
     })
       .sort({ updated_at: -1 })
       .limit(5)
