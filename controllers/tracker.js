@@ -497,7 +497,13 @@ const disconnectVideo = async (video_tracker_id) => {
       tS = '0' + tS;
     }
 
-    const timeTotal = tH + ':' + tM + ':' + tS;
+    let timeTotal = '';
+
+    if (tH === '00') {
+      timeTotal = tM + ':' + tS;
+    } else {
+      timeTotal = tH + ':' + tM + ':' + tS;
+    }
 
     const desktop_notification = garbage.desktop_notification;
     // send desktop notification
@@ -642,7 +648,7 @@ const disconnectVideo = async (video_tracker_id) => {
 
       const created_at = moment(query['created_at'])
         .tz(time_zone)
-        .format('h:mm: a');
+        .format('h:mmA');
 
       const data = {
         template_data: {
@@ -654,8 +660,8 @@ const disconnectVideo = async (video_tracker_id) => {
           material_url: `${urls.MATERIAL_USER_VIEW_VIDEO_URL}?video=${video.id}&user=${currentUser.id}`,
           thumbnail_url: video.thumbnail,
           duration: timeWatched,
-          end_at: query.end,
-          start_at: query.start,
+          end_at: Math.trunc(query.end),
+          start_at: Math.trunc(query.start),
         },
         template_name: 'VideoWatched',
         required_reply: false,
