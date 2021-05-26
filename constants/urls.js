@@ -49,7 +49,7 @@ const urls = {
     'https://marketing-image-production.s3.amazonaws.com/uploads/cdf34fec41e40d4000fcf649d42a6666957666fba97ba03fa77eed3365e757943285d8cb65df1e79749c088f114af817384e9ff251957e17162e6e223379f3e2.png',
   CONTACT_CSV_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
-  IMPORT_CSV_URL: `${domain}/contacts/import-csv`,
+  IMPORT_CSV_URL: `${front}/contacts/import-csv`,
   INTRO_VIDEO_URL: 'https://crmgrow.com/demo',
   // INTRO_VIDEO_URL: `${domain}/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc`,
   GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',

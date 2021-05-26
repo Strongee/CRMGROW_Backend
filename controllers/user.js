@@ -896,18 +896,21 @@ const socialOutlook = async (req, res) => {
         const jwt = JSON.parse(decoded_token);
 
         let email_max_count;
+        let connected_email_type;
         if (
           jwt.preferred_username.indexOf('@outlook.com') !== -1 ||
           jwt.preferred_username.indexOf('@hotmail.com') !== -1
         ) {
           email_max_count = system_settings.EMAIL_DAILY_LIMIT.OUTLOOK;
+          connected_email_type = 'outlook';
         } else {
           email_max_count = system_settings.EMAIL_DAILY_LIMIT.MICROSOFT;
+          connected_email_type = 'outlook';
         }
         const data = {
           email: jwt.preferred_username,
           social_id: jwt.oid,
-          connected_email_type: 'outlook',
+          connected_email_type,
           primary_connected: true,
           outlook_refresh_token,
           calendar_connected: true,
