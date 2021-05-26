@@ -611,16 +611,19 @@ const socialGmail = async (req, res) => {
     }
 
     let email_max_count;
+    let connected_email_type;
     if (_res.data.hd) {
       email_max_count = system_settings.EMAIL_DAILY_LIMIT.GSUIT;
+      connected_email_type = 'gsuit';
     } else {
       email_max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
+      connected_email_type = 'gsuit';
     }
 
     const data = {
       email: _res.data.email,
       social_id: _res.data.id,
-      connected_email_type: 'gmail',
+      connected_email_type,
       email_max_count,
       primary_connected: true,
       google_refresh_token: JSON.stringify(tokens),
