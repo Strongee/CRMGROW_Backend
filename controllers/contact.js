@@ -5060,7 +5060,7 @@ const stopShare = async (req, res) => {
   const data = [];
   const error = [];
 
-  const shareTeam = await Team.findOne({_id: req.body.team}).catch((err) => {
+  const shareTeam = await Team.findOne({ _id: req.body.team }).catch((err) => {
     console.log('team not found', err.message);
   });
 
