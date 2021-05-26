@@ -109,7 +109,7 @@ const UserSchema = new Schema(
     dialer_info: {
       is_enabled: Boolean,
     },
-    user_version: String,
+    user_version: { type: String, default: 'v2' },
     capture_enabled: { type: Boolean, default: true },
     link_track_enabled: { type: Boolean, default: true },
     email_verified: Boolean,

@@ -488,10 +488,28 @@ const getStatus = async (req, res) => {
   });
   response.notifications = formatted_notifications;
 
-  const system_notifications = await Notification.find({
+  let system_notifications = await Notification.find({
     type: 'global',
+    _id: { $ne: '5f5863fe1764de3cf845b8b3' },
     del: false,
   }).sort({ updated_at: -1 });
+
+  let v2_announce;
+  if (currentUser.user_version === 'v1') {
+    v2_announce = {
+      content: `<a href="https://crmgrow.com">Click here</a> to go back to crmgrow version 1.0. Please register live training for v2 by <a href="https://crmgrow.com/demo">clicking here</a>`,
+    };
+  } else {
+    v2_announce = {
+      content: `Welcome to crmgrow! Please register live training for v2 by <a href="https://crmgrow.com/demo">clicking here</a>`,
+    };
+  }
+
+  if (system_notifications.length === 0) {
+    system_notifications = [v2_announce];
+  } else {
+    system_notifications.push(v2_announce);
+  }
 
   response.system_notifications = system_notifications;
 
