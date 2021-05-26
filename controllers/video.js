@@ -265,8 +265,9 @@ const playDemo = async (req, res) => {
     }
 
     console.log('calendly', calendly);
+    const material = await videoHelper.getVideoPublicUrl(video._doc);
     return res.render('demo', {
-      material: video,
+      material,
       material_type: 'video',
       user,
       capture_dialog,
