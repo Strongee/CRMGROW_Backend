@@ -416,7 +416,7 @@ const create = async (req, res) => {
           webinar_url: system_settings.WEBINAR_LINK,
           import_url: urls.IMPORT_CSV_URL,
           template_url: urls.CONTACT_CSV_URL,
-          connect_url: urls.PROFILE_URL,
+          connect_url: urls.INTEGRATION_URL,
         },
         template_name: 'Welcome',
         required_reply: true,

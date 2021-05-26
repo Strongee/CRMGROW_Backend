@@ -81,7 +81,7 @@ const system_settings = {
   },
   DEMO_VIDEO: '60ad6077af664b0016ebb176',
   WEBINAR_LINK:
-    'https://zoom.us/meeting/register/tJ0ldumrrT4vGtYOOCiiMpjNJbvSLE4NWBad',
+    'https://calendly.com/support-1196/crmgrow-live-demo?month=2021-05',
   TIME_ZONE: 'America/New York',
   DEFAULT_STAGES: [
     'Lead',

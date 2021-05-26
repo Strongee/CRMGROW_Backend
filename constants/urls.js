@@ -6,7 +6,8 @@ if (process.env.NODE_ENV === 'production') {
   front = 'https://app-v2.crmgrow.com';
 } else if (process.env.NODE_ENV === 'staging') {
   domain = 'http://3.139.190.87:3000';
-  front = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
+  // front = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
+  front = 'https://app-v2.crmgrow.com';
 } else {
   domain = 'http://localhost:3000';
   front = 'http://localhost:4201';
@@ -14,11 +15,12 @@ if (process.env.NODE_ENV === 'production') {
 
 const urls = {
   DOMAIN_NAME,
-  DOMAIN_URL: `${domain}/`,
+  DOMAIN_URL: `${front}/`,
   API_URL: `${domain}/api/`,
   LOGIN_URL: `${front}/login`,
   PROFILE_URL: `${front}/profile/`,
   SOCIAL_SIGNUP_URL: `${front}/signup/`,
+  INTEGRATION_URL: `${front}/settings/integration`,
   APP_SIGNIN_URL: `${front}/social-oauth-callback/`,
   OUTLOOK_AUTHORIZE_URL: `${front}/profile/outlook`,
   GMAIL_AUTHORIZE_URL: `${front}/profile/gmail`,
@@ -48,8 +50,7 @@ const urls = {
   CONTACT_CSV_URL:
     'https://teamgrow.s3.us-east-2.amazonaws.com/contacts_to_load_for_Exp.csv',
   IMPORT_CSV_URL: `${domain}/contacts/import-csv`,
-  INTRO_VIDEO_URL:
-    'https://zoom.us/rec/play/w2x1LGD1yGDUMkTo3Aa8XA2OAmb7hez5p9raoL7H-lrbLXP-5H52YE_t4MdpJO1y5mTJuZfplpHXjefN.yUHzRToASLwY8yPz?continueMode=true&_x_zm_rtaid=kNtWtmh8Ri2ht1dmHmtPQw.1614790967245.588ab25e5935f7ac744e189c6b379dd3&_x_zm_rhtaid=625',
+  INTRO_VIDEO_URL: 'https://crmgrow.com/demo',
   // INTRO_VIDEO_URL: `${domain}/video?video=5eeb3e0c702a0f3536f5501a&user=5e9a02eaefb6b2a3449245dc`,
   GOOGLE_CALENDAR_URL: 'https://calendar.google.com/calendar/r/eventedit?',
   TRACK_URL: `${domain}/api/email/opened/`,

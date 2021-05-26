@@ -122,7 +122,7 @@ const capitalize = (str) => {
 ContactSchema.index({ user: 1, first_name: 1, last_name: 1 });
 ContactSchema.index({ user: 1, email: 1 });
 ContactSchema.index({ user: 1, cell_phone: 1 });
-ContactSchema.index({ shared_contact: 1 });
+ContactSchema.index({ shared_members: 1 });
 ContactSchema.index({ user: 1 });
 const Contact = mongoose.model('contact', ContactSchema);
 module.exports = Contact;

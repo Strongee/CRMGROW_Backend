@@ -70,7 +70,6 @@ const { sendNotificationEmail } = require('../helpers/email');
 const { setPackage } = require('../helpers/user');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
-const { Pay } = require('twilio/lib/twiml/VoiceResponse');
 
 const signUp = async (req, res) => {
   const errors = validationResult(req);
@@ -166,7 +165,7 @@ const signUp = async (req, res) => {
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
-              connect_url: urls.PROFILE_URL,
+              connect_url: urls.INTEGRATION_URL,
             },
             template_name: 'Welcome',
             required_reply: true,
@@ -387,7 +386,7 @@ const socialSignUp = async (req, res) => {
               webinar_url: system_settings.WEBINAR_LINK,
               import_url: urls.IMPORT_CSV_URL,
               template_url: urls.CONTACT_CSV_URL,
-              connect_url: urls.PROFILE_URL,
+              connect_url: urls.INTEGRATION_URL,
             },
             template_name: 'Welcome',
             required_reply: true,
