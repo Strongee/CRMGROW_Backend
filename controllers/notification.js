@@ -497,7 +497,7 @@ const getStatus = async (req, res) => {
   let v2_announce;
   if (currentUser.user_version === 'v1') {
     v2_announce = {
-      content: `<a href="https://crmgrow.com">Click here</a> to go back to crmgrow version 1.0. Please register live training for v2 by <a href="https://crmgrow.com/demo">clicking here</a>`,
+      content: `<a href="https://app.crmgrow.com">Click here</a> to go back to crmgrow version 1.0. Please register live training for v2 by <a href="https://crmgrow.com/demo">clicking here</a>`,
     };
   } else {
     v2_announce = {
