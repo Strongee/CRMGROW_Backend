@@ -617,7 +617,7 @@ const socialGmail = async (req, res) => {
       connected_email_type = 'gsuit';
     } else {
       email_max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
-      connected_email_type = 'gsuit';
+      connected_email_type = 'gmail';
     }
 
     const data = {
