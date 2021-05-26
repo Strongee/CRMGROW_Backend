@@ -67,7 +67,6 @@
     }
   ],
   "placementConstraints": [],
-  "memory": "1024",
   "taskRoleArn": "arn:aws:iam::013236793350:role/ecsTaskExecutionRole",
   "family": "crmg-webapi",
   "pidMode": null,
@@ -75,6 +74,7 @@
     "FARGATE"
   ],
   "networkMode": "awsvpc",
-  "cpu": "512",
+  "cpu": "1 vcpu",
+  "memory": "2 gb",
   "proxyConfiguration": null
 }
