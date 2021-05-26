@@ -5,6 +5,8 @@ const api = require('../config/api');
 const mail_contents = require('../constants/mail_contents');
 const urls = require('../constants/urls');
 const system_settings = require('../config/system_settings');
+const moment = require('moment-timezone');
+const { sendNotificationEmail } = require('../helpers/email');
 
 const load = async (req, res) => {
   const { currentUser } = req;
@@ -79,24 +81,43 @@ const create = async (req, res) => {
   guest
     .save()
     .then((_res) => {
-      sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-
-      const msg = {
-        to: _res.email,
-        from: mail_contents.INVITE_GUEST.MAIL,
-        templateId: api.SENDGRID.SENDGRID_INVITE_GUEST,
-        dynamic_template_data: {
-          subject: `${mail_contents.INVITE_GUEST.SUBJECT}${currentUser.user_name} has invited you to join CRMGrow`,
+      const data = {
+        template_data: {
           user_name: currentUser.user_name,
           password: req.body.password,
-          LOGIN_URL: urls.LOGIN_URL,
-          LOGO_URL: urls.LOGO_URL,
+          url: urls.LOGIN_URL,
         },
+        template_name: 'AssistantInvite',
+        required_reply: false,
+        email: _res.email,
       };
 
-      sgMail.send(msg).catch((err) => {
-        console.log('email message err', err.message || err.msg);
-      });
+      sendNotificationEmail(data)
+        .then(() => {
+          console.log('assistant invite email has been sent out successfully');
+        })
+        .catch((err) => {
+          console.log('assistant invite email send err', err);
+        });
+
+      // sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+      //
+      // const msg = {
+      //   to: _res.email,
+      //   from: mail_contents.INVITE_GUEST.MAIL,
+      //   templateId: api.SENDGRID.SENDGRID_INVITE_GUEST,
+      //   dynamic_template_data: {
+      //     subject: `${mail_contents.INVITE_GUEST.SUBJECT}${currentUser.user_name} has invited you to join CRMGrow`,
+      //     user_name: currentUser.user_name,
+      //     password: req.body.password,
+      //     LOGIN_URL: urls.LOGIN_URL,
+      //     LOGO_URL: urls.LOGO_URL,
+      //   },
+      // };
+      //
+      // sgMail.send(msg).catch((err) => {
+      //   console.log('email message err', err.message || err.msg);
+      // });
 
       return res.send({
         status: true,

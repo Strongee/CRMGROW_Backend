@@ -10,7 +10,7 @@ AWS.config.update({
   region: api.AWS.AWS_SES_REGION,
 });
 
-const templateName = 'ForgotPassword';
+const templateName = 'AssistantInvite';
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
   TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,
@@ -31,6 +31,7 @@ const subjects = {
   TeamInvitation: `You've been invited to join team {{team_name}} in CRMGrow`,
   EmailClicked: `Email clicked: {{contact_name}} at {{clicked_at}}`,
   ForgotPassword: `CRMGrow forgot password notification`,
+  AssistantInvite: `CRMGrow assistant invitation`,
 };
 const htmls = {};
 fs.readFile(

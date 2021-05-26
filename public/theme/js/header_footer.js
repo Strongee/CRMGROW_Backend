@@ -1,5 +1,5 @@
 $( document ).ready(function() {
-    const baseURL = 'http://teamgrow-staticsite-green.s3-website-us-west-1.amazonaws.com';
+    const baseURL = 'https://app-v2.crmgrow.com';
     function validateEmail(email) {
         const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/gim;
         if (email === '' || !re.test(email)) {
