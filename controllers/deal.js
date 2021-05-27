@@ -1246,9 +1246,19 @@ const sendEmails = async (req, res) => {
             error.push({
               contact: response.contact,
               error: response.error,
+              type: response.type,
             });
           }
         });
+
+        let notRunnedContactIds = [];
+        if (_res.length !== contacts.length) {
+          const runnedContactIds = [];
+          _res.forEach((e) => {
+            runnedContactIds.push(e.contact && e.contact._id);
+          });
+          notRunnedContactIds = _.difference(contacts, runnedContactIds);
+        }
 
         // Create Notification and With Success and Failed
         if (contactsToTemp) {
@@ -1262,6 +1272,7 @@ const sendEmails = async (req, res) => {
               deliver_status: {
                 failed: error,
                 contacts,
+                notExecuted: notRunnedContactIds,
               },
               detail: { ...req.body },
             });
@@ -1275,9 +1286,13 @@ const sendEmails = async (req, res) => {
           });
           if (task) {
             const failedContacts = error.map((e) => e.contact && e.contact._id);
-            const succeedContacts = _.difference(contacts, failedContacts);
+            const succeedContacts = _.difference(contacts, [
+              ...failedContacts,
+              ...notRunnedContactIds,
+            ]);
             task.exec_result = {
               failed: error,
+              notExecuted: notRunnedContactIds,
               succeed: succeedContacts,
             };
             task.save().catch(() => {
@@ -1287,10 +1302,28 @@ const sendEmails = async (req, res) => {
         }
 
         if (error.length > 0) {
-          return res.status(405).json({
-            status: false,
-            error,
+          const connect_errors = error.filter((e) => {
+            if (
+              e.type === 'connection_failed' ||
+              e.type === 'google_token_invalid' ||
+              e.type === 'outlook_token_invalid'
+            ) {
+              return true;
+            }
           });
+          if (connect_errors.length) {
+            return res.status(406).json({
+              status: false,
+              error,
+              notExecuted: notRunnedContactIds,
+            });
+          } else {
+            return res.status(405).json({
+              status: false,
+              error,
+              notExecuted: notRunnedContactIds,
+            });
+          }
         } else {
           return res.send({
             status: true,

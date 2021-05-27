@@ -23,6 +23,7 @@ const moment = require('moment-timezone');
 const urls = require('../constants/urls');
 const { RestClient } = require('@signalwire/node');
 const { Action } = require('rxjs/internal/scheduler/Action');
+const Garbage = require('../models/garbage');
 
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
@@ -743,8 +744,8 @@ const bulkImage = async (data) => {
 };
 
 const resendVideo = async (data) => {
-  const { user, content, activities, videos, contacts } = data;
-  const promise_array = [];
+  const { user, content, activity, video: video_id, contact } = data;
+  let promise;
 
   const currentUser = await User.findOne({ _id: user, del: false }).catch(
     (err) => {
@@ -753,159 +754,184 @@ const resendVideo = async (data) => {
   );
 
   if (!currentUser) {
-    promise_array.push(
-      new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          error: 'User not found',
-        });
-      })
-    );
+    return new Promise((resolve, reject) => {
+      resolve({
+        status: false,
+        error: 'User not found',
+        type: 'user_not_found',
+      });
+    });
   }
-  if (promise_array.length > 0) {
-    return Promise.all(promise_array);
+
+  const _contact = await Contact.findById(contact).catch((err) => {
+    console.log('contact not found err', err.message);
+  });
+
+  if (!_contact) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+        },
+        error: 'Contact was removed.',
+        type: 'not_found_contact',
+      });
+    });
+    return promise;
+  }
+
+  if (_contact.tags.indexOf('unsubscribed') !== -1) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+          first_name: _contact.first_name,
+          email: _contact.email,
+        },
+        error: 'contact email unsubscribed',
+        type: 'unsubscribed_contact',
+      });
+    });
+    return promise;
+  }
+
+  const video = await Video.findOne({ _id: video_id, del: false }).catch(
+    (err) => {
+      console.log('video find error', err.message);
+    }
+  );
+
+  if (!video) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+          first_name: _contact.first_name,
+          email: _contact.email,
+        },
+        error: 'Video was removed.',
+        type: 'not_found_video',
+      });
+    });
+    return promise;
   }
 
   let detail_content = 'resent video using sms';
   detail_content = ActivityHelper.autoSettingLog(detail_content);
 
-  for (let i = 0; i < contacts.length; i++) {
-    const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
-      (err) => {
-        console.log('contact not found err', err.message);
-      }
-    );
+  let text_content = content;
+  text_content = text_content
+    .replace(/{user_name}/gi, currentUser.user_name)
+    .replace(/{user_email}/gi, currentUser.email)
+    .replace(/{user_phone}/gi, currentUser.cell_phone)
+    .replace(/{contact_first_name}/gi, _contact.first_name)
+    .replace(/{contact_last_name}/gi, _contact.last_name)
+    .replace(/{contact_email}/gi, _contact.email)
+    .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-    if (!_contact) {
-      promise_array.push(
-        new Promise((resolve, reject) => {
-          resolve({
-            status: false,
-            error: 'Contact not found',
-          });
-        })
-      );
-      continue;
-    }
+  const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
+  const video_title = video.title;
+  const video_description = video.description;
+  const video_object = `\n${video.title}:\n\n${video_link}\n`;
 
-    let video_titles = '';
-    let video_descriptions = '';
-    let video_objects = '';
-    let video_content = content;
-    let activity;
-    for (let j = 0; j < activities.length; j++) {
-      activity = activities[j];
-      const video = await Video.findOne({ _id: videos[j] });
-
-      if (typeof video_content === 'undefined') {
-        video_content = '';
-      }
-
-      video_content = video_content
-        .replace(/{user_name}/gi, currentUser.user_name)
-        .replace(/{user_email}/gi, currentUser.email)
-        .replace(/{user_phone}/gi, currentUser.cell_phone)
-        .replace(/{contact_first_name}/gi, _contact.first_name)
-        .replace(/{contact_last_name}/gi, _contact.last_name)
-        .replace(/{contact_email}/gi, _contact.email)
-        .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-      const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
-
-      if (j < videos.length - 1) {
-        video_titles = video_titles + video.title + ', ';
-        video_descriptions += `${video.description}, `;
-      } else {
-        video_titles += video.title;
-        video_descriptions += video.description;
-      }
-      const video_object = `\n${video.title}:\n\n${video_link}\n`;
-      video_objects += video_object;
-    }
-
-    if (video_content.search(/{video_object}/gi) !== -1) {
-      video_content = video_content.replace(/{video_object}/gi, video_objects);
-    } else {
-      video_content = video_content + '\n' + video_objects;
-    }
-
-    if (video_content.search(/{video_title}/gi) !== -1) {
-      video_content = video_content.replace(/{video_title}/gi, video_titles);
-    }
-
-    if (video_content.search(/{video_description}/gi) !== -1) {
-      video_content = video_content.replace(
-        /{video_description}/gi,
-        video_descriptions
-      );
-    }
-
-    let fromNumber = currentUser['proxy_number'];
-
-    if (!fromNumber) {
-      fromNumber = await getSignalWireNumber(currentUser.id);
-    }
-
-    const promise = new Promise((resolve, reject) => {
-      const e164Phone = phone(_contact.cell_phone)[0];
-
-      if (!e164Phone) {
-        resolve({
-          contact: contacts[i],
-          error: 'Phone number is not valid format',
-          status: false,
-        }); // Invalid phone number
-      }
-
-      client.messages
-        .create({
-          from: fromNumber,
-          to: e164Phone,
-          body: video_content,
-        })
-        .then(async (message) => {
-          console.log('Message ID: ', message.sid);
-
-          const _activity = new Activity({
-            content: detail_content,
-            contacts: contacts[i],
-            user: currentUser.id,
-            type: 'videos',
-            videos: videos[0],
-            description: video_content,
-          });
-
-          const resend_activity = await _activity
-            .save()
-            .then()
-            .catch((err) => {
-              console.log('err', err);
-            });
-
-          Contact.updateOne(
-            { _id: contacts[i] },
-            {
-              $set: { last_activity: resend_activity.id },
-            }
-          ).catch((err) => {
-            console.log('err', err);
-          });
-          resolve({
-            status: true,
-          });
-        })
-        .catch((err) => {
-          resolve({
-            contact: contacts[i],
-            error: err,
-            status: false,
-          });
-        });
-    });
-    promise_array.push(promise);
+  if (
+    text_content.search(/{video_object}/gi) !== -1 ||
+    text_content.search(/{material_object}/gi) !== -1
+  ) {
+    text_content = text_content.replace(/{video_object}/gi, video_object);
+    text_content = text_content.replace(/{material_object}/gi, video_object);
+  } else {
+    text_content = text_content + '\n' + video_object;
   }
 
-  return Promise.all(promise_array);
+  if (text_content.search(/{video_title}/gi) !== -1) {
+    text_content = text_content.replace(/{video_title}/gi, video_title);
+  }
+  if (text_content.search(/{material_title}/gi) !== -1) {
+    text_content = text_content.replace(/{material_title}/gi, video_title);
+  }
+
+  if (text_content.search(/{video_description}/gi) !== -1) {
+    text_content = text_content.replace(
+      /{video_description}/gi,
+      video_description
+    );
+  }
+  if (text_content.search(/{material_description}/gi) !== -1) {
+    text_content = text_content.replace(
+      /{material_description}/gi,
+      video_description
+    );
+  }
+
+  let fromNumber = currentUser['proxy_number'];
+
+  if (!fromNumber) {
+    fromNumber = await getSignalWireNumber(currentUser.id);
+  }
+  console.log('contact', _contact);
+
+  promise = new Promise((resolve, reject) => {
+    const e164Phone = phone(_contact.cell_phone)[0];
+
+    if (!e164Phone) {
+      resolve({
+        contact: contact,
+        error: 'Phone number is not valid format',
+        status: false,
+      });
+    }
+
+    client.messages
+      .create({
+        from: fromNumber,
+        to: e164Phone,
+        body: text_content,
+      })
+      .then(async (message) => {
+        console.log('Message ID: ', message.sid);
+
+        const _activity = new Activity({
+          content: detail_content,
+          contacts: contact,
+          user: currentUser.id,
+          type: 'videos',
+          videos: video,
+          description: text_content,
+        });
+
+        const resend_activity = await _activity
+          .save()
+          .then()
+          .catch((err) => {
+            console.log('err', err);
+          });
+
+        Contact.updateOne(
+          { _id: contact },
+          {
+            $set: { last_activity: resend_activity.id },
+          }
+        ).catch((err) => {
+          console.log('err', err);
+        });
+        resolve({
+          status: true,
+        });
+      })
+      .catch((err) => {
+        console.log('sending text is failed in resending', err);
+        resolve({
+          contact,
+          error: err,
+          status: false,
+        });
+      });
+  });
+  return promise;
 };
 
 const getTwilioNumber = async (id) => {
@@ -1170,9 +1196,32 @@ const sendText = async (data) => {
   let count = text_info.count || 0;
   let additional_sms_credit = 0;
 
+  const garbage = await Garbage.findOne({
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('garbage find err', err.message);
+  });
+  let auto_follow_up2;
+  let auto_resend2;
+  let canned_message;
+  if (garbage && garbage.auto_follow_up2) {
+    auto_follow_up2 = garbage.auto_follow_up2;
+  }
+  if (garbage && garbage.auto_resend2) {
+    auto_resend2 = garbage.auto_resend2;
+    canned_message = await EmailTemplate.findOne({
+      _id: auto_resend2.sms_canned_message,
+    });
+    if (!canned_message) {
+      // TODO: Default Email Templates
+    }
+  }
+
   for (let i = 0; i < contacts.length; i++) {
     let text_content = content;
     const activities = [];
+    const autoResends = [];
+    const autoFollowUps = [];
 
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
@@ -1277,6 +1326,55 @@ const sendText = async (data) => {
           new RegExp(`{{${video.id}}}`, 'g'),
           video_link
         );
+
+        const now = moment();
+        if (auto_resend2['enabled']) {
+          const period = auto_resend2['period'];
+          const due_date = now.add(period, 'hours');
+          const task = new Task({
+            user: currentUser.id,
+            contacts: contacts[i],
+            type: 'resend_email_video2',
+            action: {
+              activity: activity.id,
+              content: canned_message.content,
+              subject: canned_message.subject,
+              video: video.id,
+            },
+            watched_video: video.id,
+            'condition.case': 'watched_video',
+            'condition.answer': false,
+            status: 'active',
+            due_date,
+          })
+          task.save().catch((err) => {
+            console.log('task ', err.message);
+          });
+          autoResends.push(task.id);
+        }
+        if (auto_follow_up2['enabled']) {
+          const period = auto_follow_up2['period'];
+          const content = auto_follow_up2['content'];
+          const due_date = now.add(period, 'hours');
+          const task = new Task({
+            user: currentUser.id,
+            type: 'auto_follow_up2',
+            action: {
+              due_date,
+              content,
+            },
+            watched_video: video.id,
+            'condition.case': 'watched_video',
+            'condition.answer': false,
+            status: 'active',
+            contacts: contacts[i],
+            due_date,
+          });
+          task.save().catch((err) => {
+            console.log('task save err', err.message);
+          });
+          autoFollowUps.push(task.id);
+        }
 
         activities.push(activity.id);
       }
@@ -1452,7 +1550,8 @@ const sendText = async (data) => {
                   text._id,
                   textProcessId,
                   taskDetail,
-                  time
+                  time,
+                  [...autoResends, ...autoFollowUps]
                 );
                 resolve({
                   status: true,
@@ -1480,7 +1579,7 @@ const sendText = async (data) => {
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
                       // Handle failed text with status 3
-                      handleFailedText(activities, activity._id, text._id, 3);
+                      handleFailedText(activities, activity._id, text._id, 3, [...autoResends, ...autoFollowUps]);
 
                       resolve({
                         status: false,
@@ -1494,7 +1593,7 @@ const sendText = async (data) => {
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
                       // Handle with 4 status
-                      handleFailedText(activities, activity._id, text._id, 4);
+                      handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
 
                       resolve({
                         status: false,
@@ -1528,7 +1627,7 @@ const sendText = async (data) => {
               });
             } else {
               // Handle Failed Text
-              handleFailedText(activities, activity._id, text._id, 4);
+              handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
 
               resolve({
                 status: false,
@@ -1544,7 +1643,7 @@ const sendText = async (data) => {
           .catch((err) => {
             console.log('video message send err', err);
             // Handle Failed Text
-            revertTexting(activities, activity._id, text._id);
+            revertTexting(activities, activity._id, text._id, [...autoResends, ...autoFollowUps]);
 
             resolve({
               status: false,
@@ -1597,7 +1696,8 @@ const sendText = async (data) => {
                   text._id,
                   textProcessId,
                   taskDetail,
-                  time
+                  time,
+                  [...autoResends, ...autoFollowUps]
                 );
 
                 resolve({
@@ -1625,7 +1725,7 @@ const sendText = async (data) => {
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
                       // Handle Failed Text with Status 3
-                      handleFailedText(activities, activity._id, text._id, 3);
+                      handleFailedText(activities, activity._id, text._id, 3, [...autoResends, ...autoFollowUps]);
 
                       resolve({
                         status: false,
@@ -1639,7 +1739,7 @@ const sendText = async (data) => {
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
                       // Handle Failed Text with Status 4
-                      handleFailedText(activities, activity._id, text._id, 4);
+                      handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
 
                       resolve({
                         status: false,
@@ -1671,7 +1771,7 @@ const sendText = async (data) => {
                 status: true,
               });
             } else {
-              handleFailedText(activities, activity._id, text._id, 4);
+              handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
               resolve({
                 status: false,
                 contact: {
@@ -1684,7 +1784,7 @@ const sendText = async (data) => {
             }
           })
           .catch((err) => {
-            revertTexting(activities, activity._id, text._id);
+            revertTexting(activities, activity._id, text._id, [...autoResends, ...autoFollowUps]);
 
             resolve({
               status: false,
@@ -1713,9 +1813,12 @@ const sendText = async (data) => {
   return Promise.all(promise_array);
 };
 
-const handleFailedText = (activities, text_activity, text_id, status) => {
+const handleFailedText = (activities, text_activity, text_id, status, tasks) => {
   Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
     console.log('text material activity delete err', err.message);
+  });
+  Task.deleteMany({ _id: { $in: tasks } }).catch((err) => {
+    console.log('auto tasks delete err', err.message);
   });
 
   // TODO: Update the Text Activity with error or consider about this.
@@ -1775,7 +1878,7 @@ const handleDeliveredText = (
   });
 };
 
-const revertTexting = (activities, text_activity, text_id) => {
+const revertTexting = (activities, text_activity, text_id, tasks) => {
   Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
     console.log('text material activity delete err', err.message);
   });
@@ -1784,6 +1887,9 @@ const revertTexting = (activities, text_activity, text_id) => {
   });
   Text.deleteOne({ _id: text_id }).catch((err) => {
     console.log('activity delete err', err.message);
+  });
+  Task.deleteMany({ _id: { $in: tasks } }).catch((err) => {
+    console.log('auto tasks delete err', err.message);
   });
 };
 
@@ -1797,7 +1903,8 @@ const createTextCheckTasks = (
   text_id,
   process_id,
   detail,
-  time
+  time,
+  tasks
 ) => {
   const task = new Task({
     user: user.id,
@@ -1809,6 +1916,7 @@ const createTextCheckTasks = (
       service,
       activity: text_activity,
       text: text_id,
+      tasks,
       ...detail,
     },
     contacts: [contact._id],

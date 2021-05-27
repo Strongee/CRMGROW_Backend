@@ -201,7 +201,7 @@ const terminateAutoSetting = async (req, res) => {
     case 'auto_follow_up2': {
       Task.deleteMany({
         user: currentUser.id,
-        'action.type': 'auto_follow_up2',
+        type: 'auto_follow_up2',
       }).catch((err) => {
         console.log('task delete err', err.message);
       });
@@ -210,7 +210,7 @@ const terminateAutoSetting = async (req, res) => {
     case 'auto_resend1': {
       Task.deleteMany({
         user: currentUser.id,
-        'action.type': 'auto_resend1',
+        type: { $in: ['resend_email_video1', 'resend_text_video1'] },
       }).catch((err) => {
         console.log('task delete err', err.message);
       });
@@ -219,7 +219,7 @@ const terminateAutoSetting = async (req, res) => {
     case 'auto_resend2': {
       Task.deleteMany({
         user: currentUser.id,
-        'action.type': 'auto_resend2',
+        type: { $in: ['resend_email_video2', 'resend_text_video2'] },
       }).catch((err) => {
         console.log('task delete err', err.message);
       });
