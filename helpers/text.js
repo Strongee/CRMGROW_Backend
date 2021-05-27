@@ -11,6 +11,7 @@ const Notification = require('../models/notification');
 const Text = require('../models/text');
 const Task = require('../models/task');
 const ActivityHelper = require('./activity');
+const EmailTemplate = require('../models/email_template');
 const system_settings = require('../config/system_settings');
 const api = require('../config/api');
 
