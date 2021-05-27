@@ -349,6 +349,7 @@ const getDetail = async (req, res) => {
           appointments,
           tasks,
           deals,
+          users,
         },
       }
     );
