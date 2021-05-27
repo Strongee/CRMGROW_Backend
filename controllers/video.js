@@ -3308,7 +3308,7 @@ const autoResend = async (data) => {
     );
     if (!activity.send_type) {
       time_line = await Task.findOne({
-        'action.type': 'resend_email_video2',
+        type: 'resend_email_video2',
         'action.activity': activity.id,
         status: 'active',
       });
@@ -3322,8 +3322,8 @@ const autoResend = async (data) => {
         time_line = new Task({
           user: activity.user,
           contacts: activity.contacts,
+          type: 'resend_email_video2',
           action: {
-            type: 'resend_email_video2',
             activity: activity.id,
             content: canned_message.content,
             subject: canned_message.subject,
@@ -3338,7 +3338,7 @@ const autoResend = async (data) => {
       }
     } else {
       time_line = await Task.findOne({
-        'action.type': 'resend_text_video2',
+        type: 'resend_text_video2',
         'action.activity': activity.id,
         status: 'active',
       });
@@ -3351,8 +3351,8 @@ const autoResend = async (data) => {
         time_line = new Task({
           user: activity.user,
           contacts: activity.contacts,
+          type: 'resend_text_video2',
           action: {
-            type: 'resend_text_video2',
             activity: activity.id,
             content: canned_message.content,
             subject: canned_message.subject,
