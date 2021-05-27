@@ -79,6 +79,7 @@ const urls = {
     call: 'https://teamgrow.s3.us-east-2.amazonaws.com/phone.png',
     meeting: 'https://teamgrow.s3.us-east-2.amazonaws.com/lunch.png',
   },
+  VERIFY_EMAIL_URL: `${domain}/verify-email/`,
 };
 
 module.exports = urls;
