@@ -632,7 +632,7 @@ const create = async (req, res) => {
             contacts: contact.id,
             user: currentUser.id,
             deal_stage: req.body.deal_stage,
-            title: `${contact.first_name}  Deal`,
+            title: `${contact.first_name} ${contact.last_name || ''} Deal`,
           });
 
           deal
@@ -823,6 +823,57 @@ const edit = async (req, res) => {
           error: 'Phone number must be unique!',
         });
       }
+    }
+
+    if (req.body.deal_stage) {
+      const deal = new Deal({
+        contacts: contact.id,
+        user: currentUser.id,
+        deal_stage: req.body.deal_stage,
+        title: `${contact.first_name} ${contact.last_name || ''} Deal`,
+      });
+
+      deal
+        .save()
+        .then((_deal) => {
+          let detail_content = 'added deal';
+          if (req.guest_loggin) {
+            detail_content = ActivityHelper.assistantLog(detail_content);
+          }
+
+          DealStage.updateOne(
+            {
+              _id: req.body.deal_stage,
+            },
+            {
+              $push: { deals: _deal._id },
+            }
+          ).catch((err) => {
+            console.log('error', err.message);
+          });
+
+          const activity = new Activity({
+            content: detail_content,
+            contacts: contact.id,
+            user: currentUser.id,
+            type: 'deals',
+            deals: _deal.id,
+          });
+
+          activity.save().catch((err) => {
+            console.log('activity save err', err.message);
+          });
+
+          Contact.updateOne(
+            { _id: contact.id },
+            { $set: { last_activity: activity.id } }
+          ).catch((err) => {
+            console.log('contact update err', err.message);
+          });
+        })
+        .catch((err) => {
+          console.log('deal create err', err.message);
+        });
     }
 
     contact
