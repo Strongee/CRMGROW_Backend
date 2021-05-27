@@ -370,6 +370,10 @@ const reminder_job = new CronJob(
         console.log('err: ', err.message);
       });
 
+      if (!contact) {
+        continue;
+      }
+
       const garbage = await Garbage.findOne({ user: user.id }).catch((err) => {
         console.log('err: ', err.message);
       });
@@ -485,6 +489,18 @@ const reminder_job = new CronJob(
           .catch((err) => console.error(err));
       }
 
+      FollowUp.updateOne(
+        {
+          _id: follow_up.id,
+        },
+        {
+          status: 2,
+        }
+      ).catch((err) => {
+        console.log('follow up update err', err.message);
+      });
+
+      /** 
       if (follow_up.set_recurrence) {
         switch (follow_up.recurrence_mode) {
           case 'DAILY': {
@@ -571,6 +587,7 @@ const reminder_job = new CronJob(
           }
         }
       }
+      */
     }
   },
   function () {
@@ -1604,9 +1621,8 @@ const timesheet_check = new CronJob(
                       });
 
                       let detail_content = 'updated task';
-                      detail_content = ActivityHelper.automationLog(
-                        detail_content
-                      );
+                      detail_content =
+                        ActivityHelper.automationLog(detail_content);
                       const activity = new Activity({
                         content: detail_content,
                         contacts: timeline.contact,
@@ -1652,9 +1668,8 @@ const timesheet_check = new CronJob(
                     });
 
                     let detail_content = 'completed task';
-                    detail_content = ActivityHelper.automationLog(
-                      detail_content
-                    );
+                    detail_content =
+                      ActivityHelper.automationLog(detail_content);
                     const activity = new Activity({
                       content: detail_content,
                       contacts: timeline.contact,
@@ -1838,7 +1853,7 @@ const task_check = new CronJob(
                         ) {
                           succeed = [
                             ...succeed,
-                            ...timeline.exec_result.succeed
+                            ...timeline.exec_result.succeed,
                           ];
                         }
                       });
@@ -1889,14 +1904,8 @@ const task_check = new CronJob(
             break;
           }
           case 'bulk_sms': {
-            const {
-              message_sid,
-              service,
-              activities,
-              activity,
-              text,
-              tasks,
-            } = timeline.action;
+            const { message_sid, service, activities, activity, text, tasks } =
+              timeline.action;
             TextHelper.getStatus(message_sid, service)
               .then(async (res) => {
                 if (res.status === 'delivered') {
@@ -1918,7 +1927,13 @@ const task_check = new CronJob(
                   );
                   const now = moment();
                   if (beginning_time.isBefore(now)) {
-                    TextHelper.handleFailedText(activities, activity, text, 3, tasks || []);
+                    TextHelper.handleFailedText(
+                      activities,
+                      activity,
+                      text,
+                      3,
+                      tasks || []
+                    );
 
                     const notification = new Notification({
                       user: timeline.user,
@@ -1953,7 +1968,13 @@ const task_check = new CronJob(
                   res.status === 'undelivered' ||
                   res.status === 'failed'
                 ) {
-                  TextHelper.handleFailedText(activities, activity, text, 4, tasks || []);
+                  TextHelper.handleFailedText(
+                    activities,
+                    activity,
+                    text,
+                    4,
+                    tasks || []
+                  );
 
                   const notification = new Notification({
                     user: timeline.user,
