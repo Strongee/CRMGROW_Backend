@@ -68,11 +68,15 @@ const migrate = async () => {
     },
     {
       $set: {
-        user_version: 'v1',
+        'text_info.count': 0,
       },
     }
-  ).catch((err) => {
-    console.log('user update err', err.message);
-  });
+  )
+    .then(() => {
+       console.log('text count update finished');
+    })
+    .catch((err) => {
+      console.log('user update err', err.message);
+    });
 };
 migrate();

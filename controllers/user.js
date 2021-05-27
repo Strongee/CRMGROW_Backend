@@ -617,7 +617,7 @@ const socialGmail = async (req, res) => {
       connected_email_type = 'gsuit';
     } else {
       email_max_count = system_settings.EMAIL_DAILY_LIMIT.GMAIL;
-      connected_email_type = 'gsuit';
+      connected_email_type = 'gmail';
     }
 
     const data = {
@@ -2811,7 +2811,7 @@ const schedulePaidDemo = async (req, res) => {
 
 const sendWelcomeEmail = async (data) => {
   const { id, email, user_name, password, time_zone } = data;
-  const verification_url = `${urls.DOMAIN_URL}?id=${id}`;
+  const verification_url = `${urls.VERIFY_EMAIL_URL}/${id}`;
   const templatedData = {
     user_name,
     verification_url,

@@ -85,4 +85,13 @@ const followup_test = async () => {
   }
 };
 
-followup_test();
+const followup_migrate = async () => {
+  const users = await User.find({
+    del: true,
+  }).catch((err) => {
+    console.log('user find err', err.message);
+  });
+
+};
+
+// followup_test();
