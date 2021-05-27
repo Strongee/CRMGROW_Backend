@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 const mongoose = require('mongoose');
-const CountryState = require('../constants/country_state');
+const CountryState = require('../constants/country_state.json');
 const Countries = require('../constants/country.json');
 
 const ContactSchema = mongoose.Schema(
