@@ -1056,9 +1056,8 @@ const importCSV = async (req, res) => {
                 });
 
               if (_duplicate_contacts && _duplicate_contacts.length > 0) {
-                duplicate_contacts = duplicate_contacts.concat(
-                  _duplicate_contacts
-                );
+                duplicate_contacts =
+                  duplicate_contacts.concat(_duplicate_contacts);
 
                 duplicate_contacts.push(data);
                 resolve();
@@ -2227,6 +2226,7 @@ const advanceSearch = async (req, res) => {
     cityCondition,
     zipcodeCondition,
     tagsCondition,
+    stagesCondition,
     brokerageCondition,
     lastMaterial,
     materialCondition,
@@ -3313,7 +3313,38 @@ const advanceSearch = async (req, res) => {
     });
   }
   const count = await Contact.countDocuments({ user: currentUser.id });
-
+  // advance search for stage field
+  if (includeStage) {
+    var temp = [];
+    if (stagesCondition && stagesCondition.length) {
+      const deals = await DealStage.find(
+        {
+          title: { $in: stagesCondition },
+          user: currentUser._id,
+        },
+        { deals: 1 }
+      );
+      if (deals) {
+        for (let i = 0; i < deals.length; i++) {
+          const deal = deals[i];
+          if (deal.deals && deal.deals.length) {
+            const mDeal = deal.deals;
+            for (let j = 0; j < mDeal.length; j++) {
+              const dealObj = await Deal.findById(mDeal[j]);
+              if (dealObj.contacts) {
+                for (let m = 0; m < dealObj.contacts.length; m++) {
+                  temp.push(dealObj.contacts[m].toHexString());
+                }
+              }
+            }
+          }
+        }
+      }
+      results = results.filter(
+        (item) => temp.indexOf(item._id.toHexString()) != -1
+      );
+    }
+  }
   return res.send({
     status: true,
     data: results,
@@ -3840,9 +3871,9 @@ const capitalize = (s) => {
   if (s.split(' ').length === 2) {
     const s1 = s.split(' ')[0];
     const s2 = s.split(' ')[1];
-    return `${
-      s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()
-    } ${s2.charAt(0).toUpperCase()}${s2.slice(1).toLowerCase()}`;
+    return `${s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()} ${s2
+      .charAt(0)
+      .toUpperCase()}${s2.slice(1).toLowerCase()}`;
   }
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
@@ -3904,14 +3935,8 @@ const interestContact = async (req, res) => {
 };
 
 const interestSubmitContact = async (req, res) => {
-  const {
-    user,
-    first_name,
-    email,
-    cell_phone,
-    material,
-    materialType,
-  } = req.body;
+  const { user, first_name, email, cell_phone, material, materialType } =
+    req.body;
   let _exist = await Contact.findOne({
     email,
     user,
