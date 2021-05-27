@@ -329,7 +329,8 @@ const socialSignUp = async (req, res) => {
     return;
   }
 
-  const { user_name, email, token, referral, is_trial } = req.body;
+  const { user_name, email, token, referral, is_trial, email_max_count } =
+    req.body;
   const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
@@ -347,6 +348,7 @@ const socialSignUp = async (req, res) => {
         ...req.body,
         package_level: level,
         payment: payment.id,
+        'email_info.max_count': email_max_count,
       });
 
       user
