@@ -231,6 +231,7 @@ const getDetail = async (req, res) => {
     let appointments = [];
     let tasks = [];
     let deals = [];
+    let users = [];
 
     _activity_list.forEach((e) => {
       if (e['type'] === 'videos') {
@@ -270,6 +271,8 @@ const getDetail = async (req, res) => {
       const apptIds = [];
       const taskIds = [];
       const dealIds = [];
+      const userIds = [];
+
       for (let i = 0; i < _activity_list.length; i++) {
         if (
           [
@@ -279,6 +282,7 @@ const getDetail = async (req, res) => {
             'appointments',
             'follow_ups',
             'deals',
+            'users',
           ].indexOf(_activity_list[i].type) !== -1
         ) {
           let detail_id = _activity_list[i][_activity_list[i].type];
@@ -305,6 +309,9 @@ const getDetail = async (req, res) => {
               case 'deals':
                 dealIds.push(detail_id);
                 break;
+              case 'users':
+                userIds.push(detail_id);
+                break;
             }
           }
         }
@@ -315,6 +322,7 @@ const getDetail = async (req, res) => {
       appointments = await Appointment.find({ _id: { $in: apptIds } });
       tasks = await FollowUp.find({ _id: { $in: taskIds } });
       deals = await Deal.find({ _id: { $in: dealIds } });
+      users = await User.find({ _id: { $in: userIds } });
     } else {
       notes = await Note.find({ contact: contactId });
       emails = await Email.find({ contacts: contactId });
@@ -322,6 +330,7 @@ const getDetail = async (req, res) => {
       appointments = await Appointment.find({ contacts: contactId });
       tasks = await FollowUp.find({ contact: contactId });
       deals = await Deal.find({ contacts: contactId });
+      users = await User.find({ _id: { $in: contact.shared_members || [] } });
     }
 
     const myJSON = JSON.stringify(_contact);
@@ -1056,9 +1065,8 @@ const importCSV = async (req, res) => {
                 });
 
               if (_duplicate_contacts && _duplicate_contacts.length > 0) {
-                duplicate_contacts = duplicate_contacts.concat(
-                  _duplicate_contacts
-                );
+                duplicate_contacts =
+                  duplicate_contacts.concat(_duplicate_contacts);
 
                 duplicate_contacts.push(data);
                 resolve();
@@ -3840,9 +3848,9 @@ const capitalize = (s) => {
   if (s.split(' ').length === 2) {
     const s1 = s.split(' ')[0];
     const s2 = s.split(' ')[1];
-    return `${
-      s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()
-    } ${s2.charAt(0).toUpperCase()}${s2.slice(1).toLowerCase()}`;
+    return `${s1.charAt(0).toUpperCase() + s1.slice(1).toLowerCase()} ${s2
+      .charAt(0)
+      .toUpperCase()}${s2.slice(1).toLowerCase()}`;
   }
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
@@ -3904,14 +3912,8 @@ const interestContact = async (req, res) => {
 };
 
 const interestSubmitContact = async (req, res) => {
-  const {
-    user,
-    first_name,
-    email,
-    cell_phone,
-    material,
-    materialType,
-  } = req.body;
+  const { user, first_name, email, cell_phone, material, materialType } =
+    req.body;
   let _exist = await Contact.findOne({
     email,
     user,
