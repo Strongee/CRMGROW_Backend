@@ -330,7 +330,7 @@ const getDetail = async (req, res) => {
       appointments = await Appointment.find({ contacts: contactId });
       tasks = await FollowUp.find({ contact: contactId });
       deals = await Deal.find({ contacts: contactId });
-      users = await User.find({ _id: { $in: contact.shared_members || [] } });
+      users = await User.find({ _id: { $in: _contact.shared_members || [] } });
     }
 
     const myJSON = JSON.stringify(_contact);
