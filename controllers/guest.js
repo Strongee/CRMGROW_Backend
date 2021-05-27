@@ -87,10 +87,12 @@ const create = async (req, res) => {
           password: req.body.password,
           url: urls.LOGIN_URL,
         },
-        template_name: 'AssistantInvite',
+        template_name: 'CreateAssistant',
         required_reply: false,
         email: _res.email,
       };
+
+      console.log("assitant data =========>", data);
 
       sendNotificationEmail(data)
         .then(() => {

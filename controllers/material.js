@@ -19,23 +19,9 @@ const ImageTracker = require('../models/image_tracker');
 const Garbage = require('../models/garbage');
 const Task = require('../models/task');
 const Notification = require('../models/notification');
-// const ActivityHelper = require('../helpers/activity');
 const EmailHelper = require('../helpers/email');
 const TextHelper = require('../helpers/text');
 const api = require('../config/api');
-// const request = require('request-promise');
-// const createBody = require('gmail-api-create-message-body');
-// const { google } = require('googleapis');
-// const graph = require('@microsoft/microsoft-graph-client');
-// const {
-//   generateUnsubscribeLink,
-//   generateOpenTrackLink,
-//   addLinkTracking,
-// } = require('../helpers/email');
-const {
-  generateUnsubscribeLink: generateTextUnsubscribeLink,
-  getStatus,
-} = require('../helpers/text');
 const garbageHelper = require('../helpers/garbage.js');
 const mail_contents = require('../constants/mail_contents');
 const system_settings = require('../config/system_settings');
@@ -172,7 +158,7 @@ const bulkEmail = async (req, res) => {
 
   // TODO: Update the Response if temp contacts exist.
   if (contacts.length) {
-    EmailHelper.sendEmail({
+    const email_data = {
       user: currentUser._id,
       contacts,
       video_ids,
@@ -187,7 +173,9 @@ const bulkEmail = async (req, res) => {
       // shared_email,
       // has_shared,
       is_guest: req.guest_loggin,
-    })
+    };
+
+    EmailHelper.sendEmail(email_data)
       .then(async (result) => {
         const error = [];
         result.forEach((_res) => {
@@ -195,9 +183,19 @@ const bulkEmail = async (req, res) => {
             error.push({
               contact: _res.contact,
               error: _res.error,
+              type: _res.type,
             });
           }
         });
+
+        let notRunnedContactIds = [];
+        if (result.length !== contacts.length) {
+          const runnedContactIds = [];
+          result.forEach((e) => {
+            runnedContactIds.push(e.contact && e.contact._id);
+          });
+          notRunnedContactIds = _.difference(contacts, runnedContactIds);
+        }
 
         // Create Notification and With Success and Failed
         if (contactsToTemp) {
@@ -211,6 +209,7 @@ const bulkEmail = async (req, res) => {
               deliver_status: {
                 failed: error,
                 contacts,
+                notExecuted: notRunnedContactIds,
               },
               detail: { ...req.body },
             });
@@ -224,9 +223,13 @@ const bulkEmail = async (req, res) => {
           });
           if (task) {
             const failedContacts = error.map((e) => e.contact && e.contact._id);
-            const succeedContacts = _.difference(contacts, failedContacts);
+            const succeedContacts = _.difference(contacts, [
+              ...failedContacts,
+              ...notRunnedContactIds,
+            ]);
             task.exec_result = {
               failed: error,
+              notExecuted: notRunnedContactIds,
               succeed: succeedContacts,
             };
             task.save().catch(() => {
@@ -236,10 +239,28 @@ const bulkEmail = async (req, res) => {
         }
 
         if (error.length > 0) {
-          return res.status(405).json({
-            status: false,
-            error,
+          const connect_errors = error.filter((e) => {
+            if (
+              e.type === 'connection_failed' ||
+              e.type === 'google_token_invalid' ||
+              e.type === 'outlook_token_invalid'
+            ) {
+              return true;
+            }
           });
+          if (connect_errors.length) {
+            return res.status(406).json({
+              status: false,
+              error,
+              notExecuted: notRunnedContactIds,
+            });
+          } else {
+            return res.status(405).json({
+              status: false,
+              error,
+              notExecuted: notRunnedContactIds,
+            });
+          }
         } else {
           return res.send({
             status: true,

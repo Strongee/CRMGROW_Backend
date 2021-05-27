@@ -103,12 +103,15 @@ const task_check = new CronJob(
               .then(async (res) => {
                 // Getting task exec status
                 const errors = [];
+                const succeedContactIds = [];
                 res.forEach((_res) => {
                   if (!_res.status) {
                     errors.push({
                       contact: _res.contact,
                       error: _res.error,
                     });
+                  } else {
+                    succeedContactIds.push(_res.contact._id);
                   }
                 });
                 // Checking the same process tasks, if same doesn't exist, remove all tasks
@@ -124,9 +127,23 @@ const task_check = new CronJob(
                       ...timeline.exec_result.failed,
                       ...errors,
                     ];
+                  } else if (timeline.exec_result) {
+                    timeline.exec_result.failed = errors;
                   } else {
                     timeline.exec_result = {
                       failed: errors,
+                    };
+                  }
+                  if (timeline.exec_result && timeline.exec_result.succeed) {
+                    timeline.exec_result.succeed = [
+                      ...timeline.exec_result.succeed,
+                      ...succeedContactIds,
+                    ];
+                  } else if (timeline.exec_result) {
+                    timeline.exec_result.succeed = succeedContactIds;
+                  } else {
+                    timeline.exec_result = {
+                      succeed: succeedContactIds,
                     };
                   }
                   timeline.save();
@@ -140,6 +157,7 @@ const task_check = new CronJob(
                       deliver_status: {
                         contacts: action.contacts,
                         failed: errors,
+                        succeed: succeedContactIds,
                       },
                       detail: action,
                     });
@@ -152,6 +170,7 @@ const task_check = new CronJob(
                     .then((_tasks) => {
                       let contacts = [];
                       let failed = errors;
+                      let succeed = succeedContactIds;
                       _tasks.forEach((_task) => {
                         contacts = [...contacts, ..._task.contacts];
                         if (
@@ -160,6 +179,16 @@ const task_check = new CronJob(
                           timeline.exec_result.failed.length
                         ) {
                           failed = [...failed, ...timeline.exec_result.failed];
+                        }
+                        if (
+                          timeline.exec_result &&
+                          timeline.exec_result.succeed &&
+                          timeline.exec_result.succeed.length
+                        ) {
+                          succeed = [
+                            ...succeed,
+                            ...timeline.exec_result.succeed
+                          ];
                         }
                       });
                       // Remove all same tasks
@@ -178,6 +207,7 @@ const task_check = new CronJob(
                             deliver_status: {
                               contacts,
                               failed,
+                              succeed,
                             },
                             detail: action,
                           });
@@ -214,6 +244,7 @@ const task_check = new CronJob(
               activities,
               activity,
               text,
+              tasks,
             } = timeline.action;
             TextHelper.getStatus(message_sid, service)
               .then(async (res) => {
@@ -236,7 +267,7 @@ const task_check = new CronJob(
                   );
                   const now = moment();
                   if (beginning_time.isBefore(now)) {
-                    TextHelper.handleFailedText(activities, activity, text, 3);
+                    TextHelper.handleFailedText(activities, activity, text, 3, tasks || []);
 
                     const notification = new Notification({
                       user: timeline.user,
@@ -271,7 +302,7 @@ const task_check = new CronJob(
                   res.status === 'undelivered' ||
                   res.status === 'failed'
                 ) {
-                  TextHelper.handleFailedText(activities, activity, text, 4);
+                  TextHelper.handleFailedText(activities, activity, text, 4, tasks || []);
 
                   const notification = new Notification({
                     user: timeline.user,
@@ -374,6 +405,256 @@ const task_check = new CronJob(
               });
             break;
           }
+          case 'auto_follow_up1':
+          case 'auto_follow_up2': {
+            let follow_due_date;
+            if (action.due_date) {
+              follow_due_date = action.due_date;
+            } else {
+              const now = moment();
+              now.set({ second: 0, millisecond: 0 });
+              follow_due_date = now.add(action.due_duration, 'hours');
+              follow_due_date.set({ second: 0, millisecond: 0 });
+            }
+
+            const garbage = await Garbage.findOne({
+              user: timeline.user,
+            }).catch((err) => {
+              console.log('err', err);
+            });
+            let reminder_before = 30;
+            if (garbage) {
+              reminder_before = garbage.reminder_before;
+            }
+            const startdate = moment(follow_due_date);
+            const remind_at = startdate.subtract(reminder_before, 'mins');
+
+            const followUp = new FollowUp({
+              content: action.content,
+              contact: timeline.contact,
+              user: timeline.user,
+              type: action.task_type,
+              due_date: follow_due_date,
+              remind_at,
+            });
+
+            followUp
+              .save()
+              .then(async (_followup) => {
+                let detail_content = 'added task';
+                detail_content = ActivityHelper.automationLog(detail_content);
+                const activity = new Activity({
+                  content: detail_content,
+                  contacts: _followup.contact,
+                  user: timeline.user,
+                  type: 'follow_ups',
+                  follow_ups: _followup.id,
+                });
+
+                activity
+                  .save()
+                  .then((_activity) => {
+                    timeline['status'] = 'completed';
+                    timeline['updated_at'] = new Date();
+                    timeline.save().catch((err) => {
+                      console.log('err', err);
+                    });
+                    Contact.updateOne(
+                      { _id: _followup.contact },
+                      { $set: { last_activity: _activity.id } }
+                    ).catch((err) => {
+                      console.log('contact update err', err.message);
+                    });
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+
+                TimeLine.updateMany(
+                  {
+                    contact: timeline.contact,
+                    'action.ref_id': timeline.ref,
+                  },
+                  {
+                    $set: { 'action.follow_up': _followup.id },
+                  }
+                )
+                  .then(() => {
+                    console.log('follow up updated');
+                  })
+                  .catch((err) => {
+                    console.log('follow error', err.message);
+                  });
+              })
+              .catch((err) => {
+                timeline['status'] = 'error';
+                timeline['updated_at'] = new Date();
+                timeline.save().catch((err) => {
+                  console.log('err', err.message);
+                });
+                console.log('follow error', err.message);
+              });
+            break;
+          }
+          case 'resend_email_video1':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activity: action.activity,
+              video: action.video,
+              contact: timeline.contacts[0],
+            };
+
+            console.log('data', data);
+
+            EmailHelper.resendVideo(data)
+              .then((res) => {
+                if (res.status) {
+                  console.log('Resend Video is successed.');
+                  Task.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                } else {
+                  console.log('Resend video is failed', res);
+                  Task.updateOne(
+                    {
+                      _id: timeline.id,
+                    },
+                    {
+                      $set: {
+                        exec_result: res,
+                        status: 'failed',
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('email resend video err', err.message);
+              });
+            break;
+          case 'resend_text_video1':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              activity: action.activity,
+              video: action.video,
+              contact: timeline.contacts[0],
+            };
+            TextHelper.resendVideo(data)
+              .then((res) => {
+                console.log(res);
+                if (res.status) {
+                  console.log('resend text video(watch case) is successed');
+                  Task.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                } else {
+                  console.log('resend text video(unwatched case) is failed');
+                  Task.updateOne(
+                    {
+                      _id: timeline.id,
+                    },
+                    {
+                      $set: {
+                        exec_result: res,
+                        status: 'failed',
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('text resend video err', err.message);
+              });
+            break;
+          case 'resend_email_video2':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              subject: action.subject,
+              activity: action.activity,
+              video: action.video,
+              contact: timeline.contacts[0],
+            };
+
+            EmailHelper.resendVideo(data)
+              .then((res) => {
+                if (res.status) {
+                  console.log('resend video(unwatched case) is successed');
+                  Task.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                } else {
+                  console.log('resend video(unwatched case) is failed');
+                  Task.updateOne(
+                    {
+                      _id: timeline.id,
+                    },
+                    {
+                      $set: {
+                        exec_result: res,
+                        status: 'failed',
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('email resend video err', err.message);
+              });
+            break;
+          case 'resend_text_video2':
+            data = {
+              user: timeline.user,
+              content: action.content,
+              activity: action.activity,
+              video: action.video,
+              contact: timeline.contacts[0],
+            };
+            TextHelper.resendVideo(data)
+              .then((res) => {
+                if (res.status) {
+                  console.log('resend text video(unwatched case) is successed');
+                  Task.deleteOne({
+                    _id: timeline.id,
+                  }).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                } else {
+                  console.log('resend text video(unwatched case) is failed');
+                  Task.updateOne(
+                    {
+                      _id: timeline.id,
+                    },
+                    {
+                      $set: {
+                        exec_result: res,
+                        status: 'failed',
+                      },
+                    }
+                  ).catch((err) => {
+                    console.log('timeline remove err', err.message);
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log('text resend video err', err.message);
+              });
+            break;
         }
       }
     }

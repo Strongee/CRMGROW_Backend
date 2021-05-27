@@ -456,14 +456,18 @@ const disconnectVideo = async (video_tracker_id) => {
       (garbage.auto_resend2 && garbage.auto_resend2['enabled'])
     ) {
       Task.deleteMany({
-        contact: contact.id,
+        contacts: contact.id,
         status: 'active',
         watched_video: query['video'],
         'condition.case': 'watched_video',
         'condition.answer': false,
-      }).catch((err) => {
-        console.log('unwatched task remove err', err.message);
-      });
+      })
+        .then(() => {
+          console.log('task bulk remove');
+        })
+        .catch((err) => {
+          console.log('unwatched case task remove err', err.message);
+        });
     }
 
     const d = query['duration'] / 1000;
@@ -769,15 +773,16 @@ const disconnectVideo = async (video_tracker_id) => {
             console.log('activity found err', err.message);
           }
         );
+        console.log('tracking checking activity', _activity);
         if (_activity && !_activity.full_watched) {
           let time_line;
           const now = moment();
           const due_date = now.add(auto_resend.period, 'hours');
           due_date.set({ second: 0, millisecond: 0 });
 
-          if (!_activity.send_type) {
+          if (_activity.emails) {
             time_line = await Task.findOne({
-              'action.type': 'resend_email_video1',
+              type: 'resend_email_video1',
               'action.activity': _activity.id,
               status: 'active',
             });
@@ -790,8 +795,8 @@ const disconnectVideo = async (video_tracker_id) => {
               time_line = new Task({
                 user: currentUser.id,
                 contacts: contact.id,
+                type: 'resend_email_video1',
                 action: {
-                  type: 'resend_email_video1',
                   activity: _activity.id,
                   content: canned_message.content,
                   subject: canned_message.subject,
@@ -801,9 +806,9 @@ const disconnectVideo = async (video_tracker_id) => {
                 due_date,
               });
             }
-          } else {
+          } else if (_activity.texts) {
             time_line = await Task.findOne({
-              'action.type': 'resend_text_video1',
+              type: 'resend_text_video1',
               'action.activity': _activity.id,
               status: 'active',
             });
@@ -816,8 +821,8 @@ const disconnectVideo = async (video_tracker_id) => {
               time_line = new Task({
                 user: currentUser.id,
                 contacts: contact.id,
+                type: 'resend_text_video1',
                 action: {
-                  type: 'resend_text_video1',
                   activity: _activity.id,
                   content: canned_message.content,
                   video: video.id,
