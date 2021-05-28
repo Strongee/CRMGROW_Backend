@@ -1,5 +1,5 @@
 const api = require('../config/api');
-
+const affiliateHelper = require('../helpers/affiliate');
 const request = require('request-promise');
 
 const get = async (req, res) => {
@@ -170,10 +170,28 @@ const update = async (req, res) => {
     });
   }
 };
+const getAllByMLM = async (req, res) => {
+  const { currentUser } = req;
+  if (currentUser.affiliate && currentUser.affiliate.id) {
+    const affiliate_id = currentUser.affiliate.id;
+    const referrals = await affiliateHelper.getReferrals(affiliate_id, 1);
+    const charge = await affiliateHelper.charge(referrals);
+    res.status(200).json({
+      status: true,
+      data: referrals,
+    });
+  } else {
+    res.status(400).json({
+      status: false,
+      error: `Can't find affilate id`,
+    });
+  }
+};
 
 module.exports = {
   get,
   getAll,
   create,
   update,
+  getAllByMLM,
 };
