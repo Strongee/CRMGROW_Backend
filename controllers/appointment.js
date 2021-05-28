@@ -91,6 +91,7 @@ const getAll = async (req, res) => {
         const ctz = currentUser.time_zone_info
           ? JSON.parse(currentUser.time_zone_info).tz_name
           : system_settings.TIME_ZONE;
+
         const calendar_data = {
           client,
           ctz,
