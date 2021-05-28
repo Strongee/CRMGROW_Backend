@@ -2432,15 +2432,15 @@ const campaign_job = new CronJob(
   'US/Central'
 );
 
-signup_job.start();
+// signup_job.start();
 reminder_job.start();
-weekly_report.start();
-upload_video_job.start();
+// weekly_report.start();
+// upload_video_job.start();
 // convert_video_job.start();
 payment_check.start();
 // campaign_job.start();
 // logger_check.start()
-notification_check.start();
+// notification_check.start();
 task_check.start();
 timesheet_check.start();
 reset_daily_limit.start();
