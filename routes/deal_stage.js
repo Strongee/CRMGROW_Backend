@@ -21,6 +21,12 @@ router.get(
   catchError(DealStageCtrl.getStages)
 );
 
+router.get(
+  '/with-contact',
+  UserCtrl.checkAuth,
+  catchError(DealStageCtrl.getStageWithContact)
+);
+
 router.get('/', UserCtrl.checkAuth, catchError(DealStageCtrl.getAll));
 
 router.put('/:id', UserCtrl.checkAuth, catchError(DealStageCtrl.edit));

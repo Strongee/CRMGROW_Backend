@@ -34,6 +34,7 @@ const cheerio = require('cheerio');
 
 const AWS = require('aws-sdk');
 const moment = require('moment-timezone');
+const EmailTemplate = require('../models/email_template');
 
 const ses = new AWS.SES({
   accessKeyId: api.AWS.AWS_ACCESS_KEY,
@@ -395,8 +396,7 @@ const bulkEmail = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -679,7 +679,7 @@ const bulkEmail = async (data) => {
   }
 };
 
-const revertEmailing = (activities, email_activity, email_id) => {
+const revertEmailing = (activities, email_activity, email_id, tasks) => {
   Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
     console.log('email material activity delete err', err.message);
   });
@@ -689,7 +689,9 @@ const revertEmailing = (activities, email_activity, email_id) => {
   Email.deleteOne({ _id: email_id }).catch((err) => {
     console.log('activity delete err', err.message);
   });
-  // TODO: Auto Follow REMOVE
+  Task.deleteMany({ _id: { $in: tasks } }).catch((err) => {
+    console.log('auto tasks delete err', err.message);
+  });
 };
 
 const handleSuccessEmailing = (
@@ -1163,8 +1165,7 @@ const bulkVideo = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -1880,8 +1881,7 @@ const bulkPDF = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2836,8 +2836,7 @@ const bulkImage = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2895,232 +2894,197 @@ const bulkImage = async (data) => {
 };
 
 const resendVideo = async (data) => {
-  const { user, content, subject, activities, videos, contacts } = data;
+  const { user, content, subject, activity, video: video_id, contact } = data;
   const currentUser = await User.findOne({ _id: user, del: false }).catch(
     (err) => {
       console.log('err', err);
     }
   );
   const promise_array = [];
+  let promise;
 
   if (!currentUser) {
-    promise_array.push(
-      new Promise((resolve, reject) => {
-        resolve({
-          status: false,
-          error: 'User not found',
-        });
-      })
-    );
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        error: 'User not found',
+      });
+    });
+    return promise;
   }
 
-  if (promise_array.length > 0) {
-    return Promise.all(promise_array);
+  const _contact = await Contact.findOne({
+    _id: contact,
+  }).catch((err) => {
+    console.log('contact found err', err.message);
+  });
+
+  if (!_contact) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+        },
+        error: 'Contact was removed.',
+        type: 'not_found_contact',
+      });
+    });
+    return promise;
+  }
+
+  if (_contact.tags.indexOf('unsubscribed') !== -1) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+          first_name: _contact.first_name,
+          email: _contact.email,
+        },
+        error: 'contact email unsubscribed',
+        type: 'unsubscribed_contact',
+      });
+    });
+    return promise;
+  }
+
+  const video = await Video.findOne({ _id: video_id, del: false }).catch(
+    (err) => {
+      console.log('video find error', err.message);
+    }
+  );
+  if (!video) {
+    promise = new Promise((resolve) => {
+      resolve({
+        status: false,
+        contact: {
+          _id: contact,
+          first_name: _contact.first_name,
+          email: _contact.email,
+        },
+        error: 'Video was removed.',
+        type: 'not_found_video',
+      });
+    });
+    return promise;
   }
 
   let detail_content = 'resent video using email';
   detail_content = ActivityHelper.autoSettingLog(detail_content);
 
+  let email_subject = subject;
+  let email_content = content;
+  const video_objects = '';
+
+  email_subject = email_subject
+    .replace(/{user_name}/gi, currentUser.user_name)
+    .replace(/{user_email}/gi, currentUser.connected_email)
+    .replace(/{user_phone}/gi, currentUser.cell_phone)
+    .replace(/{contact_first_name}/gi, _contact.first_name)
+    .replace(/{contact_last_name}/gi, _contact.last_name)
+    .replace(/{contact_email}/gi, _contact.email)
+    .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+  email_content = email_content
+    .replace(/{user_name}/gi, currentUser.user_name)
+    .replace(/{user_email}/gi, currentUser.connected_email)
+    .replace(/{user_phone}/gi, currentUser.cell_phone)
+    .replace(/{contact_first_name}/gi, _contact.first_name)
+    .replace(/{contact_last_name}/gi, _contact.last_name)
+    .replace(/{contact_email}/gi, _contact.email)
+    .replace(/{contact_phone}/gi, _contact.cell_phone);
+
+  email_subject = email_subject.replace(/{material_title}/gi, video.title);
+
+  const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
+  const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${video.preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
+
+  if (
+    email_content.indexOf('{video_object}') !== -1 ||
+    email_content.indexOf('{material_object}') !== -1
+  ) {
+    email_content = email_content.replace(/{video_object}/gi, video_object);
+    email_content = email_content.replace(/{material_object}/gi, video_object);
+  } else {
+    email_content = email_content + '<br/><br/>' + video_object;
+  }
+
   if (!currentUser.primary_connected) {
+    // Send SG mail
+    const msg = {
+      to: _contact.email,
+      from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
+      replyTo: currentUser.connected_email,
+      subject: email_subject,
+      html:
+        '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+        email_content +
+        '</tbody></table>' +
+        currentUser.email_signature +
+        generateUnsubscribeLink(activity) +
+        '</body></html>',
+      text: email_content,
+    };
+
     sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
+    promise = new Promise((resolve, reject) => {
+      sgMail
+        .send(msg)
+        .then(async (_res) => {
+          console.log('mailres.errorcode', _res[0].statusCode);
+          if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
+            console.log('status', _res[0].statusCode);
 
-    for (let i = 0; i < contacts.length; i++) {
-      let promise;
-
-      let _contact = await Contact.findOne({
-        _id: contacts[i],
-        tags: { $nin: ['unsubscribed'] },
-      }).catch((err) => {
-        console.log('contact found err', err.message);
-      });
-
-      if (!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
-          console.log('contact found err', err.message);
-        });
-        if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            resolve({
-              contact: {
-                id: contacts[i],
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email unsubscribed',
+            const _activity = new Activity({
+              content: detail_content,
+              contacts: contact,
+              user: currentUser.id,
+              type: 'videos',
+              videos: video_id,
+              subject: email_subject,
+              description: email_content,
             });
-          });
-          promise_array.push(promise);
-          continue;
-        } else {
-          promise = new Promise(async (resolve, reject) => {
-            resolve({
-              contact: {
-                id: contacts[i],
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email removed',
-            });
-          });
-          promise_array.push(promise);
-          continue;
-        }
-      }
 
-      if (_contact) {
-        let video_subject = subject;
-        let video_content = content;
-        let video_titles = '';
-        let video_objects = '';
-        let html_content = '';
-        let activity;
-
-        for (let j = 0; j < activities.length; j++) {
-          activity = activities[j];
-          const video = await Video.findOne({ _id: videos[j] });
-          if (typeof video_content === 'undefined') {
-            video_content = '';
-          }
-
-          let preview;
-          if (video['preview']) {
-            preview = video['preview'];
-          } else {
-            preview = video['thumbnail'];
-          }
-
-          if (videos.length >= 2) {
-            video_titles = mail_contents.VIDEO_TITLE;
-          } else {
-            video_titles = `${video.title}`;
-          }
-
-          video_subject = video_subject
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          video_content = video_content
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
-          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          video_objects += video_object;
-        }
-
-        if (video_subject === '') {
-          video_subject = 'VIDEO: ' + video_titles;
-        } else {
-          video_subject = video_subject.replace(
-            /{video_title}/gi,
-            video_titles
-          );
-          video_subject = video_subject.replace(
-            /{material_title}/gi,
-            video_titles
-          );
-        }
-
-        html_content = video_content;
-        if (video_content.search(/{video_object}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_object}/gi,
-            video_objects
-          );
-        } else {
-          video_content = video_content + '<br/>' + video_objects;
-        }
-
-        const msg = {
-          to: _contact.email,
-          from: `${currentUser.user_name} <${mail_contents.MAIL_SEND}>`,
-          replyTo: currentUser.connected_email,
-          subject: video_subject,
-          html:
-            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
-            video_content +
-            '</tbody></table>' +
-            currentUser.email_signature +
-            generateUnsubscribeLink(activity) +
-            '</body></html>',
-          text: video_content,
-        };
-
-        promise = new Promise((resolve, reject) => {
-          sgMail
-            .send(msg)
-            .then(async (_res) => {
-              console.log('mailres.errorcode', _res[0].statusCode);
-              if (_res[0].statusCode >= 200 && _res[0].statusCode < 400) {
-                console.log('status', _res[0].statusCode);
-
-                const _activity = new Activity({
-                  content: detail_content,
-                  contacts: contacts[i],
-                  user: currentUser.id,
-                  type: 'videos',
-                  videos: videos[0],
-                  subject: video_subject,
-                  description: html_content,
-                });
-
-                const resend_activity = await _activity
-                  .save()
-                  .then()
-                  .catch((err) => {
-                    console.log('resend activity err', err.message);
-                  });
-                Contact.updateOne(
-                  { _id: contacts[i] },
-                  { $set: { last_activity: resend_activity.id } }
-                ).catch((err) => {
-                  console.log('conatct update err', err.message);
-                });
-                resolve({
-                  status: true,
-                });
-              } else {
-                resolve({
-                  status: false,
-                  error: msg.to + _res[0].statusCode,
-                  contact: contacts[i],
-                });
-              }
-            })
-            .catch((err) => {
-              console.log('email sending err', msg.to);
-              console.error(err);
-              resolve({
-                status: false,
-                err,
-                contact: contacts[i],
+            const resend_activity = await _activity
+              .save()
+              .then()
+              .catch((err) => {
+                console.log('resend activity err', err.message);
               });
+            Contact.updateOne(
+              { _id: contact },
+              { $set: { last_activity: resend_activity.id } }
+            ).catch((err) => {
+              console.log('conatct update err', err.message);
             });
+            resolve({
+              status: true,
+            });
+          } else {
+            resolve({
+              status: false,
+              error: msg.to + _res[0].statusCode,
+              contact,
+            });
+          }
+        })
+        .catch((err) => {
+          console.log('email sending err', msg.to);
+          console.error(err);
+          resolve({
+            status: false,
+            error: err.message || err,
+            contact,
+          });
         });
-        promise_array.push(promise);
-      }
-    }
-
-    return Promise.all(promise_array);
+    });
+    return promise;
   } else if (
     currentUser.connected_email_type === 'gmail' ||
     currentUser.connected_email_type === 'gsuit'
   ) {
-    const promise_array = [];
-    let promise;
-
+    // Send Gmail
     const oauth2Client = new google.auth.OAuth2(
       api.GMAIL_CLIENT.GMAIL_CLIENT_ID,
       api.GMAIL_CLIENT.GMAIL_CLIENT_SECRET,
@@ -3130,253 +3094,94 @@ const resendVideo = async (data) => {
     oauth2Client.setCredentials({ refresh_token: token.refresh_token });
     await oauth2Client.getAccessToken().catch((err) => {
       console.log('get access err', err.message || err.msg);
-      promise_array.push(
-        new Promise((resolve, reject) => {
-          resolve({
-            status: false,
-            err,
-          });
-        })
-      );
-    });
-
-    if (promise_array.length > 0) {
-      return Promise.all(promise_array);
-    }
-
-    for (let i = 0; i < contacts.length; i++) {
-      let _contact = await Contact.findOne({
-        _id: contacts[i],
-        tags: { $nin: ['unsubscribed'] },
-      }).catch((err) => {
-        console.log('contact found err', err.message);
-      });
-
-      if (!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
-          console.log('contact found err', err.message);
+      promise = new Promise((resolve) => {
+        resolve({
+          status: false,
+          error: 'google_token_invalid',
         });
-        if (_contact) {
-          promise = new Promise((resolve, reject) => {
-            resolve({
-              contact: {
-                id: contacts[i],
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email unsubscribed',
+      });
+    });
+    if (promise) {
+      return promise;
+    }
+    promise = new Promise((resolve, reject) => {
+      try {
+        const body = createBody({
+          headers: {
+            To: _contact.email,
+            From: `${currentUser.user_name} <${currentUser.connected_email}>`,
+            Subject: email_subject,
+          },
+          textHtml:
+            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+            email_content +
+            '</tbody></table>' +
+            currentUser.email_signature +
+            generateUnsubscribeLink(activity) +
+            '</body></html>',
+          textPlain: email_content,
+        });
+        request({
+          method: 'POST',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          headers: {
+            Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
+            'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
+          },
+          body,
+        })
+          .then(async () => {
+            const _activity = new Activity({
+              content: detail_content,
+              contacts: contact,
+              user: currentUser.id,
+              type: 'videos',
+              videos: video_id,
+              created_at: new Date(),
+              updated_at: new Date(),
+              subject: email_subject,
+              description: email_content,
             });
-          });
-          promise_array.push(promise);
-          continue;
-        } else {
-          promise = new Promise((resolve, reject) => {
-            resolve({
-              contact: {
-                id: contacts[i],
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email not found',
-            });
-          });
-          promise_array.push(promise);
-          continue;
-        }
-      }
 
-      if (_contact) {
-        let video_titles = '';
-        let video_descriptions = '';
-        let video_objects = '';
-        let video_subject = subject;
-        let video_content = content;
-        let html_content = '';
-        let activity;
-        for (let j = 0; j < activities.length; j++) {
-          activity = activities[j];
-          const video = await Video.findOne({ _id: videos[j] });
-          let preview;
-          if (video['preview']) {
-            preview = video['preview'];
-          } else {
-            preview = video['thumbnail'] + '-resize';
-          }
-
-          if (typeof video_content === 'undefined') {
-            video_content = '';
-          }
-
-          video_subject = video_subject
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          video_content = video_content
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          if (videos.length >= 2) {
-            video_titles = mail_contents.VIDEO_TITLE;
-          } else {
-            video_titles = `${video.title}`;
-          }
-
-          if (j < videos.length - 1) {
-            video_descriptions += `${video.description}, `;
-          } else {
-            video_descriptions += video.description;
-          }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
-          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          video_objects += video_object;
-        }
-
-        if (video_subject === '') {
-          video_subject = 'VIDEO: ' + video_titles;
-        } else {
-          video_subject = video_subject.replace(
-            /{video_title}/gi,
-            video_titles
-          );
-          video_subject = video_subject.replace(
-            /{material_title}/gi,
-            video_titles
-          );
-        }
-
-        html_content = video_content;
-
-        if (video_content.search(/{video_object}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_object}/gi,
-            video_objects
-          );
-        } else {
-          video_content = video_content + '<br/>' + video_objects;
-        }
-
-        if (video_content.search(/{video_title}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_title}/gi,
-            video_titles
-          );
-        }
-
-        if (video_content.search(/{video_description}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_description}/gi,
-            video_descriptions
-          );
-        }
-
-        const email_content =
-          '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
-          video_content +
-          '</tbody></table>' +
-          currentUser.email_signature +
-          generateUnsubscribeLink(activity) +
-          '</body></html>';
-
-        // const rawContent = makeBody(_contact.email, `${currentUser.user_name} <${currentUser.email}>`, video_subject, email_content );
-
-        promise = new Promise((resolve, reject) => {
-          try {
-            const body = createBody({
-              headers: {
-                To: _contact.email,
-                From: `${currentUser.user_name} <${currentUser.connected_email}>`,
-                Subject: video_subject,
-              },
-              textHtml: email_content,
-              textPlain: video_content,
-            });
-            request({
-              method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
-              headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
-                'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
-              },
-              body,
-            })
-              .then(async () => {
-                const _activity = new Activity({
-                  content: detail_content,
-                  contacts: contacts[i],
-                  user: currentUser.id,
-                  type: 'videos',
-                  videos: videos[0],
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                  subject: video_subject,
-                  description: html_content,
-                });
-
-                const resend_activity = await _activity
-                  .save()
-                  .then()
-                  .catch((err) => {
-                    console.log('resend activity err', err.message);
-                  });
-                Contact.updateOne(
-                  { _id: contacts[i] },
-                  { $set: { last_activity: resend_activity.id } }
-                ).catch((err) => {
-                  console.log('contact find err', err.message);
-                });
-                resolve({
-                  status: true,
-                });
-              })
+            const resend_activity = await _activity
+              .save()
+              .then()
               .catch((err) => {
-                console.log('err', err.message);
-                resolve({
-                  status: false,
-                  err,
-                  contact: contacts[i],
-                });
+                console.log('resend activity err', err.message);
               });
-          } catch (err) {
+            Contact.updateOne(
+              { _id: contact },
+              { $set: { last_activity: resend_activity.id } }
+            ).catch((err) => {
+              console.log('contact find err', err.message);
+            });
+            resolve({
+              status: true,
+            });
+          })
+          .catch((err) => {
             console.log('err', err.message);
             resolve({
               status: false,
-              error: err.message,
-              contact: contacts[i],
+              error: err.message || err,
+              contact,
             });
-          }
-        });
-      } else {
-        promise = new Promise((resolve, reject) => {
-          resolve({
-            status: false,
-            error: 'no contact found',
-            contact: contacts[i],
           });
+      } catch (err) {
+        console.log('err', err.message);
+        resolve({
+          status: false,
+          error: err.message,
+          contact,
         });
       }
-      promise_array.push(promise);
-    }
-    return Promise.all(promise_array);
+    });
+    return promise;
   } else if (
     currentUser.connected_email_type === 'outlook' ||
     currentUser.connected_email_type === 'microsoft'
   ) {
-    const promise_array = [];
-    let promise;
-
+    // Send Outlook mail
     const token = oauth2.accessToken.create({
       refresh_token: currentUser.outlook_refresh_token,
       expires_in: 0,
@@ -3395,21 +3200,16 @@ const resendVideo = async (data) => {
         accessToken = token.access_token;
       })
       .catch((err) => {
-        console.log('outlook token grant error', err.message || err.msg);
-        promise_array.push(
-          new Promise((resolve, reject) => {
-            resolve({
-              status: false,
-              error: err.message || err.msg,
-            });
-          })
-        );
+        promise = new Promise((resolve, reject) => {
+          resolve({
+            status: false,
+            error: err.message || err.msg,
+          });
+        });
       });
-
-    if (promise_array.length > 0) {
-      return Promise.all(promise_array);
+    if (promise) {
+      return promise;
     }
-
     const client = graph.Client.init({
       // Use the provided access token to authenticate
       // requests
@@ -3418,209 +3218,73 @@ const resendVideo = async (data) => {
       },
     });
 
-    for (let i = 0; i < contacts.length; i++) {
-      let _contact = await Contact.findOne({
-        _id: contacts[i],
-        tags: { $nin: ['unsubscribed'] },
-      }).catch((err) => {
-        console.log('contact found err', err.message);
-      });
-
-      if (!_contact) {
-        _contact = await Contact.findOne({ _id: contacts[i] }).catch((err) => {
-          console.log('contact found err', err.message);
-        });
-        if (_contact) {
-          promise = new Promise(async (resolve, reject) => {
-            resolve({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email unsubscribed',
-            });
-          });
-          promise_array.push(promise);
-          continue;
-        } else {
-          promise = new Promise(async (resolve, reject) => {
-            resolve({
-              contact: {
-                first_name: _contact.first_name,
-                email: _contact.email,
-              },
-              error: 'contact email not found',
-            });
-          });
-          promise_array.push(promise);
-          continue;
-        }
-      }
-
-      if (_contact) {
-        let video_titles = '';
-        let video_descriptions = '';
-        let video_objects = '';
-        let video_subject = subject;
-        let video_content = content;
-        let html_content = '';
-        let activity;
-        for (let j = 0; j < activities.length; j++) {
-          activity = activities[j];
-          const video = await Video.findOne({ _id: videos[j] });
-          let preview;
-          if (video['preview']) {
-            preview = video['preview'];
-          } else {
-            preview = video['thumbnail'] + '-resize';
-          }
-
-          if (typeof video_content === 'undefined') {
-            video_content = '';
-          }
-
-          video_subject = video_subject
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          video_content = video_content
-            .replace(/{user_name}/gi, currentUser.user_name)
-            .replace(/{user_email}/gi, currentUser.connected_email)
-            .replace(/{user_phone}/gi, currentUser.cell_phone)
-            .replace(/{contact_first_name}/gi, _contact.first_name)
-            .replace(/{contact_last_name}/gi, _contact.last_name)
-            .replace(/{contact_email}/gi, _contact.email)
-            .replace(/{contact_phone}/gi, _contact.cell_phone);
-
-          if (videos.length >= 2) {
-            video_titles = mail_contents.VIDEO_TITLE;
-          } else {
-            video_titles = `${video.title}`;
-          }
-
-          if (j < videos.length - 1) {
-            video_descriptions += `${video.description}, `;
-          } else {
-            video_descriptions += video.description;
-          }
-          const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/>${video.description}<br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`
-          // const video_object = `<p style="margin-top:0px;max-width: 800px;"><b>${video.title}:</b><br/><br/><a href="${video_link}"><img src="${preview}"/></a><br/></p>`;
-          const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-          video_objects += video_object;
-        }
-
-        html_content = video_content;
-        if (video_subject === '') {
-          video_subject = 'VIDEO: ' + video_titles;
-        } else {
-          video_subject = video_subject.replace(
-            /{video_title}/gi,
-            video_titles
-          );
-        }
-
-        if (video_content.search(/{video_object}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_object}/gi,
-            video_objects
-          );
-        } else {
-          video_content = video_content + '<br/>' + video_objects;
-        }
-
-        if (video_content.search(/{video_title}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_title}/gi,
-            video_titles
-          );
-        }
-
-        if (video_content.search(/{video_description}/gi) !== -1) {
-          video_content = video_content.replace(
-            /{video_description}/gi,
-            video_descriptions
-          );
-        }
-
-        const sendMail = {
-          message: {
-            subject: video_subject,
-            body: {
-              contentType: 'HTML',
-              content:
-                '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
-                video_content +
-                '</tbody></table>' +
-                currentUser.email_signature +
-                generateUnsubscribeLink(activity) +
-                '</body></html>',
+    const sendMail = {
+      message: {
+        subject: email_subject,
+        body: {
+          contentType: 'HTML',
+          content:
+            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+            email_content +
+            '</tbody></table>' +
+            currentUser.email_signature +
+            generateUnsubscribeLink(activity) +
+            '</body></html>',
+        },
+        toRecipients: [
+          {
+            emailAddress: {
+              address: _contact.email,
             },
-            toRecipients: [
-              {
-                emailAddress: {
-                  address: _contact.email,
-                },
-              },
-            ],
           },
-          saveToSentItems: 'true',
-        };
+        ],
+      },
+      saveToSentItems: 'true',
+    };
 
-        promise = new Promise((resolve, reject) => {
-          client
-            .api('/me/sendMail')
-            .post(sendMail)
-            .then(async () => {
-              const _activity = new Activity({
-                content: detail_content,
-                contacts: contacts[i],
-                user: currentUser.id,
-                type: 'videos',
-                videos: videos[0],
-                created_at: new Date(),
-                updated_at: new Date(),
-                subject: video_subject,
-                description: html_content,
-              });
+    promise = new Promise((resolve, reject) => {
+      client
+        .api('/me/sendMail')
+        .post(sendMail)
+        .then(async () => {
+          const _activity = new Activity({
+            content: detail_content,
+            contacts: contact,
+            user: currentUser.id,
+            type: 'videos',
+            videos: video_id,
+            subject: email_subject,
+            description: email_content,
+          });
 
-              const resend_activity = await _activity
-                .save()
-                .then()
-                .catch((err) => {
-                  console.log('resend activity err', err.message);
-                });
-              Contact.updateOne(
-                { _id: contacts[i] },
-                {
-                  $set: { last_activity: resend_activity.id },
-                }
-              ).catch((err) => {
-                console.log('err', err.message);
-              });
-              resolve({
-                status: true,
-              });
-            })
+          const resend_activity = await _activity
+            .save()
+            .then()
             .catch((err) => {
-              console.log('outlook send err', err.message);
-              resolve({
-                status: false,
-                contact: contacts[i],
-                error: err.message,
-              });
+              console.log('resend activity err', err.message);
             });
+          Contact.updateOne(
+            { _id: contact },
+            {
+              $set: { last_activity: resend_activity.id },
+            }
+          ).catch((err) => {
+            console.log('err', err.message);
+          });
+          resolve({
+            status: true,
+          });
+        })
+        .catch((err) => {
+          console.log('outlook send err', err.message);
+          resolve({
+            status: false,
+            contact,
+            error: err.message,
+          });
         });
-        promise_array.push(promise);
-      }
-    }
-
-    return Promise.all(promise_array);
+    });
+    return promise;
   }
 };
 
@@ -3679,11 +3343,34 @@ const sendEmail = async (data) => {
     system_settings.EMAIL_DAILY_LIMIT.BASIC;
   const email_info = currentUser['email_info'] || {};
 
+  const garbage = await Garbage.findOne({
+    user: currentUser.id,
+  }).catch((err) => {
+    console.log('garbage find err', err.message);
+  });
+  let auto_follow_up2;
+  let auto_resend2;
+  let canned_message;
+  if (garbage && garbage.auto_follow_up2) {
+    auto_follow_up2 = garbage.auto_follow_up2;
+  }
+  if (garbage && garbage.auto_resend2) {
+    auto_resend2 = garbage.auto_resend2;
+    canned_message = await EmailTemplate.findOne({
+      _id: auto_resend2.email_canned_message,
+    });
+    if (!canned_message) {
+      // TODO: Default Email Templates
+    }
+  }
+
   const promise_array = [];
 
   for (let i = 0; i < contacts.length; i++) {
     let promise;
     const activities = [];
+    const autoResends = [];
+    const autoFollowUps = [];
 
     const contact = await Contact.findOne({
       _id: contacts[i],
@@ -3699,6 +3386,7 @@ const sendEmail = async (data) => {
             _id: contacts[i],
           },
           error: 'Contact was removed.',
+          type: 'not_found_contact',
         });
       });
 
@@ -3716,6 +3404,7 @@ const sendEmail = async (data) => {
             email: contact.email,
           },
           error: 'contact email unsubscribed',
+          type: 'unsubscribed_contact',
         });
       });
 
@@ -3733,10 +3422,11 @@ const sendEmail = async (data) => {
             email: contact.email,
           },
           error: 'email daily limit exceed!',
+          type: 'email_daily_limit',
         });
       });
       promise_array.push(promise);
-      continue;
+      break;
     }
 
     let email_subject = subject;
@@ -3832,6 +3522,55 @@ const sendEmail = async (data) => {
           new RegExp(`{{${video.id}}}`, 'g'),
           video_link
         );
+
+        const now = moment();
+        if (auto_resend2['enabled']) {
+          const period = auto_resend2['period'];
+          const due_date = now.add(period, 'hours');
+          const task = new Task({
+            user: currentUser.id,
+            contacts: contacts[i],
+            type: 'resend_email_video2',
+            action: {
+              activity: activity.id,
+              content: canned_message.content,
+              subject: canned_message.subject,
+              video: video.id,
+            },
+            watched_video: video.id,
+            'condition.case': 'watched_video',
+            'condition.answer': false,
+            status: 'active',
+            due_date,
+          });
+          task.save().catch((err) => {
+            console.log('task ', err.message);
+          });
+          autoResends.push(task.id);
+        }
+        if (auto_follow_up2['enabled']) {
+          const period = auto_follow_up2['period'];
+          const content = auto_follow_up2['content'];
+          const due_date = now.add(period, 'hours');
+          const task = new Task({
+            user: currentUser.id,
+            type: 'auto_follow_up2',
+            action: {
+              due_date,
+              content,
+            },
+            watched_video: video.id,
+            'condition.case': 'watched_video',
+            'condition.answer': false,
+            status: 'active',
+            contacts: contacts[i],
+            due_date,
+          });
+          task.save().catch((err) => {
+            console.log('task save err', err.message);
+          });
+          autoFollowUps.push(task.id);
+        }
 
         activities.push(activity.id);
       }
@@ -4028,88 +3767,6 @@ const sendEmail = async (data) => {
     }
 
     if (
-      (video_ids && video_ids.length) ||
-      (pdf_ids && pdf_ids.length) ||
-      (image_ids && image_ids.length)
-    ) {
-      const garbage = await Garbage.findOne({
-        user: currentUser.id,
-      }).catch((err) => {
-        console.log('garbage find err', err.message);
-      });
-
-      if (garbage && garbage.auto_follow_up2) {
-        const auto_follow_up2 = garbage.auto_follow_up2;
-        if (auto_follow_up2['enabled']) {
-          const now = moment();
-          const period = auto_follow_up2['period'];
-          const content = auto_follow_up2['content'];
-          const due_date = now.add(period, 'hours');
-
-          for (let j = 0; j < video_ids.length; j++) {
-            const task = new Task({
-              user: currentUser.id,
-              action: {
-                type: 'auto_follow_up2',
-                due_date,
-                content,
-              },
-              watched_video: video_ids[j],
-              'condition.case': 'watched_video',
-              'condition.answer': false,
-              status: 'active',
-              contact: contacts[i],
-            });
-
-            task.save().catch((err) => {
-              console.log('task save err', err.message);
-            });
-          }
-
-          for (let j = 0; j < pdf_ids.length; j++) {
-            const task = new Task({
-              user: currentUser.id,
-              action: {
-                type: 'auto_follow_up2',
-                due_date,
-                content,
-              },
-              watched_pdf: pdf_ids[j],
-              'condition.case': 'watched_pdf',
-              'condition.answer': false,
-              status: 'active',
-              contact: contacts[i],
-            });
-
-            task.save().catch((err) => {
-              console.log('task save err', err.message);
-            });
-          }
-
-          for (let j = 0; j < image_ids.length; j++) {
-            const task = new Task({
-              user: currentUser.id,
-              action: {
-                type: 'auto_follow_up2',
-                due_date,
-                content,
-              },
-              watched_image: image_ids[j],
-              'condition.case': 'watched_image',
-              'condition.answer': false,
-              status: 'active',
-              contact: contacts[i],
-            });
-
-            task.save().catch((err) => {
-              console.log('task save err', err.message);
-            });
-          }
-        }
-      }
-    }
-
-    if (
       currentUser.connected_email_type === 'gmail' ||
       currentUser.connected_email_type === 'gsuit'
     ) {
@@ -4136,14 +3793,18 @@ const sendEmail = async (data) => {
               email: contact.email,
             },
             error: 'google access token invalid!',
+            type: 'google_token_invalid',
           });
         });
 
         promise_array.push(promise);
 
         // Remove created activity and email
-        revertEmailing(activities, activity._id, email._id);
-        continue;
+        revertEmailing(activities, activity._id, email._id, [
+          ...autoResends,
+          ...autoFollowUps,
+        ]);
+        break;
       }
       const attachment_array = [];
       if (attachments) {
@@ -4173,8 +3834,7 @@ const sendEmail = async (data) => {
 
           request({
             method: 'POST',
-            uri:
-              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -4205,7 +3865,10 @@ const sendEmail = async (data) => {
             .catch((err) => {
               console.log('gmail video send err', err.message);
 
-              revertEmailing(activities, activity._id, email._id);
+              revertEmailing(activities, activity._id, email._id, [
+                ...autoResends,
+                ...autoFollowUps,
+              ]);
               if (err.statusCode === 403) {
                 // no_connected = true;
                 resolve({
@@ -4216,6 +3879,7 @@ const sendEmail = async (data) => {
                     email: contact.email,
                   },
                   error: 'No Connected Gmail',
+                  type: 'connection_failed',
                 });
               } else if (err.statusCode === 400) {
                 resolve({
@@ -4226,6 +3890,7 @@ const sendEmail = async (data) => {
                     email: contact.email,
                   },
                   error: err.message,
+                  type: 'general',
                 });
               } else {
                 resolve({
@@ -4236,20 +3901,26 @@ const sendEmail = async (data) => {
                     email: contact.email,
                   },
                   error: 'Recipient address required',
+                  type: 'general',
                 });
               }
             });
         } catch (err) {
           console.log('gmail video send err', err.message);
 
-          revertEmailing(activities, activity._id, email._id);
+          revertEmailing(activities, activity._id, email._id, [
+            ...autoResends,
+            ...autoFollowUps,
+          ]);
           resolve({
             status: false,
             contact: {
+              _id: contact._id,
               first_name: contact.first_name,
               email: contact.email,
             },
             error: err.message,
+            type: 'internal_error',
           });
         }
       });
@@ -4287,15 +3958,19 @@ const sendEmail = async (data) => {
                 email: contact.email,
               },
               error: 'not connected',
+              type: 'outlook_token_invalid',
             });
           });
 
-          revertEmailing(activities, activity._id, email._id);
+          revertEmailing(activities, activity._id, email._id, [
+            ...autoResends,
+            ...autoFollowUps,
+          ]);
           promise_array.push(promise);
         });
 
       if (!accessToken) {
-        continue;
+        break;
       }
 
       const client = graph.Client.init({
@@ -4386,7 +4061,10 @@ const sendEmail = async (data) => {
             });
           })
           .catch((err) => {
-            revertEmailing(activities, activity._id, email._id);
+            revertEmailing(activities, activity._id, email._id, [
+              ...autoResends,
+              ...autoFollowUps,
+            ]);
             console.log('microsoft email send error', err.message);
             resolve({
               status: false,
@@ -4396,6 +4074,7 @@ const sendEmail = async (data) => {
                 email: contact.email,
               },
               error: err.message || err.msg,
+              type: 'internal_error',
             });
           });
       });
