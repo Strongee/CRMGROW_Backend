@@ -7,7 +7,7 @@ const FollowUp = require('../models/follow_up');
 const User = require('../models/user');
 const Contact = require('../models/contact');
 const Garbage = require('../models/garbage');
-const { sendNotificationEmail } = require('../helpers/email')
+const { sendNotificationEmail } = require('../helpers/email');
 const system_settings = require('../config/system_settings');
 const urls = require('../constants/urls');
 const moment = require('moment-timezone');
@@ -92,6 +92,16 @@ const followup_migrate = async () => {
     console.log('user find err', err.message);
   });
 
+  const follow_ups = await FollowUp.deleteMany({
+    user: { $in: users },
+  })
+    .then(() => {
+      console.log('remove old followups successfully');
+    })
+    .catch((err) => {
+      console.log('follows err', err.message);
+    });
 };
 
+followup_migrate();
 // followup_test();
