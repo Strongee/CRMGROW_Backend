@@ -399,6 +399,7 @@ const reminder_job = new CronJob(
             contact_name: `${contact.first_name} ${contact.last_name}`,
             follow_up_type: type,
             follow_up_description: follow_up.content,
+            follow_up_type_url: urls.FOLLOWUP_TYPE_URL[type],
             due_start: due_date,
           },
           template_name: 'TaskReminder',
