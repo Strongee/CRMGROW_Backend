@@ -399,6 +399,7 @@ const reminder_job = new CronJob(
             contact_name: `${contact.first_name} ${contact.last_name}`,
             follow_up_type: type,
             follow_up_description: follow_up.content,
+            follow_up_type_url: urls.FOLLOWUP_TYPE_URL[type],
             due_start: due_date,
           },
           template_name: 'TaskReminder',
@@ -406,6 +407,7 @@ const reminder_job = new CronJob(
           email: user.email,
         };
 
+        console.log('data*****', data);
         sendNotificationEmail(data);
       }
 
@@ -2432,15 +2434,15 @@ const campaign_job = new CronJob(
   'US/Central'
 );
 
-signup_job.start();
+// signup_job.start();
 reminder_job.start();
-weekly_report.start();
-upload_video_job.start();
-convert_video_job.start();
+// weekly_report.start();
+// upload_video_job.start();
+// convert_video_job.start();
 payment_check.start();
 // campaign_job.start();
 // logger_check.start()
-notification_check.start();
+// notification_check.start();
 task_check.start();
 timesheet_check.start();
 reset_daily_limit.start();

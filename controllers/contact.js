@@ -322,7 +322,9 @@ const getDetail = async (req, res) => {
       appointments = await Appointment.find({ _id: { $in: apptIds } });
       tasks = await FollowUp.find({ _id: { $in: taskIds } });
       deals = await Deal.find({ _id: { $in: dealIds } });
-      users = await User.find({ _id: { $in: userIds } });
+      users = await User.find({ _id: { $in: userIds } }).select(
+        '_id user_name email cell_phone picture_profile'
+      );
     } else {
       notes = await Note.find({ contact: contactId });
       emails = await Email.find({ contacts: contactId });
@@ -330,7 +332,9 @@ const getDetail = async (req, res) => {
       appointments = await Appointment.find({ contacts: contactId });
       tasks = await FollowUp.find({ contact: contactId });
       deals = await Deal.find({ contacts: contactId });
-      users = await User.find({ _id: { $in: _contact.shared_members || [] } });
+      users = await User.find({
+        _id: { $in: _contact.shared_members || [] },
+      }).select('_id user_name email cell_phone picture_profile');
     }
 
     const myJSON = JSON.stringify(_contact);
@@ -349,6 +353,7 @@ const getDetail = async (req, res) => {
           appointments,
           tasks,
           deals,
+          users,
         },
       }
     );

@@ -74,11 +74,14 @@ const urls = {
     'https://teamgrow.s3.us-east-2.amazonaws.com/gif120/9/5f7fd210b5c62a75b11e130b',
   ONEONONE_URL: 'https://crmgrow.com/oneonone',
   FOLLOWUP_TYPE_URL: {
-    task: 'https://teamgrow.s3.us-east-2.amazonaws.com/task.png',
-    email: 'https://teamgrow.s3.us-east-2.amazonaws.com/message.png',
-    material: 'https://teamgrow.s3.us-east-2.amazonaws.com/materials+2.png',
-    call: 'https://teamgrow.s3.us-east-2.amazonaws.com/phone.png',
-    meeting: 'https://teamgrow.s3.us-east-2.amazonaws.com/lunch.png',
+    task: 'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_task_black_48dp.png',
+    email:
+      'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_email_black_48dp.png',
+    material:
+      'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_smart_display_black_48dp.png',
+    call: 'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_call_black_48dp.png',
+    meeting:
+      'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_people_black_48dp.png',
   },
   VERIFY_EMAIL_URL: `${domain}/verify-email/`,
 };

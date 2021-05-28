@@ -396,8 +396,7 @@ const bulkEmail = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -1166,8 +1165,7 @@ const bulkVideo = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -1883,8 +1881,7 @@ const bulkPDF = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2839,8 +2836,7 @@ const bulkImage = async (data) => {
             });
             request({
               method: 'POST',
-              uri:
-                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2909,16 +2905,16 @@ const resendVideo = async (data) => {
 
   if (!currentUser) {
     promise = new Promise((resolve) => {
-        resolve({
-          status: false,
-          error: 'User not found',
-        });
+      resolve({
+        status: false,
+        error: 'User not found',
       });
+    });
     return promise;
   }
 
-  let _contact = await Contact.findOne({
-    _id: contact
+  const _contact = await Contact.findOne({
+    _id: contact,
   }).catch((err) => {
     console.log('contact found err', err.message);
   });
@@ -2979,7 +2975,7 @@ const resendVideo = async (data) => {
 
   let email_subject = subject;
   let email_content = content;
-  let video_objects = '';
+  const video_objects = '';
 
   email_subject = email_subject
     .replace(/{user_name}/gi, currentUser.user_name)
@@ -2999,23 +2995,17 @@ const resendVideo = async (data) => {
     .replace(/{contact_email}/gi, _contact.email)
     .replace(/{contact_phone}/gi, _contact.cell_phone);
 
-  email_subject = email_subject.replace(
-      /{material_title}/gi,
-      video.title
-    );
+  email_subject = email_subject.replace(/{material_title}/gi, video.title);
 
   const video_link = urls.MATERIAL_VIEW_VIDEO_URL + activity;
   const video_object = `<tr style="margin-top:10px;max-width:800px;"><td><b>${video.title}:</b></td></tr><tr style="margin-top:10px;display:block"><td><a href="${video_link}"><img src="${video.preview}" alt="Preview image went something wrong. Please click here"/></a></td></tr>`;
-  
-  if (email_content.indexOf('{video_object}') !== -1 || email_content.indexOf('{material_object}') !== -1) {
-    email_content = email_content.replace(
-      /{video_object}/gi,
-      video_object
-    );
-    email_content = email_content.replace(
-      /{material_object}/gi,
-      video_object
-    );
+
+  if (
+    email_content.indexOf('{video_object}') !== -1 ||
+    email_content.indexOf('{material_object}') !== -1
+  ) {
+    email_content = email_content.replace(/{video_object}/gi, video_object);
+    email_content = email_content.replace(/{material_object}/gi, video_object);
   } else {
     email_content = email_content + '<br/><br/>' + video_object;
   }
@@ -3122,7 +3112,8 @@ const resendVideo = async (data) => {
             From: `${currentUser.user_name} <${currentUser.connected_email}>`,
             Subject: email_subject,
           },
-          textHtml: '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
+          textHtml:
+            '<html><head><title>Video Invitation</title></head><body><table><tbody>' +
             email_content +
             '</tbody></table>' +
             currentUser.email_signature +
@@ -3132,8 +3123,7 @@ const resendVideo = async (data) => {
         });
         request({
           method: 'POST',
-          uri:
-            'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
           headers: {
             Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -3174,7 +3164,7 @@ const resendVideo = async (data) => {
             resolve({
               status: false,
               error: err.message || err,
-              contact: contact,
+              contact,
             });
           });
       } catch (err) {
@@ -3182,7 +3172,7 @@ const resendVideo = async (data) => {
         resolve({
           status: false,
           error: err.message,
-          contact: contact,
+          contact,
         });
       }
     });
@@ -3211,11 +3201,11 @@ const resendVideo = async (data) => {
       })
       .catch((err) => {
         promise = new Promise((resolve, reject) => {
-            resolve({
-              status: false,
-              error: err.message || err.msg,
-            });
+          resolve({
+            status: false,
+            error: err.message || err.msg,
           });
+        });
       });
     if (promise) {
       return promise;
@@ -3289,7 +3279,7 @@ const resendVideo = async (data) => {
           console.log('outlook send err', err.message);
           resolve({
             status: false,
-            contact: contact,
+            contact,
             error: err.message,
           });
         });
@@ -3381,7 +3371,6 @@ const sendEmail = async (data) => {
     const activities = [];
     const autoResends = [];
     const autoFollowUps = [];
-
 
     const contact = await Contact.findOne({
       _id: contacts[i],
@@ -3553,7 +3542,7 @@ const sendEmail = async (data) => {
             'condition.answer': false,
             status: 'active',
             due_date,
-          })
+          });
           task.save().catch((err) => {
             console.log('task ', err.message);
           });
@@ -3811,7 +3800,10 @@ const sendEmail = async (data) => {
         promise_array.push(promise);
 
         // Remove created activity and email
-        revertEmailing(activities, activity._id, email._id, [...autoResends, ...autoFollowUps]);
+        revertEmailing(activities, activity._id, email._id, [
+          ...autoResends,
+          ...autoFollowUps,
+        ]);
         break;
       }
       const attachment_array = [];
@@ -3842,8 +3834,7 @@ const sendEmail = async (data) => {
 
           request({
             method: 'POST',
-            uri:
-              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -3874,7 +3865,10 @@ const sendEmail = async (data) => {
             .catch((err) => {
               console.log('gmail video send err', err.message);
 
-              revertEmailing(activities, activity._id, email._id, [...autoResends, ...autoFollowUps]);
+              revertEmailing(activities, activity._id, email._id, [
+                ...autoResends,
+                ...autoFollowUps,
+              ]);
               if (err.statusCode === 403) {
                 // no_connected = true;
                 resolve({
@@ -3914,7 +3908,10 @@ const sendEmail = async (data) => {
         } catch (err) {
           console.log('gmail video send err', err.message);
 
-          revertEmailing(activities, activity._id, email._id, [...autoResends, ...autoFollowUps]);
+          revertEmailing(activities, activity._id, email._id, [
+            ...autoResends,
+            ...autoFollowUps,
+          ]);
           resolve({
             status: false,
             contact: {
@@ -3965,7 +3962,10 @@ const sendEmail = async (data) => {
             });
           });
 
-          revertEmailing(activities, activity._id, email._id, [...autoResends, ...autoFollowUps]);
+          revertEmailing(activities, activity._id, email._id, [
+            ...autoResends,
+            ...autoFollowUps,
+          ]);
           promise_array.push(promise);
         });
 
@@ -4061,7 +4061,10 @@ const sendEmail = async (data) => {
             });
           })
           .catch((err) => {
-            revertEmailing(activities, activity._id, email._id, [...autoResends, ...autoFollowUps]);
+            revertEmailing(activities, activity._id, email._id, [
+              ...autoResends,
+              ...autoFollowUps,
+            ]);
             console.log('microsoft email send error', err.message);
             resolve({
               status: false,
