@@ -52,7 +52,6 @@ const api = require('../config/api');
 const system_settings = require('../config/system_settings');
 const mail_contents = require('../constants/mail_contents');
 const { emptyBucket } = require('./material');
-
 const emailHelper = require('../helpers/email.js');
 const garbageHelper = require('../helpers/garbage.js');
 const textHelper = require('../helpers/text.js');
@@ -2230,8 +2229,7 @@ const bulkGmail = async (req, res) => {
           });
           request({
             method: 'POST',
-            uri:
-              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',

@@ -6,6 +6,16 @@ const api = require('../config/api');
 const TextHelper = require('../helpers/text');
 const { timeInterval } = require('rxjs/operators');
 
+const mongoose = require('mongoose');
+const User = require('../models/user');
+const { DB_PORT } = require('../config/database');
+
+mongoose.set('useCreateIndex', true);
+mongoose
+  .connect(DB_PORT, { useNewUrlParser: true })
+  .then(() => console.log('Connecting to database successful'))
+  .catch((err) => console.error('Could not connect to mongo DB', err));
+
 const client = new RestClient(api.SIGNALWIRE.PROJECT_ID, api.SIGNALWIRE.TOKEN, {
   signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE_DOMAIN,
 });
@@ -216,7 +226,22 @@ const getSignalWireNumber = async (id) => {
 
 // longNumber();
 // buyNumber();
-sendMessage();
+// sendMessage();
 // releasePhone();
 // receivedStatus();
 // getSignalWireNumber();
+
+const getSignalwires = async () => {
+  const users = await User.find({
+    del: false,
+  }).catch((err) => {
+    console.log('user fine err', err.message);
+  });
+
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    console.log('user********', user.proxy_number_id);
+  }
+};
+
+getSignalwires();

@@ -880,7 +880,7 @@ const resendVideo = async (data) => {
 
     if (!e164Phone) {
       resolve({
-        contact: contact,
+        contact,
         error: 'Phone number is not valid format',
         status: false,
       });
@@ -1347,7 +1347,7 @@ const sendText = async (data) => {
             'condition.answer': false,
             status: 'active',
             due_date,
-          })
+          });
           task.save().catch((err) => {
             console.log('task ', err.message);
           });
@@ -1580,7 +1580,10 @@ const sendText = async (data) => {
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
                       // Handle failed text with status 3
-                      handleFailedText(activities, activity._id, text._id, 3, [...autoResends, ...autoFollowUps]);
+                      handleFailedText(activities, activity._id, text._id, 3, [
+                        ...autoResends,
+                        ...autoFollowUps,
+                      ]);
 
                       resolve({
                         status: false,
@@ -1594,7 +1597,10 @@ const sendText = async (data) => {
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
                       // Handle with 4 status
-                      handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
+                      handleFailedText(activities, activity._id, text._id, 4, [
+                        ...autoResends,
+                        ...autoFollowUps,
+                      ]);
 
                       resolve({
                         status: false,
@@ -1628,7 +1634,10 @@ const sendText = async (data) => {
               });
             } else {
               // Handle Failed Text
-              handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
+              handleFailedText(activities, activity._id, text._id, 4, [
+                ...autoResends,
+                ...autoFollowUps,
+              ]);
 
               resolve({
                 status: false,
@@ -1644,7 +1653,10 @@ const sendText = async (data) => {
           .catch((err) => {
             console.log('video message send err', err);
             // Handle Failed Text
-            revertTexting(activities, activity._id, text._id, [...autoResends, ...autoFollowUps]);
+            revertTexting(activities, activity._id, text._id, [
+              ...autoResends,
+              ...autoFollowUps,
+            ]);
 
             resolve({
               status: false,
@@ -1726,7 +1738,10 @@ const sendText = async (data) => {
                     } else if (res.status === 'sent' && j >= 5) {
                       clearInterval(interval_id);
                       // Handle Failed Text with Status 3
-                      handleFailedText(activities, activity._id, text._id, 3, [...autoResends, ...autoFollowUps]);
+                      handleFailedText(activities, activity._id, text._id, 3, [
+                        ...autoResends,
+                        ...autoFollowUps,
+                      ]);
 
                       resolve({
                         status: false,
@@ -1740,7 +1755,10 @@ const sendText = async (data) => {
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
                       // Handle Failed Text with Status 4
-                      handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
+                      handleFailedText(activities, activity._id, text._id, 4, [
+                        ...autoResends,
+                        ...autoFollowUps,
+                      ]);
 
                       resolve({
                         status: false,
@@ -1772,7 +1790,10 @@ const sendText = async (data) => {
                 status: true,
               });
             } else {
-              handleFailedText(activities, activity._id, text._id, 4, [...autoResends, ...autoFollowUps]);
+              handleFailedText(activities, activity._id, text._id, 4, [
+                ...autoResends,
+                ...autoFollowUps,
+              ]);
               resolve({
                 status: false,
                 contact: {
@@ -1785,7 +1806,10 @@ const sendText = async (data) => {
             }
           })
           .catch((err) => {
-            revertTexting(activities, activity._id, text._id, [...autoResends, ...autoFollowUps]);
+            revertTexting(activities, activity._id, text._id, [
+              ...autoResends,
+              ...autoFollowUps,
+            ]);
 
             resolve({
               status: false,
@@ -1814,7 +1838,13 @@ const sendText = async (data) => {
   return Promise.all(promise_array);
 };
 
-const handleFailedText = (activities, text_activity, text_id, status, tasks) => {
+const handleFailedText = (
+  activities,
+  text_activity,
+  text_id,
+  status,
+  tasks
+) => {
   Activity.deleteMany({ _id: { $in: activities } }).catch((err) => {
     console.log('text material activity delete err', err.message);
   });
