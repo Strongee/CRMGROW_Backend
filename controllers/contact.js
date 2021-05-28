@@ -3333,7 +3333,7 @@ const advanceSearch = async (req, res) => {
     if (stagesCondition && stagesCondition.length) {
       const deals = await DealStage.find(
         {
-          title: { $in: stagesCondition },
+          _id: { $in: stagesCondition },
           user: currentUser._id,
         },
         { deals: 1 }
