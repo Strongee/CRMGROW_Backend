@@ -83,7 +83,7 @@ const urls = {
     meeting:
       'https://teamgrow.s3.us-east-2.amazonaws.com/twotone_people_black_48dp.png',
   },
-  VERIFY_EMAIL_URL: `${domain}/verify-email/`,
+  VERIFY_EMAIL_URL: `${domain}/verify-email`,
 };
 
 module.exports = urls;
