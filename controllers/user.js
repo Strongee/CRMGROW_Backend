@@ -2838,8 +2838,6 @@ const sendWelcomeEmail = async (data) => {
     TemplateData: JSON.stringify(templatedData),
   };
 
-  // Create the promise and SES service object
-
   ses.sendTemplatedEmail(params).promise();
 };
 
