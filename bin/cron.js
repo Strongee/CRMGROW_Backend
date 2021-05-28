@@ -407,6 +407,7 @@ const reminder_job = new CronJob(
           email: user.email,
         };
 
+        console.log('data*****', data);
         sendNotificationEmail(data);
       }
 
