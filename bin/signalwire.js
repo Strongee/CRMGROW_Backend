@@ -283,10 +283,10 @@ const getAllNumbers = async () => {
   );
  */
   let total = 0;
-  for (let index = 0; index < 900; index += 50) {
+  // for (let index = 0; index < 900; index += 50) {
     request({
       method: 'GET',
-      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers`,
+      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers?page_number=16&page_size=50&page_token=PA222813ff-94f7-449a-8459-a2649d2095b4`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -297,29 +297,30 @@ const getAllNumbers = async () => {
       json: true,
     })
       .then((res) => {
+        const link = res.links;
         const numbers = res.data;
+        console.log('link', link);
         for (let i = 0; i < numbers.length; i++) {
           const number = numbers[i];
           console.log(number.number);
-          // User.updateOne(
-          //   { proxy_number: number.number },
-          //   {
-          //     $set: { proxy_number_id: number.id },
-          //   }
-          // )
-          //   .then(() => {
-          //     console.log('updated successfully', total);
-          //     total++;
-          //   })
-          //   .catch((err) => {
-          //     console.log('err field', number.number, err);
-          //   });
+          User.updateOne(
+            { proxy_number: number.number },
+            {
+              $set: { proxy_number_id: number.id },
+            }
+          )
+            .then(() => {
+              console.log('updated successfully', total);
+            })
+            .catch((err) => {
+              console.log('err field', number.number, err);
+            });
         }
       })
       .catch((err) => {
         console.log('phone number update redirect err', err);
       });
-  }
+  // }
 };
 
 const getAllId = async () => {
@@ -338,7 +339,6 @@ const getAllId = async () => {
   }
 };
 
-// getSignalwires();
+getSignalwires();
 // getAllNumbers();
-
-getAllId();
+// getAllId();

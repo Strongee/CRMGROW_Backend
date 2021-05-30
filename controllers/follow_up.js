@@ -127,7 +127,7 @@ const edit = async (req, res) => {
     const startdate = moment(req.body.due_date);
     const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, remind_at };
+    query = { ...query, remind_at, status: 0 };
   }
 
   const follow_up = await FollowUp.findOne({ _id: req.params.id }).catch(
@@ -536,7 +536,7 @@ const bulkUpdate = async (req, res) => {
     const startdate = moment(req.body.due_date);
     const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, remind_at };
+    query = { ...query, remind_at, status: 0 };
   }
 
   if (ids && ids.length) {
@@ -603,14 +603,8 @@ const bulkUpdate = async (req, res) => {
 
 const bulkCreate = async (req, res) => {
   const { currentUser } = req;
-  const {
-    contacts,
-    content,
-    due_date,
-    type,
-    set_recurrence,
-    recurrence_mode,
-  } = req.body;
+  const { contacts, content, due_date, type, set_recurrence, recurrence_mode } =
+    req.body;
 
   const garbage = await Garbage.findOne({ user: currentUser.id }).catch(
     (err) => {
@@ -693,16 +687,8 @@ const bulkCreate = async (req, res) => {
 const load = async (req, res) => {
   const { currentUser } = req;
   const { skip, pageSize, searchOption } = req.body;
-  const {
-    types,
-    status,
-    contact,
-    labels,
-    start_date,
-    end_date,
-    str,
-    sortDir,
-  } = searchOption;
+  const { types, status, contact, labels, start_date, end_date, str, sortDir } =
+    searchOption;
 
   const query = { user: currentUser._id };
 
@@ -759,16 +745,8 @@ const load = async (req, res) => {
 
 const selectAll = async (req, res) => {
   const { currentUser } = req;
-  const {
-    types,
-    status,
-    contact,
-    labels,
-    start_date,
-    end_date,
-    str,
-    sortDir,
-  } = req.body;
+  const { types, status, contact, labels, start_date, end_date, str, sortDir } =
+    req.body;
 
   const query = { user: currentUser._id };
   types && types.length ? (query.type = { $in: types }) : false;
