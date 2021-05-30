@@ -322,6 +322,7 @@ const outlookCalendarList = (calendar_data) => {
   const { client, ctz, connected_email, date, mode } = calendar_data;
   const data = [];
   const promise_array = [];
+
   return new Promise((resolve) => {
     client
       .api('/me/calendars')
@@ -351,10 +352,12 @@ const outlookCalendarList = (calendar_data) => {
                   .api(
                     `/me/calendars/${calendar.id}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`
                   )
+                  .header('Prefer', `outlook.timezone="${ctz}"`)
                   .get()
                   .catch((err) => {
                     console.log('outlook calendar events get err', err);
                   });
+
                 if (outlook_events && outlook_events.value) {
                   const recurrence_event = [];
                   const calendar_events = outlook_events.value;
@@ -469,6 +472,7 @@ const outlookCalendarList = (calendar_data) => {
                       const master_id = recurrence_event[j].id;
                       const master_event = await client
                         .api(`/me/events/${master_id}`)
+                        .header('Prefer', `outlook.timezone="${ctz}"`)
                         .get()
                         .catch((err) => {
                           console.log('outlook calendar events get err', err);
@@ -523,6 +527,7 @@ const outlookCalendarList = (calendar_data) => {
       });
   });
 };
+
 const create = async (req, res) => {
   const { currentUser } = req;
   let event_id;
@@ -1824,9 +1829,18 @@ const getEventById = async (req, res) => {
       });
     }
 
+    const ctz = currentUser.time_zone_info
+      ? JSON.parse(currentUser.time_zone_info).tz_name
+      : system_settings.TIME_ZONE;
+
     const calendar_event_id = recurrence_id || event_id;
     if (calendar.connected_calendar_type === 'outlook') {
-      await getOutlookEventById({ calendar_id, calendar_event_id, calendar })
+      await getOutlookEventById({
+        calendar_id,
+        ctz,
+        calendar_event_id,
+        calendar,
+      })
         .then(async (event) => {
           const guests = [];
 
@@ -2058,7 +2072,12 @@ const removeOutlookCalendarById = async (data) => {
 };
 
 const getOutlookEventById = async (data) => {
-  const { calendar_id, calendar_event_id: outlook_event_id, calendar } = data;
+  const {
+    calendar_id,
+    ctz,
+    calendar_event_id: outlook_event_id,
+    calendar,
+  } = data;
 
   let accessToken;
   const token = oauth2.accessToken.create({
@@ -2094,6 +2113,7 @@ const getOutlookEventById = async (data) => {
 
     const event = await client
       .api(`/me/calendars/${calendar_id}/events/${outlook_event_id}`)
+      .header('Prefer', `outlook.timezone="${ctz}"`)
       .get()
       .catch((err) => {
         console.log('remove err', err);
