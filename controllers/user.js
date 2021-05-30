@@ -45,6 +45,8 @@ const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
+const Text = require('../models/text');
+const Notification = require('../models/notification');
 const {
   create: createPayment,
   createCharge,
@@ -2359,6 +2361,8 @@ const closeAccount = async (req, res) => {
   await Reminder.deleteMany({ user: currentUser.id });
   await Tag.deleteMany({ user: currentUser.id });
   await TimeLine.deleteMany({ user: currentUser.id });
+  await Text.deleteMany({ user: currentUser.id });
+  await Notification.deleteMany({ user: currentUser.id });
 
   const data = {
     template_data: {

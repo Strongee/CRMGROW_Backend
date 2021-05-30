@@ -91,6 +91,7 @@ const getAll = async (req, res) => {
         const ctz = currentUser.time_zone_info
           ? JSON.parse(currentUser.time_zone_info).tz_name
           : system_settings.TIME_ZONE;
+
         const calendar_data = {
           client,
           ctz,
@@ -321,6 +322,8 @@ const outlookCalendarList = (calendar_data) => {
   const { client, ctz, connected_email, date, mode } = calendar_data;
   const data = [];
   const promise_array = [];
+  console.log('ctz', ctz);
+
   return new Promise((resolve) => {
     client
       .api('/me/calendars')
@@ -522,6 +525,7 @@ const outlookCalendarList = (calendar_data) => {
       });
   });
 };
+
 const create = async (req, res) => {
   const { currentUser } = req;
   let event_id;
