@@ -327,7 +327,7 @@ const outlookCalendarList = (calendar_data) => {
   return new Promise((resolve) => {
     client
       .api('/me/calendars')
-      .header('Prefer', `outlook.timezone="${ctz}"`)
+      .header('Prefer')
       .get()
       .then(async (outlook_calendars) => {
         const calendars = outlook_calendars.value;
