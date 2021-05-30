@@ -155,7 +155,7 @@ const signUp = async (req, res) => {
           const email_data = {
             template_data: {
               user_email: email,
-              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              verification_url: `${urls.VERIFY_EMAIL_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password,
@@ -378,7 +378,7 @@ const socialSignUp = async (req, res) => {
           const data = {
             template_data: {
               user_email: email,
-              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              verification_url: `${urls.VERIFY_EMAIL_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password: 'No password (use social login)',
