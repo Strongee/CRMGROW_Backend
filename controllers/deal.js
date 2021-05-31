@@ -34,8 +34,8 @@ const {
   removeGoogleCalendarById,
   removeOutlookCalendarById,
 } = require('./appointment');
-const { sendEmail } = require('../helpers/email');
-const { sendText } = require('../helpers/text');
+const { sendEmail, updateUserCount } = require('../helpers/email');
+const { sendText, updateUserTextCount } = require('../helpers/text');
 const api = require('../config/api');
 const urls = require('../constants/urls');
 const mail_contents = require('../constants/mail_contents');
@@ -1172,7 +1172,10 @@ const sendEmails = async (req, res) => {
   let newTaskId;
   let contacts = [...inputContacts];
   let contactsToTemp = [];
+
   const CHUNK_COUNT = 15;
+  const MIN_CHUNK = 5;
+  const TIME_GAPS = [1, 2, 3];
 
   if (inputContacts.length > CHUNK_COUNT) {
     const currentTasks = await Task.find({
@@ -1199,13 +1202,15 @@ const sendEmails = async (req, res) => {
     }
 
     let delay = 2;
-    for (let i = 0; i < contactsToTemp.length; i += CHUNK_COUNT) {
+    let taskIndex = 0;
+    while (taskIndex < contactsToTemp.length) {
       const due_date = moment(last_due).add(delay, 'minutes');
-      delay++;
+      const chunk =
+        Math.floor(Math.random() * (CHUNK_COUNT - MIN_CHUNK)) + MIN_CHUNK;
 
       const task = new Task({
         user: currentUser.id,
-        contacts: contactsToTemp.slice(i, i + CHUNK_COUNT),
+        contacts: contactsToTemp.slice(taskIndex, taskIndex + chunk),
         status: 'active',
         process: taskProcessId,
         type: 'send_email',
@@ -1222,6 +1227,10 @@ const sendEmails = async (req, res) => {
       if (!newTaskId) {
         newTaskId = task._id;
       }
+
+      taskIndex += chunk;
+      const timeIndex = Math.floor(Math.random() * TIME_GAPS.length);
+      delay += TIME_GAPS[timeIndex];
     }
 
     if (!contacts.length) {
@@ -1300,6 +1309,12 @@ const sendEmails = async (req, res) => {
             });
           }
         }
+
+        updateUserCount(currentUser._id, _res.length - error.length).catch(
+          (err) => {
+            console.log('Update user email count failed.', err);
+          }
+        );
 
         if (error.length > 0) {
           const connect_errors = error.filter((e) => {
@@ -1918,47 +1933,20 @@ const sendTexts = async (req, res) => {
   sendText(data)
     .then((_res) => {
       const errors = [];
-      let execResult;
+      let sentCount = 0;
       _res.forEach((e) => {
         if (!e.status && !e.type) {
           errors.push(e);
         }
-        if (e.type === 'exec_result') {
-          execResult = e;
+        if (e.isSent || e.status) {
+          sentCount++;
         }
       });
 
-      if (execResult) {
-        const { additional_credit } = currentUser.text_info;
-        if (additional_credit) {
-          User.updateOne(
-            {
-              _id: currentUser.id,
-            },
-            {
-              $set: {
-                'text_info.count': execResult.count,
-                'text_info.additional_credit.amount':
-                  execResult.additional_sms_credit,
-              },
-            }
-          ).catch((err) => {
-            console.log('user sms count updaet error: ', err);
-          });
-        } else {
-          User.updateOne(
-            {
-              _id: currentUser.id,
-            },
-            {
-              $set: {
-                'text_info.count': execResult.count,
-              },
-            }
-          ).catch((err) => {
-            console.log('user sms count updaet error: ', err);
-          });
-        }
+      if (sentCount) {
+        updateUserTextCount(currentUser._id, sentCount).catch((err) => {
+          console.log('update user text info is failed.', err);
+        });
       }
 
       if (errors.length > 0) {

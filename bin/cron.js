@@ -1782,6 +1782,13 @@ const task_check = new CronJob(
                     succeedContactIds.push(_res.contact._id);
                   }
                 });
+                // Update tasks
+                EmailHelper.updateUserCount(
+                  timeline.user,
+                  res.length - errors.length
+                ).catch((err) => {
+                  console.log('Update user email count failed.', err);
+                });
                 // Checking the same process tasks, if same doesn't exist, remove all tasks
                 const anotherProcessTasks = await Task.find({
                   process: timeline.process,
@@ -2230,6 +2237,11 @@ const task_check = new CronJob(
                   }).catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
+                  TextHelper.updateUserTextCount(timeline.user, 1).catch(
+                    (err) => {
+                      console.log('update user text info is failed.', err);
+                    }
+                  );
                 } else {
                   console.log('resend text video(unwatched case) is failed');
                   Task.updateOne(
@@ -2308,6 +2320,11 @@ const task_check = new CronJob(
                   }).catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
+                  TextHelper.updateUserTextCount(timeline.user, 1).catch(
+                    (err) => {
+                      console.log('update user text info is failed.', err);
+                    }
+                  );
                 } else {
                   console.log('resend text video(unwatched case) is failed');
                   Task.updateOne(

@@ -4081,7 +4081,26 @@ const sendEmail = async (data) => {
       promise_array.push(promise);
     }
   }
+
   return Promise.all(promise_array);
+};
+
+const updateUserCount = (userId, count) => {
+  const newPromise = new Promise(async (resolve, reject) => {
+    const user = await User.findOne({ _id: userId }).catch((err) => {
+      reject({ message: 'not_found_user' });
+    });
+    if (user['email_info'] && count) {
+      user['email_info']['count'] += count;
+      user.save().catch((err) => {
+        console.log('current user email count update is failed.', err);
+      });
+      resolve({ status: true });
+    } else {
+      reject({ message: 'not_found_email_info' });
+    }
+  });
+  return newPromise;
 };
 
 const sendNotificationEmail = async (data) => {
@@ -4126,4 +4145,5 @@ module.exports = {
   generateOpenTrackLink,
   revertEmailing,
   handleSuccessEmailing,
+  updateUserCount,
 };
