@@ -127,7 +127,7 @@ const edit = async (req, res) => {
     const startdate = moment(req.body.due_date);
     const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, remind_at };
+    query = { ...query, remind_at, status: 0 };
   }
 
   const follow_up = await FollowUp.findOne({ _id: req.params.id }).catch(
@@ -536,7 +536,7 @@ const bulkUpdate = async (req, res) => {
     const startdate = moment(req.body.due_date);
     const remind_at = startdate.subtract(reminder_before, 'minutes');
 
-    query = { ...query, remind_at };
+    query = { ...query, remind_at, status: 0 };
   }
 
   if (ids && ids.length) {

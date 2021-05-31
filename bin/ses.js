@@ -10,7 +10,7 @@ AWS.config.update({
   region: api.AWS.AWS_SES_REGION,
 });
 
-const templateName = 'TaskReminder';
+const templateName = 'PaymentFailed';
 const subjects = {
   TaskReminder: `CRMGrow task reminder: {{contact_name}} at {{due_start}}`,
   TeamCallRequest: `CRMGROW team member call join request: {{user_name}}`,
@@ -26,6 +26,7 @@ const subjects = {
   VideoWatched: 'CRMGrow video watched: {{contact_name}} at {{created_at}}',
   EmailOpened: `Opened email: {{contact_name}} at {{created_at}}`,
   PaymentNotification: 'CRMGrow payment notification',
+  PaymentFailed: 'CRMGrow payment failed notification',
   CancelAccount: 'CRMGrow cancel notification',
   ShareContact: 'CRMGrow share contact notification',
   TeamInvitation: `You've been invited to join team {{team_name}} in CRMGrow`,

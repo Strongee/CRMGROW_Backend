@@ -72,6 +72,8 @@ const bulkEmail = async (req, res) => {
   } = req.body;
 
   const CHUNK_COUNT = 15;
+  const MIN_CHUNK = 5;
+  const TIME_GAPS = [1, 2, 3];
 
   const max_email_count =
     currentUser['email_info']['max_count'] ||
@@ -123,13 +125,15 @@ const bulkEmail = async (req, res) => {
     }
 
     let delay = 2;
-    for (let i = 0; i < contactsToTemp.length; i += CHUNK_COUNT) {
+    let taskIndex = 0;
+    while (taskIndex < contactsToTemp.length) {
       const due_date = moment(last_due).add(delay, 'minutes');
-      delay++;
+      const chunk =
+        Math.floor(Math.random() * (CHUNK_COUNT - MIN_CHUNK)) + MIN_CHUNK;
 
       const task = new Task({
         user: currentUser.id,
-        contacts: contactsToTemp.slice(i, i + CHUNK_COUNT),
+        contacts: contactsToTemp.slice(taskIndex, taskIndex + chunk),
         status: 'active',
         process: taskProcessId,
         type: 'send_email',
@@ -146,12 +150,16 @@ const bulkEmail = async (req, res) => {
       if (!newTaskId) {
         newTaskId = task._id;
       }
+
+      taskIndex += chunk;
+      const timeIndex = Math.floor(Math.random() * TIME_GAPS.length);
+      delay += TIME_GAPS[timeIndex];
     }
 
     if (!contacts.length) {
       return res.send({
         status: true,
-        message: 'All are in queue.',
+        message: 'all_queue',
       });
     }
   }
@@ -237,6 +245,13 @@ const bulkEmail = async (req, res) => {
             });
           }
         }
+
+        EmailHelper.updateUserCount(
+          currentUser._id,
+          result.length - error.length
+        ).catch((err) => {
+          console.log('Update user email count failed.', err);
+        });
 
         if (error.length > 0) {
           const connect_errors = error.filter((e) => {
@@ -351,47 +366,22 @@ const bulkText = async (req, res) => {
   })
     .then((_res) => {
       const errors = [];
-      let execResult;
+      let sentCount = 0;
       _res.forEach((e) => {
         if (!e.status && !e.type) {
           errors.push(e);
         }
-        if (e.type === 'exec_result') {
-          execResult = e;
+        if (e.isSent || e.status) {
+          sentCount++;
         }
       });
 
-      if (execResult) {
-        const { additional_credit } = currentUser.text_info;
-        if (additional_credit) {
-          User.updateOne(
-            {
-              _id: currentUser.id,
-            },
-            {
-              $set: {
-                'text_info.count': execResult.count,
-                'text_info.additional_credit.amount':
-                  execResult.additional_sms_credit,
-              },
-            }
-          ).catch((err) => {
-            console.log('user sms count updaet error: ', err);
-          });
-        } else {
-          User.updateOne(
-            {
-              _id: currentUser.id,
-            },
-            {
-              $set: {
-                'text_info.count': execResult.count,
-              },
-            }
-          ).catch((err) => {
-            console.log('user sms count updaet error: ', err);
-          });
-        }
+      if (sentCount) {
+        TextHelper.updateUserTextCount(currentUser._id, sentCount).catch(
+          (err) => {
+            console.log('update user text info is failed.', err);
+          }
+        );
       }
 
       if (errors.length > 0) {

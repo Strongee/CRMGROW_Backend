@@ -7,7 +7,6 @@ const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
 const phone = require('phone');
 const webpush = require('web-push');
-const sharp = require('sharp');
 const child_process = require('child_process');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
@@ -30,6 +29,7 @@ const TimeLine = require('../models/time_line');
 const Garbage = require('../models/garbage');
 const CampaignJob = require('../models/campaign_job');
 const EmailTemplate = require('../models/email_template');
+const Payment = require('../models/payment');
 const Text = require('../models/text');
 const Task = require('../models/task');
 const TimeLineCtrl = require('../controllers/time_line');
@@ -735,50 +735,40 @@ const signup_job = new CronJob(
 const payment_check = new CronJob(
   '0 21 */3 * *',
   async () => {
-    sgMail.setApiKey(api.SENDGRID.SENDGRID_KEY);
-
-    const payment_notification = await Notification.findOne({
-      type: 'urgent',
-      criteria: 'subscription_failed',
+    const subscribers = await User.find({
+      'subscription.is_failed': true,
+      del: false,
     }).catch((err) => {
-      console.log('err', err);
+      console.log('err', err.messsage);
     });
 
-    if (payment_notification) {
-      const subscribers = await User.find({
-        'subscription.is_failed': true,
-        del: false,
-      }).catch((err) => {
-        console.log('err', err.messsage);
-      });
+    if (subscribers && subscribers.length > 0) {
+      for (let i = 0; i < subscribers.length; i++) {
+        const user = subscribers[i];
 
-      if (subscribers) {
-        for (let i = 0; i < subscribers.length; i++) {
-          const subscriber = subscribers[i];
+        const time_zone = user.time_zone_info
+          ? JSON.parse(user.time_zone_info).tz_name
+          : system_settings.TIME_ZONE;
 
-          const msg = {
-            to: subscriber.email,
-            from: mail_contents.SUPPORT_CRMGROW.MAIL,
-            templateId: api.SENDGRID.SENDGRID_SYSTEM_NOTIFICATION,
-            dynamic_template_data: {
-              first_name: subscriber.user_name,
-              content: payment_notification['content'],
-            },
-          };
-          sgMail
-            .send(msg)
-            .then((res) => {
-              console.log('mailres.errorcode', res[0].statusCode);
-              if (res[0].statusCode >= 200 && res[0].statusCode < 400) {
-                console.log('Successful send to ' + msg.to);
-              } else {
-                console.log('email sending err', msg.to + res[0].statusCode);
-              }
-            })
-            .catch((err) => {
-              console.log('err', err);
-            });
-        }
+        const payment = await Payment.findOne({ _id: user.payment }).catch(
+          (err) => {
+            console.log('payment find err', err.message);
+          }
+        );
+
+        const data = {
+          template_data: {
+            user_name: user.user_name,
+            created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
+            amount: payment.bill_amount || 29,
+            last_4_cc: payment.last4 || 'Unknown',
+          },
+          template_name: 'PaymentFailed',
+          required_reply: true,
+          email: user.email,
+        };
+
+        sendNotificationEmail(data);
       }
     }
   },
@@ -1588,65 +1578,58 @@ const timesheet_check = new CronJob(
                   content = action.content;
                   update_data = { ...update_data, content };
                 }
+
+                if (follow_due_date) {
+                  const garbage = await Garbage.findOne({
+                    user: timeline.user,
+                  }).catch((err) => {
+                    console.log('err', err.message);
+                  });
+                  let reminder_before = 30;
+                  if (garbage) {
+                    reminder_before = garbage.reminder_before;
+                  }
+                  const startdate = moment(follow_due_date);
+                  const remind_at = startdate.subtract(reminder_before, 'mins');
+
+                  update_data = {
+                    ...update_data,
+                    remind_at,
+                    status: 0,
+                  };
+                }
+
                 FollowUp.updateOne(
                   {
                     _id: action.follow_up,
                   },
                   update_data
                 )
-                  .then(async () => {
-                    if (follow_due_date) {
-                      const garbage = await Garbage.findOne({
-                        user: timeline.user,
-                      }).catch((err) => {
-                        console.log('err', err.message);
-                      });
-                      let reminder_before = 30;
-                      if (garbage) {
-                        reminder_before = garbage.reminder_before;
-                      }
-                      const startdate = moment(follow_due_date);
-                      const reminder_due_date = startdate.subtract(
-                        reminder_before,
-                        'mins'
-                      );
+                  .then(() => {
+                    let detail_content = 'updated task';
+                    detail_content =
+                      ActivityHelper.automationLog(detail_content);
+                    const activity = new Activity({
+                      content: detail_content,
+                      contacts: timeline.contact,
+                      user: timeline.user,
+                      type: 'follow_ups',
+                      follow_ups: action.follow_up,
+                    });
 
-                      Reminder.updateOne(
-                        {
-                          follow_up: action.follow_up,
-                        },
-                        {
-                          due_date: reminder_due_date,
-                        }
-                      ).catch((err) => {
-                        console.log('reminder delete err', err.message);
-                      });
-
-                      let detail_content = 'updated task';
-                      detail_content =
-                        ActivityHelper.automationLog(detail_content);
-                      const activity = new Activity({
-                        content: detail_content,
-                        contacts: timeline.contact,
-                        user: timeline.user,
-                        type: 'follow_ups',
-                        follow_ups: action.follow_up,
-                      });
-
-                      activity
-                        .save()
-                        .then((_activity) => {
-                          Contact.updateOne(
-                            { _id: timeline.contact },
-                            { $set: { last_activity: _activity.id } }
-                          ).catch((err) => {
-                            console.log('contact update err', err.message);
-                          });
-                        })
-                        .catch((err) => {
-                          console.log('follow error', err.message);
+                    activity
+                      .save()
+                      .then((_activity) => {
+                        Contact.updateOne(
+                          { _id: timeline.contact },
+                          { $set: { last_activity: _activity.id } }
+                        ).catch((err) => {
+                          console.log('contact update err', err.message);
                         });
-                    }
+                      })
+                      .catch((err) => {
+                        console.log('follow error', err.message);
+                      });
                   })
                   .catch((err) => {
                     console.log('update task cron err', err.message);
@@ -1663,12 +1646,6 @@ const timesheet_check = new CronJob(
                   }
                 )
                   .then(() => {
-                    Reminder.deleteOne({
-                      follow_up: action.follow_up,
-                    }).catch((err) => {
-                      console.log('reminder delete err', err.message);
-                    });
-
                     let detail_content = 'completed task';
                     detail_content =
                       ActivityHelper.automationLog(detail_content);
@@ -1781,6 +1758,13 @@ const task_check = new CronJob(
                   } else {
                     succeedContactIds.push(_res.contact._id);
                   }
+                });
+                // Update tasks
+                EmailHelper.updateUserCount(
+                  timeline.user,
+                  res.length - errors.length
+                ).catch((err) => {
+                  console.log('Update user email count failed.', err);
                 });
                 // Checking the same process tasks, if same doesn't exist, remove all tasks
                 const anotherProcessTasks = await Task.find({
@@ -2230,6 +2214,11 @@ const task_check = new CronJob(
                   }).catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
+                  TextHelper.updateUserTextCount(timeline.user, 1).catch(
+                    (err) => {
+                      console.log('update user text info is failed.', err);
+                    }
+                  );
                 } else {
                   console.log('resend text video(unwatched case) is failed');
                   Task.updateOne(
@@ -2308,6 +2297,11 @@ const task_check = new CronJob(
                   }).catch((err) => {
                     console.log('timeline remove err', err.message);
                   });
+                  TextHelper.updateUserTextCount(timeline.user, 1).catch(
+                    (err) => {
+                      console.log('update user text info is failed.', err);
+                    }
+                  );
                 } else {
                   console.log('resend text video(unwatched case) is failed');
                   Task.updateOne(

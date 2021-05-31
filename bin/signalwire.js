@@ -4,6 +4,7 @@ const { ENV_PATH } = require('../config/path');
 require('dotenv').config({ path: ENV_PATH });
 const api = require('../config/api');
 const TextHelper = require('../helpers/text');
+const urls = require('../constants/urls');
 const { timeInterval } = require('rxjs/operators');
 
 const mongoose = require('mongoose');
@@ -241,7 +242,103 @@ const getSignalwires = async () => {
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
     console.log('user********', user.proxy_number_id);
+    if (user.proxy_number_id) {
+      request({
+        method: 'PUT',
+        uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers/${user.proxy_number_id}`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        auth: {
+          user: api.SIGNALWIRE.PROJECT_ID,
+          password: api.SIGNALWIRE.TOKEN,
+        },
+        body: {
+          name: user.user_name,
+          message_request_url: urls.SMS_RECEIVE_URL1,
+        },
+        json: true,
+      })
+        .then(() => {
+          console.log('number succesfully');
+        })
+        .catch((err) => {
+          console.log('phone number update redirect err', err);
+        });
+    }
+  }
+};
+
+const getAllNumbers = async () => {
+  /**
+  const client = new RestClient(
+    api.SIGNALWIRE.PROJECT_ID,
+    api.SIGNALWIRE.TOKEN,
+    { signalwireSpaceUrl: api.SIGNALWIRE.WORKSPACE }
+  );
+
+  console.log('client.incomingPhoneNumbers', client.incomingPhoneNumbers);
+  client.incomingPhoneNumbers.each((incomingPhoneNumbers) =>
+    console.log(incomingPhoneNumbers.sid, incomingPhoneNumbers.phone_number)
+  );
+ */
+  let total = 0;
+  // for (let index = 0; index < 900; index += 50) {
+    request({
+      method: 'GET',
+      uri: `${api.SIGNALWIRE.WORKSPACE}/api/relay/rest/phone_numbers?page_number=16&page_size=50&page_token=PA222813ff-94f7-449a-8459-a2649d2095b4`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        user: api.SIGNALWIRE.PROJECT_ID,
+        password: api.SIGNALWIRE.TOKEN,
+      },
+      json: true,
+    })
+      .then((res) => {
+        const link = res.links;
+        const numbers = res.data;
+        console.log('link', link);
+        for (let i = 0; i < numbers.length; i++) {
+          const number = numbers[i];
+          console.log(number.number);
+          User.updateOne(
+            { proxy_number: number.number },
+            {
+              $set: { proxy_number_id: number.id },
+            }
+          )
+            .then(() => {
+              console.log('updated successfully', total);
+            })
+            .catch((err) => {
+              console.log('err field', number.number, err);
+            });
+        }
+      })
+      .catch((err) => {
+        console.log('phone number update redirect err', err);
+      });
+  // }
+};
+
+const getAllId = async () => {
+  const users = await User.find({
+    del: false,
+  }).catch((err) => {
+    console.log('users find err', err.message);
+  });
+
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].proxy_number) {
+      if (!users[i].proxy_number_id) {
+        console.log(users[i].proxy_number);
+      }
+    }
   }
 };
 
 getSignalwires();
+// getAllNumbers();
+// getAllId();

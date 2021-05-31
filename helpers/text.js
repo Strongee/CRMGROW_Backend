@@ -1195,7 +1195,7 @@ const sendText = async (data) => {
 
   const text_info = currentUser.text_info;
   let count = text_info.count || 0;
-  let additional_sms_credit = 0;
+  const additional_sms_credit = text_info.additional_credit ? text_info.additional_credit.amount || 0 : 0;
 
   const garbage = await Garbage.findOne({
     user: currentUser.id,
@@ -1226,11 +1226,45 @@ const sendText = async (data) => {
 
     const _contact = await Contact.findOne({ _id: contacts[i] }).catch(
       (err) => {
-        console.log('contact update err', err.messgae);
+        console.log('contact update err', err.message);
       }
     );
 
     let promise;
+
+    if (!_contact) {
+      promise = new Promise((resolve) => {
+        resolve({
+          status: false,
+          contact: {
+            _id: contacts[i],
+          },
+          error: 'Contact was removed.',
+          type: 'not_found_contact',
+        });
+      });
+
+      promise_array.push(promise);
+      continue;
+    }
+
+    if (_contact.tags.indexOf('unsubscribed') !== -1) {
+      promise = new Promise((resolve) => {
+        resolve({
+          status: false,
+          contact: {
+            _id: contacts[i],
+            first_name: _contact.first_name,
+            email: _contact.email,
+          },
+          error: 'contact email unsubscribed',
+          type: 'unsubscribed_contact',
+        });
+      });
+
+      promise_array.push(promise);
+      continue;
+    }
 
     if (!text_info['is_enabled']) {
       promise = new Promise(async (resolve) => {
@@ -1424,7 +1458,7 @@ const sendText = async (data) => {
     }
 
     if (image_ids && image_ids.length > 0) {
-      let activity_content = 'sent image using email';
+      let activity_content = 'sent image using sms';
 
       switch (mode) {
         case 'automation':
@@ -1527,11 +1561,11 @@ const sendText = async (data) => {
             body,
           })
           .then((message) => {
-            if (text_info['is_limit'] && max_text_count <= count) {
-              additional_sms_credit -= 1;
-            } else {
-              count += 1;
-            }
+            // if (text_info['is_limit'] && max_text_count <= count) {
+            //   additional_sms_credit -= 1;
+            // } else {
+            //   count += 1;
+            // }
             if (message.status === 'queued' || message.status === 'sent') {
               console.log('Message ID: ', message.sid);
               console.info(
@@ -1593,6 +1627,7 @@ const sendText = async (data) => {
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
+                        isSent: true,
                       });
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
@@ -1610,6 +1645,7 @@ const sendText = async (data) => {
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
+                        isSent: true,
                       });
                     }
                   });
@@ -1647,6 +1683,7 @@ const sendText = async (data) => {
                   cell_phone: _contact.cell_phone,
                 },
                 error: message.error_message || 'message response is lost',
+                isSent: true,
               });
             }
           })
@@ -1679,11 +1716,11 @@ const sendText = async (data) => {
             to: e164Phone,
           })
           .then((message) => {
-            if (text_info['is_limit'] && max_text_count <= count) {
-              additional_sms_credit -= 1;
-            } else {
-              count += 1;
-            }
+            // if (text_info['is_limit'] && max_text_count <= count) {
+            //   additional_sms_credit -= 1;
+            // } else {
+            //   count += 1;
+            // }
 
             if (
               message.status === 'accepted' ||
@@ -1751,6 +1788,7 @@ const sendText = async (data) => {
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
+                        isSent: true,
                       });
                     } else if (res.status === 'undelivered') {
                       clearInterval(interval_id);
@@ -1768,6 +1806,7 @@ const sendText = async (data) => {
                           cell_phone: _contact.cell_phone,
                         },
                         error: message.error_message,
+                        isSent: true,
                       });
                     }
                   });
@@ -1802,6 +1841,7 @@ const sendText = async (data) => {
                   cell_phone: _contact.cell_phone,
                 },
                 error: message.error_message || 'message response is lost',
+                isSent: true,
               });
             }
           })
@@ -1823,18 +1863,10 @@ const sendText = async (data) => {
           });
       });
     }
+    count++;
     promise_array.push(promise);
   }
 
-  promise_array.push(
-    new Promise((resolve) => {
-      resolve({
-        type: 'exec_result',
-        count,
-        additional_sms_credit,
-      });
-    })
-  );
   return Promise.all(promise_array);
 };
 
@@ -1983,6 +2015,63 @@ const createTextCheckTasks = (
   });
 };
 
+const updateUserTextCount = (userId, count) => {
+  const newPromise = new Promise(async (resolve, reject) => {
+    const user = await User.findOne({ _id: userId }).catch((err) => {
+      reject({ message: 'not_found_user' });
+    });
+    const text_info = user.text_info;
+    if (!text_info) {
+      reject({ messsage: 'invalid_user_text_info' });
+    }
+    const max_text_count =
+      text_info.max_count || system_settings.TEXT_MONTHLY_LIMIT.PRO;
+    const current_count = text_info.count || 0;
+    if (text_info['is_limit'] && max_text_count < current_count + count) {
+      // Current Count Setting
+      const updatedCount = max_text_count;
+      // Additional SMS Setting
+      let additional_sms_credit =
+        text_info.additional_credit.amount -
+        (current_count + count - max_text_count);
+      if (additional_sms_credit < 0) {
+        additional_sms_credit = 0;
+      }
+
+      User.updateOne(
+        {
+          _id: user.id,
+        },
+        {
+          $set: {
+            'text_info.count': updatedCount,
+            'text_info.additional_credit.amount': additional_sms_credit,
+          },
+        }
+      ).catch((err) => {
+        console.log('user sms count updaet error: ', err);
+      });
+    } else {
+      const updatedCount = current_count + count;
+
+      User.updateOne(
+        {
+          _id: user.id,
+        },
+        {
+          $set: {
+            'text_info.count': updatedCount,
+          },
+        }
+      ).catch((err) => {
+        console.log('user sms count updaet error: ', err);
+      });
+    }
+    resolve({ status: true });
+  });
+  return newPromise;
+};
+
 module.exports = {
   sendText,
   bulkVideo,
@@ -1999,4 +2088,5 @@ module.exports = {
   sleep,
   handleDeliveredText,
   handleFailedText,
+  updateUserTextCount,
 };
