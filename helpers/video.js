@@ -7,6 +7,7 @@ const api = require('../config/api');
 const Video = require('../models/video');
 const Garbage = require('../models/garbage');
 const Team = require('../models/team');
+const { emptyBucket } = require('../controllers/material');
 
 const {
   VIDEO_CONVERT_LOG_PATH,
@@ -400,15 +401,36 @@ const removeVideo = async (user) => {
     } else {
       const url = video.url;
       if (url.indexOf('teamgrow.s3') > 0) {
-        s3.deleteObject(
-          {
-            Bucket: api.AWS.AWS_S3_BUCKET_NAME,
-            Key: url.slice(44),
-          },
-          function (err, data) {
-            console.log('err', err);
-          }
-        );
+        if (video['bucket']) {
+          s3.deleteObject(
+            {
+              Bucket: video['bucket'],
+              Key: 'transcoded/' + video['key'] + '.mp4',
+            },
+            function (err, data) {
+              console.log('transcoded video removing error', err);
+            }
+          );
+          emptyBucket(
+            video['bucket'],
+            'streamd/' + video['key'] + '/',
+            (err) => {
+              if (err) {
+                console.log('Removing files error in bucket');
+              }
+            }
+          );
+        } else {
+          s3.deleteObject(
+            {
+              Bucket: api.AWS.AWS_S3_BUCKET_NAME,
+              Key: url.slice(44),
+            },
+            function (err, data) {
+              console.log('err', err);
+            }
+          );
+        }
       } else {
         try {
           const file_path = video.path;
