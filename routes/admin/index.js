@@ -14,6 +14,7 @@ const video_tracker = require('./video_tracker');
 const pdf = require('./pdf');
 const pdf_tracker = require('./pdf_tracker');
 const payment = require('./payment');
+const commission = require('./commission');
 const UserCtrl = require('../../controllers/user');
 
 const router = express.Router();
@@ -33,4 +34,5 @@ router.use('/vtrack', video_tracker);
 router.use('/pdf', pdf);
 router.use('/ptrack', pdf_tracker);
 router.use('/payment', payment);
+router.use('/commission', commission);
 module.exports = router;

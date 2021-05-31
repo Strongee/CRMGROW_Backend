@@ -1,6 +1,7 @@
 const api = require('../config/api');
 const affiliateHelper = require('../helpers/affiliate');
 const request = require('request-promise');
+const User = require('../models/user');
 
 const get = async (req, res) => {
   const { currentUser } = req;
@@ -75,6 +76,46 @@ const getAll = async (req, res) => {
       error: `Can't find affilate id`,
     });
   }
+}
+
+const getAllByMLM = async (req, res) => {
+  const { currentUser } = req;
+  if (currentUser.affiliate && currentUser.affiliate.id) {
+    const affiliate_id = currentUser.affiliate.id;
+    const referrals = await affiliateHelper.getReferrals(affiliate_id, 1);
+    const charge = await affiliateHelper.charge(referrals);
+    res.status(200).json({
+      status: true,
+      data: referrals,
+    });
+  } else {
+    res.status(400).json({
+      status: false,
+      error: `Can't find affilate id`,
+    });
+  }
+};
+
+const getCharge = async (req, res) => {
+  const { currentUser } = req;
+  const users = await User.find({
+    $and: [
+      { del: false },
+      { is_trial: false },
+      { 'subscription.is_failed': false },
+      { 'subscription.is_suspended': false },
+    ],
+  });
+  for (let i = 0; i < users.length; i++) {
+    var user = JSON.parse(JSON.stringify(users[i]));
+    const referrals = await affiliateHelper.getReferrals(user.affiliate.id, 1);
+    const charge = await affiliateHelper.charge(referrals);
+    user.charge = charge;
+  }
+  res.send({
+    status: true,
+    data: users,
+  });
 };
 
 const create = async (req, res) => {
@@ -170,23 +211,6 @@ const update = async (req, res) => {
     });
   }
 };
-const getAllByMLM = async (req, res) => {
-  const { currentUser } = req;
-  if (currentUser.affiliate && currentUser.affiliate.id) {
-    const affiliate_id = currentUser.affiliate.id;
-    const referrals = await affiliateHelper.getReferrals(affiliate_id, 1);
-    const charge = await affiliateHelper.charge(referrals);
-    res.status(200).json({
-      status: true,
-      data: referrals,
-    });
-  } else {
-    res.status(400).json({
-      status: false,
-      error: `Can't find affilate id`,
-    });
-  }
-};
 
 module.exports = {
   get,
@@ -194,4 +218,5 @@ module.exports = {
   create,
   update,
   getAllByMLM,
+  getCharge,
 };

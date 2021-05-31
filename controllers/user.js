@@ -96,6 +96,7 @@ const signUp = async (req, res) => {
   }
 
   const { user_name, email, token, referral, is_trial } = req.body;
+  console.log(referral);
   const level = req.body.level || system_settings.DEFAULT_PACKAGE;
 
   const payment_data = {
