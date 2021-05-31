@@ -73,5 +73,16 @@ const data = {
   cc: 'super@crmgrow.com',
 };
 
+const data1 = {
+  template_data: {
+    user_name: 'Garrett Steve',
+    created_at: moment().tz('America/Cancun').format('h:mm MMMM Do, YYYY'),
+    amount: 29,
+    last_4_cc: 1234,
+  },
+  template_name: 'PaymentFailed',
+  required_reply: true,
+  email: 'super@crmgrow.com',
+};
 // sendWelcomeEmail(data);
-sendNotificationEmail(data);
+sendNotificationEmail(data1);

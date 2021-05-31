@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const DraftSchema = new Schema(
   {
-    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     content: String,
     subject: String,
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'contact' },
