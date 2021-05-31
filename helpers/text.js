@@ -1195,7 +1195,7 @@ const sendText = async (data) => {
 
   const text_info = currentUser.text_info;
   let count = text_info.count || 0;
-  let additional_sms_credit = 0;
+  const additional_sms_credit = text_info.additional_credit ? text_info.additional_credit.amount || 0 : 0;
 
   const garbage = await Garbage.findOne({
     user: currentUser.id,
