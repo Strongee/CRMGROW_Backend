@@ -45,6 +45,8 @@ const FollowUp = require('../models/follow_up');
 const Payment = require('../models/payment');
 const Appointment = require('../models/appointment');
 const Contact = require('../models/contact');
+const Text = require('../models/text');
+const Notification = require('../models/notification');
 const {
   create: createPayment,
   createCharge,
@@ -155,7 +157,7 @@ const signUp = async (req, res) => {
           const email_data = {
             template_data: {
               user_email: email,
-              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              verification_url: `${urls.VERIFY_EMAIL_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password,
@@ -378,7 +380,7 @@ const socialSignUp = async (req, res) => {
           const data = {
             template_data: {
               user_email: email,
-              verification_url: `${urls.DOMAIN_URL}?id=${_res.id}`,
+              verification_url: `${urls.VERIFY_EMAIL_URL}?id=${_res.id}`,
               user_name: _res.user_name,
               created_at: moment().tz(time_zone).format('h:mm MMMM Do, YYYY'),
               password: 'No password (use social login)',
@@ -2359,6 +2361,8 @@ const closeAccount = async (req, res) => {
   await Reminder.deleteMany({ user: currentUser.id });
   await Tag.deleteMany({ user: currentUser.id });
   await TimeLine.deleteMany({ user: currentUser.id });
+  await Text.deleteMany({ user: currentUser.id });
+  await Notification.deleteMany({ user: currentUser.id });
 
   const data = {
     template_data: {
@@ -2813,7 +2817,7 @@ const schedulePaidDemo = async (req, res) => {
 
 const sendWelcomeEmail = async (data) => {
   const { id, email, user_name, password, time_zone } = data;
-  const verification_url = `${urls.VERIFY_EMAIL_URL}/${id}`;
+  const verification_url = `${urls.VERIFY_EMAIL_URL}?id=${id}`;
   const templatedData = {
     user_name,
     verification_url,
@@ -2837,8 +2841,6 @@ const sendWelcomeEmail = async (data) => {
     Template: 'Welcome',
     TemplateData: JSON.stringify(templatedData),
   };
-
-  // Create the promise and SES service object
 
   ses.sendTemplatedEmail(params).promise();
 };

@@ -1588,65 +1588,58 @@ const timesheet_check = new CronJob(
                   content = action.content;
                   update_data = { ...update_data, content };
                 }
+
+                if (follow_due_date) {
+                  const garbage = await Garbage.findOne({
+                    user: timeline.user,
+                  }).catch((err) => {
+                    console.log('err', err.message);
+                  });
+                  let reminder_before = 30;
+                  if (garbage) {
+                    reminder_before = garbage.reminder_before;
+                  }
+                  const startdate = moment(follow_due_date);
+                  const remind_at = startdate.subtract(reminder_before, 'mins');
+
+                  update_data = {
+                    ...update_data,
+                    remind_at,
+                    status: 0,
+                  };
+                }
+
                 FollowUp.updateOne(
                   {
                     _id: action.follow_up,
                   },
                   update_data
                 )
-                  .then(async () => {
-                    if (follow_due_date) {
-                      const garbage = await Garbage.findOne({
-                        user: timeline.user,
-                      }).catch((err) => {
-                        console.log('err', err.message);
-                      });
-                      let reminder_before = 30;
-                      if (garbage) {
-                        reminder_before = garbage.reminder_before;
-                      }
-                      const startdate = moment(follow_due_date);
-                      const reminder_due_date = startdate.subtract(
-                        reminder_before,
-                        'mins'
-                      );
+                  .then(() => {
+                    let detail_content = 'updated task';
+                    detail_content =
+                      ActivityHelper.automationLog(detail_content);
+                    const activity = new Activity({
+                      content: detail_content,
+                      contacts: timeline.contact,
+                      user: timeline.user,
+                      type: 'follow_ups',
+                      follow_ups: action.follow_up,
+                    });
 
-                      Reminder.updateOne(
-                        {
-                          follow_up: action.follow_up,
-                        },
-                        {
-                          due_date: reminder_due_date,
-                        }
-                      ).catch((err) => {
-                        console.log('reminder delete err', err.message);
-                      });
-
-                      let detail_content = 'updated task';
-                      detail_content =
-                        ActivityHelper.automationLog(detail_content);
-                      const activity = new Activity({
-                        content: detail_content,
-                        contacts: timeline.contact,
-                        user: timeline.user,
-                        type: 'follow_ups',
-                        follow_ups: action.follow_up,
-                      });
-
-                      activity
-                        .save()
-                        .then((_activity) => {
-                          Contact.updateOne(
-                            { _id: timeline.contact },
-                            { $set: { last_activity: _activity.id } }
-                          ).catch((err) => {
-                            console.log('contact update err', err.message);
-                          });
-                        })
-                        .catch((err) => {
-                          console.log('follow error', err.message);
+                    activity
+                      .save()
+                      .then((_activity) => {
+                        Contact.updateOne(
+                          { _id: timeline.contact },
+                          { $set: { last_activity: _activity.id } }
+                        ).catch((err) => {
+                          console.log('contact update err', err.message);
                         });
-                    }
+                      })
+                      .catch((err) => {
+                        console.log('follow error', err.message);
+                      });
                   })
                   .catch((err) => {
                     console.log('update task cron err', err.message);
@@ -1663,12 +1656,6 @@ const timesheet_check = new CronJob(
                   }
                 )
                   .then(() => {
-                    Reminder.deleteOne({
-                      follow_up: action.follow_up,
-                    }).catch((err) => {
-                      console.log('reminder delete err', err.message);
-                    });
-
                     let detail_content = 'completed task';
                     detail_content =
                       ActivityHelper.automationLog(detail_content);

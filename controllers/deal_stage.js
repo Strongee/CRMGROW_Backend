@@ -241,6 +241,20 @@ const getEasyLoad = async (req, res) => {
   });
 };
 
+const getStageWithContact = async (req, res) => {
+  const { currentUser } = req;
+  const deal_stage = await DealStage.find({ user: currentUser.id })
+    .sort({
+      priority: 1,
+    })
+    .populate('deals', 'contacts');
+
+  return res.send({
+    status: true,
+    data: deal_stage,
+  });
+};
+
 module.exports = {
   init,
   getAll,
@@ -250,4 +264,5 @@ module.exports = {
   edit,
   changeOrder,
   getStages,
+  getStageWithContact,
 };
