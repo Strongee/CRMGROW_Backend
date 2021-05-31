@@ -20,6 +20,7 @@ const GarbageSchema = new Schema(
     desktop_notification: {
       material: { type: Boolean, default: false },
       email: { type: Boolean, default: false },
+      link_clicked: { type: Boolean, default: false },
       follow_up: { type: Boolean, default: false },
       lead_capture: { type: Boolean, default: false },
       unsubscription: { type: Boolean, default: false },
@@ -28,6 +29,7 @@ const GarbageSchema = new Schema(
     email_notification: {
       material: { type: Boolean, default: true },
       email: { type: Boolean, default: true },
+      link_clicked: { type: Boolean, default: false },
       follow_up: { type: Boolean, default: true },
       lead_capture: { type: Boolean, default: false },
       unsubscription: { type: Boolean, default: true },
@@ -36,6 +38,7 @@ const GarbageSchema = new Schema(
     text_notification: {
       material: { type: Boolean, default: true },
       email: { type: Boolean, default: false },
+      link_clicked: { type: Boolean, default: false },
       follow_up: { type: Boolean, default: false },
       lead_capture: { type: Boolean, default: false },
       unsubscription: { type: Boolean, default: false },
