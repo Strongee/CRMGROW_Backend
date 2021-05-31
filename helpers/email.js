@@ -4128,7 +4128,12 @@ const sendNotificationEmail = async (data) => {
     TemplateData: JSON.stringify(templatedData),
   };
 
-  ses.sendTemplatedEmail(params).promise();
+  ses
+    .sendTemplatedEmail(params)
+    .promise()
+    .catch((err) => {
+      console.log('Notification email send err', err);
+    });
 };
 
 module.exports = {

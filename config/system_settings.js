@@ -105,6 +105,11 @@ const system_settings = {
       AMOUNT: 1000,
     },
   ],
+  REFERRAL_DEEP: 3,
+  USER_VERSION: 1,
+  REPLACE_NAME: 'crmgrow',
+  PACKAGE_LEVEL: [0, 29, 49, 99],
+  MLM_LEVEL: [0, 0.1, 0.15, 0.12],
 };
 
 module.exports = system_settings;

@@ -126,6 +126,9 @@ const UserSchema = new Schema(
       period: { type: String, default: 'month' },
     },
     package_level: { type: String, default: 'PRO' },
+    due_commission: Number,
+    paid_commission: Number,
+    total_commission: Number,
     paid_demo: { type: Boolean, default: false },
     paid_demo_mode: Number,
     expired_at: Date,
@@ -147,6 +150,7 @@ const UserSchema = new Schema(
       link: String,
       paypal: String,
     },
+    parent_affiliate_id: String,
     smtp_connected: Boolean,
   },
   {

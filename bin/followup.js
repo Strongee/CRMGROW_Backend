@@ -80,7 +80,6 @@ const followup_test = async () => {
         email: user.email,
       };
 
-      console.log('data', data);
       sendNotificationEmail(data);
     }
   }

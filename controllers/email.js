@@ -269,8 +269,7 @@ const bulkGmail = async (req, res) => {
         });
         request({
           method: 'POST',
-          uri:
-            'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
           headers: {
             Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2920,8 +2919,7 @@ const sendEmail = async (req, res) => {
           });
           request({
             method: 'POST',
-            uri:
-              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
