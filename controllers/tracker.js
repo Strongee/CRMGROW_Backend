@@ -341,7 +341,7 @@ const createVideo = async (data) => {
   return video;
 };
 
-const disconnectVideo = async (video_tracker_id) => {
+const disconnectVideo = async (video_tracker_id, isEnd = false) => {
   const query = await VideoTracker.findOne({ _id: video_tracker_id });
   const currentUser = await User.findOne({ _id: query['user'], del: false });
   const contact = await Contact.findOne({ _id: query['contact'] });
@@ -378,7 +378,7 @@ const disconnectVideo = async (video_tracker_id) => {
           timestamps: false,
         }
       ).catch((err) => {
-        console.log('activty material_last update err', err.message);
+        console.log('activty material last update err', err.message);
       });
     }
 
@@ -395,14 +395,18 @@ const disconnectVideo = async (video_tracker_id) => {
         });
 
         await Notification.deleteMany({ video_tracker: query.id });
+        const notificationAction = {
+          object: 'video',
+          video: [video.id],
+        };
+        if (isEnd) {
+          notificationAction.isEnd = true;
+        }
         const newNotification = new Notification({
           criteria: 'material_track',
           user: currentUser._id,
           contact: query.contact,
-          action: {
-            object: 'video',
-            video: [video.id],
-          },
+          action: notificationAction,
           video_tracker: query.id,
         });
         newNotification.save().catch((err) => {
@@ -1176,7 +1180,6 @@ const setup = (io) => {
     });
 
     socket.on('init_video', (data) => {
-      console.log('init video', JSON.stringify(data));
       createVideo(data).then((_video_tracker) => {
         socket.type = 'video';
         socket.video_tracker = _video_tracker;
@@ -1260,6 +1263,10 @@ const setup = (io) => {
       } else if (socket.type === 'video') {
         console.log('close', JSON.stringify(data));
         const video_tracker = socket.video_tracker;
+        if (data.mode === 'end_reached') {
+          disconnectVideo(video_tracker._id, true);
+          return;
+        }
         if (data.mode === 'full_watched') {
           socket.video_tracker.viewed = true;
         }

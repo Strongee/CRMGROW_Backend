@@ -13,6 +13,8 @@ const Reminder = require('../../models/reminder');
 const FollowUp = require('../../models/follow_up');
 const TimeLine = require('../../models/time_line');
 const Team = require('../../models/team');
+const Notification = require('../../models/notification');
+const Task = require('../../models/task');
 const PaymentCtrl = require('../payment');
 const moment = require('moment-timezone');
 const VideoHelper = require('../../helpers/video');
@@ -472,6 +474,8 @@ const closeAccount = async (req, res) => {
     await Reminder.deleteMany({ user: user.id });
     await Tag.deleteMany({ user: user.id });
     await Team.deleteMany({ user: user.id });
+    await Notification.deleteMany({ user: user.id });
+    await Task.deleteMany({ user: user.id });
 
     Team.updateMany(
       { members: user.id },

@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c29cbc8a-5be9-4cab-b223-2a3f2f074f60" name="Default" comment="fix country state issue">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/contact.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/contact.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/deal_stage.js" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/deal_stage.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/deal_stage.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/deal_stage.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

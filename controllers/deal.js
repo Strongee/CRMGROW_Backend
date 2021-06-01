@@ -1173,11 +1173,12 @@ const sendEmails = async (req, res) => {
   let contacts = [...inputContacts];
   let contactsToTemp = [];
 
-  const CHUNK_COUNT = 15;
+  const STANDARD_CHUNK = 8;
+  const CHUNK_COUNT = 12;
   const MIN_CHUNK = 5;
   const TIME_GAPS = [1, 2, 3];
 
-  if (inputContacts.length > CHUNK_COUNT) {
+  if (inputContacts.length > STANDARD_CHUNK) {
     const currentTasks = await Task.find({
       user: currentUser._id,
       type: 'send_email',
@@ -1197,8 +1198,8 @@ const sendEmails = async (req, res) => {
     } else {
       // Handle First Chunk and Create With Anothers
       last_due = new Date();
-      contactsToTemp = contacts.slice(CHUNK_COUNT);
-      contacts = contacts.slice(0, CHUNK_COUNT);
+      contactsToTemp = contacts.slice(STANDARD_CHUNK);
+      contacts = contacts.slice(0, STANDARD_CHUNK);
     }
 
     let delay = 2;
