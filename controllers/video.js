@@ -2229,7 +2229,8 @@ const bulkGmail = async (req, res) => {
           });
           request({
             method: 'POST',
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri:
+              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -3846,8 +3847,6 @@ const downloadVideo = async (req, res) => {
   });
 };
 
-const bulkRemove = (req, res) => {};
-
 module.exports = {
   play,
   play1,
@@ -3878,6 +3877,5 @@ module.exports = {
   downloadVideo,
   uploadVideo,
   playVideo,
-  bulkRemove,
   updateConvertStatus,
 };
