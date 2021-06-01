@@ -62,7 +62,11 @@ const update = async (req, res) => {
   const id = req.params.id;
   const data = req.body;
 
-  await Draft.updateOne({ user: currentUser._id, _id: id }, { $set: data });
+  Draft.updateOne({ user: currentUser._id, _id: id }, { $set: data }).catch(
+    (err) => {
+      console.log('draft update err', err.message);
+    }
+  );
 
   return res.send({
     status: true,
