@@ -2827,7 +2827,7 @@ const clickEmailLink = async (req, res) => {
             .catch((err) => console.error(err));
         }
         const text_notification = garbage['text_notification'];
-        if (text_notification['emalink_clickedil']) {
+        if (text_notification['link_clicked']) {
           const e164Phone = phone(user.cell_phone)[0];
 
           if (!e164Phone) {
