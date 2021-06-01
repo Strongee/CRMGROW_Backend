@@ -2763,7 +2763,7 @@ const clickEmailLink = async (req, res) => {
 
         const email_notification = garbage['email_notification'];
 
-        if (email_notification['email']) {
+        if (email_notification['link_clicked']) {
           const data = {
             template_data: {
               contact_name: contact.first_name + ' ' + contact.last_name,
@@ -2780,7 +2780,7 @@ const clickEmailLink = async (req, res) => {
 
         const desktop_notification = garbage['desktop_notification'];
 
-        if (desktop_notification['email']) {
+        if (desktop_notification['link_clicked']) {
           webpush.setVapidDetails(
             'mailto:support@crmgrow.com',
             api.VAPID.PUBLIC_VAPID_KEY,
@@ -2827,7 +2827,7 @@ const clickEmailLink = async (req, res) => {
             .catch((err) => console.error(err));
         }
         const text_notification = garbage['text_notification'];
-        if (text_notification['email']) {
+        if (text_notification['emalink_clickedil']) {
           const e164Phone = phone(user.cell_phone)[0];
 
           if (!e164Phone) {
