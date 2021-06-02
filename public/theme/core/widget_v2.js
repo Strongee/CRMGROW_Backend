@@ -106,10 +106,17 @@ $('#interest-form').submit((e) => {
       if (response) {
         $('#contact').val(response.contact);
         $('#activity').val(response.activity);
-        if(!socket) {
+        if (!socket || !socket.connected) {
           var siteAddr = location.protocol + '//' + location.hostname;
-          // var siteAddr = "http://localhost:3000";
+          if (location.port) {
+            siteAddr += (':' + location.port)
+          }
+          // var siteAddr = 'http://localhost:3000'
           socket = io.connect(siteAddr);
+          socket.on('inited_video', (data) => {
+            console.log('init Video', data);
+            tracker_id = data._id;
+          });
         }
         likeWithContact();
       }

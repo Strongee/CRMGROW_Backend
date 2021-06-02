@@ -396,7 +396,8 @@ const bulkEmail = async (data) => {
             });
             request({
               method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri:
+                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -1165,7 +1166,8 @@ const bulkVideo = async (data) => {
             });
             request({
               method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri:
+                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -1881,7 +1883,8 @@ const bulkPDF = async (data) => {
             });
             request({
               method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri:
+                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -2836,7 +2839,8 @@ const bulkImage = async (data) => {
             });
             request({
               method: 'POST',
-              uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+              uri:
+                'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
               headers: {
                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
                 'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -3123,7 +3127,8 @@ const resendVideo = async (data) => {
         });
         request({
           method: 'POST',
-          uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+          uri:
+            'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
           headers: {
             Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
             'Content-Type': 'multipart/related; boundary="foo_bar_baz"',
@@ -3386,6 +3391,27 @@ const sendEmail = async (data) => {
             _id: contacts[i],
           },
           error: 'Contact was removed.',
+          type: 'not_found_contact',
+        });
+      });
+
+      promise_array.push(promise);
+      continue;
+    }
+
+    if (
+      contact.user.indexOf(currentUser._id) === -1 ||
+      contact.shared_members.indexOf(currentUser._id) === -1
+    ) {
+      promise = new Promise((resolve) => {
+        resolve({
+          status: false,
+          contact: {
+            _id: contacts[i],
+            first_name: contact.first_name,
+            email: contact.email,
+          },
+          error: 'This contact is not your contact.',
           type: 'not_found_contact',
         });
       });
@@ -3834,7 +3860,8 @@ const sendEmail = async (data) => {
 
           request({
             method: 'POST',
-            uri: 'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
+            uri:
+              'https://www.googleapis.com/upload/gmail/v1/users/me/messages/send',
             headers: {
               Authorization: `Bearer ${oauth2Client.credentials.access_token}`,
               'Content-Type': 'multipart/related; boundary="foo_bar_baz"',

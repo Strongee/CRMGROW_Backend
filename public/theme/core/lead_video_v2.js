@@ -11,6 +11,8 @@ var seek_flag = false;
 var watched_time = 0;
 var duration = document.querySelector('#duration').value;
 var limit = duration
+var tracker_id = '';
+
 if(duration > 600) {
   limit = duration - 5
 } else {
@@ -71,9 +73,20 @@ if(duration > 600) {
             }
             $('#contact').val(response.contact);
             $('#activity').val(response.activity);
-            var siteAddr = location.protocol + '//' + location.hostname;
-            // var siteAddr = "http://localhost:3000";
-            socket = io.connect(siteAddr);
+
+            if (!socket || !socket.connected) {
+              var siteAddr = location.protocol + '//' + location.hostname;
+              if (location.port) {
+                siteAddr += (':' + location.port)
+              }
+              // var siteAddr = 'http://localhost:3000'
+              socket = io.connect(siteAddr);
+              socket.on('inited_video', (data) => {
+                console.log('init Video', data);
+                tracker_id = data._id;
+              });
+            }
+
             vPlayer.play();
             if(updateInterested) {
               updateInterested();
@@ -193,11 +206,19 @@ function updateEndTime() {
   }
 }
 
-function reportTime() {
+function reportTime(isEnd = false) {
   var total = 0;
+  var start = duration;
+  var end = 0;
   trackingTimes.forEach((e) => {
     if (e[1]) {
       total += e[1] - e[0];
+      if (e[0] < start) {
+        start = e[0];
+      }
+      if (e[1] > end) {
+        end = e[1];
+      }
     }
   });
   watched_time = total;
@@ -220,9 +241,17 @@ function reportTime() {
         socket.emit('init_video', report);
       } else {
         socket.emit('update_video', {
+          tracker_id: tracker_id,
           duration: total * 1000,
-          material_last: vPlayer.currentTime
+          material_last: vPlayer.currentTime,
+          start: start,
+          end: end,
+          gap: trackingTimes
         });
+
+        if (isEnd && !reported) {
+          socket.emit('close', { mode: 'end_reached' });
+        }
       }
     } else {
       if (!reported) {
@@ -231,10 +260,13 @@ function reportTime() {
           currentTime = 0;
         }
         socket.emit('update_video', {
+          tracker_id: tracker_id,
           duration: duration * 1000,
-          material_last: currentTime
+          material_last: currentTime,
+          start: start,
+          end: end
         });
-        socket.emit('close');
+        socket.emit('close', { mode: 'full_watched' });
         reported = true;
       }
     }
@@ -249,6 +281,7 @@ vPlayer.on('playing', function () {
 });
 
 vPlayer.on('timeupdate', function () {
+  console.log('timeupdate');
   if (vPlayer.seeking || seek_flag) {
     seek_flag = true;
   } else {
@@ -260,6 +293,15 @@ vPlayer.on('timeupdate', function () {
 
 vPlayer.on('seeking', () => {
   seek_flag = true;
+});
+
+vPlayer.on('seeked', () => {
+  seek_flag = false;
+  updateStartTime();
+});
+
+vPlayer.on('ended', (e) => {
+  reportTime(true);
 });
 
 function initRecord() {
@@ -280,16 +322,23 @@ function handleVisibilityChange() {
     // Close the Socket on mobile
     if(deviceType === 'mobile') {
       if(socket) {
-        socket.emit('close');
+        socket.emit('close', { mode: 'hide' });
       }
     }
   } else  {
     // Restart the Socket on mobile
     if(deviceType === 'mobile') {
-      initRecord();
-      var siteAddr = location.protocol + '//' + location.hostname;
-      // var siteAddr = 'http://localhost:3000'
-      socket = io.connect(siteAddr);
+      if (!socket || !socket.connected) {
+        initRecord();
+        var siteAddr = location.protocol + '//' + location.hostname;
+        if (location.port) {
+          siteAddr += (':' + location.port)
+        }
+        socket = io.connect(siteAddr);
+        socket.on('inited_video', (data) => {
+          tracker_id = data._id;
+        });
+      }
     }
   }
 }

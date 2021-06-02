@@ -132,7 +132,7 @@ function updateEndTime() {
 }
 
 // Report the time 
-function reportTime() {
+function reportTime(isEnd = false) {
   var total = 0;
   var start = duration;
   var end = 0;
@@ -174,6 +174,9 @@ function reportTime() {
           end: end,
           gap: trackingTimes
         });
+        if (isEnd && !reported) {
+          socket.emit('close', { mode: 'end_reached' });
+        }
       }
     } else {
       if (!reported) {
@@ -241,6 +244,9 @@ vPlayer.on('seeking', () => {
 vPlayer.on('seeked', () => {
   seek_flag = false;
   updateStartTime();
+});
+vPlayer.on('ended', (e) => {
+  reportTime(true);
 });
 
 function initRecord() {

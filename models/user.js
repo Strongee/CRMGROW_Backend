@@ -100,8 +100,14 @@ const UserSchema = new Schema(
     material_info: {
       is_enabled: { type: Boolean, default: true },
       is_limit: { type: Boolean, default: true },
-      upload_max_count: Number,
-      record_max_duration: Number,
+      upload_max_count: {
+        type: Number,
+        default: system_settings.MATERIAL_UPLOAD_LIMIT.PRO,
+      },
+      record_max_duration: {
+        type: Number,
+        default: system_settings.VIDEO_RECORD_LIMIT.PRO,
+      },
     },
     team_info: {
       owner_enabled: { type: Boolean, default: true },
