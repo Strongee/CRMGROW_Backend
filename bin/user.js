@@ -73,7 +73,7 @@ const migrate = async () => {
     }
   )
     .then(() => {
-       console.log('text count update finished');
+      console.log('text count update finished');
     })
     .catch((err) => {
       console.log('user update err', err.message);
